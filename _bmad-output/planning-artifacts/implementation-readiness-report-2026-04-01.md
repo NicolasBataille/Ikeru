@@ -1,5 +1,5 @@
 ---
-stepsCompleted: [step-01-document-discovery, step-02-prd-analysis, step-03-epic-coverage-validation]
+stepsCompleted: [step-01-document-discovery, step-02-prd-analysis, step-03-epic-coverage-validation, step-04-ux-alignment, step-05-epic-quality-review, step-06-final-assessment]
 documentsFound:
   prd: _bmad-output/planning-artifacts/prd.md
   architecture: null
@@ -176,3 +176,82 @@ All 65 FRs (FR1–FR65) are uncovered. This is expected — the Epics & Stories 
 - Coverage percentage: 0%
 
 **Recommendation:** Create Epics & Stories document using `/bmad-create-epics-and-stories` to map all 65 FRs into implementable epics and user stories.
+
+## UX Alignment Assessment
+
+### UX Document Status
+
+Not found. No UX design document exists yet.
+
+### Alignment Issues
+
+Cannot assess UX ↔ PRD or UX ↔ Architecture alignment — no UX document and no Architecture document exist.
+
+### Warnings
+
+⚠️ **UX is strongly implied but missing.** Ikeru is a user-facing iOS + watchOS application with:
+- Complex multi-surface interactions (iPhone, Apple Watch, StandBy mode)
+- Guided onboarding tour
+- RPG progression UI (XP, levelling, loot, lootboxes)
+- Adaptive session composition with varied exercise types
+- Natural language chat interface with AI companion
+- Progress dashboard with per-skill breakdown
+- SRS card review flows across multiple card types (kanji, vocabulary, grammar, listening)
+- Stroke order animations and handwriting input
+- Watch-specific 4-choice quizzes and haptic feedback patterns
+
+A UX design document is critical before implementation to define interaction patterns, navigation architecture, and visual design across all surfaces.
+
+**Recommendation:** Create UX design document using `/bmad-create-ux-design` before implementation.
+
+## Epic Quality Review
+
+No Epics & Stories document exists. Quality review cannot be performed.
+
+**Status:** Skipped — no epics to validate.
+
+**When epics are created, validate:**
+- Each epic delivers user value (not technical milestones)
+- Epic independence (Epic N does not require Epic N+1)
+- No forward dependencies between stories
+- Proper story sizing with clear acceptance criteria
+- Database/entity creation only when first needed
+- FR traceability maintained across all epics
+
+## Summary and Recommendations
+
+### Overall Readiness Status
+
+**NOT READY** for implementation — PRD is solid, but three critical downstream documents are missing.
+
+### Critical Issues Requiring Immediate Action
+
+| # | Issue | Severity | Impact |
+|---|---|---|---|
+| 1 | **No Architecture document** | Critical | Cannot make technology decisions, define data model, or design system components |
+| 2 | **No Epics & Stories document** | Critical | Cannot plan sprints, 0% FR coverage, no implementation roadmap |
+| 3 | **No UX Design document** | Critical | Cannot design interactions for a complex multi-surface app (iPhone, Watch, StandBy) |
+
+### PRD Quality Assessment
+
+The PRD itself is **implementation-ready quality**:
+- 65 well-structured FRs across 10 capability areas — complete capability contract
+- 19 measurable NFRs with specific performance targets
+- Clear traceability chain: Vision → Success Criteria → User Journeys → FRs
+- 6 technical validations identified with risk/fallback matrix
+- Content licensing fully assessed with alternatives for blocked resources
+- Domain constraints documented (data integrity, linguistic accuracy)
+
+No issues found within the PRD that would block downstream work.
+
+### Recommended Next Steps
+
+1. **Create Architecture document** (`/bmad-create-architecture`) — Define data model (SwiftData vs SQLite), system component design, AI tier routing logic, FSRS engine design, content pipeline architecture, Watch app architecture
+2. **Create UX Design document** (`/bmad-create-ux-design`) — Define navigation architecture, interaction patterns for all exercise types, RPG UI, companion chat interface, Watch UI, multi-surface session flow
+3. **Create Epics & Stories** (`/bmad-create-epics-and-stories`) — Map all 65 FRs into user-value epics with acceptance criteria, dependency ordering, and story sizing
+4. **Run technical validation spikes** — Prioritize the 6 identified validations (pitch accent F0, FoundationModels Japanese quality, Claude integration, Watch kanji, FSRS Swift port, CoreML handwriting) before committing to full implementation
+5. **Re-run this readiness check** (`/bmad-check-implementation-readiness`) after creating the missing documents to validate full alignment
+
+### Final Note
+
+This assessment identified 3 critical gaps (Architecture, UX, Epics) with a strong PRD foundation. The PRD covers all capability areas comprehensively and is ready to feed into downstream documents. Address the missing documents in order (Architecture → UX → Epics) before beginning implementation.
