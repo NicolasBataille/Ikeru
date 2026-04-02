@@ -14,6 +14,8 @@ struct ActiveSessionView: View {
     @State private var hapticTriggerCorrect = false
     @State private var hapticTriggerIncorrect = false
     @State private var timerTick: Int = 0
+    @State private var xpGained: Int?
+    @State private var levelUpLevel: Int?
 
     /// Timer to update elapsed time display.
     private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
@@ -29,9 +31,23 @@ struct ActiveSessionView: View {
                 sessionContent
             }
         }
+        .xpGainOverlay(xpGained: $xpGained)
+        .levelUpOverlay(level: $levelUpLevel)
         .sensoryFeedback(.success, trigger: hapticTriggerCorrect)
         .sensoryFeedback(.warning, trigger: hapticTriggerIncorrect)
         .gesture(pauseSwipeGesture)
+        .onChange(of: viewModel.lastXPGained) { _, newValue in
+            if let xp = newValue {
+                xpGained = xp
+                viewModel.clearXPGain()
+            }
+        }
+        .onChange(of: viewModel.levelUpLevel) { _, newValue in
+            if let level = newValue {
+                levelUpLevel = level
+                viewModel.clearLevelUp()
+            }
+        }
         .sheet(isPresented: $showPauseSheet) {
             PauseSheetView(
                 onResume: {
@@ -64,6 +80,15 @@ struct ActiveSessionView: View {
                 elapsedTime: viewModel.elapsedTimeFormatted
             )
             .padding(.top, IkeruTheme.Spacing.sm)
+
+            // Compact XP bar below progress
+            XPBarView(
+                totalXP: viewModel.totalXP,
+                level: viewModel.currentLevel,
+                variant: .compact
+            )
+            .padding(.horizontal, IkeruTheme.Spacing.md)
+            .padding(.top, IkeruTheme.Spacing.xs)
 
             Spacer()
 
@@ -194,12 +219,16 @@ private struct PauseSheetView: View {
 // MARK: - Preview
 
 #Preview("ActiveSessionView") {
-    let schema = Schema([UserProfile.self, Card.self, ReviewLog.self])
+    let schema = Schema([UserProfile.self, Card.self, ReviewLog.self, RPGState.self])
     let config = ModelConfiguration(isStoredInMemoryOnly: true)
     let container = try! ModelContainer(for: schema, configurations: [config])
     let repo = CardRepository(modelContainer: container)
     let planner = PlannerService(cardRepository: repo)
-    let viewModel = SessionViewModel(plannerService: planner, cardRepository: repo)
+    let viewModel = SessionViewModel(
+        plannerService: planner,
+        cardRepository: repo,
+        modelContainer: container
+    )
 
     ActiveSessionView(viewModel: viewModel)
         .preferredColorScheme(.dark)

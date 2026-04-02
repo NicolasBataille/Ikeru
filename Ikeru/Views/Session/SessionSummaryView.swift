@@ -45,6 +45,13 @@ struct SessionSummaryView: View {
                 )
 
                 summaryRow(
+                    icon: "shield.fill",
+                    label: "Level",
+                    value: "Lv. \(viewModel.currentLevel)",
+                    valueColor: Color(hex: IkeruTheme.Colors.Rarity.legendary)
+                )
+
+                summaryRow(
                     icon: "clock.fill",
                     label: "Duration",
                     value: viewModel.elapsedTimeFormatted,

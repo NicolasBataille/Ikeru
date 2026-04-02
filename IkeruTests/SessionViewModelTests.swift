@@ -11,7 +11,7 @@ struct SessionViewModelTests {
     // MARK: - Helpers
 
     private func makeContainer() throws -> ModelContainer {
-        let schema = Schema([UserProfile.self, Card.self, ReviewLog.self])
+        let schema = Schema([UserProfile.self, Card.self, ReviewLog.self, RPGState.self])
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         return try ModelContainer(for: schema, configurations: [config])
     }
@@ -19,7 +19,11 @@ struct SessionViewModelTests {
     private func makeViewModel(container: ModelContainer) -> SessionViewModel {
         let repo = CardRepository(modelContainer: container)
         let planner = PlannerService(cardRepository: repo)
-        return SessionViewModel(plannerService: planner, cardRepository: repo)
+        return SessionViewModel(
+            plannerService: planner,
+            cardRepository: repo,
+            modelContainer: container
+        )
     }
 
     private func seedDueCards(container: ModelContainer, count: Int) throws -> [UUID] {
@@ -124,8 +128,8 @@ struct SessionViewModelTests {
         #expect(vm.xpEarned == 5)
     }
 
-    @Test("gradeAndAdvance earns 5 XP for again grade")
-    func gradeAgainEarns5XP() async throws {
+    @Test("gradeAndAdvance earns 2 XP for again grade")
+    func gradeAgainEarns2XP() async throws {
         let container = try makeContainer()
         _ = try seedDueCards(container: container, count: 1)
         let vm = makeViewModel(container: container)
@@ -133,7 +137,7 @@ struct SessionViewModelTests {
         await vm.startSession()
         await vm.gradeAndAdvance(grade: .again)
 
-        #expect(vm.xpEarned == 5)
+        #expect(vm.xpEarned == 2)
     }
 
     @Test("Session completes when all cards graded")
@@ -149,7 +153,7 @@ struct SessionViewModelTests {
         #expect(vm.isSessionComplete == true)
         #expect(vm.currentCard == nil)
         #expect(vm.reviewedCount == 2)
-        #expect(vm.xpEarned == 20)
+        #expect(vm.xpEarned == 20) // 10 + 10
     }
 
     @Test("Session progress tracks correctly")
@@ -233,7 +237,7 @@ struct SessionViewModelTests {
 
         #expect(vm.isSessionComplete == true)
         #expect(vm.reviewedCount == 2) // Only 2 were actually reviewed
-        #expect(vm.xpEarned == 20)
+        #expect(vm.xpEarned == 20) // 10 + 10
     }
 
     // MARK: - Dismiss Tests
@@ -295,5 +299,84 @@ struct SessionViewModelTests {
         await vm.loadSessionEstimate()
 
         #expect(vm.estimatedCardCount == 4)
+    }
+
+    // MARK: - RPG Integration Tests
+
+    @Test("gradeAndAdvance updates totalXP")
+    func gradeAndAdvanceUpdatesTotalXP() async throws {
+        let container = try makeContainer()
+        _ = try seedDueCards(container: container, count: 1)
+        let vm = makeViewModel(container: container)
+
+        await vm.startSession()
+        #expect(vm.totalXP == 0)
+
+        await vm.gradeAndAdvance(grade: .good)
+        #expect(vm.totalXP == 10)
+    }
+
+    @Test("gradeAndAdvance persists RPG state to SwiftData")
+    func gradeAndAdvancePersistsRPGState() async throws {
+        let container = try makeContainer()
+        _ = try seedDueCards(container: container, count: 1)
+        let vm = makeViewModel(container: container)
+
+        await vm.startSession()
+        await vm.gradeAndAdvance(grade: .good)
+
+        // Verify persisted state
+        let descriptor = FetchDescriptor<RPGState>()
+        let states = try container.mainContext.fetch(descriptor)
+        #expect(states.count == 1)
+        #expect(states.first?.xp == 10)
+    }
+
+    @Test("startSession creates RPGState if none exists")
+    func startSessionCreatesRPGState() async throws {
+        let container = try makeContainer()
+        _ = try seedDueCards(container: container, count: 1)
+        let vm = makeViewModel(container: container)
+
+        await vm.startSession()
+
+        let descriptor = FetchDescriptor<RPGState>()
+        let states = try container.mainContext.fetch(descriptor)
+        #expect(states.count == 1)
+        #expect(vm.currentLevel == 1)
+        #expect(vm.totalXP == 0)
+    }
+
+    @Test("XP accumulates across multiple grades in session")
+    func xpAccumulatesAcrossGrades() async throws {
+        let container = try makeContainer()
+        _ = try seedDueCards(container: container, count: 3)
+        let vm = makeViewModel(container: container)
+
+        await vm.startSession()
+        await vm.gradeAndAdvance(grade: .good)  // +10
+        await vm.gradeAndAdvance(grade: .hard)   // +5
+        await vm.gradeAndAdvance(grade: .again)  // +2
+
+        #expect(vm.xpEarned == 17)
+        #expect(vm.totalXP == 17)
+    }
+
+    @Test("loadRPGStateForDisplay loads persisted state")
+    func loadRPGStateForDisplay() async throws {
+        let container = try makeContainer()
+
+        // Seed an RPGState with some XP
+        let rpgState = RPGState(xp: 150, level: 2, totalReviewsCompleted: 15)
+        container.mainContext.insert(rpgState)
+        try container.mainContext.save()
+
+        _ = try seedDueCards(container: container, count: 1)
+        let vm = makeViewModel(container: container)
+
+        await vm.loadRPGStateForDisplay()
+
+        #expect(vm.totalXP == 150)
+        #expect(vm.currentLevel == 2)
     }
 }

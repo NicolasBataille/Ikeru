@@ -165,7 +165,7 @@ struct CardReviewView: View {
     // Preview requires a model container
     CardReviewView(
         cardRepository: {
-            let schema = Schema([UserProfile.self, Card.self, ReviewLog.self])
+            let schema = Schema([UserProfile.self, Card.self, ReviewLog.self, RPGState.self])
             let config = ModelConfiguration(isStoredInMemoryOnly: true)
             let container = try! ModelContainer(for: schema, configurations: [config])
             return CardRepository(modelContainer: container)

@@ -11,7 +11,7 @@ struct CardReviewViewModelTests {
     // MARK: - Helpers
 
     private func makeContainer() throws -> ModelContainer {
-        let schema = Schema([UserProfile.self, Card.self, ReviewLog.self])
+        let schema = Schema([UserProfile.self, Card.self, ReviewLog.self, RPGState.self])
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         return try ModelContainer(for: schema, configurations: [config])
     }

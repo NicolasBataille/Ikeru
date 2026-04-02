@@ -11,7 +11,7 @@ struct SessionIntegrationTests {
     // MARK: - Helpers
 
     private func makeContainer() throws -> ModelContainer {
-        let schema = Schema([UserProfile.self, Card.self, ReviewLog.self])
+        let schema = Schema([UserProfile.self, Card.self, ReviewLog.self, RPGState.self])
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         return try ModelContainer(for: schema, configurations: [config])
     }
@@ -23,7 +23,7 @@ struct SessionIntegrationTests {
         let container = try makeContainer()
         let repo = CardRepository(modelContainer: container)
         let planner = PlannerService(cardRepository: repo)
-        let vm = SessionViewModel(plannerService: planner, cardRepository: repo)
+        let vm = SessionViewModel(plannerService: planner, cardRepository: repo, modelContainer: container)
 
         // Step 1: Seed content
         let allCards = await repo.allCards()
@@ -71,7 +71,7 @@ struct SessionIntegrationTests {
         )
 
         let planner = PlannerService(cardRepository: repo)
-        let vm = SessionViewModel(plannerService: planner, cardRepository: repo)
+        let vm = SessionViewModel(plannerService: planner, cardRepository: repo, modelContainer: container)
 
         await vm.startSession()
 
@@ -107,7 +107,7 @@ struct SessionIntegrationTests {
         let container = try makeContainer()
         let repo = CardRepository(modelContainer: container)
         let planner = PlannerService(cardRepository: repo)
-        let vm = SessionViewModel(plannerService: planner, cardRepository: repo)
+        let vm = SessionViewModel(plannerService: planner, cardRepository: repo, modelContainer: container)
 
         // Start session with no cards
         await vm.startSession()
@@ -131,7 +131,7 @@ struct SessionIntegrationTests {
         )
 
         let planner = PlannerService(cardRepository: repo)
-        let vm = SessionViewModel(plannerService: planner, cardRepository: repo)
+        let vm = SessionViewModel(plannerService: planner, cardRepository: repo, modelContainer: container)
 
         await vm.startSession()
 
@@ -146,7 +146,7 @@ struct SessionIntegrationTests {
 
         #expect(vm.isSessionComplete == true)
         #expect(vm.reviewedCount == 2)
-        #expect(vm.xpEarned == 15) // 10 (good) + 5 (hard)
+        #expect(vm.xpEarned == 15) // 10 (good) + 5 (hard) -- unchanged
 
         // Verify review logs exist for reviewed cards
         if let id1 = firstCardId {
@@ -178,16 +178,16 @@ struct SessionIntegrationTests {
 
         let repo = CardRepository(modelContainer: container)
         let planner = PlannerService(cardRepository: repo)
-        let vm = SessionViewModel(plannerService: planner, cardRepository: repo)
+        let vm = SessionViewModel(plannerService: planner, cardRepository: repo, modelContainer: container)
 
         await vm.startSession()
 
         await vm.gradeAndAdvance(grade: .easy)  // 10 XP
         await vm.gradeAndAdvance(grade: .good)   // 10 XP
         await vm.gradeAndAdvance(grade: .hard)   // 5 XP
-        await vm.gradeAndAdvance(grade: .again)  // 5 XP
+        await vm.gradeAndAdvance(grade: .again)  // 2 XP
 
-        #expect(vm.xpEarned == 30)
+        #expect(vm.xpEarned == 27)
         #expect(vm.reviewedCount == 4)
     }
 
@@ -202,7 +202,7 @@ struct SessionIntegrationTests {
         )
 
         let planner = PlannerService(cardRepository: repo)
-        let vm = SessionViewModel(plannerService: planner, cardRepository: repo)
+        let vm = SessionViewModel(plannerService: planner, cardRepository: repo, modelContainer: container)
 
         // First session
         await vm.startSession()

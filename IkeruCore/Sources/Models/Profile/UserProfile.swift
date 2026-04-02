@@ -22,6 +22,10 @@ public final class UserProfile {
     @Relationship(deleteRule: .cascade, inverse: \Card.profile)
     public var cards: [Card]?
 
+    /// RPG progression state for this profile
+    @Relationship(deleteRule: .cascade, inverse: \RPGState.profile)
+    public var rpgState: RPGState?
+
     public init(
         displayName: String,
         settings: ProfileSettings = ProfileSettings()
@@ -31,5 +35,6 @@ public final class UserProfile {
         self.createdAt = Date()
         self.settings = settings
         self.cards = []
+        self.rpgState = RPGState()
     }
 }

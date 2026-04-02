@@ -19,6 +19,7 @@ struct IkeruApp: App {
                 UserProfile.self,
                 Card.self,
                 ReviewLog.self,
+                RPGState.self,
             ])
             let config = ModelConfiguration(
                 "Ikeru",

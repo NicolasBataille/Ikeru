@@ -10,7 +10,7 @@ struct ProfileViewModelTests {
     // MARK: - Helpers
 
     private func makeModelContext() throws -> ModelContext {
-        let schema = Schema([UserProfile.self, Card.self, ReviewLog.self])
+        let schema = Schema([UserProfile.self, Card.self, ReviewLog.self, RPGState.self])
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         let container = try ModelContainer(for: schema, configurations: [config])
         return container.mainContext

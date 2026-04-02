@@ -147,6 +147,18 @@ private struct HomeTabView: View {
                     .font(.ikeruBody)
                     .foregroundStyle(.ikeruTextSecondary)
 
+                // XP Bar (full variant) on home screen
+                if let vm = sessionViewModel {
+                    XPBarView(
+                        totalXP: vm.totalXP,
+                        level: vm.currentLevel,
+                        variant: .full
+                    )
+                    .padding(.horizontal, IkeruTheme.Spacing.lg)
+                    .ikeruCard(.standard)
+                    .padding(.horizontal, IkeruTheme.Spacing.md)
+                }
+
                 Spacer()
 
                 VStack(spacing: IkeruTheme.Spacing.md) {
@@ -187,9 +199,10 @@ private struct HomeTabView: View {
                     .onChange(of: vm.isActive) { _, isActive in
                         if !isActive {
                             showSession = false
-                            // Refresh estimate after session ends
+                            // Refresh estimate and RPG state after session ends
                             Task {
                                 await vm.loadSessionEstimate()
+                                await vm.loadRPGStateForDisplay()
                             }
                         }
                     }
@@ -198,6 +211,7 @@ private struct HomeTabView: View {
         .task {
             initializeSessionViewModel()
             await sessionViewModel?.loadSessionEstimate()
+            await sessionViewModel?.loadRPGStateForDisplay()
         }
     }
 
@@ -208,7 +222,11 @@ private struct HomeTabView: View {
         let container = modelContext.container
         let repo = CardRepository(modelContainer: container)
         let planner = PlannerService(cardRepository: repo)
-        sessionViewModel = SessionViewModel(plannerService: planner, cardRepository: repo)
+        sessionViewModel = SessionViewModel(
+            plannerService: planner,
+            cardRepository: repo,
+            modelContainer: container
+        )
     }
 
     private func startSession() {

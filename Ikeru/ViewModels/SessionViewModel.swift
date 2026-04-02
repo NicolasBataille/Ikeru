@@ -76,6 +76,20 @@ public final class SessionViewModel {
     /// Estimated session card count for preview.
     public private(set) var estimatedCardCount: Int = 0
 
+    // MARK: - RPG State
+
+    /// Current total XP (persisted across sessions via RPGState).
+    public private(set) var totalXP: Int = 0
+
+    /// Current level (persisted across sessions via RPGState).
+    public private(set) var currentLevel: Int = 1
+
+    /// XP gained from the last graded card (drives XPGainView overlay).
+    public private(set) var lastXPGained: Int?
+
+    /// Level reached via level-up (drives LevelUpView overlay).
+    public private(set) var levelUpLevel: Int?
+
     // MARK: - Feedback
 
     /// Whether a feedback flash is currently showing.
@@ -85,13 +99,19 @@ public final class SessionViewModel {
 
     private let plannerService: PlannerService
     private let cardRepository: CardRepository
+    private let modelContainer: ModelContainer
     private var cardStartTime: Date = Date()
 
     // MARK: - Init
 
-    public init(plannerService: PlannerService, cardRepository: CardRepository) {
+    public init(
+        plannerService: PlannerService,
+        cardRepository: CardRepository,
+        modelContainer: ModelContainer
+    ) {
         self.plannerService = plannerService
         self.cardRepository = cardRepository
+        self.modelContainer = modelContainer
     }
 
     // MARK: - Session Lifecycle
@@ -104,11 +124,16 @@ public final class SessionViewModel {
         reviewedCount = 0
         xpEarned = 0
         newItemsLearned = 0
+        lastXPGained = nil
+        levelUpLevel = nil
         isPaused = false
         sessionStartTime = Date()
         cardStartTime = Date()
         isActive = true
         estimatedCardCount = queue.count
+
+        // Load persisted RPG state
+        await loadRPGState()
 
         Logger.ui.info("Session started with \(queue.count) cards")
     }
@@ -141,19 +166,26 @@ public final class SessionViewModel {
             responseTimeMs: responseTimeMs
         )
 
-        // Calculate XP
-        let cardXP: Int
-        switch grade {
-        case .easy:
-            cardXP = 10
-        case .good:
-            cardXP = 10
-        case .hard:
-            cardXP = 5
-        case .again:
-            cardXP = 5
+        // Award XP via RPGService (pure function)
+        let result = RPGService.awardXP(
+            grade: grade,
+            currentXP: totalXP,
+            currentLevel: currentLevel,
+            totalReviews: reviewedCount
+        )
+
+        totalXP = result.newXP
+        currentLevel = result.newLevel
+        xpEarned += result.xpAwarded
+        lastXPGained = result.xpAwarded
+
+        // Persist RPG state
+        await persistRPGState()
+
+        // Check for level-up
+        if result.didLevelUp {
+            levelUpLevel = result.newLevel
         }
-        xpEarned += cardXP
 
         // Track new items learned (first review = reps was 0)
         if card.fsrsState.reps == 0 {
@@ -178,6 +210,16 @@ public final class SessionViewModel {
     /// Grade from a swipe direction.
     public func gradeFromSwipe(direction: SwipeDirection) async {
         await gradeAndAdvance(grade: direction.grade)
+    }
+
+    /// Clears the last XP gained display (called by the overlay after animation).
+    public func clearXPGain() {
+        lastXPGained = nil
+    }
+
+    /// Clears the level-up display (called by the overlay after celebration).
+    public func clearLevelUp() {
+        levelUpLevel = nil
     }
 
     /// Pauses the current session.
@@ -210,6 +252,48 @@ public final class SessionViewModel {
         sessionQueue = []
         currentIndex = 0
         Logger.ui.debug("Session dismissed")
+    }
+
+    // MARK: - RPG State Persistence
+
+    /// Loads RPGState from SwiftData, creating one if none exists.
+    private func loadRPGState() async {
+        let context = modelContainer.mainContext
+        let descriptor = FetchDescriptor<RPGState>()
+        let results = (try? context.fetch(descriptor)) ?? []
+
+        if let state = results.first {
+            totalXP = state.xp
+            currentLevel = state.level
+            Logger.rpg.debug("Loaded RPG state: xp=\(state.xp), level=\(state.level)")
+        } else {
+            // Create initial RPG state
+            let newState = RPGState()
+            context.insert(newState)
+            try? context.save()
+            totalXP = 0
+            currentLevel = 1
+            Logger.rpg.info("Created initial RPG state")
+        }
+    }
+
+    /// Persists current RPG state to SwiftData.
+    private func persistRPGState() async {
+        let context = modelContainer.mainContext
+        let descriptor = FetchDescriptor<RPGState>()
+        let results = (try? context.fetch(descriptor)) ?? []
+
+        if let state = results.first {
+            state.xp = totalXP
+            state.level = currentLevel
+            state.totalReviewsCompleted += 1
+            try? context.save()
+        }
+    }
+
+    /// Loads RPG state for display (used by home screen).
+    public func loadRPGStateForDisplay() async {
+        await loadRPGState()
     }
 }
 
