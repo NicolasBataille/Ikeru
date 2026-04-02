@@ -1,0 +1,86 @@
+# SwiftLint Configuration for Ikeru
+
+included:
+  - Ikeru
+  - IkeruCore/Sources
+  - IkeruCore/Tests
+  - IkeruTests
+  - IkeruWatch
+  - IkeruWidget
+
+excluded:
+  - IkeruCore/.build
+  - DerivedData
+  - .build
+  - Pods
+
+# Rules
+opt_in_rules:
+  - empty_count
+  - closure_spacing
+  - contains_over_first_not_nil
+  - discouraged_optional_boolean
+  - fatal_error_message
+  - first_where
+  - implicitly_unwrapped_optional
+  - modifier_order
+  - overridden_super_call
+  - private_action
+  - private_outlet
+  - redundant_nil_coalescing
+  - sorted_first_last
+  - unowned_variable_capture
+  - vertical_whitespace_closing_braces
+
+disabled_rules:
+  - trailing_whitespace
+  - opening_brace
+
+# Rule configurations
+line_length:
+  warning: 150
+  error: 200
+  ignores_comments: true
+  ignores_urls: true
+
+file_length:
+  warning: 800
+  error: 1000
+
+type_body_length:
+  warning: 300
+  error: 500
+
+function_body_length:
+  warning: 50
+  error: 80
+
+force_unwrapping:
+  severity: error
+
+force_cast:
+  severity: error
+
+force_try:
+  severity: warning
+
+identifier_name:
+  min_length:
+    warning: 2
+    error: 1
+  max_length:
+    warning: 50
+    error: 60
+  excluded:
+    - id
+    - x
+    - y
+    - r
+    - g
+    - b
+
+nesting:
+  type_level: 3
+  function_level: 3
+
+reporter: xcode

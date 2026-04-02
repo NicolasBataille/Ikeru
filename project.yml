@@ -1,0 +1,127 @@
+name: Ikeru
+options:
+  bundleIdPrefix: com.ikeru
+  deploymentTarget:
+    iOS: "17.0"
+    watchOS: "10.0"
+  xcodeVersion: "16.0"
+  createIntermediateGroups: true
+  generateEmptyDirectories: true
+  groupSortPosition: top
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    IPHONEOS_DEPLOYMENT_TARGET: "17.0"
+    CODE_SIGN_STYLE: Automatic
+
+packages:
+  IkeruCore:
+    path: IkeruCore
+
+targets:
+  Ikeru:
+    type: application
+    platform: iOS
+    sources:
+      - path: Ikeru
+        excludes:
+          - "**/.DS_Store"
+    dependencies:
+      - package: IkeruCore
+      - target: IkeruWidget
+        embed: true
+    settings:
+      base:
+        INFOPLIST_FILE: Ikeru/Info.plist
+        CODE_SIGN_ENTITLEMENTS: Ikeru/Ikeru.entitlements
+        PRODUCT_BUNDLE_IDENTIFIER: com.ikeru.app
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        GENERATE_INFOPLIST_FILE: true
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: true
+        INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: true
+        INFOPLIST_KEY_UILaunchScreen_Generation: true
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone: "UIInterfaceOrientationPortrait"
+        INFOPLIST_KEY_UIUserInterfaceStyle: Dark
+    resources:
+      - path: Ikeru/Resources
+        buildPhase: resources
+
+  IkeruTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: IkeruTests
+    dependencies:
+      - target: Ikeru
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.ikeru.app.tests
+        GENERATE_INFOPLIST_FILE: true
+        BUNDLE_LOADER: "$(TEST_HOST)"
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/Ikeru.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Ikeru"
+
+  IkeruWatch:
+    type: application
+    platform: watchOS
+    sources:
+      - path: IkeruWatch
+    dependencies:
+      - package: IkeruCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.ikeru.app.watch
+        GENERATE_INFOPLIST_FILE: true
+        WATCHOS_DEPLOYMENT_TARGET: "10.0"
+        SDKROOT: watchos
+        INFOPLIST_KEY_WKCompanionAppBundleIdentifier: com.ikeru.app
+
+  IkeruWidget:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: IkeruWidget
+    dependencies:
+      - package: IkeruCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.ikeru.app.widget
+        CODE_SIGN_ENTITLEMENTS: IkeruWidget/IkeruWidget.entitlements
+        GENERATE_INFOPLIST_FILE: true
+        INFOPLIST_KEY_CFBundleDisplayName: IkeruWidget
+        INFOPLIST_KEY_NSHumanReadableCopyright: ""
+    entitlements:
+      path: IkeruWidget/IkeruWidget.entitlements
+
+schemes:
+  Ikeru:
+    build:
+      targets:
+        Ikeru: all
+        IkeruTests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - IkeruTests
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release
+
+  IkeruWatch:
+    build:
+      targets:
+        IkeruWatch: all
+    run:
+      config: Debug
+
+  IkeruWidget:
+    build:
+      targets:
+        IkeruWidget: all
+    run:
+      config: Debug
