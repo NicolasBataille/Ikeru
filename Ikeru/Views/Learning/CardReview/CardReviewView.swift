@@ -1,0 +1,175 @@
+import SwiftUI
+import SwiftData
+import IkeruCore
+
+// MARK: - CardReviewView
+
+struct CardReviewView: View {
+
+    @State private var viewModel: CardReviewViewModel
+    @State private var hapticTriggerCorrect = false
+    @State private var hapticTriggerIncorrect = false
+
+    init(cardRepository: CardRepository) {
+        _viewModel = State(initialValue: CardReviewViewModel(cardRepository: cardRepository))
+    }
+
+    var body: some View {
+        ZStack {
+            Color.ikeruBackground
+                .ignoresSafeArea()
+
+            content
+        }
+        .sensoryFeedback(.success, trigger: hapticTriggerCorrect)
+        .sensoryFeedback(.warning, trigger: hapticTriggerIncorrect)
+        .task {
+            await viewModel.loadDueCards()
+        }
+    }
+
+    // MARK: - Content
+
+    @ViewBuilder
+    private var content: some View {
+        if viewModel.isLoading {
+            loadingView
+        } else if viewModel.isSessionComplete {
+            emptyStateView
+        } else {
+            reviewContent
+        }
+    }
+
+    // MARK: - Loading
+
+    private var loadingView: some View {
+        VStack(spacing: IkeruTheme.Spacing.md) {
+            ProgressView()
+                .tint(Color.ikeruPrimaryAccent)
+            Text("Loading cards...")
+                .font(.ikeruBody)
+                .foregroundStyle(.ikeruTextSecondary)
+        }
+    }
+
+    // MARK: - Empty State
+
+    private var emptyStateView: some View {
+        VStack(spacing: IkeruTheme.Spacing.lg) {
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 60))
+                .foregroundStyle(Color.ikeruSuccess)
+
+            Text("All caught up!")
+                .font(.ikeruHeading1)
+                .foregroundStyle(.white)
+
+            Text("Great work! Come back later for more reviews.")
+                .font(.ikeruBody)
+                .foregroundStyle(.ikeruTextSecondary)
+                .multilineTextAlignment(.center)
+        }
+        .padding(IkeruTheme.Spacing.xl)
+    }
+
+    // MARK: - Review Content
+
+    private var reviewContent: some View {
+        VStack(spacing: IkeruTheme.Spacing.md) {
+            // Header with remaining count and progress
+            headerView
+
+            Spacer()
+
+            // Card with swipe gesture and feedback overlay
+            if let card = viewModel.currentCard {
+                cardWithFeedback(card: card)
+            }
+
+            Spacer()
+
+            // Grade buttons fallback
+            GradeButtonsView { grade in
+                Task {
+                    triggerHaptic(for: grade)
+                    await viewModel.gradeCard(grade: grade)
+                }
+            }
+            .padding(.horizontal, IkeruTheme.Spacing.md)
+            .padding(.bottom, IkeruTheme.Spacing.md)
+        }
+    }
+
+    // MARK: - Header
+
+    private var headerView: some View {
+        VStack(spacing: IkeruTheme.Spacing.xs) {
+            Text("\(viewModel.remainingCount) cards remaining")
+                .font(.ikeruCaption)
+                .foregroundStyle(.ikeruTextSecondary)
+
+            ProgressView(value: viewModel.sessionProgress)
+                .tint(Color.ikeruPrimaryAccent)
+                .padding(.horizontal, IkeruTheme.Spacing.lg)
+        }
+        .padding(.top, IkeruTheme.Spacing.md)
+    }
+
+    // MARK: - Card With Feedback
+
+    private func cardWithFeedback(card: CardDTO) -> some View {
+        SRSCardView(
+            card: card,
+            nextCard: viewModel.nextCard
+        ) { direction in
+            Task {
+                triggerHaptic(for: direction.grade)
+                await viewModel.gradeFromSwipe(direction: direction)
+            }
+        }
+        .padding(.horizontal, IkeruTheme.Spacing.lg)
+        .overlay {
+            feedbackOverlay
+        }
+    }
+
+    // MARK: - Feedback Overlay
+
+    @ViewBuilder
+    private var feedbackOverlay: some View {
+        if let feedback = viewModel.feedbackState {
+            RoundedRectangle(cornerRadius: IkeruTheme.Radius.md)
+                .strokeBorder(feedback.color, lineWidth: 3)
+                .padding(.horizontal, IkeruTheme.Spacing.lg)
+                .transition(.opacity)
+                .animation(.easeOut(duration: 0.3), value: viewModel.feedbackState)
+        }
+    }
+
+    // MARK: - Haptic Triggers
+
+    private func triggerHaptic(for grade: Grade) {
+        let isCorrect = grade == .good || grade == .easy
+        if isCorrect {
+            hapticTriggerCorrect.toggle()
+        } else {
+            hapticTriggerIncorrect.toggle()
+        }
+    }
+}
+
+// MARK: - Preview
+
+#Preview("CardReviewView") {
+    // Preview requires a model container
+    CardReviewView(
+        cardRepository: {
+            let schema = Schema([UserProfile.self, Card.self, ReviewLog.self])
+            let config = ModelConfiguration(isStoredInMemoryOnly: true)
+            let container = try! ModelContainer(for: schema, configurations: [config])
+            return CardRepository(modelContainer: container)
+        }()
+    )
+    .preferredColorScheme(.dark)
+}
