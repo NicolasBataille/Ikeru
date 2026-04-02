@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 import IkeruCore
 
 // MARK: - Tab Definition
@@ -122,6 +123,9 @@ private struct TabContentView: View {
 private struct HomeTabView: View {
 
     @Environment(\.profileViewModel) private var profileViewModel
+    @Environment(\.modelContext) private var modelContext
+    @State private var sessionViewModel: SessionViewModel?
+    @State private var showSession = false
 
     var body: some View {
         ZStack {
@@ -146,13 +150,28 @@ private struct HomeTabView: View {
                 Spacer()
 
                 VStack(spacing: IkeruTheme.Spacing.md) {
-                    Image(systemName: "book.fill")
-                        .font(.system(size: 48))
-                        .foregroundStyle(Color.ikeruPrimaryAccent)
+                    Button {
+                        startSession()
+                    } label: {
+                        HStack(spacing: IkeruTheme.Spacing.sm) {
+                            Image(systemName: "play.fill")
+                            Text("Start Session")
+                        }
+                        .frame(maxWidth: .infinity)
+                    }
+                    .ikeruButtonStyle(.primary)
+                    .padding(.horizontal, IkeruTheme.Spacing.lg)
 
-                    Text("Start a session to begin learning")
-                        .font(.ikeruCaption)
-                        .foregroundStyle(.ikeruTextSecondary)
+                    // Session preview
+                    if let vm = sessionViewModel, vm.estimatedCardCount > 0 {
+                        Text("~\(estimatedMinutes(vm.estimatedCardCount)) min \u{00B7} \(vm.estimatedCardCount) reviews")
+                            .font(.ikeruCaption)
+                            .foregroundStyle(.ikeruTextSecondary)
+                    } else {
+                        Text("Start a session to begin learning")
+                            .font(.ikeruCaption)
+                            .foregroundStyle(.ikeruTextSecondary)
+                    }
                 }
 
                 Spacer()
@@ -162,6 +181,54 @@ private struct HomeTabView: View {
         .navigationTitle("Home")
         .navigationBarTitleDisplayMode(.inline)
         .toolbarColorScheme(.dark, for: .navigationBar)
+        .fullScreenCover(isPresented: $showSession) {
+            if let vm = sessionViewModel {
+                ActiveSessionView(viewModel: vm)
+                    .onChange(of: vm.isActive) { _, isActive in
+                        if !isActive {
+                            showSession = false
+                            // Refresh estimate after session ends
+                            Task {
+                                await vm.loadSessionEstimate()
+                            }
+                        }
+                    }
+            }
+        }
+        .task {
+            initializeSessionViewModel()
+            await sessionViewModel?.loadSessionEstimate()
+        }
+    }
+
+    // MARK: - Helpers
+
+    private func initializeSessionViewModel() {
+        guard sessionViewModel == nil else { return }
+        let container = modelContext.container
+        let repo = CardRepository(modelContainer: container)
+        let planner = PlannerService(cardRepository: repo)
+        sessionViewModel = SessionViewModel(plannerService: planner, cardRepository: repo)
+    }
+
+    private func startSession() {
+        guard let vm = sessionViewModel else { return }
+        Task {
+            // Seed content if needed
+            let container = modelContext.container
+            let repo = CardRepository(modelContainer: container)
+            let allCards = await repo.allCards()
+            await ContentSeedService.seedBeginnerKanaIfNeeded(
+                repository: repo,
+                existingCardCount: allCards.count
+            )
+            await vm.startSession()
+            showSession = true
+        }
+    }
+
+    private func estimatedMinutes(_ cardCount: Int) -> Int {
+        max(1, cardCount) // Roughly 1 minute per card
     }
 }
 
