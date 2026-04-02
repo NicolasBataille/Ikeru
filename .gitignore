@@ -34,3 +34,6 @@ Pods/
 # IDE
 .vscode/
 .idea/
+
+# BMAD output (planning and implementation artifacts)
+_bmad-output/
