@@ -95,11 +95,20 @@ public final class SessionViewModel {
     /// Whether a feedback flash is currently showing.
     public private(set) var feedbackState: FeedbackState?
 
+    // MARK: - Adaptive Session State
+
+    /// Preview of the upcoming session (exercise breakdown, estimated time, skill split).
+    public private(set) var sessionPreview: SessionPreview = .empty
+
+    /// Review forecast for upcoming days (displayed on home screen).
+    public private(set) var reviewForecast: [ForecastDay] = []
+
     // MARK: - Dependencies
 
     private let plannerService: PlannerService
     private let cardRepository: CardRepository
     private let modelContainer: ModelContainer
+    private let reviewForecastService: ReviewForecastService
     private var cardStartTime: Date = Date()
 
     // MARK: - Init
@@ -112,6 +121,7 @@ public final class SessionViewModel {
         self.plannerService = plannerService
         self.cardRepository = cardRepository
         self.modelContainer = modelContainer
+        self.reviewForecastService = ReviewForecastService(cardRepository: cardRepository)
     }
 
     // MARK: - Session Lifecycle
@@ -142,6 +152,80 @@ public final class SessionViewModel {
     public func loadSessionEstimate() async {
         let queue = await plannerService.composeSession()
         estimatedCardCount = queue.count
+    }
+
+    /// Computes a session preview without starting the session.
+    /// Uses adaptive composition to provide detailed exercise breakdown.
+    /// - Parameter config: Session configuration (time, mode, balances).
+    public func loadSessionPreview(config: SessionConfig = SessionConfig()) async {
+        let plan = await plannerService.composeAdaptiveSession(config: config)
+        let totalExercises = plan.exercises.count
+        let totalSeconds = plan.exercises.reduce(0) { $0 + $1.estimatedDurationSeconds }
+
+        var skillSplit: [SkillType: Double] = [:]
+        if totalExercises > 0 {
+            for (skill, count) in plan.exerciseBreakdown {
+                skillSplit[skill] = Double(count) / Double(totalExercises)
+            }
+        }
+
+        sessionPreview = SessionPreview(
+            estimatedMinutes: plan.estimatedDurationMinutes,
+            cardCount: totalExercises,
+            exerciseBreakdown: plan.exerciseBreakdown,
+            skillSplit: skillSplit
+        )
+
+        estimatedCardCount = totalExercises
+
+        Logger.ui.info(
+            "Session preview loaded: \(totalExercises) exercises, ~\(totalSeconds / 60) min"
+        )
+    }
+
+    /// Loads the review forecast for display on the home screen.
+    /// - Parameter days: Number of days to forecast (default 7).
+    public func loadReviewForecast(days: Int = 7) async {
+        reviewForecast = await reviewForecastService.forecast(days: days)
+        Logger.ui.debug("Review forecast loaded: \(self.reviewForecast.count) days")
+    }
+
+    /// Starts an adaptive session using the provided config.
+    /// Falls back to basic composition if adaptive session produces no exercises.
+    /// - Parameter config: Session configuration for adaptive composition.
+    public func startAdaptiveSession(config: SessionConfig) async {
+        let plan = await plannerService.composeAdaptiveSession(config: config)
+
+        if plan.exercises.isEmpty {
+            // Fallback to basic composition
+            await startSession()
+            return
+        }
+
+        // Extract CardDTOs from SRS review exercises for the queue
+        let srsCards = plan.exercises.compactMap { exercise -> CardDTO? in
+            if case .srsReview(let card) = exercise { return card }
+            return nil
+        }
+
+        sessionQueue = srsCards
+        currentIndex = 0
+        reviewedCount = 0
+        xpEarned = 0
+        newItemsLearned = 0
+        lastXPGained = nil
+        levelUpLevel = nil
+        isPaused = false
+        sessionStartTime = Date()
+        cardStartTime = Date()
+        isActive = true
+        estimatedCardCount = plan.exercises.count
+
+        await loadRPGState()
+
+        Logger.ui.info(
+            "Adaptive session started: \(srsCards.count) SRS cards, \(plan.supplementaryExerciseCount) supplementary"
+        )
     }
 
     /// Grades the current card and advances to the next one.
