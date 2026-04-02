@@ -7,6 +7,9 @@ import os
 struct IkeruApp: App {
 
     @State private var toastManager = ToastManager()
+    @State private var profileViewModel: ProfileViewModel?
+    @State private var showOnboarding = false
+    @State private var hasCheckedProfile = false
 
     let modelContainer: ModelContainer
 
@@ -33,29 +36,56 @@ struct IkeruApp: App {
 
     var body: some Scene {
         WindowGroup {
-            MainTabView()
+            mainContent
                 .preferredColorScheme(.dark)
                 .environment(\.toastManager, toastManager)
+                .environment(\.profileViewModel, profileViewModel)
                 .toastOverlay()
                 .task {
-                    await seedDefaultProfileIfNeeded()
+                    initializeProfileViewModel()
                 }
         }
         .modelContainer(modelContainer)
     }
 
-    /// Creates a default UserProfile on first launch if none exists.
-    @MainActor
-    private func seedDefaultProfileIfNeeded() async {
-        let context = modelContainer.mainContext
-        let descriptor = FetchDescriptor<UserProfile>()
-        let existingProfiles = (try? context.fetch(descriptor)) ?? []
+    // MARK: - Main Content
 
-        if existingProfiles.isEmpty {
-            let defaultProfile = UserProfile(displayName: "Learner")
-            context.insert(defaultProfile)
-            try? context.save()
-            Logger.srs.info("Created default user profile")
+    @ViewBuilder
+    private var mainContent: some View {
+        if hasCheckedProfile {
+            MainTabView()
+                .fullScreenCover(isPresented: $showOnboarding) {
+                    NameEntryView()
+                        .environment(\.profileViewModel, profileViewModel)
+                        .onDisappear {
+                            // Reload profile after onboarding dismisses
+                            profileViewModel?.loadProfile()
+                        }
+                }
+        } else {
+            // Brief loading state while checking profile
+            ZStack {
+                Color.ikeruBackground
+                    .ignoresSafeArea()
+            }
         }
+    }
+
+    // MARK: - Profile Initialization
+
+    @MainActor
+    private func initializeProfileViewModel() {
+        let viewModel = ProfileViewModel(modelContext: modelContainer.mainContext)
+        profileViewModel = viewModel
+
+        if viewModel.hasProfile {
+            Logger.ui.info("Existing profile found — skipping onboarding")
+            showOnboarding = false
+        } else {
+            Logger.ui.info("No profile found — showing onboarding")
+            showOnboarding = true
+        }
+
+        hasCheckedProfile = true
     }
 }

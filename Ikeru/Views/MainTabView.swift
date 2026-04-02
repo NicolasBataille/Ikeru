@@ -95,13 +95,73 @@ private struct TabContentView: View {
 
     var body: some View {
         NavigationStack(path: $coordinator.path) {
-            PlaceholderTabView(tab: tab)
+            tabRootView
                 .navigationDestination(for: NavigationDestination.self) { destination in
                     Text("Detail: \(String(describing: destination))")
                         .foregroundStyle(.white)
                 }
         }
         .environment(\.navigationCoordinator, coordinator)
+    }
+
+    @ViewBuilder
+    private var tabRootView: some View {
+        switch tab {
+        case .home:
+            HomeTabView()
+        case .settings:
+            SettingsView()
+        default:
+            PlaceholderTabView(tab: tab)
+        }
+    }
+}
+
+// MARK: - Home Tab View
+
+private struct HomeTabView: View {
+
+    @Environment(\.profileViewModel) private var profileViewModel
+
+    var body: some View {
+        ZStack {
+            Color.ikeruBackground
+                .ignoresSafeArea()
+
+            VStack(spacing: IkeruTheme.Spacing.lg) {
+                if let name = profileViewModel?.displayName, !name.isEmpty {
+                    Text("Welcome, \(name)!")
+                        .font(.ikeruHeading1)
+                        .foregroundStyle(.white)
+                } else {
+                    Text("Welcome!")
+                        .font(.ikeruHeading1)
+                        .foregroundStyle(.white)
+                }
+
+                Text("Ready to study?")
+                    .font(.ikeruBody)
+                    .foregroundStyle(.ikeruTextSecondary)
+
+                Spacer()
+
+                VStack(spacing: IkeruTheme.Spacing.md) {
+                    Image(systemName: "book.fill")
+                        .font(.system(size: 48))
+                        .foregroundStyle(Color.ikeruPrimaryAccent)
+
+                    Text("Start a session to begin learning")
+                        .font(.ikeruCaption)
+                        .foregroundStyle(.ikeruTextSecondary)
+                }
+
+                Spacer()
+            }
+            .padding(.top, IkeruTheme.Spacing.xl)
+        }
+        .navigationTitle("Home")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarColorScheme(.dark, for: .navigationBar)
     }
 }
 
