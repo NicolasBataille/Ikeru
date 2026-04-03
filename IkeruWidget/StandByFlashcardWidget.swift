@@ -16,7 +16,7 @@ struct StandByFlashcardWidget: Widget {
         }
         .configurationDisplayName("Japanese Flashcard")
         .description("Learn kanji in StandBy mode.")
-        .supportedFamilies([.systemLarge, .systemMedium])
+        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
     }
 }
 

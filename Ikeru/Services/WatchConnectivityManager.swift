@@ -52,7 +52,7 @@ final class WatchConnectivityManager: NSObject, ObservableObject {
         guard let state = try? context.fetch(descriptor).first else { return }
 
         let cardRepo = CardRepository(modelContainer: container)
-        Task {
+        Task { @MainActor in
             let dueCards = await cardRepo.dueCards(before: Date())
 
             let payload = WatchSyncPayload(
@@ -86,7 +86,11 @@ final class WatchConnectivityManager: NSObject, ObservableObject {
         state.level = RPGConstants.levelForXP(state.xp)
         state.totalReviewsCompleted += result.totalQuestions
 
-        try? context.save()
+        do {
+            try context.save()
+        } catch {
+            Logger.sync.error("Failed to save Watch session result: \(error.localizedDescription)")
+        }
         Logger.sync.info(
             "Processed Watch session: +\(result.xpEarned) XP, drill=\(result.drillType.rawValue)"
         )
@@ -167,7 +171,11 @@ extension WatchConnectivityManager: WCSessionDelegate {
                 state.xp = winner.xp
                 state.level = winner.level
                 state.totalReviewsCompleted = winner.totalReviews
-                try? context.save()
+                do {
+                    try context.save()
+                } catch {
+                    Logger.sync.error("Failed to save synced Watch state: \(error.localizedDescription)")
+                }
                 Logger.sync.info("Applied Watch state: level=\(winner.level), xp=\(winner.xp)")
             }
         }

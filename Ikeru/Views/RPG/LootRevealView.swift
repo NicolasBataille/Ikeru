@@ -153,7 +153,10 @@ struct LootRevealView: View {
     // MARK: - State
 
     private var currentItem: LootItem {
-        guard currentItemIndex < items.count else { return items.last! }
+        guard !items.isEmpty else {
+            return LootItem(category: .badge, rarity: .common, name: "Empty", iconName: "questionmark.circle.fill")
+        }
+        guard currentItemIndex < items.count else { return items[items.count - 1] }
         return items[currentItemIndex]
     }
 

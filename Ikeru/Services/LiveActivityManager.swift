@@ -1,3 +1,4 @@
+#if os(iOS)
 import Foundation
 import ActivityKit
 import IkeruCore
@@ -56,7 +57,7 @@ final class LiveActivityManager {
         totalCount: Int,
         xpEarned: Int,
         streakCount: Int
-    ) {
+    ) async {
         guard let activity = currentActivity else { return }
 
         let state = SessionActivityAttributes.ContentState(
@@ -68,9 +69,7 @@ final class LiveActivityManager {
             streakCount: streakCount
         )
 
-        Task {
-            await activity.update(.init(state: state, staleDate: nil))
-        }
+        await activity.update(.init(state: state, staleDate: nil))
     }
 
     // MARK: - End
@@ -80,8 +79,9 @@ final class LiveActivityManager {
         elapsedSeconds: Int,
         completedCount: Int,
         totalCount: Int,
-        xpEarned: Int
-    ) {
+        xpEarned: Int,
+        streakCount: Int = 0
+    ) async {
         guard let activity = currentActivity else { return }
 
         let finalState = SessionActivityAttributes.ContentState(
@@ -90,16 +90,15 @@ final class LiveActivityManager {
             completedCount: completedCount,
             totalCount: totalCount,
             xpEarned: xpEarned,
-            streakCount: 0
+            streakCount: streakCount
         )
 
-        Task {
-            await activity.end(
-                .init(state: finalState, staleDate: nil),
-                dismissalPolicy: .after(.now + 30) // Dismiss after 30 seconds
-            )
-            currentActivity = nil
-            Logger.ui.info("Live Activity ended")
-        }
+        await activity.end(
+            .init(state: finalState, staleDate: nil),
+            dismissalPolicy: .after(.now + 30)
+        )
+        currentActivity = nil
+        Logger.ui.info("Live Activity ended")
     }
 }
+#endif

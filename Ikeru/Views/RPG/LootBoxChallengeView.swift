@@ -18,6 +18,8 @@ struct LootBoxChallengeView: View {
     @State private var currentQuestionIndex: Int = 0
     @State private var hapticCorrect = false
     @State private var hapticIncorrect = false
+    @State private var timerTask: Task<Void, Never>?
+    @State private var randomizedAnswerIndex: Int = Int.random(in: 0..<4)
 
     init(lootBox: LootBox, onComplete: (([LootItem]) -> Void)? = nil, onDismiss: (() -> Void)? = nil) {
         self.lootBox = lootBox
@@ -212,8 +214,7 @@ struct LootBoxChallengeView: View {
     }
 
     private var correctAnswerIndex: Int {
-        // Rotate correct answer position
-        currentQuestionIndex % 4
+        randomizedAnswerIndex
     }
 
     private func answerText(for index: Int) -> String {
@@ -245,6 +246,7 @@ struct LootBoxChallengeView: View {
             score += 1
             hapticCorrect.toggle()
             currentQuestionIndex += 1
+            randomizedAnswerIndex = Int.random(in: 0..<4)
 
             if score >= lootBox.requiredScore {
                 challengeState = .completed
@@ -257,8 +259,9 @@ struct LootBoxChallengeView: View {
     }
 
     private func startTimer() {
+        timerTask?.cancel()
         isTimerRunning = true
-        Task { @MainActor in
+        timerTask = Task { @MainActor in
             while isTimerRunning && timeRemaining > 0 {
                 try? await Task.sleep(for: .seconds(1))
                 guard isTimerRunning else { break }

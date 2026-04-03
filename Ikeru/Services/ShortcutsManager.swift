@@ -14,11 +14,12 @@ struct StartQuizIntent: AppIntent {
 
     func perform() async throws -> some IntentResult {
         Logger.ui.info("Siri Shortcut: Quiz Me triggered")
-        // The app will detect this intent via NotificationCenter on launch
-        NotificationCenter.default.post(
-            name: .startQuizFromShortcut,
-            object: nil
-        )
+        await MainActor.run {
+            NotificationCenter.default.post(
+                name: .startQuizFromShortcut,
+                object: nil
+            )
+        }
         return .result()
     }
 }
@@ -34,10 +35,12 @@ struct StartReviewIntent: AppIntent {
 
     func perform() async throws -> some IntentResult {
         Logger.ui.info("Siri Shortcut: Review Japanese triggered")
-        NotificationCenter.default.post(
-            name: .startReviewFromShortcut,
-            object: nil
-        )
+        await MainActor.run {
+            NotificationCenter.default.post(
+                name: .startReviewFromShortcut,
+                object: nil
+            )
+        }
         return .result()
     }
 }

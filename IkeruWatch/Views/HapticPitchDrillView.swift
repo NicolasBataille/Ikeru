@@ -156,6 +156,13 @@ final class HapticPitchViewModel {
             loadCurrentWord()
         } else {
             WKInterfaceDevice.current().play(.notification)
+            let result = WatchSessionResult(
+                correctCount: totalWords,
+                totalQuestions: totalWords,
+                drillType: .pitchAccent,
+                xpEarned: totalWords * 3
+            )
+            WatchSessionManager.shared.sendSessionResult(result)
         }
     }
 

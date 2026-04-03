@@ -44,7 +44,10 @@ public final class CardRepository: Sendable {
         await backgroundActor.card(by: id)
     }
 
-    /// Fetch all cards.
+    /// Fetch all cards across all profiles.
+    /// NOTE: Currently unscoped to a specific profile. This is acceptable while
+    /// the app uses a single active profile context. Profile-scoped queries would
+    /// require changing the Card model relationship which is too risky to change now.
     public func allCards() async -> [CardDTO] {
         await backgroundActor.allCards()
     }
@@ -173,6 +176,7 @@ actor CardModelActor {
         return results.first?.toDTO()
     }
 
+    // NOTE: Returns all cards across all profiles — see CardRepository.allCards() comment.
     func allCards() -> [CardDTO] {
         let descriptor = FetchDescriptor<Card>()
         let results = (try? modelContext.fetch(descriptor)) ?? []

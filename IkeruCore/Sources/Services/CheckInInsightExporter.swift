@@ -76,7 +76,8 @@ public final class CheckInInsightExporter: Sendable {
         formatter.dateFormat = "yyyy-MM-dd"
         let dateString = formatter.string(from: date)
 
-        let filename = "ikeru-checkin-\(dateString).json"
+        let shortId = UUID().uuidString.prefix(8)
+        let filename = "ikeru-checkin-\(dateString)-\(shortId).json"
         return documentsURL.appendingPathComponent(filename)
     }
 

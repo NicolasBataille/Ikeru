@@ -172,12 +172,41 @@ final class CloudBackupManager: ObservableObject {
             lootBoxesData: rpg?.lootBoxesData
         )
 
+        // Fetch all cards and their review logs
+        let allCards = (try? context.fetch(FetchDescriptor<Card>())) ?? []
+        let cardSnapshots = allCards.map { card in
+            CardSnapshot(
+                id: card.id,
+                front: card.front,
+                back: card.back,
+                type: card.type.rawValue,
+                dueDate: card.dueDate,
+                easeFactor: card.easeFactor,
+                interval: card.interval,
+                reps: card.fsrsState.reps,
+                lapseCount: card.lapseCount,
+                leechFlag: card.leechFlag
+            )
+        }
+
+        let reviewSnapshots = allCards.flatMap { card in
+            (card.reviewLogs ?? []).map { log in
+                ReviewSnapshot(
+                    id: log.id,
+                    cardId: card.id,
+                    timestamp: log.timestamp,
+                    grade: "\(log.gradeRawValue)",
+                    responseTimeMs: log.responseTimeMs
+                )
+            }
+        }
+
         return BackupSnapshot(
             profile: profileSnapshot,
-            cards: [], // CardDTOs fetched separately via CardRepository
-            reviews: [],
+            cards: cardSnapshots,
+            reviews: reviewSnapshots,
             rpgState: rpgSnapshot,
-            deviceName: UIDevice.current.name
+            deviceName: UIDevice.current.model
         )
     }
 
@@ -214,6 +243,52 @@ final class CloudBackupManager: ObservableObject {
             rpg.lootBoxesData = snapshot.rpgState.lootBoxesData
         }
 
-        try context.save()
+        // Restore cards: delete existing cards, then re-create from snapshot
+        let existingCards = (try? context.fetch(FetchDescriptor<Card>())) ?? []
+        for card in existingCards {
+            context.delete(card)
+        }
+
+        // Build a lookup for review snapshots by card ID
+        var reviewsByCardId: [UUID: [ReviewSnapshot]] = [:]
+        for review in snapshot.reviews {
+            reviewsByCardId[review.cardId, default: []].append(review)
+        }
+
+        for cardSnap in snapshot.cards {
+            let card = Card(
+                front: cardSnap.front,
+                back: cardSnap.back,
+                type: CardType(rawValue: cardSnap.type) ?? .kanji,
+                easeFactor: cardSnap.easeFactor,
+                interval: cardSnap.interval,
+                dueDate: cardSnap.dueDate,
+                lapseCount: cardSnap.lapseCount,
+                leechFlag: cardSnap.leechFlag
+            )
+            // Preserve original ID
+            card.id = cardSnap.id
+            context.insert(card)
+
+            // Restore review logs for this card
+            for reviewSnap in reviewsByCardId[cardSnap.id] ?? [] {
+                let grade = Grade(rawValue: Int(reviewSnap.grade) ?? 3) ?? .good
+                let log = ReviewLog(
+                    card: card,
+                    grade: grade,
+                    responseTimeMs: reviewSnap.responseTimeMs,
+                    timestamp: reviewSnap.timestamp
+                )
+                log.id = reviewSnap.id
+                context.insert(log)
+            }
+        }
+
+        do {
+            try context.save()
+        } catch {
+            Logger.sync.error("Failed to save restored snapshot: \(error.localizedDescription)")
+            throw BackupError.restoreFailed("Save failed: \(error.localizedDescription)")
+        }
     }
 }

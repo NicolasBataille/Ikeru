@@ -62,6 +62,14 @@ final class DataExportManager {
         return exportDir
     }
 
+    // MARK: - Cleanup
+
+    /// Deletes the temporary export directory. Call after the share sheet is dismissed.
+    func cleanup(url: URL) {
+        try? FileManager.default.removeItem(at: url)
+        Logger.ui.info("Cleaned up export directory at \(url.path)")
+    }
+
     // MARK: - CSV Generation
 
     private func generateCardsCSV(cards: [CardDTO]) -> String {

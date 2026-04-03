@@ -331,7 +331,12 @@ struct SettingsView: View {
                     .foregroundStyle(.ikeruError)
             }
         }
-        .sheet(isPresented: $showExportShare) {
+        .sheet(isPresented: $showExportShare, onDismiss: {
+            if let url = exportURL {
+                DataExportManager().cleanup(url: url)
+                exportURL = nil
+            }
+        }) {
             if let url = exportURL {
                 ShareLink(item: url)
             }
@@ -532,9 +537,8 @@ struct SettingsView: View {
             Task {
                 let authorized = await NotificationManager.shared.requestAuthorization()
                 if authorized {
-                    NotificationManager.shared.scheduleReviewReminder(
-                        hour: reviewReminderHour,
-                        dueCardCount: 0
+                    await NotificationManager.shared.scheduleReviewReminder(
+                        hour: reviewReminderHour
                     )
                 } else {
                     reviewReminderEnabled = false
@@ -550,7 +554,7 @@ struct SettingsView: View {
             Task {
                 let authorized = await NotificationManager.shared.requestAuthorization()
                 if authorized {
-                    NotificationManager.shared.scheduleWeeklyCheckIn(
+                    await NotificationManager.shared.scheduleWeeklyCheckIn(
                         weekday: weeklyCheckInDay,
                         hour: weeklyCheckInHour
                     )

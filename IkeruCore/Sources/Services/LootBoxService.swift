@@ -33,7 +33,13 @@ public enum LootBoxService {
     /// - Parameter level: The player's current RPG level.
     /// - Returns: A new unopened lootbox.
     public static func generateLootBox(level: Int) -> LootBox {
-        let challengeType = LootBox.ChallengeType.allCases.randomElement()!
+        guard let challengeType = LootBox.ChallengeType.allCases.randomElement() else {
+            // ChallengeType.allCases is never empty, but guard against the impossible
+            let fallback = LootBox.ChallengeType.kanjiSpeed
+            let requiredScore = challengeRequiredScore(for: fallback, level: level)
+            let rewards = generateRewards(level: level)
+            return LootBox(challengeType: fallback, requiredScore: requiredScore, rewards: rewards)
+        }
         let requiredScore = challengeRequiredScore(for: challengeType, level: level)
         let rewards = generateRewards(level: level)
 

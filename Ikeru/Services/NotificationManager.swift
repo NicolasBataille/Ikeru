@@ -33,20 +33,15 @@ final class NotificationManager {
     // MARK: - SRS Review Reminders
 
     /// Schedules a daily review reminder at the specified hour.
-    /// - Parameters:
-    ///   - hour: Hour of day (0-23) for the reminder.
-    ///   - dueCardCount: Number of cards currently due (for the message).
-    func scheduleReviewReminder(hour: Int, dueCardCount: Int) {
+    /// - Parameter hour: Hour of day (0-23) for the reminder.
+    func scheduleReviewReminder(hour: Int) async {
         let center = UNUserNotificationCenter.current()
 
-        // Remove existing review reminders
         center.removePendingNotificationRequests(withIdentifiers: ["ikeru.review.daily"])
 
         let content = UNMutableNotificationContent()
         content.title = "Ready to study?"
-        content.body = dueCardCount > 0
-            ? "\(dueCardCount) cards ready for review!"
-            : "Keep your streak going — new cards are waiting!"
+        content.body = "Keep your streak going — your cards are waiting!"
         content.sound = .default
         content.categoryIdentifier = "REVIEW_REMINDER"
 
@@ -65,12 +60,11 @@ final class NotificationManager {
             trigger: trigger
         )
 
-        center.add(request) { error in
-            if let error {
-                Logger.ui.error("Failed to schedule review reminder: \(error.localizedDescription)")
-            } else {
-                Logger.ui.info("Review reminder scheduled at \(hour):00")
-            }
+        do {
+            try await center.add(request)
+            Logger.ui.info("Review reminder scheduled at \(hour):00")
+        } catch {
+            Logger.ui.error("Failed to schedule review reminder: \(error.localizedDescription)")
         }
     }
 
@@ -80,7 +74,7 @@ final class NotificationManager {
     /// - Parameters:
     ///   - weekday: Day of week (1=Sunday, 7=Saturday).
     ///   - hour: Hour of day (0-23).
-    func scheduleWeeklyCheckIn(weekday: Int, hour: Int) {
+    func scheduleWeeklyCheckIn(weekday: Int, hour: Int) async {
         let center = UNUserNotificationCenter.current()
 
         center.removePendingNotificationRequests(withIdentifiers: ["ikeru.checkin.weekly"])
@@ -106,12 +100,11 @@ final class NotificationManager {
             trigger: trigger
         )
 
-        center.add(request) { error in
-            if let error {
-                Logger.ui.error("Failed to schedule check-in: \(error.localizedDescription)")
-            } else {
-                Logger.ui.info("Weekly check-in scheduled: weekday=\(weekday), hour=\(hour)")
-            }
+        do {
+            try await center.add(request)
+            Logger.ui.info("Weekly check-in scheduled: weekday=\(weekday), hour=\(hour)")
+        } catch {
+            Logger.ui.error("Failed to schedule check-in: \(error.localizedDescription)")
         }
     }
 

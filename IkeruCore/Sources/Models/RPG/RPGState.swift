@@ -1,4 +1,5 @@
 import Foundation
+import os
 import SwiftData
 
 /// Persistent RPG progression state for a user profile.
@@ -53,12 +54,21 @@ public final class RPGState {
     /// Decoded RPG attributes. Returns empty array if no data stored.
     public var attributes: [RPGAttribute] {
         guard let data = attributesData else { return [] }
-        return (try? JSONDecoder().decode([RPGAttribute].self, from: data)) ?? []
+        do {
+            return try JSONDecoder().decode([RPGAttribute].self, from: data)
+        } catch {
+            Logger.rpg.error("Failed to decode RPG attributes: \(error.localizedDescription)")
+            return []
+        }
     }
 
     /// Encodes and stores the given attributes.
     public func setAttributes(_ attributes: [RPGAttribute]) {
-        self.attributesData = try? JSONEncoder().encode(attributes)
+        do {
+            self.attributesData = try JSONEncoder().encode(attributes)
+        } catch {
+            Logger.rpg.error("Failed to encode RPG attributes: \(error.localizedDescription)")
+        }
     }
 
     // MARK: - Loot Inventory Accessors
@@ -66,12 +76,21 @@ public final class RPGState {
     /// Decoded loot inventory. Returns empty array if no data stored.
     public var lootInventory: [LootItem] {
         guard let data = lootInventoryData else { return [] }
-        return (try? JSONDecoder().decode([LootItem].self, from: data)) ?? []
+        do {
+            return try JSONDecoder().decode([LootItem].self, from: data)
+        } catch {
+            Logger.rpg.error("Failed to decode loot inventory: \(error.localizedDescription)")
+            return []
+        }
     }
 
     /// Encodes and stores the given inventory.
     public func setLootInventory(_ inventory: [LootItem]) {
-        self.lootInventoryData = try? JSONEncoder().encode(inventory)
+        do {
+            self.lootInventoryData = try JSONEncoder().encode(inventory)
+        } catch {
+            Logger.rpg.error("Failed to encode loot inventory: \(error.localizedDescription)")
+        }
     }
 
     /// Adds a single loot item to the inventory.
@@ -86,12 +105,21 @@ public final class RPGState {
     /// Decoded lootboxes. Returns empty array if no data stored.
     public var lootBoxes: [LootBox] {
         guard let data = lootBoxesData else { return [] }
-        return (try? JSONDecoder().decode([LootBox].self, from: data)) ?? []
+        do {
+            return try JSONDecoder().decode([LootBox].self, from: data)
+        } catch {
+            Logger.rpg.error("Failed to decode loot boxes: \(error.localizedDescription)")
+            return []
+        }
     }
 
     /// Encodes and stores the given lootboxes.
     public func setLootBoxes(_ boxes: [LootBox]) {
-        self.lootBoxesData = try? JSONEncoder().encode(boxes)
+        do {
+            self.lootBoxesData = try JSONEncoder().encode(boxes)
+        } catch {
+            Logger.rpg.error("Failed to encode loot boxes: \(error.localizedDescription)")
+        }
     }
 
     /// Adds a single lootbox.

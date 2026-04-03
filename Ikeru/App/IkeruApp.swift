@@ -110,14 +110,14 @@ struct IkeruApp: App {
         if settings.reviewReminderEnabled {
             let authorized = await manager.requestAuthorization()
             if authorized {
-                manager.scheduleReviewReminder(hour: settings.reviewReminderHour, dueCardCount: 0)
+                await manager.scheduleReviewReminder(hour: settings.reviewReminderHour)
             }
         }
 
         if settings.weeklyCheckInEnabled {
             let authorized = await manager.requestAuthorization()
             if authorized {
-                manager.scheduleWeeklyCheckIn(
+                await manager.scheduleWeeklyCheckIn(
                     weekday: settings.weeklyCheckInDay,
                     hour: settings.weeklyCheckInHour
                 )

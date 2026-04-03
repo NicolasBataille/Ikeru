@@ -37,19 +37,25 @@ struct ProgressTimelineProvider: TimelineProvider {
     }
 
     func getSnapshot(in context: Context, completion: @escaping (ProgressEntry) -> Void) {
+        // TODO: Use App Group UserDefaults to share real data between the Watch app
+        // and the widget extension process. WatchSessionManager.shared won't have
+        // real data in the widget extension's separate process.
         let entry = ProgressEntry(
             date: .now,
-            level: WatchSessionManager.shared.syncedLevel,
-            dueCards: WatchSessionManager.shared.syncedDueCards
+            level: 1,
+            dueCards: 0
         )
         completion(entry)
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<ProgressEntry>) -> Void) {
+        // TODO: Use App Group UserDefaults to share real data between the Watch app
+        // and the widget extension process. WatchSessionManager.shared won't have
+        // real data in the widget extension's separate process.
         let entry = ProgressEntry(
             date: .now,
-            level: WatchSessionManager.shared.syncedLevel,
-            dueCards: WatchSessionManager.shared.syncedDueCards
+            level: 1,
+            dueCards: 0
         )
         // Refresh every 30 minutes
         let nextUpdate = Calendar.current.date(byAdding: .minute, value: 30, to: .now) ?? .now

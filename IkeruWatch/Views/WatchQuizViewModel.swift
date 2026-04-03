@@ -85,6 +85,13 @@ final class WatchQuizViewModel {
                 loadNextQuestion()
             } else {
                 WKInterfaceDevice.current().play(.notification)
+                let result = WatchSessionResult(
+                    correctCount: correctCount,
+                    totalQuestions: totalQuestions,
+                    drillType: .kanaQuiz,
+                    xpEarned: correctCount * 5
+                )
+                WatchSessionManager.shared.sendSessionResult(result)
             }
         }
     }

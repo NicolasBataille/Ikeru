@@ -140,6 +140,9 @@ public enum LootDropService {
             ]
         }
 
-        return templates.randomElement()!
+        guard let template = templates.randomElement() else {
+            return LootTemplate(category: .badge, name: "Mystery Shard", iconName: "questionmark.circle.fill")
+        }
+        return template
     }
 }

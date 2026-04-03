@@ -405,7 +405,7 @@ public final class SessionViewModel {
 
         // Update Live Activity with current progress
         let exerciseLabel = currentExercise.map { exerciseDisplayName($0) } ?? "Review"
-        liveActivityManager.updateActivity(
+        await liveActivityManager.updateActivity(
             elapsedSeconds: Int(elapsedTime),
             exerciseType: exerciseLabel,
             completedCount: reviewedCount,
@@ -430,11 +430,12 @@ public final class SessionViewModel {
 
         if isSessionComplete {
             stopTimer()
-            liveActivityManager.endActivity(
+            await liveActivityManager.endActivity(
                 elapsedSeconds: Int(elapsedTime),
                 completedCount: reviewedCount,
                 totalCount: sessionQueue.count,
-                xpEarned: xpEarned
+                xpEarned: xpEarned,
+                streakCount: consecutiveCorrect
             )
             Logger.ui.info(
                 "Session complete: \(self.reviewedCount) reviewed, \(self.xpEarned) XP earned"
@@ -489,12 +490,15 @@ public final class SessionViewModel {
         )
 
         // End Live Activity
-        liveActivityManager.endActivity(
-            elapsedSeconds: Int(elapsedTime),
-            completedCount: reviewedCount,
-            totalCount: sessionQueue.count,
-            xpEarned: xpEarned
-        )
+        Task {
+            await liveActivityManager.endActivity(
+                elapsedSeconds: Int(elapsedTime),
+                completedCount: reviewedCount,
+                totalCount: sessionQueue.count,
+                xpEarned: xpEarned,
+                streakCount: consecutiveCorrect
+            )
+        }
 
         // Mark as complete by jumping to end of queue
         currentIndex = sessionQueue.count
