@@ -5,6 +5,8 @@ import SwiftUI
 struct IkeruWidgetBundle: WidgetBundle {
     var body: some Widget {
         IkeruWidget()
+        SessionLiveActivity()
+        StandByFlashcardWidget()
     }
 }
 

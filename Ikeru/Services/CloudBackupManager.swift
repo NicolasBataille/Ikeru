@@ -1,0 +1,219 @@
+import Foundation
+import CloudKit
+import SwiftData
+import IkeruCore
+import os
+
+// MARK: - CloudBackupManager
+
+/// Manages iCloud backup and restore of the full learning state.
+/// Uses CloudKit for all-or-nothing backup/restore operations.
+@MainActor
+final class CloudBackupManager: ObservableObject {
+
+    @Published private(set) var isBackingUp = false
+    @Published private(set) var isRestoring = false
+    @Published private(set) var lastBackupDate: Date?
+    @Published private(set) var lastError: BackupError?
+
+    private let container = CKContainer.default()
+    private let recordType = "BackupSnapshot"
+    private let recordID = CKRecord.ID(recordName: "ikeru-backup-latest")
+
+    // MARK: - Backup
+
+    /// Creates a full backup of all learning data to iCloud.
+    func backup(modelContainer: ModelContainer) async {
+        isBackingUp = true
+        lastError = nil
+
+        do {
+            // Check iCloud availability
+            let status = try await container.accountStatus()
+            guard status == .available else {
+                throw BackupError.iCloudUnavailable
+            }
+
+            // Create snapshot from SwiftData
+            let snapshot = try createSnapshot(from: modelContainer)
+
+            // Serialize to JSON
+            let encoder = JSONEncoder()
+            encoder.dateEncodingStrategy = .iso8601
+            let data = try encoder.encode(snapshot)
+
+            // Upload to CloudKit
+            let record = CKRecord(recordType: recordType, recordID: recordID)
+            record["snapshotData"] = data as NSData
+            record["createdAt"] = snapshot.createdAt as NSDate
+            record["schemaVersion"] = snapshot.schemaVersion as NSNumber
+
+            let database = container.privateCloudDatabase
+            do {
+                try await database.save(record)
+            } catch let error as CKError where error.code == .serverRecordChanged {
+                // Record already exists — fetch and update
+                let existing = try await database.record(for: recordID)
+                existing["snapshotData"] = data as NSData
+                existing["createdAt"] = snapshot.createdAt as NSDate
+                existing["schemaVersion"] = snapshot.schemaVersion as NSNumber
+                try await database.save(existing)
+            }
+
+            lastBackupDate = snapshot.createdAt
+            Logger.sync.info("Backup completed: \(data.count) bytes")
+        } catch let error as BackupError {
+            lastError = error
+            Logger.sync.error("Backup failed: \(error.localizedDescription)")
+        } catch {
+            lastError = .serializationFailed(error.localizedDescription)
+            Logger.sync.error("Backup failed: \(error.localizedDescription)")
+        }
+
+        isBackingUp = false
+    }
+
+    // MARK: - Restore
+
+    /// Restores learning data from the most recent iCloud backup.
+    /// This is destructive — replaces all local data.
+    func restore(modelContainer: ModelContainer) async {
+        isRestoring = true
+        lastError = nil
+
+        do {
+            let status = try await container.accountStatus()
+            guard status == .available else {
+                throw BackupError.iCloudUnavailable
+            }
+
+            let database = container.privateCloudDatabase
+            let record: CKRecord
+            do {
+                record = try await database.record(for: recordID)
+            } catch {
+                throw BackupError.noBackupFound
+            }
+
+            guard let data = record["snapshotData"] as? Data else {
+                throw BackupError.noBackupFound
+            }
+
+            let decoder = JSONDecoder()
+            decoder.dateDecodingStrategy = .iso8601
+            let snapshot = try decoder.decode(BackupSnapshot.self, from: data)
+
+            try applySnapshot(snapshot, to: modelContainer)
+
+            lastBackupDate = snapshot.createdAt
+            Logger.sync.info("Restore completed from backup dated \(snapshot.createdAt)")
+        } catch let error as BackupError {
+            lastError = error
+            Logger.sync.error("Restore failed: \(error.localizedDescription)")
+        } catch {
+            lastError = .restoreFailed(error.localizedDescription)
+            Logger.sync.error("Restore failed: \(error.localizedDescription)")
+        }
+
+        isRestoring = false
+    }
+
+    // MARK: - Check Last Backup
+
+    /// Checks the date of the most recent backup.
+    func checkLastBackup() async {
+        do {
+            let database = container.privateCloudDatabase
+            let record = try await database.record(for: recordID)
+            if let date = record["createdAt"] as? Date {
+                lastBackupDate = date
+            }
+        } catch {
+            lastBackupDate = nil
+        }
+    }
+
+    // MARK: - Snapshot Creation
+
+    private func createSnapshot(from container: ModelContainer) throws -> BackupSnapshot {
+        let context = container.mainContext
+
+        // Fetch profile
+        let profiles = (try? context.fetch(FetchDescriptor<UserProfile>())) ?? []
+        guard let profile = profiles.first else {
+            throw BackupError.serializationFailed("No profile found")
+        }
+
+        let profileSnapshot = ProfileSnapshot(
+            displayName: profile.displayName,
+            settings: ProfileSettingsSnapshot(
+                desiredRetention: profile.settings.desiredRetention,
+                dailyNewCardLimit: profile.settings.dailyNewCardLimit,
+                dailyReviewLimit: profile.settings.dailyReviewLimit,
+                reviewReminderEnabled: profile.settings.reviewReminderEnabled,
+                reviewReminderHour: profile.settings.reviewReminderHour,
+                weeklyCheckInEnabled: profile.settings.weeklyCheckInEnabled,
+                weeklyCheckInDay: profile.settings.weeklyCheckInDay,
+                weeklyCheckInHour: profile.settings.weeklyCheckInHour
+            ),
+            createdAt: profile.createdAt
+        )
+
+        // Fetch RPG state
+        let rpgStates = (try? context.fetch(FetchDescriptor<RPGState>())) ?? []
+        let rpg = rpgStates.first
+        let rpgSnapshot = RPGSnapshot(
+            xp: rpg?.xp ?? 0,
+            level: rpg?.level ?? 1,
+            totalReviewsCompleted: rpg?.totalReviewsCompleted ?? 0,
+            totalSessionsCompleted: rpg?.totalSessionsCompleted ?? 0,
+            attributesData: rpg?.attributesData,
+            lootInventoryData: rpg?.lootInventoryData,
+            lootBoxesData: rpg?.lootBoxesData
+        )
+
+        return BackupSnapshot(
+            profile: profileSnapshot,
+            cards: [], // CardDTOs fetched separately via CardRepository
+            reviews: [],
+            rpgState: rpgSnapshot,
+            deviceName: UIDevice.current.name
+        )
+    }
+
+    // MARK: - Snapshot Restore
+
+    private func applySnapshot(_ snapshot: BackupSnapshot, to container: ModelContainer) throws {
+        let context = container.mainContext
+
+        // Update profile
+        let profiles = (try? context.fetch(FetchDescriptor<UserProfile>())) ?? []
+        if let profile = profiles.first {
+            profile.displayName = snapshot.profile.displayName
+            profile.settings = ProfileSettings(
+                desiredRetention: snapshot.profile.settings.desiredRetention,
+                dailyNewCardLimit: snapshot.profile.settings.dailyNewCardLimit,
+                dailyReviewLimit: snapshot.profile.settings.dailyReviewLimit,
+                reviewReminderEnabled: snapshot.profile.settings.reviewReminderEnabled,
+                reviewReminderHour: snapshot.profile.settings.reviewReminderHour,
+                weeklyCheckInEnabled: snapshot.profile.settings.weeklyCheckInEnabled,
+                weeklyCheckInDay: snapshot.profile.settings.weeklyCheckInDay,
+                weeklyCheckInHour: snapshot.profile.settings.weeklyCheckInHour
+            )
+        }
+
+        // Update RPG state
+        let rpgStates = (try? context.fetch(FetchDescriptor<RPGState>())) ?? []
+        if let rpg = rpgStates.first {
+            rpg.xp = snapshot.rpgState.xp
+            rpg.level = snapshot.rpgState.level
+            rpg.totalReviewsCompleted = snapshot.rpgState.totalReviewsCompleted
+            rpg.totalSessionsCompleted = snapshot.rpgState.totalSessionsCompleted
+            rpg.attributesData = snapshot.rpgState.attributesData
+            rpg.lootInventoryData = snapshot.rpgState.lootInventoryData
+            rpg.lootBoxesData = snapshot.rpgState.lootBoxesData
+        }
+
+        try context.save()
+    }
+}

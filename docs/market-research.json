@@ -1,0 +1,443 @@
+{
+  "research_date": "2026-04-01",
+  "project": "Ikeru - Japanese Learning iOS + Apple Watch App",
+
+  "sotaku_analysis": {
+    "description": "Sottaku (also spelled Sotaku) is a multi-language learning platform supporting Chinese (Simplified & Traditional), Japanese, Korean, and English. It uses a freemium model where all core materials -- grammar guides, quizzes, and flashcards -- are permanently free. Available on iOS, Android, and web. 4.9-star Google Play rating with 1.6M+ downloads.",
+    "methodology": "Built on the FSRS (Free Spaced Repetition Scheduler) algorithm, the same ML-based scheduler used by Anki. FSRS uses machine learning trained on 700M+ reviews to predict optimal review timing, personalized to each learner. Covers vocabulary flashcards, grammar guides for all proficiency levels, interactive quizzes, and kanji/kana/hangul character instruction.",
+    "key_features": [
+      "FSRS-based spaced repetition (same algorithm as Anki)",
+      "Free grammar guides, quizzes, and flashcards",
+      "Browser extension (Sottaku-Yomitan) to add words from web browsing to flashcards",
+      "Leaderboards and multiplayer quiz modes",
+      "Community chat for peer-to-peer learning",
+      "Progress tracking and achievement systems",
+      "Multi-language support (CJK + English)"
+    ],
+    "strengths": [
+      "Generous free tier -- all core learning materials free forever",
+      "Uses scientifically-backed FSRS algorithm for optimal retention",
+      "Browser extension for contextual vocabulary mining from real content",
+      "Gamification elements (leaderboards, quizzes) boost engagement",
+      "Cross-platform availability (iOS, Android, web)",
+      "Multi-language support makes it appealing to polyglots"
+    ],
+    "weaknesses": [
+      "Relatively new app -- smaller content library compared to established tools like WaniKani",
+      "No Apple Watch companion app",
+      "No dedicated speaking or pronunciation practice features",
+      "No handwriting/stroke order practice",
+      "No dedicated listening comprehension training",
+      "Grammar explanations may be less comprehensive than Bunpro or textbooks",
+      "Limited offline capabilities compared to native apps"
+    ],
+    "elements_to_adopt": [
+      "FSRS algorithm as the core SRS engine -- proven 20-30% fewer reviews for same retention",
+      "Browser/content extension for vocabulary mining from real-world content",
+      "Freemium model with generous free tier builds user base",
+      "Leaderboard and social features for motivation",
+      "Clean progress tracking with achievement systems",
+      "Multi-skill integration in a single platform"
+    ]
+  },
+
+  "rtk_assessment": {
+    "still_recommended": true,
+    "qualified_recommendation": "RTK remains recommended as the fastest method for learning kanji meanings (recognition), but only when paired with supplementary resources for readings, vocabulary, and context. It is increasingly seen as one option among several rather than the definitive approach.",
+    "methodology": "Breaks each of 2,200 kanji into component parts (radicals/primitives) and assigns mnemonic stories linking components to the kanji's English keyword meaning. Teaches kanji in a logical order where simpler components are learned before complex characters that contain them. Does NOT teach Japanese readings (on'yomi/kun'yomi) or vocabulary in Volume 1.",
+    "volumes": [
+      "Volume 1: 2,200 kanji meanings and writing (the most popular volume) - $34",
+      "Volume 2: Systematic introduction of on'yomi and kun'yomi readings for kanji from Vol 1",
+      "Volume 3: 800 additional kanji beyond the standard joyo set"
+    ],
+    "pros": [
+      "Fastest method to recognize meanings of 2,200 kanji",
+      "Systematic component-based decomposition makes complex kanji manageable",
+      "Mnemonic stories create strong memory hooks",
+      "Logical learning order (simple -> complex) builds on prior knowledge",
+      "Well-established community with extensive Anki decks available",
+      "Covers all joyo kanji in a single structured course",
+      "Excellent for visual/spatial learners"
+    ],
+    "cons": [
+      "Volume 1 does NOT teach readings -- a critical gap for actual Japanese literacy",
+      "Teaches kanji in isolation from vocabulary and real usage context",
+      "English keywords can be misleading about actual Japanese usage",
+      "Requires 3-6 months of dedicated study before you can read any Japanese",
+      "Must be paired with SRS (Anki) for effective retention -- book alone insufficient",
+      "Some mnemonics are weak or culturally insensitive",
+      "No audio component -- purely visual/text-based learning",
+      "Controversial ordering -- not frequency-based, so common kanji may come late"
+    ],
+    "alternatives": [
+      {
+        "name": "WaniKani",
+        "approach": "Web-based SRS teaching kanji meanings, readings, AND vocabulary together with built-in mnemonics",
+        "advantage_over_rtk": "Integrated readings and vocabulary; built-in SRS; active community",
+        "cost": "$9/month, $89/year, or $299 lifetime"
+      },
+      {
+        "name": "Kodansha Kanji Learner's Course (KKLC)",
+        "approach": "Textbook teaching 2,300 kanji with readings, vocabulary in context, and stroke order",
+        "advantage_over_rtk": "Teaches readings and vocabulary alongside meanings; frequency-ordered; sample vocab uses only previously learned kanji",
+        "cost": "$34 (textbook)"
+      },
+      {
+        "name": "Kanji Garden",
+        "approach": "App-based component learning with SRS, animations, readings, and example words",
+        "advantage_over_rtk": "Interactive with stroke animations; teaches readings; built-in SRS; mobile-friendly",
+        "cost": "Freemium"
+      },
+      {
+        "name": "Kanji Damage",
+        "approach": "Free web resource teaching 1,700 kanji with humor-based mnemonics including readings",
+        "advantage_over_rtk": "Free; includes readings; humorous mnemonics for memorability",
+        "cost": "Free"
+      }
+    ],
+    "recommendation_for_ikeru": "Adopt the component-based decomposition approach from RTK but integrate readings and vocabulary from the start (like KKLC/WaniKani). Use FSRS for scheduling. This is the biggest opportunity gap -- no app combines RTK's systematic decomposition with immediate reading integration and modern ML-based SRS."
+  },
+
+  "best_methodologies": {
+    "reading": [
+      "Component-based kanji decomposition (radicals -> kanji -> vocabulary -> sentences) with spaced repetition",
+      "Graded readers starting from N5 level, progressing through JLPT levels",
+      "Extensive reading with dictionary lookup tools (Yomitan/browser extensions)",
+      "i+1 comprehensible input -- reading material slightly above current level",
+      "Sentence mining from native content (manga, news, novels) with SRS review",
+      "Context-based vocabulary learning (words learned in sentences, not isolation)",
+      "KKLC-style approach: only use kanji the learner has already studied in examples"
+    ],
+    "writing": [
+      "Stroke order animation and guided practice with immediate feedback",
+      "Radical/component recognition before full kanji writing",
+      "Spaced repetition for writing practice (recall kanji from meaning/reading)",
+      "Production-focused exercises: compose sentences using learned grammar/vocabulary",
+      "Handwriting recognition technology for stroke accuracy verification",
+      "Progressive complexity: trace -> guided writing -> free writing -> composition",
+      "Writing kanji by hand shown to improve recognition and long-term retention"
+    ],
+    "listening": [
+      "Shadowing technique: listen and repeat simultaneously, matching rhythm/intonation/pronunciation",
+      "Comprehensible input at i+1 level with graduated difficulty",
+      "Podcast-based learning with transcripts (e.g., Comprehensible Japanese, Nihongo con Teppei)",
+      "Active listening exercises with comprehension questions",
+      "Speed-graded content: slow -> natural speed progression",
+      "Pitch accent awareness training (critical for natural comprehension)",
+      "Dictation exercises: write what you hear",
+      "Media immersion with graded subtitles (Japanese subs -> no subs progression)"
+    ],
+    "speaking": [
+      "Shadowing for pronunciation and rhythm development",
+      "AI-powered conversation practice with real-time feedback (Kaiwa, Talkpal, SpeakPal)",
+      "Roleplay scenarios for real-world situations (restaurant, directions, self-introduction)",
+      "Pitch accent training with visual feedback",
+      "Progressive formality: casual -> polite -> keigo",
+      "Record and compare: record yourself, compare to native audio",
+      "Speech recognition for pronunciation accuracy assessment",
+      "Start speaking early -- even simple phrases build confidence and muscle memory"
+    ],
+    "general": [
+      "Spaced Repetition System (FSRS algorithm preferred over SM-2): 20-30% more efficient than traditional SRS",
+      "i+1 Comprehensible Input (Krashen): content slightly above current level",
+      "Active recall over passive recognition: typing/producing answers > multiple choice",
+      "Interleaving: mix different skills in study sessions rather than blocking",
+      "Consistent daily practice (30-60 min/day) beats intensive weekend cramming",
+      "Multi-modal learning: combine visual, auditory, and kinesthetic (writing) for stronger memory",
+      "Immersion-based learning with real native content as soon as possible",
+      "Test-enhanced learning: frequent low-stakes quizzing improves retention",
+      "Metacognitive training: teach learners to assess their own knowledge gaps",
+      "Goal-oriented progression tied to JLPT levels for measurable milestones"
+    ],
+    "srs_best_practices": [
+      "FSRS algorithm: ML-based, personalized intervals, 20-30% fewer reviews than SM-2",
+      "Optimal retention target: 85-90% (configurable in FSRS)",
+      "New cards per day: 10-20 for sustainable long-term progress",
+      "Review consistency: better to review daily than skip days and pile up",
+      "Card design: one concept per card, clear and unambiguous",
+      "Context-rich cards: include example sentences, audio, and images",
+      "Leech detection: flag cards that are repeatedly failed for redesign",
+      "Mature card intervals: up to 1 year between reviews for well-known items"
+    ],
+    "jlpt_progression": {
+      "N5_beginner": {
+        "kanji": "~100",
+        "vocabulary": "~800",
+        "grammar_points": "~80",
+        "study_hours": "~350",
+        "description": "Basic greetings, self-introduction, simple daily conversations"
+      },
+      "N4_elementary": {
+        "kanji": "~300",
+        "vocabulary": "~1,500",
+        "grammar_points": "~200",
+        "study_hours": "~600 (cumulative)",
+        "description": "Basic daily conversation, read simple texts"
+      },
+      "N3_intermediate": {
+        "kanji": "~650",
+        "vocabulary": "~3,700",
+        "grammar_points": "~350",
+        "study_hours": "~950 (cumulative)",
+        "description": "Everyday situations, read newspaper headlines, bridge level"
+      },
+      "N2_upper_intermediate": {
+        "kanji": "~1,000",
+        "vocabulary": "~6,000",
+        "grammar_points": "~500",
+        "study_hours": "~1,600 (cumulative)",
+        "description": "Read newspapers/articles, understand most conversations, business Japanese"
+      },
+      "N1_advanced": {
+        "kanji": "~2,000",
+        "vocabulary": "~10,000",
+        "grammar_points": "~700+",
+        "study_hours": "~3,000+ (cumulative)",
+        "description": "Read complex texts, understand nuanced speech, professional proficiency"
+      }
+    }
+  },
+
+  "competitive_landscape": [
+    {
+      "name": "Anki",
+      "approach": "Open-source flashcard app with FSRS algorithm. Fully customizable decks, community-shared content. The gold standard for SRS.",
+      "pricing": "Free (desktop), $24.99 (iOS one-time)",
+      "strengths": "Maximum flexibility, FSRS algorithm, massive community decks, completely free on desktop, works offline",
+      "gaps": "Steep learning curve, intimidating settings, no built-in content, ugly default UI, no structured learning path, requires significant setup discipline, no speaking/listening features"
+    },
+    {
+      "name": "WaniKani",
+      "approach": "Web-based kanji+vocabulary learning with built-in mnemonics and SRS. 60 levels covering 2,074 kanji and 6,528 vocabulary words.",
+      "pricing": "$9/month, $89/year, $299 lifetime",
+      "strengths": "Excellent mnemonics for both meanings AND readings, built-in SRS, active community with user scripts, structured progression, no setup required",
+      "gaps": "No grammar, no speaking, no listening, no writing practice, rigid pacing (early levels feel slow), kanji-only focus, expensive for what it offers, web-only (no native mobile app), locked progression frustrates advanced learners"
+    },
+    {
+      "name": "Bunpro",
+      "approach": "Grammar-focused SRS covering 900+ grammar points organized by JLPT level. Active recall through typed answers.",
+      "pricing": "$5/month, $50/year, $150 lifetime (30-day free trial)",
+      "strengths": "Best grammar SRS available, forces production (typing), organized by JLPT level, links to external resources, textbook path alignment (Genki, Tobira, etc.)",
+      "gaps": "Grammar only -- no kanji, vocabulary, speaking, or listening, strict answer acceptance frustrates users, brief explanations need supplementing, isolated grammar points lack real-world context"
+    },
+    {
+      "name": "Duolingo Japanese",
+      "approach": "Gamified course with bite-sized lessons covering vocabulary, grammar, kana, and basic kanji through translation exercises.",
+      "pricing": "Free (ad-supported), $6.99/month Super",
+      "strengths": "Extremely polished UI/UX, strong gamification (streaks, leagues), massive user base, free tier is generous, good for absolute beginners",
+      "gaps": "Shallow grammar explanations, recognition over production, brutally slow progression, limited kanji coverage, no pitch accent, grammar points infrequent and poorly explained, polite vs casual forms glossed over, insufficient for anything beyond N5"
+    },
+    {
+      "name": "LingoDeer",
+      "approach": "Structured Japanese course with detailed grammar explanations, vocabulary, reading, and listening exercises up to ~JLPT N3.",
+      "pricing": "$14.99/month, $95.99/year",
+      "strengths": "Much better grammar explanations than Duolingo, natural example sentences, good audio quality, teaches all three writing systems, comprehensive curriculum for beginners",
+      "gaps": "Content stops around N4-N3 level, no speaking practice, no handwriting practice, limited advanced content, some bugs in audio, expensive for limited content depth"
+    },
+    {
+      "name": "Migaku",
+      "approach": "Immersion-based learning platform with browser extension for subtitle mining, reading tools, and AI-assisted study from native content (Netflix, YouTube, manga).",
+      "pricing": "Subscription-based (varies)",
+      "strengths": "Best for immersion learners, AI-generated subtitles, sentence mining from real content, media-based learning, comprehensive courses for beginners, fastest path to advanced fluency",
+      "gaps": "Complex setup (browser extension + desktop app), confusing for beginners, requires existing content subscriptions, not a standalone app, better for intermediate+ learners, no Apple Watch support"
+    },
+    {
+      "name": "Kanji Garden",
+      "approach": "Component-based kanji learning with SRS, stroke animations, readings, example words, and audio. Personalized study plans.",
+      "pricing": "Freemium",
+      "strengths": "Component-based learning order, stroke order animations, built-in SRS with 1-year mature intervals, readings and vocabulary included, clean mobile app, good for ADHD learners",
+      "gaps": "Kanji-focused only, no grammar, no speaking/listening, relatively small user community, limited advanced features"
+    },
+    {
+      "name": "Jalup / Nihongo Lessons",
+      "approach": "i+1 sentence-based learning through flashcards. Japanese-English for beginners, then Japanese-Japanese. Full native audio on all cards.",
+      "pricing": "Subscription via Nihongo app",
+      "strengths": "Excellent i+1 methodology, contextual learning, transitions to Japanese-only explanations, native audio throughout, includes manga-based content",
+      "gaps": "Jalup itself shut down (content now in Nihongo app), no speaking practice, no handwriting, limited interactivity, deck-based format may feel monotonous"
+    },
+    {
+      "name": "Takoboto",
+      "approach": "Japanese-English dictionary with 200,000+ entries, conjugations, example sentences, and built-in flashcard functionality.",
+      "pricing": "Free (ad-supported), paid for cloud sync",
+      "strengths": "Comprehensive dictionary (200K+ words), conjugation lookup, example sentences, flashcard export to AnkiDroid, 4.66 star rating, offline capable",
+      "gaps": "Dictionary-first tool, not a structured learning app, no SRS scheduling, no grammar instruction, no speaking/listening, basic flashcard functionality"
+    },
+    {
+      "name": "Kaiwa",
+      "approach": "AI-powered Japanese conversation practice with real-time feedback on grammar, pronunciation, and natural speech patterns.",
+      "pricing": "Freemium",
+      "strengths": "Best AI speaking practice for Japanese, real-time feedback, no scheduling needed, judgment-free practice, scenario-based conversations",
+      "gaps": "Speaking only -- no reading, writing, or kanji learning, requires internet, AI sometimes makes errors, limited vocabulary instruction"
+    },
+    {
+      "name": "Talkpal",
+      "approach": "AI conversation tutor with real-time transcription, grammar correction, and persona modes (character-based scenarios).",
+      "pricing": "Subscription-based",
+      "strengths": "Real-time grammar highlighting, persona mode for varied contexts (formal/casual), character-based scenarios, strong market momentum in 2025",
+      "gaps": "Speaking-focused only, no kanji/writing features, subscription required for full access, newer app with less proven track record"
+    }
+  ],
+
+  "ios_watchos_landscape": {
+    "apple_watch_japanese_apps": [
+      {
+        "name": "TokeiTango",
+        "description": "Flashcard app exclusively for Apple Watch with 9,000+ words across JLPT N5-N1. Updated for watchOS 26 with Liquid Glass design.",
+        "limitations": "Vocabulary flashcards only, no grammar or kanji learning, limited interaction model"
+      },
+      {
+        "name": "LingoTime",
+        "description": "Japanese vocabulary and kanji learning across all Apple platforms (watchOS, iOS, macOS). Features widgets, iCloud sync, and Smart SRS.",
+        "limitations": "Vocabulary-focused, limited depth per platform"
+      },
+      {
+        "name": "Wakaru",
+        "description": "Augmented language learning assistant for Apple Watch with voice-based translation, context understanding, and roleplay.",
+        "limitations": "Translation/assistant focus rather than structured learning"
+      },
+      {
+        "name": "Daily Kanji",
+        "description": "Daily kanji notifications by JLPT level for passive learning on Apple Watch.",
+        "limitations": "Notification-based only, no active learning or SRS"
+      },
+      {
+        "name": "Hiragana Having It Up My Watch",
+        "description": "Hiragana learning and writing practice specifically for Apple Watch.",
+        "limitations": "Hiragana only, very narrow scope"
+      }
+    ],
+    "market_gap_analysis": "No existing Apple Watch app provides comprehensive Japanese learning. Current Watch apps are limited to simple flashcards, notifications, or narrow scope (hiragana only). There is NO Watch app that combines: SRS-based review, kanji/vocabulary/grammar, listening snippets, or progress tracking synced with a full iOS app. This represents a significant greenfield opportunity.",
+    "ios_japanese_app_ecosystem": [
+      "Kanji Teacher: stroke order analysis with position/direction/order checking for all 2,136 joyo kanji",
+      "Kanji Koi: JLPT N5-N1 coverage with drawing and swipe review modes, stroke guidance",
+      "KanjiQ: 13,000 kanji with 6,000 stroke order animations, trace-and-compare",
+      "Kanji Study: stroke detection with instant feedback, SRS reviews",
+      "iKanji touch 2: writing practice with stroke animation and stroke count display"
+    ]
+  },
+
+  "ai_integration_trends": [
+    "LLM-powered conversation tutors are the fastest-growing segment -- Kaiwa, Talkpal, SpeakPal, Langua all launched/scaled 2024-2025",
+    "Google's LearnLM (integrated into Gemini 2.5) uses Socratic questioning and adaptive instruction, preferred over GPT-4o by 31% in learning scenarios",
+    "AI-generated subtitles and real-time translation are becoming standard (Migaku leads here)",
+    "Persona/roleplay modes in AI tutors (e.g., Talkpal's character scenarios) improve engagement and contextual learning",
+    "Students using AI speaking practice showed 75% improvement in speaking scores over 8 weeks (2025 study)",
+    "LearnLM students were 5.5 percentage points more likely to solve novel problems vs human tutors alone",
+    "Multimodal AI (vision + audio + text) enables new features: OCR for handwriting feedback, image-based vocabulary, audio pronunciation scoring",
+    "FSRS algorithm (ML-based SRS) reached mainstream adoption in 2025 -- now in Anki, RemNote, Mochi Cards, and multiple learning platforms",
+    "RAG (Retrieval-Augmented Generation) enables accurate grammar explanations and example generation without hallucination",
+    "On-device ML (Core ML, Apple FoundationModels) enables offline SRS optimization and handwriting recognition"
+  ],
+
+  "gemini_free_tier_assessment": {
+    "available_models": {
+      "gemini_2_5_pro": {
+        "rpm": 5,
+        "rpd": 100,
+        "tpm": 250000,
+        "context_window": "1M tokens",
+        "best_for": "Complex grammar explanations, nuanced conversation simulation, essay correction"
+      },
+      "gemini_2_5_flash": {
+        "rpm": 10,
+        "rpd": 500,
+        "tpm": 250000,
+        "context_window": "1M tokens",
+        "best_for": "Real-time conversation practice, quick vocabulary queries, sentence generation"
+      },
+      "gemini_2_5_flash_lite": {
+        "rpm": 15,
+        "rpd": 1000,
+        "tpm": 250000,
+        "context_window": "1M tokens",
+        "best_for": "Simple lookups, card generation, basic translation verification"
+      }
+    },
+    "practical_limits_for_ikeru": "With Flash-Lite at 1,000 RPD, a user doing 30-60 min/day of study could realistically make 50-100 API calls per session. Flash at 500 RPD is sufficient for conversation practice sessions. Pro at 100 RPD should be reserved for complex tasks (essay correction, grammar explanation generation). Combined, the free tier supports a viable personal-use app.",
+    "important_caveats": [
+      "December 2025 saw 50-80% quota reductions -- limits may change again",
+      "Limits are per-project, not per-API-key -- multiple keys don't help",
+      "Actual limits may vary from documented limits (check AI Studio dashboard)",
+      "Free tier data may be used for model improvement (privacy consideration)",
+      "Rate limits are not guaranteed and can be further restricted",
+      "For a personal app this is fine; for distribution, paid tier may be needed"
+    ],
+    "alternative_free_options": [
+      "Groq (free tier with Llama/Mixtral models -- very fast inference)",
+      "Mistral API (free tier available)",
+      "OpenRouter (aggregates free tiers from multiple providers)",
+      "On-device Apple FoundationModels (iOS 26+, no API cost, offline capable)",
+      "Ollama for local inference during development"
+    ]
+  },
+
+  "market_context": [
+    "Japanese learning platform market: $860M in 2025, projected $2.5B by 2032 (16.4% CAGR)",
+    "Global language learning market exceeds $25B with mobile apps as fastest-growing segment",
+    "65-70% of language learners now prefer app-based learning over classrooms",
+    "Japanese language learners increased 17% globally since 2023, driven by anime/manga/J-pop cultural interest",
+    "Asia-Pacific commands 45.75% of online language learning market revenue",
+    "FSI estimates 2,200 hours for English speakers to achieve Japanese professional proficiency -- highest difficulty category",
+    "Japanese is consistently in top 10 most-studied languages globally",
+    "Apple ecosystem users tend to have higher willingness to pay for quality apps",
+    "Indie/solo developer Japanese apps have successfully competed (Manabi Reader won 'best iOS Japanese learning tool 2025')"
+  ],
+
+  "user_sentiment": [
+    "Biggest frustration: needing 4-6 separate apps to cover all skills (kanji app + grammar app + speaking app + dictionary + reading tool)",
+    "Anki users love the power but hate the UI, setup complexity, and ugly default experience",
+    "WaniKani users frustrated by rigid pacing -- early levels feel too slow, can't skip known content",
+    "Duolingo users hit a wall around N4 level -- insufficient depth for real progress",
+    "Bunpro's strict typing requirements cause frustration when multiple valid answers exist",
+    "LingoDeer praised for grammar explanations but content stops too early (N4-N3)",
+    "Strong demand for AI conversation partners that understand formality levels and context",
+    "Users want progress tracking that shows concrete JLPT-level advancement",
+    "Handwriting practice is valued but poorly served -- most apps have limited stroke recognition",
+    "Apple Watch users want micro-learning sessions for commute/waiting time",
+    "Privacy-conscious users prefer on-device processing over cloud-dependent features",
+    "Community and social features (streaks, leaderboards) are effective motivation tools but not enough alone",
+    "Advanced learners (N2+) feel severely underserved by most apps"
+  ],
+
+  "timing_and_opportunity": [
+    "MASSIVE OPPORTUNITY: No single app covers all 4 skills (reading, writing, listening, speaking) with modern ML/AI -- the market is fragmented into single-skill tools",
+    "Apple Watch companion for Japanese learning is essentially greenfield -- existing apps are minimal flashcard viewers",
+    "FSRS algorithm is now proven and open-source, ready for integration without licensing issues",
+    "Gemini free tier provides viable LLM access for a personal app's conversation/tutoring features at zero cost",
+    "Apple's FoundationModels framework (iOS 26+) enables on-device LLM for offline features -- perfect for Watch",
+    "LearnLM research validates AI tutoring effectiveness -- replicable patterns for grammar explanation and Socratic questioning",
+    "The indie developer success stories (Manabi Reader, Kanji Garden) prove there's room for quality solo-dev apps",
+    "Growing interest in evidence-based, data-exportable learning tools among technical users",
+    "JLPT-aligned progression gives clear product milestones and marketing angles (N5 starter -> N1 complete)",
+    "Cultural moment: anime/manga popularity driving Japanese learning demand to historic highs"
+  ],
+
+  "risks_and_considerations": [
+    "Gemini free tier limits could be reduced further (already cut 50-80% in Dec 2025) -- need fallback strategy",
+    "Content creation is the biggest bottleneck: 10,000+ vocabulary items, 700+ grammar points, audio recordings, example sentences",
+    "Competing with well-funded apps (Duolingo: $7B valuation, WaniKani: established community) on production quality",
+    "Speech recognition accuracy for Japanese (pitch accent, particles) is still imperfect across all platforms",
+    "Apple Watch screen size severely limits interaction complexity -- must design for glanceable micro-learning",
+    "App Store discovery is extremely competitive -- need strong differentiation messaging",
+    "Maintaining content accuracy requires native speaker review (especially grammar explanations and example sentences)",
+    "JLPT content is not officially published -- community-sourced JLPT lists may have inaccuracies",
+    "User retention beyond N4 level drops significantly across all apps -- advanced content is harder to gamify",
+    "Data export feature is a differentiator but adds engineering complexity (CSV, JSON, Anki export formats)",
+    "Scope creep risk: covering all 4 skills is ambitious for a solo developer -- consider phased release (e.g., reading+writing first, then listening+speaking)",
+    "On-device ML models need careful optimization for Watch hardware constraints",
+    "Privacy regulations (GDPR if distributing in EU) apply to any user learning data collected"
+  ],
+
+  "recommended_architecture_for_ikeru": {
+    "core_srs_engine": "FSRS algorithm (open-source, MIT licensed, Swift port available via awesome-fsrs GitHub repo)",
+    "kanji_system": "Component-based decomposition (RTK-inspired) WITH integrated readings and vocabulary (KKLC-inspired). Teach radicals -> kanji meaning+reading -> vocabulary in context.",
+    "grammar_system": "JLPT-organized grammar points with typed production exercises (Bunpro-inspired) enhanced by LLM-generated explanations and examples",
+    "listening_system": "Graded audio content with comprehension exercises, shadowing mode with recording/comparison, pitch accent visualization",
+    "speaking_system": "Gemini API-powered conversation practice with scenario-based roleplay, pronunciation feedback via iOS Speech framework",
+    "writing_system": "Stroke order animations with PencilKit/touch-based handwriting recognition and accuracy scoring",
+    "apple_watch": "Micro-review sessions (SRS flashcard reviews), daily kanji notification, listening comprehension snippets, progress dashboard complications",
+    "data_layer": "SwiftData for local persistence, CloudKit for sync, export to CSV/JSON/Anki formats",
+    "ai_integration": "Gemini Flash-Lite for routine tasks (1000 RPD), Flash for conversation (500 RPD), Pro for complex explanations (100 RPD). Apple FoundationModels for offline fallback.",
+    "progress_tracking": "JLPT-level dashboard, skill radar chart (reading/writing/listening/speaking), streak tracking, detailed statistics with data export"
+  }
+}

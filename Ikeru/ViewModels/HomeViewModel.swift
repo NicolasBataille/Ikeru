@@ -35,6 +35,12 @@ public final class HomeViewModel {
     /// Estimated time in minutes for the next session.
     public private(set) var sessionPreviewMinutes: Int = 0
 
+    /// Recent achievement text (e.g., "Unlocked Listening!").
+    public private(set) var recentAchievement: String?
+
+    /// Number of unopened lootboxes.
+    public private(set) var unopenedLootBoxCount: Int = 0
+
     /// Whether data has been loaded at least once.
     public private(set) var hasLoaded: Bool = false
 
@@ -141,9 +147,26 @@ public final class HomeViewModel {
         if let state = results.first {
             xp = state.xp
             level = state.level
+            unopenedLootBoxCount = state.unopenedLootBoxes.count
+
+            // Compute recent achievement from last inventory item
+            let inventory = state.lootInventory
+            if let lastItem = inventory.last {
+                recentAchievement = lastItem.name
+            } else {
+                // Check for recently unlocked attributes
+                let attrs = state.attributes
+                if let lastAttr = attrs.last {
+                    recentAchievement = "Unlocked \(lastAttr.name)!"
+                } else {
+                    recentAchievement = nil
+                }
+            }
         } else {
             xp = 0
             level = 1
+            recentAchievement = nil
+            unopenedLootBoxCount = 0
         }
 
         xpForNextLevel = RPGConstants.xpForLevel(level)

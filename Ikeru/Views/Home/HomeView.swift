@@ -72,26 +72,12 @@ struct HomeView: View {
 
     @ViewBuilder
     private func heroSection(_ vm: HomeViewModel) -> some View {
-        VStack(spacing: IkeruTheme.Spacing.md) {
-            // Greeting
-            Text(vm.greetingText)
-                .font(.ikeruHeading1)
-                .foregroundStyle(.white)
-
-            Text("Ready to study?")
-                .font(.ikeruBody)
-                .foregroundStyle(.ikeruTextSecondary)
-
-            // XP Bar (full variant) with level badge
-            XPBarView(
-                totalXP: vm.xp,
-                level: vm.level,
-                variant: .full
-            )
-            .padding(.horizontal, IkeruTheme.Spacing.sm)
-        }
-        .frame(maxWidth: .infinity)
-        .ikeruCard(.standard)
+        MeshHeroView(
+            level: vm.level,
+            totalXP: vm.xp,
+            displayName: vm.displayName,
+            recentAchievement: vm.recentAchievement
+        )
     }
 
     // MARK: - Learning Summary Card

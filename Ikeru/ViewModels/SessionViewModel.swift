@@ -140,12 +140,28 @@ public final class SessionViewModel {
     /// Review forecast for upcoming days (displayed on home screen).
     public private(set) var reviewForecast: [ForecastDay] = []
 
+    /// The most recent leech event detected during this session, if any.
+    public private(set) var lastLeechEvent: LeechEvent?
+
+    /// Loot item dropped from the most recent review (drives LootDropView overlay).
+    public private(set) var lastLootDrop: LootItem?
+
+    /// Count of consecutive correct answers in this session (affects loot drop rate).
+    public private(set) var consecutiveCorrect: Int = 0
+
+    /// Total loot items earned this session.
+    public private(set) var sessionLootCount: Int = 0
+
+    /// Lootbox earned during this session (presented after session summary).
+    public private(set) var earnedLootBox: LootBox?
+
     // MARK: - Dependencies
 
     private let plannerService: PlannerService
     private let cardRepository: CardRepository
     private let modelContainer: ModelContainer
     private let reviewForecastService: ReviewForecastService
+    private weak var companionViewModel: CompanionChatViewModel?
     private var cardStartTime: Date = Date()
     private var timerTask: Task<Void, Never>?
 
@@ -162,6 +178,11 @@ public final class SessionViewModel {
         self.reviewForecastService = ReviewForecastService(cardRepository: cardRepository)
     }
 
+    /// Connects the companion chat view model for leech intervention notifications.
+    public func setCompanionViewModel(_ companion: CompanionChatViewModel) {
+        self.companionViewModel = companion
+    }
+
     // MARK: - Session Lifecycle
 
     /// Composes a session queue via PlannerService and starts the session.
@@ -174,6 +195,10 @@ public final class SessionViewModel {
         newItemsLearned = 0
         lastXPGained = nil
         levelUpLevel = nil
+        lastLootDrop = nil
+        consecutiveCorrect = 0
+        sessionLootCount = 0
+        earnedLootBox = nil
         isPaused = false
         sessionStartTime = Date()
         cardStartTime = Date()
@@ -262,6 +287,10 @@ public final class SessionViewModel {
         newItemsLearned = 0
         lastXPGained = nil
         levelUpLevel = nil
+        lastLootDrop = nil
+        consecutiveCorrect = 0
+        sessionLootCount = 0
+        earnedLootBox = nil
         isPaused = false
         sessionStartTime = Date()
         cardStartTime = Date()
@@ -327,9 +356,40 @@ public final class SessionViewModel {
             levelUpLevel = result.newLevel
         }
 
+        // Track consecutive correct for loot drop probability
+        if isCorrect {
+            consecutiveCorrect += 1
+        } else {
+            consecutiveCorrect = 0
+        }
+
+        // Check for loot drop
+        lastLootDrop = nil
+        if LootDropService.shouldDropLoot(
+            grade: grade,
+            consecutiveCorrect: consecutiveCorrect
+        ) {
+            let drop = LootDropService.generateDrop(level: currentLevel)
+            lastLootDrop = drop
+            sessionLootCount += 1
+            await persistLootDrop(drop)
+        }
+
         // Track new items learned (first review = reps was 0)
         if card.fsrsState.reps == 0 {
             newItemsLearned += 1
+        }
+
+        // Check for leech detection after grading
+        if let leechEvent = LeechDetectionService.checkForLeech(
+            card: card,
+            grade: grade,
+            threshold: CardRepository.leechThreshold
+        ) {
+            lastLeechEvent = leechEvent
+            if let companion = companionViewModel {
+                await companion.handleLeechDetected(card: card)
+            }
         }
 
         reviewedCount += 1
@@ -342,6 +402,13 @@ public final class SessionViewModel {
         // Clear feedback after brief display
         try? await Task.sleep(for: .milliseconds(300))
         feedbackState = nil
+
+        // Check for lootbox milestone (every 25 reviews in session)
+        if LootBoxService.shouldAwardLootBox(reviewsInSession: reviewedCount) {
+            let box = LootBoxService.generateLootBox(level: currentLevel)
+            earnedLootBox = box
+            await persistLootBox(box)
+        }
 
         if isSessionComplete {
             stopTimer()
@@ -364,6 +431,16 @@ public final class SessionViewModel {
     /// Clears the level-up display (called by the overlay after celebration).
     public func clearLevelUp() {
         levelUpLevel = nil
+    }
+
+    /// Clears the loot drop display (called by the overlay after animation).
+    public func clearLootDrop() {
+        lastLootDrop = nil
+    }
+
+    /// Clears the earned lootbox (called after opening or dismissing).
+    public func clearLootBox() {
+        earnedLootBox = nil
     }
 
     /// Pauses the current session.
@@ -519,6 +596,38 @@ public final class SessionViewModel {
             }
         } catch {
             Logger.rpg.error("Failed to persist RPG state: \(error.localizedDescription)")
+        }
+    }
+
+    /// Persists a loot drop to the RPG state inventory.
+    private func persistLootDrop(_ item: LootItem) async {
+        let context = modelContainer.mainContext
+        let descriptor = FetchDescriptor<RPGState>()
+        do {
+            let results = try context.fetch(descriptor)
+            if let state = results.first {
+                state.addLootItem(item)
+                try context.save()
+                Logger.rpg.info("Loot drop persisted: \(item.name) (\(item.rarity.displayName))")
+            }
+        } catch {
+            Logger.rpg.error("Failed to persist loot drop: \(error.localizedDescription)")
+        }
+    }
+
+    /// Persists a lootbox to the RPG state.
+    private func persistLootBox(_ box: LootBox) async {
+        let context = modelContainer.mainContext
+        let descriptor = FetchDescriptor<RPGState>()
+        do {
+            let results = try context.fetch(descriptor)
+            if let state = results.first {
+                state.addLootBox(box)
+                try context.save()
+                Logger.rpg.info("Lootbox persisted: \(box.challengeType.displayName)")
+            }
+        } catch {
+            Logger.rpg.error("Failed to persist lootbox: \(error.localizedDescription)")
         }
     }
 

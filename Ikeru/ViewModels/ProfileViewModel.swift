@@ -16,6 +16,9 @@ public final class ProfileViewModel {
     /// The current user profile, if one exists.
     public private(set) var currentProfile: UserProfile?
 
+    /// All available user profiles.
+    public private(set) var allProfiles: [UserProfile] = []
+
     /// Whether a profile exists (used for onboarding gating).
     public var hasProfile: Bool {
         currentProfile != nil
@@ -35,12 +38,15 @@ public final class ProfileViewModel {
 
     // MARK: - Profile Loading
 
-    /// Fetches the first available UserProfile from SwiftData.
+    /// Fetches all profiles and sets the first as current if none is set.
     public func loadProfile() {
         let descriptor = FetchDescriptor<UserProfile>()
         let profiles = (try? modelContext.fetch(descriptor)) ?? []
-        currentProfile = profiles.first
-        Logger.ui.debug("Profile loaded: \(self.currentProfile?.displayName ?? "none")")
+        allProfiles = profiles
+        if currentProfile == nil {
+            currentProfile = profiles.first
+        }
+        Logger.ui.debug("Profiles loaded: \(profiles.count), current: \(self.currentProfile?.displayName ?? "none")")
     }
 
     // MARK: - Profile Creation
@@ -63,6 +69,36 @@ public final class ProfileViewModel {
             Logger.ui.info("Created user profile: \(trimmedName)")
         } catch {
             Logger.ui.error("Failed to save user profile: \(error)")
+        }
+    }
+
+    // MARK: - Profile Switching
+
+    /// Switches to a different profile.
+    /// - Parameter profile: The profile to switch to.
+    public func switchProfile(to profile: UserProfile) {
+        currentProfile = profile
+        Logger.ui.info("Switched to profile: \(profile.displayName)")
+    }
+
+    /// Deletes a profile (only if it's not the last remaining one).
+    /// - Parameter profile: The profile to delete.
+    public func deleteProfile(_ profile: UserProfile) {
+        guard allProfiles.count > 1 else {
+            Logger.ui.warning("Cannot delete last remaining profile")
+            return
+        }
+
+        modelContext.delete(profile)
+        do {
+            try modelContext.save()
+            allProfiles.removeAll { $0.id == profile.id }
+            if currentProfile?.id == profile.id {
+                currentProfile = allProfiles.first
+            }
+            Logger.ui.info("Deleted profile: \(profile.displayName)")
+        } catch {
+            Logger.ui.error("Failed to delete profile: \(error)")
         }
     }
 

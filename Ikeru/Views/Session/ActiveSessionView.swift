@@ -16,6 +16,7 @@ struct ActiveSessionView: View {
     @State private var hapticTriggerIncorrect = false
     @State private var xpGained: Int?
     @State private var levelUpLevel: Int?
+    @State private var lootDrop: LootItem?
     @State private var dragOffset: CGFloat = 0
 
     var body: some View {
@@ -41,6 +42,7 @@ struct ActiveSessionView: View {
         .persistentSystemOverlays(.hidden)
         .xpGainOverlay(xpGained: $xpGained)
         .levelUpOverlay(level: $levelUpLevel)
+        .lootDropOverlay(item: $lootDrop)
         .sensoryFeedback(.success, trigger: hapticTriggerCorrect)
         .sensoryFeedback(.warning, trigger: hapticTriggerIncorrect)
         .onChange(of: viewModel.lastXPGained) { _, newValue in
@@ -53,6 +55,12 @@ struct ActiveSessionView: View {
             if let level = newValue {
                 levelUpLevel = level
                 viewModel.clearLevelUp()
+            }
+        }
+        .onChange(of: viewModel.lastLootDrop?.id) { _, newValue in
+            if newValue != nil, let drop = viewModel.lastLootDrop {
+                lootDrop = drop
+                viewModel.clearLootDrop()
             }
         }
         .confirmationDialog(

@@ -26,4 +26,7 @@ extension Logger {
 
     /// UI events and navigation
     public static let ui = Logger(subsystem: subsystem, category: "ui")
+
+    /// Companion chat operations
+    public static let companion = Logger(subsystem: subsystem, category: "companion")
 }

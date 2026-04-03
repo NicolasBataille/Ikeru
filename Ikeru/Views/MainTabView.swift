@@ -38,22 +38,70 @@ enum AppTab: Int, CaseIterable, Identifiable {
 
 struct MainTabView: View {
 
+    @Environment(\.modelContext) private var modelContext
     @State private var selectedTab: AppTab = .home
+    @State private var showCompanionChat = false
+    @State private var companionViewModel: CompanionChatViewModel?
 
     var body: some View {
-        TabView(selection: $selectedTab) {
-            ForEach(AppTab.allCases) { tab in
-                TabContentView(tab: tab)
-                    .tabItem {
-                        Label(tab.title, systemImage: tab.icon)
-                    }
-                    .tag(tab)
+        ZStack(alignment: .bottomTrailing) {
+            TabView(selection: $selectedTab) {
+                ForEach(AppTab.allCases) { tab in
+                    TabContentView(tab: tab)
+                        .tabItem {
+                            Label(tab.title, systemImage: tab.icon)
+                        }
+                        .tag(tab)
+                }
             }
+            .tint(Color(hex: IkeruTheme.Colors.primaryAccent))
+
+            // Floating companion avatar — persistent across screens
+            companionAvatarOverlay
         }
-        .tint(Color(hex: IkeruTheme.Colors.primaryAccent))
         .onAppear {
             configureTabBarAppearance()
+            initializeCompanionViewModel()
         }
+        .sheet(isPresented: $showCompanionChat) {
+            if let vm = companionViewModel {
+                CompanionChatSheet(viewModel: vm)
+                    .presentationDetents([.large, .medium])
+                    .presentationDragIndicator(.hidden)
+            }
+        }
+    }
+
+    // MARK: - Companion Avatar Overlay
+
+    @ViewBuilder
+    private var companionAvatarOverlay: some View {
+        if let vm = companionViewModel {
+            CompanionAvatarView(
+                hasAttention: vm.hasAttention,
+                showBadge: vm.showBadge,
+                onTap: { showCompanionChat = true }
+            )
+            .padding(.trailing, IkeruTheme.Spacing.md)
+            .padding(.bottom, 64) // Above tab bar
+        }
+    }
+
+    // MARK: - Companion Initialization
+
+    private func initializeCompanionViewModel() {
+        guard companionViewModel == nil else { return }
+        let container = modelContext.container
+
+        let context = container.mainContext
+        let descriptor = FetchDescriptor<UserProfile>()
+        let profiles = (try? context.fetch(descriptor)) ?? []
+        let profileId = profiles.first?.id ?? UUID()
+
+        companionViewModel = CompanionChatViewModel(
+            modelContainer: container,
+            profileId: profileId
+        )
     }
 
     private func configureTabBarAppearance() {
@@ -110,42 +158,15 @@ private struct TabContentView: View {
         switch tab {
         case .home:
             HomeView()
+        case .study:
+            ProgressDashboardView()
+        case .companion:
+            CompanionTabView()
+        case .rpg:
+            RPGProfileView()
         case .settings:
             SettingsView()
-        default:
-            PlaceholderTabView(tab: tab)
         }
-    }
-}
-
-// MARK: - Placeholder View
-
-private struct PlaceholderTabView: View {
-
-    let tab: AppTab
-
-    var body: some View {
-        ZStack {
-            Color(hex: IkeruTheme.Colors.background)
-                .ignoresSafeArea()
-
-            VStack(spacing: IkeruTheme.Spacing.md) {
-                Image(systemName: tab.icon)
-                    .font(.system(size: 48))
-                    .foregroundStyle(Color(hex: IkeruTheme.Colors.primaryAccent))
-
-                Text(tab.title)
-                    .font(.ikeruHeading1)
-                    .foregroundStyle(.white)
-
-                Text("Coming soon...")
-                    .font(.ikeruCaption)
-                    .foregroundStyle(.ikeruTextSecondary)
-            }
-        }
-        .navigationTitle(tab.title)
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbarColorScheme(.dark, for: .navigationBar)
     }
 }
 

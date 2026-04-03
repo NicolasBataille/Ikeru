@@ -51,6 +51,15 @@ struct SessionSummaryView: View {
                     valueColor: Color(hex: IkeruTheme.Colors.Rarity.legendary)
                 )
 
+                if viewModel.sessionLootCount > 0 {
+                    summaryRow(
+                        icon: "bag.fill",
+                        label: "Loot Earned",
+                        value: "\(viewModel.sessionLootCount)",
+                        valueColor: Color(hex: IkeruTheme.Colors.Rarity.rare)
+                    )
+                }
+
                 summaryRow(
                     icon: "clock.fill",
                     label: "Duration",

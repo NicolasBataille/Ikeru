@@ -13,13 +13,38 @@ public struct ProfileSettings: Codable, Equatable, Sendable {
     /// Maximum number of review cards to show per day
     public let dailyReviewLimit: Int
 
+    /// Whether daily review reminders are enabled
+    public let reviewReminderEnabled: Bool
+
+    /// Hour of day for the review reminder (0-23)
+    public let reviewReminderHour: Int
+
+    /// Whether weekly check-in notifications are enabled
+    public let weeklyCheckInEnabled: Bool
+
+    /// Day of week for check-in (1=Sunday, 7=Saturday)
+    public let weeklyCheckInDay: Int
+
+    /// Hour of day for the weekly check-in (0-23)
+    public let weeklyCheckInHour: Int
+
     public init(
         desiredRetention: Double = 0.9,
         dailyNewCardLimit: Int = 20,
-        dailyReviewLimit: Int = 200
+        dailyReviewLimit: Int = 200,
+        reviewReminderEnabled: Bool = false,
+        reviewReminderHour: Int = 9,
+        weeklyCheckInEnabled: Bool = false,
+        weeklyCheckInDay: Int = 1,
+        weeklyCheckInHour: Int = 10
     ) {
         self.desiredRetention = desiredRetention
         self.dailyNewCardLimit = dailyNewCardLimit
         self.dailyReviewLimit = dailyReviewLimit
+        self.reviewReminderEnabled = reviewReminderEnabled
+        self.reviewReminderHour = reviewReminderHour
+        self.weeklyCheckInEnabled = weeklyCheckInEnabled
+        self.weeklyCheckInDay = weeklyCheckInDay
+        self.weeklyCheckInHour = weeklyCheckInHour
     }
 }

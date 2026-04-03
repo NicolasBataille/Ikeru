@@ -101,6 +101,13 @@ public final class ContentRepository: Sendable {
         await actor.sentencesForVocabulary(word)
     }
 
+    /// Fetch vocabulary items for a given JLPT level.
+    /// - Parameter level: The JLPT level to filter by.
+    /// - Returns: Array of Vocabulary structs for that level.
+    public func vocabularyByLevel(_ level: JLPTLevel) async -> [Vocabulary] {
+        await actor.vocabularyByLevel(level)
+    }
+
     // MARK: - Grammar Queries
 
     /// Fetch grammar points for a given JLPT level.
@@ -299,6 +306,45 @@ actor ContentDatabaseActor {
 
     func sentencesForVocabulary(_ word: String) -> [String] {
         fetchSentences(for: word)
+    }
+
+    func vocabularyByLevel(_ level: JLPTLevel) -> [Vocabulary] {
+        guard openIfNeeded() else { return [] }
+
+        let sql = """
+            SELECT v.id, v.word, v.reading, v.meaning, v.kanji_character, v.jlpt_level
+            FROM vocabulary v WHERE v.jlpt_level = ?
+            """
+
+        var stmt: OpaquePointer?
+        guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else {
+            Logger.content.error("Failed to prepare vocabularyByLevel query")
+            return []
+        }
+        defer { sqlite3_finalize(stmt) }
+
+        sqlite3_bind_text(stmt, 1, level.rawValue, -1, SQLITE_TRANSIENT)
+
+        var results: [Vocabulary] = []
+        while sqlite3_step(stmt) == SQLITE_ROW {
+            let vocabId = Int(sqlite3_column_int(stmt, 0))
+            let word = columnText(stmt, 1)
+            let sentences = fetchSentences(for: word)
+
+            let vocab = Vocabulary(
+                id: vocabId,
+                word: word,
+                reading: columnText(stmt, 2),
+                meaning: columnText(stmt, 3),
+                kanjiCharacter: columnOptionalText(stmt, 4),
+                jlptLevel: JLPTLevel(rawValue: columnText(stmt, 5)) ?? .n5,
+                exampleSentences: sentences
+            )
+            results.append(vocab)
+        }
+
+        Logger.content.debug("Fetched \(results.count) vocabulary for level \(level.rawValue)")
+        return results
     }
 
     // MARK: - Grammar Queries
