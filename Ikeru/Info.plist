@@ -9,5 +9,9 @@
 	</array>
 	<key>UIUserInterfaceStyle</key>
 	<string>Dark</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Ikeru needs microphone access for shadowing exercises where you practice speaking Japanese.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Ikeru uses speech recognition to evaluate your Japanese pronunciation during shadowing exercises.</string>
 </dict>
 </plist>
