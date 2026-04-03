@@ -5,12 +5,14 @@ import IkeruCore
 
 /// Collapsible sections in the kanji study view.
 private enum KanjiSection: String, CaseIterable, Sendable {
+    case mnemonic = "Mnemonic"
     case radicals = "Radicals"
     case readings = "Readings"
     case vocabulary = "Vocabulary"
 
     var iconName: String {
         switch self {
+        case .mnemonic: "lightbulb.max"
         case .radicals: "square.grid.2x2"
         case .readings: "character.book.closed"
         case .vocabulary: "text.book.closed"
@@ -25,7 +27,7 @@ private enum KanjiSection: String, CaseIterable, Sendable {
 struct KanjiStudyView: View {
 
     @State private var viewModel: KanjiStudyViewModel
-    @State private var expandedSections: Set<KanjiSection> = [.radicals, .readings]
+    @State private var expandedSections: Set<KanjiSection> = [.mnemonic, .radicals, .readings]
 
     init(viewModel: KanjiStudyViewModel) {
         self._viewModel = State(initialValue: viewModel)
@@ -58,6 +60,18 @@ struct KanjiStudyView: View {
             loadingIndicator
 
         case .loaded:
+            collapsibleSection(.mnemonic) {
+                MnemonicView(
+                    mnemonicText: viewModel.mnemonicText,
+                    loadingState: viewModel.mnemonicLoadingState,
+                    onRegenerate: {
+                        Task {
+                            await viewModel.regenerateMnemonic()
+                        }
+                    }
+                )
+            }
+
             collapsibleSection(.radicals) {
                 RadicalDecompositionView(radicals: viewModel.radicals)
             }

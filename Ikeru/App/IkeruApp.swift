@@ -21,6 +21,7 @@ struct IkeruApp: App {
                 Card.self,
                 ReviewLog.self,
                 RPGState.self,
+                MnemonicCache.self,
             ])
             let config = ModelConfiguration(
                 "Ikeru",
