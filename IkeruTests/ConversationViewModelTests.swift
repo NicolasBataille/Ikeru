@@ -7,17 +7,20 @@ import Foundation
 
 private final class MockAIProvider: AIProvider, @unchecked Sendable {
     let name = "MockProvider"
+    let tier = AITier.onDevice
     var available: Bool = true
     var responseText: String = "はい、元気です！"
     var shouldThrow: Error?
 
-    func isAvailable() async -> Bool { available }
+    var isAvailable: Bool {
+        get async { available }
+    }
 
-    func generate(_ request: AIRequest) async throws -> AIResponse {
+    func generate(prompt: AIPrompt) async throws -> AIResponse {
         if let error = shouldThrow {
             throw error
         }
-        return AIResponse(text: responseText, providerName: name)
+        return AIResponse(content: responseText, tier: .onDevice, latencyMs: 50)
     }
 }
 
@@ -55,7 +58,7 @@ struct ConversationViewModelTests {
         provider.responseText = responseText
         provider.shouldThrow = shouldThrow
 
-        let router = AIRouterService(providers: [provider])
+        let router = AIRouterService(onDeviceProvider: provider, geminiProvider: provider, claudeProvider: provider, localGPUProvider: provider)
         let service = ConversationService(aiRouter: router, timeoutSeconds: 5.0)
         let vm = ConversationViewModel(
             conversationService: service,
@@ -132,7 +135,7 @@ struct ConversationViewModelTests {
 
     @Test("Handles provider error gracefully")
     func handlesError() async {
-        let (vm, _) = makeViewModel(shouldThrow: AIProviderError.networkError("test"))
+        let (vm, _) = makeViewModel(shouldThrow: AIError.networkError(NSError(domain: "test", code: -1)))
         vm.inputText = "hello"
 
         await vm.sendMessage()
@@ -154,7 +157,7 @@ struct ConversationViewModelTests {
 
     @Test("Handles timeout error")
     func handlesTimeout() async {
-        let (vm, _) = makeViewModel(shouldThrow: AIProviderError.timeout)
+        let (vm, _) = makeViewModel(shouldThrow: AIError.timeout(.onDevice))
         vm.inputText = "hello"
 
         await vm.sendMessage()
@@ -164,7 +167,7 @@ struct ConversationViewModelTests {
 
     @Test("Handles rate limit error")
     func handlesRateLimit() async {
-        let (vm, _) = makeViewModel(shouldThrow: AIProviderError.rateLimited)
+        let (vm, _) = makeViewModel(shouldThrow: AIError.rateLimited(.onDevice))
         vm.inputText = "hello"
 
         await vm.sendMessage()
