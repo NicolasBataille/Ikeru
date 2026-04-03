@@ -237,10 +237,7 @@ actor CardModelActor {
         // Save atomically — both card update and review log persist together
         try? modelContext.save()
 
-        Logger.srs.debug(
-            "Graded card \(card.front): grade=\(grade.rawValue), " +
-            "stability=\(newState.stability), due=\(newDueDate)"
-        )
+        Logger.srs.debug("Graded card \(card.front): grade=\(grade.rawValue), stability=\(newState.stability), due=\(newDueDate)")
     }
 
     func reviewLogs(for cardId: UUID) -> [ReviewLogDTO] {

@@ -21,6 +21,9 @@ extension Logger {
     /// Content management (kanji, vocabulary)
     public static let content = Logger(subsystem: subsystem, category: "content")
 
+    /// Audio playback and listening exercises
+    public static let audio = Logger(subsystem: subsystem, category: "audio")
+
     /// UI events and navigation
     public static let ui = Logger(subsystem: subsystem, category: "ui")
 }
