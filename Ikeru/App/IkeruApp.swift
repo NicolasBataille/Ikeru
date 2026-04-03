@@ -10,6 +10,7 @@ struct IkeruApp: App {
     @State private var profileViewModel: ProfileViewModel?
     @State private var showOnboarding = false
     @State private var hasCheckedProfile = false
+    @State private var aiRouterService = AIRouterService()
 
     let modelContainer: ModelContainer
 
@@ -41,6 +42,7 @@ struct IkeruApp: App {
                 .preferredColorScheme(.dark)
                 .environment(\.toastManager, toastManager)
                 .environment(\.profileViewModel, profileViewModel)
+                .environment(\.aiRouterService, aiRouterService)
                 .toastOverlay()
                 .task {
                     initializeProfileViewModel()

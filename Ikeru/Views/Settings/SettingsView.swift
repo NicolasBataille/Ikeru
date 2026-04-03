@@ -23,6 +23,7 @@ struct SettingsView: View {
             ScrollView {
                 VStack(spacing: IkeruTheme.Spacing.lg) {
                     profileSection
+                    aiProvidersSection
                 }
                 .padding(IkeruTheme.Spacing.md)
             }
@@ -127,6 +128,40 @@ struct SettingsView: View {
                 }
             }
         }
+    }
+
+    // MARK: - AI Providers Section
+
+    private var aiProvidersSection: some View {
+        VStack(alignment: .leading, spacing: IkeruTheme.Spacing.md) {
+            Text("AI")
+                .font(.ikeruHeading3)
+                .foregroundStyle(.ikeruTextSecondary)
+                .padding(.leading, IkeruTheme.Spacing.xs)
+
+            NavigationLink {
+                AISettingsView()
+            } label: {
+                HStack {
+                    VStack(alignment: .leading, spacing: IkeruTheme.Spacing.xs) {
+                        Text("AI Providers")
+                            .font(.ikeruBody)
+                            .foregroundStyle(.white)
+
+                        Text("Configure API keys and local GPU")
+                            .font(.ikeruCaption)
+                            .foregroundStyle(.ikeruTextSecondary)
+                    }
+
+                    Spacer()
+
+                    Image(systemName: "chevron.right")
+                        .font(.ikeruCaption)
+                        .foregroundStyle(.ikeruTextSecondary)
+                }
+            }
+        }
+        .ikeruCard(.standard)
     }
 
     // MARK: - Actions
