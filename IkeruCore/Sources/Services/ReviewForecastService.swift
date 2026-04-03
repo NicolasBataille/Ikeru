@@ -5,7 +5,7 @@ import os
 /// Provides review queue analytics and daily review forecasts.
 /// Uses card due dates to project future review workload.
 @Observable
-public final class ReviewForecastService {
+public final class ReviewForecastService: @unchecked Sendable {
 
     private let cardRepository: CardRepository
 

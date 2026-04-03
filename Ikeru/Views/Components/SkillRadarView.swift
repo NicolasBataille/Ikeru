@@ -218,8 +218,8 @@ struct SkillRadarView: View {
     /// Axis angles: 0 = top, 1 = right, 2 = bottom, 3 = left
     /// Arranged clockwise starting from top (-π/2).
     private func angleForAxis(_ index: Int) -> Double {
-        let startAngle = -.pi / 2
-        return startAngle + (Double(index) * .pi / 2)
+        let startAngle = -Double.pi / 2
+        return startAngle + (Double(index) * Double.pi / 2)
     }
 
     private func pointOnCircle(

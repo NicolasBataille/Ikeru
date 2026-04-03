@@ -117,17 +117,18 @@ public final class AudioService {
             queue: .main
         ) { [weak self] notification in
             guard let self else { return }
+            let typeValue = notification.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt
+            let optionsValue = notification.userInfo?[AVAudioSessionInterruptionOptionKey] as? UInt
             Task { @MainActor in
-                self.handleInterruption(notification: notification)
+                self.handleInterruption(typeValue: typeValue, optionsValue: optionsValue)
             }
         }
         #endif
     }
 
     #if os(iOS) || os(watchOS)
-    private func handleInterruption(notification: Notification) {
-        guard let userInfo = notification.userInfo,
-              let typeValue = userInfo[AVAudioSessionInterruptionTypeKey] as? UInt,
+    private func handleInterruption(typeValue: UInt?, optionsValue: UInt?) {
+        guard let typeValue,
               let type = AVAudioSession.InterruptionType(rawValue: typeValue) else {
             return
         }
@@ -138,8 +139,7 @@ public final class AudioService {
             stop()
         case .ended:
             Logger.audio.info("Audio interruption ended")
-            let optionsValue = userInfo[AVAudioSessionInterruptionOptionKey] as? UInt ?? 0
-            let options = AVAudioSession.InterruptionOptions(rawValue: optionsValue)
+            let options = AVAudioSession.InterruptionOptions(rawValue: optionsValue ?? 0)
             if options.contains(.shouldResume) {
                 configureAudioSession()
                 Logger.audio.info("Audio session reactivated after interruption")

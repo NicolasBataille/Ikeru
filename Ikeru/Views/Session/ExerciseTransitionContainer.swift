@@ -105,6 +105,30 @@ struct ExerciseTransitionContainer: View {
                 detail: "Arrange words to form a sentence",
                 skill: .writing
             )
+
+        case .vocabularyStudy:
+            placeholderExerciseView(
+                icon: sfSymbol(for: .reading),
+                title: "Vocabulary Study",
+                detail: "Learn new vocabulary",
+                skill: .reading
+            )
+
+        case .fillInBlank:
+            placeholderExerciseView(
+                icon: sfSymbol(for: .reading),
+                title: "Fill in the Blank",
+                detail: "Complete the sentence",
+                skill: .reading
+            )
+
+        case .readingPassage:
+            placeholderExerciseView(
+                icon: sfSymbol(for: .reading),
+                title: "Reading Passage",
+                detail: "Read and comprehend",
+                skill: .reading
+            )
         }
     }
 
@@ -229,6 +253,9 @@ extension ExerciseItem {
         case .listeningExercise(let id): "listening-\(id)"
         case .speakingExercise(let id): "speaking-\(id)"
         case .sentenceConstruction(let id): "sentence-\(id)"
+        case .vocabularyStudy(let id): "vocabulary-\(id)"
+        case .fillInBlank(let id): "fillinblank-\(id)"
+        case .readingPassage(let id): "reading-\(id)"
         }
     }
 }

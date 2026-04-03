@@ -69,7 +69,7 @@ struct HandwritingCanvasView: View {
             .frame(width: canvasSize, height: canvasSize)
             .contentShape(Rectangle())
             .gesture(drawingGesture)
-            .sensoryFeedback(.impact(.light), trigger: isDrawing)
+            .sensoryFeedback(.impact(weight: .light), trigger: isDrawing)
         }
         .aspectRatio(1, contentMode: .fit)
     }

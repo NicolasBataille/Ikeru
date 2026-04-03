@@ -76,7 +76,7 @@ struct StrokeOrderExerciseView: View {
                         viewModel.advanceAnimationStroke()
                     }
                 )
-                .sensoryFeedback(.impact(.light), trigger: viewModel.currentStrokeIndex)
+                .sensoryFeedback(.impact(weight: .light), trigger: viewModel.currentStrokeIndex)
 
             case .practice:
                 StrokeTracingView(

@@ -112,7 +112,7 @@ public final class CardReviewViewModel {
     }
 
     /// Grade from a swipe direction.
-    public func gradeFromSwipe(direction: SwipeDirection) async {
+    func gradeFromSwipe(direction: SwipeDirection) async {
         await gradeCard(grade: direction.grade)
     }
 

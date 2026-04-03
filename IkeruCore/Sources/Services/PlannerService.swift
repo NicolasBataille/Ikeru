@@ -11,7 +11,7 @@ import os
 ///
 /// All composition logic is pure — no side effects, no database writes.
 @Observable
-public final class PlannerService {
+public final class PlannerService: @unchecked Sendable {
 
     /// Maximum number of new (unseen) cards to include per session.
     public static let maxNewCardsPerSession = 5

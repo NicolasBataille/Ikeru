@@ -86,7 +86,7 @@ public struct PitchAccentPattern: Sendable, Equatable {
     /// Builds the high/low array from accent position using standard Tokyo-dialect rules:
     /// - First mora is low unless atamadaka (accent position 1).
     /// - Pitch rises after mora 1 and drops after the accent position.
-    static func buildMoraHighLow(moraCount: Int, accentPosition: Int) -> [Bool] {
+    public static func buildMoraHighLow(moraCount: Int, accentPosition: Int) -> [Bool] {
         guard moraCount > 0 else { return [] }
 
         var result = [Bool](repeating: false, count: moraCount)

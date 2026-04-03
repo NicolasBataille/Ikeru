@@ -158,8 +158,7 @@ public final class StrokeOrderViewModel {
         strokeResults.append(result)
 
         Logger.ui.debug(
-            "Stroke \(self.currentStrokeIndex) result: \(String(describing: result)), " +
-            "score: \(result.score)"
+            "Stroke \(self.currentStrokeIndex) result: \(String(describing: result)), score: \(result.score)"
         )
 
         // Advance to next stroke
@@ -171,8 +170,7 @@ public final class StrokeOrderViewModel {
             let overall = accuracyService.evaluateOverall(strokeResults: strokeResults)
             overallResult = overall
             Logger.ui.info(
-                "Character '\(self.character)' tracing complete: " +
-                "passed=\(overall.passed), avgScore=\(overall.averageScore)"
+                "Character '\(self.character)' tracing complete: passed=\(overall.passed), avgScore=\(overall.averageScore)"
             )
         }
     }

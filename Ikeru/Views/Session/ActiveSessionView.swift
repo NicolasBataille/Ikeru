@@ -10,7 +10,7 @@ import os
 /// Supports swipe-down pause gesture and abandon confirmation.
 struct ActiveSessionView: View {
 
-    var viewModel: SessionViewModel
+    @Bindable var viewModel: SessionViewModel
     @State private var showPauseOverlay = false
     @State private var hapticTriggerCorrect = false
     @State private var hapticTriggerIncorrect = false

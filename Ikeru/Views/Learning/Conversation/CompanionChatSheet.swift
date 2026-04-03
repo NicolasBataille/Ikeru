@@ -221,7 +221,11 @@ struct CompanionChatSheet: View {
     private func scrollToBottom(proxy: ScrollViewProxy) {
         if let lastId = viewModel.messages.last?.id {
             withAnimation(.easeOut(duration: IkeruTheme.Animation.quickDuration)) {
-                proxy.scrollTo(viewModel.isTyping ? "typing-indicator" : lastId, anchor: .bottom)
+                if viewModel.isTyping {
+                    proxy.scrollTo("typing-indicator", anchor: .bottom)
+                } else {
+                    proxy.scrollTo(lastId, anchor: .bottom)
+                }
             }
         }
     }

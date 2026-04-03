@@ -69,7 +69,8 @@ final class LiveActivityManager {
             streakCount: streakCount
         )
 
-        await activity.update(.init(state: state, staleDate: nil))
+        nonisolated(unsafe) let act = activity
+        await act.update(.init(state: state, staleDate: nil))
     }
 
     // MARK: - End
@@ -93,7 +94,8 @@ final class LiveActivityManager {
             streakCount: streakCount
         )
 
-        await activity.end(
+        nonisolated(unsafe) let act = activity
+        await act.end(
             .init(state: finalState, staleDate: nil),
             dismissalPolicy: .after(.now + 30)
         )

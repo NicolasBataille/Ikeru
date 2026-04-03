@@ -67,7 +67,11 @@ public final class ToastManager {
 // MARK: - Environment Key
 
 private struct ToastManagerKey: EnvironmentKey {
-    nonisolated(unsafe) static let defaultValue = ToastManager()
+    nonisolated(unsafe) static let defaultValue: ToastManager = {
+        MainActor.assumeIsolated {
+            ToastManager()
+        }
+    }()
 }
 
 extension EnvironmentValues {

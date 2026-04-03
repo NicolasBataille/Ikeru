@@ -3,6 +3,7 @@ import Foundation
 @testable import IkeruCore
 
 @Suite("VolumeDetector — Volume and Mute Detection")
+@MainActor
 struct VolumeDetectorTests {
 
     // MARK: - MockVolumeDetector Tests

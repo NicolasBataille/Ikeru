@@ -67,13 +67,11 @@ struct SentenceConstructionView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
 
             WrappingHStack(tokens: viewModel.arrangedTokens, spacing: IkeruTheme.Spacing.sm) { token in
-                let isIncorrect = incorrectPosition(for: token)
-
                 tokenTile(
                     token: token,
                     highlight: tileHighlight(
                         token: token,
-                        isIncorrect: isIncorrect
+                        isIncorrect: incorrectPosition(for: token)
                     )
                 )
                 .matchedGeometryEffect(id: token.id, in: tokenAnimation)

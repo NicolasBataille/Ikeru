@@ -389,7 +389,8 @@ struct PitchAccentView: View {
                         engine.stop()
 
                         if let pcmBuffer = Self.buildPCMBuffer(from: collectedSamples, format: recordingFormat) {
-                            continuation.resume(returning: pcmBuffer)
+                            nonisolated(unsafe) let buf = pcmBuffer
+                            continuation.resume(returning: buf)
                         } else {
                             continuation.resume(throwing: PitchCaptureError.bufferCreationFailed)
                         }
@@ -414,7 +415,8 @@ struct PitchAccentView: View {
                     if collectedSamples.isEmpty {
                         continuation.resume(throwing: PitchCaptureError.noAudioCaptured)
                     } else if let pcmBuffer = Self.buildPCMBuffer(from: collectedSamples, format: recordingFormat) {
-                        continuation.resume(returning: pcmBuffer)
+                        nonisolated(unsafe) let buf = pcmBuffer
+                        continuation.resume(returning: buf)
                     } else {
                         continuation.resume(throwing: PitchCaptureError.bufferCreationFailed)
                     }

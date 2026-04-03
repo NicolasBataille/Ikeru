@@ -130,6 +130,30 @@ public struct CardDTO: Sendable, Identifiable {
     public let dueDate: Date
     public let lapseCount: Int
     public let leechFlag: Bool
+
+    public init(
+        id: UUID,
+        front: String,
+        back: String,
+        type: CardType,
+        fsrsState: FSRSState,
+        easeFactor: Double,
+        interval: Int,
+        dueDate: Date,
+        lapseCount: Int,
+        leechFlag: Bool
+    ) {
+        self.id = id
+        self.front = front
+        self.back = back
+        self.type = type
+        self.fsrsState = fsrsState
+        self.easeFactor = easeFactor
+        self.interval = interval
+        self.dueDate = dueDate
+        self.lapseCount = lapseCount
+        self.leechFlag = leechFlag
+    }
 }
 
 /// Lightweight, Sendable snapshot of a ReviewLog for cross-actor transfer.

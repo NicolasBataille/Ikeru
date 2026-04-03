@@ -43,4 +43,44 @@ extension Color {
     static var ikeruTextSecondary: Color {
         Color.white.opacity(IkeruTheme.Colors.textSecondaryOpacity)
     }
+
+    static var ikeruError: Color {
+        Color(hex: IkeruTheme.Colors.secondaryAccent)
+    }
+}
+
+// MARK: - ShapeStyle Convenience Accessors
+
+extension ShapeStyle where Self == Color {
+    static var ikeruTextSecondary: Color {
+        Color.ikeruTextSecondary
+    }
+
+    static var ikeruBackground: Color {
+        Color.ikeruBackground
+    }
+
+    static var ikeruSurface: Color {
+        Color.ikeruSurface
+    }
+
+    static var ikeruPrimaryAccent: Color {
+        Color.ikeruPrimaryAccent
+    }
+
+    static var ikeruSecondaryAccent: Color {
+        Color.ikeruSecondaryAccent
+    }
+
+    static var ikeruSuccess: Color {
+        Color.ikeruSuccess
+    }
+
+    static var ikeruKanjiText: Color {
+        Color.ikeruKanjiText
+    }
+
+    static var ikeruError: Color {
+        Color.ikeruError
+    }
 }

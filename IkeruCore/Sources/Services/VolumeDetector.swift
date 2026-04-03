@@ -5,6 +5,7 @@ import os
 
 /// Abstraction for detecting system volume and mute state.
 /// Inject this protocol to decouple audio monitoring from business logic.
+@MainActor
 public protocol VolumeDetecting: Sendable {
     /// Whether the system volume is effectively muted (volume < 0.01).
     var isMuted: Bool { get }
@@ -109,6 +110,7 @@ public final class SystemVolumeDetector: NSObject, VolumeDetecting, @unchecked S
 // MARK: - MockVolumeDetector (for testing)
 
 /// A test double for VolumeDetecting that allows manual control of volume state.
+@MainActor
 public final class MockVolumeDetector: VolumeDetecting, @unchecked Sendable {
 
     public private(set) var isMuted: Bool

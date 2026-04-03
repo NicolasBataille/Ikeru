@@ -121,15 +121,13 @@ public final class HandwritingViewModel {
             feedbackState = evaluateFeedback(result: result)
 
             Logger.content.info(
-                "Recognition for '\(self.targetCharacter)': " +
-                "\(self.feedbackState) in \(result.formattedDuration)"
+                "Recognition for '\(self.targetCharacter)': \(String(describing: self.feedbackState)) in \(result.formattedDuration)"
             )
         } catch {
             recognitionState = .failed(error)
             feedbackState = .incorrect
             Logger.content.error(
-                "Recognition failed for '\(self.targetCharacter)': " +
-                "\(error.localizedDescription)"
+                "Recognition failed for '\(self.targetCharacter)': \(error.localizedDescription)"
             )
         }
     }

@@ -444,7 +444,7 @@ public final class SessionViewModel {
     }
 
     /// Grade from a swipe direction.
-    public func gradeFromSwipe(direction: SwipeDirection) async {
+    func gradeFromSwipe(direction: SwipeDirection) async {
         await gradeAndAdvance(grade: direction.grade)
     }
 

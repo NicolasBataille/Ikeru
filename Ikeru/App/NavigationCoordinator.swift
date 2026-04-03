@@ -64,7 +64,11 @@ public final class NavigationCoordinator {
 // MARK: - Environment Key
 
 private struct NavigationCoordinatorKey: EnvironmentKey {
-    nonisolated(unsafe) static let defaultValue = NavigationCoordinator()
+    nonisolated(unsafe) static let defaultValue: NavigationCoordinator = {
+        MainActor.assumeIsolated {
+            NavigationCoordinator()
+        }
+    }()
 }
 
 extension EnvironmentValues {

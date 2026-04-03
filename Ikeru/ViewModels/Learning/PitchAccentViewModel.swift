@@ -61,7 +61,7 @@ public final class PitchAccentViewModel {
 
     /// Analyzes a recorded audio buffer against the current target pattern.
     /// - Parameter buffer: The PCM audio buffer from the learner's recording.
-    func analyzeRecording(buffer: AVAudioPCMBuffer) async {
+    func analyzeRecording(buffer: sending AVAudioPCMBuffer) async {
         guard !isAnalyzing else { return }
         guard let target = targetPattern else {
             Logger.audio.warning("Cannot analyze pitch — no target pattern set")
