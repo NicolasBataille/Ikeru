@@ -46,16 +46,18 @@ public final class KanjiStudyViewModel {
         loadingState = .loading
         Logger.content.info("Loading content for kanji '\(self.kanji.character)'")
 
-        let fetchedRadicals = await contentRepository.radicalsForKanji(kanji.character)
-        let fetchedVocabulary = await contentRepository.vocabularyForKanji(kanji.character)
+        async let radicalsFetch = contentRepository.radicalsForKanji(kanji.character)
+        async let vocabularyFetch = contentRepository.vocabularyForKanji(kanji.character)
+        let (fetchedRadicals, fetchedVocabulary) = await (radicalsFetch, vocabularyFetch)
 
         radicals = fetchedRadicals
         vocabulary = fetchedVocabulary
         loadingState = .loaded(())
 
-        Logger.content.info(
-            "Loaded \(fetchedRadicals.count) radicals and " +
-            "\(fetchedVocabulary.count) vocabulary for '\(self.kanji.character)'"
-        )
+        if fetchedRadicals.isEmpty && fetchedVocabulary.isEmpty {
+            Logger.content.warning("Both radicals and vocabulary empty for '\(self.kanji.character)' — possible load failure")
+        } else {
+            Logger.content.info("Loaded \(fetchedRadicals.count) radicals and \(fetchedVocabulary.count) vocabulary for '\(self.kanji.character)'")
+        }
     }
 }

@@ -64,7 +64,12 @@ public struct VisionRecognitionProvider: RecognitionProvider, Sendable {
     public func recognize(image: CGImage) async throws -> [RecognitionCandidate] {
         let maxN = maxCandidates
         return try await withCheckedThrowingContinuation { continuation in
+            var resumed = false
+
             let request = VNRecognizeTextRequest { request, error in
+                guard !resumed else { return }
+                resumed = true
+
                 if let error {
                     continuation.resume(throwing: HandwritingRecognitionError.visionFailed(
                         error.localizedDescription
@@ -92,6 +97,8 @@ public struct VisionRecognitionProvider: RecognitionProvider, Sendable {
             do {
                 try handler.perform([request])
             } catch {
+                guard !resumed else { return }
+                resumed = true
                 continuation.resume(throwing: HandwritingRecognitionError.visionFailed(
                     error.localizedDescription
                 ))
@@ -164,7 +171,7 @@ public struct ShapeMatchingProvider: RecognitionProvider, Sendable {
         let width = image.width
         let height = image.height
         let totalPixels = width * height
-        guard totalPixels > 0 else { return 0 }
+        guard totalPixels > 0, totalPixels <= 256 * 256 else { return 0 }
 
         guard let context = CGContext(
             data: nil,
