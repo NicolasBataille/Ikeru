@@ -59,22 +59,59 @@ public final class SessionViewModel {
         return Double(currentIndex) / Double(sessionQueue.count)
     }
 
-    /// Elapsed session duration in seconds.
+    /// Elapsed session duration in seconds (driven by ContinuousClock timer).
+    public private(set) var elapsedTime: TimeInterval = 0
+
+    /// Whether the ContinuousClock timer is actively ticking.
+    public private(set) var isTimerRunning: Bool = false
+
+    /// Elapsed session duration in seconds (legacy computed property for compatibility).
     public var elapsedSeconds: TimeInterval {
-        guard isActive else { return 0 }
-        return Date().timeIntervalSince(sessionStartTime)
+        elapsedTime
     }
 
     /// Formatted elapsed time string (MM:SS).
     public var elapsedTimeFormatted: String {
-        let total = Int(elapsedSeconds)
-        let minutes = total / 60
-        let seconds = total % 60
-        return String(format: "%d:%02d", minutes, seconds)
+        formatTime(elapsedTime)
+    }
+
+    /// Estimated total session duration in seconds, computed from exercise list.
+    public var estimatedTotalTime: TimeInterval {
+        TimeInterval(sessionExercises.reduce(0) { $0 + $1.estimatedDurationSeconds })
+    }
+
+    /// Estimated remaining time in seconds.
+    public var estimatedRemainingTime: TimeInterval {
+        max(0, estimatedTotalTime - elapsedTime)
+    }
+
+    /// Formatted estimated remaining time string ("-MM:SS").
+    public var estimatedRemainingTimeFormatted: String {
+        "-" + formatTime(estimatedRemainingTime)
     }
 
     /// Estimated session card count for preview.
     public private(set) var estimatedCardCount: Int = 0
+
+    // MARK: - Immersive Session State
+
+    /// The ordered list of exercises for the current session (adaptive or SRS-only).
+    public private(set) var sessionExercises: [ExerciseItem] = []
+
+    /// Index of the current exercise in the sessionExercises array.
+    public private(set) var currentExerciseIndex: Int = 0
+
+    /// The current exercise item, or nil if session is complete.
+    public var currentExercise: ExerciseItem? {
+        guard currentExerciseIndex < sessionExercises.count else { return nil }
+        return sessionExercises[currentExerciseIndex]
+    }
+
+    /// Whether the abandon confirmation dialog should be shown.
+    public var showAbandonConfirmation: Bool = false
+
+    /// Triggers animation when exercise transitions occur.
+    public private(set) var exerciseTransitionTrigger: Int = 0
 
     // MARK: - RPG State
 
@@ -110,6 +147,7 @@ public final class SessionViewModel {
     private let modelContainer: ModelContainer
     private let reviewForecastService: ReviewForecastService
     private var cardStartTime: Date = Date()
+    private var timerTask: Task<Void, Never>?
 
     // MARK: - Init
 
@@ -141,6 +179,15 @@ public final class SessionViewModel {
         cardStartTime = Date()
         isActive = true
         estimatedCardCount = queue.count
+
+        // Build exercise list from cards (each card is an SRS review)
+        sessionExercises = queue.map { .srsReview($0) }
+        currentExerciseIndex = 0
+        showAbandonConfirmation = false
+
+        // Start timer
+        elapsedTime = 0
+        startTimer()
 
         // Load persisted RPG state
         await loadRPGState()
@@ -221,6 +268,15 @@ public final class SessionViewModel {
         isActive = true
         estimatedCardCount = plan.exercises.count
 
+        // Store full exercise list for immersive mode
+        sessionExercises = plan.exercises
+        currentExerciseIndex = 0
+        showAbandonConfirmation = false
+
+        // Start timer
+        elapsedTime = 0
+        startTimer()
+
         await loadRPGState()
 
         Logger.ui.info(
@@ -280,11 +336,15 @@ public final class SessionViewModel {
         currentIndex += 1
         cardStartTime = Date()
 
+        // Advance exercise index to stay in sync
+        advanceToNextExercise()
+
         // Clear feedback after brief display
         try? await Task.sleep(for: .milliseconds(300))
         feedbackState = nil
 
         if isSessionComplete {
+            stopTimer()
             Logger.ui.info(
                 "Session complete: \(self.reviewedCount) reviewed, \(self.xpEarned) XP earned"
             )
@@ -309,6 +369,7 @@ public final class SessionViewModel {
     /// Pauses the current session.
     public func pauseSession() {
         isPaused = true
+        pauseTimer()
         Logger.ui.debug("Session paused at card \(self.currentIndex + 1)/\(self.sessionQueue.count)")
     }
 
@@ -316,6 +377,7 @@ public final class SessionViewModel {
     public func resumeSession() {
         isPaused = false
         cardStartTime = Date()
+        startTimer()
         Logger.ui.debug("Session resumed at card \(self.currentIndex + 1)/\(self.sessionQueue.count)")
     }
 
@@ -326,7 +388,10 @@ public final class SessionViewModel {
         )
         // Mark as complete by jumping to end of queue
         currentIndex = sessionQueue.count
+        currentExerciseIndex = sessionExercises.count
         isPaused = false
+        showAbandonConfirmation = false
+        stopTimer()
     }
 
     /// Dismisses the session completely (called after summary).
@@ -334,8 +399,83 @@ public final class SessionViewModel {
         isActive = false
         isPaused = false
         sessionQueue = []
+        sessionExercises = []
         currentIndex = 0
+        currentExerciseIndex = 0
+        showAbandonConfirmation = false
+        stopTimer()
         Logger.ui.debug("Session dismissed")
+    }
+
+    // MARK: - Exercise Navigation
+
+    /// Advances to the next exercise in the session.
+    /// Called internally after grading; ends session if this was the last exercise.
+    public func advanceToNextExercise() {
+        let nextIndex = currentExerciseIndex + 1
+        if nextIndex >= sessionExercises.count {
+            currentExerciseIndex = sessionExercises.count
+            Logger.ui.debug("Last exercise completed")
+        } else {
+            exerciseTransitionTrigger += 1
+            currentExerciseIndex = nextIndex
+            Logger.ui.debug(
+                "Advanced to exercise \(nextIndex + 1)/\(self.sessionExercises.count)"
+            )
+        }
+    }
+
+    /// Requests abandon confirmation — shows the confirmation dialog.
+    public func requestAbandon() {
+        showAbandonConfirmation = true
+    }
+
+    /// Cancels the abandon request — dismisses the dialog and returns to pause.
+    public func cancelAbandon() {
+        showAbandonConfirmation = false
+    }
+
+    /// Progress description for the abandon dialog (e.g., "You've completed 3 of 8 exercises").
+    public var abandonProgressDescription: String {
+        "You've completed \(reviewedCount) of \(sessionExercises.count) exercises"
+    }
+
+    // MARK: - Timer
+
+    /// Starts the ContinuousClock-based timer that increments elapsedTime every second.
+    private func startTimer() {
+        guard !isTimerRunning else { return }
+        isTimerRunning = true
+        timerTask = Task { @MainActor in
+            let clock = ContinuousClock()
+            while !Task.isCancelled {
+                try? await clock.sleep(for: .seconds(1))
+                guard !Task.isCancelled else { break }
+                self.elapsedTime += 1
+            }
+        }
+    }
+
+    /// Pauses the timer by cancelling the task.
+    private func pauseTimer() {
+        timerTask?.cancel()
+        timerTask = nil
+        isTimerRunning = false
+    }
+
+    /// Stops the timer completely.
+    private func stopTimer() {
+        timerTask?.cancel()
+        timerTask = nil
+        isTimerRunning = false
+    }
+
+    /// Formats a time interval as "M:SS".
+    private func formatTime(_ interval: TimeInterval) -> String {
+        let total = Int(interval)
+        let minutes = total / 60
+        let seconds = total % 60
+        return String(format: "%d:%02d", minutes, seconds)
     }
 
     // MARK: - RPG State Persistence
@@ -344,20 +484,24 @@ public final class SessionViewModel {
     private func loadRPGState() async {
         let context = modelContainer.mainContext
         let descriptor = FetchDescriptor<RPGState>()
-        let results = (try? context.fetch(descriptor)) ?? []
-
-        if let state = results.first {
-            totalXP = state.xp
-            currentLevel = state.level
-            Logger.rpg.debug("Loaded RPG state: xp=\(state.xp), level=\(state.level)")
-        } else {
-            // Create initial RPG state
-            let newState = RPGState()
-            context.insert(newState)
-            try? context.save()
+        do {
+            let results = try context.fetch(descriptor)
+            if let state = results.first {
+                totalXP = state.xp
+                currentLevel = state.level
+                Logger.rpg.debug("Loaded RPG state: xp=\(state.xp), level=\(state.level)")
+            } else {
+                let newState = RPGState()
+                context.insert(newState)
+                try context.save()
+                totalXP = 0
+                currentLevel = 1
+                Logger.rpg.info("Created initial RPG state")
+            }
+        } catch {
+            Logger.rpg.error("Failed to load RPG state: \(error.localizedDescription)")
             totalXP = 0
             currentLevel = 1
-            Logger.rpg.info("Created initial RPG state")
         }
     }
 
@@ -365,13 +509,16 @@ public final class SessionViewModel {
     private func persistRPGState() async {
         let context = modelContainer.mainContext
         let descriptor = FetchDescriptor<RPGState>()
-        let results = (try? context.fetch(descriptor)) ?? []
-
-        if let state = results.first {
-            state.xp = totalXP
-            state.level = currentLevel
-            state.totalReviewsCompleted += 1
-            try? context.save()
+        do {
+            let results = try context.fetch(descriptor)
+            if let state = results.first {
+                state.xp = totalXP
+                state.level = currentLevel
+                state.totalReviewsCompleted += 1
+                try context.save()
+            }
+        } catch {
+            Logger.rpg.error("Failed to persist RPG state: \(error.localizedDescription)")
         }
     }
 

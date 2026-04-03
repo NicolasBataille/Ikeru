@@ -5,20 +5,18 @@ import os
 
 // MARK: - ActiveSessionView
 
-/// Full-screen immersive session view that presents cards sequentially.
-/// Presented as .fullScreenCover to hide the tab bar.
+/// Full-screen immersive session view with exercise transitions.
+/// Hides the tab bar and status bar for complete immersion.
+/// Supports swipe-down pause gesture and abandon confirmation.
 struct ActiveSessionView: View {
 
     var viewModel: SessionViewModel
-    @State private var showPauseSheet = false
+    @State private var showPauseOverlay = false
     @State private var hapticTriggerCorrect = false
     @State private var hapticTriggerIncorrect = false
-    @State private var timerTick: Int = 0
     @State private var xpGained: Int?
     @State private var levelUpLevel: Int?
-
-    /// Timer to update elapsed time display.
-    private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
+    @State private var dragOffset: CGFloat = 0
 
     var body: some View {
         ZStack {
@@ -27,15 +25,24 @@ struct ActiveSessionView: View {
 
             if viewModel.isSessionComplete {
                 SessionSummaryView(viewModel: viewModel)
+            } else if viewModel.sessionExercises.isEmpty {
+                emptySessionView
             } else {
-                sessionContent
+                immersiveSessionContent
+            }
+
+            // Pause overlay
+            if showPauseOverlay {
+                pauseOverlay
             }
         }
+        .toolbar(.hidden, for: .tabBar)
+        .statusBarHidden(true)
+        .persistentSystemOverlays(.hidden)
         .xpGainOverlay(xpGained: $xpGained)
         .levelUpOverlay(level: $levelUpLevel)
         .sensoryFeedback(.success, trigger: hapticTriggerCorrect)
         .sensoryFeedback(.warning, trigger: hapticTriggerIncorrect)
-        .gesture(pauseSwipeGesture)
         .onChange(of: viewModel.lastXPGained) { _, newValue in
             if let xp = newValue {
                 xpGained = xp
@@ -48,38 +55,38 @@ struct ActiveSessionView: View {
                 viewModel.clearLevelUp()
             }
         }
-        .sheet(isPresented: $showPauseSheet) {
-            PauseSheetView(
-                onResume: {
-                    showPauseSheet = false
-                    viewModel.resumeSession()
-                },
-                onEndSession: {
-                    showPauseSheet = false
-                    viewModel.endSession()
-                }
-            )
-            .presentationDetents([.medium])
-            .presentationDragIndicator(.visible)
-        }
-        .onReceive(timer) { _ in
-            if viewModel.isActive && !viewModel.isPaused {
-                timerTick += 1
+        .confirmationDialog(
+            "End Session?",
+            isPresented: $viewModel.showAbandonConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("End Session", role: .destructive) {
+                viewModel.endSession()
+                showPauseOverlay = false
             }
+            Button("Cancel", role: .cancel) {
+                viewModel.cancelAbandon()
+            }
+        } message: {
+            Text(viewModel.abandonProgressDescription)
         }
     }
 
-    // MARK: - Session Content
+    // MARK: - Immersive Session Content
 
-    private var sessionContent: some View {
+    private var immersiveSessionContent: some View {
         VStack(spacing: 0) {
+            // Drag indicator pill
+            dragIndicatorPill
+
             // Progress bar at top
             SessionProgressBar(
-                progress: viewModel.sessionProgress,
-                exerciseCountText: "\(viewModel.currentIndex + 1)/\(viewModel.sessionQueue.count)",
-                elapsedTime: viewModel.elapsedTimeFormatted
+                exercises: viewModel.sessionExercises,
+                currentIndex: viewModel.currentExerciseIndex,
+                elapsedTime: viewModel.elapsedTime,
+                estimatedTotalTime: viewModel.estimatedTotalTime
             )
-            .padding(.top, IkeruTheme.Spacing.sm)
+            .padding(.top, IkeruTheme.Spacing.xs)
 
             // Compact XP bar below progress
             XPBarView(
@@ -90,97 +97,47 @@ struct ActiveSessionView: View {
             .padding(.horizontal, IkeruTheme.Spacing.md)
             .padding(.top, IkeruTheme.Spacing.xs)
 
-            Spacer()
-
-            // Current card with swipe gestures
-            if let card = viewModel.currentCard {
-                cardWithFeedback(card: card)
-            }
-
-            Spacer()
-
-            // Grade buttons fallback
-            GradeButtonsView { grade in
-                Task {
-                    triggerHaptic(for: grade)
-                    await viewModel.gradeAndAdvance(grade: grade)
-                }
-            }
-            .padding(.horizontal, IkeruTheme.Spacing.md)
-            .padding(.bottom, IkeruTheme.Spacing.md)
+            // Exercise transition container
+            ExerciseTransitionContainer(
+                exercise: viewModel.currentExercise,
+                onSwipeGrade: { direction in
+                    Task {
+                        triggerHaptic(for: direction.grade)
+                        await viewModel.gradeFromSwipe(direction: direction)
+                    }
+                },
+                onButtonGrade: { grade in
+                    Task {
+                        triggerHaptic(for: grade)
+                        await viewModel.gradeAndAdvance(grade: grade)
+                    }
+                },
+                currentCard: viewModel.currentCard,
+                nextCard: viewModel.nextCard,
+                feedbackState: viewModel.feedbackState
+            )
+            .frame(maxHeight: .infinity)
         }
+        .ignoresSafeArea(.container, edges: .bottom)
+        .gesture(pauseSwipeGesture)
     }
 
-    // MARK: - Card With Feedback
+    // MARK: - Drag Indicator Pill
 
-    private func cardWithFeedback(card: CardDTO) -> some View {
-        SRSCardView(
-            card: card,
-            nextCard: viewModel.nextCard
-        ) { direction in
-            Task {
-                triggerHaptic(for: direction.grade)
-                await viewModel.gradeFromSwipe(direction: direction)
-            }
-        }
-        .padding(.horizontal, IkeruTheme.Spacing.lg)
-        .overlay {
-            feedbackOverlay
-        }
+    private var dragIndicatorPill: some View {
+        RoundedRectangle(cornerRadius: IkeruTheme.Radius.full)
+            .fill(Color.ikeruTextSecondary)
+            .frame(width: 36, height: 4)
+            .padding(.top, IkeruTheme.Spacing.sm)
     }
 
-    // MARK: - Feedback Overlay
+    // MARK: - Pause Overlay
 
-    @ViewBuilder
-    private var feedbackOverlay: some View {
-        if let feedback = viewModel.feedbackState {
-            RoundedRectangle(cornerRadius: IkeruTheme.Radius.md)
-                .strokeBorder(feedback.color, lineWidth: 3)
-                .padding(.horizontal, IkeruTheme.Spacing.lg)
-                .transition(.opacity)
-                .animation(.easeOut(duration: 0.3), value: viewModel.feedbackState)
-        }
-    }
-
-    // MARK: - Pause Swipe Gesture
-
-    private var pauseSwipeGesture: some Gesture {
-        DragGesture(minimumDistance: 80)
-            .onEnded { value in
-                // Only trigger on a dominant downward swipe from near the top
-                let isDownward = value.translation.height > 100
-                let isVerticalDominant = abs(value.translation.height) > abs(value.translation.width) * 1.5
-                let startedNearTop = value.startLocation.y < 150
-
-                if isDownward && isVerticalDominant && startedNearTop {
-                    viewModel.pauseSession()
-                    showPauseSheet = true
-                }
-            }
-    }
-
-    // MARK: - Haptic Triggers
-
-    private func triggerHaptic(for grade: Grade) {
-        let isCorrect = grade == .good || grade == .easy
-        if isCorrect {
-            hapticTriggerCorrect.toggle()
-        } else {
-            hapticTriggerIncorrect.toggle()
-        }
-    }
-}
-
-// MARK: - Pause Sheet View
-
-private struct PauseSheetView: View {
-
-    let onResume: () -> Void
-    let onEndSession: () -> Void
-
-    var body: some View {
+    private var pauseOverlay: some View {
         ZStack {
-            Color.ikeruBackground
+            // Blur background
+            Rectangle()
+                .fill(.ultraThinMaterial)
                 .ignoresSafeArea()
 
             VStack(spacing: IkeruTheme.Spacing.xl) {
@@ -194,17 +151,21 @@ private struct PauseSheetView: View {
                     .font(.ikeruHeading1)
                     .foregroundStyle(.white)
 
+                Text(viewModel.abandonProgressDescription)
+                    .font(.ikeruBody)
+                    .foregroundStyle(.ikeruTextSecondary)
+
                 Spacer()
 
                 VStack(spacing: IkeruTheme.Spacing.md) {
                     Button("Resume") {
-                        onResume()
+                        resumeFromPause()
                     }
                     .ikeruButtonStyle(.primary)
                     .frame(maxWidth: .infinity)
 
                     Button("End Session") {
-                        onEndSession()
+                        viewModel.requestAbandon()
                     }
                     .ikeruButtonStyle(.danger)
                     .frame(maxWidth: .infinity)
@@ -212,6 +173,81 @@ private struct PauseSheetView: View {
                 .padding(.horizontal, IkeruTheme.Spacing.lg)
                 .padding(.bottom, IkeruTheme.Spacing.xl)
             }
+        }
+        .transition(
+            .opacity.combined(with: .scale(scale: 0.95))
+        )
+    }
+
+    // MARK: - Empty Session View
+
+    private var emptySessionView: some View {
+        VStack(spacing: IkeruTheme.Spacing.lg) {
+            Image(systemName: "tray.fill")
+                .font(.system(size: 48))
+                .foregroundStyle(.ikeruTextSecondary)
+
+            Text("No exercises available")
+                .font(.ikeruHeading2)
+                .foregroundStyle(.white)
+
+            Text("Come back later when you have cards to review.")
+                .font(.ikeruBody)
+                .foregroundStyle(.ikeruTextSecondary)
+                .multilineTextAlignment(.center)
+
+            Button("Dismiss") {
+                viewModel.dismissSession()
+            }
+            .ikeruButtonStyle(.primary)
+            .padding(.top, IkeruTheme.Spacing.md)
+        }
+        .padding(.horizontal, IkeruTheme.Spacing.lg)
+    }
+
+    // MARK: - Pause Swipe Gesture
+
+    private var pauseSwipeGesture: some Gesture {
+        DragGesture(minimumDistance: 80)
+            .onChanged { value in
+                let isDownward = value.translation.height > 0
+                let startedNearTop = value.startLocation.y < 150
+                if isDownward && startedNearTop {
+                    dragOffset = value.translation.height
+                }
+            }
+            .onEnded { value in
+                dragOffset = 0
+
+                let isDownward = value.translation.height > 100
+                let isVerticalDominant =
+                    abs(value.translation.height) > abs(value.translation.width) * 1.5
+                let startedNearTop = value.startLocation.y < 150
+
+                if isDownward && isVerticalDominant && startedNearTop {
+                    withAnimation(.spring(duration: IkeruTheme.Animation.standardDuration)) {
+                        viewModel.pauseSession()
+                        showPauseOverlay = true
+                    }
+                }
+            }
+    }
+
+    // MARK: - Helpers
+
+    private func resumeFromPause() {
+        withAnimation(.spring(duration: IkeruTheme.Animation.standardDuration)) {
+            showPauseOverlay = false
+            viewModel.resumeSession()
+        }
+    }
+
+    private func triggerHaptic(for grade: Grade) {
+        let isCorrect = grade == .good || grade == .easy
+        if isCorrect {
+            hapticTriggerCorrect.toggle()
+        } else {
+            hapticTriggerIncorrect.toggle()
         }
     }
 }

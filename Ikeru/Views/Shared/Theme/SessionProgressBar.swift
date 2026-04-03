@@ -1,11 +1,12 @@
 import SwiftUI
 import IkeruCore
 
-// MARK: - SessionProgressBar
+// MARK: - SessionProgressBar (Legacy)
 
 /// A thin 4pt amber progress bar displayed at the top of the session screen.
 /// Shows current exercise position and elapsed time.
-struct SessionProgressBar: View {
+/// Note: For immersive sessions, use ImmersiveSessionProgressBar instead.
+struct SimpleSessionProgressBar: View {
 
     /// Progress fraction (0.0 to 1.0).
     let progress: Double
@@ -55,29 +56,187 @@ struct SessionProgressBar: View {
     }
 }
 
+// MARK: - SessionProgressBar (Segmented)
+
+/// Segmented progress bar for immersive session mode.
+/// Each segment represents one exercise, with skill type icons and timing display.
+struct SessionProgressBar: View {
+
+    /// The ordered list of exercises in the session.
+    let exercises: [ExerciseItem]
+
+    /// Index of the currently active exercise.
+    let currentIndex: Int
+
+    /// Elapsed time in seconds.
+    let elapsedTime: TimeInterval
+
+    /// Estimated total session duration in seconds.
+    let estimatedTotalTime: TimeInterval
+
+    var body: some View {
+        VStack(spacing: IkeruTheme.Spacing.xs) {
+            // Time labels
+            timeLabelsRow
+
+            // Segmented progress bar
+            segmentedBar
+
+            // Skill type icons below segments
+            skillIconsRow
+        }
+        .padding(.horizontal, IkeruTheme.Spacing.md)
+    }
+
+    // MARK: - Time Labels
+
+    private var timeLabelsRow: some View {
+        HStack {
+            Text(formatTime(elapsedTime))
+                .font(.ikeruStats)
+                .foregroundStyle(.ikeruTextSecondary)
+
+            Spacer()
+
+            Text("-" + formatTime(max(0, estimatedTotalTime - elapsedTime)))
+                .font(.ikeruStats)
+                .foregroundStyle(.ikeruTextSecondary)
+        }
+    }
+
+    // MARK: - Segmented Bar
+
+    private var segmentedBar: some View {
+        HStack(spacing: 2) {
+            ForEach(Array(exercises.enumerated()), id: \.offset) { index, _ in
+                segmentView(at: index)
+            }
+        }
+        .frame(height: 4)
+    }
+
+    private func segmentView(at index: Int) -> some View {
+        RoundedRectangle(cornerRadius: 2)
+            .fill(segmentColor(at: index))
+            .animation(
+                .easeInOut(duration: IkeruTheme.Animation.quickDuration),
+                value: currentIndex
+            )
+    }
+
+    private func segmentColor(at index: Int) -> Color {
+        if index < currentIndex {
+            return .ikeruPrimaryAccent
+        } else if index == currentIndex {
+            return Color(hex: IkeruTheme.Colors.textPrimary)
+        } else {
+            return .ikeruSurface
+        }
+    }
+
+    // MARK: - Skill Icons
+
+    private var skillIconsRow: some View {
+        HStack(spacing: 0) {
+            // Show icons only when there are a reasonable number
+            if exercises.count <= 12 {
+                ForEach(Array(exercises.enumerated()), id: \.offset) { index, exercise in
+                    Image(systemName: sfSymbol(for: exercise.skill))
+                        .font(.system(size: 8))
+                        .foregroundStyle(iconColor(at: index))
+                        .frame(maxWidth: .infinity)
+                }
+            } else {
+                // For many exercises, show a compact count
+                Text("\(currentIndex + 1)/\(exercises.count)")
+                    .font(.ikeruCaption)
+                    .foregroundStyle(.ikeruTextSecondary)
+                    .frame(maxWidth: .infinity)
+            }
+        }
+    }
+
+    private func iconColor(at index: Int) -> Color {
+        if index < currentIndex {
+            return .ikeruPrimaryAccent
+        } else if index == currentIndex {
+            return .white
+        } else {
+            return .ikeruTextSecondary
+        }
+    }
+
+    // MARK: - Helpers
+
+    private func formatTime(_ interval: TimeInterval) -> String {
+        let total = Int(interval)
+        let minutes = total / 60
+        let seconds = total % 60
+        return String(format: "%d:%02d", minutes, seconds)
+    }
+}
+
+// MARK: - SkillType SF Symbol Mapping
+
+/// Maps a SkillType to the corresponding SF Symbol name.
+func sfSymbol(for skill: SkillType) -> String {
+    switch skill {
+    case .reading: "book.fill"
+    case .writing: "pencil.line"
+    case .listening: "ear.fill"
+    case .speaking: "mouth.fill"
+    }
+}
+
 // MARK: - Preview
 
-#Preview("SessionProgressBar") {
+#Preview("SessionProgressBar (Segmented)") {
+    let previewCard = CardDTO(
+        id: UUID(),
+        front: "\u{6F22}",
+        back: "kanji",
+        type: .kanji,
+        fsrsState: FSRSState(),
+        easeFactor: 2.5,
+        interval: 0,
+        dueDate: Date(),
+        lapseCount: 0,
+        leechFlag: false
+    )
+    let sampleExercises: [ExerciseItem] = [
+        .srsReview(previewCard),
+        .srsReview(previewCard),
+        .writingPractice("kanji"),
+        .listeningExercise(UUID()),
+        .speakingExercise(UUID()),
+        .srsReview(previewCard),
+        .grammarExercise(UUID()),
+        .kanjiStudy("test"),
+    ]
+
     ZStack {
         Color.ikeruBackground.ignoresSafeArea()
 
         VStack(spacing: IkeruTheme.Spacing.xl) {
             SessionProgressBar(
-                progress: 0.3,
-                exerciseCountText: "3/10",
-                elapsedTime: "1:25"
+                exercises: sampleExercises,
+                currentIndex: 3,
+                elapsedTime: 85,
+                estimatedTotalTime: 300
             )
 
             SessionProgressBar(
-                progress: 0.7,
-                exerciseCountText: "7/10",
-                elapsedTime: "4:10"
+                exercises: sampleExercises,
+                currentIndex: 0,
+                elapsedTime: 0,
+                estimatedTotalTime: 300
             )
 
             SessionProgressBar(
-                progress: 1.0,
-                exerciseCountText: "10/10",
-                elapsedTime: "6:42"
+                exercises: sampleExercises,
+                currentIndex: 7,
+                elapsedTime: 280,
+                estimatedTotalTime: 300
             )
         }
         .padding(IkeruTheme.Spacing.lg)
