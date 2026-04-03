@@ -97,6 +97,14 @@ struct ExerciseTransitionContainer: View {
                 detail: "Speak the phrase",
                 skill: .speaking
             )
+
+        case .sentenceConstruction:
+            placeholderExerciseView(
+                icon: sfSymbol(for: .writing),
+                title: "Sentence Construction",
+                detail: "Arrange words to form a sentence",
+                skill: .writing
+            )
         }
     }
 
@@ -220,6 +228,7 @@ extension ExerciseItem {
         case .writingPractice(let text): "writing-\(text)"
         case .listeningExercise(let id): "listening-\(id)"
         case .speakingExercise(let id): "speaking-\(id)"
+        case .sentenceConstruction(let id): "sentence-\(id)"
         }
     }
 }

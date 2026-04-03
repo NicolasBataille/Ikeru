@@ -4,6 +4,7 @@ import Foundation
 public typealias GrammarPointID = UUID
 public typealias ListeningExerciseID = UUID
 public typealias SpeakingExerciseID = UUID
+public typealias SentenceExerciseID = UUID
 
 /// A single exercise in an adaptive session plan.
 /// Each item maps to a skill and has an estimated duration.
@@ -20,6 +21,8 @@ public enum ExerciseItem: Sendable, Equatable {
     case listeningExercise(ListeningExerciseID)
     /// A speaking practice exercise.
     case speakingExercise(SpeakingExerciseID)
+    /// A sentence construction exercise.
+    case sentenceConstruction(SentenceExerciseID)
 
     /// The skill this exercise targets.
     public var skill: SkillType {
@@ -30,6 +33,7 @@ public enum ExerciseItem: Sendable, Equatable {
         case .writingPractice: .writing
         case .listeningExercise: .listening
         case .speakingExercise: .speaking
+        case .sentenceConstruction: .writing
         }
     }
 
@@ -42,6 +46,7 @@ public enum ExerciseItem: Sendable, Equatable {
         case .writingPractice: 90
         case .listeningExercise: 60
         case .speakingExercise: 90
+        case .sentenceConstruction: 60
         }
     }
 
@@ -49,7 +54,7 @@ public enum ExerciseItem: Sendable, Equatable {
     public var requiresAudio: Bool {
         switch self {
         case .listeningExercise, .speakingExercise: true
-        case .srsReview, .kanjiStudy, .grammarExercise, .writingPractice: false
+        case .srsReview, .kanjiStudy, .grammarExercise, .writingPractice, .sentenceConstruction: false
         }
     }
 }
