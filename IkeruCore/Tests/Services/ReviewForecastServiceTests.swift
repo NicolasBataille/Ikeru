@@ -4,6 +4,7 @@ import Foundation
 @testable import IkeruCore
 
 @Suite("ReviewForecastService")
+@MainActor
 struct ReviewForecastServiceTests {
 
     // MARK: - Helpers
@@ -107,7 +108,7 @@ struct ReviewForecastServiceTests {
         let today = calendar.startOfDay(for: now)
 
         try seedCardsWithDueDates(container: container, dueDates: [
-            now.addingTimeInterval(-3600),              // Today
+            today.addingTimeInterval(100),              // Today (just after midnight)
             today.addingTimeInterval(86400 + 100),      // Tomorrow
             today.addingTimeInterval(86400 + 200),      // Tomorrow
             today.addingTimeInterval(86400 * 2 + 100),  // Day after tomorrow

@@ -15,7 +15,7 @@ public final class FoundationModelsProvider: AIProvider, @unchecked Sendable {
     public var isAvailable: Bool {
         get async {
             #if canImport(FoundationModels)
-            if #available(iOS 26, *) {
+            if #available(iOS 26, macOS 26, *) {
                 return OnDeviceModelSession.isSupported
             }
             #endif
@@ -32,7 +32,7 @@ public final class FoundationModelsProvider: AIProvider, @unchecked Sendable {
         }
 
         #if canImport(FoundationModels)
-        if #available(iOS 26, *) {
+        if #available(iOS 26, macOS 26, *) {
             return try await generateWithFoundationModels(prompt: prompt, start: start)
         }
         #endif
@@ -41,7 +41,7 @@ public final class FoundationModelsProvider: AIProvider, @unchecked Sendable {
     }
 
     #if canImport(FoundationModels)
-    @available(iOS 26, *)
+    @available(iOS 26, macOS 26, *)
     private func generateWithFoundationModels(
         prompt: AIPrompt,
         start: ContinuousClock.Instant
@@ -73,7 +73,7 @@ public final class FoundationModelsProvider: AIProvider, @unchecked Sendable {
 #if canImport(FoundationModels)
 import FoundationModels
 
-@available(iOS 26, *)
+@available(iOS 26, macOS 26, *)
 private struct OnDeviceModelSession {
 
     static var isSupported: Bool {

@@ -63,6 +63,12 @@ struct MainTabView: View {
             configureTabBarAppearance()
             initializeCompanionViewModel()
         }
+        .onReceive(NotificationCenter.default.publisher(for: .startQuizFromShortcut)) { _ in
+            selectedTab = .home
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .startReviewFromShortcut)) { _ in
+            selectedTab = .home
+        }
         .sheet(isPresented: $showCompanionChat) {
             if let vm = companionViewModel {
                 CompanionChatSheet(viewModel: vm)

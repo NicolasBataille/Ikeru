@@ -3,6 +3,7 @@ import Foundation
 @testable import IkeruCore
 
 @Suite("AI Router Integration Tests")
+@MainActor
 struct AIRouterIntegrationTests {
 
     // MARK: - Helpers

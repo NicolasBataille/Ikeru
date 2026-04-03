@@ -7,614 +7,1167 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		A10000010000000000000001 /* IkeruCore in Frameworks */ = {isa = PBXBuildFile; productRef = A20000010000000000000001 /* IkeruCore */; };
-		A10000010000000000000002 /* IkeruCore in Frameworks */ = {isa = PBXBuildFile; productRef = A20000010000000000000002 /* IkeruCore */; };
-		A10000010000000000000003 /* IkeruCore in Frameworks */ = {isa = PBXBuildFile; productRef = A20000010000000000000003 /* IkeruCore */; };
-		A10000010000000000000004 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A30000010000000000000004 /* WidgetKit.framework */; };
-		A10000010000000000000005 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A30000010000000000000005 /* SwiftUI.framework */; };
-		A10000010000000000000010 /* IkeruWidget.appex in Embed Extensions */ = {isa = PBXBuildFile; fileRef = C30000010000000000000003 /* IkeruWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		00C45E3806F4F41DF942E46A /* WatchConnectivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6DF718512A3E4A694744447 /* WatchConnectivityManager.swift */; };
+		03266CA2AC2C8FE09FF324D2 /* SentenceConstructionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60A2A898AE8FA9CED4206F98 /* SentenceConstructionView.swift */; };
+		03A18AE27633E99C6225720C /* ColorExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF141412A4CE1AAA9CA80398 /* ColorExtensions.swift */; };
+		09A4F7F1DA62FBF986A78C5F /* ToastManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C365C4F5BEDC3A891466ECC7 /* ToastManager.swift */; };
+		09AEC542DAB9105AFD7EC1C4 /* LiveActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94DFE0591021BC898110AB38 /* LiveActivityManager.swift */; };
+		0A1E1B0B0E18C4EE14E1C657 /* IkeruCore in Frameworks */ = {isa = PBXBuildFile; productRef = 4F8B33137F081915FB6E5329 /* IkeruCore */; };
+		0B1E0557EEEB57EA318D8C7B /* LootBoxOpenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED6429B9AE19A6A3E5BA0986 /* LootBoxOpenView.swift */; };
+		0C0BACF716CC048BD8D3047A /* SessionPreviewCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03B24C86EFCA15EB15DF8BD4 /* SessionPreviewCard.swift */; };
+		0CF08BFEB33FB6FDA26D67BE /* IkeruWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF1DEA455FF965BF74038E0F /* IkeruWatchApp.swift */; };
+		0D7F6C804EBBBB485D58A756 /* ListeningPassageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B28B5F9A82603C231B759EB /* ListeningPassageView.swift */; };
+		115FC8D3C754A17975CF5886 /* WatchSessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B13C680FC67DBFC91A70F7 /* WatchSessionManager.swift */; };
+		1485E00B3EC04B8D4910F48C /* ConversationBubbleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C6D0B6BD68351B04273B4FE /* ConversationBubbleView.swift */; };
+		14EFF53B93984E414DD41C10 /* SkillRadarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 248E0A33E3D0B2C6E89E4FBD /* SkillRadarView.swift */; };
+		159F80F88E64BACBD528A0EB /* StrokeOrderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E4D340B0F01E28B73402EFC /* StrokeOrderView.swift */; };
+		1661F05AF2EE6DEFD886575B /* ListeningViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7822D645AD833A363D150831 /* ListeningViewModel.swift */; };
+		18215CF0553ABF951057A4E6 /* SkillBalanceBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10FD9A1B3124B1306DA628AB /* SkillBalanceBar.swift */; };
+		18FB9E310248D0E4180685FF /* PitchContourView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBDEA4C637B31C8705BEE907 /* PitchContourView.swift */; };
+		1F267C7F06B849E143C9F872 /* ProfileViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF20C958BD43ABB601BE2B23 /* ProfileViewModelTests.swift */; };
+		20A46053CB898DA6AEBA6697 /* RPGProfileViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FFDBE842988EF4A387035C1 /* RPGProfileViewModel.swift */; };
+		2332D3E825277DEE0E731926 /* CompanionChatSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A98FD4C07ADD0EB411EE77F /* CompanionChatSheet.swift */; };
+		24B1C98084294C7E17812BF1 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8CF84F59DAF36277A923CF3 /* SettingsView.swift */; };
+		2599E15EC556738138D16158 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E2839E6E122B09254AB7E515 /* Assets.xcassets */; };
+		2631DE603C9A3FFDB97B9D17 /* CardReviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21DBD5C564011D9B1EA163B8 /* CardReviewView.swift */; };
+		2B56415B2F3545851F6B8182 /* FillInBlankExerciseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E199ACCB659AD0493D556C8C /* FillInBlankExerciseView.swift */; };
+		2E71B9173249BF48621921E7 /* InlineKanjiView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E70B7A4174B6CFE8ED602D4 /* InlineKanjiView.swift */; };
+		2EDB743A773B1110D8D8160D /* StrokeOrderViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97DC0D8C7FA88DAEF99E751F /* StrokeOrderViewModelTests.swift */; };
+		2F6B8C98160163965120553D /* HandwritingViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F4FD0C67B08C1DEFCC562B6 /* HandwritingViewModel.swift */; };
+		318AD0DC566D55CF8F54F721 /* AttributionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DDE2DBC0AC80C3C72CCE6E1 /* AttributionView.swift */; };
+		3201547827523F9F7FCDDCAD /* XPGainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE989EDC826A8D21056CC758 /* XPGainView.swift */; };
+		36DBAA3C969EE384E09F1819 /* PitchAccentViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CC0E136E8E57719AD1366EF /* PitchAccentViewModel.swift */; };
+		39A095270B40F6C416C13453 /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E7F076DF0062A3442F461F3 /* MainTabView.swift */; };
+		3FF25A148A3F29A4766B9536 /* ListeningExerciseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E725C72DE5BC3FCCF6797E99 /* ListeningExerciseView.swift */; };
+		46BC1FB8F57C080AAF0EB987 /* CardReviewViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13AC955C7BA5C06F2A873D40 /* CardReviewViewModelTests.swift */; };
+		484D405C4211881A67889AB9 /* SessionLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = B46DF69A2A765C203CB58B09 /* SessionLiveActivity.swift */; };
+		4A75A771A6DEAF3D5109046E /* SessionConfigViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D45BABE0EF71F59D7E9FCF5 /* SessionConfigViewModel.swift */; };
+		4C300AF08D17073C30F03BA3 /* KanjiDisplayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DEC565E5BC2D95F4A14BD0A /* KanjiDisplayView.swift */; };
+		4CC1293E4E5E5F24872B7EB6 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 156EFFF0B204464405BC709E /* HomeView.swift */; };
+		4EAB9553B308C0E627182D2D /* IkeruApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBF0809FE4E8A651003BFFB1 /* IkeruApp.swift */; };
+		4FC23EE5CBF8C86A98A855F6 /* WatchHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25A2EBFE2B6872980172B207 /* WatchHomeView.swift */; };
+		50621972E820A8D923FB54D9 /* ReadingPassageViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9350635C5EB9E93159CBD562 /* ReadingPassageViewModel.swift */; };
+		53CA5BB295FDB9CBF8535BE8 /* IkeruCore in Frameworks */ = {isa = PBXBuildFile; productRef = F1FCE9F34C02B01EDB2461B7 /* IkeruCore */; };
+		553E0E281A012BF7C569A6D1 /* IkeruCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24AB1AB1DDE2D5EE0D52DA0C /* IkeruCard.swift */; };
+		56C0FAA75C6A9BDAD06FC62E /* ToastView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCAD9A4831D219D1C4FC0037 /* ToastView.swift */; };
+		588F16A9AD56FA5DE5DDB103 /* ImmersiveSessionViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E415FB60B6790A37E7C422E7 /* ImmersiveSessionViewTests.swift */; };
+		58BECF1D8B55499034C3F5AA /* IkeruButtonStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 631CDAB692FF8F02FB5E77FD /* IkeruButtonStyle.swift */; };
+		5A12D68CE875C055EFB12733 /* LootBoxChallengeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 470D3E9716A0BCBE20FBD7D8 /* LootBoxChallengeView.swift */; };
+		5B188F1ABB8FDAC523D264FD /* StrokeOrderViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 605EB123E5636067D0104242 /* StrokeOrderViewModel.swift */; };
+		5D874F7760089A5C335464FD /* DiffHighlightView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6340F44EB5D85320D1D1B58D /* DiffHighlightView.swift */; };
+		62289A66A5C3A6A9D6CD9364 /* ListeningIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46F48E350D03281741ABCA19 /* ListeningIntegrationTests.swift */; };
+		65B55BA772664AD8B848C157 /* SessionConfigView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46AB2F335A1FD2EC78D8993E /* SessionConfigView.swift */; };
+		65CFDAA2B97AA214A4AEEFA8 /* SessionViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B43EF20C3659B03FE6702B5 /* SessionViewModel.swift */; };
+		699CDC8CCD6C70501B8AF94A /* n5-content.sqlite in Resources */ = {isa = PBXBuildFile; fileRef = D5D9BA9F4FDA871221354B88 /* n5-content.sqlite */; };
+		69B4E8F5F4A60063E5212BF0 /* IkeruCore in Frameworks */ = {isa = PBXBuildFile; productRef = D6284BC7E5C7136958E6185E /* IkeruCore */; };
+		6B447B08EC87253CC183BF68 /* WatchQuizViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE61F033B42BC3AD5742F25A /* WatchQuizViewModel.swift */; };
+		6DA42A5338F4B35DF64928BF /* HomeViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1DF2E350075F0F6C4CFE5D5 /* HomeViewModel.swift */; };
+		784365F25937638D410F69D3 /* ListeningViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5EC7CD071A02DEB1F3611E0 /* ListeningViewModelTests.swift */; };
+		78EBAB8487F09970D54B4F08 /* AISettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E027F7024C00861EDEA8A363 /* AISettingsView.swift */; };
+		7AD47972332D13661BE1885F /* HomeViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44FF091731003AFD23A516FF /* HomeViewModelTests.swift */; };
+		7C128D3DB683FE9C44385E9E /* HandwritingViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FB214E27E81F30D44CAD195 /* HandwritingViewModelTests.swift */; };
+		7EBC2982099C381560979F85 /* ToastManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8CB4D8F6D27886A95BBAC2D /* ToastManagerTests.swift */; };
+		7F007D67BD6304542673C64D /* SessionIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB8329720757C93EEDE0EF41 /* SessionIntegrationTests.swift */; };
+		8079EBD85DD413FB6BA17D40 /* MnemonicView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A91BD866585603D217E09761 /* MnemonicView.swift */; };
+		80928CE01894C7B023866E4A /* ChatBubbleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C682D70A5C43E544AC5BF0B3 /* ChatBubbleView.swift */; };
+		8220FF72EE512779FDF93501 /* NameEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 457B840A63725833DFB68E38 /* NameEntryView.swift */; };
+		8416A09ACC39E1CDD672E983 /* StrokeOrderIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 912009585675D42B2F7ED4D3 /* StrokeOrderIntegrationTests.swift */; };
+		85204B34AEE5C56B01857C3C /* StandByFlashcardWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = F75C1AD94292B42125242E1C /* StandByFlashcardWidget.swift */; };
+		878E64EF919A51C376AD483C /* CardReviewViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A1B070C3AF5FEAAEA23ABDB /* CardReviewViewModel.swift */; };
+		88D106140718312AFFC69671 /* KanaQuizView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DABC761CD00B88F2CB2B98DF /* KanaQuizView.swift */; };
+		89472D6F07C417CF74A6F34D /* FontExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4EB5EA8CFACFEDD72045EB3 /* FontExtensions.swift */; };
+		8AEE9F8BE78788FDEBEF1F7B /* RPGProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13D5225E5540A893D5EA823D /* RPGProfileView.swift */; };
+		8F797DDBE2D54C590F237849 /* LootDropView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 876AD9101EE9AB2CA2148935 /* LootDropView.swift */; };
+		90422BEF9BC8E04D637D5227 /* KanjiStudyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15C00EAAA3BA98179DFE119D /* KanjiStudyView.swift */; };
+		93BF5688D23C97D381684CDD /* PlaybackRateSelector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C436FC5E8920ED935DA2049 /* PlaybackRateSelector.swift */; };
+		94FED3DFE4912D74155C44F1 /* InlineMnemonicView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99665C482D14C819E209167E /* InlineMnemonicView.swift */; };
+		96318E447330C86C4B8FF75B /* VocabularyStudyViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1F62206E7AC1CAC9A3335D5 /* VocabularyStudyViewModel.swift */; };
+		96B7AA4DDFCB52A92BA246C3 /* SessionViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8908562DCE1E539972918E03 /* SessionViewModelTests.swift */; };
+		9B7FD90C901ED310BA49F1C6 /* SessionProgressBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 130C19D8358A2B30F37B94C9 /* SessionProgressBar.swift */; };
+		9BC4183DC3C8A7EC9B37686D /* HandwritingCanvasView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2435124626D304119CA77076 /* HandwritingCanvasView.swift */; };
+		9CE7075A738FC2C1627420CD /* ExerciseTransitionContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFC50EBFAD8E44D18F442E7C /* ExerciseTransitionContainer.swift */; };
+		A00ED71AC785B8E955FF9A08 /* WordDefinitionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3C8E2C7FFD4176128B70C18 /* WordDefinitionView.swift */; };
+		A4FD9CA72477C29768928B5E /* LootRevealView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C05F94E3AA1A7B8AC2AA9D70 /* LootRevealView.swift */; };
+		A8C2670E450109C4289456F5 /* ShortcutsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DFC0A4678F7D8B667D36783 /* ShortcutsManager.swift */; };
+		A91A182B2779D86CD983FE2A /* CloudBackupManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = EEC26D21B28CD7D093350336 /* CloudBackupManager.swift */; };
+		AB876BD7DDC67C76C138EBDC /* PitchAccentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8AB076B8A600D63B3107B9F /* PitchAccentView.swift */; };
+		ABA74ED79DF7BC71F7543DBF /* ActiveSessionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C153A64FF1D3081D81EEFDCC /* ActiveSessionView.swift */; };
+		ABB829D69579D496F77AC77F /* ReadingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 406C6BA699B52A4C383A75E1 /* ReadingsView.swift */; };
+		AF2A856D7DBDC342722B07BD /* StrokeOrderExerciseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 903AD257C1627C8BC35CD73B /* StrokeOrderExerciseView.swift */; };
+		B2142C70A1C6014266FB9F2E /* ShadowingExerciseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CD329CF724A6DBCD80A22CD /* ShadowingExerciseView.swift */; };
+		B4D53BD2C72F596C888D6FAB /* KanjiStudyViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6C995B4118F51F9AD485135 /* KanjiStudyViewModelTests.swift */; };
+		B529F67EFA4A5DB91FD0B0E1 /* XPBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AA32DE9A1AC1EB7AC247E80 /* XPBarView.swift */; };
+		B645B881692E0AE7FE378DE4 /* AdaptiveSessionViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 769F5F51519266322B36DD05 /* AdaptiveSessionViewModelTests.swift */; };
+		B6C31E378ED030EB4ED10D9B /* SessionConfigIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A026C938CB364847F71607FC /* SessionConfigIntegrationTests.swift */; };
+		B8984A48353B6EE06C997BAD /* CompanionChatViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 703BA3FA54B696C033378136 /* CompanionChatViewModel.swift */; };
+		BBE2383F1411582FB9D27014 /* GradeButtonsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBEFE3A537DA4FB93E2E2B46 /* GradeButtonsView.swift */; };
+		BC727BB5AEAC7CAFA04263C3 /* ShadowingIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C1446591A309B0937C15FAC /* ShadowingIntegrationTests.swift */; };
+		BCCDF647874F54F1271E46FF /* AppConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC137F101E47A5AE2272EFC4 /* AppConfiguration.swift */; };
+		BE51F2E828552A87D898A01B /* HapticPitchDrillView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5835C532A5799C48001C02D1 /* HapticPitchDrillView.swift */; };
+		BF45D9ACC0C1A84F62E338D5 /* LevelUpView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6288ACD8B355DCD027711C8B /* LevelUpView.swift */; };
+		C3C088775E85F7B1F020235C /* ProgressDashboardViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33B41D44105A174C447228C4 /* ProgressDashboardViewModel.swift */; };
+		C4AA3905DE90177682E212A8 /* ReadingPassageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E028A7B4AD2AB9F9E1802817 /* ReadingPassageView.swift */; };
+		C5AFFF3C83FD80FF4E57B0EB /* ConversationViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D08B33E031522EEA0E701C84 /* ConversationViewModel.swift */; };
+		C7D3EB4AA2D2D81C101368D7 /* NavigationCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33CEED6C6C796647FAF4C683 /* NavigationCoordinatorTests.swift */; };
+		C8F7ED3F00387307F04FD73E /* InlineQuizView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5A9840F6C7DB7B734D9FC80 /* InlineQuizView.swift */; };
+		C91AAFCB6B347DD7E48BEC5F /* GrammarPointView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BFAD9F3F0796D53A41F3F2A /* GrammarPointView.swift */; };
+		C9C552606F14AE938AB0A1C3 /* StrokeTracingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69FD1BC54CDC2C981E6F4402 /* StrokeTracingView.swift */; };
+		CD75D7ADA19D87E667DA3C4C /* ShimmerModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24753C49380E97C0DB2BC98B /* ShimmerModifier.swift */; };
+		CF13EFF3CE9BC5A619F0B16D /* IkeruWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = FAB097C7086A8C5F1549D53D /* IkeruWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		D00AC904AC8A13E4B9237F2E /* ProgressDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D70646A260FBC5CBB22E479 /* ProgressDashboardView.swift */; };
+		D620F952CB6ED990AB51DB36 /* IkeruWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD4E32975E0ECE57675459EB /* IkeruWidgetBundle.swift */; };
+		D8EB495D638484D9EAB4DC02 /* ShadowingViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A71BF12D4449340885A08FCA /* ShadowingViewModel.swift */; };
+		DAAC21592CB9A41BBF136425 /* VocabularyStudyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCB50A9A0ED295F6A7C82144 /* VocabularyStudyView.swift */; };
+		DCCF0B7EBE77A847DB43B406 /* RadicalDecompositionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40C5ECF5A9EA8B982657904C /* RadicalDecompositionView.swift */; };
+		E27F5570AE1B045B6470C43D /* OnboardingTourView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0B25FD2BC64C88BF9B170AC /* OnboardingTourView.swift */; };
+		E31340113FF54CDF9EA9D6ED /* ShadowingViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A4D6DBF214AA1BE4ADDF3B8 /* ShadowingViewModelTests.swift */; };
+		E5D377E0EE04F7256C198370 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00C65E3B1046C3448638D50 /* NotificationManager.swift */; };
+		E67443C57282C375B28E1ADB /* MeshHeroView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25F5EC3E127B20A52562853D /* MeshHeroView.swift */; };
+		E6D5C29E18595B7C6DEF7878 /* ProfileViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FF30B9862993AD81B2EA938 /* ProfileViewModel.swift */; };
+		E954C4AFA27E9820C570C3BF /* DataExportManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA8ABC5B44D456C6BD980427 /* DataExportManager.swift */; };
+		EBB22606F9278C7CBC1604BF /* ConversationViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D73A69C4AD84199B467D6CC9 /* ConversationViewModelTests.swift */; };
+		EC69319148C3AF3B25F59DCA /* CompanionTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CC8C440C720A9129AF84FF8 /* CompanionTabView.swift */; };
+		EE902487BE754E4D763DA2E9 /* ProgressComplication.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD7E0BEDFFAF72A3409B8B08 /* ProgressComplication.swift */; };
+		EFA3DDE7B5BBFA82A09873CB /* SentenceConstructionViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 929D91F5E4CA898816722EFF /* SentenceConstructionViewModel.swift */; };
+		EFB4AC9FEB8312A7E21BAB67 /* KanjiStudyViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0751CC1AD8BD9B3CB495986 /* KanjiStudyViewModel.swift */; };
+		F0BDE207FB9AD47E59F1AE92 /* ConversationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9ADB1F486DEEFD4CE3C20C5C /* ConversationView.swift */; };
+		F2A0D73D1228BC5748D9C024 /* SRSCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2CD2275E34C699B7B4288B1 /* SRSCardView.swift */; };
+		F83318606CDD399E5B109CEB /* VocabularyExamplesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77C23A25576DBE04B0A332B8 /* VocabularyExamplesView.swift */; };
+		F8B54EFE3D06A1D370D8FED4 /* CompanionAvatarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0962CAD661B7DE355E691364 /* CompanionAvatarView.swift */; };
+		F99671B5F564DEA0F4B3C41B /* NavigationCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7A35CBDE82C399C0BDE9E67 /* NavigationCoordinator.swift */; };
+		FDA86090738921E4E18E79CE /* SessionSummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8BD1F07D5A033139C8C8A83 /* SessionSummaryView.swift */; };
+		FF89BFE59885EB3742A25989 /* HandwritingExerciseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6662134E08023C0DBD738ED /* HandwritingExerciseView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		D10000010000000000000001 /* PBXContainerItemProxy */ = {
+		25C6E74F283D27715783DD21 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = E10000010000000000000001 /* Project object */;
+			containerPortal = 44FF3435A5B11DC2E0D31918 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = C30000010000000000000003;
-			remoteInfo = IkeruWidget;
-		};
-		D10000010000000000000002 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = E10000010000000000000001 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = T10000010000000000000001;
+			remoteGlobalIDString = EDDB8F3812DC1BC18F32017C;
 			remoteInfo = Ikeru;
+		};
+		433E1B3B24082529B9000005 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 44FF3435A5B11DC2E0D31918 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 5E31F15C6A31BAD7198508F4;
+			remoteInfo = IkeruWidget;
 		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		F10000010000000000000001 /* Embed Extensions */ = {
+		144B808990A1D5825BB8E28C /* Embed Foundation Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
-				A10000010000000000000010 /* IkeruWidget.appex in Embed Extensions */,
+				CF13EFF3CE9BC5A619F0B16D /* IkeruWidget.appex in Embed Foundation Extensions */,
 			);
-			name = "Embed Extensions";
+			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		A30000010000000000000004 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
-		A30000010000000000000005 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
-		C30000010000000000000001 /* Ikeru.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Ikeru.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		C30000010000000000000002 /* IkeruWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = IkeruWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		C30000010000000000000003 /* IkeruWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = IkeruWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
-		C30000010000000000000004 /* IkeruTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = IkeruTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		03B24C86EFCA15EB15DF8BD4 /* SessionPreviewCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionPreviewCard.swift; sourceTree = "<group>"; };
+		06D4DC8FC49CC9C5B56F5438 /* IkeruWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = IkeruWidget.entitlements; sourceTree = "<group>"; };
+		0962CAD661B7DE355E691364 /* CompanionAvatarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompanionAvatarView.swift; sourceTree = "<group>"; };
+		10FD9A1B3124B1306DA628AB /* SkillBalanceBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkillBalanceBar.swift; sourceTree = "<group>"; };
+		130C19D8358A2B30F37B94C9 /* SessionProgressBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionProgressBar.swift; sourceTree = "<group>"; };
+		13AC955C7BA5C06F2A873D40 /* CardReviewViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardReviewViewModelTests.swift; sourceTree = "<group>"; };
+		13D5225E5540A893D5EA823D /* RPGProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RPGProfileView.swift; sourceTree = "<group>"; };
+		156EFFF0B204464405BC709E /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		15C00EAAA3BA98179DFE119D /* KanjiStudyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KanjiStudyView.swift; sourceTree = "<group>"; };
+		1BFAD9F3F0796D53A41F3F2A /* GrammarPointView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GrammarPointView.swift; sourceTree = "<group>"; };
+		1E4D340B0F01E28B73402EFC /* StrokeOrderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StrokeOrderView.swift; sourceTree = "<group>"; };
+		21DBD5C564011D9B1EA163B8 /* CardReviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardReviewView.swift; sourceTree = "<group>"; };
+		2435124626D304119CA77076 /* HandwritingCanvasView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HandwritingCanvasView.swift; sourceTree = "<group>"; };
+		24753C49380E97C0DB2BC98B /* ShimmerModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShimmerModifier.swift; sourceTree = "<group>"; };
+		248E0A33E3D0B2C6E89E4FBD /* SkillRadarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkillRadarView.swift; sourceTree = "<group>"; };
+		24AB1AB1DDE2D5EE0D52DA0C /* IkeruCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IkeruCard.swift; sourceTree = "<group>"; };
+		25A2EBFE2B6872980172B207 /* WatchHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchHomeView.swift; sourceTree = "<group>"; };
+		25F5EC3E127B20A52562853D /* MeshHeroView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeshHeroView.swift; sourceTree = "<group>"; };
+		2DDE2DBC0AC80C3C72CCE6E1 /* AttributionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttributionView.swift; sourceTree = "<group>"; };
+		2DFC0A4678F7D8B667D36783 /* ShortcutsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutsManager.swift; sourceTree = "<group>"; };
+		2FB214E27E81F30D44CAD195 /* HandwritingViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HandwritingViewModelTests.swift; sourceTree = "<group>"; };
+		33B41D44105A174C447228C4 /* ProgressDashboardViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressDashboardViewModel.swift; sourceTree = "<group>"; };
+		33CEED6C6C796647FAF4C683 /* NavigationCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationCoordinatorTests.swift; sourceTree = "<group>"; };
+		358B47E0F54AAFD423C1BAAD /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		406C6BA699B52A4C383A75E1 /* ReadingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadingsView.swift; sourceTree = "<group>"; };
+		40C5ECF5A9EA8B982657904C /* RadicalDecompositionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadicalDecompositionView.swift; sourceTree = "<group>"; };
+		41DE2FB348D4D1AFBF4143ED /* IkeruWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = IkeruWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		44FF091731003AFD23A516FF /* HomeViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewModelTests.swift; sourceTree = "<group>"; };
+		457B840A63725833DFB68E38 /* NameEntryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NameEntryView.swift; sourceTree = "<group>"; };
+		46AB2F335A1FD2EC78D8993E /* SessionConfigView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionConfigView.swift; sourceTree = "<group>"; };
+		46F48E350D03281741ABCA19 /* ListeningIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListeningIntegrationTests.swift; sourceTree = "<group>"; };
+		470D3E9716A0BCBE20FBD7D8 /* LootBoxChallengeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LootBoxChallengeView.swift; sourceTree = "<group>"; };
+		4C436FC5E8920ED935DA2049 /* PlaybackRateSelector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackRateSelector.swift; sourceTree = "<group>"; };
+		4D70646A260FBC5CBB22E479 /* ProgressDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressDashboardView.swift; sourceTree = "<group>"; };
+		5835C532A5799C48001C02D1 /* HapticPitchDrillView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticPitchDrillView.swift; sourceTree = "<group>"; };
+		5A1B070C3AF5FEAAEA23ABDB /* CardReviewViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardReviewViewModel.swift; sourceTree = "<group>"; };
+		5CC8C440C720A9129AF84FF8 /* CompanionTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompanionTabView.swift; sourceTree = "<group>"; };
+		5D45BABE0EF71F59D7E9FCF5 /* SessionConfigViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionConfigViewModel.swift; sourceTree = "<group>"; };
+		5E70B7A4174B6CFE8ED602D4 /* InlineKanjiView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InlineKanjiView.swift; sourceTree = "<group>"; };
+		5FF30B9862993AD81B2EA938 /* ProfileViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileViewModel.swift; sourceTree = "<group>"; };
+		605EB123E5636067D0104242 /* StrokeOrderViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StrokeOrderViewModel.swift; sourceTree = "<group>"; };
+		60A2A898AE8FA9CED4206F98 /* SentenceConstructionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SentenceConstructionView.swift; sourceTree = "<group>"; };
+		6288ACD8B355DCD027711C8B /* LevelUpView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LevelUpView.swift; sourceTree = "<group>"; };
+		631CDAB692FF8F02FB5E77FD /* IkeruButtonStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IkeruButtonStyle.swift; sourceTree = "<group>"; };
+		6340F44EB5D85320D1D1B58D /* DiffHighlightView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiffHighlightView.swift; sourceTree = "<group>"; };
+		66B13C680FC67DBFC91A70F7 /* WatchSessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchSessionManager.swift; sourceTree = "<group>"; };
+		69FD1BC54CDC2C981E6F4402 /* StrokeTracingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StrokeTracingView.swift; sourceTree = "<group>"; };
+		6B43EF20C3659B03FE6702B5 /* SessionViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionViewModel.swift; sourceTree = "<group>"; };
+		703BA3FA54B696C033378136 /* CompanionChatViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompanionChatViewModel.swift; sourceTree = "<group>"; };
+		71F17C0E3B326F9F0C5D3E94 /* IkeruTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = IkeruTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		769F5F51519266322B36DD05 /* AdaptiveSessionViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdaptiveSessionViewModelTests.swift; sourceTree = "<group>"; };
+		77C23A25576DBE04B0A332B8 /* VocabularyExamplesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VocabularyExamplesView.swift; sourceTree = "<group>"; };
+		7822D645AD833A363D150831 /* ListeningViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListeningViewModel.swift; sourceTree = "<group>"; };
+		7A98FD4C07ADD0EB411EE77F /* CompanionChatSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompanionChatSheet.swift; sourceTree = "<group>"; };
+		7AA32DE9A1AC1EB7AC247E80 /* XPBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XPBarView.swift; sourceTree = "<group>"; };
+		7B28B5F9A82603C231B759EB /* ListeningPassageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListeningPassageView.swift; sourceTree = "<group>"; };
+		7DEC565E5BC2D95F4A14BD0A /* KanjiDisplayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KanjiDisplayView.swift; sourceTree = "<group>"; };
+		8225047CD3C41A1364CD67FA /* Ikeru.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Ikeru.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		876AD9101EE9AB2CA2148935 /* LootDropView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LootDropView.swift; sourceTree = "<group>"; };
+		8908562DCE1E539972918E03 /* SessionViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionViewModelTests.swift; sourceTree = "<group>"; };
+		8A4D6DBF214AA1BE4ADDF3B8 /* ShadowingViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShadowingViewModelTests.swift; sourceTree = "<group>"; };
+		8C6D0B6BD68351B04273B4FE /* ConversationBubbleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationBubbleView.swift; sourceTree = "<group>"; };
+		8CC0E136E8E57719AD1366EF /* PitchAccentViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PitchAccentViewModel.swift; sourceTree = "<group>"; };
+		8E7F076DF0062A3442F461F3 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
+		903AD257C1627C8BC35CD73B /* StrokeOrderExerciseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StrokeOrderExerciseView.swift; sourceTree = "<group>"; };
+		912009585675D42B2F7ED4D3 /* StrokeOrderIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StrokeOrderIntegrationTests.swift; sourceTree = "<group>"; };
+		929D91F5E4CA898816722EFF /* SentenceConstructionViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SentenceConstructionViewModel.swift; sourceTree = "<group>"; };
+		9350635C5EB9E93159CBD562 /* ReadingPassageViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadingPassageViewModel.swift; sourceTree = "<group>"; };
+		94DFE0591021BC898110AB38 /* LiveActivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveActivityManager.swift; sourceTree = "<group>"; };
+		97DC0D8C7FA88DAEF99E751F /* StrokeOrderViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StrokeOrderViewModelTests.swift; sourceTree = "<group>"; };
+		99665C482D14C819E209167E /* InlineMnemonicView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InlineMnemonicView.swift; sourceTree = "<group>"; };
+		9ADB1F486DEEFD4CE3C20C5C /* ConversationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationView.swift; sourceTree = "<group>"; };
+		9BC828DB0D8D10873566FFC0 /* Ikeru.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Ikeru.entitlements; sourceTree = "<group>"; };
+		9C1446591A309B0937C15FAC /* ShadowingIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShadowingIntegrationTests.swift; sourceTree = "<group>"; };
+		9CD329CF724A6DBCD80A22CD /* ShadowingExerciseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShadowingExerciseView.swift; sourceTree = "<group>"; };
+		9F4FD0C67B08C1DEFCC562B6 /* HandwritingViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HandwritingViewModel.swift; sourceTree = "<group>"; };
+		9FFDBE842988EF4A387035C1 /* RPGProfileViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RPGProfileViewModel.swift; sourceTree = "<group>"; };
+		A026C938CB364847F71607FC /* SessionConfigIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionConfigIntegrationTests.swift; sourceTree = "<group>"; };
+		A0751CC1AD8BD9B3CB495986 /* KanjiStudyViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KanjiStudyViewModel.swift; sourceTree = "<group>"; };
+		A2CD2275E34C699B7B4288B1 /* SRSCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SRSCardView.swift; sourceTree = "<group>"; };
+		A3C8E2C7FFD4176128B70C18 /* WordDefinitionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordDefinitionView.swift; sourceTree = "<group>"; };
+		A5A9840F6C7DB7B734D9FC80 /* InlineQuizView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InlineQuizView.swift; sourceTree = "<group>"; };
+		A6C995B4118F51F9AD485135 /* KanjiStudyViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KanjiStudyViewModelTests.swift; sourceTree = "<group>"; };
+		A71BF12D4449340885A08FCA /* ShadowingViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShadowingViewModel.swift; sourceTree = "<group>"; };
+		A7A35CBDE82C399C0BDE9E67 /* NavigationCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationCoordinator.swift; sourceTree = "<group>"; };
+		A8CB4D8F6D27886A95BBAC2D /* ToastManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToastManagerTests.swift; sourceTree = "<group>"; };
+		A91BD866585603D217E09761 /* MnemonicView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MnemonicView.swift; sourceTree = "<group>"; };
+		AA8ABC5B44D456C6BD980427 /* DataExportManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataExportManager.swift; sourceTree = "<group>"; };
+		AF20C958BD43ABB601BE2B23 /* ProfileViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileViewModelTests.swift; sourceTree = "<group>"; };
+		B46DF69A2A765C203CB58B09 /* SessionLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionLiveActivity.swift; sourceTree = "<group>"; };
+		B5EC7CD071A02DEB1F3611E0 /* ListeningViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListeningViewModelTests.swift; sourceTree = "<group>"; };
+		B8CF84F59DAF36277A923CF3 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		BCB50A9A0ED295F6A7C82144 /* VocabularyStudyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VocabularyStudyView.swift; sourceTree = "<group>"; };
+		BF1DEA455FF965BF74038E0F /* IkeruWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IkeruWatchApp.swift; sourceTree = "<group>"; };
+		BFC50EBFAD8E44D18F442E7C /* ExerciseTransitionContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseTransitionContainer.swift; sourceTree = "<group>"; };
+		C05F94E3AA1A7B8AC2AA9D70 /* LootRevealView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LootRevealView.swift; sourceTree = "<group>"; };
+		C153A64FF1D3081D81EEFDCC /* ActiveSessionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActiveSessionView.swift; sourceTree = "<group>"; };
+		C365C4F5BEDC3A891466ECC7 /* ToastManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToastManager.swift; sourceTree = "<group>"; };
+		C4EB5EA8CFACFEDD72045EB3 /* FontExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FontExtensions.swift; sourceTree = "<group>"; };
+		C682D70A5C43E544AC5BF0B3 /* ChatBubbleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatBubbleView.swift; sourceTree = "<group>"; };
+		C6DF718512A3E4A694744447 /* WatchConnectivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchConnectivityManager.swift; sourceTree = "<group>"; };
+		C8AB076B8A600D63B3107B9F /* PitchAccentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PitchAccentView.swift; sourceTree = "<group>"; };
+		CC137F101E47A5AE2272EFC4 /* AppConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfiguration.swift; sourceTree = "<group>"; };
+		CCAD9A4831D219D1C4FC0037 /* ToastView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToastView.swift; sourceTree = "<group>"; };
+		CE989EDC826A8D21056CC758 /* XPGainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XPGainView.swift; sourceTree = "<group>"; };
+		D08B33E031522EEA0E701C84 /* ConversationViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationViewModel.swift; sourceTree = "<group>"; };
+		D1F62206E7AC1CAC9A3335D5 /* VocabularyStudyViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VocabularyStudyViewModel.swift; sourceTree = "<group>"; };
+		D5D9BA9F4FDA871221354B88 /* n5-content.sqlite */ = {isa = PBXFileReference; lastKnownFileType = file; path = "n5-content.sqlite"; sourceTree = "<group>"; };
+		D73A69C4AD84199B467D6CC9 /* ConversationViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationViewModelTests.swift; sourceTree = "<group>"; };
+		DABC761CD00B88F2CB2B98DF /* KanaQuizView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KanaQuizView.swift; sourceTree = "<group>"; };
+		DB8329720757C93EEDE0EF41 /* SessionIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionIntegrationTests.swift; sourceTree = "<group>"; };
+		DBDEA4C637B31C8705BEE907 /* PitchContourView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PitchContourView.swift; sourceTree = "<group>"; };
+		DE61F033B42BC3AD5742F25A /* WatchQuizViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchQuizViewModel.swift; sourceTree = "<group>"; };
+		DF141412A4CE1AAA9CA80398 /* ColorExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorExtensions.swift; sourceTree = "<group>"; };
+		E027F7024C00861EDEA8A363 /* AISettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AISettingsView.swift; sourceTree = "<group>"; };
+		E028A7B4AD2AB9F9E1802817 /* ReadingPassageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadingPassageView.swift; sourceTree = "<group>"; };
+		E199ACCB659AD0493D556C8C /* FillInBlankExerciseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FillInBlankExerciseView.swift; sourceTree = "<group>"; };
+		E2839E6E122B09254AB7E515 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		E3B790F00378454A3668D4EC /* IkeruCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = IkeruCore; path = IkeruCore; sourceTree = SOURCE_ROOT; };
+		E415FB60B6790A37E7C422E7 /* ImmersiveSessionViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImmersiveSessionViewTests.swift; sourceTree = "<group>"; };
+		E6662134E08023C0DBD738ED /* HandwritingExerciseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HandwritingExerciseView.swift; sourceTree = "<group>"; };
+		E725C72DE5BC3FCCF6797E99 /* ListeningExerciseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListeningExerciseView.swift; sourceTree = "<group>"; };
+		EBEFE3A537DA4FB93E2E2B46 /* GradeButtonsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GradeButtonsView.swift; sourceTree = "<group>"; };
+		EBF0809FE4E8A651003BFFB1 /* IkeruApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IkeruApp.swift; sourceTree = "<group>"; };
+		ED6429B9AE19A6A3E5BA0986 /* LootBoxOpenView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LootBoxOpenView.swift; sourceTree = "<group>"; };
+		EEC26D21B28CD7D093350336 /* CloudBackupManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudBackupManager.swift; sourceTree = "<group>"; };
+		F00C65E3B1046C3448638D50 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
+		F0B25FD2BC64C88BF9B170AC /* OnboardingTourView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingTourView.swift; sourceTree = "<group>"; };
+		F1DF2E350075F0F6C4CFE5D5 /* HomeViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewModel.swift; sourceTree = "<group>"; };
+		F75C1AD94292B42125242E1C /* StandByFlashcardWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StandByFlashcardWidget.swift; sourceTree = "<group>"; };
+		F8BD1F07D5A033139C8C8A83 /* SessionSummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionSummaryView.swift; sourceTree = "<group>"; };
+		FAB097C7086A8C5F1549D53D /* IkeruWidget.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = IkeruWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		FD4E32975E0ECE57675459EB /* IkeruWidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IkeruWidgetBundle.swift; sourceTree = "<group>"; };
+		FD7E0BEDFFAF72A3409B8B08 /* ProgressComplication.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressComplication.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
-/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		EX000001000000000000001 /* Exceptions for "Ikeru" folder in "Ikeru" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Info.plist,
-			);
-			target = T10000010000000000000001 /* Ikeru */;
-		};
-/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
-
-/* Begin PBXFileSystemSynchronizedRootGroup section */
-		FS000001000000000000001 /* Ikeru */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				EX000001000000000000001 /* Exceptions for "Ikeru" folder in "Ikeru" target */,
-			);
-			path = Ikeru;
-			sourceTree = "<group>";
-		};
-		FS000001000000000000002 /* IkeruWatch */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = IkeruWatch;
-			sourceTree = "<group>";
-		};
-		FS000001000000000000003 /* IkeruWidget */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = IkeruWidget;
-			sourceTree = "<group>";
-		};
-		FS000001000000000000004 /* IkeruTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = IkeruTests;
-			sourceTree = "<group>";
-		};
-/* End PBXFileSystemSynchronizedRootGroup section */
-
 /* Begin PBXFrameworksBuildPhase section */
-		F20000010000000000000001 /* Frameworks */ = {
+		22069A737D28651902763C82 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A10000010000000000000001 /* IkeruCore in Frameworks */,
+				69B4E8F5F4A60063E5212BF0 /* IkeruCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		F20000010000000000000002 /* Frameworks */ = {
+		57AE8D39B8B572E32EA6388E /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A10000010000000000000002 /* IkeruCore in Frameworks */,
+				0A1E1B0B0E18C4EE14E1C657 /* IkeruCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		F20000010000000000000003 /* Frameworks */ = {
+		B425F8A581EEF932D98C24E6 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A10000010000000000000004 /* WidgetKit.framework in Frameworks */,
-				A10000010000000000000005 /* SwiftUI.framework in Frameworks */,
-				A10000010000000000000003 /* IkeruCore in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		F20000010000000000000004 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
+				53CA5BB295FDB9CBF8535BE8 /* IkeruCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		G10000010000000000000001 /* Root */ = {
+		15CB0667583EC6D52A9954F3 /* CardReview */ = {
 			isa = PBXGroup;
 			children = (
-				FS000001000000000000001 /* Ikeru */,
-				FS000001000000000000002 /* IkeruWatch */,
-				FS000001000000000000003 /* IkeruWidget */,
-				FS000001000000000000004 /* IkeruTests */,
-				G10000010000000000000014 /* Frameworks */,
-				G10000010000000000000015 /* Products */,
+				21DBD5C564011D9B1EA163B8 /* CardReviewView.swift */,
+				EBEFE3A537DA4FB93E2E2B46 /* GradeButtonsView.swift */,
+				A2CD2275E34C699B7B4288B1 /* SRSCardView.swift */,
 			);
+			path = CardReview;
 			sourceTree = "<group>";
 		};
-		G10000010000000000000014 /* Frameworks */ = {
+		1E47396E1F5DF4E474444039 /* Complications */ = {
 			isa = PBXGroup;
 			children = (
-				A30000010000000000000004 /* WidgetKit.framework */,
-				A30000010000000000000005 /* SwiftUI.framework */,
+				FD7E0BEDFFAF72A3409B8B08 /* ProgressComplication.swift */,
 			);
-			name = Frameworks;
+			path = Complications;
 			sourceTree = "<group>";
 		};
-		G10000010000000000000015 /* Products */ = {
+		1F8611C9C3B8F9020F867C7B /* Writing */ = {
 			isa = PBXGroup;
 			children = (
-				C30000010000000000000001 /* Ikeru.app */,
-				C30000010000000000000002 /* IkeruWatch.app */,
-				C30000010000000000000003 /* IkeruWidget.appex */,
-				C30000010000000000000004 /* IkeruTests.xctest */,
+				2435124626D304119CA77076 /* HandwritingCanvasView.swift */,
+				E6662134E08023C0DBD738ED /* HandwritingExerciseView.swift */,
+				60A2A898AE8FA9CED4206F98 /* SentenceConstructionView.swift */,
+				903AD257C1627C8BC35CD73B /* StrokeOrderExerciseView.swift */,
+				1E4D340B0F01E28B73402EFC /* StrokeOrderView.swift */,
+				69FD1BC54CDC2C981E6F4402 /* StrokeTracingView.swift */,
+			);
+			path = Writing;
+			sourceTree = "<group>";
+		};
+		2B69D0979D8176C680D0BBF2 /* Reading */ = {
+			isa = PBXGroup;
+			children = (
+				E199ACCB659AD0493D556C8C /* FillInBlankExerciseView.swift */,
+				1BFAD9F3F0796D53A41F3F2A /* GrammarPointView.swift */,
+				E028A7B4AD2AB9F9E1802817 /* ReadingPassageView.swift */,
+				BCB50A9A0ED295F6A7C82144 /* VocabularyStudyView.swift */,
+				A3C8E2C7FFD4176128B70C18 /* WordDefinitionView.swift */,
+			);
+			path = Reading;
+			sourceTree = "<group>";
+		};
+		2C4C5EDAADACC15D5976A581 /* IkeruWidget */ = {
+			isa = PBXGroup;
+			children = (
+				06D4DC8FC49CC9C5B56F5438 /* IkeruWidget.entitlements */,
+				FD4E32975E0ECE57675459EB /* IkeruWidgetBundle.swift */,
+				B46DF69A2A765C203CB58B09 /* SessionLiveActivity.swift */,
+				F75C1AD94292B42125242E1C /* StandByFlashcardWidget.swift */,
+			);
+			path = IkeruWidget;
+			sourceTree = "<group>";
+		};
+		2DE7B7F90FE1037146766705 /* ContentBundles */ = {
+			isa = PBXGroup;
+			children = (
+				D5D9BA9F4FDA871221354B88 /* n5-content.sqlite */,
+			);
+			path = ContentBundles;
+			sourceTree = "<group>";
+		};
+		2E37ED4BBD6D09186DF28517 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				2DE7B7F90FE1037146766705 /* ContentBundles */,
+				C5A2D6A86325FDCBF4A95238 /* Fonts */,
+				E2839E6E122B09254AB7E515 /* Assets.xcassets */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		2EC73927B26307316E243F0B /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				5835C532A5799C48001C02D1 /* HapticPitchDrillView.swift */,
+				DABC761CD00B88F2CB2B98DF /* KanaQuizView.swift */,
+				25A2EBFE2B6872980172B207 /* WatchHomeView.swift */,
+				DE61F033B42BC3AD5742F25A /* WatchQuizViewModel.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		38B60D65E4577A0EF94FA2E1 /* Listening */ = {
+			isa = PBXGroup;
+			children = (
+				E725C72DE5BC3FCCF6797E99 /* ListeningExerciseView.swift */,
+				7B28B5F9A82603C231B759EB /* ListeningPassageView.swift */,
+				4C436FC5E8920ED935DA2049 /* PlaybackRateSelector.swift */,
+			);
+			path = Listening;
+			sourceTree = "<group>";
+		};
+		3B0777DDC4C5BB5F000D91D7 /* Onboarding */ = {
+			isa = PBXGroup;
+			children = (
+				457B840A63725833DFB68E38 /* NameEntryView.swift */,
+				F0B25FD2BC64C88BF9B170AC /* OnboardingTourView.swift */,
+			);
+			path = Onboarding;
+			sourceTree = "<group>";
+		};
+		43A4A4A315A417661BA7189D /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				E3B790F00378454A3668D4EC /* IkeruCore */,
+			);
+			name = Packages;
+			sourceTree = "<group>";
+		};
+		50287D79DC47EDEB28CCE168 /* Home */ = {
+			isa = PBXGroup;
+			children = (
+				156EFFF0B204464405BC709E /* HomeView.swift */,
+				25F5EC3E127B20A52562853D /* MeshHeroView.swift */,
+				4D70646A260FBC5CBB22E479 /* ProgressDashboardView.swift */,
+			);
+			path = Home;
+			sourceTree = "<group>";
+		};
+		58EFC03C1940A4C5948A11CA /* Learning */ = {
+			isa = PBXGroup;
+			children = (
+				15CB0667583EC6D52A9954F3 /* CardReview */,
+				6BD85ED735A9A13C87CB65D6 /* Conversation */,
+				F4FC6E91906301FF6EEE000C /* Kanji */,
+				38B60D65E4577A0EF94FA2E1 /* Listening */,
+				2B69D0979D8176C680D0BBF2 /* Reading */,
+				6AFC71E9BA7A3E134A9C2C2C /* Speaking */,
+				1F8611C9C3B8F9020F867C7B /* Writing */,
+			);
+			path = Learning;
+			sourceTree = "<group>";
+		};
+		68A947D733890653FB312AFD /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				E919265431000718FFB5D4FB /* Theme */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		6A9F7504043CBF673DAB0FDF /* RPG */ = {
+			isa = PBXGroup;
+			children = (
+				6288ACD8B355DCD027711C8B /* LevelUpView.swift */,
+				470D3E9716A0BCBE20FBD7D8 /* LootBoxChallengeView.swift */,
+				ED6429B9AE19A6A3E5BA0986 /* LootBoxOpenView.swift */,
+				876AD9101EE9AB2CA2148935 /* LootDropView.swift */,
+				C05F94E3AA1A7B8AC2AA9D70 /* LootRevealView.swift */,
+				13D5225E5540A893D5EA823D /* RPGProfileView.swift */,
+			);
+			path = RPG;
+			sourceTree = "<group>";
+		};
+		6AFC71E9BA7A3E134A9C2C2C /* Speaking */ = {
+			isa = PBXGroup;
+			children = (
+				6340F44EB5D85320D1D1B58D /* DiffHighlightView.swift */,
+				C8AB076B8A600D63B3107B9F /* PitchAccentView.swift */,
+				DBDEA4C637B31C8705BEE907 /* PitchContourView.swift */,
+				9CD329CF724A6DBCD80A22CD /* ShadowingExerciseView.swift */,
+			);
+			path = Speaking;
+			sourceTree = "<group>";
+		};
+		6BD85ED735A9A13C87CB65D6 /* Conversation */ = {
+			isa = PBXGroup;
+			children = (
+				C682D70A5C43E544AC5BF0B3 /* ChatBubbleView.swift */,
+				7A98FD4C07ADD0EB411EE77F /* CompanionChatSheet.swift */,
+				5CC8C440C720A9129AF84FF8 /* CompanionTabView.swift */,
+				8C6D0B6BD68351B04273B4FE /* ConversationBubbleView.swift */,
+				9ADB1F486DEEFD4CE3C20C5C /* ConversationView.swift */,
+				5E70B7A4174B6CFE8ED602D4 /* InlineKanjiView.swift */,
+				99665C482D14C819E209167E /* InlineMnemonicView.swift */,
+				A5A9840F6C7DB7B734D9FC80 /* InlineQuizView.swift */,
+			);
+			path = Conversation;
+			sourceTree = "<group>";
+		};
+		7027B6CB9096071D6EB32301 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				0962CAD661B7DE355E691364 /* CompanionAvatarView.swift */,
+				10FD9A1B3124B1306DA628AB /* SkillBalanceBar.swift */,
+				248E0A33E3D0B2C6E89E4FBD /* SkillRadarView.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		70A9DC9F6ECBB150C593E25D /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				8225047CD3C41A1364CD67FA /* Ikeru.app */,
+				71F17C0E3B326F9F0C5D3E94 /* IkeruTests.xctest */,
+				41DE2FB348D4D1AFBF4143ED /* IkeruWatch.app */,
+				FAB097C7086A8C5F1549D53D /* IkeruWidget.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		7344ECA701F647E161A3F97A /* IkeruTests */ = {
+			isa = PBXGroup;
+			children = (
+				769F5F51519266322B36DD05 /* AdaptiveSessionViewModelTests.swift */,
+				13AC955C7BA5C06F2A873D40 /* CardReviewViewModelTests.swift */,
+				D73A69C4AD84199B467D6CC9 /* ConversationViewModelTests.swift */,
+				2FB214E27E81F30D44CAD195 /* HandwritingViewModelTests.swift */,
+				44FF091731003AFD23A516FF /* HomeViewModelTests.swift */,
+				E415FB60B6790A37E7C422E7 /* ImmersiveSessionViewTests.swift */,
+				A6C995B4118F51F9AD485135 /* KanjiStudyViewModelTests.swift */,
+				46F48E350D03281741ABCA19 /* ListeningIntegrationTests.swift */,
+				B5EC7CD071A02DEB1F3611E0 /* ListeningViewModelTests.swift */,
+				33CEED6C6C796647FAF4C683 /* NavigationCoordinatorTests.swift */,
+				AF20C958BD43ABB601BE2B23 /* ProfileViewModelTests.swift */,
+				A026C938CB364847F71607FC /* SessionConfigIntegrationTests.swift */,
+				DB8329720757C93EEDE0EF41 /* SessionIntegrationTests.swift */,
+				8908562DCE1E539972918E03 /* SessionViewModelTests.swift */,
+				9C1446591A309B0937C15FAC /* ShadowingIntegrationTests.swift */,
+				8A4D6DBF214AA1BE4ADDF3B8 /* ShadowingViewModelTests.swift */,
+				912009585675D42B2F7ED4D3 /* StrokeOrderIntegrationTests.swift */,
+				97DC0D8C7FA88DAEF99E751F /* StrokeOrderViewModelTests.swift */,
+				A8CB4D8F6D27886A95BBAC2D /* ToastManagerTests.swift */,
+			);
+			path = IkeruTests;
+			sourceTree = "<group>";
+		};
+		867A3CA926C8EDBF228F4F2F /* Learning */ = {
+			isa = PBXGroup;
+			children = (
+				5A1B070C3AF5FEAAEA23ABDB /* CardReviewViewModel.swift */,
+				703BA3FA54B696C033378136 /* CompanionChatViewModel.swift */,
+				D08B33E031522EEA0E701C84 /* ConversationViewModel.swift */,
+				9F4FD0C67B08C1DEFCC562B6 /* HandwritingViewModel.swift */,
+				A0751CC1AD8BD9B3CB495986 /* KanjiStudyViewModel.swift */,
+				7822D645AD833A363D150831 /* ListeningViewModel.swift */,
+				8CC0E136E8E57719AD1366EF /* PitchAccentViewModel.swift */,
+				9350635C5EB9E93159CBD562 /* ReadingPassageViewModel.swift */,
+				929D91F5E4CA898816722EFF /* SentenceConstructionViewModel.swift */,
+				A71BF12D4449340885A08FCA /* ShadowingViewModel.swift */,
+				605EB123E5636067D0104242 /* StrokeOrderViewModel.swift */,
+				D1F62206E7AC1CAC9A3335D5 /* VocabularyStudyViewModel.swift */,
+			);
+			path = Learning;
+			sourceTree = "<group>";
+		};
+		89E961573BC43074012E9FBE /* IkeruWatch */ = {
+			isa = PBXGroup;
+			children = (
+				BAFBA957FABEDC6717C846F6 /* App */,
+				1E47396E1F5DF4E474444039 /* Complications */,
+				BA2CF2FEED3A72F53EA93A02 /* Services */,
+				2EC73927B26307316E243F0B /* Views */,
+			);
+			path = IkeruWatch;
+			sourceTree = "<group>";
+		};
+		994C26AB9900AD67DA28FFB0 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				7027B6CB9096071D6EB32301 /* Components */,
+				50287D79DC47EDEB28CCE168 /* Home */,
+				58EFC03C1940A4C5948A11CA /* Learning */,
+				3B0777DDC4C5BB5F000D91D7 /* Onboarding */,
+				6A9F7504043CBF673DAB0FDF /* RPG */,
+				E60A1010D4BD8AEAB2DAE87A /* Session */,
+				E45B0D5EEA672824C9F2E14D /* Settings */,
+				68A947D733890653FB312AFD /* Shared */,
+				8E7F076DF0062A3442F461F3 /* MainTabView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		9AAEFD1942FF8F04AD564639 /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				867A3CA926C8EDBF228F4F2F /* Learning */,
+				F1DF2E350075F0F6C4CFE5D5 /* HomeViewModel.swift */,
+				5FF30B9862993AD81B2EA938 /* ProfileViewModel.swift */,
+				33B41D44105A174C447228C4 /* ProgressDashboardViewModel.swift */,
+				9FFDBE842988EF4A387035C1 /* RPGProfileViewModel.swift */,
+				5D45BABE0EF71F59D7E9FCF5 /* SessionConfigViewModel.swift */,
+				6B43EF20C3659B03FE6702B5 /* SessionViewModel.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		A0602841F6D8C0D39D5604DE /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				EEC26D21B28CD7D093350336 /* CloudBackupManager.swift */,
+				AA8ABC5B44D456C6BD980427 /* DataExportManager.swift */,
+				94DFE0591021BC898110AB38 /* LiveActivityManager.swift */,
+				F00C65E3B1046C3448638D50 /* NotificationManager.swift */,
+				2DFC0A4678F7D8B667D36783 /* ShortcutsManager.swift */,
+				C6DF718512A3E4A694744447 /* WatchConnectivityManager.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		BA2CF2FEED3A72F53EA93A02 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				66B13C680FC67DBFC91A70F7 /* WatchSessionManager.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		BAFBA957FABEDC6717C846F6 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				BF1DEA455FF965BF74038E0F /* IkeruWatchApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		C5A2D6A86325FDCBF4A95238 /* Fonts */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Fonts;
+			sourceTree = "<group>";
+		};
+		E45B0D5EEA672824C9F2E14D /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				E027F7024C00861EDEA8A363 /* AISettingsView.swift */,
+				2DDE2DBC0AC80C3C72CCE6E1 /* AttributionView.swift */,
+				B8CF84F59DAF36277A923CF3 /* SettingsView.swift */,
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
+		E60A1010D4BD8AEAB2DAE87A /* Session */ = {
+			isa = PBXGroup;
+			children = (
+				C153A64FF1D3081D81EEFDCC /* ActiveSessionView.swift */,
+				BFC50EBFAD8E44D18F442E7C /* ExerciseTransitionContainer.swift */,
+				46AB2F335A1FD2EC78D8993E /* SessionConfigView.swift */,
+				03B24C86EFCA15EB15DF8BD4 /* SessionPreviewCard.swift */,
+				F8BD1F07D5A033139C8C8A83 /* SessionSummaryView.swift */,
+			);
+			path = Session;
+			sourceTree = "<group>";
+		};
+		E776BAF63C750B3C5FCC0C85 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				CC137F101E47A5AE2272EFC4 /* AppConfiguration.swift */,
+				EBF0809FE4E8A651003BFFB1 /* IkeruApp.swift */,
+				A7A35CBDE82C399C0BDE9E67 /* NavigationCoordinator.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		E919265431000718FFB5D4FB /* Theme */ = {
+			isa = PBXGroup;
+			children = (
+				DF141412A4CE1AAA9CA80398 /* ColorExtensions.swift */,
+				C4EB5EA8CFACFEDD72045EB3 /* FontExtensions.swift */,
+				631CDAB692FF8F02FB5E77FD /* IkeruButtonStyle.swift */,
+				24AB1AB1DDE2D5EE0D52DA0C /* IkeruCard.swift */,
+				130C19D8358A2B30F37B94C9 /* SessionProgressBar.swift */,
+				24753C49380E97C0DB2BC98B /* ShimmerModifier.swift */,
+				C365C4F5BEDC3A891466ECC7 /* ToastManager.swift */,
+				CCAD9A4831D219D1C4FC0037 /* ToastView.swift */,
+				7AA32DE9A1AC1EB7AC247E80 /* XPBarView.swift */,
+				CE989EDC826A8D21056CC758 /* XPGainView.swift */,
+			);
+			path = Theme;
+			sourceTree = "<group>";
+		};
+		EF88C2B2433715E2D2E8D0DA = {
+			isa = PBXGroup;
+			children = (
+				F07F60B10BED6A68A1D6B10F /* Ikeru */,
+				7344ECA701F647E161A3F97A /* IkeruTests */,
+				89E961573BC43074012E9FBE /* IkeruWatch */,
+				2C4C5EDAADACC15D5976A581 /* IkeruWidget */,
+				43A4A4A315A417661BA7189D /* Packages */,
+				70A9DC9F6ECBB150C593E25D /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		F07F60B10BED6A68A1D6B10F /* Ikeru */ = {
+			isa = PBXGroup;
+			children = (
+				E776BAF63C750B3C5FCC0C85 /* App */,
+				2E37ED4BBD6D09186DF28517 /* Resources */,
+				A0602841F6D8C0D39D5604DE /* Services */,
+				9AAEFD1942FF8F04AD564639 /* ViewModels */,
+				994C26AB9900AD67DA28FFB0 /* Views */,
+				9BC828DB0D8D10873566FFC0 /* Ikeru.entitlements */,
+				358B47E0F54AAFD423C1BAAD /* Info.plist */,
+			);
+			path = Ikeru;
+			sourceTree = "<group>";
+		};
+		F4FC6E91906301FF6EEE000C /* Kanji */ = {
+			isa = PBXGroup;
+			children = (
+				7DEC565E5BC2D95F4A14BD0A /* KanjiDisplayView.swift */,
+				15C00EAAA3BA98179DFE119D /* KanjiStudyView.swift */,
+				A91BD866585603D217E09761 /* MnemonicView.swift */,
+				40C5ECF5A9EA8B982657904C /* RadicalDecompositionView.swift */,
+				406C6BA699B52A4C383A75E1 /* ReadingsView.swift */,
+				77C23A25576DBE04B0A332B8 /* VocabularyExamplesView.swift */,
+			);
+			path = Kanji;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		T10000010000000000000001 /* Ikeru */ = {
+		5E31F15C6A31BAD7198508F4 /* IkeruWidget */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = BC0000010000000000000001 /* Build configuration list for PBXNativeTarget "Ikeru" */;
+			buildConfigurationList = 5EF9BD251E9F05226021728B /* Build configuration list for PBXNativeTarget "IkeruWidget" */;
 			buildPhases = (
-				S10000010000000000000001 /* Sources */,
-				F20000010000000000000001 /* Frameworks */,
-				R10000010000000000000001 /* Resources */,
-				F10000010000000000000001 /* Embed Extensions */,
+				179A5D27A2F5F3FE1813BD95 /* Sources */,
+				57AE8D39B8B572E32EA6388E /* Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				D20000010000000000000001 /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				FS000001000000000000001 /* Ikeru */,
-			);
-			name = Ikeru;
-			packageProductDependencies = (
-				A20000010000000000000001 /* IkeruCore */,
-			);
-			productName = Ikeru;
-			productReference = C30000010000000000000001 /* Ikeru.app */;
-			productType = "com.apple.product-type.application";
-		};
-		T10000010000000000000002 /* IkeruWatch */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = BC0000010000000000000002 /* Build configuration list for PBXNativeTarget "IkeruWatch" */;
-			buildPhases = (
-				S10000010000000000000002 /* Sources */,
-				F20000010000000000000002 /* Frameworks */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			fileSystemSynchronizedGroups = (
-				FS000001000000000000002 /* IkeruWatch */,
-			);
-			name = IkeruWatch;
-			packageProductDependencies = (
-				A20000010000000000000002 /* IkeruCore */,
-			);
-			productName = IkeruWatch;
-			productReference = C30000010000000000000002 /* IkeruWatch.app */;
-			productType = "com.apple.product-type.application";
-		};
-		T10000010000000000000003 /* IkeruWidget */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = BC0000010000000000000003 /* Build configuration list for PBXNativeTarget "IkeruWidget" */;
-			buildPhases = (
-				S10000010000000000000003 /* Sources */,
-				F20000010000000000000003 /* Frameworks */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			fileSystemSynchronizedGroups = (
-				FS000001000000000000003 /* IkeruWidget */,
 			);
 			name = IkeruWidget;
 			packageProductDependencies = (
-				A20000010000000000000003 /* IkeruCore */,
+				4F8B33137F081915FB6E5329 /* IkeruCore */,
 			);
 			productName = IkeruWidget;
-			productReference = C30000010000000000000003 /* IkeruWidget.appex */;
+			productReference = FAB097C7086A8C5F1549D53D /* IkeruWidget.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
-		T10000010000000000000004 /* IkeruTests */ = {
+		AB63406F8CCDE07382570F0B /* IkeruWatch */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = BC0000010000000000000005 /* Build configuration list for PBXNativeTarget "IkeruTests" */;
+			buildConfigurationList = 5C70031FEE72C6BA13B3D4A9 /* Build configuration list for PBXNativeTarget "IkeruWatch" */;
 			buildPhases = (
-				S10000010000000000000004 /* Sources */,
-				F20000010000000000000004 /* Frameworks */,
+				54342E9728AE8A29CCF86C92 /* Sources */,
+				22069A737D28651902763C82 /* Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				D20000010000000000000002 /* PBXTargetDependency */,
 			);
-			fileSystemSynchronizedGroups = (
-				FS000001000000000000004 /* IkeruTests */,
+			name = IkeruWatch;
+			packageProductDependencies = (
+				D6284BC7E5C7136958E6185E /* IkeruCore */,
+			);
+			productName = IkeruWatch;
+			productReference = 41DE2FB348D4D1AFBF4143ED /* IkeruWatch.app */;
+			productType = "com.apple.product-type.application";
+		};
+		C7A466B4903F67E7A7B2D0E2 /* IkeruTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CD35C0C4146E23BA575AC8C6 /* Build configuration list for PBXNativeTarget "IkeruTests" */;
+			buildPhases = (
+				3D6847B33A8C563EBC103828 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				48B02306B9618FF189A631C9 /* PBXTargetDependency */,
 			);
 			name = IkeruTests;
+			packageProductDependencies = (
+			);
 			productName = IkeruTests;
-			productReference = C30000010000000000000004 /* IkeruTests.xctest */;
+			productReference = 71F17C0E3B326F9F0C5D3E94 /* IkeruTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		EDDB8F3812DC1BC18F32017C /* Ikeru */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 3CA19E1D53CD0152AB4B9BA3 /* Build configuration list for PBXNativeTarget "Ikeru" */;
+			buildPhases = (
+				6EF51E41D399C3C6A20B3DA0 /* Sources */,
+				05E704457ED3467819DD63DB /* Resources */,
+				B425F8A581EEF932D98C24E6 /* Frameworks */,
+				144B808990A1D5825BB8E28C /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				6B5EFA12D68F711EDA158C69 /* PBXTargetDependency */,
+			);
+			name = Ikeru;
+			packageProductDependencies = (
+				F1FCE9F34C02B01EDB2461B7 /* IkeruCore */,
+			);
+			productName = Ikeru;
+			productReference = 8225047CD3C41A1364CD67FA /* Ikeru.app */;
+			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		E10000010000000000000001 /* Project object */ = {
+		44FF3435A5B11DC2E0D31918 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 1600;
+				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1600;
 				TargetAttributes = {
-					T10000010000000000000001 = {
-						CreatedOnToolsVersion = 16.0;
+					5E31F15C6A31BAD7198508F4 = {
+						ProvisioningStyle = Automatic;
 					};
-					T10000010000000000000002 = {
-						CreatedOnToolsVersion = 16.0;
+					AB63406F8CCDE07382570F0B = {
+						ProvisioningStyle = Automatic;
 					};
-					T10000010000000000000003 = {
-						CreatedOnToolsVersion = 16.0;
+					C7A466B4903F67E7A7B2D0E2 = {
+						ProvisioningStyle = Automatic;
 					};
-					T10000010000000000000004 = {
-						CreatedOnToolsVersion = 16.0;
-						TestTargetID = T10000010000000000000001;
+					EDDB8F3812DC1BC18F32017C = {
+						ProvisioningStyle = Automatic;
 					};
 				};
 			};
-			buildConfigurationList = BC0000010000000000000004 /* Build configuration list for PBXProject "Ikeru" */;
+			buildConfigurationList = 0C1F0BD46893EA58379F20A9 /* Build configuration list for PBXProject "Ikeru" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
-				en,
 				Base,
-				ja,
+				en,
 			);
-			mainGroup = G10000010000000000000001 /* Root */;
+			mainGroup = EF88C2B2433715E2D2E8D0DA;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				PR0000010000000000000001 /* XCLocalSwiftPackageReference "IkeruCore" */,
+				827513D841A7FC2BEC4018F6 /* XCLocalSwiftPackageReference "IkeruCore" */,
 			);
 			preferredProjectObjectVersion = 77;
-			productRefGroup = G10000010000000000000015 /* Products */;
+			productRefGroup = 70A9DC9F6ECBB150C593E25D /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				T10000010000000000000001 /* Ikeru */,
-				T10000010000000000000002 /* IkeruWatch */,
-				T10000010000000000000003 /* IkeruWidget */,
-				T10000010000000000000004 /* IkeruTests */,
+				EDDB8F3812DC1BC18F32017C /* Ikeru */,
+				C7A466B4903F67E7A7B2D0E2 /* IkeruTests */,
+				AB63406F8CCDE07382570F0B /* IkeruWatch */,
+				5E31F15C6A31BAD7198508F4 /* IkeruWidget */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		R10000010000000000000001 /* Resources */ = {
+		05E704457ED3467819DD63DB /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2599E15EC556738138D16158 /* Assets.xcassets in Resources */,
+				699CDC8CCD6C70501B8AF94A /* n5-content.sqlite in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		S10000010000000000000001 /* Sources */ = {
+		179A5D27A2F5F3FE1813BD95 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D620F952CB6ED990AB51DB36 /* IkeruWidgetBundle.swift in Sources */,
+				484D405C4211881A67889AB9 /* SessionLiveActivity.swift in Sources */,
+				85204B34AEE5C56B01857C3C /* StandByFlashcardWidget.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		S10000010000000000000002 /* Sources */ = {
+		3D6847B33A8C563EBC103828 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B645B881692E0AE7FE378DE4 /* AdaptiveSessionViewModelTests.swift in Sources */,
+				46BC1FB8F57C080AAF0EB987 /* CardReviewViewModelTests.swift in Sources */,
+				EBB22606F9278C7CBC1604BF /* ConversationViewModelTests.swift in Sources */,
+				7C128D3DB683FE9C44385E9E /* HandwritingViewModelTests.swift in Sources */,
+				7AD47972332D13661BE1885F /* HomeViewModelTests.swift in Sources */,
+				588F16A9AD56FA5DE5DDB103 /* ImmersiveSessionViewTests.swift in Sources */,
+				B4D53BD2C72F596C888D6FAB /* KanjiStudyViewModelTests.swift in Sources */,
+				62289A66A5C3A6A9D6CD9364 /* ListeningIntegrationTests.swift in Sources */,
+				784365F25937638D410F69D3 /* ListeningViewModelTests.swift in Sources */,
+				C7D3EB4AA2D2D81C101368D7 /* NavigationCoordinatorTests.swift in Sources */,
+				1F267C7F06B849E143C9F872 /* ProfileViewModelTests.swift in Sources */,
+				B6C31E378ED030EB4ED10D9B /* SessionConfigIntegrationTests.swift in Sources */,
+				7F007D67BD6304542673C64D /* SessionIntegrationTests.swift in Sources */,
+				96B7AA4DDFCB52A92BA246C3 /* SessionViewModelTests.swift in Sources */,
+				BC727BB5AEAC7CAFA04263C3 /* ShadowingIntegrationTests.swift in Sources */,
+				E31340113FF54CDF9EA9D6ED /* ShadowingViewModelTests.swift in Sources */,
+				8416A09ACC39E1CDD672E983 /* StrokeOrderIntegrationTests.swift in Sources */,
+				2EDB743A773B1110D8D8160D /* StrokeOrderViewModelTests.swift in Sources */,
+				7EBC2982099C381560979F85 /* ToastManagerTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		S10000010000000000000003 /* Sources */ = {
+		54342E9728AE8A29CCF86C92 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BE51F2E828552A87D898A01B /* HapticPitchDrillView.swift in Sources */,
+				0CF08BFEB33FB6FDA26D67BE /* IkeruWatchApp.swift in Sources */,
+				88D106140718312AFFC69671 /* KanaQuizView.swift in Sources */,
+				EE902487BE754E4D763DA2E9 /* ProgressComplication.swift in Sources */,
+				4FC23EE5CBF8C86A98A855F6 /* WatchHomeView.swift in Sources */,
+				6B447B08EC87253CC183BF68 /* WatchQuizViewModel.swift in Sources */,
+				115FC8D3C754A17975CF5886 /* WatchSessionManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		S10000010000000000000004 /* Sources */ = {
+		6EF51E41D399C3C6A20B3DA0 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				78EBAB8487F09970D54B4F08 /* AISettingsView.swift in Sources */,
+				ABA74ED79DF7BC71F7543DBF /* ActiveSessionView.swift in Sources */,
+				BCCDF647874F54F1271E46FF /* AppConfiguration.swift in Sources */,
+				318AD0DC566D55CF8F54F721 /* AttributionView.swift in Sources */,
+				2631DE603C9A3FFDB97B9D17 /* CardReviewView.swift in Sources */,
+				878E64EF919A51C376AD483C /* CardReviewViewModel.swift in Sources */,
+				80928CE01894C7B023866E4A /* ChatBubbleView.swift in Sources */,
+				A91A182B2779D86CD983FE2A /* CloudBackupManager.swift in Sources */,
+				03A18AE27633E99C6225720C /* ColorExtensions.swift in Sources */,
+				F8B54EFE3D06A1D370D8FED4 /* CompanionAvatarView.swift in Sources */,
+				2332D3E825277DEE0E731926 /* CompanionChatSheet.swift in Sources */,
+				B8984A48353B6EE06C997BAD /* CompanionChatViewModel.swift in Sources */,
+				EC69319148C3AF3B25F59DCA /* CompanionTabView.swift in Sources */,
+				1485E00B3EC04B8D4910F48C /* ConversationBubbleView.swift in Sources */,
+				F0BDE207FB9AD47E59F1AE92 /* ConversationView.swift in Sources */,
+				C5AFFF3C83FD80FF4E57B0EB /* ConversationViewModel.swift in Sources */,
+				E954C4AFA27E9820C570C3BF /* DataExportManager.swift in Sources */,
+				5D874F7760089A5C335464FD /* DiffHighlightView.swift in Sources */,
+				9CE7075A738FC2C1627420CD /* ExerciseTransitionContainer.swift in Sources */,
+				2B56415B2F3545851F6B8182 /* FillInBlankExerciseView.swift in Sources */,
+				89472D6F07C417CF74A6F34D /* FontExtensions.swift in Sources */,
+				BBE2383F1411582FB9D27014 /* GradeButtonsView.swift in Sources */,
+				C91AAFCB6B347DD7E48BEC5F /* GrammarPointView.swift in Sources */,
+				9BC4183DC3C8A7EC9B37686D /* HandwritingCanvasView.swift in Sources */,
+				FF89BFE59885EB3742A25989 /* HandwritingExerciseView.swift in Sources */,
+				2F6B8C98160163965120553D /* HandwritingViewModel.swift in Sources */,
+				4CC1293E4E5E5F24872B7EB6 /* HomeView.swift in Sources */,
+				6DA42A5338F4B35DF64928BF /* HomeViewModel.swift in Sources */,
+				4EAB9553B308C0E627182D2D /* IkeruApp.swift in Sources */,
+				58BECF1D8B55499034C3F5AA /* IkeruButtonStyle.swift in Sources */,
+				553E0E281A012BF7C569A6D1 /* IkeruCard.swift in Sources */,
+				2E71B9173249BF48621921E7 /* InlineKanjiView.swift in Sources */,
+				94FED3DFE4912D74155C44F1 /* InlineMnemonicView.swift in Sources */,
+				C8F7ED3F00387307F04FD73E /* InlineQuizView.swift in Sources */,
+				4C300AF08D17073C30F03BA3 /* KanjiDisplayView.swift in Sources */,
+				90422BEF9BC8E04D637D5227 /* KanjiStudyView.swift in Sources */,
+				EFB4AC9FEB8312A7E21BAB67 /* KanjiStudyViewModel.swift in Sources */,
+				BF45D9ACC0C1A84F62E338D5 /* LevelUpView.swift in Sources */,
+				3FF25A148A3F29A4766B9536 /* ListeningExerciseView.swift in Sources */,
+				0D7F6C804EBBBB485D58A756 /* ListeningPassageView.swift in Sources */,
+				1661F05AF2EE6DEFD886575B /* ListeningViewModel.swift in Sources */,
+				09AEC542DAB9105AFD7EC1C4 /* LiveActivityManager.swift in Sources */,
+				5A12D68CE875C055EFB12733 /* LootBoxChallengeView.swift in Sources */,
+				0B1E0557EEEB57EA318D8C7B /* LootBoxOpenView.swift in Sources */,
+				8F797DDBE2D54C590F237849 /* LootDropView.swift in Sources */,
+				A4FD9CA72477C29768928B5E /* LootRevealView.swift in Sources */,
+				39A095270B40F6C416C13453 /* MainTabView.swift in Sources */,
+				E67443C57282C375B28E1ADB /* MeshHeroView.swift in Sources */,
+				8079EBD85DD413FB6BA17D40 /* MnemonicView.swift in Sources */,
+				8220FF72EE512779FDF93501 /* NameEntryView.swift in Sources */,
+				F99671B5F564DEA0F4B3C41B /* NavigationCoordinator.swift in Sources */,
+				E5D377E0EE04F7256C198370 /* NotificationManager.swift in Sources */,
+				E27F5570AE1B045B6470C43D /* OnboardingTourView.swift in Sources */,
+				AB876BD7DDC67C76C138EBDC /* PitchAccentView.swift in Sources */,
+				36DBAA3C969EE384E09F1819 /* PitchAccentViewModel.swift in Sources */,
+				18FB9E310248D0E4180685FF /* PitchContourView.swift in Sources */,
+				93BF5688D23C97D381684CDD /* PlaybackRateSelector.swift in Sources */,
+				E6D5C29E18595B7C6DEF7878 /* ProfileViewModel.swift in Sources */,
+				D00AC904AC8A13E4B9237F2E /* ProgressDashboardView.swift in Sources */,
+				C3C088775E85F7B1F020235C /* ProgressDashboardViewModel.swift in Sources */,
+				8AEE9F8BE78788FDEBEF1F7B /* RPGProfileView.swift in Sources */,
+				20A46053CB898DA6AEBA6697 /* RPGProfileViewModel.swift in Sources */,
+				DCCF0B7EBE77A847DB43B406 /* RadicalDecompositionView.swift in Sources */,
+				C4AA3905DE90177682E212A8 /* ReadingPassageView.swift in Sources */,
+				50621972E820A8D923FB54D9 /* ReadingPassageViewModel.swift in Sources */,
+				ABB829D69579D496F77AC77F /* ReadingsView.swift in Sources */,
+				F2A0D73D1228BC5748D9C024 /* SRSCardView.swift in Sources */,
+				03266CA2AC2C8FE09FF324D2 /* SentenceConstructionView.swift in Sources */,
+				EFA3DDE7B5BBFA82A09873CB /* SentenceConstructionViewModel.swift in Sources */,
+				65B55BA772664AD8B848C157 /* SessionConfigView.swift in Sources */,
+				4A75A771A6DEAF3D5109046E /* SessionConfigViewModel.swift in Sources */,
+				0C0BACF716CC048BD8D3047A /* SessionPreviewCard.swift in Sources */,
+				9B7FD90C901ED310BA49F1C6 /* SessionProgressBar.swift in Sources */,
+				FDA86090738921E4E18E79CE /* SessionSummaryView.swift in Sources */,
+				65CFDAA2B97AA214A4AEEFA8 /* SessionViewModel.swift in Sources */,
+				24B1C98084294C7E17812BF1 /* SettingsView.swift in Sources */,
+				B2142C70A1C6014266FB9F2E /* ShadowingExerciseView.swift in Sources */,
+				D8EB495D638484D9EAB4DC02 /* ShadowingViewModel.swift in Sources */,
+				CD75D7ADA19D87E667DA3C4C /* ShimmerModifier.swift in Sources */,
+				A8C2670E450109C4289456F5 /* ShortcutsManager.swift in Sources */,
+				18215CF0553ABF951057A4E6 /* SkillBalanceBar.swift in Sources */,
+				14EFF53B93984E414DD41C10 /* SkillRadarView.swift in Sources */,
+				AF2A856D7DBDC342722B07BD /* StrokeOrderExerciseView.swift in Sources */,
+				159F80F88E64BACBD528A0EB /* StrokeOrderView.swift in Sources */,
+				5B188F1ABB8FDAC523D264FD /* StrokeOrderViewModel.swift in Sources */,
+				C9C552606F14AE938AB0A1C3 /* StrokeTracingView.swift in Sources */,
+				09A4F7F1DA62FBF986A78C5F /* ToastManager.swift in Sources */,
+				56C0FAA75C6A9BDAD06FC62E /* ToastView.swift in Sources */,
+				F83318606CDD399E5B109CEB /* VocabularyExamplesView.swift in Sources */,
+				DAAC21592CB9A41BBF136425 /* VocabularyStudyView.swift in Sources */,
+				96318E447330C86C4B8FF75B /* VocabularyStudyViewModel.swift in Sources */,
+				00C45E3806F4F41DF942E46A /* WatchConnectivityManager.swift in Sources */,
+				A00ED71AC785B8E955FF9A08 /* WordDefinitionView.swift in Sources */,
+				B529F67EFA4A5DB91FD0B0E1 /* XPBarView.swift in Sources */,
+				3201547827523F9F7FCDDCAD /* XPGainView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		D20000010000000000000001 /* PBXTargetDependency */ = {
+		48B02306B9618FF189A631C9 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = T10000010000000000000003 /* IkeruWidget */;
-			targetProxy = D10000010000000000000001 /* PBXContainerItemProxy */;
+			target = EDDB8F3812DC1BC18F32017C /* Ikeru */;
+			targetProxy = 25C6E74F283D27715783DD21 /* PBXContainerItemProxy */;
 		};
-		D20000010000000000000002 /* PBXTargetDependency */ = {
+		6B5EFA12D68F711EDA158C69 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = T10000010000000000000001 /* Ikeru */;
-			targetProxy = D10000010000000000000002 /* PBXContainerItemProxy */;
+			target = 5E31F15C6A31BAD7198508F4 /* IkeruWidget */;
+			targetProxy = 433E1B3B24082529B9000005 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
-		/* Debug - Ikeru iOS App */
-		X10000010000000000000001 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_ENTITLEMENTS = Ikeru/Ikeru.entitlements;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = Ikeru/Info.plist;
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait";
-				INFOPLIST_KEY_UIUserInterfaceStyle = Dark;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.ikeru.app;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 6.0;
-				TARGETED_DEVICE_FAMILY = "1";
-			};
-			name = Debug;
-		};
-		/* Release - Ikeru iOS App */
-		X10000010000000000000002 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_ENTITLEMENTS = Ikeru/Ikeru.entitlements;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = Ikeru/Info.plist;
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait";
-				INFOPLIST_KEY_UIUserInterfaceStyle = Dark;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.ikeru.app;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 6.0;
-				TARGETED_DEVICE_FAMILY = "1";
-			};
-			name = Release;
-		};
-		/* Debug - IkeruWatch */
-		X10000010000000000000003 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.ikeru.app;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.ikeru.app.watch;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = watchos;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 6.0;
-				WATCHOS_DEPLOYMENT_TARGET = 10.0;
-			};
-			name = Debug;
-		};
-		/* Release - IkeruWatch */
-		X10000010000000000000004 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.ikeru.app;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.ikeru.app.watch;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = watchos;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 6.0;
-				WATCHOS_DEPLOYMENT_TARGET = 10.0;
-			};
-			name = Release;
-		};
-		/* Debug - IkeruWidget */
-		X10000010000000000000005 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_ENTITLEMENTS = IkeruWidget/IkeruWidget.entitlements;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = IkeruWidget;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@executable_path/../../Frameworks",
-				);
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.ikeru.app.widget;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 6.0;
-				TARGETED_DEVICE_FAMILY = "1";
-			};
-			name = Debug;
-		};
-		/* Release - IkeruWidget */
-		X10000010000000000000006 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_ENTITLEMENTS = IkeruWidget/IkeruWidget.entitlements;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = IkeruWidget;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@executable_path/../../Frameworks",
-				);
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.ikeru.app.widget;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 6.0;
-				TARGETED_DEVICE_FAMILY = "1";
-			};
-			name = Release;
-		};
-		/* Debug - IkeruTests */
-		X10000010000000000000009 /* Debug */ = {
+		0AC7F214D33BD7F4D7729F3F /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.ikeru.app.tests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_VERSION = 6.0;
-				TARGETED_DEVICE_FAMILY = "1";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Ikeru.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Ikeru";
-			};
-			name = Debug;
-		};
-		/* Release - IkeruTests */
-		X10000010000000000000010 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.ikeru.app.tests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_VERSION = 6.0;
-				TARGETED_DEVICE_FAMILY = "1";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Ikeru.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Ikeru";
-			};
-			name = Release;
-		};
-		/* Debug - Project */
-		X10000010000000000000007 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
-				CLANG_ANALYZER_NONNULL = YES;
-				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
-				CLANG_ENABLE_MODULES = YES;
-				CLANG_ENABLE_OBJC_ARC = YES;
-				CLANG_ENABLE_OBJC_WEAK = YES;
-				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
-				CLANG_WARN_BOOL_CONVERSION = YES;
-				CLANG_WARN_COMMA = YES;
-				CLANG_WARN_CONSTANT_CONVERSION = YES;
-				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
-				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
-				CLANG_WARN_EMPTY_BODY = YES;
-				CLANG_WARN_ENUM_CONVERSION = YES;
-				CLANG_WARN_INFINITE_RECURSION = YES;
-				CLANG_WARN_INT_CONVERSION = YES;
-				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
-				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
-				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
-				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
-				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
-				CLANG_WARN_STRICT_PROTOTYPES = YES;
-				CLANG_WARN_SUSPICIOUS_MOVE = YES;
-				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
-				CLANG_WARN_UNREACHABLE_CODE = YES;
-				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				COPY_PHASE_STRIP = NO;
-				DEBUG_INFORMATION_FORMAT = dwarf;
-				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				ENABLE_TESTABILITY = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu17;
-				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_NO_COMMON_BLOCKS = YES;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
+				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
 				);
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNDECLARED_SELECTOR = YES;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				GCC_WARN_UNUSED_FUNCTION = YES;
-				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
-				MTL_FAST_MATH = YES;
-				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ikeru.app.tests;
 				SDKROOT = iphoneos;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
-				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
-				SWIFT_STRICT_CONCURRENCY = complete;
-				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Ikeru.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Ikeru";
 			};
 			name = Debug;
 		};
-		/* Release - Project */
-		X10000010000000000000008 /* Release */ = {
+		24756A11F3B03604763E175D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.ikeru.app;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ikeru.app.watch;
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+			};
+			name = Release;
+		};
+		361D0ADA4E14F53C967FAFAC /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Ikeru/Ikeru.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Ikeru/Info.plist;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UIUserInterfaceStyle = Dark;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.ikeru.app;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		59CEEF26E2A5EB7AA0D56731 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.ikeru.app.tests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Ikeru.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Ikeru";
+			};
+			name = Release;
+		};
+		7431E212CC57E62FB4CBA582 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.ikeru.app;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ikeru.app.watch;
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+			};
+			name = Debug;
+		};
+		7B650AB59D8F374B6B574838 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = IkeruWidget/IkeruWidget.entitlements;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = IkeruWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.ikeru.app.widget;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		7D6595C8356D9F7F7E05434C /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_ENABLE_OBJC_WEAK = YES;
@@ -640,12 +1193,12 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
@@ -654,88 +1207,192 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
-				SDKROOT = iphoneos;
+				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_COMPILATION_MODE = wholemodule;
-				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 6.0;
-				VALIDATE_PRODUCT = YES;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
 			};
 			name = Release;
+		};
+		A45A6F037871A5F44542F639 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.0;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+			};
+			name = Debug;
+		};
+		E893CD9712D57AA5F7EF5955 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Ikeru/Ikeru.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Ikeru/Info.plist;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UIUserInterfaceStyle = Dark;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.ikeru.app;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		EC8548B03853231284F4DFD0 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = IkeruWidget/IkeruWidget.entitlements;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = IkeruWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.ikeru.app.widget;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
 		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		BC0000010000000000000001 /* Build configuration list for PBXNativeTarget "Ikeru" */ = {
+		0C1F0BD46893EA58379F20A9 /* Build configuration list for PBXProject "Ikeru" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				X10000010000000000000001 /* Debug */,
-				X10000010000000000000002 /* Release */,
+				A45A6F037871A5F44542F639 /* Debug */,
+				7D6595C8356D9F7F7E05434C /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Debug;
 		};
-		BC0000010000000000000002 /* Build configuration list for PBXNativeTarget "IkeruWatch" */ = {
+		3CA19E1D53CD0152AB4B9BA3 /* Build configuration list for PBXNativeTarget "Ikeru" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				X10000010000000000000003 /* Debug */,
-				X10000010000000000000004 /* Release */,
+				361D0ADA4E14F53C967FAFAC /* Debug */,
+				E893CD9712D57AA5F7EF5955 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Debug;
 		};
-		BC0000010000000000000003 /* Build configuration list for PBXNativeTarget "IkeruWidget" */ = {
+		5C70031FEE72C6BA13B3D4A9 /* Build configuration list for PBXNativeTarget "IkeruWatch" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				X10000010000000000000005 /* Debug */,
-				X10000010000000000000006 /* Release */,
+				7431E212CC57E62FB4CBA582 /* Debug */,
+				24756A11F3B03604763E175D /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Debug;
 		};
-		BC0000010000000000000004 /* Build configuration list for PBXProject "Ikeru" */ = {
+		5EF9BD251E9F05226021728B /* Build configuration list for PBXNativeTarget "IkeruWidget" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				X10000010000000000000007 /* Debug */,
-				X10000010000000000000008 /* Release */,
+				EC8548B03853231284F4DFD0 /* Debug */,
+				7B650AB59D8F374B6B574838 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Debug;
 		};
-		BC0000010000000000000005 /* Build configuration list for PBXNativeTarget "IkeruTests" */ = {
+		CD35C0C4146E23BA575AC8C6 /* Build configuration list for PBXNativeTarget "IkeruTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				X10000010000000000000009 /* Debug */,
-				X10000010000000000000010 /* Release */,
+				0AC7F214D33BD7F4D7729F3F /* Debug */,
+				59CEEF26E2A5EB7AA0D56731 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		PR0000010000000000000001 /* XCLocalSwiftPackageReference "IkeruCore" */ = {
+		827513D841A7FC2BEC4018F6 /* XCLocalSwiftPackageReference "IkeruCore" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = IkeruCore;
 		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		A20000010000000000000001 /* IkeruCore */ = {
+		4F8B33137F081915FB6E5329 /* IkeruCore */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = IkeruCore;
 		};
-		A20000010000000000000002 /* IkeruCore */ = {
+		D6284BC7E5C7136958E6185E /* IkeruCore */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = IkeruCore;
 		};
-		A20000010000000000000003 /* IkeruCore */ = {
+		F1FCE9F34C02B01EDB2461B7 /* IkeruCore */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = IkeruCore;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
-	rootObject = E10000010000000000000001 /* Project object */;
+	rootObject = 44FF3435A5B11DC2E0D31918 /* Project object */;
 }

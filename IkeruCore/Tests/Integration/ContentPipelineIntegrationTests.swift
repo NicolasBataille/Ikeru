@@ -8,6 +8,7 @@ import SQLite3
 /// Integration tests for the full content pipeline:
 /// SQLite bundle -> ContentRepository -> KanjiGraphRepository -> ContentLoadingService
 @Suite("Content Pipeline Integration")
+@MainActor
 struct ContentPipelineIntegrationTests {
 
     // MARK: - Full Pipeline Tests
@@ -90,8 +91,7 @@ struct ContentPipelineIntegrationTests {
             }
             #expect(
                 radIdx < kanjiIdx,
-                "Edge \(edge.radicalCharacter) -> \(edge.kanjiCharacter): " +
-                "radical at index \(radIdx) must be before kanji at index \(kanjiIdx)"
+                Comment(rawValue: "Edge \(edge.radicalCharacter) -> \(edge.kanjiCharacter): radical at index \(radIdx) must be before kanji at index \(kanjiIdx)")
             )
         }
     }

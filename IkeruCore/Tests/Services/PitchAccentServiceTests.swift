@@ -358,11 +358,12 @@ struct PitchAccentServiceTests {
 // MARK: - PitchAccentTracker Tests
 
 @Suite("PitchAccentTracker")
+@MainActor
 struct PitchAccentTrackerTests {
 
     @Test("recordResult increments total and correct counts")
     func recordResultTracksCorrectly() async {
-        let defaults = UserDefaults(suiteName: "test.pitchTracker.\(UUID().uuidString)")!
+        nonisolated(unsafe) let defaults = UserDefaults(suiteName: "test.pitchTracker.\(UUID().uuidString)")!
         let tracker = PitchAccentTracker(defaults: defaults)
 
         await tracker.recordResult(pattern: .heiban, wasCorrect: true)
@@ -442,7 +443,7 @@ struct PitchAccentTrackerTests {
     @Test("tracker persists data via UserDefaults")
     func persistence() async {
         let suiteName = "test.pitchTracker.\(UUID().uuidString)"
-        let defaults = UserDefaults(suiteName: suiteName)!
+        nonisolated(unsafe) let defaults = UserDefaults(suiteName: suiteName)!
 
         // Record with first instance
         let tracker1 = PitchAccentTracker(defaults: defaults)

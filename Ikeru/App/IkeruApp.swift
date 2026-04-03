@@ -48,6 +48,8 @@ struct IkeruApp: App {
                 .toastOverlay()
                 .task {
                     initializeProfileViewModel()
+                    WatchConnectivityManager.shared.activate(modelContainer: modelContainer)
+                    await scheduleNotificationsFromSettings()
                 }
         }
         .modelContainer(modelContainer)
@@ -92,5 +94,34 @@ struct IkeruApp: App {
         }
 
         hasCheckedProfile = true
+    }
+
+    // MARK: - Notification Scheduling
+
+    @MainActor
+    private func scheduleNotificationsFromSettings() async {
+        let context = modelContainer.mainContext
+        let descriptor = FetchDescriptor<UserProfile>()
+        guard let profile = try? context.fetch(descriptor).first else { return }
+
+        let settings = profile.settings
+        let manager = NotificationManager.shared
+
+        if settings.reviewReminderEnabled {
+            let authorized = await manager.requestAuthorization()
+            if authorized {
+                manager.scheduleReviewReminder(hour: settings.reviewReminderHour, dueCardCount: 0)
+            }
+        }
+
+        if settings.weeklyCheckInEnabled {
+            let authorized = await manager.requestAuthorization()
+            if authorized {
+                manager.scheduleWeeklyCheckIn(
+                    weekday: settings.weeklyCheckInDay,
+                    hour: settings.weeklyCheckInHour
+                )
+            }
+        }
     }
 }

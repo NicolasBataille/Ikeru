@@ -12,7 +12,7 @@ final class ProgressDashboardViewModel {
     // MARK: - Exposed State
 
     /// Skill balance for the radar chart.
-    private(set) var skillBalance: SkillBalance = SkillBalance()
+    private(set) var skillBalance: SkillBalanceSnapshot = SkillBalanceSnapshot()
 
     /// Estimated JLPT level and mastery.
     private(set) var jlptEstimate: JLPTEstimate = JLPTEstimate(

@@ -3,9 +3,9 @@ import os
 
 // MARK: - Skill Balance
 
-/// Represents the learner's balance across the four language skills.
+/// Represents a snapshot of the learner's balance across the four language skills.
 /// Each value is normalized to 0.0–1.0 (fraction of cards mastered in that category).
-public struct SkillBalance: Sendable, Equatable {
+public struct SkillBalanceSnapshot: Sendable, Equatable {
     public let reading: Double
     public let writing: Double
     public let listening: Double
@@ -84,7 +84,7 @@ public struct ForecastEntry: Sendable, Equatable, Identifiable {
 
 /// Aggregated data for the progress dashboard.
 public struct ProgressDashboardData: Sendable, Equatable {
-    public let skillBalance: SkillBalance
+    public let skillBalance: SkillBalanceSnapshot
     public let jlptEstimate: JLPTEstimate
     public let dueNowCount: Int
     public let dueTodayCount: Int
@@ -92,7 +92,7 @@ public struct ProgressDashboardData: Sendable, Equatable {
     public let monthlySnapshots: [MonthlySnapshot]
 
     public init(
-        skillBalance: SkillBalance,
+        skillBalance: SkillBalanceSnapshot,
         jlptEstimate: JLPTEstimate,
         dueNowCount: Int,
         dueTodayCount: Int,
@@ -135,7 +135,7 @@ public final class ProgressService: Sendable {
 
         let elapsed = (CFAbsoluteTimeGetCurrent() - startTime) * 1000
         Logger.planner.info(
-            "Progress data loaded in \(elapsed, format: .fixed(precision: 1))ms — \(allCards.count) cards, \(dueNow.count) due"
+            "Progress data loaded in \(String(format: "%.1f", elapsed))ms — \(allCards.count) cards, \(dueNow.count) due"
         )
 
         return ProgressDashboardData(
@@ -151,7 +151,7 @@ public final class ProgressService: Sendable {
     // MARK: - Skill Balance
 
     /// Computes skill balance as fraction of mastered cards per type.
-    private func computeSkillBalance(allCards: [CardDTO]) -> SkillBalance {
+    private func computeSkillBalance(allCards: [CardDTO]) -> SkillBalanceSnapshot {
         let masteredByType = Dictionary(grouping: allCards) { $0.type }
 
         func masteryRatio(for type: CardType) -> Double {
@@ -173,7 +173,7 @@ public final class ProgressService: Sendable {
             + vocabCards.filter { $0.fsrsState.reps > 0 }.count
         let readingRatio = readingTotal > 0 ? Double(readingMastered) / Double(readingTotal) : 0
 
-        return SkillBalance(
+        return SkillBalanceSnapshot(
             reading: readingRatio,
             writing: masteryRatio(for: .grammar),
             listening: masteryRatio(for: .listening),

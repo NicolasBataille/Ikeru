@@ -90,6 +90,7 @@ public final class AudioService {
 
     /// Configures AVAudioSession for a learning app with spoken audio.
     private func configureAudioSession() {
+        #if os(iOS) || os(watchOS)
         let session = AVAudioSession.sharedInstance()
         do {
             try session.setCategory(
@@ -102,12 +103,14 @@ public final class AudioService {
         } catch {
             Logger.audio.error("Failed to configure audio session: \(error.localizedDescription)")
         }
+        #endif
     }
 
     // MARK: - Interruption Handling
 
     /// Observes audio interruptions (phone calls, other app audio) and pauses/resumes.
     private func observeInterruptions() {
+        #if os(iOS) || os(watchOS)
         interruptionObserver = NotificationCenter.default.addObserver(
             forName: AVAudioSession.interruptionNotification,
             object: AVAudioSession.sharedInstance(),
@@ -118,8 +121,10 @@ public final class AudioService {
                 self.handleInterruption(notification: notification)
             }
         }
+        #endif
     }
 
+    #if os(iOS) || os(watchOS)
     private func handleInterruption(notification: Notification) {
         guard let userInfo = notification.userInfo,
               let typeValue = userInfo[AVAudioSessionInterruptionTypeKey] as? UInt,
@@ -143,6 +148,7 @@ public final class AudioService {
             break
         }
     }
+    #endif
 
     // MARK: - Speech Completion
 
@@ -271,7 +277,11 @@ public final class AudioService {
 
     /// Whether the system volume is effectively muted.
     public var isSilentMode: Bool {
+        #if os(iOS) || os(watchOS)
         AVAudioSession.sharedInstance().outputVolume == 0.0
+        #else
+        false
+        #endif
     }
 
     /// Whether audio exercises should be skipped due to silent mode.

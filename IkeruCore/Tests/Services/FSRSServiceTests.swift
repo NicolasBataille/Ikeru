@@ -280,14 +280,22 @@ struct FSRSServiceTests {
     @Test("Schedule 1000 cards in under 1 second")
     func performanceBenchmark() {
         let now = Date()
-        let states = (0..<1000).map { i in
-            FSRSState(
-                difficulty: Double(i % 10) + 1,
-                stability: Double(i % 100) + 1,
-                reps: i % 20,
-                lapses: i % 5,
-                lastReview: now.addingTimeInterval(-Double(i % 30) * 86400)
+        var states: [FSRSState] = []
+        states.reserveCapacity(1000)
+        for i in 0..<1000 {
+            let difficulty = Double(i % 10) + 1
+            let stability = Double(i % 100) + 1
+            let reps = i % 20
+            let lapses = i % 5
+            let lastReview = now.addingTimeInterval(-Double(i % 30) * 86400)
+            let state = FSRSState(
+                difficulty: difficulty,
+                stability: stability,
+                reps: reps,
+                lapses: lapses,
+                lastReview: lastReview
             )
+            states.append(state)
         }
         let grades: [Grade] = [.again, .hard, .good, .easy]
         let start = ContinuousClock.now

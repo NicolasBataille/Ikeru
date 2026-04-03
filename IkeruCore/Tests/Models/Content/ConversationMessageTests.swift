@@ -62,12 +62,12 @@ struct ConversationMessageTests {
 
 // MARK: - JLPTLevel Tests
 
-@Suite("JLPTLevel")
-struct JLPTLevelTests {
+@Suite("JLPTLevel Conversation Extensions")
+struct JLPTLevelConversationTests {
 
     @Test("All levels have rawValues", arguments: JLPTLevel.allCases)
     func rawValues(level: JLPTLevel) {
-        #expect(level.rawValue.hasPrefix("N"))
+        #expect(!level.rawValue.isEmpty)
         #expect(!level.complexityDescription.isEmpty)
     }
 

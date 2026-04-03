@@ -3,6 +3,7 @@ import Foundation
 @testable import IkeruCore
 
 @Suite("AIRouterService")
+@MainActor
 struct AIRouterServiceTests {
 
     // MARK: - Helpers

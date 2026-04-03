@@ -50,6 +50,14 @@ struct HomeView: View {
                 }
             }
         }
+        .onReceive(NotificationCenter.default.publisher(for: .startQuizFromShortcut)) { _ in
+            initializeViewModels()
+            startSession()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .startReviewFromShortcut)) { _ in
+            initializeViewModels()
+            startSession()
+        }
     }
 
     // MARK: - Home Content

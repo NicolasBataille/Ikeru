@@ -131,7 +131,7 @@ struct CardRepositoryTests {
         #expect(updated != nil)
         #expect(updated?.fsrsState.reps == 1)
         #expect(updated?.fsrsState.lastReview != nil)
-        #expect(updated?.fsrsState.stability > 0)
+        #expect((updated?.fsrsState.stability ?? 0) > 0)
 
         let logs = await repository.reviewLogs(for: cardId)
         #expect(logs.count == 1)

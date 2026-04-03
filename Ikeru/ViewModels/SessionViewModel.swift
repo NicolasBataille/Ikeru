@@ -161,6 +161,7 @@ public final class SessionViewModel {
     private let cardRepository: CardRepository
     private let modelContainer: ModelContainer
     private let reviewForecastService: ReviewForecastService
+    private let liveActivityManager = LiveActivityManager()
     private weak var companionViewModel: CompanionChatViewModel?
     private var cardStartTime: Date = Date()
     private var timerTask: Task<Void, Never>?
@@ -216,6 +217,9 @@ public final class SessionViewModel {
 
         // Load persisted RPG state
         await loadRPGState()
+
+        // Start Live Activity for Dynamic Island
+        liveActivityManager.startActivity(totalExercises: queue.count)
 
         Logger.ui.info("Session started with \(queue.count) cards")
     }
@@ -308,6 +312,9 @@ public final class SessionViewModel {
 
         await loadRPGState()
 
+        // Start Live Activity for Dynamic Island
+        liveActivityManager.startActivity(totalExercises: plan.exercises.count)
+
         Logger.ui.info(
             "Adaptive session started: \(srsCards.count) SRS cards, \(plan.supplementaryExerciseCount) supplementary"
         )
@@ -396,6 +403,17 @@ public final class SessionViewModel {
         currentIndex += 1
         cardStartTime = Date()
 
+        // Update Live Activity with current progress
+        let exerciseLabel = currentExercise.map { exerciseDisplayName($0) } ?? "Review"
+        liveActivityManager.updateActivity(
+            elapsedSeconds: Int(elapsedTime),
+            exerciseType: exerciseLabel,
+            completedCount: reviewedCount,
+            totalCount: sessionExercises.count,
+            xpEarned: xpEarned,
+            streakCount: consecutiveCorrect
+        )
+
         // Advance exercise index to stay in sync
         advanceToNextExercise()
 
@@ -412,6 +430,12 @@ public final class SessionViewModel {
 
         if isSessionComplete {
             stopTimer()
+            liveActivityManager.endActivity(
+                elapsedSeconds: Int(elapsedTime),
+                completedCount: reviewedCount,
+                totalCount: sessionQueue.count,
+                xpEarned: xpEarned
+            )
             Logger.ui.info(
                 "Session complete: \(self.reviewedCount) reviewed, \(self.xpEarned) XP earned"
             )
@@ -463,6 +487,15 @@ public final class SessionViewModel {
         Logger.ui.info(
             "Session ended early: \(self.reviewedCount)/\(self.sessionQueue.count) reviewed, \(self.xpEarned) XP"
         )
+
+        // End Live Activity
+        liveActivityManager.endActivity(
+            elapsedSeconds: Int(elapsedTime),
+            completedCount: reviewedCount,
+            totalCount: sessionQueue.count,
+            xpEarned: xpEarned
+        )
+
         // Mark as complete by jumping to end of queue
         currentIndex = sessionQueue.count
         currentExerciseIndex = sessionExercises.count
@@ -553,6 +586,24 @@ public final class SessionViewModel {
         let minutes = total / 60
         let seconds = total % 60
         return String(format: "%d:%02d", minutes, seconds)
+    }
+
+    // MARK: - Exercise Display Name
+
+    /// Returns a user-facing label for the given exercise type.
+    private func exerciseDisplayName(_ exercise: ExerciseItem) -> String {
+        switch exercise {
+        case .srsReview: "Review"
+        case .kanjiStudy: "Kanji"
+        case .grammarExercise: "Grammar"
+        case .vocabularyStudy: "Vocabulary"
+        case .fillInBlank: "Fill in Blank"
+        case .readingPassage: "Reading"
+        case .writingPractice: "Writing"
+        case .listeningExercise: "Listening"
+        case .speakingExercise: "Speaking"
+        case .sentenceConstruction: "Sentence"
+        }
     }
 
     // MARK: - RPG State Persistence

@@ -2,53 +2,66 @@ import Testing
 import Foundation
 @testable import IkeruCore
 
-// MARK: - Mock AI Provider
+// MARK: - Mock AI Provider for ConversationService Tests
 
-private final class MockAIProvider: AIProvider, @unchecked Sendable {
+private final class MockConversationAIProvider: AIProvider, @unchecked Sendable {
     let name: String
-    var available: Bool
-    var responseText: String
-    var shouldThrow: Error?
+    let tier: AITier
+    private let _available: Bool
+    private let responseContent: String
+    private let shouldThrow: Error?
 
     init(
         name: String = "MockProvider",
+        tier: AITier = .onDevice,
         available: Bool = true,
-        responseText: String = "こんにちは！元気ですか？",
+        responseContent: String = "こんにちは！元気ですか？",
         shouldThrow: Error? = nil
     ) {
         self.name = name
-        self.available = available
-        self.responseText = responseText
+        self.tier = tier
+        self._available = available
+        self.responseContent = responseContent
         self.shouldThrow = shouldThrow
     }
 
-    func isAvailable() async -> Bool {
-        available
+    var isAvailable: Bool {
+        get async { _available }
     }
 
-    func generate(_ request: AIRequest) async throws -> AIResponse {
+    func generate(prompt: AIPrompt) async throws -> AIResponse {
         if let error = shouldThrow {
             throw error
         }
-        return AIResponse(text: responseText, providerName: name)
+        return AIResponse(
+            content: responseContent,
+            tier: tier,
+            latencyMs: 50
+        )
     }
 }
 
 // MARK: - ConversationService Tests
 
 @Suite("ConversationService")
+@MainActor
 struct ConversationServiceTests {
 
     @Test("Sends message and receives response")
     func sendMessage() async throws {
-        let provider = MockAIProvider(responseText: "はい、いい天気ですね！")
-        let router = AIRouterService(providers: [provider])
+        let provider = MockConversationAIProvider(responseContent: "はい、いい天気ですね！")
+        let router = AIRouterService(
+            onDeviceProvider: provider,
+            geminiProvider: provider,
+            claudeProvider: provider,
+            localGPUProvider: provider
+        )
         let service = ConversationService(aiRouter: router)
 
         let response = try await service.sendMessage(
             "こんにちは",
             history: [],
-            jlptLevel: .n5
+            jlptLevel: JLPTLevel.n5
         )
 
         #expect(response.role == .assistant)
@@ -61,14 +74,19 @@ struct ConversationServiceTests {
         いいですね！
         [CORRECTION: 食べます → 食べました | Past tense needed here]
         """
-        let provider = MockAIProvider(responseText: responseText)
-        let router = AIRouterService(providers: [provider])
+        let provider = MockConversationAIProvider(responseContent: responseText)
+        let router = AIRouterService(
+            onDeviceProvider: provider,
+            geminiProvider: provider,
+            claudeProvider: provider,
+            localGPUProvider: provider
+        )
         let service = ConversationService(aiRouter: router)
 
         let response = try await service.sendMessage(
             "昨日、寿司を食べます。",
             history: [],
-            jlptLevel: .n4
+            jlptLevel: JLPTLevel.n4
         )
 
         #expect(response.content == "いいですね！")
@@ -85,14 +103,19 @@ struct ConversationServiceTests {
         [VOCAB: 散歩(さんぽ) = walk]
         [VOCAB: 公園(こうえん) = park]
         """
-        let provider = MockAIProvider(responseText: responseText)
-        let router = AIRouterService(providers: [provider])
+        let provider = MockConversationAIProvider(responseContent: responseText)
+        let router = AIRouterService(
+            onDeviceProvider: provider,
+            geminiProvider: provider,
+            claudeProvider: provider,
+            localGPUProvider: provider
+        )
         let service = ConversationService(aiRouter: router)
 
         let response = try await service.sendMessage(
             "外に行きたいです",
             history: [],
-            jlptLevel: .n5
+            jlptLevel: JLPTLevel.n5
         )
 
         #expect(response.content == "散歩しましょう！")
@@ -110,14 +133,19 @@ struct ConversationServiceTests {
         [CORRECTION: 行きます → 行きました | Use past tense for completed actions]
         [VOCAB: 映画(えいが) = movie]
         """
-        let provider = MockAIProvider(responseText: responseText)
-        let router = AIRouterService(providers: [provider])
+        let provider = MockConversationAIProvider(responseContent: responseText)
+        let router = AIRouterService(
+            onDeviceProvider: provider,
+            geminiProvider: provider,
+            claudeProvider: provider,
+            localGPUProvider: provider
+        )
         let service = ConversationService(aiRouter: router)
 
         let response = try await service.sendMessage(
             "昨日映画に行きます",
             history: [],
-            jlptLevel: .n5
+            jlptLevel: JLPTLevel.n5
         )
 
         #expect(response.content == "そうですか！楽しかったですか？")
@@ -127,19 +155,24 @@ struct ConversationServiceTests {
 
     @Test("Includes history in AI messages")
     func includesHistory() async throws {
-        let provider = MockAIProvider(responseText: "はい！")
-        let router = AIRouterService(providers: [provider])
+        let provider = MockConversationAIProvider(responseContent: "はい！")
+        let router = AIRouterService(
+            onDeviceProvider: provider,
+            geminiProvider: provider,
+            claudeProvider: provider,
+            localGPUProvider: provider
+        )
         let service = ConversationService(aiRouter: router)
 
         let history = [
             ConversationMessage(role: .user, content: "こんにちは"),
-            ConversationMessage(role: .assistant, content: "こんにちは！")
+            ConversationMessage(role: MessageRole.assistant, content: "こんにちは！")
         ]
 
         let response = try await service.sendMessage(
             "元気ですか？",
             history: history,
-            jlptLevel: .n5
+            jlptLevel: JLPTLevel.n5
         )
 
         #expect(response.role == .assistant)
@@ -147,87 +180,17 @@ struct ConversationServiceTests {
 
     @Test("Throws when no providers available")
     func throwsWhenUnavailable() async {
-        let provider = MockAIProvider(available: false)
-        let router = AIRouterService(providers: [provider])
+        let provider = MockConversationAIProvider(available: false)
+        let router = AIRouterService(
+            onDeviceProvider: provider,
+            geminiProvider: provider,
+            claudeProvider: provider,
+            localGPUProvider: provider
+        )
         let service = ConversationService(aiRouter: router)
 
-        await #expect(throws: AIProviderError.self) {
-            try await service.sendMessage("hello", history: [], jlptLevel: .n5)
+        await #expect(throws: AIError.self) {
+            try await service.sendMessage("hello", history: [], jlptLevel: JLPTLevel.n5)
         }
-    }
-
-    @Test("Reports availability correctly")
-    func availabilityCheck() async {
-        let available = MockAIProvider(available: true)
-        let unavailable = MockAIProvider(available: false)
-
-        let routerAvailable = AIRouterService(providers: [available])
-        let routerUnavailable = AIRouterService(providers: [unavailable])
-
-        let serviceAvailable = ConversationService(aiRouter: routerAvailable)
-        let serviceUnavailable = ConversationService(aiRouter: routerUnavailable)
-
-        #expect(await serviceAvailable.isAvailable() == true)
-        #expect(await serviceUnavailable.isAvailable() == false)
-    }
-}
-
-// MARK: - AIRouterService Tests
-
-@Suite("AIRouterService")
-struct AIRouterServiceTests {
-
-    @Test("Routes to first available provider")
-    func routesToFirstAvailable() async throws {
-        let provider1 = MockAIProvider(name: "First", available: false)
-        let provider2 = MockAIProvider(name: "Second", responseText: "From second")
-        let router = AIRouterService(providers: [provider1, provider2])
-
-        let request = AIRequest(systemPrompt: "test", messages: [])
-        let response = try await router.generate(request)
-
-        #expect(response.providerName == "Second")
-    }
-
-    @Test("Falls back on provider error")
-    func fallsBackOnError() async throws {
-        let provider1 = MockAIProvider(
-            name: "Failing",
-            shouldThrow: AIProviderError.networkError("test")
-        )
-        let provider2 = MockAIProvider(name: "Fallback", responseText: "fallback response")
-        let router = AIRouterService(providers: [provider1, provider2])
-
-        let request = AIRequest(systemPrompt: "test", messages: [])
-        let response = try await router.generate(request)
-
-        #expect(response.providerName == "Fallback")
-    }
-
-    @Test("Throws when all providers fail")
-    func throwsWhenAllFail() async {
-        let provider = MockAIProvider(
-            shouldThrow: AIProviderError.networkError("test")
-        )
-        let router = AIRouterService(providers: [provider])
-
-        let request = AIRequest(systemPrompt: "test", messages: [])
-        await #expect(throws: (any Error).self) {
-            try await router.generate(request)
-        }
-    }
-
-    @Test("Has available provider check")
-    func hasAvailableProvider() async {
-        let available = MockAIProvider(available: true)
-        let unavailable = MockAIProvider(available: false)
-
-        let router1 = AIRouterService(providers: [available])
-        let router2 = AIRouterService(providers: [unavailable])
-        let router3 = AIRouterService(providers: [])
-
-        #expect(await router1.hasAvailableProvider() == true)
-        #expect(await router2.hasAvailableProvider() == false)
-        #expect(await router3.hasAvailableProvider() == false)
     }
 }

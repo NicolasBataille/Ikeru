@@ -97,6 +97,8 @@ public final class SpeechRecognitionService {
     /// Checks current permission status without requesting.
     public func checkPermissionStatus() {
         let speechStatus = SFSpeechRecognizer.authorizationStatus()
+
+        #if os(iOS)
         let micStatus = AVAudioApplication.shared.recordPermission
 
         switch (speechStatus, micStatus) {
@@ -109,6 +111,18 @@ public final class SpeechRecognitionService {
         default:
             permissionStatus = .denied
         }
+        #else
+        switch speechStatus {
+        case .authorized:
+            permissionStatus = .authorized
+        case .notDetermined:
+            permissionStatus = .notDetermined
+        case .restricted:
+            permissionStatus = .restricted
+        default:
+            permissionStatus = .denied
+        }
+        #endif
     }
 
     private func requestSpeechAuthorization() async -> Bool {
@@ -120,7 +134,11 @@ public final class SpeechRecognitionService {
     }
 
     private func requestMicrophonePermission() async -> Bool {
+        #if os(iOS)
         await AVAudioApplication.requestRecordPermission()
+        #else
+        true
+        #endif
     }
 
     // MARK: - Recording
@@ -146,6 +164,7 @@ public final class SpeechRecognitionService {
         }
 
         // Configure audio session for recording
+        #if os(iOS)
         let audioSession = AVAudioSession.sharedInstance()
         try audioSession.setCategory(
             .playAndRecord,
@@ -153,6 +172,7 @@ public final class SpeechRecognitionService {
             options: [.defaultToSpeaker]
         )
         try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
+        #endif
 
         let inputNode = engine.inputNode
         let recordingFormat = inputNode.outputFormat(forBus: 0)
@@ -239,6 +259,7 @@ public final class SpeechRecognitionService {
     }
 
     private func restoreAudioSession() {
+        #if os(iOS)
         let audioSession = AVAudioSession.sharedInstance()
         do {
             try audioSession.setCategory(
@@ -251,6 +272,7 @@ public final class SpeechRecognitionService {
         } catch {
             Logger.audio.error("Failed to restore audio session: \(error.localizedDescription)")
         }
+        #endif
     }
 
     /// Tears down resources. Call when the service is no longer needed.

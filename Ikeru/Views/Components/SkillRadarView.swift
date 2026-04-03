@@ -14,7 +14,7 @@ enum SkillRadarVariant {
 /// Supports `.mini` (compact, no labels) and `.full` (with labels and values).
 struct SkillRadarView: View {
 
-    let skillBalance: SkillBalance
+    let skillBalance: SkillBalanceSnapshot
     let variant: SkillRadarVariant
 
     /// Animatable data points for the four axes.
@@ -263,7 +263,7 @@ struct SkillRadarView: View {
 
         VStack(spacing: IkeruTheme.Spacing.xl) {
             SkillRadarView(
-                skillBalance: SkillBalance(
+                skillBalance: SkillBalanceSnapshot(
                     reading: 0.7,
                     writing: 0.4,
                     listening: 0.6,
@@ -273,7 +273,7 @@ struct SkillRadarView: View {
             )
 
             SkillRadarView(
-                skillBalance: SkillBalance(
+                skillBalance: SkillBalanceSnapshot(
                     reading: 0.7,
                     writing: 0.4,
                     listening: 0.6,

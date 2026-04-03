@@ -5,7 +5,7 @@
    <BuildAction
       parallelizeBuildables = "YES"
       buildImplicitDependencies = "YES"
-      buildArchitectures = "Automatic">
+      runPostActionsOnFailure = "NO">
       <BuildActionEntries>
          <BuildActionEntry
             buildForTesting = "YES"
@@ -15,9 +15,23 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "T10000010000000000000001"
+               BlueprintIdentifier = "EDDB8F3812DC1BC18F32017C"
                BuildableName = "Ikeru.app"
                BlueprintName = "Ikeru"
+               ReferencedContainer = "container:Ikeru.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "C7A466B4903F67E7A7B2D0E2"
+               BuildableName = "IkeruTests.xctest"
+               BlueprintName = "IkeruTests"
                ReferencedContainer = "container:Ikeru.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -27,19 +41,32 @@
       buildConfiguration = "Debug"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
-      shouldUseLaunchSchemeArgsEnv = "YES">
+      shouldUseLaunchSchemeArgsEnv = "YES"
+      onlyGenerateCoverageForSpecifiedTargets = "NO">
+      <MacroExpansion>
+         <BuildableReference
+            BuildableIdentifier = "primary"
+            BlueprintIdentifier = "EDDB8F3812DC1BC18F32017C"
+            BuildableName = "Ikeru.app"
+            BlueprintName = "Ikeru"
+            ReferencedContainer = "container:Ikeru.xcodeproj">
+         </BuildableReference>
+      </MacroExpansion>
       <Testables>
          <TestableReference
-            skipped = "NO">
+            skipped = "NO"
+            parallelizable = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "T10000010000000000000004"
+               BlueprintIdentifier = "C7A466B4903F67E7A7B2D0E2"
                BuildableName = "IkeruTests.xctest"
                BlueprintName = "IkeruTests"
                ReferencedContainer = "container:Ikeru.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
+      <CommandLineArguments>
+      </CommandLineArguments>
    </TestAction>
    <LaunchAction
       buildConfiguration = "Debug"
@@ -55,12 +82,14 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "T10000010000000000000001"
+            BlueprintIdentifier = "EDDB8F3812DC1BC18F32017C"
             BuildableName = "Ikeru.app"
             BlueprintName = "Ikeru"
             ReferencedContainer = "container:Ikeru.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
+      <CommandLineArguments>
+      </CommandLineArguments>
    </LaunchAction>
    <ProfileAction
       buildConfiguration = "Release"
@@ -72,12 +101,14 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "T10000010000000000000001"
+            BlueprintIdentifier = "EDDB8F3812DC1BC18F32017C"
             BuildableName = "Ikeru.app"
             BlueprintName = "Ikeru"
             ReferencedContainer = "container:Ikeru.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
+      <CommandLineArguments>
+      </CommandLineArguments>
    </ProfileAction>
    <AnalyzeAction
       buildConfiguration = "Debug">

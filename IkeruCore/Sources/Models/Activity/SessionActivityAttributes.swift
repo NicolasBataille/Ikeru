@@ -1,3 +1,4 @@
+#if os(iOS)
 import Foundation
 import ActivityKit
 
@@ -55,3 +56,4 @@ public struct SessionActivityAttributes: ActivityAttributes {
         self.sessionTitle = sessionTitle
     }
 }
+#endif

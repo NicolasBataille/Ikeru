@@ -4,6 +4,7 @@ import SQLite3
 @testable import IkeruCore
 
 @Suite("ContentLoadingService")
+@MainActor
 struct ContentLoadingServiceTests {
 
     // MARK: - Helpers
