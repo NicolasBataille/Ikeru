@@ -87,9 +87,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.ikeru.app.widget
         CODE_SIGN_ENTITLEMENTS: IkeruWidget/IkeruWidget.entitlements
-        GENERATE_INFOPLIST_FILE: true
-        INFOPLIST_KEY_CFBundleDisplayName: IkeruWidget
-        INFOPLIST_KEY_NSHumanReadableCopyright: ""
+        GENERATE_INFOPLIST_FILE: false
+        INFOPLIST_FILE: IkeruWidget/Info.plist
     entitlements:
       path: IkeruWidget/IkeruWidget.entitlements
 

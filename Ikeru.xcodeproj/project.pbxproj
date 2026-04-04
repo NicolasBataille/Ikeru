@@ -240,6 +240,7 @@
 		929D91F5E4CA898816722EFF /* SentenceConstructionViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SentenceConstructionViewModel.swift; sourceTree = "<group>"; };
 		9350635C5EB9E93159CBD562 /* ReadingPassageViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadingPassageViewModel.swift; sourceTree = "<group>"; };
 		94DFE0591021BC898110AB38 /* LiveActivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveActivityManager.swift; sourceTree = "<group>"; };
+		95596EED1B8269510E18C1B6 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		97DC0D8C7FA88DAEF99E751F /* StrokeOrderViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StrokeOrderViewModelTests.swift; sourceTree = "<group>"; };
 		99665C482D14C819E209167E /* InlineMnemonicView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InlineMnemonicView.swift; sourceTree = "<group>"; };
 		9ADB1F486DEEFD4CE3C20C5C /* ConversationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationView.swift; sourceTree = "<group>"; };
@@ -383,6 +384,7 @@
 			children = (
 				06D4DC8FC49CC9C5B56F5438 /* IkeruWidget.entitlements */,
 				FD4E32975E0ECE57675459EB /* IkeruWidgetBundle.swift */,
+				95596EED1B8269510E18C1B6 /* Info.plist */,
 				B46DF69A2A765C203CB58B09 /* SessionLiveActivity.swift */,
 				F75C1AD94292B42125242E1C /* StandByFlashcardWidget.swift */,
 			);
@@ -1146,9 +1148,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = IkeruWidget/IkeruWidget.entitlements;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = IkeruWidget;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = IkeruWidget/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1308,9 +1309,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = IkeruWidget/IkeruWidget.entitlements;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = IkeruWidget;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = IkeruWidget/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
