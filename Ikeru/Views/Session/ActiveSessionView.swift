@@ -21,8 +21,7 @@ struct ActiveSessionView: View {
 
     var body: some View {
         ZStack {
-            Color.ikeruBackground
-                .ignoresSafeArea()
+            IkeruScreenBackground()
 
             if viewModel.isSessionComplete {
                 SessionSummaryView(viewModel: viewModel)
@@ -133,9 +132,9 @@ struct ActiveSessionView: View {
     // MARK: - Drag Indicator Pill
 
     private var dragIndicatorPill: some View {
-        RoundedRectangle(cornerRadius: IkeruTheme.Radius.full)
-            .fill(Color.ikeruTextSecondary)
-            .frame(width: 36, height: 4)
+        Capsule()
+            .fill(Color.white.opacity(0.18))
+            .frame(width: 42, height: 4)
             .padding(.top, IkeruTheme.Spacing.sm)
     }
 
@@ -143,7 +142,6 @@ struct ActiveSessionView: View {
 
     private var pauseOverlay: some View {
         ZStack {
-            // Blur background
             Rectangle()
                 .fill(.ultraThinMaterial)
                 .ignoresSafeArea()
@@ -151,22 +149,36 @@ struct ActiveSessionView: View {
             VStack(spacing: IkeruTheme.Spacing.xl) {
                 Spacer()
 
-                Image(systemName: "pause.circle.fill")
-                    .font(.system(size: 60))
-                    .foregroundStyle(Color.ikeruPrimaryAccent)
+                VStack(spacing: IkeruTheme.Spacing.lg) {
+                    Image(systemName: "pause.circle")
+                        .font(.system(size: 64, weight: .light))
+                        .foregroundStyle(LinearGradient.ikeruGold)
 
-                Text("Session Paused")
-                    .font(.ikeruHeading1)
-                    .foregroundStyle(.white)
+                    VStack(spacing: 6) {
+                        Text("PAUSED")
+                            .font(.ikeruMicro)
+                            .ikeruTracking(.micro)
+                            .foregroundStyle(Color.ikeruTextTertiary)
 
-                Text(viewModel.abandonProgressDescription)
-                    .font(.ikeruBody)
-                    .foregroundStyle(.ikeruTextSecondary)
+                        Text("Session Paused")
+                            .font(.ikeruDisplaySmall)
+                            .ikeruTracking(.display)
+                            .foregroundStyle(Color.ikeruTextPrimary)
+
+                        Text(viewModel.abandonProgressDescription)
+                            .font(.ikeruBody)
+                            .foregroundStyle(Color.ikeruTextSecondary)
+                            .multilineTextAlignment(.center)
+                    }
+                }
+                .padding(IkeruTheme.Spacing.xl)
+                .ikeruCard(.elevated)
+                .padding(.horizontal, IkeruTheme.Spacing.lg)
 
                 Spacer()
 
                 VStack(spacing: IkeruTheme.Spacing.md) {
-                    Button("Resume") {
+                    Button("Resume Session") {
                         resumeFromPause()
                     }
                     .ikeruButtonStyle(.primary)
@@ -183,7 +195,7 @@ struct ActiveSessionView: View {
             }
         }
         .transition(
-            .opacity.combined(with: .scale(scale: 0.95))
+            .opacity.combined(with: .scale(scale: 0.96))
         )
     }
 
@@ -191,18 +203,23 @@ struct ActiveSessionView: View {
 
     private var emptySessionView: some View {
         VStack(spacing: IkeruTheme.Spacing.lg) {
-            Image(systemName: "tray.fill")
-                .font(.system(size: 48))
-                .foregroundStyle(.ikeruTextSecondary)
+            Image(systemName: "tray")
+                .font(.system(size: 56, weight: .light))
+                .foregroundStyle(Color.ikeruTextTertiary)
 
-            Text("No exercises available")
-                .font(.ikeruHeading2)
-                .foregroundStyle(.white)
-
-            Text("Come back later when you have cards to review.")
-                .font(.ikeruBody)
-                .foregroundStyle(.ikeruTextSecondary)
-                .multilineTextAlignment(.center)
+            VStack(spacing: 6) {
+                Text("ALL CLEAR")
+                    .font(.ikeruMicro)
+                    .ikeruTracking(.micro)
+                    .foregroundStyle(Color.ikeruTextTertiary)
+                Text("No exercises available")
+                    .font(.ikeruHeading2)
+                    .foregroundStyle(Color.ikeruTextPrimary)
+                Text("Come back later when you have cards to review.")
+                    .font(.ikeruBody)
+                    .foregroundStyle(Color.ikeruTextSecondary)
+                    .multilineTextAlignment(.center)
+            }
 
             Button("Dismiss") {
                 viewModel.dismissSession()
@@ -210,6 +227,8 @@ struct ActiveSessionView: View {
             .ikeruButtonStyle(.primary)
             .padding(.top, IkeruTheme.Spacing.md)
         }
+        .padding(IkeruTheme.Spacing.xl)
+        .ikeruCard(.elevated)
         .padding(.horizontal, IkeruTheme.Spacing.lg)
     }
 

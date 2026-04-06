@@ -12,18 +12,13 @@ struct ProgressDashboardView: View {
 
     var body: some View {
         ZStack {
-            Color.ikeruBackground
-                .ignoresSafeArea()
+            IkeruScreenBackground()
 
             if let vm = viewModel, vm.hasLoaded {
                 dashboardContent(vm)
-            } else {
-                Color.ikeruBackground.ignoresSafeArea()
             }
         }
-        .navigationTitle("Progress")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbarColorScheme(.dark, for: .navigationBar)
+        .toolbar(.hidden, for: .navigationBar)
         .task {
             initializeViewModel()
             await viewModel?.loadData()
@@ -40,24 +35,92 @@ struct ProgressDashboardView: View {
     @ViewBuilder
     private func dashboardContent(_ vm: ProgressDashboardViewModel) -> some View {
         ScrollView {
-            VStack(spacing: IkeruTheme.Spacing.lg) {
-                skillRadarSection(vm)
+            VStack(spacing: IkeruTheme.Spacing.xl) {
+                topBar
                 jlptEstimateCard(vm)
+                skillRadarSection(vm)
                 reviewQueueSection(vm)
                 monthlyTrendsSection(vm)
+
+                Spacer(minLength: 200)
             }
             .padding(.horizontal, IkeruTheme.Spacing.md)
-            .padding(.top, IkeruTheme.Spacing.md)
-            .padding(.bottom, IkeruTheme.Spacing.xxl)
+            .padding(.top, IkeruTheme.Spacing.lg)
         }
     }
 
-    // MARK: - Skill Radar Section
+    // MARK: - Top Bar
+
+    private var topBar: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("YOUR PATH")
+                .font(.ikeruMicro)
+                .ikeruTracking(.micro)
+                .foregroundStyle(Color.ikeruTextTertiary)
+            Text("Progress")
+                .font(.ikeruDisplaySmall)
+                .ikeruTracking(.display)
+                .foregroundStyle(Color.ikeruTextPrimary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    // MARK: - JLPT Estimate
+
+    @ViewBuilder
+    private func jlptEstimateCard(_ vm: ProgressDashboardViewModel) -> some View {
+        VStack(alignment: .leading, spacing: IkeruTheme.Spacing.md) {
+            IkeruSectionHeader(title: "JLPT Estimate", eyebrow: "Mastery")
+
+            HStack(alignment: .lastTextBaseline) {
+                Text(vm.jlptEstimate.level)
+                    .font(.ikeruDisplayLarge)
+                    .ikeruTracking(.display)
+                    .foregroundStyle(LinearGradient.ikeruGold)
+
+                Spacer()
+
+                VStack(alignment: .trailing, spacing: 4) {
+                    Text(vm.jlptDisplayText)
+                        .font(.ikeruBody)
+                        .foregroundStyle(Color.ikeruTextPrimary)
+
+                    Text("\(vm.jlptEstimate.masteredCount)/\(vm.jlptEstimate.totalRequired) items")
+                        .font(.ikeruCaption)
+                        .foregroundStyle(Color.ikeruTextSecondary)
+                }
+            }
+
+            jlptProgressBar(fraction: vm.jlptEstimate.masteryFraction)
+        }
+        .ikeruCard(.hero)
+    }
+
+    @ViewBuilder
+    private func jlptProgressBar(fraction: Double) -> some View {
+        GeometryReader { geometry in
+            ZStack(alignment: .leading) {
+                Capsule()
+                    .fill(Color.white.opacity(0.08))
+
+                Capsule()
+                    .fill(LinearGradient.ikeruGold)
+                    .frame(width: geometry.size.width * min(1.0, max(0, fraction)))
+                    .animation(
+                        .spring(response: 0.42, dampingFraction: 0.86),
+                        value: fraction
+                    )
+            }
+        }
+        .frame(height: 8)
+    }
+
+    // MARK: - Skill Radar
 
     @ViewBuilder
     private func skillRadarSection(_ vm: ProgressDashboardViewModel) -> some View {
-        VStack(spacing: IkeruTheme.Spacing.sm) {
-            sectionHeader(icon: "chart.pie.fill", title: "Skill Balance")
+        VStack(alignment: .leading, spacing: IkeruTheme.Spacing.md) {
+            IkeruSectionHeader(title: "Skill Balance", eyebrow: "Strengths")
 
             SkillRadarView(
                 skillBalance: vm.skillBalance,
@@ -68,156 +131,90 @@ struct ProgressDashboardView: View {
         .ikeruCard(.standard)
     }
 
-    // MARK: - JLPT Estimate Card
-
-    @ViewBuilder
-    private func jlptEstimateCard(_ vm: ProgressDashboardViewModel) -> some View {
-        VStack(spacing: IkeruTheme.Spacing.sm) {
-            sectionHeader(icon: "rosette", title: "JLPT Estimate")
-
-            HStack {
-                Text(vm.jlptEstimate.level)
-                    .font(.ikeruHeading1)
-                    .foregroundStyle(Color.ikeruPrimaryAccent)
-
-                Spacer()
-
-                VStack(alignment: .trailing, spacing: 4) {
-                    Text(vm.jlptDisplayText)
-                        .font(.ikeruBody)
-                        .foregroundStyle(.white)
-
-                    Text("\(vm.jlptEstimate.masteredCount)/\(vm.jlptEstimate.totalRequired) items")
-                        .font(.ikeruCaption)
-                        .foregroundStyle(.ikeruTextSecondary)
-                }
-            }
-
-            // Progress bar
-            jlptProgressBar(fraction: vm.jlptEstimate.masteryFraction)
-        }
-        .ikeruCard(.standard)
-    }
-
-    @ViewBuilder
-    private func jlptProgressBar(fraction: Double) -> some View {
-        GeometryReader { geometry in
-            ZStack(alignment: .leading) {
-                RoundedRectangle(cornerRadius: IkeruTheme.Radius.sm)
-                    .fill(Color.white.opacity(0.1))
-
-                RoundedRectangle(cornerRadius: IkeruTheme.Radius.sm)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color.ikeruPrimaryAccent,
-                                Color.ikeruSuccess
-                            ],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
-                    .frame(width: geometry.size.width * min(1.0, max(0, fraction)))
-                    .animation(
-                        .spring(duration: IkeruTheme.Animation.standardDuration),
-                        value: fraction
-                    )
-            }
-        }
-        .frame(height: 8)
-    }
-
-    // MARK: - Review Queue Section
+    // MARK: - Review Queue
 
     @ViewBuilder
     private func reviewQueueSection(_ vm: ProgressDashboardViewModel) -> some View {
-        VStack(spacing: IkeruTheme.Spacing.md) {
-            sectionHeader(icon: "tray.full.fill", title: "Review Queue")
+        VStack(alignment: .leading, spacing: IkeruTheme.Spacing.md) {
+            IkeruSectionHeader(title: "Review Queue", eyebrow: "Today")
 
             HStack(spacing: IkeruTheme.Spacing.md) {
-                reviewStatBadge(
+                reviewStatTile(
                     value: "\(vm.dueNowCount)",
                     label: "Due Now",
-                    color: vm.dueNowCount > 0
+                    tint: vm.dueNowCount > 0
                         ? Color.ikeruSecondaryAccent
-                        : Color.ikeruSuccess
+                        : Color.ikeruTertiaryAccent
                 )
 
-                reviewStatBadge(
+                reviewStatTile(
                     value: "\(vm.dueTodayCount)",
                     label: "Due Today",
-                    color: Color.ikeruPrimaryAccent
+                    tint: Color.ikeruPrimaryAccent
                 )
             }
 
-            // 7-day forecast bar chart
             if !vm.forecast.isEmpty {
                 forecastChart(vm)
+                    .padding(.top, IkeruTheme.Spacing.sm)
             }
         }
         .ikeruCard(.standard)
     }
 
     @ViewBuilder
-    private func reviewStatBadge(
+    private func reviewStatTile(
         value: String,
         label: String,
-        color: Color
+        tint: Color
     ) -> some View {
-        VStack(spacing: 4) {
+        VStack(spacing: IkeruTheme.Spacing.xs) {
             Text(value)
-                .font(.ikeruHeading2)
-                .foregroundStyle(color)
+                .font(.ikeruStatsLarge)
+                .foregroundStyle(tint)
 
-            Text(label)
-                .font(.ikeruCaption)
-                .foregroundStyle(.ikeruTextSecondary)
+            Text(label.uppercased())
+                .font(.ikeruMicro)
+                .ikeruTracking(.micro)
+                .foregroundStyle(Color.ikeruTextTertiary)
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, IkeruTheme.Spacing.sm)
-        .background(color.opacity(0.1))
-        .clipShape(RoundedRectangle(cornerRadius: IkeruTheme.Radius.sm))
+        .padding(.vertical, IkeruTheme.Spacing.md)
+        .ikeruGlass(
+            cornerRadius: IkeruTheme.Radius.md,
+            tint: tint,
+            tintOpacity: 0.08
+        )
     }
 
     @ViewBuilder
     private func forecastChart(_ vm: ProgressDashboardViewModel) -> some View {
-        VStack(alignment: .leading, spacing: IkeruTheme.Spacing.xs) {
-            Text("7-Day Forecast")
-                .font(.ikeruCaption)
-                .foregroundStyle(.ikeruTextSecondary)
+        VStack(alignment: .leading, spacing: IkeruTheme.Spacing.sm) {
+            Text("7-DAY FORECAST")
+                .font(.ikeruMicro)
+                .ikeruTracking(.micro)
+                .foregroundStyle(Color.ikeruTextTertiary)
 
             HStack(alignment: .bottom, spacing: IkeruTheme.Spacing.xs) {
                 ForEach(vm.forecast) { entry in
                     VStack(spacing: 4) {
                         Text("\(entry.cardsDue)")
                             .font(.system(size: 10, design: .monospaced))
-                            .foregroundStyle(.ikeruTextSecondary)
+                            .foregroundStyle(Color.ikeruTextSecondary)
 
-                        let barHeight = barHeight(
-                            value: entry.cardsDue,
-                            maxValue: vm.forecastMaxValue
-                        )
+                        let h = barHeight(value: entry.cardsDue, maxValue: vm.forecastMaxValue)
 
-                        RoundedRectangle(cornerRadius: 3)
-                            .fill(
-                                LinearGradient(
-                                    colors: [
-                                        Color.ikeruPrimaryAccent.opacity(0.6),
-                                        Color.ikeruPrimaryAccent
-                                    ],
-                                    startPoint: .bottom,
-                                    endPoint: .top
-                                )
-                            )
-                            .frame(height: barHeight)
+                        Capsule()
+                            .fill(LinearGradient.ikeruGold)
+                            .frame(height: h)
                             .animation(
-                                .spring(duration: IkeruTheme.Animation.standardDuration),
+                                .spring(response: 0.42, dampingFraction: 0.86),
                                 value: entry.cardsDue
                             )
 
                         Text(entry.dayLabel)
                             .font(.system(size: 9))
-                            .foregroundStyle(.ikeruTextSecondary)
+                            .foregroundStyle(Color.ikeruTextTertiary)
                             .lineLimit(1)
                     }
                     .frame(maxWidth: .infinity)
@@ -227,19 +224,21 @@ struct ProgressDashboardView: View {
         }
     }
 
-    // MARK: - Monthly Trends Section
+    // MARK: - Monthly Trends
 
     @ViewBuilder
     private func monthlyTrendsSection(_ vm: ProgressDashboardViewModel) -> some View {
-        VStack(spacing: IkeruTheme.Spacing.md) {
-            sectionHeader(icon: "chart.bar.fill", title: "Monthly Progress")
+        VStack(alignment: .leading, spacing: IkeruTheme.Spacing.md) {
+            IkeruSectionHeader(title: "Monthly Progress", eyebrow: "Trends")
 
             if !vm.monthlySnapshots.isEmpty {
                 monthlyChart(vm)
             } else {
-                Text("Start reviewing to see trends")
+                Text("Start reviewing to see trends.")
                     .font(.ikeruCaption)
-                    .foregroundStyle(.ikeruTextSecondary)
+                    .foregroundStyle(Color.ikeruTextSecondary)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.vertical, IkeruTheme.Spacing.md)
             }
         }
         .ikeruCard(.standard)
@@ -252,54 +251,35 @@ struct ProgressDashboardView: View {
                 VStack(spacing: 4) {
                     Text("\(snapshot.cardsMastered)")
                         .font(.system(size: 10, design: .monospaced))
-                        .foregroundStyle(.ikeruTextSecondary)
+                        .foregroundStyle(Color.ikeruTextSecondary)
 
-                    let barHeight = barHeight(
-                        value: snapshot.cardsMastered,
-                        maxValue: vm.monthlyMaxValue
-                    )
+                    let h = barHeight(value: snapshot.cardsMastered, maxValue: vm.monthlyMaxValue)
 
-                    RoundedRectangle(cornerRadius: 3)
+                    Capsule()
                         .fill(
                             LinearGradient(
                                 colors: [
-                                    Color.ikeruSuccess.opacity(0.4),
-                                    Color.ikeruSuccess
+                                    Color.ikeruTertiaryAccent.opacity(0.4),
+                                    Color.ikeruTertiaryAccent
                                 ],
                                 startPoint: .bottom,
                                 endPoint: .top
                             )
                         )
-                        .frame(height: barHeight)
+                        .frame(height: h)
                         .animation(
-                            .spring(duration: IkeruTheme.Animation.standardDuration),
+                            .spring(response: 0.42, dampingFraction: 0.86),
                             value: snapshot.cardsMastered
                         )
 
                     Text(snapshot.monthLabel)
                         .font(.system(size: 10))
-                        .foregroundStyle(.ikeruTextSecondary)
+                        .foregroundStyle(Color.ikeruTextTertiary)
                 }
                 .frame(maxWidth: .infinity)
             }
         }
         .frame(height: 100)
-    }
-
-    // MARK: - Shared Components
-
-    @ViewBuilder
-    private func sectionHeader(icon: String, title: String) -> some View {
-        HStack {
-            Image(systemName: icon)
-                .foregroundStyle(Color.ikeruPrimaryAccent)
-
-            Text(title)
-                .font(.ikeruHeading3)
-                .foregroundStyle(.white)
-
-            Spacer()
-        }
     }
 
     // MARK: - Helpers

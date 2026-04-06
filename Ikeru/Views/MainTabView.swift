@@ -25,11 +25,11 @@ enum AppTab: Int, CaseIterable, Identifiable {
 
     var icon: String {
         switch self {
-        case .home: return "house.fill"
-        case .study: return "book.fill"
-        case .companion: return "bubble.left.fill"
-        case .rpg: return "shield.fill"
-        case .settings: return "gearshape.fill"
+        case .home: return "house"
+        case .study: return "book.closed"
+        case .companion: return "bubble.left"
+        case .rpg: return "shield"
+        case .settings: return "gearshape"
         }
     }
 }
@@ -39,28 +39,30 @@ enum AppTab: Int, CaseIterable, Identifiable {
 struct MainTabView: View {
 
     @Environment(\.modelContext) private var modelContext
-    @State private var selectedTab: AppTab = .home
+    @State private var selectedTab: AppTab = {
+        if let arg = CommandLine.arguments.first(where: { $0.hasPrefix("-startTab=") }),
+           let raw = Int(arg.dropFirst("-startTab=".count)),
+           let tab = AppTab(rawValue: raw) {
+            return tab
+        }
+        return .home
+    }()
     @State private var showCompanionChat = false
     @State private var companionViewModel: CompanionChatViewModel?
 
     var body: some View {
-        ZStack(alignment: .bottomTrailing) {
-            TabView(selection: $selectedTab) {
-                ForEach(AppTab.allCases) { tab in
-                    TabContentView(tab: tab)
-                        .tabItem {
-                            Label(tab.title, systemImage: tab.icon)
-                        }
-                        .tag(tab)
-                }
-            }
-            .tint(Color(hex: IkeruTheme.Colors.primaryAccent))
+        ZStack(alignment: .bottom) {
+            IkeruScreenBackground()
 
-            // Floating companion avatar — persistent across screens
-            companionAvatarOverlay
+            // Tab content
+            tabContent
+                .ignoresSafeArea(.keyboard)
+
+            // Custom floating Liquid Glass tab bar
+            IkeruTabBar(selection: $selectedTab, tabs: AppTab.allCases)
+                .ignoresSafeArea(.keyboard)
         }
         .onAppear {
-            configureTabBarAppearance()
             initializeCompanionViewModel()
         }
         .onReceive(NotificationCenter.default.publisher(for: .startQuizFromShortcut)) { _ in
@@ -73,24 +75,30 @@ struct MainTabView: View {
             if let vm = companionViewModel {
                 CompanionChatSheet(viewModel: vm)
                     .presentationDetents([.large, .medium])
-                    .presentationDragIndicator(.hidden)
+                    .presentationDragIndicator(.visible)
+                    .presentationBackground(.ultraThinMaterial)
             }
         }
     }
 
-    // MARK: - Companion Avatar Overlay
+    // MARK: - Tab content
 
     @ViewBuilder
-    private var companionAvatarOverlay: some View {
-        if let vm = companionViewModel {
-            CompanionAvatarView(
-                hasAttention: vm.hasAttention,
-                showBadge: vm.showBadge,
-                onTap: { showCompanionChat = true }
-            )
-            .padding(.trailing, IkeruTheme.Spacing.md)
-            .padding(.bottom, 64) // Above tab bar
+    private var tabContent: some View {
+        ZStack {
+            ForEach(AppTab.allCases) { tab in
+                if selectedTab == tab {
+                    TabContentView(tab: tab)
+                        .transition(
+                            .asymmetric(
+                                insertion: .opacity.combined(with: .scale(scale: 0.98)),
+                                removal: .opacity
+                            )
+                        )
+                }
+            }
         }
+        .animation(.spring(response: 0.42, dampingFraction: 0.86), value: selectedTab)
     }
 
     // MARK: - Companion Initialization
@@ -108,36 +116,6 @@ struct MainTabView: View {
             modelContainer: container,
             profileId: profileId
         )
-    }
-
-    private func configureTabBarAppearance() {
-        let appearance = UITabBarAppearance()
-        appearance.configureWithDefaultBackground()
-        appearance.backgroundColor = UIColor(
-            red: CGFloat((IkeruTheme.Colors.surface >> 16) & 0xFF) / 255.0,
-            green: CGFloat((IkeruTheme.Colors.surface >> 8) & 0xFF) / 255.0,
-            blue: CGFloat(IkeruTheme.Colors.surface & 0xFF) / 255.0,
-            alpha: 1.0
-        )
-
-        // Active tab color (amber)
-        let activeColor = UIColor(
-            red: CGFloat((IkeruTheme.Colors.primaryAccent >> 16) & 0xFF) / 255.0,
-            green: CGFloat((IkeruTheme.Colors.primaryAccent >> 8) & 0xFF) / 255.0,
-            blue: CGFloat(IkeruTheme.Colors.primaryAccent & 0xFF) / 255.0,
-            alpha: 1.0
-        )
-
-        // Inactive tab color (white 40%)
-        let inactiveColor = UIColor.white.withAlphaComponent(0.4)
-
-        appearance.stackedLayoutAppearance.selected.iconColor = activeColor
-        appearance.stackedLayoutAppearance.selected.titleTextAttributes = [.foregroundColor: activeColor]
-        appearance.stackedLayoutAppearance.normal.iconColor = inactiveColor
-        appearance.stackedLayoutAppearance.normal.titleTextAttributes = [.foregroundColor: inactiveColor]
-
-        UITabBar.appearance().standardAppearance = appearance
-        UITabBar.appearance().scrollEdgeAppearance = appearance
     }
 }
 

@@ -28,21 +28,34 @@ struct CompanionTabView: View {
 
     private var loadingPlaceholder: some View {
         ZStack {
-            Color.ikeruBackground.ignoresSafeArea()
+            IkeruScreenBackground()
 
-            VStack(spacing: IkeruTheme.Spacing.md) {
-                Image(systemName: "bubble.left.fill")
-                    .font(.system(size: 48))
-                    .foregroundStyle(Color.ikeruPrimaryAccent)
+            VStack(spacing: IkeruTheme.Spacing.lg) {
+                Image(systemName: "bubble.left.and.bubble.right")
+                    .font(.system(size: 56, weight: .light))
+                    .foregroundStyle(LinearGradient.ikeruGold)
 
-                Text("Companion")
-                    .font(.ikeruHeading1)
-                    .foregroundStyle(.white)
+                VStack(spacing: 6) {
+                    Text("YOUR PARTNER")
+                        .font(.ikeruMicro)
+                        .ikeruTracking(.micro)
+                        .foregroundStyle(Color.ikeruTextTertiary)
+
+                    Text("Companion")
+                        .font(.ikeruDisplaySmall)
+                        .ikeruTracking(.display)
+                        .foregroundStyle(Color.ikeruTextPrimary)
+
+                    Text("Preparing your conversation…")
+                        .font(.ikeruBody)
+                        .foregroundStyle(Color.ikeruTextSecondary)
+                }
             }
+            .padding(IkeruTheme.Spacing.xl)
+            .ikeruCard(.companion)
+            .padding(.horizontal, IkeruTheme.Spacing.lg)
         }
-        .navigationTitle("Companion")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbarColorScheme(.dark, for: .navigationBar)
+        .toolbar(.hidden, for: .navigationBar)
     }
 
     // MARK: - Initialization

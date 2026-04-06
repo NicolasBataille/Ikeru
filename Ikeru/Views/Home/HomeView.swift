@@ -5,29 +5,25 @@ import os
 
 // MARK: - HomeView
 
-/// "Your World" home screen showing RPG status, learning summary, and session CTA.
+/// Premium "Your World" home screen.
+/// Layout philosophy: generous breathing space, glass surfaces, calm typography.
 struct HomeView: View {
 
     @Environment(\.modelContext) private var modelContext
     @State private var viewModel: HomeViewModel?
     @State private var sessionViewModel: SessionViewModel?
     @State private var showSession = false
+    @State private var heroAppeared = false
 
     var body: some View {
         ZStack {
-            Color.ikeruBackground
-                .ignoresSafeArea()
+            IkeruScreenBackground()
 
             if let vm = viewModel {
                 homeContent(vm)
-            } else {
-                // Brief loading placeholder (stays under 2s)
-                Color.ikeruBackground.ignoresSafeArea()
             }
         }
-        .navigationTitle("Home")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbarColorScheme(.dark, for: .navigationBar)
+        .toolbar(.hidden, for: .navigationBar)
         .fullScreenCover(isPresented: $showSession) {
             if let svm = sessionViewModel {
                 ActiveSessionView(viewModel: svm)
@@ -41,13 +37,16 @@ struct HomeView: View {
         .task {
             initializeViewModels()
             await viewModel?.loadData()
+            withAnimation(.spring(response: 0.55, dampingFraction: 0.86).delay(0.05)) {
+                heroAppeared = true
+            }
+            if CommandLine.arguments.contains("-autoStartSession") {
+                startSession()
+            }
         }
         .onAppear {
-            // Refresh data when returning from session or other tabs
             if viewModel != nil {
-                Task {
-                    await viewModel?.loadData()
-                }
+                Task { await viewModel?.loadData() }
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: .startQuizFromShortcut)) { _ in
@@ -64,19 +63,74 @@ struct HomeView: View {
 
     @ViewBuilder
     private func homeContent(_ vm: HomeViewModel) -> some View {
-        ScrollView {
-            VStack(spacing: IkeruTheme.Spacing.lg) {
+        ScrollView(showsIndicators: false) {
+            VStack(spacing: IkeruTheme.Spacing.xl) {
+                topBar(vm)
                 heroSection(vm)
-                learningSummaryCard(vm)
-                sessionCTASection(vm)
+                statsRow(vm)
+                primaryAction(vm)
+                if vm.hasLoaded && vm.dueCardCount == 0 {
+                    quietState
+                }
             }
-            .padding(.horizontal, IkeruTheme.Spacing.md)
-            .padding(.top, IkeruTheme.Spacing.xl)
-            .padding(.bottom, IkeruTheme.Spacing.xxl)
+            .padding(.horizontal, IkeruTheme.Spacing.lg)
+            .padding(.top, IkeruTheme.Spacing.md)
+            .padding(.bottom, 140) // Space for floating tab bar
+            .opacity(heroAppeared ? 1 : 0)
+            .offset(y: heroAppeared ? 0 : 16)
         }
     }
 
-    // MARK: - Hero Section
+    // MARK: - Quiet state (when no cards due)
+
+    private var quietState: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "checkmark.seal")
+                .font(.system(size: 14, weight: .medium))
+                .foregroundStyle(Color.ikeruSuccess)
+            Text("All caught up — enjoy the calm")
+                .font(.ikeruCaption)
+                .foregroundStyle(Color.ikeruTextTertiary)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background {
+            Capsule().fill(.ultraThinMaterial)
+        }
+        .overlay(
+            Capsule().strokeBorder(Color.white.opacity(0.10), lineWidth: 0.6)
+        )
+    }
+
+    // MARK: - Top Bar
+
+    @ViewBuilder
+    private func topBar(_ vm: HomeViewModel) -> some View {
+        HStack(alignment: .center) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(timeOfDayGreeting().uppercased())
+                    .font(.ikeruMicro)
+                    .ikeruTracking(.micro)
+                    .foregroundStyle(Color.ikeruTextTertiary)
+
+                Text(vm.displayName.isEmpty ? "Welcome" : vm.displayName)
+                    .font(.ikeruDisplaySmall)
+                    .ikeruTracking(.display)
+                    .foregroundStyle(Color.ikeruTextPrimary)
+            }
+            Spacer()
+            // Streak / status pill
+            IkeruStatPill(
+                icon: "flame.fill",
+                value: "\(max(1, vm.level))",
+                label: "lvl",
+                tint: .ikeruPrimaryAccent
+            )
+        }
+        .padding(.top, IkeruTheme.Spacing.xs)
+    }
+
+    // MARK: - Hero
 
     @ViewBuilder
     private func heroSection(_ vm: HomeViewModel) -> some View {
@@ -86,60 +140,113 @@ struct HomeView: View {
             displayName: vm.displayName,
             recentAchievement: vm.recentAchievement
         )
+        .frame(height: 260)
     }
 
-    // MARK: - Learning Summary Card
+    // MARK: - Stats Row
 
     @ViewBuilder
-    private func learningSummaryCard(_ vm: HomeViewModel) -> some View {
-        VStack(spacing: IkeruTheme.Spacing.sm) {
-            HStack {
-                Image(systemName: "book.fill")
-                    .foregroundStyle(Color.ikeruPrimaryAccent)
+    private func statsRow(_ vm: HomeViewModel) -> some View {
+        HStack(spacing: IkeruTheme.Spacing.sm) {
+            statCard(
+                icon: "tray.full",
+                value: "\(vm.dueCardCount)",
+                label: "Due",
+                tint: .ikeruPrimaryAccent
+            )
+            statCard(
+                icon: "character.book.closed",
+                value: "\(vm.kanjiLearnedCount)",
+                label: "Learned",
+                tint: .ikeruTertiaryAccent
+            )
+            statCard(
+                icon: "shippingbox",
+                value: "\(vm.unopenedLootBoxCount)",
+                label: "Lootboxes",
+                tint: .ikeruSecondaryAccent
+            )
+        }
+    }
 
-                Text("Learning")
-                    .font(.ikeruHeading3)
-                    .foregroundStyle(.white)
-
-                Spacer()
+    @ViewBuilder
+    private func statCard(icon: String, value: String, label: String, tint: Color) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+            // Icon in a small tinted circle
+            ZStack {
+                Circle()
+                    .fill(tint.opacity(0.14))
+                    .frame(width: 32, height: 32)
+                Image(systemName: icon)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(tint)
             }
 
-            HStack {
-                Text(vm.learningSummaryText)
-                    .font(.ikeruBody)
-                    .foregroundStyle(.ikeruTextSecondary)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(value)
+                    .font(.system(size: 32, weight: .light, design: .default))
+                    .ikeruTracking(.heading)
+                    .foregroundStyle(Color.ikeruTextPrimary)
+                    .contentTransition(.numericText())
+                    .animation(.spring(response: 0.4, dampingFraction: 0.8), value: value)
 
-                Spacer()
+                Text(label.uppercased())
+                    .font(.ikeruMicro)
+                    .ikeruTracking(.micro)
+                    .foregroundStyle(Color.ikeruTextTertiary)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .ikeruCard(.standard)
+        .padding(.vertical, IkeruTheme.Spacing.md)
+        .padding(.horizontal, IkeruTheme.Spacing.md)
+        .background {
+            IkeruGlassSurface(
+                cornerRadius: IkeruTheme.Radius.lg,
+                tint: tint,
+                tintOpacity: 0.04,
+                highlight: 0.14,
+                strokeOpacity: 0.16
+            )
+        }
+        .clipShape(RoundedRectangle(cornerRadius: IkeruTheme.Radius.lg, style: .continuous))
+        .shadow(color: Color.black.opacity(0.4), radius: 18, y: 8)
     }
 
-    // MARK: - Session CTA
+    // MARK: - Primary action
 
     @ViewBuilder
-    private func sessionCTASection(_ vm: HomeViewModel) -> some View {
-        VStack(spacing: IkeruTheme.Spacing.md) {
+    private func primaryAction(_ vm: HomeViewModel) -> some View {
+        VStack(spacing: IkeruTheme.Spacing.sm) {
             Button {
                 startSession()
             } label: {
                 HStack(spacing: IkeruTheme.Spacing.sm) {
                     Image(systemName: "play.fill")
-                    Text("Start Session")
+                        .font(.system(size: 14, weight: .semibold))
+                    Text("Begin Session")
                 }
                 .frame(maxWidth: .infinity)
             }
             .ikeruButtonStyle(.primary)
 
-            // Session preview
             Text(vm.sessionPreviewText)
                 .font(.ikeruCaption)
-                .foregroundStyle(.ikeruTextSecondary)
+                .foregroundStyle(Color.ikeruTextTertiary)
         }
+        .padding(.top, IkeruTheme.Spacing.xs)
     }
 
     // MARK: - Helpers
+
+    private func timeOfDayGreeting() -> String {
+        let hour = Calendar.current.component(.hour, from: Date())
+        switch hour {
+        case 5..<12:  return "Good morning"
+        case 12..<17: return "Good afternoon"
+        case 17..<22: return "Good evening"
+        default:      return "Good night"
+        }
+    }
 
     private func initializeViewModels() {
         guard viewModel == nil else { return }
@@ -159,7 +266,6 @@ struct HomeView: View {
     private func startSession() {
         guard let svm = sessionViewModel else { return }
         Task {
-            // Seed content if needed
             let container = modelContext.container
             let repo = CardRepository(modelContainer: container)
             let allCards = await repo.allCards()

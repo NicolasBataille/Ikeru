@@ -7,6 +7,9 @@ import os
 struct SettingsView: View {
 
     @Environment(\.profileViewModel) private var profileViewModel
+    @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
+
     @State private var editingName: String = ""
     @State private var isEditingName = false
     @State private var reviewReminderEnabled = false
@@ -29,41 +32,53 @@ struct SettingsView: View {
 
     var body: some View {
         ZStack {
-            Color.ikeruBackground
-                .ignoresSafeArea()
+            IkeruScreenBackground()
 
             ScrollView {
-                VStack(spacing: IkeruTheme.Spacing.lg) {
+                VStack(spacing: IkeruTheme.Spacing.xl) {
+                    topBar
+
                     profileSection
                     profileManagementSection
                     notificationsSection
                     backupSection
                     aiProvidersSection
                     attributionSection
+
+                    Spacer(minLength: 200)
                 }
-                .padding(IkeruTheme.Spacing.md)
+                .padding(.horizontal, IkeruTheme.Spacing.md)
+                .padding(.top, IkeruTheme.Spacing.lg)
             }
         }
-        .navigationTitle("Settings")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbarColorScheme(.dark, for: .navigationBar)
+        .toolbar(.hidden, for: .navigationBar)
+    }
+
+    // MARK: - Top Bar
+
+    private var topBar: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("PREFERENCES")
+                .font(.ikeruMicro)
+                .ikeruTracking(.micro)
+                .foregroundStyle(Color.ikeruTextTertiary)
+            Text("Settings")
+                .font(.ikeruDisplaySmall)
+                .ikeruTracking(.display)
+                .foregroundStyle(Color.ikeruTextPrimary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     // MARK: - Profile Section
 
     private var profileSection: some View {
         VStack(alignment: .leading, spacing: IkeruTheme.Spacing.md) {
-            Text("Profile")
-                .font(.ikeruHeading3)
-                .foregroundStyle(.ikeruTextSecondary)
-                .padding(.leading, IkeruTheme.Spacing.xs)
-
+            IkeruSectionHeader(title: "Profile", eyebrow: "Identity")
             displayNameRow
         }
         .ikeruCard(.standard)
     }
-
-    // MARK: - Display Name Row
 
     @ViewBuilder
     private var displayNameRow: some View {
@@ -76,71 +91,78 @@ struct SettingsView: View {
 
     private var nameDisplayRow: some View {
         HStack {
-            VStack(alignment: .leading, spacing: IkeruTheme.Spacing.xs) {
-                Text("Display Name")
-                    .font(.ikeruCaption)
-                    .foregroundStyle(.ikeruTextSecondary)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("DISPLAY NAME")
+                    .font(.ikeruMicro)
+                    .ikeruTracking(.micro)
+                    .foregroundStyle(Color.ikeruTextTertiary)
 
                 Text(profileViewModel?.displayName ?? "")
-                    .font(.ikeruBody)
-                    .foregroundStyle(.white)
+                    .font(.ikeruBodyLarge)
+                    .foregroundStyle(Color.ikeruTextPrimary)
             }
 
             Spacer()
 
             Button {
                 editingName = profileViewModel?.displayName ?? ""
-                isEditingName = true
+                withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) {
+                    isEditingName = true
+                }
                 isNameFieldFocused = true
             } label: {
                 Image(systemName: "pencil")
-                    .font(.ikeruBody)
+                    .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(Color.ikeruPrimaryAccent)
+                    .padding(10)
+                    .background {
+                        Circle().fill(.ultraThinMaterial)
+                    }
             }
+            .buttonStyle(.plain)
         }
     }
 
     private var nameEditField: some View {
         VStack(alignment: .leading, spacing: IkeruTheme.Spacing.sm) {
-            Text("Display Name")
-                .font(.ikeruCaption)
-                .foregroundStyle(.ikeruTextSecondary)
+            Text("DISPLAY NAME")
+                .font(.ikeruMicro)
+                .ikeruTracking(.micro)
+                .foregroundStyle(Color.ikeruTextTertiary)
 
             HStack(spacing: IkeruTheme.Spacing.sm) {
                 TextField("Your name", text: $editingName)
                     .font(.ikeruBody)
-                    .foregroundStyle(.white)
-                    .padding(IkeruTheme.Spacing.sm)
-                    .background(
-                        RoundedRectangle(cornerRadius: IkeruTheme.Radius.sm)
-                            .fill(Color.ikeruSurface)
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: IkeruTheme.Radius.sm)
-                            .strokeBorder(Color.ikeruPrimaryAccent, lineWidth: 1)
+                    .foregroundStyle(Color.ikeruTextPrimary)
+                    .padding(.horizontal, IkeruTheme.Spacing.md)
+                    .padding(.vertical, IkeruTheme.Spacing.sm)
+                    .ikeruGlass(
+                        cornerRadius: IkeruTheme.Radius.md,
+                        tint: Color.ikeruPrimaryAccent,
+                        tintOpacity: 0.05
                     )
                     .focused($isNameFieldFocused)
                     .submitLabel(.done)
-                    .onSubmit {
-                        saveName()
-                    }
+                    .onSubmit { saveName() }
 
                 Button {
                     saveName()
                 } label: {
                     Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 24))
+                        .font(.system(size: 26))
                         .foregroundStyle(Color.ikeruPrimaryAccent)
                 }
                 .disabled(!isNameValid)
-                .opacity(isNameValid ? 1.0 : 0.5)
+                .opacity(isNameValid ? 1.0 : 0.4)
 
                 Button {
-                    isEditingName = false
+                    withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) {
+                        isEditingName = false
+                    }
                 } label: {
                     Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 24))
-                        .foregroundStyle(.ikeruTextSecondary)
+                        .font(.system(size: 26))
+                        .foregroundStyle(Color.ikeruTextTertiary)
                 }
             }
         }
@@ -150,61 +172,27 @@ struct SettingsView: View {
 
     private var profileManagementSection: some View {
         VStack(alignment: .leading, spacing: IkeruTheme.Spacing.md) {
-            Text("Profiles")
-                .font(.ikeruHeading3)
-                .foregroundStyle(.ikeruTextSecondary)
-                .padding(.leading, IkeruTheme.Spacing.xs)
+            IkeruSectionHeader(title: "Profiles", eyebrow: "Accounts")
 
-            ForEach(profileViewModel?.allProfiles ?? [], id: \.id) { profile in
-                HStack {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(profile.displayName)
-                            .font(.ikeruBody)
-                            .foregroundStyle(.white)
-
-                        if profile.id == profileViewModel?.currentProfile?.id {
-                            Text("Active")
-                                .font(.ikeruCaption)
-                                .foregroundStyle(Color.ikeruPrimaryAccent)
-                        }
-                    }
-
-                    Spacer()
-
-                    if profile.id != profileViewModel?.currentProfile?.id {
-                        Button("Switch") {
-                            profileViewModel?.switchProfile(to: profile)
-                        }
-                        .font(.ikeruCaption)
-                        .foregroundStyle(Color.ikeruPrimaryAccent)
-
-                        if (profileViewModel?.allProfiles.count ?? 0) > 1 {
-                            Button(role: .destructive) {
-                                profileToDelete = profile
-                            } label: {
-                                Image(systemName: "trash")
-                                    .font(.ikeruCaption)
-                            }
-                        }
-                    } else {
-                        Image(systemName: "checkmark.circle.fill")
-                            .foregroundStyle(Color.ikeruPrimaryAccent)
+            VStack(spacing: 0) {
+                let profiles = profileViewModel?.allProfiles ?? []
+                ForEach(Array(profiles.enumerated()), id: \.element.id) { index, profile in
+                    profileRow(profile)
+                    if index < profiles.count - 1 {
+                        IkeruDivider()
                     }
                 }
-                .padding(.vertical, IkeruTheme.Spacing.xs)
             }
 
             Button {
                 showNewProfile = true
             } label: {
-                HStack {
+                HStack(spacing: IkeruTheme.Spacing.sm) {
                     Image(systemName: "plus.circle.fill")
-                        .foregroundStyle(Color.ikeruPrimaryAccent)
                     Text("Add Profile")
-                        .font(.ikeruBody)
-                        .foregroundStyle(.white)
                 }
             }
+            .ikeruButtonStyle(.glassPill)
         }
         .ikeruCard(.standard)
         .alert("New Profile", isPresented: $showNewProfile) {
@@ -243,92 +231,107 @@ struct SettingsView: View {
         }
     }
 
-    // MARK: - Backup Section
+    @ViewBuilder
+    private func profileRow(_ profile: UserProfile) -> some View {
+        let isCurrent = profile.id == profileViewModel?.currentProfile?.id
+        HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(profile.displayName)
+                    .font(.ikeruBody)
+                    .foregroundStyle(Color.ikeruTextPrimary)
 
-    @Environment(\.modelContext) private var modelContext
+                if isCurrent {
+                    Text("ACTIVE")
+                        .font(.ikeruMicro)
+                        .ikeruTracking(.micro)
+                        .foregroundStyle(Color.ikeruPrimaryAccent)
+                }
+            }
+
+            Spacer()
+
+            if !isCurrent {
+                Button("Switch") {
+                    withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) {
+                        profileViewModel?.switchProfile(to: profile)
+                    }
+                }
+                .font(.ikeruCaption)
+                .foregroundStyle(Color.ikeruPrimaryAccent)
+
+                if (profileViewModel?.allProfiles.count ?? 0) > 1 {
+                    Button(role: .destructive) {
+                        profileToDelete = profile
+                    } label: {
+                        Image(systemName: "trash")
+                            .font(.ikeruCaption)
+                            .foregroundStyle(Color.ikeruDanger)
+                    }
+                }
+            } else {
+                Image(systemName: "checkmark.seal.fill")
+                    .foregroundStyle(Color.ikeruPrimaryAccent)
+            }
+        }
+        .padding(.vertical, IkeruTheme.Spacing.sm)
+    }
+
+    // MARK: - Backup Section
 
     private var backupSection: some View {
         VStack(alignment: .leading, spacing: IkeruTheme.Spacing.md) {
-            Text("Data")
-                .font(.ikeruHeading3)
-                .foregroundStyle(.ikeruTextSecondary)
-                .padding(.leading, IkeruTheme.Spacing.xs)
+            IkeruSectionHeader(title: "Data", eyebrow: "Backup & Export")
 
-            // Backup button
-            Button {
-                Task {
-                    await backupManager.backup(modelContainer: modelContext.container)
+            VStack(spacing: 0) {
+                glassRow(
+                    icon: "icloud.and.arrow.up",
+                    title: "Backup to iCloud",
+                    subtitle: backupManager.isBackingUp ? "Backing up..." : nil
+                ) {
+                    Task {
+                        await backupManager.backup(modelContainer: modelContext.container)
+                    }
                 }
-            } label: {
-                HStack {
-                    Image(systemName: "icloud.and.arrow.up")
-                        .foregroundStyle(Color.ikeruPrimaryAccent)
-                    Text("Backup to iCloud")
-                        .font(.ikeruBody)
-                        .foregroundStyle(.white)
-                    Spacer()
-                    if backupManager.isBackingUp {
-                        ProgressView()
-                            .tint(.white)
+                .disabled(backupManager.isBackingUp || backupManager.isRestoring)
+
+                IkeruDivider()
+
+                glassRow(
+                    icon: "icloud.and.arrow.down",
+                    title: "Restore from iCloud",
+                    subtitle: backupManager.isRestoring ? "Restoring..." : nil
+                ) {
+                    showRestoreConfirmation = true
+                }
+                .disabled(backupManager.isBackingUp || backupManager.isRestoring)
+
+                IkeruDivider()
+
+                glassRow(
+                    icon: "square.and.arrow.up",
+                    title: "Export Data",
+                    subtitle: nil
+                ) {
+                    Task {
+                        let manager = DataExportManager()
+                        if let url = try? await manager.exportData(modelContainer: modelContext.container) {
+                            exportURL = url
+                            showExportShare = true
+                        }
                     }
                 }
             }
-            .disabled(backupManager.isBackingUp || backupManager.isRestoring)
 
-            // Restore button
-            Button {
-                showRestoreConfirmation = true
-            } label: {
-                HStack {
-                    Image(systemName: "icloud.and.arrow.down")
-                        .foregroundStyle(Color.ikeruPrimaryAccent)
-                    Text("Restore from iCloud")
-                        .font(.ikeruBody)
-                        .foregroundStyle(.white)
-                    Spacer()
-                    if backupManager.isRestoring {
-                        ProgressView()
-                            .tint(.white)
-                    }
-                }
-            }
-            .disabled(backupManager.isBackingUp || backupManager.isRestoring)
-
-            // Last backup date
             if let date = backupManager.lastBackupDate {
                 Text("Last backup: \(date.formatted(date: .abbreviated, time: .shortened))")
                     .font(.ikeruCaption)
-                    .foregroundStyle(.ikeruTextSecondary)
+                    .foregroundStyle(Color.ikeruTextTertiary)
             }
 
-            Divider()
-                .background(.ikeruTextSecondary.opacity(0.3))
-
-            // Export button
-            Button {
-                Task {
-                    let manager = DataExportManager()
-                    if let url = try? await manager.exportData(modelContainer: modelContext.container) {
-                        exportURL = url
-                        showExportShare = true
-                    }
-                }
-            } label: {
-                HStack {
-                    Image(systemName: "square.and.arrow.up")
-                        .foregroundStyle(Color.ikeruPrimaryAccent)
-                    Text("Export Data")
-                        .font(.ikeruBody)
-                        .foregroundStyle(.white)
-                    Spacer()
-                }
-            }
-
-            // Error display
             if let error = backupManager.lastError {
                 Text(error.localizedDescription)
                     .font(.ikeruCaption)
-                    .foregroundStyle(.ikeruError)
+                    .foregroundStyle(Color.ikeruDanger)
             }
         }
         .sheet(isPresented: $showExportShare, onDismiss: {
@@ -361,25 +364,53 @@ struct SettingsView: View {
         }
     }
 
+    private func glassRow(
+        icon: String,
+        title: String,
+        subtitle: String?,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            HStack(spacing: IkeruTheme.Spacing.md) {
+                Image(systemName: icon)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(Color.ikeruPrimaryAccent)
+                    .frame(width: 28)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(.ikeruBody)
+                        .foregroundStyle(Color.ikeruTextPrimary)
+                    if let subtitle {
+                        Text(subtitle)
+                            .font(.ikeruCaption)
+                            .foregroundStyle(Color.ikeruTextSecondary)
+                    }
+                }
+
+                Spacer()
+            }
+            .padding(.vertical, IkeruTheme.Spacing.sm)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+
     // MARK: - Notifications Section
 
     private var notificationsSection: some View {
         VStack(alignment: .leading, spacing: IkeruTheme.Spacing.md) {
-            Text("Notifications")
-                .font(.ikeruHeading3)
-                .foregroundStyle(.ikeruTextSecondary)
-                .padding(.leading, IkeruTheme.Spacing.xs)
+            IkeruSectionHeader(title: "Notifications", eyebrow: "Reminders")
 
-            // Review reminder toggle
             VStack(alignment: .leading, spacing: IkeruTheme.Spacing.sm) {
                 Toggle(isOn: $reviewReminderEnabled) {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Daily Review Reminder")
                             .font(.ikeruBody)
-                            .foregroundStyle(.white)
+                            .foregroundStyle(Color.ikeruTextPrimary)
                         Text("Get notified when cards are ready")
                             .font(.ikeruCaption)
-                            .foregroundStyle(.ikeruTextSecondary)
+                            .foregroundStyle(Color.ikeruTextSecondary)
                     }
                 }
                 .tint(Color.ikeruPrimaryAccent)
@@ -400,20 +431,19 @@ struct SettingsView: View {
                     }
                 }
             }
+            .padding(.vertical, IkeruTheme.Spacing.xs)
 
-            Divider()
-                .background(.ikeruTextSecondary.opacity(0.3))
+            IkeruDivider()
 
-            // Weekly check-in toggle
             VStack(alignment: .leading, spacing: IkeruTheme.Spacing.sm) {
                 Toggle(isOn: $weeklyCheckInEnabled) {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Weekly Check-In")
                             .font(.ikeruBody)
-                            .foregroundStyle(.white)
+                            .foregroundStyle(Color.ikeruTextPrimary)
                         Text("Reflect on your progress")
                             .font(.ikeruCaption)
-                            .foregroundStyle(.ikeruTextSecondary)
+                            .foregroundStyle(Color.ikeruTextSecondary)
                     }
                 }
                 .tint(Color.ikeruPrimaryAccent)
@@ -451,6 +481,7 @@ struct SettingsView: View {
                     }
                 }
             }
+            .padding(.vertical, IkeruTheme.Spacing.xs)
         }
         .ikeruCard(.standard)
     }
@@ -459,32 +490,17 @@ struct SettingsView: View {
 
     private var aiProvidersSection: some View {
         VStack(alignment: .leading, spacing: IkeruTheme.Spacing.md) {
-            Text("AI")
-                .font(.ikeruHeading3)
-                .foregroundStyle(.ikeruTextSecondary)
-                .padding(.leading, IkeruTheme.Spacing.xs)
+            IkeruSectionHeader(title: "AI", eyebrow: "Providers")
 
             NavigationLink {
                 AISettingsView()
             } label: {
-                HStack {
-                    VStack(alignment: .leading, spacing: IkeruTheme.Spacing.xs) {
-                        Text("AI Providers")
-                            .font(.ikeruBody)
-                            .foregroundStyle(.white)
-
-                        Text("Configure API keys and local GPU")
-                            .font(.ikeruCaption)
-                            .foregroundStyle(.ikeruTextSecondary)
-                    }
-
-                    Spacer()
-
-                    Image(systemName: "chevron.right")
-                        .font(.ikeruCaption)
-                        .foregroundStyle(.ikeruTextSecondary)
-                }
+                navRow(
+                    title: "AI Providers",
+                    subtitle: "Configure API keys and local GPU"
+                )
             }
+            .buttonStyle(.plain)
         }
         .ikeruCard(.standard)
     }
@@ -493,34 +509,38 @@ struct SettingsView: View {
 
     private var attributionSection: some View {
         VStack(alignment: .leading, spacing: IkeruTheme.Spacing.md) {
-            Text("About")
-                .font(.ikeruHeading3)
-                .foregroundStyle(.ikeruTextSecondary)
-                .padding(.leading, IkeruTheme.Spacing.xs)
+            IkeruSectionHeader(title: "About", eyebrow: "Credits")
 
             NavigationLink {
                 AttributionView()
             } label: {
-                HStack {
-                    VStack(alignment: .leading, spacing: IkeruTheme.Spacing.xs) {
-                        Text("Attribution")
-                            .font(.ikeruBody)
-                            .foregroundStyle(.white)
-
-                        Text("Open-source credits")
-                            .font(.ikeruCaption)
-                            .foregroundStyle(.ikeruTextSecondary)
-                    }
-
-                    Spacer()
-
-                    Image(systemName: "chevron.right")
-                        .font(.ikeruCaption)
-                        .foregroundStyle(.ikeruTextSecondary)
-                }
+                navRow(
+                    title: "Attribution",
+                    subtitle: "Open-source credits"
+                )
             }
+            .buttonStyle(.plain)
         }
         .ikeruCard(.standard)
+    }
+
+    private func navRow(title: String, subtitle: String) -> some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.ikeruBody)
+                    .foregroundStyle(Color.ikeruTextPrimary)
+                Text(subtitle)
+                    .font(.ikeruCaption)
+                    .foregroundStyle(Color.ikeruTextSecondary)
+            }
+            Spacer()
+            Image(systemName: "chevron.right")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(Color.ikeruTextTertiary)
+        }
+        .padding(.vertical, IkeruTheme.Spacing.xs)
+        .contentShape(Rectangle())
     }
 
     // MARK: - Actions
@@ -529,7 +549,9 @@ struct SettingsView: View {
         guard isNameValid else { return }
         Logger.ui.info("Updating display name from settings")
         profileViewModel?.updateDisplayName(editingName)
-        isEditingName = false
+        withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) {
+            isEditingName = false
+        }
     }
 
     private func updateReviewReminder(enabled: Bool) {

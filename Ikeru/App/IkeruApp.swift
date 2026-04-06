@@ -85,6 +85,13 @@ struct IkeruApp: App {
         let viewModel = ProfileViewModel(modelContext: modelContainer.mainContext)
         profileViewModel = viewModel
 
+        // Dev helper: launch with -skipOnboarding to auto-create a default profile
+        if !viewModel.hasProfile && CommandLine.arguments.contains("-skipOnboarding") {
+            Logger.ui.info("Skip onboarding flag set — creating default profile")
+            viewModel.createProfile(name: "Nico")
+            viewModel.loadProfile()
+        }
+
         if viewModel.hasProfile {
             Logger.ui.info("Existing profile found — skipping onboarding")
             showOnboarding = false

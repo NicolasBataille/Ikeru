@@ -17,7 +17,20 @@ final class CloudBackupManager: ObservableObject {
     @Published private(set) var lastBackupDate: Date?
     @Published private(set) var lastError: BackupError?
 
-    private let container = CKContainer.default()
+    /// Lazily resolved CKContainer — using a stored property crashes at init
+    /// when the app has no iCloud entitlements. Lazy + try lets the manager
+    /// degrade gracefully to "unavailable" when CloudKit isn't configured.
+    private var _container: CKContainer?
+    private var container: CKContainer? {
+        if _container == nil {
+            // CKContainer.default() throws if no container identifier is set in entitlements.
+            // Wrap in a defensive check by first looking for the entitlement.
+            if Bundle.main.object(forInfoDictionaryKey: "com.apple.developer.icloud-container-identifiers") != nil {
+                _container = CKContainer.default()
+            }
+        }
+        return _container
+    }
     private let recordType = "BackupSnapshot"
     private let recordID = CKRecord.ID(recordName: "ikeru-backup-latest")
 
@@ -28,9 +41,17 @@ final class CloudBackupManager: ObservableObject {
         isBackingUp = true
         lastError = nil
 
+        defer { isBackingUp = false }
+
+        guard let ckContainer = container else {
+            lastError = .iCloudUnavailable
+            Logger.sync.warning("Backup skipped — CloudKit not configured")
+            return
+        }
+
         do {
             // Check iCloud availability
-            let status = try await container.accountStatus()
+            let status = try await ckContainer.accountStatus()
             guard status == .available else {
                 throw BackupError.iCloudUnavailable
             }
@@ -49,11 +70,10 @@ final class CloudBackupManager: ObservableObject {
             record["createdAt"] = snapshot.createdAt as NSDate
             record["schemaVersion"] = snapshot.schemaVersion as NSNumber
 
-            let database = container.privateCloudDatabase
+            let database = ckContainer.privateCloudDatabase
             do {
                 try await database.save(record)
             } catch let error as CKError where error.code == .serverRecordChanged {
-                // Record already exists — fetch and update
                 let existing = try await database.record(for: recordID)
                 existing["snapshotData"] = data as NSData
                 existing["createdAt"] = snapshot.createdAt as NSDate
@@ -70,8 +90,6 @@ final class CloudBackupManager: ObservableObject {
             lastError = .serializationFailed(error.localizedDescription)
             Logger.sync.error("Backup failed: \(error.localizedDescription)")
         }
-
-        isBackingUp = false
     }
 
     // MARK: - Restore
@@ -82,13 +100,21 @@ final class CloudBackupManager: ObservableObject {
         isRestoring = true
         lastError = nil
 
+        defer { isRestoring = false }
+
+        guard let ckContainer = container else {
+            lastError = .iCloudUnavailable
+            Logger.sync.warning("Restore skipped — CloudKit not configured")
+            return
+        }
+
         do {
-            let status = try await container.accountStatus()
+            let status = try await ckContainer.accountStatus()
             guard status == .available else {
                 throw BackupError.iCloudUnavailable
             }
 
-            let database = container.privateCloudDatabase
+            let database = ckContainer.privateCloudDatabase
             let record: CKRecord
             do {
                 record = try await database.record(for: recordID)
@@ -115,16 +141,18 @@ final class CloudBackupManager: ObservableObject {
             lastError = .restoreFailed(error.localizedDescription)
             Logger.sync.error("Restore failed: \(error.localizedDescription)")
         }
-
-        isRestoring = false
     }
 
     // MARK: - Check Last Backup
 
     /// Checks the date of the most recent backup.
     func checkLastBackup() async {
+        guard let ckContainer = container else {
+            lastBackupDate = nil
+            return
+        }
         do {
-            let database = container.privateCloudDatabase
+            let database = ckContainer.privateCloudDatabase
             let record = try await database.record(for: recordID)
             if let date = record["createdAt"] as? Date {
                 lastBackupDate = date

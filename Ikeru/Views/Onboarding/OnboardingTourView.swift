@@ -6,7 +6,8 @@ import os
 
 private struct OnboardingPage: Identifiable {
     let id: Int
-    let icon: String
+    let kanji: String
+    let romaji: String
     let title: String
     let subtitle: String
     let description: String
@@ -22,22 +23,25 @@ struct OnboardingTourView: View {
     private let pages: [OnboardingPage] = [
         OnboardingPage(
             id: 0,
-            icon: "map.fill",
+            kanji: "\u{9053}",
+            romaji: "michi",
             title: "Your Journey",
             subtitle: "A path from curious to fluent",
             description: "Master kana, kanji, grammar, and conversation — one step at a time, at your own pace."
         ),
         OnboardingPage(
             id: 1,
-            icon: "bubble.left.fill",
+            kanji: "\u{53CB}",
+            romaji: "tomo",
             title: "Your Companion",
             subtitle: "A guide by your side",
             description: "Your AI companion adapts to you, celebrates your wins, and helps when things get tough."
         ),
         OnboardingPage(
             id: 2,
-            icon: "sparkles",
-            title: "Ready?",
+            kanji: "\u{59CB}",
+            romaji: "hajime",
+            title: "Begin",
             subtitle: "Your first lesson awaits",
             description: "You'll start with hiragana — the first writing system. Let's begin your Japanese adventure."
         ),
@@ -45,8 +49,7 @@ struct OnboardingTourView: View {
 
     var body: some View {
         ZStack {
-            Color.ikeruBackground
-                .ignoresSafeArea()
+            IkeruScreenBackground()
 
             VStack(spacing: 0) {
                 TabView(selection: $currentPage) {
@@ -60,7 +63,7 @@ struct OnboardingTourView: View {
                     }
                 }
                 .tabViewStyle(.page(indexDisplayMode: .never))
-                .animation(.easeInOut(duration: IkeruTheme.Animation.standardDuration), value: currentPage)
+                .animation(.spring(response: 0.5, dampingFraction: 0.86), value: currentPage)
 
                 pageIndicator
                     .padding(.bottom, IkeruTheme.Spacing.xxl)
@@ -73,16 +76,14 @@ struct OnboardingTourView: View {
     private var pageIndicator: some View {
         HStack(spacing: IkeruTheme.Spacing.sm) {
             ForEach(0..<pages.count, id: \.self) { index in
-                Circle()
-                    .fill(index == currentPage
-                          ? Color.ikeruPrimaryAccent
-                          : Color.white.opacity(0.3))
-                    .frame(width: 8, height: 8)
-                    .scaleEffect(index == currentPage ? 1.2 : 1.0)
-                    .animation(
-                        .spring(duration: IkeruTheme.Animation.quickDuration),
-                        value: currentPage
+                Capsule()
+                    .fill(
+                        index == currentPage
+                            ? AnyShapeStyle(LinearGradient.ikeruGold)
+                            : AnyShapeStyle(Color.white.opacity(0.18))
                     )
+                    .frame(width: index == currentPage ? 24 : 8, height: 6)
+                    .animation(.spring(response: 0.42, dampingFraction: 0.78), value: currentPage)
             }
         }
     }
@@ -109,73 +110,94 @@ private struct OnboardingPageView: View {
         VStack(spacing: IkeruTheme.Spacing.xl) {
             Spacer()
 
-            iconSection
+            kanjiOrnament
 
-            contentCard
+            Spacer().frame(height: IkeruTheme.Spacing.md)
+
+            contentBlock
 
             if isLastPage {
                 startButton
+                    .padding(.top, IkeruTheme.Spacing.lg)
             }
 
             Spacer()
+            Spacer()
         }
-        .padding(.horizontal, IkeruTheme.Spacing.lg)
+        .padding(.horizontal, IkeruTheme.Spacing.xl)
         .onAppear {
-            withAnimation(
-                .easeInOut(duration: 2.0)
-                .repeatForever(autoreverses: true)
-            ) {
+            withAnimation(.easeInOut(duration: 4.0).repeatForever(autoreverses: true)) {
                 isAnimating = true
             }
         }
     }
 
-    // MARK: - Icon Section
+    // MARK: - Kanji ornament
 
-    private var iconSection: some View {
-        ZStack {
-            Circle()
-                .fill(Color.ikeruPrimaryAccent.opacity(0.15))
-                .frame(width: 120, height: 120)
-                .scaleEffect(isAnimating ? 1.1 : 1.0)
+    private var kanjiOrnament: some View {
+        VStack(spacing: 8) {
+            Text(page.kanji)
+                .font(.kanjiHero)
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [
+                            Color(hex: 0xF5DBB6),
+                            Color(hex: 0xD4A574),
+                            Color(hex: 0xB88A5C)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .shadow(color: Color(hex: 0xD4A574, opacity: 0.4), radius: 32)
+                .scaleEffect(isAnimating ? 1.02 : 0.98)
 
-            Image(systemName: page.icon)
-                .font(.system(size: 48))
-                .foregroundStyle(Color.ikeruPrimaryAccent)
-                .scaleEffect(isAnimating ? 1.05 : 0.95)
+            Text(page.romaji)
+                .font(.ikeruMicro)
+                .ikeruTracking(.micro)
+                .foregroundStyle(Color.ikeruTextTertiary)
         }
     }
 
-    // MARK: - Content Card
+    // MARK: - Content block
 
-    private var contentCard: some View {
+    private var contentBlock: some View {
         VStack(spacing: IkeruTheme.Spacing.md) {
-            Text(page.title)
-                .font(.ikeruHeading1)
-                .foregroundStyle(.white)
+            VStack(spacing: 6) {
+                Text(page.title)
+                    .font(.ikeruDisplaySmall)
+                    .ikeruTracking(.display)
+                    .foregroundStyle(Color.ikeruTextPrimary)
 
-            Text(page.subtitle)
-                .font(.ikeruHeading3)
-                .foregroundStyle(Color.ikeruPrimaryAccent)
+                Text(page.subtitle)
+                    .font(.ikeruBody)
+                    .foregroundStyle(Color.ikeruPrimaryAccent.opacity(0.85))
+            }
 
             Text(page.description)
                 .font(.ikeruBody)
-                .foregroundStyle(.ikeruTextSecondary)
+                .foregroundStyle(Color.ikeruTextSecondary)
                 .multilineTextAlignment(.center)
+                .lineSpacing(4)
                 .fixedSize(horizontal: false, vertical: true)
+                .padding(.horizontal, IkeruTheme.Spacing.md)
         }
-        .padding(IkeruTheme.Spacing.lg)
-        .ikeruCard(.elevated)
     }
 
-    // MARK: - Start Button
+    // MARK: - Start button
 
     private var startButton: some View {
-        Button("Start Learning") {
+        Button {
             onStartLearning()
+        } label: {
+            HStack(spacing: 10) {
+                Text("Start Learning")
+                Image(systemName: "arrow.right")
+                    .font(.system(size: 14, weight: .semibold))
+            }
+            .frame(maxWidth: .infinity)
         }
         .ikeruButtonStyle(.primary)
-        .padding(.horizontal, IkeruTheme.Spacing.lg)
     }
 }
 

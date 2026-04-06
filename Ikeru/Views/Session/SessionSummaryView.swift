@@ -9,104 +9,152 @@ struct SessionSummaryView: View {
     let viewModel: SessionViewModel
 
     var body: some View {
-        VStack(spacing: IkeruTheme.Spacing.xl) {
-            Spacer()
+        ZStack {
+            IkeruScreenBackground()
 
-            // Completion icon
-            Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 64))
-                .foregroundStyle(Color.ikeruSuccess)
+            ScrollView {
+                VStack(spacing: IkeruTheme.Spacing.xl) {
+                    Spacer(minLength: IkeruTheme.Spacing.xl)
 
-            Text("Session Complete!")
-                .font(.ikeruHeading1)
-                .foregroundStyle(.white)
+                    heroHeader
 
-            // Summary cards
-            VStack(spacing: IkeruTheme.Spacing.md) {
-                summaryRow(
-                    icon: "rectangle.stack.fill",
-                    label: "Cards Reviewed",
-                    value: "\(viewModel.reviewedCount)",
-                    valueColor: .white
-                )
+                    statsGrid
 
-                summaryRow(
-                    icon: "sparkles",
-                    label: "New Items Learned",
-                    value: "\(viewModel.newItemsLearned)",
-                    valueColor: Color.ikeruSuccess
-                )
+                    if viewModel.sessionLootCount > 0 {
+                        lootCallout
+                    }
 
-                summaryRow(
-                    icon: "star.fill",
-                    label: "XP Earned",
-                    value: "+\(viewModel.xpEarned)",
-                    valueColor: Color.ikeruPrimaryAccent
-                )
+                    Spacer(minLength: IkeruTheme.Spacing.xl)
 
-                summaryRow(
-                    icon: "shield.fill",
-                    label: "Level",
-                    value: "Lv. \(viewModel.currentLevel)",
-                    valueColor: Color(hex: IkeruTheme.Colors.Rarity.legendary)
-                )
+                    Button("Done") {
+                        viewModel.dismissSession()
+                    }
+                    .ikeruButtonStyle(.primary)
+                    .frame(maxWidth: .infinity)
 
-                if viewModel.sessionLootCount > 0 {
-                    summaryRow(
-                        icon: "bag.fill",
-                        label: "Loot Earned",
-                        value: "\(viewModel.sessionLootCount)",
-                        valueColor: Color(hex: IkeruTheme.Colors.Rarity.rare)
-                    )
+                    Spacer(minLength: 60)
                 }
-
-                summaryRow(
-                    icon: "clock.fill",
-                    label: "Duration",
-                    value: viewModel.elapsedTimeFormatted,
-                    valueColor: .ikeruTextSecondary
-                )
+                .padding(.horizontal, IkeruTheme.Spacing.lg)
+                .padding(.top, IkeruTheme.Spacing.xl)
             }
-            .ikeruCard(.elevated)
-            .padding(.horizontal, IkeruTheme.Spacing.md)
-
-            Spacer()
-
-            // Done button
-            Button("Done") {
-                viewModel.dismissSession()
-            }
-            .ikeruButtonStyle(.primary)
-            .frame(maxWidth: .infinity)
-            .padding(.horizontal, IkeruTheme.Spacing.lg)
-            .padding(.bottom, IkeruTheme.Spacing.xl)
         }
     }
 
-    // MARK: - Summary Row
+    // MARK: - Hero Header
 
-    private func summaryRow(
+    private var heroHeader: some View {
+        VStack(spacing: IkeruTheme.Spacing.md) {
+            Image(systemName: "checkmark.seal.fill")
+                .font(.system(size: 48, weight: .light))
+                .foregroundStyle(LinearGradient.ikeruGold)
+
+            Text("SESSION COMPLETE")
+                .font(.ikeruMicro)
+                .ikeruTracking(.micro)
+                .foregroundStyle(Color.ikeruTextTertiary)
+
+            Text("\(viewModel.reviewedCount)")
+                .font(.ikeruDisplayLarge)
+                .ikeruTracking(.display)
+                .foregroundStyle(Color.ikeruTextPrimary)
+
+            Text("cards reviewed")
+                .font(.ikeruBody)
+                .foregroundStyle(Color.ikeruTextSecondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(IkeruTheme.Spacing.xl)
+        .ikeruCard(.hero)
+    }
+
+    // MARK: - Stats Grid
+
+    private var statsGrid: some View {
+        LazyVGrid(
+            columns: [
+                GridItem(.flexible(), spacing: IkeruTheme.Spacing.md),
+                GridItem(.flexible(), spacing: IkeruTheme.Spacing.md)
+            ],
+            spacing: IkeruTheme.Spacing.md
+        ) {
+            statTile(
+                icon: "sparkles",
+                value: "\(viewModel.newItemsLearned)",
+                label: "New items",
+                tint: Color.ikeruTertiaryAccent
+            )
+            statTile(
+                icon: "star.fill",
+                value: "+\(viewModel.xpEarned)",
+                label: "XP earned",
+                tint: Color.ikeruPrimaryAccent
+            )
+            statTile(
+                icon: "shield.lefthalf.filled",
+                value: "Lv. \(viewModel.currentLevel)",
+                label: "Level",
+                tint: Color(hex: IkeruTheme.Colors.Rarity.legendary)
+            )
+            statTile(
+                icon: "clock",
+                value: viewModel.elapsedTimeFormatted,
+                label: "Duration",
+                tint: Color.ikeruSecondaryAccent
+            )
+        }
+    }
+
+    private func statTile(
         icon: String,
-        label: String,
         value: String,
-        valueColor: Color
+        label: String,
+        tint: Color
     ) -> some View {
-        HStack {
+        VStack(alignment: .leading, spacing: IkeruTheme.Spacing.sm) {
             Image(systemName: icon)
-                .font(.ikeruBody)
-                .foregroundStyle(.ikeruTextSecondary)
-                .frame(width: 24)
-
-            Text(label)
-                .font(.ikeruBody)
-                .foregroundStyle(.ikeruTextSecondary)
-
-            Spacer()
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(tint)
 
             Text(value)
-                .font(.ikeruHeading3)
-                .foregroundStyle(valueColor)
+                .font(.ikeruStatsLarge)
+                .foregroundStyle(Color.ikeruTextPrimary)
+
+            Text(label.uppercased())
+                .font(.ikeruMicro)
+                .ikeruTracking(.micro)
+                .foregroundStyle(Color.ikeruTextTertiary)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(IkeruTheme.Spacing.lg)
+        .ikeruGlass(
+            cornerRadius: IkeruTheme.Radius.lg,
+            tint: tint,
+            tintOpacity: 0.06
+        )
+    }
+
+    private var lootCallout: some View {
+        HStack(spacing: IkeruTheme.Spacing.md) {
+            Image(systemName: "bag.fill")
+                .font(.system(size: 22))
+                .foregroundStyle(Color(hex: IkeruTheme.Colors.Rarity.rare))
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Loot earned")
+                    .font(.ikeruBody)
+                    .foregroundStyle(Color.ikeruTextPrimary)
+                Text("\(viewModel.sessionLootCount) new item\(viewModel.sessionLootCount == 1 ? "" : "s")")
+                    .font(.ikeruCaption)
+                    .foregroundStyle(Color.ikeruTextSecondary)
+            }
+            Spacer()
+        }
+        .padding(IkeruTheme.Spacing.lg)
+        .ikeruGlass(
+            cornerRadius: IkeruTheme.Radius.lg,
+            tint: Color(hex: IkeruTheme.Colors.Rarity.rare),
+            tintOpacity: 0.10
+        )
     }
 }
 
@@ -114,12 +162,9 @@ struct SessionSummaryView: View {
 
 #Preview("SessionSummaryView") {
     ZStack {
-        Color.ikeruBackground.ignoresSafeArea()
-
-        // Create a mock scenario by using a real ViewModel
-        // In preview we just show the layout
+        IkeruScreenBackground()
         Text("Preview: See ActiveSessionView preview for full flow")
-            .foregroundStyle(.white)
+            .foregroundStyle(Color.ikeruTextPrimary)
     }
     .preferredColorScheme(.dark)
 }

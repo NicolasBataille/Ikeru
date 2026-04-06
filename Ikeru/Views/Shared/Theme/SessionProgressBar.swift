@@ -75,7 +75,7 @@ struct SessionProgressBar: View {
     let estimatedTotalTime: TimeInterval
 
     var body: some View {
-        VStack(spacing: IkeruTheme.Spacing.xs) {
+        VStack(spacing: IkeruTheme.Spacing.sm) {
             // Time labels
             timeLabelsRow
 
@@ -94,44 +94,55 @@ struct SessionProgressBar: View {
         HStack {
             Text(formatTime(elapsedTime))
                 .font(.ikeruStats)
-                .foregroundStyle(.ikeruTextSecondary)
+                .foregroundStyle(Color.ikeruTextSecondary)
 
             Spacer()
 
             Text("-" + formatTime(max(0, estimatedTotalTime - elapsedTime)))
                 .font(.ikeruStats)
-                .foregroundStyle(.ikeruTextSecondary)
+                .foregroundStyle(Color.ikeruTextTertiary)
         }
     }
 
     // MARK: - Segmented Bar
 
     private var segmentedBar: some View {
-        HStack(spacing: 2) {
+        HStack(spacing: 3) {
             ForEach(Array(exercises.enumerated()), id: \.offset) { index, _ in
                 segmentView(at: index)
             }
         }
-        .frame(height: 4)
+        .frame(height: 6)
     }
 
     private func segmentView(at index: Int) -> some View {
-        RoundedRectangle(cornerRadius: 2)
-            .fill(segmentColor(at: index))
-            .animation(
-                .easeInOut(duration: IkeruTheme.Animation.quickDuration),
-                value: currentIndex
-            )
-    }
-
-    private func segmentColor(at index: Int) -> Color {
-        if index < currentIndex {
-            return .ikeruPrimaryAccent
-        } else if index == currentIndex {
-            return Color(hex: IkeruTheme.Colors.textPrimary)
-        } else {
-            return .ikeruSurface
+        ZStack {
+            Capsule().fill(Color.white.opacity(0.08))
+            if index < currentIndex {
+                Capsule().fill(
+                    LinearGradient(
+                        colors: [Color(hex: 0xE5BC8A), Color(hex: 0xD4A574)],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+            } else if index == currentIndex {
+                Capsule().fill(
+                    LinearGradient(
+                        colors: [Color(hex: 0xF5F2EC), Color(hex: 0xE0DDD7)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+            }
         }
+        .overlay(
+            Capsule().strokeBorder(Color.white.opacity(0.06), lineWidth: 0.5)
+        )
+        .animation(
+            .spring(response: 0.42, dampingFraction: 0.86),
+            value: currentIndex
+        )
     }
 
     // MARK: - Skill Icons

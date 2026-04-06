@@ -4,10 +4,11 @@ import IkeruCore
 // MARK: - Card Variant
 
 public enum IkeruCardVariant: Sendable {
-    case standard
-    case elevated
-    case interactive
-    case companion
+    case standard       // glass surface, soft border
+    case elevated       // brighter glass, stronger shadow
+    case interactive    // springy press feedback
+    case companion      // larger radius, sakura tinted
+    case hero           // tallest, used for top hero panels
 }
 
 // MARK: - IkeruCard ViewModifier
@@ -15,26 +16,28 @@ public enum IkeruCardVariant: Sendable {
 public struct IkeruCardModifier: ViewModifier {
 
     let variant: IkeruCardVariant
+    let padding: CGFloat
     @State private var isPressed = false
 
     public func body(content: Content) -> some View {
         content
-            .padding(IkeruTheme.Spacing.md)
+            .padding(padding)
+            .frame(maxWidth: .infinity, alignment: .leading)
             .background {
-                materialBackground
+                cardBackground
             }
-            .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
+            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+            .overlay {
+                cardBorder
+            }
             .shadow(
                 color: shadowColor,
                 radius: shadowRadius,
-                x: shadowX,
+                x: 0,
                 y: shadowY
             )
-            .scaleEffect(scaleValue)
-            .animation(
-                .spring(duration: IkeruTheme.Animation.quickDuration),
-                value: isPressed
-            )
+            .scaleEffect(isPressed ? 0.985 : 1.0)
+            .animation(.spring(response: 0.32, dampingFraction: 0.86), value: isPressed)
             .modifier(InteractiveGestureModifier(
                 isInteractive: variant == .interactive,
                 isPressed: $isPressed
@@ -42,58 +45,95 @@ public struct IkeruCardModifier: ViewModifier {
     }
 
     @ViewBuilder
-    private var materialBackground: some View {
+    private var cardBackground: some View {
+        ZStack {
+            // Base glass material
+            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                .fill(.ultraThinMaterial)
+
+            // Tinted overlay (each variant has its own subtle tint)
+            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                .fill(tintFill)
+
+            // Top edge highlight (gives the glass that "lifted" feel)
+            LinearGradient(
+                colors: [
+                    Color.white.opacity(highlightOpacity),
+                    Color.white.opacity(0.0)
+                ],
+                startPoint: .top,
+                endPoint: .center
+            )
+            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+            .blendMode(.plusLighter)
+            .allowsHitTesting(false)
+        }
+    }
+
+    @ViewBuilder
+    private var cardBorder: some View {
+        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+            .strokeBorder(
+                LinearGradient(
+                    colors: [
+                        Color.white.opacity(0.18),
+                        Color.white.opacity(0.04)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                ),
+                lineWidth: 0.6
+            )
+    }
+
+    private var tintFill: Color {
         switch variant {
-        case .elevated:
-            Rectangle().fill(.thickMaterial)
-        default:
-            Rectangle().fill(.ultraThinMaterial)
+        case .standard:    return Color.white.opacity(0.04)
+        case .elevated:    return Color.white.opacity(0.07)
+        case .interactive: return Color.white.opacity(0.05)
+        case .companion:   return Color(hex: 0xE8B4B8, opacity: 0.06)
+        case .hero:        return Color.white.opacity(0.06)
+        }
+    }
+
+    private var highlightOpacity: Double {
+        switch variant {
+        case .elevated, .hero: return 0.18
+        case .companion:       return 0.16
+        default:               return 0.12
         }
     }
 
     private var cornerRadius: CGFloat {
         switch variant {
-        case .companion:
-            return IkeruTheme.Radius.lg
-        default:
-            return IkeruTheme.Radius.md
+        case .companion: return IkeruTheme.Radius.xl
+        case .hero:      return IkeruTheme.Radius.xl
+        case .elevated:  return IkeruTheme.Radius.lg
+        default:         return IkeruTheme.Radius.lg
         }
     }
 
     private var shadowColor: Color {
         switch variant {
-        case .elevated:
-            return Color.black.opacity(0.4)
+        case .elevated, .hero:
+            return Color.black.opacity(0.55)
         default:
-            return Color.black.opacity(IkeruTheme.Shadow.card.opacity)
+            return Color.black.opacity(0.4)
         }
     }
 
     private var shadowRadius: CGFloat {
         switch variant {
-        case .elevated:
-            return IkeruTheme.Shadow.card.radius + 4
-        default:
-            return IkeruTheme.Shadow.card.radius
+        case .elevated, .hero: return 32
+        default:               return 20
         }
-    }
-
-    private var shadowX: CGFloat {
-        IkeruTheme.Shadow.card.x
     }
 
     private var shadowY: CGFloat {
         switch variant {
-        case .elevated:
-            return IkeruTheme.Shadow.card.y + 2
-        default:
-            return IkeruTheme.Shadow.card.y
+        case .elevated, .hero: return 12
+        default:               return 8
         }
-    }
-
-    private var scaleValue: CGFloat {
-        guard variant == .interactive else { return 1.0 }
-        return isPressed ? 0.98 : 1.0
     }
 }
 
@@ -106,9 +146,14 @@ private struct InteractiveGestureModifier: ViewModifier {
     func body(content: Content) -> some View {
         if isInteractive {
             content
-                .onLongPressGesture(minimumDuration: .infinity, pressing: { pressing in
-                    isPressed = pressing
-                }, perform: {})
+                .onLongPressGesture(
+                    minimumDuration: .infinity,
+                    maximumDistance: .infinity,
+                    pressing: { pressing in
+                        isPressed = pressing
+                    },
+                    perform: {}
+                )
         } else {
             content
         }
@@ -118,8 +163,15 @@ private struct InteractiveGestureModifier: ViewModifier {
 // MARK: - View Extension
 
 extension View {
-    public func ikeruCard(_ variant: IkeruCardVariant = .standard) -> some View {
-        modifier(IkeruCardModifier(variant: variant))
+    /// Applies a premium glass card style.
+    /// - Parameters:
+    ///   - variant: visual treatment
+    ///   - padding: inner padding (defaults to lg)
+    public func ikeruCard(
+        _ variant: IkeruCardVariant = .standard,
+        padding: CGFloat = IkeruTheme.Spacing.lg
+    ) -> some View {
+        modifier(IkeruCardModifier(variant: variant, padding: padding))
     }
 }
 
@@ -128,28 +180,14 @@ extension View {
 #Preview("IkeruCard Variants") {
     ScrollView {
         VStack(spacing: IkeruTheme.Spacing.lg) {
-            Text("Standard Card")
-                .foregroundStyle(.white)
-                .frame(maxWidth: .infinity)
-                .ikeruCard(.standard)
-
-            Text("Elevated Card")
-                .foregroundStyle(.white)
-                .frame(maxWidth: .infinity)
-                .ikeruCard(.elevated)
-
-            Text("Interactive Card")
-                .foregroundStyle(.white)
-                .frame(maxWidth: .infinity)
-                .ikeruCard(.interactive)
-
-            Text("Companion Card")
-                .foregroundStyle(.white)
-                .frame(maxWidth: .infinity)
-                .ikeruCard(.companion)
+            Text("Standard").foregroundStyle(.white).ikeruCard(.standard)
+            Text("Elevated").foregroundStyle(.white).ikeruCard(.elevated)
+            Text("Interactive").foregroundStyle(.white).ikeruCard(.interactive)
+            Text("Companion").foregroundStyle(.white).ikeruCard(.companion)
+            Text("Hero").foregroundStyle(.white).ikeruCard(.hero)
         }
         .padding(IkeruTheme.Spacing.md)
     }
-    .background(Color(hex: IkeruTheme.Colors.background))
+    .background(Color.ikeruBackground.ignoresSafeArea())
     .preferredColorScheme(.dark)
 }
