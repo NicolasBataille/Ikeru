@@ -6,12 +6,17 @@ import os
 
 /// Routes AI requests to the appropriate provider tier with automatic fallback.
 ///
-/// Tier selection:
+/// Tier selection (per `PromptComplexity`):
 /// - Offline: always FoundationModels
-/// - Online simple: FoundationModels (lowest latency)
-/// - Online medium: Gemini free tier
-/// - Online complex: Claude subscription
-/// - Online batch: LocalGPU (if discovered)
+/// - `.simple` (low latency wins): onDevice -> Cerebras -> Groq -> onDevice
+/// - `.medium` (balance): Cerebras -> Groq -> OpenRouter -> Gemini -> onDevice
+/// - `.complex` (quality wins): OpenRouter -> Gemini -> Cerebras -> Groq -> onDevice
+/// - `.batch` (large volume, latency irrelevant): Gemini -> OpenRouter -> Cerebras -> onDevice
+///
+/// Claude is excluded from the default chain because Anthropic closed third-party
+/// subscription auth (2026-04-04). Users may still configure a paid Claude API key
+/// from Settings; when present, Claude is appended ahead of OpenRouter for complex
+/// prompts. localGPU is reserved for the future ikeru-rig bridge (Stories 7.3-7.5).
 ///
 /// On provider failure, falls back to the next available tier within a 2-second budget.
 @Observable
@@ -21,41 +26,75 @@ public final class AIRouterService {
     // MARK: - Properties
 
     @ObservationIgnored
-    private let onDeviceProvider: any AIProvider
-    @ObservationIgnored
-    private let geminiProvider: any AIProvider
-    @ObservationIgnored
-    private let claudeProvider: any AIProvider
-    @ObservationIgnored
-    private let localGPUProvider: any AIProvider
+    private let providers: [AITier: any AIProvider]
     @ObservationIgnored
     private let networkChecker: any NetworkChecker
 
     /// Current status of each tier. Updated after each generation attempt.
-    public private(set) var tierStatuses: [AITier: ProviderStatus] = [
-        .onDevice: .available,
-        .gemini: .unavailable,
-        .claude: .unavailable,
-        .localGPU: .unavailable,
-    ]
+    public private(set) var tierStatuses: [AITier: ProviderStatus]
 
-    /// Total fallback budget in seconds.
-    private static let fallbackBudgetSeconds: Double = 2.0
+    /// Total fallback budget in seconds. Generous enough that Gemini and
+    /// OpenRouter cold-starts (which routinely take 1–3s) don't time out before
+    /// returning a response.
+    private static let fallbackBudgetSeconds: Double = 10.0
 
     // MARK: - Initialization
 
+    /// Designated initializer accepting an explicit dictionary of providers.
+    /// Use this for tests with mocked providers.
     public init(
-        onDeviceProvider: any AIProvider = FoundationModelsProvider(),
-        geminiProvider: any AIProvider = GeminiProvider(),
-        claudeProvider: any AIProvider = ClaudeProvider(),
-        localGPUProvider: any AIProvider = LocalGPUProvider(),
+        providers: [AITier: any AIProvider],
         networkChecker: any NetworkChecker = NWPathNetworkChecker()
     ) {
-        self.onDeviceProvider = onDeviceProvider
-        self.geminiProvider = geminiProvider
-        self.claudeProvider = claudeProvider
-        self.localGPUProvider = localGPUProvider
+        self.providers = providers
         self.networkChecker = networkChecker
+        self.tierStatuses = Dictionary(uniqueKeysWithValues: AITier.allCases.map {
+            ($0, providers[$0] != nil ? ProviderStatus.unavailable : ProviderStatus.unavailable)
+        })
+        self.tierStatuses[.onDevice] = .available
+    }
+
+    /// Convenience initializer that wires up all default providers (FoundationModels +
+    /// Gemini + Cerebras + Groq + OpenRouter + GitHub Models + Claude + LocalGPU).
+    /// Each provider self-checks key availability via Keychain at request time.
+    public convenience init(networkChecker: any NetworkChecker = NWPathNetworkChecker()) {
+        self.init(
+            providers: [
+                .onDevice: FoundationModelsProvider(),
+                .gemini: GeminiProvider(),
+                .cerebras: CerebrasProvider(),
+                .groq: GroqProvider(),
+                .openRouter: OpenRouterProvider(),
+                .githubModels: GitHubModelsProvider(),
+                .claude: ClaudeProvider(),
+                .localGPU: LocalGPUProvider(),
+            ],
+            networkChecker: networkChecker
+        )
+    }
+
+    /// Backwards-compatible positional initializer kept so the existing test suite
+    /// (which injects `onDeviceProvider`, `geminiProvider`, `claudeProvider`,
+    /// `localGPUProvider`) keeps compiling. New cloud providers (Cerebras, Groq,
+    /// OpenRouter, GitHub Models) default to a stub that is always unavailable
+    /// when called via this initializer — tests that need them should use the
+    /// designated `init(providers:networkChecker:)`.
+    public convenience init(
+        onDeviceProvider: any AIProvider,
+        geminiProvider: any AIProvider,
+        claudeProvider: any AIProvider,
+        localGPUProvider: any AIProvider,
+        networkChecker: any NetworkChecker = NWPathNetworkChecker()
+    ) {
+        self.init(
+            providers: [
+                .onDevice: onDeviceProvider,
+                .gemini: geminiProvider,
+                .claude: claudeProvider,
+                .localGPU: localGPUProvider,
+            ],
+            networkChecker: networkChecker
+        )
     }
 
     // MARK: - Public API
@@ -91,12 +130,14 @@ public final class AIRouterService {
                     // FoundationModels (final fallback) has no timeout -- on-device, always fast
                     response = try await provider.generate(prompt: prompt)
                 } else {
-                    // Apply deadline-aware timeout
+                    // Give the current provider the FULL remaining budget instead of
+                    // dividing it across remaining providers. With 5-6 providers in the
+                    // chain, the per-provider slice was 300-400ms, way below a real
+                    // Gemini/OpenRouter cold start (1-3s), causing systematic timeouts
+                    // even with valid keys.
                     let remaining = deadline - ContinuousClock.now
-                    let remainingProviders = chain.count - index
-                    let perProviderBudget = remaining / remainingProviders
 
-                    response = try await withTimeout(duration: perProviderBudget, tier: provider.tier) {
+                    response = try await withTimeout(duration: remaining, tier: provider.tier) {
                         try await provider.generate(prompt: prompt)
                     }
                 }
@@ -146,14 +187,11 @@ public final class AIRouterService {
 
     /// Refresh the status of all tiers.
     public func refreshTierStatuses() async {
-        let providers: [(any AIProvider, AITier)] = [
-            (onDeviceProvider, .onDevice),
-            (geminiProvider, .gemini),
-            (claudeProvider, .claude),
-            (localGPUProvider, .localGPU),
-        ]
-
-        for (provider, tier) in providers {
+        for tier in AITier.allCases {
+            guard let provider = providers[tier] else {
+                updateTierStatus(tier, status: .unavailable)
+                continue
+            }
             let available = await provider.isAvailable
             updateTierStatus(tier, status: available ? .available : .unavailable)
         }
@@ -161,29 +199,42 @@ public final class AIRouterService {
 
     // MARK: - Tier Selection
 
-    /// Build the fallback chain based on complexity and network state.
-    /// The chain starts with the ideal provider and includes fallbacks down to FoundationModels.
-    private func buildFallbackChain(for complexity: PromptComplexity) -> [any AIProvider] {
-        let isOnline = networkChecker.isOnline
+    /// Resolve a tier order to concrete providers, dropping any that aren't installed.
+    /// On-device is always appended last as the final fallback.
+    private func resolve(_ order: [AITier]) -> [any AIProvider] {
+        var resolved = order.compactMap { providers[$0] }
+        if !order.contains(.onDevice), let onDevice = providers[.onDevice] {
+            resolved.append(onDevice)
+        }
+        return resolved
+    }
 
+    /// Build the fallback chain based on complexity and network state.
+    /// The chain starts with the ideal provider and ends with FoundationModels.
+    private func buildFallbackChain(for complexity: PromptComplexity) -> [any AIProvider] {
         // Offline: only on-device
-        guard isOnline else {
-            return [onDeviceProvider]
+        guard networkChecker.isOnline else {
+            return providers[.onDevice].map { [$0] } ?? []
         }
 
-        // Online: build chain based on complexity
         switch complexity {
         case .simple:
-            return [onDeviceProvider]
+            // Latency wins. Prefer on-device, then sub-second Cerebras/Groq.
+            return resolve([.onDevice, .cerebras, .groq])
 
         case .medium:
-            return [geminiProvider, onDeviceProvider]
+            // Balance latency and quality. Cerebras first, broaden out before falling back.
+            return resolve([.cerebras, .groq, .openRouter, .gemini, .githubModels])
 
         case .complex:
-            return [claudeProvider, geminiProvider, onDeviceProvider]
+            // Quality wins. OpenRouter (Llama 70B free) and Gemini Pro-class first.
+            // Claude is inserted ahead only if a paid key is configured (handled at runtime
+            // by isAvailable; the chain itself just lists it).
+            return resolve([.openRouter, .gemini, .cerebras, .groq, .githubModels, .claude])
 
         case .batch:
-            return [localGPUProvider, claudeProvider, geminiProvider, onDeviceProvider]
+            // Volume jobs (build-time content gen). Free tiers with high daily quotas first.
+            return resolve([.gemini, .openRouter, .cerebras, .githubModels])
         }
     }
 

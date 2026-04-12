@@ -71,20 +71,31 @@ public final class ConversationService: @unchecked Sendable {
         LEARNER LEVEL: \(level.displayName) — \(level.complexityDescription)
 
         RULES:
-        1. Respond primarily in Japanese at the \(level.displayName) level.
-        2. \(levelGuidance)
-        3. When the learner makes a grammar or vocabulary mistake, gently correct it.
+        1. Respond bilingually. Write Japanese first, then add an inline translation \
+        in the learner's language inside parentheses on the SAME line.
+           Example: 今日(きょう)は友達(ともだち)と映画(えいが)を見(み)ました。(Today I watched a movie with a friend.)
+        2. Detect the learner's language from their messages (English, French, etc.) and \
+        use THAT language for inline translations. If they write in French, translate into French.
+        3. \(levelGuidance)
+        4. ALWAYS annotate EVERY kanji with its reading in the format 漢字(かんじ). \
+        Never skip furigana for any kanji, regardless of the learner's level. This is critical \
+        because the app uses these annotations to display pronunciation guides.
+        5. When the learner makes a grammar or vocabulary mistake, gently correct it.
            Format corrections as: [CORRECTION: original → corrected | explanation]
-        4. Naturally introduce useful vocabulary related to the topic.
+        6. Naturally introduce useful vocabulary related to the topic.
            Format hints as: [VOCAB: word(reading) = meaning]
-        5. Keep responses concise: 2-3 sentences typical.
-        6. Be warm and conversational — use appropriate casual/polite speech for the level.
-        7. Ask follow-up questions to keep the conversation going.
-        8. If the learner writes in English, respond in Japanese but simpler, \
-        and encourage them to try Japanese.
+        7. Keep responses concise: 2-3 sentences typical.
+        8. Be warm and conversational — use appropriate casual/polite speech for the level.
+        9. Ask follow-up questions to keep the conversation going.
+        10. Encourage the learner to try responding in Japanese, even partially.
 
         RESPONSE FORMAT:
-        Write your conversational response first, then any corrections and vocab on separate lines.
+        Write your conversational response first (Japanese with inline translations), \
+        then any corrections and vocab on separate lines.
+
+        EXAMPLE RESPONSE for a French-speaking N5 learner who said "Bonjour":
+        こんにちは！元気(げんき)ですか？(Bonjour ! Comment vas-tu ?)
+        今日(きょう)は何(なに)をしましたか？(Qu'as-tu fait aujourd'hui ?)
         """
     }
 
@@ -93,27 +104,25 @@ public final class ConversationService: @unchecked Sendable {
         case .n5:
             return """
             Use only basic hiragana/katakana and the simplest kanji (数字, 日, 月, etc.). \
-            Add furigana for ALL kanji as kanji(reading). Use です/ます form exclusively. \
-            Very short sentences.
+            Use です/ます form exclusively. Very short sentences.
             """
         case .n4:
             return """
-            Use N5-N4 kanji with furigana for N4-level kanji as kanji(reading). \
-            Use です/ます form primarily. Simple compound sentences allowed.
+            Use N5-N4 kanji. Use です/ます form primarily. Simple compound sentences allowed.
             """
         case .n3:
             return """
-            Use kanji up to N3 level freely. Add furigana only for N3-level kanji. \
+            Use kanji up to N3 level freely. \
             Mix polite and casual forms. Natural mid-length sentences.
             """
         case .n2:
             return """
-            Use kanji up to N2 level freely. Furigana only for uncommon readings. \
+            Use kanji up to N2 level freely. \
             Use natural speech patterns including casual contractions. Complex sentences OK.
             """
         case .n1:
             return """
-            Use any kanji naturally. No furigana needed except for very rare readings. \
+            Use any kanji naturally. \
             Speak near-natively with idioms, nuance, and sophisticated grammar.
             """
         }
