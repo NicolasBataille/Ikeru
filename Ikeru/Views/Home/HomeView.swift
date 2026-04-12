@@ -239,6 +239,9 @@ struct HomeView: View {
     // MARK: - Helpers
 
     private func timeOfDayGreeting() -> String {
+        if let override = AppEnvironment.greetingOverride {
+            return override.phrase
+        }
         let hour = Calendar.current.component(.hour, from: Date())
         switch hour {
         case 5..<12:  return "Good morning"

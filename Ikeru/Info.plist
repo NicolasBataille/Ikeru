@@ -13,5 +13,13 @@
 	<string>Ikeru needs microphone access for shadowing exercises where you practice speaking Japanese.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>Ikeru uses speech recognition to evaluate your Japanese pronunciation during shadowing exercises.</string>
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>com.ikeru.rig.prewarm</string>
+	</array>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+	</array>
 </dict>
 </plist>

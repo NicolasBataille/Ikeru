@@ -14,6 +14,7 @@ settings:
     SWIFT_VERSION: "6.0"
     IPHONEOS_DEPLOYMENT_TARGET: "17.0"
     CODE_SIGN_STYLE: Automatic
+    DEVELOPMENT_TEAM: N84YXYF2NZ
 
 packages:
   IkeruCore:

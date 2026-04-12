@@ -18,7 +18,22 @@ final class NotificationManager {
     // MARK: - Authorization
 
     /// Requests notification permission from the user.
+    /// Skips the system prompt if the authorization status has already been
+    /// determined (authorized, denied, provisional, or ephemeral) — we only
+    /// prompt when it is still `.notDetermined`.
     func requestAuthorization() async -> Bool {
+        let current = await UNUserNotificationCenter.current().notificationSettings()
+        switch current.authorizationStatus {
+        case .authorized, .provisional, .ephemeral:
+            return true
+        case .denied:
+            return false
+        case .notDetermined:
+            break
+        @unknown default:
+            break
+        }
+
         do {
             let granted = try await UNUserNotificationCenter.current()
                 .requestAuthorization(options: [.alert, .sound, .badge])
@@ -27,6 +42,34 @@ final class NotificationManager {
         } catch {
             Logger.ui.error("Notification auth failed: \(error.localizedDescription)")
             return false
+        }
+    }
+
+    // MARK: - Transient Local Notifications
+
+    /// Posts a transient local notification immediately (no trigger). Honours
+    /// the current authorization state via `requestAuthorization()` — if the
+    /// user has denied notifications this is a silent no-op.
+    func postLocalNotification(title: String, body: String, identifier: String) async {
+        let authorized = await requestAuthorization()
+        guard authorized else { return }
+
+        let content = UNMutableNotificationContent()
+        content.title = title
+        content.body = body
+        content.sound = .default
+
+        let request = UNNotificationRequest(
+            identifier: identifier,
+            content: content,
+            trigger: nil
+        )
+
+        do {
+            try await UNUserNotificationCenter.current().add(request)
+            Logger.ui.info("Local notification posted: \(identifier, privacy: .public)")
+        } catch {
+            Logger.ui.error("Failed to post local notification \(identifier, privacy: .public): \(error.localizedDescription)")
         }
     }
 

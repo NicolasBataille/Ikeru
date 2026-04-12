@@ -47,6 +47,14 @@ The app supports launch arguments to bypass setup and reach any screen quickly:
 | `-skipOnboarding` | Auto-creates a profile named "Nico" if none exists |
 | `-startTab=N` | Pre-selects a tab on launch (0=Home, 1=Study, 2=Companion, 3=RPG, 4=Settings) |
 | `-autoStartSession` | Immediately starts a session after the home view loads |
+| `-mockProfile` | **DEBUG only.** Seeds a fixture profile with rich RPG state and a card deck. Combine with the scalar overrides below. No-op if a profile already exists. |
+| `-mockLevel=N` | Sets RPG level to `N` (mid-bar XP within that level). Defaults to 5. |
+| `-mockDue=N` | Creates `N` cards with `dueDate <= now`. Defaults to 12. |
+| `-mockMastered=N` | Creates `N` cards with `interval=365` (mastered). Defaults to 40. |
+| `-mockLootboxes=N` | Adds `N` unopened lootboxes to the inventory. Defaults to 1. |
+| `-mockInventory=N` | Adds `N` rotating-rarity loot items to the inventory. Defaults to 4. |
+| `-mockGreeting=morning\|afternoon\|evening\|night` | Overrides `HomeView.timeOfDayGreeting()` regardless of device time. |
+| `-e2eMode` | Sets `AppEnvironment.isE2EMode = true`. Reserved for future deterministic-rendering opt-ins (mesh drift freeze, AI stubbing, RNG seeding). |
 
 Examples:
 
@@ -56,10 +64,19 @@ xcrun simctl launch booted com.ikeru.app -skipOnboarding -startTab=3
 
 # Skip onboarding and dive straight into a session
 xcrun simctl launch booted com.ikeru.app -skipOnboarding -autoStartSession
+
+# Seed a mid-level profile to validate ranks, palettes, stats, and lootboxes in one shot
+xcrun simctl launch booted com.ikeru.app \
+  -mockProfile -mockLevel=15 -mockDue=25 -mockMastered=120 \
+  -mockLootboxes=3 -mockInventory=4 -mockGreeting=morning
+
+# Validate Master rank + kintsugi palette
+xcrun simctl launch booted com.ikeru.app -mockProfile -mockLevel=30 -mockMastered=2000
 ```
 
-To add a new launch argument, edit `Ikeru/App/IkeruApp.swift` (`initializeProfileViewModel`)
-or `Ikeru/Views/MainTabView.swift` (the `selectedTab` initializer).
+To add a new launch argument, edit `Ikeru/Support/AppEnvironment.swift` (parsing) and either
+`Ikeru/Support/TestFixtures.swift` (data seeding), `Ikeru/App/IkeruApp.swift`
+(`initializeProfileViewModel`), or `Ikeru/Views/MainTabView.swift` (the `selectedTab` initializer).
 
 ### Reset state between suites
 

@@ -39,3 +39,14 @@ Pods/
 _bmad-output/
 CREW.md
 .osgrep
+
+# E2E test artifacts (screenshots, run reports — may contain device info)
+tests/evidence/
+tests/results/
+
+# Rig server local state
+rig/.venv/
+rig/.env
+rig/rig.db
+rig/rig.db-journal
+rig/assets/

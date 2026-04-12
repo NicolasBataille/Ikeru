@@ -37,6 +37,7 @@ struct ProgressDashboardView: View {
         ScrollView {
             VStack(spacing: IkeruTheme.Spacing.xl) {
                 topBar
+                kanaEntryLink
                 jlptEstimateCard(vm)
                 skillRadarSection(vm)
                 reviewQueueSection(vm)
@@ -63,6 +64,39 @@ struct ProgressDashboardView: View {
                 .foregroundStyle(Color.ikeruTextPrimary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    // MARK: - Kana entry link
+
+    private var kanaEntryLink: some View {
+        NavigationLink {
+            KanaPoolSelectorView()
+        } label: {
+            HStack(spacing: IkeruTheme.Spacing.md) {
+                ZStack {
+                    Circle()
+                        .fill(Color.ikeruPrimaryAccent.opacity(0.14))
+                        .frame(width: 38, height: 38)
+                    Text("あ")
+                        .font(.system(size: 20, weight: .regular, design: .serif))
+                        .foregroundStyle(Color.ikeruPrimaryAccent)
+                }
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Kana")
+                        .font(.ikeruHeading3)
+                        .foregroundStyle(Color.ikeruTextPrimary)
+                    Text("Hiragana & katakana, par groupes")
+                        .font(.ikeruCaption)
+                        .foregroundStyle(Color.ikeruTextSecondary)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(Color.ikeruTextTertiary)
+            }
+            .ikeruCard(.interactive)
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - JLPT Estimate

@@ -49,6 +49,7 @@ struct MainTabView: View {
     }()
     @State private var showCompanionChat = false
     @State private var companionViewModel: CompanionChatViewModel?
+    @State private var presentAISettings = CommandLine.arguments.contains("-presentAISettings")
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -77,6 +78,16 @@ struct MainTabView: View {
                     .presentationDetents([.large, .medium])
                     .presentationDragIndicator(.visible)
                     .presentationBackground(.ultraThinMaterial)
+            }
+        }
+        .fullScreenCover(isPresented: $presentAISettings) {
+            NavigationStack {
+                AISettingsView()
+                    .toolbar {
+                        ToolbarItem(placement: .topBarTrailing) {
+                            Button("Done") { presentAISettings = false }
+                        }
+                    }
             }
         }
     }

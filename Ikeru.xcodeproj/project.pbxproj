@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		00C45E3806F4F41DF942E46A /* WatchConnectivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6DF718512A3E4A694744447 /* WatchConnectivityManager.swift */; };
+		024CE65C4F899FACD02F82AB /* IkeruLogo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CE66823D49245E40B9FB5AE /* IkeruLogo.swift */; };
 		03266CA2AC2C8FE09FF324D2 /* SentenceConstructionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60A2A898AE8FA9CED4206F98 /* SentenceConstructionView.swift */; };
 		03A18AE27633E99C6225720C /* ColorExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF141412A4CE1AAA9CA80398 /* ColorExtensions.swift */; };
 		09A4F7F1DA62FBF986A78C5F /* ToastManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C365C4F5BEDC3A891466ECC7 /* ToastManager.swift */; };
@@ -22,6 +23,7 @@
 		14EFF53B93984E414DD41C10 /* SkillRadarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 248E0A33E3D0B2C6E89E4FBD /* SkillRadarView.swift */; };
 		159F80F88E64BACBD528A0EB /* StrokeOrderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E4D340B0F01E28B73402EFC /* StrokeOrderView.swift */; };
 		1661F05AF2EE6DEFD886575B /* ListeningViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7822D645AD833A363D150831 /* ListeningViewModel.swift */; };
+		17DB7846F569D06593954C9A /* KanaQuizView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBD4393D7B109F5CCFAA3DEE /* KanaQuizView.swift */; };
 		18215CF0553ABF951057A4E6 /* SkillBalanceBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10FD9A1B3124B1306DA628AB /* SkillBalanceBar.swift */; };
 		18FB9E310248D0E4180685FF /* PitchContourView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBDEA4C637B31C8705BEE907 /* PitchContourView.swift */; };
 		1F267C7F06B849E143C9F872 /* ProfileViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF20C958BD43ABB601BE2B23 /* ProfileViewModelTests.swift */; };
@@ -31,15 +33,19 @@
 		2599E15EC556738138D16158 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E2839E6E122B09254AB7E515 /* Assets.xcassets */; };
 		2631DE603C9A3FFDB97B9D17 /* CardReviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21DBD5C564011D9B1EA163B8 /* CardReviewView.swift */; };
 		2B56415B2F3545851F6B8182 /* FillInBlankExerciseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E199ACCB659AD0493D556C8C /* FillInBlankExerciseView.swift */; };
+		2D7ACFA4B2B18DF787E54372 /* AppEnvironment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6955326534B6460E2F1B9C66 /* AppEnvironment.swift */; };
 		2E71B9173249BF48621921E7 /* InlineKanjiView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E70B7A4174B6CFE8ED602D4 /* InlineKanjiView.swift */; };
 		2EDB743A773B1110D8D8160D /* StrokeOrderViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97DC0D8C7FA88DAEF99E751F /* StrokeOrderViewModelTests.swift */; };
 		2F6B8C98160163965120553D /* HandwritingViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F4FD0C67B08C1DEFCC562B6 /* HandwritingViewModel.swift */; };
 		318AD0DC566D55CF8F54F721 /* AttributionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DDE2DBC0AC80C3C72CCE6E1 /* AttributionView.swift */; };
 		3201547827523F9F7FCDDCAD /* XPGainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE989EDC826A8D21056CC758 /* XPGainView.swift */; };
+		32F0852EF70ED1BB88171793 /* KanaDrillModeSelector.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEE55E655DAC68F122F04B9D /* KanaDrillModeSelector.swift */; };
 		36DBAA3C969EE384E09F1819 /* PitchAccentViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CC0E136E8E57719AD1366EF /* PitchAccentViewModel.swift */; };
 		38F70142BF2BA492DC8CE5AF /* IkeruGlass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6443713592CC74FD3AECD921 /* IkeruGlass.swift */; };
 		39A095270B40F6C416C13453 /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E7F076DF0062A3442F461F3 /* MainTabView.swift */; };
+		3F46A142E358DF4FAF74F67B /* KanjiStudyViewStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 566DAE0C74757C138694AE80 /* KanjiStudyViewStateTests.swift */; };
 		3FF25A148A3F29A4766B9536 /* ListeningExerciseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E725C72DE5BC3FCCF6797E99 /* ListeningExerciseView.swift */; };
+		4547C70DA66DB999B294CC16 /* LaunchAnimationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35E5B9D83D4ACDC6DF4C19B3 /* LaunchAnimationView.swift */; };
 		46BC1FB8F57C080AAF0EB987 /* CardReviewViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13AC955C7BA5C06F2A873D40 /* CardReviewViewModelTests.swift */; };
 		484D405C4211881A67889AB9 /* SessionLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = B46DF69A2A765C203CB58B09 /* SessionLiveActivity.swift */; };
 		4A75A771A6DEAF3D5109046E /* SessionConfigViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D45BABE0EF71F59D7E9FCF5 /* SessionConfigViewModel.swift */; };
@@ -57,38 +63,46 @@
 		5B188F1ABB8FDAC523D264FD /* StrokeOrderViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 605EB123E5636067D0104242 /* StrokeOrderViewModel.swift */; };
 		5D874F7760089A5C335464FD /* DiffHighlightView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6340F44EB5D85320D1D1B58D /* DiffHighlightView.swift */; };
 		62289A66A5C3A6A9D6CD9364 /* ListeningIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46F48E350D03281741ABCA19 /* ListeningIntegrationTests.swift */; };
+		6264BDA72959D5123E44F75D /* PreWarmFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C0690DD9A67CB231FB3B2BE /* PreWarmFactory.swift */; };
 		65B55BA772664AD8B848C157 /* SessionConfigView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46AB2F335A1FD2EC78D8993E /* SessionConfigView.swift */; };
 		65CFDAA2B97AA214A4AEEFA8 /* SessionViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B43EF20C3659B03FE6702B5 /* SessionViewModel.swift */; };
+		67FD08C3F44BED1CBC549314 /* KanaPoolSelectorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50DC3FFD19212D20C2539520 /* KanaPoolSelectorView.swift */; };
 		699CDC8CCD6C70501B8AF94A /* n5-content.sqlite in Resources */ = {isa = PBXBuildFile; fileRef = D5D9BA9F4FDA871221354B88 /* n5-content.sqlite */; };
 		69B4E8F5F4A60063E5212BF0 /* IkeruCore in Frameworks */ = {isa = PBXBuildFile; productRef = D6284BC7E5C7136958E6185E /* IkeruCore */; };
 		6B447B08EC87253CC183BF68 /* WatchQuizViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE61F033B42BC3AD5742F25A /* WatchQuizViewModel.swift */; };
 		6D12C66C7BF2FEF680E3D41E /* IkeruTabBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CA34FB1B1DB4560EB47114B /* IkeruTabBar.swift */; };
 		6DA42A5338F4B35DF64928BF /* HomeViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1DF2E350075F0F6C4CFE5D5 /* HomeViewModel.swift */; };
+		75216F3246F319E6E8271D18 /* KanaDrillViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86F0467337CA5D848E771C8C /* KanaDrillViewModel.swift */; };
 		784365F25937638D410F69D3 /* ListeningViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5EC7CD071A02DEB1F3611E0 /* ListeningViewModelTests.swift */; };
 		78EBAB8487F09970D54B4F08 /* AISettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E027F7024C00861EDEA8A363 /* AISettingsView.swift */; };
 		7AD47972332D13661BE1885F /* HomeViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44FF091731003AFD23A516FF /* HomeViewModelTests.swift */; };
 		7C128D3DB683FE9C44385E9E /* HandwritingViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FB214E27E81F30D44CAD195 /* HandwritingViewModelTests.swift */; };
+		7E72F660CAB40ADDC65BD761 /* KanaRubyText.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64B31E5354E63498288CBC25 /* KanaRubyText.swift */; };
 		7EBC2982099C381560979F85 /* ToastManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8CB4D8F6D27886A95BBAC2D /* ToastManagerTests.swift */; };
 		7F007D67BD6304542673C64D /* SessionIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB8329720757C93EEDE0EF41 /* SessionIntegrationTests.swift */; };
 		8079EBD85DD413FB6BA17D40 /* MnemonicView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A91BD866585603D217E09761 /* MnemonicView.swift */; };
 		80928CE01894C7B023866E4A /* ChatBubbleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C682D70A5C43E544AC5BF0B3 /* ChatBubbleView.swift */; };
 		8220FF72EE512779FDF93501 /* NameEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 457B840A63725833DFB68E38 /* NameEntryView.swift */; };
+		83FB41C31894E425E395AAE8 /* KanaPoolViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A62F54ADD5EEB679762E17C /* KanaPoolViewModel.swift */; };
 		8416A09ACC39E1CDD672E983 /* StrokeOrderIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 912009585675D42B2F7ED4D3 /* StrokeOrderIntegrationTests.swift */; };
 		85204B34AEE5C56B01857C3C /* StandByFlashcardWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = F75C1AD94292B42125242E1C /* StandByFlashcardWidget.swift */; };
 		878E64EF919A51C376AD483C /* CardReviewViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A1B070C3AF5FEAAEA23ABDB /* CardReviewViewModel.swift */; };
 		88D106140718312AFFC69671 /* KanaQuizView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DABC761CD00B88F2CB2B98DF /* KanaQuizView.swift */; };
 		89472D6F07C417CF74A6F34D /* FontExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4EB5EA8CFACFEDD72045EB3 /* FontExtensions.swift */; };
 		8AEE9F8BE78788FDEBEF1F7B /* RPGProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13D5225E5540A893D5EA823D /* RPGProfileView.swift */; };
+		8EFA25811F530A1ED76EB8B2 /* PreWarmNotifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4E3A9795F94E20D35EBA364 /* PreWarmNotifier.swift */; };
 		8F797DDBE2D54C590F237849 /* LootDropView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 876AD9101EE9AB2CA2148935 /* LootDropView.swift */; };
 		90422BEF9BC8E04D637D5227 /* KanjiStudyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15C00EAAA3BA98179DFE119D /* KanjiStudyView.swift */; };
 		93BF5688D23C97D381684CDD /* PlaybackRateSelector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C436FC5E8920ED935DA2049 /* PlaybackRateSelector.swift */; };
 		94FED3DFE4912D74155C44F1 /* InlineMnemonicView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99665C482D14C819E209167E /* InlineMnemonicView.swift */; };
 		96318E447330C86C4B8FF75B /* VocabularyStudyViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1F62206E7AC1CAC9A3335D5 /* VocabularyStudyViewModel.swift */; };
 		96B7AA4DDFCB52A92BA246C3 /* SessionViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8908562DCE1E539972918E03 /* SessionViewModelTests.swift */; };
+		98F793063A70505145D0FAFD /* RigSettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACB44C33C46EDA95CE1BA9E /* RigSettingsViewModel.swift */; };
 		9B7FD90C901ED310BA49F1C6 /* SessionProgressBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 130C19D8358A2B30F37B94C9 /* SessionProgressBar.swift */; };
 		9BC4183DC3C8A7EC9B37686D /* HandwritingCanvasView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2435124626D304119CA77076 /* HandwritingCanvasView.swift */; };
 		9CE7075A738FC2C1627420CD /* ExerciseTransitionContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFC50EBFAD8E44D18F442E7C /* ExerciseTransitionContainer.swift */; };
 		A00ED71AC785B8E955FF9A08 /* WordDefinitionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3C8E2C7FFD4176128B70C18 /* WordDefinitionView.swift */; };
+		A27F19D30B4DB095997231C5 /* KanaGroupCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9AF377049118CA435404314 /* KanaGroupCard.swift */; };
 		A4FD9CA72477C29768928B5E /* LootRevealView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C05F94E3AA1A7B8AC2AA9D70 /* LootRevealView.swift */; };
 		A8C2670E450109C4289456F5 /* ShortcutsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DFC0A4678F7D8B667D36783 /* ShortcutsManager.swift */; };
 		A91A182B2779D86CD983FE2A /* CloudBackupManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = EEC26D21B28CD7D093350336 /* CloudBackupManager.swift */; };
@@ -106,6 +120,7 @@
 		BC727BB5AEAC7CAFA04263C3 /* ShadowingIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C1446591A309B0937C15FAC /* ShadowingIntegrationTests.swift */; };
 		BCCDF647874F54F1271E46FF /* AppConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC137F101E47A5AE2272EFC4 /* AppConfiguration.swift */; };
 		BE51F2E828552A87D898A01B /* HapticPitchDrillView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5835C532A5799C48001C02D1 /* HapticPitchDrillView.swift */; };
+		BEE0EC302B51BA5C52D75402 /* KanaDrillViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D97512A99D55C0A04CB5169 /* KanaDrillViewModelTests.swift */; };
 		BF45D9ACC0C1A84F62E338D5 /* LevelUpView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6288ACD8B355DCD027711C8B /* LevelUpView.swift */; };
 		C3C088775E85F7B1F020235C /* ProgressDashboardViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33B41D44105A174C447228C4 /* ProgressDashboardViewModel.swift */; };
 		C4AA3905DE90177682E212A8 /* ReadingPassageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E028A7B4AD2AB9F9E1802817 /* ReadingPassageView.swift */; };
@@ -113,11 +128,15 @@
 		C7D3EB4AA2D2D81C101368D7 /* NavigationCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33CEED6C6C796647FAF4C683 /* NavigationCoordinatorTests.swift */; };
 		C8F7ED3F00387307F04FD73E /* InlineQuizView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5A9840F6C7DB7B734D9FC80 /* InlineQuizView.swift */; };
 		C91AAFCB6B347DD7E48BEC5F /* GrammarPointView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BFAD9F3F0796D53A41F3F2A /* GrammarPointView.swift */; };
+		C98990815A7397FAEECC5E9F /* MasteryBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 432F33D5FCBBD072BE009810 /* MasteryBadge.swift */; };
 		C9C552606F14AE938AB0A1C3 /* StrokeTracingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69FD1BC54CDC2C981E6F4402 /* StrokeTracingView.swift */; };
+		CA1E4BC77111ADC4E439BCB7 /* KanaDrillSessionSummary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6999560B934B111F55D2F3E5 /* KanaDrillSessionSummary.swift */; };
 		CD75D7ADA19D87E667DA3C4C /* ShimmerModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24753C49380E97C0DB2BC98B /* ShimmerModifier.swift */; };
+		CEDA5C519843F8F9E6D539DA /* KanaFlashcardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DB3671081E55064A6B6ADE5 /* KanaFlashcardView.swift */; };
 		CF13EFF3CE9BC5A619F0B16D /* IkeruWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = FAB097C7086A8C5F1549D53D /* IkeruWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		D00AC904AC8A13E4B9237F2E /* ProgressDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D70646A260FBC5CBB22E479 /* ProgressDashboardView.swift */; };
 		D620F952CB6ED990AB51DB36 /* IkeruWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD4E32975E0ECE57675459EB /* IkeruWidgetBundle.swift */; };
+		D8D5457FC6070EDB4C44E5B7 /* RigJobsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EBABD6C9A0B5F802FBA5DB2 /* RigJobsViewModel.swift */; };
 		D8EB495D638484D9EAB4DC02 /* ShadowingViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A71BF12D4449340885A08FCA /* ShadowingViewModel.swift */; };
 		DAAC21592CB9A41BBF136425 /* VocabularyStudyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCB50A9A0ED295F6A7C82144 /* VocabularyStudyView.swift */; };
 		DCCF0B7EBE77A847DB43B406 /* RadicalDecompositionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40C5ECF5A9EA8B982657904C /* RadicalDecompositionView.swift */; };
@@ -126,10 +145,13 @@
 		E5D377E0EE04F7256C198370 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00C65E3B1046C3448638D50 /* NotificationManager.swift */; };
 		E67443C57282C375B28E1ADB /* MeshHeroView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25F5EC3E127B20A52562853D /* MeshHeroView.swift */; };
 		E6D5C29E18595B7C6DEF7878 /* ProfileViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FF30B9862993AD81B2EA938 /* ProfileViewModel.swift */; };
+		E7B9345F359AC06220E9D59D /* TestFixtures.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5620682521309021B6102C49 /* TestFixtures.swift */; };
+		E893C6AD00A594F2326530A8 /* RigJobsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37FFFD4E2CCB71F726EE7A52 /* RigJobsView.swift */; };
 		E954C4AFA27E9820C570C3BF /* DataExportManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA8ABC5B44D456C6BD980427 /* DataExportManager.swift */; };
 		EBB22606F9278C7CBC1604BF /* ConversationViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D73A69C4AD84199B467D6CC9 /* ConversationViewModelTests.swift */; };
 		EC69319148C3AF3B25F59DCA /* CompanionTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CC8C440C720A9129AF84FF8 /* CompanionTabView.swift */; };
 		EE902487BE754E4D763DA2E9 /* ProgressComplication.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD7E0BEDFFAF72A3409B8B08 /* ProgressComplication.swift */; };
+		EEC2FC135D0B9B16BB75E3CA /* RigJobsViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6554CA8A229ACD1B1EAF84B9 /* RigJobsViewModelTests.swift */; };
 		EFA3DDE7B5BBFA82A09873CB /* SentenceConstructionViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 929D91F5E4CA898816722EFF /* SentenceConstructionViewModel.swift */; };
 		EFB4AC9FEB8312A7E21BAB67 /* KanjiStudyViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0751CC1AD8BD9B3CB495986 /* KanjiStudyViewModel.swift */; };
 		F0BDE207FB9AD47E59F1AE92 /* ConversationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9ADB1F486DEEFD4CE3C20C5C /* ConversationView.swift */; };
@@ -183,6 +205,7 @@
 		156EFFF0B204464405BC709E /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		15C00EAAA3BA98179DFE119D /* KanjiStudyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KanjiStudyView.swift; sourceTree = "<group>"; };
 		1BFAD9F3F0796D53A41F3F2A /* GrammarPointView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GrammarPointView.swift; sourceTree = "<group>"; };
+		1D97512A99D55C0A04CB5169 /* KanaDrillViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KanaDrillViewModelTests.swift; sourceTree = "<group>"; };
 		1E4D340B0F01E28B73402EFC /* StrokeOrderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StrokeOrderView.swift; sourceTree = "<group>"; };
 		21DBD5C564011D9B1EA163B8 /* CardReviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardReviewView.swift; sourceTree = "<group>"; };
 		2435124626D304119CA77076 /* HandwritingCanvasView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HandwritingCanvasView.swift; sourceTree = "<group>"; };
@@ -198,9 +221,12 @@
 		33B41D44105A174C447228C4 /* ProgressDashboardViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressDashboardViewModel.swift; sourceTree = "<group>"; };
 		33CEED6C6C796647FAF4C683 /* NavigationCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationCoordinatorTests.swift; sourceTree = "<group>"; };
 		358B47E0F54AAFD423C1BAAD /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		35E5B9D83D4ACDC6DF4C19B3 /* LaunchAnimationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchAnimationView.swift; sourceTree = "<group>"; };
+		37FFFD4E2CCB71F726EE7A52 /* RigJobsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RigJobsView.swift; sourceTree = "<group>"; };
 		406C6BA699B52A4C383A75E1 /* ReadingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadingsView.swift; sourceTree = "<group>"; };
 		40C5ECF5A9EA8B982657904C /* RadicalDecompositionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadicalDecompositionView.swift; sourceTree = "<group>"; };
 		41DE2FB348D4D1AFBF4143ED /* IkeruWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = IkeruWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		432F33D5FCBBD072BE009810 /* MasteryBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MasteryBadge.swift; sourceTree = "<group>"; };
 		44FF091731003AFD23A516FF /* HomeViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewModelTests.swift; sourceTree = "<group>"; };
 		457B840A63725833DFB68E38 /* NameEntryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NameEntryView.swift; sourceTree = "<group>"; };
 		46AB2F335A1FD2EC78D8993E /* SessionConfigView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionConfigView.swift; sourceTree = "<group>"; };
@@ -208,6 +234,10 @@
 		470D3E9716A0BCBE20FBD7D8 /* LootBoxChallengeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LootBoxChallengeView.swift; sourceTree = "<group>"; };
 		4C436FC5E8920ED935DA2049 /* PlaybackRateSelector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackRateSelector.swift; sourceTree = "<group>"; };
 		4D70646A260FBC5CBB22E479 /* ProgressDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressDashboardView.swift; sourceTree = "<group>"; };
+		4EBABD6C9A0B5F802FBA5DB2 /* RigJobsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RigJobsViewModel.swift; sourceTree = "<group>"; };
+		50DC3FFD19212D20C2539520 /* KanaPoolSelectorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KanaPoolSelectorView.swift; sourceTree = "<group>"; };
+		5620682521309021B6102C49 /* TestFixtures.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestFixtures.swift; sourceTree = "<group>"; };
+		566DAE0C74757C138694AE80 /* KanjiStudyViewStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KanjiStudyViewStateTests.swift; sourceTree = "<group>"; };
 		5835C532A5799C48001C02D1 /* HapticPitchDrillView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticPitchDrillView.swift; sourceTree = "<group>"; };
 		5A1B070C3AF5FEAAEA23ABDB /* CardReviewViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardReviewViewModel.swift; sourceTree = "<group>"; };
 		5CC8C440C720A9129AF84FF8 /* CompanionTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompanionTabView.swift; sourceTree = "<group>"; };
@@ -220,9 +250,16 @@
 		631CDAB692FF8F02FB5E77FD /* IkeruButtonStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IkeruButtonStyle.swift; sourceTree = "<group>"; };
 		6340F44EB5D85320D1D1B58D /* DiffHighlightView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiffHighlightView.swift; sourceTree = "<group>"; };
 		6443713592CC74FD3AECD921 /* IkeruGlass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IkeruGlass.swift; sourceTree = "<group>"; };
+		64B31E5354E63498288CBC25 /* KanaRubyText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KanaRubyText.swift; sourceTree = "<group>"; };
+		6554CA8A229ACD1B1EAF84B9 /* RigJobsViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RigJobsViewModelTests.swift; sourceTree = "<group>"; };
 		66B13C680FC67DBFC91A70F7 /* WatchSessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchSessionManager.swift; sourceTree = "<group>"; };
+		6955326534B6460E2F1B9C66 /* AppEnvironment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppEnvironment.swift; sourceTree = "<group>"; };
+		6999560B934B111F55D2F3E5 /* KanaDrillSessionSummary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KanaDrillSessionSummary.swift; sourceTree = "<group>"; };
 		69FD1BC54CDC2C981E6F4402 /* StrokeTracingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StrokeTracingView.swift; sourceTree = "<group>"; };
 		6B43EF20C3659B03FE6702B5 /* SessionViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionViewModel.swift; sourceTree = "<group>"; };
+		6C0690DD9A67CB231FB3B2BE /* PreWarmFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreWarmFactory.swift; sourceTree = "<group>"; };
+		6CE66823D49245E40B9FB5AE /* IkeruLogo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IkeruLogo.swift; sourceTree = "<group>"; };
+		6DB3671081E55064A6B6ADE5 /* KanaFlashcardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KanaFlashcardView.swift; sourceTree = "<group>"; };
 		703BA3FA54B696C033378136 /* CompanionChatViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompanionChatViewModel.swift; sourceTree = "<group>"; };
 		71F17C0E3B326F9F0C5D3E94 /* IkeruTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = IkeruTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		769F5F51519266322B36DD05 /* AdaptiveSessionViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdaptiveSessionViewModelTests.swift; sourceTree = "<group>"; };
@@ -233,6 +270,7 @@
 		7B28B5F9A82603C231B759EB /* ListeningPassageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListeningPassageView.swift; sourceTree = "<group>"; };
 		7DEC565E5BC2D95F4A14BD0A /* KanjiDisplayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KanjiDisplayView.swift; sourceTree = "<group>"; };
 		8225047CD3C41A1364CD67FA /* Ikeru.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Ikeru.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		86F0467337CA5D848E771C8C /* KanaDrillViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KanaDrillViewModel.swift; sourceTree = "<group>"; };
 		876AD9101EE9AB2CA2148935 /* LootDropView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LootDropView.swift; sourceTree = "<group>"; };
 		8908562DCE1E539972918E03 /* SessionViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionViewModelTests.swift; sourceTree = "<group>"; };
 		8A4D6DBF214AA1BE4ADDF3B8 /* ShadowingViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShadowingViewModelTests.swift; sourceTree = "<group>"; };
@@ -247,6 +285,7 @@
 		95596EED1B8269510E18C1B6 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		97DC0D8C7FA88DAEF99E751F /* StrokeOrderViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StrokeOrderViewModelTests.swift; sourceTree = "<group>"; };
 		99665C482D14C819E209167E /* InlineMnemonicView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InlineMnemonicView.swift; sourceTree = "<group>"; };
+		9A62F54ADD5EEB679762E17C /* KanaPoolViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KanaPoolViewModel.swift; sourceTree = "<group>"; };
 		9ADB1F486DEEFD4CE3C20C5C /* ConversationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationView.swift; sourceTree = "<group>"; };
 		9BC828DB0D8D10873566FFC0 /* Ikeru.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Ikeru.entitlements; sourceTree = "<group>"; };
 		9C1446591A309B0937C15FAC /* ShadowingIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShadowingIntegrationTests.swift; sourceTree = "<group>"; };
@@ -268,12 +307,14 @@
 		B46DF69A2A765C203CB58B09 /* SessionLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionLiveActivity.swift; sourceTree = "<group>"; };
 		B5EC7CD071A02DEB1F3611E0 /* ListeningViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListeningViewModelTests.swift; sourceTree = "<group>"; };
 		B8CF84F59DAF36277A923CF3 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		B9AF377049118CA435404314 /* KanaGroupCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KanaGroupCard.swift; sourceTree = "<group>"; };
 		BCB50A9A0ED295F6A7C82144 /* VocabularyStudyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VocabularyStudyView.swift; sourceTree = "<group>"; };
 		BF1DEA455FF965BF74038E0F /* IkeruWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IkeruWatchApp.swift; sourceTree = "<group>"; };
 		BFC50EBFAD8E44D18F442E7C /* ExerciseTransitionContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseTransitionContainer.swift; sourceTree = "<group>"; };
 		C05F94E3AA1A7B8AC2AA9D70 /* LootRevealView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LootRevealView.swift; sourceTree = "<group>"; };
 		C153A64FF1D3081D81EEFDCC /* ActiveSessionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActiveSessionView.swift; sourceTree = "<group>"; };
 		C365C4F5BEDC3A891466ECC7 /* ToastManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToastManager.swift; sourceTree = "<group>"; };
+		C4E3A9795F94E20D35EBA364 /* PreWarmNotifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreWarmNotifier.swift; sourceTree = "<group>"; };
 		C4EB5EA8CFACFEDD72045EB3 /* FontExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FontExtensions.swift; sourceTree = "<group>"; };
 		C682D70A5C43E544AC5BF0B3 /* ChatBubbleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatBubbleView.swift; sourceTree = "<group>"; };
 		C6DF718512A3E4A694744447 /* WatchConnectivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchConnectivityManager.swift; sourceTree = "<group>"; };
@@ -308,8 +349,11 @@
 		F75C1AD94292B42125242E1C /* StandByFlashcardWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StandByFlashcardWidget.swift; sourceTree = "<group>"; };
 		F8BD1F07D5A033139C8C8A83 /* SessionSummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionSummaryView.swift; sourceTree = "<group>"; };
 		FAB097C7086A8C5F1549D53D /* IkeruWidget.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = IkeruWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		FACB44C33C46EDA95CE1BA9E /* RigSettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RigSettingsViewModel.swift; sourceTree = "<group>"; };
+		FBD4393D7B109F5CCFAA3DEE /* KanaQuizView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KanaQuizView.swift; sourceTree = "<group>"; };
 		FD4E32975E0ECE57675459EB /* IkeruWidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IkeruWidgetBundle.swift; sourceTree = "<group>"; };
 		FD7E0BEDFFAF72A3409B8B08 /* ProgressComplication.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressComplication.swift; sourceTree = "<group>"; };
+		FEE55E655DAC68F122F04B9D /* KanaDrillModeSelector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KanaDrillModeSelector.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -369,6 +413,17 @@
 				69FD1BC54CDC2C981E6F4402 /* StrokeTracingView.swift */,
 			);
 			path = Writing;
+			sourceTree = "<group>";
+		};
+		240629691BF18D68DCDF71E3 /* Support */ = {
+			isa = PBXGroup;
+			children = (
+				6955326534B6460E2F1B9C66 /* AppEnvironment.swift */,
+				6C0690DD9A67CB231FB3B2BE /* PreWarmFactory.swift */,
+				C4E3A9795F94E20D35EBA364 /* PreWarmNotifier.swift */,
+				5620682521309021B6102C49 /* TestFixtures.swift */,
+			);
+			path = Support;
 			sourceTree = "<group>";
 		};
 		2B69D0979D8176C680D0BBF2 /* Reading */ = {
@@ -466,6 +521,7 @@
 			children = (
 				15CB0667583EC6D52A9954F3 /* CardReview */,
 				6BD85ED735A9A13C87CB65D6 /* Conversation */,
+				D3A529783E53CBA85AA1B31C /* Kana */,
 				F4FC6E91906301FF6EEE000C /* Kanji */,
 				38B60D65E4577A0EF94FA2E1 /* Listening */,
 				2B69D0979D8176C680D0BBF2 /* Reading */,
@@ -518,6 +574,7 @@
 				5E70B7A4174B6CFE8ED602D4 /* InlineKanjiView.swift */,
 				99665C482D14C819E209167E /* InlineMnemonicView.swift */,
 				A5A9840F6C7DB7B734D9FC80 /* InlineQuizView.swift */,
+				64B31E5354E63498288CBC25 /* KanaRubyText.swift */,
 			);
 			path = Conversation;
 			sourceTree = "<group>";
@@ -552,11 +609,14 @@
 				2FB214E27E81F30D44CAD195 /* HandwritingViewModelTests.swift */,
 				44FF091731003AFD23A516FF /* HomeViewModelTests.swift */,
 				E415FB60B6790A37E7C422E7 /* ImmersiveSessionViewTests.swift */,
+				1D97512A99D55C0A04CB5169 /* KanaDrillViewModelTests.swift */,
 				A6C995B4118F51F9AD485135 /* KanjiStudyViewModelTests.swift */,
+				566DAE0C74757C138694AE80 /* KanjiStudyViewStateTests.swift */,
 				46F48E350D03281741ABCA19 /* ListeningIntegrationTests.swift */,
 				B5EC7CD071A02DEB1F3611E0 /* ListeningViewModelTests.swift */,
 				33CEED6C6C796647FAF4C683 /* NavigationCoordinatorTests.swift */,
 				AF20C958BD43ABB601BE2B23 /* ProfileViewModelTests.swift */,
+				6554CA8A229ACD1B1EAF84B9 /* RigJobsViewModelTests.swift */,
 				A026C938CB364847F71607FC /* SessionConfigIntegrationTests.swift */,
 				DB8329720757C93EEDE0EF41 /* SessionIntegrationTests.swift */,
 				8908562DCE1E539972918E03 /* SessionViewModelTests.swift */,
@@ -576,6 +636,8 @@
 				703BA3FA54B696C033378136 /* CompanionChatViewModel.swift */,
 				D08B33E031522EEA0E701C84 /* ConversationViewModel.swift */,
 				9F4FD0C67B08C1DEFCC562B6 /* HandwritingViewModel.swift */,
+				86F0467337CA5D848E771C8C /* KanaDrillViewModel.swift */,
+				9A62F54ADD5EEB679762E17C /* KanaPoolViewModel.swift */,
 				A0751CC1AD8BD9B3CB495986 /* KanjiStudyViewModel.swift */,
 				7822D645AD833A363D150831 /* ListeningViewModel.swift */,
 				8CC0E136E8E57719AD1366EF /* PitchAccentViewModel.swift */,
@@ -604,6 +666,7 @@
 			children = (
 				7027B6CB9096071D6EB32301 /* Components */,
 				50287D79DC47EDEB28CCE168 /* Home */,
+				C7D863F0AA01F1DCA23EBA97 /* Launch */,
 				58EFC03C1940A4C5948A11CA /* Learning */,
 				3B0777DDC4C5BB5F000D91D7 /* Onboarding */,
 				6A9F7504043CBF673DAB0FDF /* RPG */,
@@ -622,6 +685,8 @@
 				F1DF2E350075F0F6C4CFE5D5 /* HomeViewModel.swift */,
 				5FF30B9862993AD81B2EA938 /* ProfileViewModel.swift */,
 				33B41D44105A174C447228C4 /* ProgressDashboardViewModel.swift */,
+				4EBABD6C9A0B5F802FBA5DB2 /* RigJobsViewModel.swift */,
+				FACB44C33C46EDA95CE1BA9E /* RigSettingsViewModel.swift */,
 				9FFDBE842988EF4A387035C1 /* RPGProfileViewModel.swift */,
 				5D45BABE0EF71F59D7E9FCF5 /* SessionConfigViewModel.swift */,
 				6B43EF20C3659B03FE6702B5 /* SessionViewModel.swift */,
@@ -665,11 +730,34 @@
 			path = Fonts;
 			sourceTree = "<group>";
 		};
+		C7D863F0AA01F1DCA23EBA97 /* Launch */ = {
+			isa = PBXGroup;
+			children = (
+				35E5B9D83D4ACDC6DF4C19B3 /* LaunchAnimationView.swift */,
+			);
+			path = Launch;
+			sourceTree = "<group>";
+		};
+		D3A529783E53CBA85AA1B31C /* Kana */ = {
+			isa = PBXGroup;
+			children = (
+				FEE55E655DAC68F122F04B9D /* KanaDrillModeSelector.swift */,
+				6999560B934B111F55D2F3E5 /* KanaDrillSessionSummary.swift */,
+				6DB3671081E55064A6B6ADE5 /* KanaFlashcardView.swift */,
+				B9AF377049118CA435404314 /* KanaGroupCard.swift */,
+				50DC3FFD19212D20C2539520 /* KanaPoolSelectorView.swift */,
+				FBD4393D7B109F5CCFAA3DEE /* KanaQuizView.swift */,
+				432F33D5FCBBD072BE009810 /* MasteryBadge.swift */,
+			);
+			path = Kana;
+			sourceTree = "<group>";
+		};
 		E45B0D5EEA672824C9F2E14D /* Settings */ = {
 			isa = PBXGroup;
 			children = (
 				E027F7024C00861EDEA8A363 /* AISettingsView.swift */,
 				2DDE2DBC0AC80C3C72CCE6E1 /* AttributionView.swift */,
+				37FFFD4E2CCB71F726EE7A52 /* RigJobsView.swift */,
 				B8CF84F59DAF36277A923CF3 /* SettingsView.swift */,
 			);
 			path = Settings;
@@ -705,6 +793,7 @@
 				631CDAB692FF8F02FB5E77FD /* IkeruButtonStyle.swift */,
 				24AB1AB1DDE2D5EE0D52DA0C /* IkeruCard.swift */,
 				6443713592CC74FD3AECD921 /* IkeruGlass.swift */,
+				6CE66823D49245E40B9FB5AE /* IkeruLogo.swift */,
 				2CA34FB1B1DB4560EB47114B /* IkeruTabBar.swift */,
 				130C19D8358A2B30F37B94C9 /* SessionProgressBar.swift */,
 				24753C49380E97C0DB2BC98B /* ShimmerModifier.swift */,
@@ -734,6 +823,7 @@
 				E776BAF63C750B3C5FCC0C85 /* App */,
 				2E37ED4BBD6D09186DF28517 /* Resources */,
 				A0602841F6D8C0D39D5604DE /* Services */,
+				240629691BF18D68DCDF71E3 /* Support */,
 				9AAEFD1942FF8F04AD564639 /* ViewModels */,
 				994C26AB9900AD67DA28FFB0 /* Views */,
 				9BC828DB0D8D10873566FFC0 /* Ikeru.entitlements */,
@@ -846,15 +936,19 @@
 				LastUpgradeCheck = 1600;
 				TargetAttributes = {
 					5E31F15C6A31BAD7198508F4 = {
+						DevelopmentTeam = N84YXYF2NZ;
 						ProvisioningStyle = Automatic;
 					};
 					AB63406F8CCDE07382570F0B = {
+						DevelopmentTeam = N84YXYF2NZ;
 						ProvisioningStyle = Automatic;
 					};
 					C7A466B4903F67E7A7B2D0E2 = {
+						DevelopmentTeam = N84YXYF2NZ;
 						ProvisioningStyle = Automatic;
 					};
 					EDDB8F3812DC1BC18F32017C = {
+						DevelopmentTeam = N84YXYF2NZ;
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -917,11 +1011,14 @@
 				7C128D3DB683FE9C44385E9E /* HandwritingViewModelTests.swift in Sources */,
 				7AD47972332D13661BE1885F /* HomeViewModelTests.swift in Sources */,
 				588F16A9AD56FA5DE5DDB103 /* ImmersiveSessionViewTests.swift in Sources */,
+				BEE0EC302B51BA5C52D75402 /* KanaDrillViewModelTests.swift in Sources */,
 				B4D53BD2C72F596C888D6FAB /* KanjiStudyViewModelTests.swift in Sources */,
+				3F46A142E358DF4FAF74F67B /* KanjiStudyViewStateTests.swift in Sources */,
 				62289A66A5C3A6A9D6CD9364 /* ListeningIntegrationTests.swift in Sources */,
 				784365F25937638D410F69D3 /* ListeningViewModelTests.swift in Sources */,
 				C7D3EB4AA2D2D81C101368D7 /* NavigationCoordinatorTests.swift in Sources */,
 				1F267C7F06B849E143C9F872 /* ProfileViewModelTests.swift in Sources */,
+				EEC2FC135D0B9B16BB75E3CA /* RigJobsViewModelTests.swift in Sources */,
 				B6C31E378ED030EB4ED10D9B /* SessionConfigIntegrationTests.swift in Sources */,
 				7F007D67BD6304542673C64D /* SessionIntegrationTests.swift in Sources */,
 				96B7AA4DDFCB52A92BA246C3 /* SessionViewModelTests.swift in Sources */,
@@ -954,6 +1051,7 @@
 				78EBAB8487F09970D54B4F08 /* AISettingsView.swift in Sources */,
 				ABA74ED79DF7BC71F7543DBF /* ActiveSessionView.swift in Sources */,
 				BCCDF647874F54F1271E46FF /* AppConfiguration.swift in Sources */,
+				2D7ACFA4B2B18DF787E54372 /* AppEnvironment.swift in Sources */,
 				318AD0DC566D55CF8F54F721 /* AttributionView.swift in Sources */,
 				2631DE603C9A3FFDB97B9D17 /* CardReviewView.swift in Sources */,
 				878E64EF919A51C376AD483C /* CardReviewViewModel.swift in Sources */,
@@ -983,13 +1081,24 @@
 				58BECF1D8B55499034C3F5AA /* IkeruButtonStyle.swift in Sources */,
 				553E0E281A012BF7C569A6D1 /* IkeruCard.swift in Sources */,
 				38F70142BF2BA492DC8CE5AF /* IkeruGlass.swift in Sources */,
+				024CE65C4F899FACD02F82AB /* IkeruLogo.swift in Sources */,
 				6D12C66C7BF2FEF680E3D41E /* IkeruTabBar.swift in Sources */,
 				2E71B9173249BF48621921E7 /* InlineKanjiView.swift in Sources */,
 				94FED3DFE4912D74155C44F1 /* InlineMnemonicView.swift in Sources */,
 				C8F7ED3F00387307F04FD73E /* InlineQuizView.swift in Sources */,
+				32F0852EF70ED1BB88171793 /* KanaDrillModeSelector.swift in Sources */,
+				CA1E4BC77111ADC4E439BCB7 /* KanaDrillSessionSummary.swift in Sources */,
+				75216F3246F319E6E8271D18 /* KanaDrillViewModel.swift in Sources */,
+				CEDA5C519843F8F9E6D539DA /* KanaFlashcardView.swift in Sources */,
+				A27F19D30B4DB095997231C5 /* KanaGroupCard.swift in Sources */,
+				67FD08C3F44BED1CBC549314 /* KanaPoolSelectorView.swift in Sources */,
+				83FB41C31894E425E395AAE8 /* KanaPoolViewModel.swift in Sources */,
+				17DB7846F569D06593954C9A /* KanaQuizView.swift in Sources */,
+				7E72F660CAB40ADDC65BD761 /* KanaRubyText.swift in Sources */,
 				4C300AF08D17073C30F03BA3 /* KanjiDisplayView.swift in Sources */,
 				90422BEF9BC8E04D637D5227 /* KanjiStudyView.swift in Sources */,
 				EFB4AC9FEB8312A7E21BAB67 /* KanjiStudyViewModel.swift in Sources */,
+				4547C70DA66DB999B294CC16 /* LaunchAnimationView.swift in Sources */,
 				BF45D9ACC0C1A84F62E338D5 /* LevelUpView.swift in Sources */,
 				3FF25A148A3F29A4766B9536 /* ListeningExerciseView.swift in Sources */,
 				0D7F6C804EBBBB485D58A756 /* ListeningPassageView.swift in Sources */,
@@ -1000,6 +1109,7 @@
 				8F797DDBE2D54C590F237849 /* LootDropView.swift in Sources */,
 				A4FD9CA72477C29768928B5E /* LootRevealView.swift in Sources */,
 				39A095270B40F6C416C13453 /* MainTabView.swift in Sources */,
+				C98990815A7397FAEECC5E9F /* MasteryBadge.swift in Sources */,
 				E67443C57282C375B28E1ADB /* MeshHeroView.swift in Sources */,
 				8079EBD85DD413FB6BA17D40 /* MnemonicView.swift in Sources */,
 				8220FF72EE512779FDF93501 /* NameEntryView.swift in Sources */,
@@ -1010,6 +1120,8 @@
 				36DBAA3C969EE384E09F1819 /* PitchAccentViewModel.swift in Sources */,
 				18FB9E310248D0E4180685FF /* PitchContourView.swift in Sources */,
 				93BF5688D23C97D381684CDD /* PlaybackRateSelector.swift in Sources */,
+				6264BDA72959D5123E44F75D /* PreWarmFactory.swift in Sources */,
+				8EFA25811F530A1ED76EB8B2 /* PreWarmNotifier.swift in Sources */,
 				E6D5C29E18595B7C6DEF7878 /* ProfileViewModel.swift in Sources */,
 				D00AC904AC8A13E4B9237F2E /* ProgressDashboardView.swift in Sources */,
 				C3C088775E85F7B1F020235C /* ProgressDashboardViewModel.swift in Sources */,
@@ -1019,6 +1131,9 @@
 				C4AA3905DE90177682E212A8 /* ReadingPassageView.swift in Sources */,
 				50621972E820A8D923FB54D9 /* ReadingPassageViewModel.swift in Sources */,
 				ABB829D69579D496F77AC77F /* ReadingsView.swift in Sources */,
+				E893C6AD00A594F2326530A8 /* RigJobsView.swift in Sources */,
+				D8D5457FC6070EDB4C44E5B7 /* RigJobsViewModel.swift in Sources */,
+				98F793063A70505145D0FAFD /* RigSettingsViewModel.swift in Sources */,
 				F2A0D73D1228BC5748D9C024 /* SRSCardView.swift in Sources */,
 				03266CA2AC2C8FE09FF324D2 /* SentenceConstructionView.swift in Sources */,
 				EFA3DDE7B5BBFA82A09873CB /* SentenceConstructionViewModel.swift in Sources */,
@@ -1039,6 +1154,7 @@
 				159F80F88E64BACBD528A0EB /* StrokeOrderView.swift in Sources */,
 				5B188F1ABB8FDAC523D264FD /* StrokeOrderViewModel.swift in Sources */,
 				C9C552606F14AE938AB0A1C3 /* StrokeTracingView.swift in Sources */,
+				E7B9345F359AC06220E9D59D /* TestFixtures.swift in Sources */,
 				09A4F7F1DA62FBF986A78C5F /* ToastManager.swift in Sources */,
 				56C0FAA75C6A9BDAD06FC62E /* ToastView.swift in Sources */,
 				F83318606CDD399E5B109CEB /* VocabularyExamplesView.swift in Sources */,
@@ -1205,6 +1321,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = N84YXYF2NZ;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -1262,6 +1379,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = N84YXYF2NZ;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
