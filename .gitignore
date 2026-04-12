@@ -50,3 +50,10 @@ rig/.env
 rig/rig.db
 rig/rig.db-journal
 rig/assets/
+
+# Test screenshots
+sottaku-*.png
+
+# Local tool configs
+.playwright-mcp/
+.cursor/
