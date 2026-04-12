@@ -9,6 +9,7 @@ import IkeruCore
 struct ConversationBubbleView: View {
 
     let message: ConversationMessage
+    @AppStorage("ikeru.furigana.enabled") private var furiganaEnabled = true
 
     var body: some View {
         HStack {
@@ -39,11 +40,20 @@ struct ConversationBubbleView: View {
 
     // MARK: - Content
 
+    @ViewBuilder
     private var messageContent: some View {
-        Text(message.content)
-            .font(.ikeruBody)
-            .foregroundStyle(textColor)
-            .multilineTextAlignment(message.role == .user ? .trailing : .leading)
+        if message.role == .assistant {
+            KanaRubyText(
+                message.content,
+                textColor: textColor,
+                showFurigana: furiganaEnabled
+            )
+        } else {
+            Text(message.content)
+                .font(.ikeruBody)
+                .foregroundStyle(textColor)
+                .multilineTextAlignment(message.role == .user ? .trailing : .leading)
+        }
     }
 
     // MARK: - Corrections

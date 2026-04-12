@@ -25,6 +25,14 @@ struct SettingsView: View {
     @State private var newProfileName = ""
     @State private var profileToDelete: UserProfile?
     @FocusState private var isNameFieldFocused: Bool
+    @Environment(\.assetCache) private var assetCache
+    @State private var cacheStats: AssetCache.Stats?
+    @State private var cacheQuotaMB: Double = 500
+    @State private var showClearAllAlert = false
+    @Environment(\.toastManager) private var toastManager
+    @AppStorage(IkeruApp.preWarmEnabledKey) private var preWarmEnabled: Bool = true
+    @AppStorage(IkeruApp.preWarmNotifyKey) private var preWarmNotify: Bool = false
+    @State private var isPreWarming = false
 
     private var isNameValid: Bool {
         !editingName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -40,9 +48,12 @@ struct SettingsView: View {
 
                     profileSection
                     profileManagementSection
+                    conversationSection
                     notificationsSection
                     backupSection
                     aiProvidersSection
+                    assetCacheSection
+                    localRigSection
                     attributionSection
 
                     Spacer(minLength: 200)
@@ -396,6 +407,29 @@ struct SettingsView: View {
         .buttonStyle(.plain)
     }
 
+    // MARK: - Conversation Section
+
+    @AppStorage("ikeru.furigana.enabled") private var furiganaEnabled = true
+
+    private var conversationSection: some View {
+        VStack(alignment: .leading, spacing: IkeruTheme.Spacing.md) {
+            IkeruSectionHeader(title: "Conversation", eyebrow: "Learning")
+
+            Toggle(isOn: $furiganaEnabled) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Show pronunciation guides")
+                        .font(.ikeruBody)
+                        .foregroundStyle(.white)
+                    Text("Display romaji and furigana above Japanese characters")
+                        .font(.ikeruCaption)
+                        .foregroundStyle(.ikeruTextSecondary)
+                }
+            }
+            .tint(Color.ikeruPrimaryAccent)
+        }
+        .ikeruCard(.standard)
+    }
+
     // MARK: - Notifications Section
 
     private var notificationsSection: some View {
@@ -503,6 +537,207 @@ struct SettingsView: View {
             .buttonStyle(.plain)
         }
         .ikeruCard(.standard)
+    }
+
+    // MARK: - Asset Cache Section
+
+    @ViewBuilder
+    private var assetCacheSection: some View {
+        VStack(alignment: .leading, spacing: IkeruTheme.Spacing.md) {
+            IkeruSectionHeader(title: "Storage", eyebrow: "Asset cache")
+
+            if let stats = cacheStats {
+                let usedMB = Double(stats.totalBytes) / 1_048_576.0
+                VStack(alignment: .leading, spacing: IkeruTheme.Spacing.xs) {
+                    Text(String(format: "%.1f MB / %.0f MB · %d entries", usedMB, cacheQuotaMB, stats.entryCount))
+                        .font(.ikeruBody)
+                        .foregroundStyle(.white)
+
+                    ProgressView(value: usedMB, total: cacheQuotaMB)
+                        .tint(Color.ikeruPrimaryAccent)
+                }
+
+                if !stats.breakdown.isEmpty {
+                    let breakdown = stats.breakdown.map { "\($0.key.rawValue): \($0.value / 1024) KB" }
+                        .sorted()
+                        .joined(separator: " · ")
+                    Text(breakdown)
+                        .font(.ikeruCaption)
+                        .foregroundStyle(.ikeruTextSecondary)
+                }
+            } else {
+                Text("Cache not initialised")
+                    .font(.ikeruCaption)
+                    .foregroundStyle(.ikeruTextSecondary)
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Quota")
+                    .font(.ikeruCaption)
+                    .foregroundStyle(.ikeruTextSecondary)
+                Slider(value: $cacheQuotaMB, in: 200...2000, step: 100) {
+                    Text("Quota")
+                } onEditingChanged: { editing in
+                    if !editing {
+                        let bytes = Int(cacheQuotaMB) * 1_048_576
+                        assetCache?.updateQuota(bytes)
+                        cacheStats = assetCache?.stats()
+                    }
+                }
+                .tint(Color.ikeruPrimaryAccent)
+            }
+
+            HStack(spacing: IkeruTheme.Spacing.sm) {
+                Button {
+                    showClearAllAlert = true
+                } label: {
+                    Text("Clear all")
+                        .font(.ikeruCaption)
+                        .foregroundStyle(.ikeruSecondaryAccent)
+                        .padding(.horizontal, IkeruTheme.Spacing.md)
+                        .padding(.vertical, IkeruTheme.Spacing.sm)
+                }
+
+                Button {
+                    assetCache?.clearStale(olderThan: 30 * 24 * 60 * 60)
+                    cacheStats = assetCache?.stats()
+                } label: {
+                    Text("Clear unused (30d)")
+                        .font(.ikeruCaption)
+                        .foregroundStyle(.ikeruPrimaryAccent)
+                        .padding(.horizontal, IkeruTheme.Spacing.md)
+                        .padding(.vertical, IkeruTheme.Spacing.sm)
+                }
+
+                Spacer()
+            }
+        }
+        .ikeruCard(.standard)
+        .task {
+            cacheStats = assetCache?.stats()
+            if let cache = assetCache {
+                cacheQuotaMB = Double(cache.configuration.quotaBytes) / 1_048_576.0
+            }
+        }
+        .alert("Clear cache?", isPresented: $showClearAllAlert) {
+            Button("Cancel", role: .cancel) { }
+            Button("Clear all", role: .destructive) {
+                assetCache?.clearAll()
+                cacheStats = assetCache?.stats()
+            }
+        } message: {
+            Text("Removes every cached audio file and image. Assets will be regenerated on next use.")
+        }
+    }
+
+    // MARK: - Local Rig Section (Story 7.5)
+
+    private var localRigSection: some View {
+        VStack(alignment: .leading, spacing: IkeruTheme.Spacing.md) {
+            IkeruSectionHeader(title: "Local Rig", eyebrow: "Pre-warming")
+
+            VStack(alignment: .leading, spacing: IkeruTheme.Spacing.sm) {
+                Toggle(isOn: $preWarmEnabled) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Auto pre-warm audio for upcoming reviews")
+                            .font(.ikeruBody)
+                            .foregroundStyle(Color.ikeruTextPrimary)
+                        Text("Generates tomorrow's audio in the background")
+                            .font(.ikeruCaption)
+                            .foregroundStyle(Color.ikeruTextSecondary)
+                    }
+                }
+                .tint(Color.ikeruPrimaryAccent)
+
+                Toggle(isOn: $preWarmNotify) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Notify when batch finishes")
+                            .font(.ikeruBody)
+                            .foregroundStyle(Color.ikeruTextPrimary)
+                        Text("Local notification after each pre-warm pass")
+                            .font(.ikeruCaption)
+                            .foregroundStyle(Color.ikeruTextSecondary)
+                    }
+                }
+                .tint(Color.ikeruPrimaryAccent)
+            }
+            .padding(.vertical, IkeruTheme.Spacing.xs)
+
+            IkeruDivider()
+
+            Button {
+                runPreWarmNow()
+            } label: {
+                HStack(spacing: IkeruTheme.Spacing.sm) {
+                    if isPreWarming {
+                        ProgressView()
+                            .controlSize(.small)
+                    } else {
+                        Image(systemName: "bolt.fill")
+                    }
+                    Text(isPreWarming ? "Pre-warming…" : "Pre-warm now")
+                }
+            }
+            .ikeruButtonStyle(.glassPill)
+            .disabled(isPreWarming)
+
+            IkeruDivider()
+
+            NavigationLink {
+                if let client = makeRigClient() {
+                    RigJobsView(client: client)
+                } else {
+                    Text("Configure rig first in AI Providers")
+                        .font(.ikeruCaption)
+                        .foregroundStyle(Color.ikeruTextSecondary)
+                        .padding()
+                }
+            } label: {
+                navRow(
+                    title: "View jobs",
+                    subtitle: "In-flight rig jobs"
+                )
+            }
+            .buttonStyle(.plain)
+        }
+        .ikeruCard(.standard)
+    }
+
+    private func makeRigClient() -> RigClient? {
+        guard let settings = RigSettingsStore().load(), settings.isConfigured else {
+            return nil
+        }
+        return RigClient(configuration: settings)
+    }
+
+    private func runPreWarmNow() {
+        guard !isPreWarming else { return }
+        guard let service = PreWarmFactory.make(
+            modelContainer: modelContext.container,
+            assetCache: assetCache
+        ) else {
+            toastManager.showError("Pre-warm unavailable: cache not ready")
+            return
+        }
+        isPreWarming = true
+        toastManager.showInfo("Pre-warming started")
+        Logger.cache.info("Manual pre-warm triggered from Settings")
+        Task { @MainActor in
+            defer { isPreWarming = false }
+            do {
+                try await service.enqueueUpcomingDueAudio(window: 86_400)
+                Logger.cache.info("Manual pre-warm done")
+                toastManager.showInfo("Pre-warm queued")
+                if preWarmNotify {
+                    await PreWarmNotifier.notifyBatchFinished()
+                }
+            } catch is CancellationError {
+                // Silently ignore cancellation.
+            } catch {
+                Logger.cache.warning("Manual pre-warm failed: \(error.localizedDescription)")
+                toastManager.showError("Pre-warm failed: \(error.localizedDescription)")
+            }
+        }
     }
 
     // MARK: - Attribution Section

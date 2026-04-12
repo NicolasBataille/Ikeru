@@ -16,6 +16,7 @@ struct ChatBubbleView: View {
 
     let content: String
     let variant: ChatBubbleVariant
+    @AppStorage("ikeru.furigana.enabled") private var furiganaEnabled = true
 
     // MARK: - Body
 
@@ -61,7 +62,7 @@ struct ChatBubbleView: View {
     private var richContentView: some View {
         let blocks = ChatContentParser.parse(content)
 
-        FlowLayout(spacing: 0) {
+        VStack(alignment: alignment, spacing: IkeruTheme.Spacing.xs) {
             ForEach(blocks) { block in
                 blockView(for: block)
             }
@@ -72,9 +73,11 @@ struct ChatBubbleView: View {
     private func blockView(for block: ChatContentBlock) -> some View {
         switch block {
         case .text(let text):
-            Text(text)
-                .font(.ikeruBody)
-                .foregroundStyle(textColor)
+            KanaRubyText(
+                text,
+                textColor: textColor,
+                showFurigana: variant == .companion && furiganaEnabled
+            )
 
         case .kanji(let character):
             InlineKanjiView(character: character)

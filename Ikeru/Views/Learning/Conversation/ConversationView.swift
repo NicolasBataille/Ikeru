@@ -27,6 +27,7 @@ struct ConversationView: View {
                 }
 
                 inputBar
+                    .padding(.bottom, 88) // Floating tab bar clearance
             }
         }
         .navigationTitle("Conversation")
