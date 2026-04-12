@@ -29,4 +29,7 @@ extension Logger {
 
     /// Companion chat operations
     public static let companion = Logger(subsystem: subsystem, category: "companion")
+
+    /// Vocabulary dictionary and encounter tracking
+    public static let vocabulary = Logger(subsystem: subsystem, category: "vocabulary")
 }

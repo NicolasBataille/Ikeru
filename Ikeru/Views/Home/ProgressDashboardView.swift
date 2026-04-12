@@ -38,6 +38,7 @@ struct ProgressDashboardView: View {
             VStack(spacing: IkeruTheme.Spacing.xl) {
                 topBar
                 kanaEntryLink
+                dictionaryEntryLink
                 jlptEstimateCard(vm)
                 skillRadarSection(vm)
                 reviewQueueSection(vm)
@@ -86,6 +87,39 @@ struct ProgressDashboardView: View {
                         .font(.ikeruHeading3)
                         .foregroundStyle(Color.ikeruTextPrimary)
                     Text("Hiragana & katakana, par groupes")
+                        .font(.ikeruCaption)
+                        .foregroundStyle(Color.ikeruTextSecondary)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(Color.ikeruTextTertiary)
+            }
+            .ikeruCard(.interactive)
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - Dictionary entry link
+
+    private var dictionaryEntryLink: some View {
+        NavigationLink {
+            VocabularyDictionaryView()
+        } label: {
+            HStack(spacing: IkeruTheme.Spacing.md) {
+                ZStack {
+                    Circle()
+                        .fill(Color.ikeruSecondaryAccent.opacity(0.14))
+                        .frame(width: 38, height: 38)
+                    Text("辞")
+                        .font(.system(size: 20, weight: .regular, design: .serif))
+                        .foregroundStyle(Color.ikeruSecondaryAccent)
+                }
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Dictionary")
+                        .font(.ikeruHeading3)
+                        .foregroundStyle(Color.ikeruTextPrimary)
+                    Text("Personal vocabulary collection")
                         .font(.ikeruCaption)
                         .foregroundStyle(Color.ikeruTextSecondary)
                 }

@@ -51,17 +51,20 @@ public final class ConversationViewModel {
 
     private let conversationService: ConversationService
     private let speechDelegate: SpeechRecognitionDelegate?
+    private let vocabularyRepository: VocabularyRepository?
 
     // MARK: - Init
 
     public init(
         conversationService: ConversationService,
         jlptLevel: JLPTLevel = .n5,
-        speechDelegate: SpeechRecognitionDelegate? = nil
+        speechDelegate: SpeechRecognitionDelegate? = nil,
+        vocabularyRepository: VocabularyRepository? = nil
     ) {
         self.conversationService = conversationService
         self.jlptLevel = jlptLevel
         self.speechDelegate = speechDelegate
+        self.vocabularyRepository = vocabularyRepository
     }
 
     // MARK: - Lifecycle
@@ -94,6 +97,7 @@ public final class ConversationViewModel {
                 jlptLevel: jlptLevel
             )
             messages.append(response)
+            await logVocabularyEncounters(response)
             Logger.ui.info("Conversation message sent and response received")
         } catch {
             Logger.ai.error("Conversation error: \(error.localizedDescription)")
@@ -157,6 +161,22 @@ public final class ConversationViewModel {
     public func clearConversation() {
         messages = []
         errorMessage = nil
+    }
+
+    // MARK: - Vocabulary Encounter Tracking
+
+    /// Log encounters for vocabulary hints in a chat response (fire-and-forget).
+    private func logVocabularyEncounters(_ message: ConversationMessage) async {
+        guard let repo = vocabularyRepository, !message.vocabularyHints.isEmpty else { return }
+        for hint in message.vocabularyHints {
+            await repo.logEncounterByWord(
+                word: hint.word,
+                reading: hint.reading,
+                meaning: hint.meaning,
+                source: .sakuraChat,
+                contextSnippet: String(message.content.prefix(120))
+            )
+        }
     }
 
     // MARK: - Error Handling

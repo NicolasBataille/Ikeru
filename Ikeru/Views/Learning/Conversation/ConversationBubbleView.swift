@@ -10,6 +10,7 @@ struct ConversationBubbleView: View {
 
     let message: ConversationMessage
     @AppStorage("ikeru.furigana.enabled") private var furiganaEnabled = true
+    @State private var selectedHint: VocabularyHint?
 
     var body: some View {
         HStack {
@@ -31,6 +32,12 @@ struct ConversationBubbleView: View {
                 radius: 4,
                 y: 2
             )
+            .sheet(item: $selectedHint) { hint in
+                VocabularyDetailSheet(
+                    hint: hint,
+                    contextSnippet: message.content
+                )
+            }
 
             if message.role == .assistant {
                 Spacer(minLength: 60)
@@ -76,7 +83,9 @@ struct ConversationBubbleView: View {
         if !message.vocabularyHints.isEmpty {
             FlowLayout(spacing: IkeruTheme.Spacing.xs) {
                 ForEach(message.vocabularyHints) { hint in
-                    VocabularyChipView(hint: hint)
+                    VocabularyChipView(hint: hint) {
+                        selectedHint = hint
+                    }
                 }
             }
         }
@@ -169,33 +178,37 @@ private struct CorrectionItemView: View {
 private struct VocabularyChipView: View {
 
     let hint: VocabularyHint
+    let onTap: () -> Void
 
     var body: some View {
-        VStack(spacing: 1) {
-            if !hint.reading.isEmpty {
-                Text(hint.reading)
-                    .font(.system(size: 10))
-                    .foregroundStyle(.ikeruTextSecondary)
-            }
+        Button(action: onTap) {
+            VStack(spacing: 1) {
+                if !hint.reading.isEmpty {
+                    Text(hint.reading)
+                        .font(.system(size: 10))
+                        .foregroundStyle(.ikeruTextSecondary)
+                }
 
-            Text(hint.word)
-                .font(.ikeruCaption)
-                .fontWeight(.medium)
-                .foregroundStyle(Color(hex: IkeruTheme.Colors.primaryAccent))
+                Text(hint.word)
+                    .font(.ikeruCaption)
+                    .fontWeight(.medium)
+                    .foregroundStyle(Color(hex: IkeruTheme.Colors.primaryAccent))
+            }
+            .padding(.horizontal, IkeruTheme.Spacing.sm)
+            .padding(.vertical, IkeruTheme.Spacing.xs)
+            .background(
+                Color(hex: IkeruTheme.Colors.primaryAccent).opacity(0.12)
+            )
+            .clipShape(Capsule())
+            .overlay(
+                Capsule()
+                    .strokeBorder(
+                        Color(hex: IkeruTheme.Colors.primaryAccent).opacity(0.3),
+                        lineWidth: 0.5
+                    )
+            )
         }
-        .padding(.horizontal, IkeruTheme.Spacing.sm)
-        .padding(.vertical, IkeruTheme.Spacing.xs)
-        .background(
-            Color(hex: IkeruTheme.Colors.primaryAccent).opacity(0.12)
-        )
-        .clipShape(Capsule())
-        .overlay(
-            Capsule()
-                .strokeBorder(
-                    Color(hex: IkeruTheme.Colors.primaryAccent).opacity(0.3),
-                    lineWidth: 0.5
-                )
-        )
+        .buttonStyle(.plain)
     }
 }
 

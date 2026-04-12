@@ -10,8 +10,11 @@ struct CardReviewView: View {
     @State private var hapticTriggerCorrect = false
     @State private var hapticTriggerIncorrect = false
 
-    init(cardRepository: CardRepository) {
-        _viewModel = State(initialValue: CardReviewViewModel(cardRepository: cardRepository))
+    init(cardRepository: CardRepository, vocabularyRepository: VocabularyRepository? = nil) {
+        _viewModel = State(initialValue: CardReviewViewModel(
+            cardRepository: cardRepository,
+            vocabularyRepository: vocabularyRepository
+        ))
     }
 
     var body: some View {

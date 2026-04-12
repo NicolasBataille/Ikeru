@@ -19,6 +19,10 @@ struct KanaDrillModeSelector: View {
         CardRepository(modelContainer: modelContext.container)
     }
 
+    private var vocabularyRepository: VocabularyRepository {
+        VocabularyRepository(modelContainer: modelContext.container)
+    }
+
     var body: some View {
         ZStack {
             IkeruScreenBackground()
@@ -50,14 +54,16 @@ struct KanaDrillModeSelector: View {
             KanaFlashcardView(viewModel: KanaDrillViewModel(
                 mode: mode,
                 queue: cards,
-                cardRepository: cardRepository
+                cardRepository: cardRepository,
+                vocabularyRepository: vocabularyRepository
             ))
         }
         .navigationDestination(isPresented: $goQuiz) {
             KanaQuizView(viewModel: KanaDrillViewModel(
                 mode: mode,
                 queue: cards,
-                cardRepository: cardRepository
+                cardRepository: cardRepository,
+                vocabularyRepository: vocabularyRepository
             ))
         }
     }

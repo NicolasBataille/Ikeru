@@ -55,6 +55,8 @@ struct IkeruApp: App {
                 MnemonicCache.self,
                 CompanionChatMessage.self,
                 AssetManifest.self,
+                VocabularyEntry.self,
+                VocabularyEncounter.self,
             ])
             let config = ModelConfiguration(
                 "Ikeru",

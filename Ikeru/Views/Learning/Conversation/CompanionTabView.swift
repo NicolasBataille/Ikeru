@@ -67,9 +67,11 @@ struct CompanionTabView: View {
         let aiRouter = AIRouterService()
         let conversationService = ConversationService(aiRouter: aiRouter)
 
+        let vocabRepo = VocabularyRepository(modelContainer: modelContext.container)
         viewModel = ConversationViewModel(
             conversationService: conversationService,
-            jlptLevel: jlptLevel
+            jlptLevel: jlptLevel,
+            vocabularyRepository: vocabRepo
         )
     }
 

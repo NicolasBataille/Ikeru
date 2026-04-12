@@ -45,6 +45,7 @@ public final class KanaDrillViewModel {
     // MARK: Dependencies
 
     private let cardRepository: CardRepository
+    private let vocabularyRepository: VocabularyRepository?
     private let now: @Sendable () -> Date
 
     // MARK: Init
@@ -53,11 +54,13 @@ public final class KanaDrillViewModel {
         mode: KanaDrillMode,
         queue: [CardDTO],
         cardRepository: CardRepository,
+        vocabularyRepository: VocabularyRepository? = nil,
         now: @Sendable @escaping () -> Date = { Date() }
     ) {
         self.mode = mode
         self.queue = queue.shuffled()
         self.cardRepository = cardRepository
+        self.vocabularyRepository = vocabularyRepository
         self.now = now
         let nowValue = now()
         self.startedAt = nowValue
@@ -104,6 +107,7 @@ public final class KanaDrillViewModel {
         } else {
             correctCount += 1
         }
+        await logKanaEncounter(card)
         advance()
     }
 
@@ -185,6 +189,19 @@ public final class KanaDrillViewModel {
             currentCard = nil
             sessionEnded = true
         }
+    }
+
+    // MARK: - Encounter Tracking
+
+    private func logKanaEncounter(_ card: CardDTO) async {
+        guard let repo = vocabularyRepository else { return }
+        await repo.logEncounterByWord(
+            word: card.front,
+            reading: card.back,
+            meaning: card.back,
+            source: .kanaDrill,
+            contextSnippet: "Kana drill: \(card.front) → \(card.back)"
+        )
     }
 
     // MARK: - Helpers

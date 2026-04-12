@@ -46,12 +46,17 @@ public final class CardReviewViewModel {
     private var reviewQueue: [CardDTO] = []
     private var cardStartTime: Date = Date()
     private let cardRepository: CardRepository
+    private let vocabularyRepository: VocabularyRepository?
     private var sessionStartTime: Date = Date()
 
     // MARK: - Init
 
-    public init(cardRepository: CardRepository) {
+    public init(
+        cardRepository: CardRepository,
+        vocabularyRepository: VocabularyRepository? = nil
+    ) {
         self.cardRepository = cardRepository
+        self.vocabularyRepository = vocabularyRepository
     }
 
     // MARK: - Loading
@@ -96,6 +101,17 @@ public final class CardReviewViewModel {
             grade: grade,
             responseTimeMs: responseTimeMs
         )
+
+        // Log vocabulary encounter (fire-and-forget)
+        if let repo = vocabularyRepository {
+            await repo.logEncounterByWord(
+                word: card.front,
+                reading: card.back,
+                meaning: card.back,
+                source: .srsSession,
+                contextSnippet: "SRS review: \(card.front)"
+            )
+        }
 
         // On "Again": re-queue card at the end of the session
         if grade == .again {
