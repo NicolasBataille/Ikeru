@@ -7,6 +7,14 @@ import os
 /// Well-known Keychain key identifiers for AI provider secrets.
 public enum KeychainKeys {
     public static let geminiAPIKey = "com.ikeru.gemini-api-key"
+    public static let claudeAPIKey = "com.ikeru.claude-api-key"
+    public static let openRouterAPIKey = "com.ikeru.openrouter-api-key"
+    public static let groqAPIKey = "com.ikeru.groq-api-key"
+    public static let cerebrasAPIKey = "com.ikeru.cerebras-api-key"
+    public static let githubModelsAPIKey = "com.ikeru.github-models-api-key"
+
+    /// Legacy key kept for backwards-compatible read-only migration.
+    @available(*, deprecated, message: "Anthropic closed third-party subscription auth. Use claudeAPIKey for paid API access.")
     public static let claudeSessionToken = "com.ikeru.claude-session-token"
 }
 

@@ -66,12 +66,16 @@ struct AIRouterIntegrationTests {
         #expect(response.tier == .onDevice)
     }
 
-    @Test("Online complex routes to Claude")
-    func onlineComplexRoutesToClaude() async throws {
+    @Test("Online complex routes to first available free cloud (Gemini in legacy 4-provider fixture)")
+    func onlineComplexRoutesToFreeCloud() async throws {
+        // Story 7.2: .complex chain prioritises free providers (OpenRouter, Gemini, Cerebras, Groq, GitHub Models)
+        // BEFORE Claude. Claude is paid and only used as a last cloud resort. With the legacy
+        // positional initializer (which only supplies onDevice/gemini/claude/localGPU), the resolved
+        // chain becomes [gemini, claude, onDevice], so Gemini wins.
         let router = AIRouterService(
             onDeviceProvider: MockFoundationModelsProvider(available: true, responseContent: "on-device"),
-            geminiProvider: makeConfigurableMock(tier: .gemini, content: "gemini"),
-            claudeProvider: makeConfigurableMock(tier: .claude, content: "claude complex answer"),
+            geminiProvider: makeConfigurableMock(tier: .gemini, content: "gemini complex answer"),
+            claudeProvider: makeConfigurableMock(tier: .claude, content: "claude paid"),
             localGPUProvider: makeConfigurableMock(tier: .localGPU, content: "gpu"),
             networkChecker: MockNetworkChecker(online: true)
         )
@@ -82,8 +86,8 @@ struct AIRouterIntegrationTests {
             complexity: .complex
         )
         let response = try await router.generate(prompt: prompt)
-        #expect(response.tier == .claude)
-        #expect(response.content == "claude complex answer")
+        #expect(response.tier == .gemini)
+        #expect(response.content == "gemini complex answer")
     }
 
     // MARK: - Fallback Integration

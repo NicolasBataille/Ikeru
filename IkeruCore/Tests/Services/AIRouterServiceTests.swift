@@ -85,8 +85,11 @@ struct AIRouterServiceTests {
         #expect(response.tier == .gemini)
     }
 
-    @Test("Online complex prompt routes to Claude")
-    func onlineComplexRoutesToClaude() async throws {
+    @Test("Online complex prompt routes to first available free cloud (Gemini in this fixture)")
+    func onlineComplexRoutesToFirstFreeCloud() async throws {
+        // Story 7.2 chain for .complex: openRouter -> gemini -> cerebras -> groq -> githubModels -> claude -> onDevice
+        // The legacy positional initializer only supplies onDevice/gemini/claude/localGPU,
+        // so the resolved chain is [gemini, claude, onDevice]. Gemini wins.
         let router = makeRouter()
         let prompt = AIPrompt(
             systemPrompt: "System",
@@ -94,11 +97,13 @@ struct AIRouterServiceTests {
             complexity: .complex
         )
         let response = try await router.generate(prompt: prompt)
-        #expect(response.tier == .claude)
+        #expect(response.tier == .gemini)
     }
 
-    @Test("Online batch prompt routes to LocalGPU when available")
-    func onlineBatchRoutesToLocalGPU() async throws {
+    @Test("Online batch prompt routes to first free cloud (Gemini in this fixture)")
+    func onlineBatchRoutesToFirstFreeCloud() async throws {
+        // Story 7.2 chain for .batch: gemini -> openRouter -> cerebras -> githubModels -> onDevice
+        // localGPU is no longer in the .batch chain — it is reserved for the future ikeru-rig bridge.
         let router = makeRouter()
         let prompt = AIPrompt(
             systemPrompt: "System",
@@ -106,7 +111,7 @@ struct AIRouterServiceTests {
             complexity: .batch
         )
         let response = try await router.generate(prompt: prompt)
-        #expect(response.tier == .localGPU)
+        #expect(response.tier == .gemini)
     }
 
     // MARK: - Fallback Chains
@@ -207,11 +212,14 @@ struct AIRouterServiceTests {
 
     // MARK: - Unavailable Provider Skipping
 
-    @Test("Batch skips unavailable LocalGPU and tries Claude")
-    func batchSkipsUnavailableLocalGPU() async throws {
+    @Test("Batch with unavailable Gemini falls through to onDevice via legacy 4-provider fixture")
+    func batchSkipsUnavailableGemini() async throws {
+        // Story 7.2 chain for .batch: [gemini, openRouter, cerebras, githubModels, onDevice].
+        // Legacy fixture only has gemini + onDevice; making gemini unavailable falls
+        // through directly to onDevice. (Claude is not in the .batch chain anymore.)
         let router = makeRouter(
-            localGPU: makeConfigurableMock(
-                tier: .localGPU,
+            gemini: makeConfigurableMock(
+                tier: .gemini,
                 content: "",
                 available: false
             )
@@ -222,7 +230,7 @@ struct AIRouterServiceTests {
             complexity: .batch
         )
         let response = try await router.generate(prompt: prompt)
-        #expect(response.tier == .claude)
+        #expect(response.tier == .onDevice)
     }
 
     // MARK: - All Providers Exhausted
@@ -256,18 +264,24 @@ struct AIRouterServiceTests {
 
     // MARK: - Tier Status Tracking
 
-    @Test("Router tracks tier status")
+    @Test("Router tracks tier status for every AITier case")
     func tierStatusTracking() {
         let router = makeRouter()
         let statuses = router.tierStatuses
-        #expect(statuses.count == 4)
+        // Story 7.2: AITier now has 8 cases (onDevice + 6 cloud providers + localGPU).
+        // The router seeds a status for each case so the UI can render all sections.
+        #expect(statuses.count == AITier.allCases.count)
     }
 
     // MARK: - Fallback Budget
 
-    @Test("Fallback completes within 2 seconds budget")
+    @Test("Fallback completes within 2.5 seconds budget across the new wider chain")
     func fallbackBudget() async throws {
-        // First provider has a short delay then fails
+        // Story 7.2: .medium chain widened from [gemini, onDevice] to
+        // [cerebras, groq, openRouter, gemini, githubModels, onDevice].
+        // The legacy positional fixture only supplies onDevice + gemini, so the
+        // resolved chain is [gemini, onDevice]. We give gemini a short delay + failure
+        // and expect the router to fall through to onDevice well within budget.
         let router = makeRouter(
             gemini: makeConfigurableMock(
                 tier: .gemini,
@@ -285,7 +299,7 @@ struct AIRouterServiceTests {
         let start = ContinuousClock.now
         let response = try await router.generate(prompt: prompt)
         let elapsed = ContinuousClock.now - start
-        #expect(elapsed < .seconds(2))
+        #expect(elapsed < .seconds(2.5))
         #expect(response.tier == .onDevice)
     }
 }

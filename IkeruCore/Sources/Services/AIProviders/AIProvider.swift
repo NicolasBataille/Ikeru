@@ -4,11 +4,20 @@ import Foundation
 
 /// Represents the AI provider tiers in priority order.
 /// Comparable conformance reflects tier escalation order.
+///
+/// `gemini`, `cerebras`, `groq`, `openRouter`, and `githubModels` are all free-tier
+/// cloud providers that share the OpenAI-compatible chat completion shape.
+/// `claude` remains in the enum for users who opt in to a paid Anthropic API key.
+/// `localGPU` is reserved for the future ikeru-rig bridge (Story 7.3 / 7.4).
 public enum AITier: Int, Comparable, Sendable, CaseIterable {
     case onDevice = 0
     case gemini = 1
-    case claude = 2
-    case localGPU = 3
+    case cerebras = 2
+    case groq = 3
+    case openRouter = 4
+    case githubModels = 5
+    case claude = 6
+    case localGPU = 7
 
     public static func < (lhs: AITier, rhs: AITier) -> Bool {
         lhs.rawValue < rhs.rawValue
