@@ -1,0 +1,43 @@
+services:
+  voicevox:
+    image: voicevox/voicevox_engine:nvidia-ubuntu20.04-latest
+    container_name: ikeru-voicevox
+    restart: unless-stopped
+    ports:
+      - "50021:50021"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:50021/version || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  ikeru-rig:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ikeru-rig
+    restart: unless-stopped
+    depends_on:
+      voicevox:
+        condition: service_healthy
+    ports:
+      - "8787:8787"
+    environment:
+      IKERU_RIG_SHARED_TOKEN: ${IKERU_RIG_SHARED_TOKEN:-dev}
+      IKERU_RIG_VOICEVOX_URL: http://voicevox:50021
+      IKERU_RIG_VOICEVOX_DEFAULT_SPEAKER: "3"
+      IKERU_RIG_WORKER_CONCURRENCY: "1"
+    volumes:
+      - rig-assets:/app/assets
+      - rig-db:/app
+
+volumes:
+  rig-assets:
+  rig-db:
