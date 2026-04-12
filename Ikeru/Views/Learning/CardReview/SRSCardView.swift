@@ -47,9 +47,15 @@ struct SRSCardView: View {
 
     @State private var dragOffset: CGSize = .zero
     @State private var isDragging = false
+    @State private var isRevealed = false
+    @State private var isFlyingOff = false
 
     /// Minimum drag distance before a grade registers.
     private let swipeThreshold: CGFloat = 100
+
+    /// Duration of the fly-off spring animation. Must complete before the
+    /// parent swaps in the next exercise (which destroys this view via `.id`).
+    private let flyOffDuration: TimeInterval = 0.28
 
     var body: some View {
         ZStack {
@@ -62,24 +68,40 @@ struct SRSCardView: View {
             currentCard
                 .offset(dragOffset)
                 .rotationEffect(cardRotation)
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    guard !isFlyingOff else { return }
+                    withAnimation(.spring(response: 0.45, dampingFraction: 0.78)) {
+                        isRevealed.toggle()
+                    }
+                }
                 .gesture(dragGesture)
                 .overlay(alignment: .top) {
                     gradeIndicator
                 }
+        }
+        .onChange(of: card.id) { _, _ in
+            // Reset reveal + drag when a new card slides in (parent re-creates
+            // the view via `.id(exercise.stableID)`, but be defensive).
+            isRevealed = false
+            dragOffset = .zero
+            isFlyingOff = false
         }
     }
 
     // MARK: - Current Card
 
     private var currentCard: some View {
-        cardContent(for: card)
+        cardContent(for: card, revealed: isRevealed)
             .ikeruCard(.interactive)
     }
 
     // MARK: - Peeking Card
 
     private func peekingCard(for card: CardDTO) -> some View {
-        cardContent(for: card)
+        // The peek always shows the FRONT — it's a glimpse of what's coming,
+        // not a duplicate of the current card's back face.
+        cardContent(for: card, revealed: false)
             .ikeruCard(.standard)
             .offset(y: 8)
             .scaleEffect(0.96)
@@ -89,9 +111,15 @@ struct SRSCardView: View {
 
     // MARK: - Card Content
 
-    private func cardContent(for card: CardDTO) -> some View {
+    private func cardContent(for card: CardDTO, revealed: Bool) -> some View {
         VStack(spacing: IkeruTheme.Spacing.md) {
-            cardFrontContent(for: card)
+            if revealed {
+                cardBackContent(for: card)
+                    .transition(.opacity.combined(with: .scale(scale: 0.92)))
+            } else {
+                cardFrontContent(for: card)
+                    .transition(.opacity.combined(with: .scale(scale: 0.92)))
+            }
         }
         .frame(maxWidth: .infinity)
         .frame(height: 280)
@@ -125,6 +153,22 @@ struct SRSCardView: View {
                     .font(.ikeruBody)
                     .foregroundStyle(.ikeruTextSecondary)
             }
+        }
+    }
+
+    @ViewBuilder
+    private func cardBackContent(for card: CardDTO) -> some View {
+        VStack(spacing: IkeruTheme.Spacing.sm) {
+            // Smaller front glyph as a reference at the top
+            Text(card.front)
+                .font(.system(size: 64, weight: .regular, design: .serif))
+                .foregroundStyle(Color.ikeruTextSecondary)
+
+            Text(card.back)
+                .font(.system(size: 40, weight: .semibold, design: .rounded))
+                .foregroundStyle(Color.ikeruPrimaryAccent)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, IkeruTheme.Spacing.md)
         }
     }
 
@@ -176,16 +220,20 @@ struct SRSCardView: View {
     // MARK: - Drag Gesture
 
     private var dragGesture: some Gesture {
-        DragGesture()
+        DragGesture(minimumDistance: 8)
             .onChanged { value in
+                guard !isFlyingOff else { return }
                 dragOffset = value.translation
-                isDragging = true
+                if !isDragging { isDragging = true }
             }
-            .onEnded { value in
+            .onEnded { _ in
                 isDragging = false
+                guard !isFlyingOff else { return }
                 if let direction = dominantDirection {
+                    isFlyingOff = true
+
                     // Fly off screen in the swipe direction
-                    let flyDistance: CGFloat = 500
+                    let flyDistance: CGFloat = 600
                     let flyOffset: CGSize
                     switch direction {
                     case .left:
@@ -197,13 +245,16 @@ struct SRSCardView: View {
                     case .down:
                         flyOffset = CGSize(width: 0, height: flyDistance)
                     }
-                    withAnimation(.spring(duration: 0.2)) {
+
+                    withAnimation(.easeOut(duration: flyOffDuration)) {
                         dragOffset = flyOffset
                     }
-                    // Notify after a brief delay to allow fly-off animation to start
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+
+                    // Notify the parent only AFTER the fly-off completes so the
+                    // current view isn't destroyed mid-animation by the parent
+                    // re-rendering with a new exercise (`.id(exercise.stableID)`).
+                    DispatchQueue.main.asyncAfter(deadline: .now() + flyOffDuration) {
                         onSwipe(direction)
-                        dragOffset = .zero
                     }
                 } else {
                     // Snap back

@@ -60,6 +60,10 @@ struct XPGainOverlayModifier: ViewModifier {
                 XPGainView(amount: amount) {
                     xpGained = nil
                 }
+                // Push the floating XP text below the Dynamic Island / notch.
+                // Without this, the text is rendered at the very top of the
+                // safe area and gets visually masked by the Island pill.
+                .padding(.top, 64)
                 .transition(.identity)
             }
         }

@@ -83,8 +83,29 @@ struct ActiveSessionView: View {
 
     private var immersiveSessionContent: some View {
         VStack(spacing: 0) {
-            // Drag indicator pill
-            dragIndicatorPill
+            // Drag indicator pill + visible close button row.
+            // The pause-swipe gesture exists but is invisible to first-time
+            // users; the explicit X is the discoverable escape route.
+            ZStack {
+                dragIndicatorPill
+                HStack {
+                    Button {
+                        viewModel.requestAbandon()
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(Color.ikeruTextSecondary)
+                            .frame(width: 36, height: 36)
+                            .background {
+                                Circle().fill(.ultraThinMaterial)
+                            }
+                    }
+                    .accessibilityLabel("End session")
+                    Spacer()
+                }
+                .padding(.horizontal, IkeruTheme.Spacing.md)
+            }
+            .padding(.top, IkeruTheme.Spacing.xs)
 
             // Progress bar at top
             SessionProgressBar(
