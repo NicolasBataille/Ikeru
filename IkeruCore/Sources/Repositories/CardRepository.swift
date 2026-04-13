@@ -98,18 +98,6 @@ public final class CardRepository: Sendable {
         await backgroundActor.reviewLogs(for: cardId)
     }
 
-    // MARK: - Leech Operations
-
-    /// Mark a card as a leech.
-    public func markAsLeech(cardId: UUID) async {
-        await backgroundActor.markAsLeech(cardId: cardId)
-    }
-
-    /// Tighten intervals for a leech card to accelerate re-review.
-    public func tightenIntervals(cardId: UUID) async {
-        await backgroundActor.tightenIntervals(cardId: cardId)
-    }
-
     /// Fetch all review logs within a date range across all cards.
     public func allReviewLogs(from startDate: Date, to endDate: Date) async -> [ReviewLogDTO] {
         await backgroundActor.allReviewLogs(from: startDate, to: endDate)
@@ -297,42 +285,6 @@ actor CardModelActor {
             return []
         }
         return logs.map { $0.toDTO() }
-    }
-
-    func markAsLeech(cardId: UUID) {
-        let predicate = #Predicate<Card> { $0.id == cardId }
-        let descriptor = FetchDescriptor(predicate: predicate)
-        guard let cards = try? modelContext.fetch(descriptor),
-              let card = cards.first else {
-            Logger.srs.error("Card not found for leech marking: \(cardId)")
-            return
-        }
-
-        card.leechFlag = true
-        try? modelContext.save()
-        Logger.srs.info("Marked card as leech: \(card.front)")
-    }
-
-    func tightenIntervals(cardId: UUID) {
-        let predicate = #Predicate<Card> { $0.id == cardId }
-        let descriptor = FetchDescriptor(predicate: predicate)
-        guard let cards = try? modelContext.fetch(descriptor),
-              let card = cards.first else {
-            Logger.srs.error("Card not found for interval tightening: \(cardId)")
-            return
-        }
-
-        let tightenedInterval = max(1, card.interval / 2)
-        card.interval = tightenedInterval
-
-        let now = Date()
-        let newDueDate = now.addingTimeInterval(Double(tightenedInterval) * 86400)
-        card.dueDate = newDueDate
-
-        try? modelContext.save()
-        Logger.srs.info(
-            "Tightened intervals for \(card.front): interval=\(tightenedInterval)d"
-        )
     }
 
     func allReviewLogs(from startDate: Date, to endDate: Date) -> [ReviewLogDTO] {

@@ -96,7 +96,7 @@ struct KanaDrillViewModelTests {
     func quizFastCorrectMapsEasy() async throws {
         let (repo, cards) = try await makeRepoAndCards(group: .hVowels)
         let vm = KanaDrillViewModel(mode: .freePractice, queue: cards, cardRepository: repo)
-        #expect(vm.mapQuizResult(correct: true, responseTimeMs: 1_000) == .easy)
+        #expect(mapQuizResultToGrade(correct: true, responseTimeMs: 1_000) == .easy)
         vm.selectOption(vm.correctOption)
         await vm.submitQuizAnswer()
         #expect(vm.correctCount == 1)
@@ -107,15 +107,15 @@ struct KanaDrillViewModelTests {
     func quizSlowCorrectMapsGood() async throws {
         let (repo, cards) = try await makeRepoAndCards(group: .hVowels)
         let vm = KanaDrillViewModel(mode: .freePractice, queue: cards, cardRepository: repo)
-        #expect(vm.mapQuizResult(correct: true, responseTimeMs: 3_500) == .good)
-        #expect(vm.mapQuizResult(correct: true, responseTimeMs: 8_000) == .hard)
+        #expect(mapQuizResultToGrade(correct: true, responseTimeMs: 3_500) == .good)
+        #expect(mapQuizResultToGrade(correct: true, responseTimeMs: 8_000) == .hard)
     }
 
     @Test("submitQuizAnswer wrong maps to again and increments wrong")
     func quizWrongMapsAgain() async throws {
         let (repo, cards) = try await makeRepoAndCards(group: .hVowels)
         let vm = KanaDrillViewModel(mode: .freePractice, queue: cards, cardRepository: repo)
-        #expect(vm.mapQuizResult(correct: false, responseTimeMs: 500) == .again)
+        #expect(mapQuizResultToGrade(correct: false, responseTimeMs: 500) == .again)
         let wrongOption = vm.quizOptions.first { $0 != vm.correctOption }
         try #require(wrongOption != nil)
         vm.selectOption(wrongOption!)

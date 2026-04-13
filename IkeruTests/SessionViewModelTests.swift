@@ -288,19 +288,6 @@ struct SessionViewModelTests {
         #expect(vm.nextCard == nil)
     }
 
-    // MARK: - Estimate Tests
-
-    @Test("loadSessionEstimate sets estimated card count")
-    func loadSessionEstimateSetsCount() async throws {
-        let container = try makeContainer()
-        _ = try seedDueCards(container: container, count: 4)
-        let vm = makeViewModel(container: container)
-
-        await vm.loadSessionEstimate()
-
-        #expect(vm.estimatedCardCount == 4)
-    }
-
     // MARK: - RPG Integration Tests
 
     @Test("gradeAndAdvance updates totalXP")
@@ -362,21 +349,4 @@ struct SessionViewModelTests {
         #expect(vm.totalXP == 17)
     }
 
-    @Test("loadRPGStateForDisplay loads persisted state")
-    func loadRPGStateForDisplay() async throws {
-        let container = try makeContainer()
-
-        // Seed an RPGState with some XP
-        let rpgState = RPGState(xp: 150, level: 2, totalReviewsCompleted: 15)
-        container.mainContext.insert(rpgState)
-        try container.mainContext.save()
-
-        _ = try seedDueCards(container: container, count: 1)
-        let vm = makeViewModel(container: container)
-
-        await vm.loadRPGStateForDisplay()
-
-        #expect(vm.totalXP == 150)
-        #expect(vm.currentLevel == 2)
-    }
 }

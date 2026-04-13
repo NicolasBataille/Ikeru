@@ -8,14 +8,14 @@ struct NavigationCoordinatorTests {
     @Test("Initial path is empty")
     func initialPathIsEmpty() {
         let coordinator = NavigationCoordinator()
-        #expect(coordinator.pathCount == 0)
+        #expect(coordinator.path.count == 0)
     }
 
     @Test("Push adds to path")
     func pushAddsToPath() {
         let coordinator = NavigationCoordinator()
         coordinator.push(.home)
-        #expect(coordinator.pathCount == 1)
+        #expect(coordinator.path.count == 1)
     }
 
     @Test("Multiple pushes increment path count")
@@ -24,7 +24,7 @@ struct NavigationCoordinatorTests {
         coordinator.push(.home)
         coordinator.push(.studySession)
         coordinator.push(.settings)
-        #expect(coordinator.pathCount == 3)
+        #expect(coordinator.path.count == 3)
     }
 
     @Test("Pop removes last from path")
@@ -33,14 +33,14 @@ struct NavigationCoordinatorTests {
         coordinator.push(.home)
         coordinator.push(.studySession)
         coordinator.pop()
-        #expect(coordinator.pathCount == 1)
+        #expect(coordinator.path.count == 1)
     }
 
     @Test("Pop on empty path does nothing")
     func popOnEmptyPath() {
         let coordinator = NavigationCoordinator()
         coordinator.pop()
-        #expect(coordinator.pathCount == 0)
+        #expect(coordinator.path.count == 0)
     }
 
     @Test("PopToRoot clears entire path")
@@ -50,13 +50,13 @@ struct NavigationCoordinatorTests {
         coordinator.push(.studySession)
         coordinator.push(.settings)
         coordinator.popToRoot()
-        #expect(coordinator.pathCount == 0)
+        #expect(coordinator.path.count == 0)
     }
 
     @Test("PopToRoot on empty path does nothing")
     func popToRootOnEmptyPath() {
         let coordinator = NavigationCoordinator()
         coordinator.popToRoot()
-        #expect(coordinator.pathCount == 0)
+        #expect(coordinator.path.count == 0)
     }
 }

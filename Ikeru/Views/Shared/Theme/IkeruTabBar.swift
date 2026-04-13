@@ -158,15 +158,6 @@ extension AppTab {
         }
     }
 
-    var iconUnselected: String {
-        switch self {
-        case .home:      return "house"
-        case .study:     return "book.closed"
-        case .companion: return "bubble.left"
-        case .rpg:       return "shield"
-        case .settings:  return "gearshape"
-        }
-    }
 }
 
 // MARK: - Preview

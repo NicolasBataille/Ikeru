@@ -17,11 +17,9 @@ public enum NavigationDestination: Hashable {
 
     // RPG
     case rpgProfile
-    case rpgQuest
 
     // Settings
     case settings
-    case settingsAppearance
 }
 
 // MARK: - NavigationCoordinator
@@ -31,10 +29,6 @@ public enum NavigationDestination: Hashable {
 public final class NavigationCoordinator {
 
     public var path = NavigationPath()
-
-    public var pathCount: Int {
-        path.count
-    }
 
     public init() {}
 
