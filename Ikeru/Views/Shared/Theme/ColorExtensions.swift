@@ -18,14 +18,7 @@ extension Color {
 extension Color {
     // Backgrounds
     static var ikeruBackground: Color { Color(hex: IkeruTheme.Colors.background) }
-    static var ikeruBackgroundElevated: Color { Color(hex: IkeruTheme.Colors.backgroundElevated) }
     static var ikeruSurface: Color { Color(hex: IkeruTheme.Colors.surface) }
-    static var ikeruSurfaceElevated: Color { Color(hex: IkeruTheme.Colors.surfaceElevated) }
-
-    // Glass tints — applied as fills/strokes on translucent layers
-    static var ikeruGlassFill: Color { Color.white.opacity(IkeruTheme.Colors.glassFillOpacity) }
-    static var ikeruGlassStroke: Color { Color.white.opacity(IkeruTheme.Colors.glassStrokeOpacity) }
-    static var ikeruGlassHighlight: Color { Color.white.opacity(IkeruTheme.Colors.glassHighlightOpacity) }
 
     // Accents
     static var ikeruPrimaryAccent: Color { Color(hex: IkeruTheme.Colors.primaryAccent) }
@@ -48,14 +41,7 @@ extension Color {
 extension ShapeStyle where Self == Color {
     // Backgrounds
     static var ikeruBackground: Color { Color.ikeruBackground }
-    static var ikeruBackgroundElevated: Color { Color.ikeruBackgroundElevated }
     static var ikeruSurface: Color { Color.ikeruSurface }
-    static var ikeruSurfaceElevated: Color { Color.ikeruSurfaceElevated }
-
-    // Glass
-    static var ikeruGlassFill: Color { Color.ikeruGlassFill }
-    static var ikeruGlassStroke: Color { Color.ikeruGlassStroke }
-    static var ikeruGlassHighlight: Color { Color.ikeruGlassHighlight }
 
     // Accents
     static var ikeruPrimaryAccent: Color { Color.ikeruPrimaryAccent }
@@ -116,17 +102,3 @@ extension LinearGradient {
     }
 }
 
-extension RadialGradient {
-    /// Soft glow centered on a point — perfect for hero accents.
-    static var ikeruGoldGlow: RadialGradient {
-        RadialGradient(
-            colors: [
-                Color(hex: 0xD4A574, opacity: 0.25),
-                Color(hex: 0xD4A574, opacity: 0.0)
-            ],
-            center: .center,
-            startRadius: 0,
-            endRadius: 200
-        )
-    }
-}

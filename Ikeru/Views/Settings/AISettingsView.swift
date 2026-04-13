@@ -351,30 +351,6 @@ struct AISettingsView: View {
             .frame(width: 10, height: 10)
     }
 
-    @ViewBuilder
-    private var localGPUStatusIndicator: some View {
-        switch localGPUStatus {
-        case .found:
-            statusDot(available: true)
-        case .searching:
-            ProgressView()
-                .scaleEffect(0.7)
-        case .notFound:
-            statusDot(available: false)
-        }
-    }
-
-    private var localGPUStatusText: String {
-        switch localGPUStatus {
-        case .found:
-            return "Rig server found on local network"
-        case .searching:
-            return "Searching for rig server..."
-        case .notFound:
-            return "No rig server found on local network"
-        }
-    }
-
     private var saveConfirmationToast: some View {
         VStack {
             Spacer()

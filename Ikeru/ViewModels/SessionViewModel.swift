@@ -65,11 +65,6 @@ public final class SessionViewModel {
     /// Whether the ContinuousClock timer is actively ticking.
     public private(set) var isTimerRunning: Bool = false
 
-    /// Elapsed session duration in seconds (legacy computed property for compatibility).
-    public var elapsedSeconds: TimeInterval {
-        elapsedTime
-    }
-
     /// Formatted elapsed time string (MM:SS).
     public var elapsedTimeFormatted: String {
         formatTime(elapsedTime)
@@ -137,9 +132,6 @@ public final class SessionViewModel {
     /// Preview of the upcoming session (exercise breakdown, estimated time, skill split).
     public private(set) var sessionPreview: SessionPreview = .empty
 
-    /// Review forecast for upcoming days (displayed on home screen).
-    public private(set) var reviewForecast: [ForecastDay] = []
-
     /// The most recent leech event detected during this session, if any.
     public private(set) var lastLeechEvent: LeechEvent?
 
@@ -160,9 +152,7 @@ public final class SessionViewModel {
     private let plannerService: PlannerService
     private let cardRepository: CardRepository
     private let modelContainer: ModelContainer
-    private let reviewForecastService: ReviewForecastService
     private let liveActivityManager = LiveActivityManager()
-    private weak var companionViewModel: CompanionChatViewModel?
     private var cardStartTime: Date = Date()
     private var timerTask: Task<Void, Never>?
 
@@ -176,20 +166,13 @@ public final class SessionViewModel {
         self.plannerService = plannerService
         self.cardRepository = cardRepository
         self.modelContainer = modelContainer
-        self.reviewForecastService = ReviewForecastService(cardRepository: cardRepository)
-    }
-
-    /// Connects the companion chat view model for leech intervention notifications.
-    public func setCompanionViewModel(_ companion: CompanionChatViewModel) {
-        self.companionViewModel = companion
     }
 
     // MARK: - Session Lifecycle
 
-    /// Composes a session queue via PlannerService and starts the session.
-    public func startSession() async {
-        let queue = await plannerService.composeSession()
-        sessionQueue = queue
+    /// Resets all per-session state to initial values.
+    /// Called at the start of both basic and adaptive sessions.
+    private func resetSessionState() {
         currentIndex = 0
         reviewedCount = 0
         xpEarned = 0
@@ -204,15 +187,22 @@ public final class SessionViewModel {
         sessionStartTime = Date()
         cardStartTime = Date()
         isActive = true
+        currentExerciseIndex = 0
+        showAbandonConfirmation = false
+        elapsedTime = 0
+    }
+
+    /// Composes a session queue via PlannerService and starts the session.
+    public func startSession() async {
+        let queue = await plannerService.composeSession()
+        sessionQueue = queue
+        resetSessionState()
         estimatedCardCount = queue.count
 
         // Build exercise list from cards (each card is an SRS review)
         sessionExercises = queue.map { .srsReview($0) }
-        currentExerciseIndex = 0
-        showAbandonConfirmation = false
 
         // Start timer
-        elapsedTime = 0
         startTimer()
 
         // Load persisted RPG state
@@ -222,12 +212,6 @@ public final class SessionViewModel {
         liveActivityManager.startActivity(totalExercises: queue.count)
 
         Logger.ui.info("Session started with \(queue.count) cards")
-    }
-
-    /// Loads an estimate of the upcoming session card count (for home screen preview).
-    public func loadSessionEstimate() async {
-        let queue = await plannerService.composeSession()
-        estimatedCardCount = queue.count
     }
 
     /// Computes a session preview without starting the session.
@@ -259,13 +243,6 @@ public final class SessionViewModel {
         )
     }
 
-    /// Loads the review forecast for display on the home screen.
-    /// - Parameter days: Number of days to forecast (default 7).
-    public func loadReviewForecast(days: Int = 7) async {
-        reviewForecast = await reviewForecastService.forecast(days: days)
-        Logger.ui.debug("Review forecast loaded: \(self.reviewForecast.count) days")
-    }
-
     /// Starts an adaptive session using the provided config.
     /// Falls back to basic composition if adaptive session produces no exercises.
     /// - Parameter config: Session configuration for adaptive composition.
@@ -285,29 +262,13 @@ public final class SessionViewModel {
         }
 
         sessionQueue = srsCards
-        currentIndex = 0
-        reviewedCount = 0
-        xpEarned = 0
-        newItemsLearned = 0
-        lastXPGained = nil
-        levelUpLevel = nil
-        lastLootDrop = nil
-        consecutiveCorrect = 0
-        sessionLootCount = 0
-        earnedLootBox = nil
-        isPaused = false
-        sessionStartTime = Date()
-        cardStartTime = Date()
-        isActive = true
+        resetSessionState()
         estimatedCardCount = plan.exercises.count
 
         // Store full exercise list for immersive mode
         sessionExercises = plan.exercises
-        currentExerciseIndex = 0
-        showAbandonConfirmation = false
 
         // Start timer
-        elapsedTime = 0
         startTimer()
 
         await loadRPGState()
@@ -394,9 +355,6 @@ public final class SessionViewModel {
             threshold: CardRepository.leechThreshold
         ) {
             lastLeechEvent = leechEvent
-            if let companion = companionViewModel {
-                await companion.handleLeechDetected(card: card)
-            }
         }
 
         reviewedCount += 1
@@ -471,7 +429,7 @@ public final class SessionViewModel {
     /// Pauses the current session.
     public func pauseSession() {
         isPaused = true
-        pauseTimer()
+        stopTimer()
         Logger.ui.debug("Session paused at card \(self.currentIndex + 1)/\(self.sessionQueue.count)")
     }
 
@@ -570,13 +528,6 @@ public final class SessionViewModel {
         }
     }
 
-    /// Pauses the timer by cancelling the task.
-    private func pauseTimer() {
-        timerTask?.cancel()
-        timerTask = nil
-        isTimerRunning = false
-    }
-
     /// Stops the timer completely.
     private func stopTimer() {
         timerTask?.cancel()
@@ -612,6 +563,22 @@ public final class SessionViewModel {
 
     // MARK: - RPG State Persistence
 
+    /// Fetches the existing RPGState, applies the given mutation, and saves.
+    /// Use this for all mutations on an already-created RPGState row.
+    private func withRPGState(_ body: (RPGState) throws -> Void) async {
+        let context = modelContainer.mainContext
+        let descriptor = FetchDescriptor<RPGState>()
+        do {
+            let results = try context.fetch(descriptor)
+            if let state = results.first {
+                try body(state)
+                try context.save()
+            }
+        } catch {
+            Logger.rpg.error("RPG state operation failed: \(error.localizedDescription)")
+        }
+    }
+
     /// Loads RPGState from SwiftData, creating one if none exists.
     private func loadRPGState() async {
         let context = modelContainer.mainContext
@@ -639,57 +606,29 @@ public final class SessionViewModel {
 
     /// Persists current RPG state to SwiftData.
     private func persistRPGState() async {
-        let context = modelContainer.mainContext
-        let descriptor = FetchDescriptor<RPGState>()
-        do {
-            let results = try context.fetch(descriptor)
-            if let state = results.first {
-                state.xp = totalXP
-                state.level = currentLevel
-                state.totalReviewsCompleted += 1
-                try context.save()
-            }
-        } catch {
-            Logger.rpg.error("Failed to persist RPG state: \(error.localizedDescription)")
+        await withRPGState { state in
+            state.xp = totalXP
+            state.level = currentLevel
+            state.totalReviewsCompleted += 1
         }
     }
 
     /// Persists a loot drop to the RPG state inventory.
     private func persistLootDrop(_ item: LootItem) async {
-        let context = modelContainer.mainContext
-        let descriptor = FetchDescriptor<RPGState>()
-        do {
-            let results = try context.fetch(descriptor)
-            if let state = results.first {
-                state.addLootItem(item)
-                try context.save()
-                Logger.rpg.info("Loot drop persisted: \(item.name) (\(item.rarity.displayName))")
-            }
-        } catch {
-            Logger.rpg.error("Failed to persist loot drop: \(error.localizedDescription)")
+        await withRPGState { state in
+            state.addLootItem(item)
+            Logger.rpg.info("Loot drop persisted: \(item.name) (\(item.rarity.displayName))")
         }
     }
 
     /// Persists a lootbox to the RPG state.
     private func persistLootBox(_ box: LootBox) async {
-        let context = modelContainer.mainContext
-        let descriptor = FetchDescriptor<RPGState>()
-        do {
-            let results = try context.fetch(descriptor)
-            if let state = results.first {
-                state.addLootBox(box)
-                try context.save()
-                Logger.rpg.info("Lootbox persisted: \(box.challengeType.displayName)")
-            }
-        } catch {
-            Logger.rpg.error("Failed to persist lootbox: \(error.localizedDescription)")
+        await withRPGState { state in
+            state.addLootBox(box)
+            Logger.rpg.info("Lootbox persisted: \(box.challengeType.displayName)")
         }
     }
 
-    /// Loads RPG state for display (used by home screen).
-    public func loadRPGStateForDisplay() async {
-        await loadRPGState()
-    }
 }
 
 // MARK: - Environment Key
