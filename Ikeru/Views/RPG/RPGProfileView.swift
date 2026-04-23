@@ -72,31 +72,33 @@ struct RPGProfileView: View {
     @ViewBuilder
     private func heroSection(_ vm: RPGProfileViewModel) -> some View {
         VStack(spacing: IkeruTheme.Spacing.lg) {
-            HStack(alignment: .top) {
+            HStack(alignment: .center, spacing: IkeruTheme.Spacing.lg) {
+                // Enso crest — brush circle with the level numeral inside.
+                // Replaces the heraldic shield; 段 (dan) carries the rank word.
+                EnsoRankView(level: vm.level, size: 96)
+
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("LEVEL")
-                        .font(.ikeruMicro)
-                        .ikeruTracking(.micro)
-                        .foregroundStyle(Color.ikeruTextTertiary)
-                    Text("\(vm.level)")
-                        .font(.ikeruDisplayLarge)
-                        .ikeruTracking(.display)
+                    Text("第\(vm.level)段")
+                        .font(.system(size: 15, weight: .regular, design: .serif))
+                        .foregroundStyle(Color.ikeruPrimaryAccent)
+                        .tracking(2)
+                    Text(rankTitle(level: vm.level).uppercased())
+                        .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(Color.ikeruTextPrimary)
+                        .tracking(2.4)
                     if let title = vm.equippedTitle {
                         Text(title.name.uppercased())
                             .font(.ikeruMicro)
                             .ikeruTracking(.micro)
                             .foregroundStyle(rarityColor(title.rarity))
+                            .padding(.top, 4)
                     }
                     if !vm.equippedBadges.isEmpty {
                         badgeCluster(vm.equippedBadges)
-                            .padding(.top, 2)
+                            .padding(.top, 4)
                     }
                 }
-                Spacer()
-                Image(systemName: "shield.lefthalf.filled")
-                    .font(.system(size: 44, weight: .light))
-                    .foregroundStyle(LinearGradient.ikeruGold)
+                Spacer(minLength: 0)
             }
 
             XPBarView(totalXP: vm.xp, level: vm.level, variant: .full)
@@ -203,10 +205,18 @@ struct RPGProfileView: View {
 
     private func attributeRow(_ attr: RPGAttribute, isLocked: Bool) -> some View {
         HStack(spacing: IkeruTheme.Spacing.md) {
-            Image(systemName: isLocked ? "lock.fill" : attr.iconName)
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(isLocked ? Color.ikeruTextTertiary : Color.ikeruPrimaryAccent)
-                .frame(width: 28)
+            ZStack {
+                if isLocked {
+                    Image(systemName: "lock.fill")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(Color.ikeruTextTertiary)
+                } else {
+                    Text(Self.attributeKanji(attr.id))
+                        .font(.system(size: 22, weight: .regular, design: .serif))
+                        .foregroundStyle(Color.ikeruPrimaryAccent)
+                }
+            }
+            .frame(width: 32, height: 32)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(isLocked ? "???" : attr.name)
@@ -359,6 +369,39 @@ struct RPGProfileView: View {
                         Circle().strokeBorder(rarityColor(badge.rarity).opacity(0.35), lineWidth: 0.8)
                     }
             }
+        }
+    }
+
+    // MARK: - Rank title helper (mirrors HomeView)
+
+    private func rankTitle(level: Int) -> String {
+        switch level {
+        case ..<3:  return "Novice"
+        case 3..<7: return "Apprentice"
+        case 7..<15: return "Student"
+        case 15..<25: return "Adept"
+        case 25..<40: return "Master"
+        default: return "Sage"
+        }
+    }
+
+    // MARK: - Attribute kanji mapping
+    //
+    // Traditional Japanese single-character labels for each skill attribute —
+    // Reading → 読, Writing → 書, Listening → 聞, Speaking → 話. A brushable
+    // kanji glyph is far more on-brand than an SF Symbol.
+
+    private static func attributeKanji(_ id: String) -> String {
+        switch id {
+        case "reading":    return "読"
+        case "writing":    return "書"
+        case "listening":  return "聞"
+        case "speaking":   return "話"
+        case "grammar":    return "文"
+        case "vocabulary": return "語"
+        case "culture":    return "和"
+        case "intuition":  return "悟"
+        default:           return "字"
         }
     }
 

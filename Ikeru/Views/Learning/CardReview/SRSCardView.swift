@@ -201,9 +201,15 @@ struct SRSCardView: View {
     }
 
     // MARK: - Card Content
+    //
+    // The card is now framed like a traditional scroll mount (掛軸): faint
+    // corner ticks in each corner, a discreet category micro-label at the
+    // top, glyph centered, and a row of hint chips at the bottom. The answer
+    // state layers a kintsugi gold hairline between the kana and romaji —
+    // the literal "repair seam" between what you saw and what you know.
 
     private func cardContent(for card: CardDTO, revealed: Bool) -> some View {
-        VStack(spacing: IkeruTheme.Spacing.md) {
+        ZStack {
             if revealed {
                 cardBackContent(for: card)
                     .transition(.opacity.combined(with: .scale(scale: 0.92)))
@@ -211,9 +217,58 @@ struct SRSCardView: View {
                 cardFrontContent(for: card)
                     .transition(.opacity.combined(with: .scale(scale: 0.92)))
             }
+
+            // Scroll-mount corner ticks — tint shifts gold on reveal.
+            CornerTicks(
+                color: revealed
+                    ? Color.ikeruPrimaryAccent.opacity(0.40)
+                    : Color.white.opacity(0.14)
+            )
+            .allowsHitTesting(false)
+
+            // Category micro-label pinned to the top of the card.
+            VStack {
+                Text(categoryLabel(for: card.type))
+                    .font(.system(size: 10, weight: .semibold))
+                    .tracking(3)
+                    .foregroundStyle(
+                        revealed
+                            ? Color.ikeruPrimaryAccent
+                            : Color.ikeruTextTertiary
+                    )
+                    .padding(.top, 14)
+                Spacer()
+            }
+            .allowsHitTesting(false)
+
+            // Hint chips pinned to the bottom of the card.
+            VStack {
+                Spacer()
+                HStack(spacing: 8) {
+                    if revealed {
+                        HintChip(icon: "ear", label: "Listen")
+                        HintChip(icon: "pencil.line", label: "Strokes")
+                        HintChip(icon: "text.bubble", label: "Example")
+                    } else {
+                        HintChip(icon: "ear", label: "Listen")
+                        HintChip(icon: "eye", label: "Hint")
+                        HintChip(icon: "star", label: "Mark")
+                    }
+                }
+                .padding(.bottom, 14)
+            }
         }
         .frame(maxWidth: .infinity)
         .frame(height: 280)
+    }
+
+    private func categoryLabel(for type: CardType) -> String {
+        switch type {
+        case .kanji:     return "漢字 · KANJI"
+        case .vocabulary: return "語彙 · VOCAB"
+        case .grammar:   return "文法 · GRAMMAR"
+        case .listening: return "聴解 · LISTENING"
+        }
     }
 
     @ViewBuilder
@@ -249,10 +304,16 @@ struct SRSCardView: View {
 
     @ViewBuilder
     private func cardBackContent(for card: CardDTO) -> some View {
-        VStack(spacing: IkeruTheme.Spacing.sm) {
+        VStack(spacing: IkeruTheme.Spacing.md) {
             Text(card.front)
                 .font(.system(size: 64, weight: .regular, design: .serif))
                 .foregroundStyle(Color.ikeruTextSecondary)
+
+            // Kintsugi repair seam — the gold hairline between what you saw
+            // and what you now know. Fades at the edges so it reads as a
+            // quiet thread, not a rule.
+            KintsugiHairline()
+                .frame(maxWidth: 140)
 
             Text(card.back)
                 .font(.system(size: 40, weight: .semibold, design: .rounded))

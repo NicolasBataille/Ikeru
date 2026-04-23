@@ -11,6 +11,7 @@
 		024CE65C4F899FACD02F82AB /* IkeruLogo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CE66823D49245E40B9FB5AE /* IkeruLogo.swift */; };
 		03266CA2AC2C8FE09FF324D2 /* SentenceConstructionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60A2A898AE8FA9CED4206F98 /* SentenceConstructionView.swift */; };
 		03A18AE27633E99C6225720C /* ColorExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF141412A4CE1AAA9CA80398 /* ColorExtensions.swift */; };
+		0739B3B0FF59FACA5FD474F3 /* SegmentedXPBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AA9FE40FCBDF803116B44AB /* SegmentedXPBarView.swift */; };
 		09A4F7F1DA62FBF986A78C5F /* ToastManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C365C4F5BEDC3A891466ECC7 /* ToastManager.swift */; };
 		09A567494E1C0017CD0F2625 /* ActiveProfileResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4A0D04EAEE23A91CAFB3F5F /* ActiveProfileResolver.swift */; };
 		09AEC542DAB9105AFD7EC1C4 /* LiveActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94DFE0591021BC898110AB38 /* LiveActivityManager.swift */; };
@@ -50,9 +51,11 @@
 		3F46A142E358DF4FAF74F67B /* KanjiStudyViewStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 566DAE0C74757C138694AE80 /* KanjiStudyViewStateTests.swift */; };
 		3FF25A148A3F29A4766B9536 /* ListeningExerciseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E725C72DE5BC3FCCF6797E99 /* ListeningExerciseView.swift */; };
 		4547C70DA66DB999B294CC16 /* LaunchAnimationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35E5B9D83D4ACDC6DF4C19B3 /* LaunchAnimationView.swift */; };
+		45FC9A7769D8828E759E3723 /* HintChip.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB5C6DA11F43D5B4C0018F24 /* HintChip.swift */; };
 		46BC1FB8F57C080AAF0EB987 /* CardReviewViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13AC955C7BA5C06F2A873D40 /* CardReviewViewModelTests.swift */; };
 		484D405C4211881A67889AB9 /* SessionLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = B46DF69A2A765C203CB58B09 /* SessionLiveActivity.swift */; };
 		4A75A771A6DEAF3D5109046E /* SessionConfigViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D45BABE0EF71F59D7E9FCF5 /* SessionConfigViewModel.swift */; };
+		4AF345C58ECC4AC605EACE5A /* CornerTicks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00356E3A4031A07E0D26E81C /* CornerTicks.swift */; };
 		4C300AF08D17073C30F03BA3 /* KanjiDisplayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DEC565E5BC2D95F4A14BD0A /* KanjiDisplayView.swift */; };
 		4CC1293E4E5E5F24872B7EB6 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 156EFFF0B204464405BC709E /* HomeView.swift */; };
 		4EAB9553B308C0E627182D2D /* IkeruApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBF0809FE4E8A651003BFFB1 /* IkeruApp.swift */; };
@@ -140,6 +143,7 @@
 		C5AFFF3C83FD80FF4E57B0EB /* ConversationViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D08B33E031522EEA0E701C84 /* ConversationViewModel.swift */; };
 		C7D3EB4AA2D2D81C101368D7 /* NavigationCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33CEED6C6C796647FAF4C683 /* NavigationCoordinatorTests.swift */; };
 		C8F7ED3F00387307F04FD73E /* InlineQuizView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5A9840F6C7DB7B734D9FC80 /* InlineQuizView.swift */; };
+		C90696D00FAB39C53CF71469 /* EnsoRankView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA3FF1DB0EC4937D61375C15 /* EnsoRankView.swift */; };
 		C91AAFCB6B347DD7E48BEC5F /* GrammarPointView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BFAD9F3F0796D53A41F3F2A /* GrammarPointView.swift */; };
 		C98990815A7397FAEECC5E9F /* MasteryBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 432F33D5FCBBD072BE009810 /* MasteryBadge.swift */; };
 		C9C552606F14AE938AB0A1C3 /* StrokeTracingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69FD1BC54CDC2C981E6F4402 /* StrokeTracingView.swift */; };
@@ -170,7 +174,9 @@
 		EFFC7E378C0AE8C64CD48AEB /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = B397E03A82EFF499E855C79D /* PrivacyInfo.xcprivacy */; };
 		F0BDE207FB9AD47E59F1AE92 /* ConversationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9ADB1F486DEEFD4CE3C20C5C /* ConversationView.swift */; };
 		F2A0D73D1228BC5748D9C024 /* SRSCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2CD2275E34C699B7B4288B1 /* SRSCardView.swift */; };
+		F692C438F2EC4A4E6BF13432 /* MountainGlyph.swift in Sources */ = {isa = PBXBuildFile; fileRef = D08D4F4B23347E79AF13DD74 /* MountainGlyph.swift */; };
 		F83318606CDD399E5B109CEB /* VocabularyExamplesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77C23A25576DBE04B0A332B8 /* VocabularyExamplesView.swift */; };
+		F876026CEC113A0CEE14A1CD /* KintsugiHairline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03D5EA041D7435198DDAE364 /* KintsugiHairline.swift */; };
 		F8B54EFE3D06A1D370D8FED4 /* CompanionAvatarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0962CAD661B7DE355E691364 /* CompanionAvatarView.swift */; };
 		F99671B5F564DEA0F4B3C41B /* NavigationCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7A35CBDE82C399C0BDE9E67 /* NavigationCoordinator.swift */; };
 		FDA86090738921E4E18E79CE /* SessionSummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8BD1F07D5A033139C8C8A83 /* SessionSummaryView.swift */; };
@@ -210,7 +216,9 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		00356E3A4031A07E0D26E81C /* CornerTicks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CornerTicks.swift; sourceTree = "<group>"; };
 		03B24C86EFCA15EB15DF8BD4 /* SessionPreviewCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionPreviewCard.swift; sourceTree = "<group>"; };
+		03D5EA041D7435198DDAE364 /* KintsugiHairline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KintsugiHairline.swift; sourceTree = "<group>"; };
 		06D4DC8FC49CC9C5B56F5438 /* IkeruWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = IkeruWidget.entitlements; sourceTree = "<group>"; };
 		084D2D52890467EFF5C93131 /* VocabularyDrillSummary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VocabularyDrillSummary.swift; sourceTree = "<group>"; };
 		0962CAD661B7DE355E691364 /* CompanionAvatarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompanionAvatarView.swift; sourceTree = "<group>"; };
@@ -278,6 +286,7 @@
 		6955326534B6460E2F1B9C66 /* AppEnvironment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppEnvironment.swift; sourceTree = "<group>"; };
 		6999560B934B111F55D2F3E5 /* KanaDrillSessionSummary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KanaDrillSessionSummary.swift; sourceTree = "<group>"; };
 		69FD1BC54CDC2C981E6F4402 /* StrokeTracingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StrokeTracingView.swift; sourceTree = "<group>"; };
+		6AA9FE40FCBDF803116B44AB /* SegmentedXPBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SegmentedXPBarView.swift; sourceTree = "<group>"; };
 		6B43EF20C3659B03FE6702B5 /* SessionViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionViewModel.swift; sourceTree = "<group>"; };
 		6C0690DD9A67CB231FB3B2BE /* PreWarmFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreWarmFactory.swift; sourceTree = "<group>"; };
 		6CE66823D49245E40B9FB5AE /* IkeruLogo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IkeruLogo.swift; sourceTree = "<group>"; };
@@ -326,6 +335,7 @@
 		A7A35CBDE82C399C0BDE9E67 /* NavigationCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationCoordinator.swift; sourceTree = "<group>"; };
 		A8CB4D8F6D27886A95BBAC2D /* ToastManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToastManagerTests.swift; sourceTree = "<group>"; };
 		A91BD866585603D217E09761 /* MnemonicView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MnemonicView.swift; sourceTree = "<group>"; };
+		AA3FF1DB0EC4937D61375C15 /* EnsoRankView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnsoRankView.swift; sourceTree = "<group>"; };
 		AA8ABC5B44D456C6BD980427 /* DataExportManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataExportManager.swift; sourceTree = "<group>"; };
 		AF20C958BD43ABB601BE2B23 /* ProfileViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileViewModelTests.swift; sourceTree = "<group>"; };
 		B04C74F735B5D471036C7A40 /* VocabularyDetailSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VocabularyDetailSheet.swift; sourceTree = "<group>"; };
@@ -335,6 +345,7 @@
 		B5FD009AD0E461931F7476EE /* IkeruFlowLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IkeruFlowLayout.swift; sourceTree = "<group>"; };
 		B8CF84F59DAF36277A923CF3 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		B9AF377049118CA435404314 /* KanaGroupCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KanaGroupCard.swift; sourceTree = "<group>"; };
+		BB5C6DA11F43D5B4C0018F24 /* HintChip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HintChip.swift; sourceTree = "<group>"; };
 		BCB50A9A0ED295F6A7C82144 /* VocabularyStudyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VocabularyStudyView.swift; sourceTree = "<group>"; };
 		BF1DEA455FF965BF74038E0F /* IkeruWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IkeruWatchApp.swift; sourceTree = "<group>"; };
 		BFC50EBFAD8E44D18F442E7C /* ExerciseTransitionContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseTransitionContainer.swift; sourceTree = "<group>"; };
@@ -350,6 +361,7 @@
 		CCAD9A4831D219D1C4FC0037 /* ToastView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToastView.swift; sourceTree = "<group>"; };
 		CE989EDC826A8D21056CC758 /* XPGainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XPGainView.swift; sourceTree = "<group>"; };
 		D08B33E031522EEA0E701C84 /* ConversationViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationViewModel.swift; sourceTree = "<group>"; };
+		D08D4F4B23347E79AF13DD74 /* MountainGlyph.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MountainGlyph.swift; sourceTree = "<group>"; };
 		D1F62206E7AC1CAC9A3335D5 /* VocabularyStudyViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VocabularyStudyViewModel.swift; sourceTree = "<group>"; };
 		D2CBFF6AF9FE7C9F48E34A51 /* HoldToConfirmButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HoldToConfirmButton.swift; sourceTree = "<group>"; };
 		D5D9BA9F4FDA871221354B88 /* n5-content.sqlite */ = {isa = PBXFileReference; lastKnownFileType = file; path = "n5-content.sqlite"; sourceTree = "<group>"; };
@@ -858,13 +870,19 @@
 			isa = PBXGroup;
 			children = (
 				DF141412A4CE1AAA9CA80398 /* ColorExtensions.swift */,
+				00356E3A4031A07E0D26E81C /* CornerTicks.swift */,
+				AA3FF1DB0EC4937D61375C15 /* EnsoRankView.swift */,
 				C4EB5EA8CFACFEDD72045EB3 /* FontExtensions.swift */,
+				BB5C6DA11F43D5B4C0018F24 /* HintChip.swift */,
 				D2CBFF6AF9FE7C9F48E34A51 /* HoldToConfirmButton.swift */,
 				631CDAB692FF8F02FB5E77FD /* IkeruButtonStyle.swift */,
 				24AB1AB1DDE2D5EE0D52DA0C /* IkeruCard.swift */,
 				6443713592CC74FD3AECD921 /* IkeruGlass.swift */,
 				6CE66823D49245E40B9FB5AE /* IkeruLogo.swift */,
 				2CA34FB1B1DB4560EB47114B /* IkeruTabBar.swift */,
+				03D5EA041D7435198DDAE364 /* KintsugiHairline.swift */,
+				D08D4F4B23347E79AF13DD74 /* MountainGlyph.swift */,
+				6AA9FE40FCBDF803116B44AB /* SegmentedXPBarView.swift */,
 				130C19D8358A2B30F37B94C9 /* SessionProgressBar.swift */,
 				C365C4F5BEDC3A891466ECC7 /* ToastManager.swift */,
 				CCAD9A4831D219D1C4FC0037 /* ToastView.swift */,
@@ -1136,10 +1154,12 @@
 				1485E00B3EC04B8D4910F48C /* ConversationBubbleView.swift in Sources */,
 				F0BDE207FB9AD47E59F1AE92 /* ConversationView.swift in Sources */,
 				C5AFFF3C83FD80FF4E57B0EB /* ConversationViewModel.swift in Sources */,
+				4AF345C58ECC4AC605EACE5A /* CornerTicks.swift in Sources */,
 				E954C4AFA27E9820C570C3BF /* DataExportManager.swift in Sources */,
 				61B02BAEB2D22074A962FBBE /* DeleteProfileSheet.swift in Sources */,
 				5D874F7760089A5C335464FD /* DiffHighlightView.swift in Sources */,
 				B3118C50A4B7018CE6CF5AE0 /* DrillUtilities.swift in Sources */,
+				C90696D00FAB39C53CF71469 /* EnsoRankView.swift in Sources */,
 				BBA6E2D02D5B48ED55329B5B /* EquippedCosmeticsBridge.swift in Sources */,
 				9CE7075A738FC2C1627420CD /* ExerciseTransitionContainer.swift in Sources */,
 				2B56415B2F3545851F6B8182 /* FillInBlankExerciseView.swift in Sources */,
@@ -1149,6 +1169,7 @@
 				9BC4183DC3C8A7EC9B37686D /* HandwritingCanvasView.swift in Sources */,
 				FF89BFE59885EB3742A25989 /* HandwritingExerciseView.swift in Sources */,
 				2F6B8C98160163965120553D /* HandwritingViewModel.swift in Sources */,
+				45FC9A7769D8828E759E3723 /* HintChip.swift in Sources */,
 				FDC87A32E50CF633C3BDC97D /* HoldToConfirmButton.swift in Sources */,
 				4CC1293E4E5E5F24872B7EB6 /* HomeView.swift in Sources */,
 				6DA42A5338F4B35DF64928BF /* HomeViewModel.swift in Sources */,
@@ -1174,6 +1195,7 @@
 				4C300AF08D17073C30F03BA3 /* KanjiDisplayView.swift in Sources */,
 				90422BEF9BC8E04D637D5227 /* KanjiStudyView.swift in Sources */,
 				EFB4AC9FEB8312A7E21BAB67 /* KanjiStudyViewModel.swift in Sources */,
+				F876026CEC113A0CEE14A1CD /* KintsugiHairline.swift in Sources */,
 				4547C70DA66DB999B294CC16 /* LaunchAnimationView.swift in Sources */,
 				BF45D9ACC0C1A84F62E338D5 /* LevelUpView.swift in Sources */,
 				3FF25A148A3F29A4766B9536 /* ListeningExerciseView.swift in Sources */,
@@ -1188,6 +1210,7 @@
 				C98990815A7397FAEECC5E9F /* MasteryBadge.swift in Sources */,
 				E67443C57282C375B28E1ADB /* MeshHeroView.swift in Sources */,
 				8079EBD85DD413FB6BA17D40 /* MnemonicView.swift in Sources */,
+				F692C438F2EC4A4E6BF13432 /* MountainGlyph.swift in Sources */,
 				8220FF72EE512779FDF93501 /* NameEntryView.swift in Sources */,
 				F99671B5F564DEA0F4B3C41B /* NavigationCoordinator.swift in Sources */,
 				E5D377E0EE04F7256C198370 /* NotificationManager.swift in Sources */,
@@ -1211,6 +1234,7 @@
 				D8D5457FC6070EDB4C44E5B7 /* RigJobsViewModel.swift in Sources */,
 				98F793063A70505145D0FAFD /* RigSettingsViewModel.swift in Sources */,
 				F2A0D73D1228BC5748D9C024 /* SRSCardView.swift in Sources */,
+				0739B3B0FF59FACA5FD474F3 /* SegmentedXPBarView.swift in Sources */,
 				03266CA2AC2C8FE09FF324D2 /* SentenceConstructionView.swift in Sources */,
 				EFA3DDE7B5BBFA82A09873CB /* SentenceConstructionViewModel.swift in Sources */,
 				65B55BA772664AD8B848C157 /* SessionConfigView.swift in Sources */,

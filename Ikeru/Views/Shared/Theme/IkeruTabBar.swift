@@ -153,7 +153,7 @@ extension AppTab {
         case .home:      return "house.fill"
         case .study:     return "book.closed.fill"
         case .companion: return "bubble.left.and.text.bubble.right.fill"
-        case .rpg:       return "shield.lefthalf.filled"
+        case .rpg:       return "mountain.2.fill"   // summit-to-climb; replaces the heraldic shield
         case .settings:  return "gearshape.fill"
         }
     }

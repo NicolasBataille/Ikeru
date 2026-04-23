@@ -182,7 +182,12 @@ struct SettingsView: View {
 
     private var profileManagementSection: some View {
         VStack(alignment: .leading, spacing: IkeruTheme.Spacing.md) {
-            IkeruSectionHeader(title: "Profiles", eyebrow: "Accounts")
+            IkeruSectionHeader(title: "Profiles", eyebrow: "Accounts") {
+                SettingsStatusPill(
+                    text: "\(profileViewModel?.allProfiles.count ?? 0) ACTIVE",
+                    color: .ikeruPrimaryAccent
+                )
+            }
 
             VStack(spacing: 0) {
                 let profiles = profileViewModel?.allProfiles ?? []
@@ -282,7 +287,15 @@ struct SettingsView: View {
 
     private var backupSection: some View {
         VStack(alignment: .leading, spacing: IkeruTheme.Spacing.md) {
-            IkeruSectionHeader(title: "Data", eyebrow: "Backup & Export")
+            IkeruSectionHeader(title: "Data", eyebrow: "Backup & Export") {
+                if backupManager.isBackingUp || backupManager.isRestoring {
+                    SettingsStatusPill(text: "SYNCING", color: .ikeruWarning, pulses: true)
+                } else if backupManager.lastBackupDate != nil {
+                    SettingsStatusPill(text: "SYNCED", color: .ikeruSuccess)
+                } else {
+                    SettingsStatusPill(text: "NEVER", color: .ikeruTextTertiary)
+                }
+            }
 
             VStack(spacing: 0) {
                 glassRow(
@@ -625,7 +638,13 @@ struct SettingsView: View {
 
     private var localRigSection: some View {
         VStack(alignment: .leading, spacing: IkeruTheme.Spacing.md) {
-            IkeruSectionHeader(title: "Local Rig", eyebrow: "Pre-warming")
+            IkeruSectionHeader(title: "Advanced", eyebrow: "Local rig & pre-warming") {
+                if preWarmEnabled {
+                    SettingsStatusPill(text: "ON", color: .ikeruSuccess)
+                } else {
+                    SettingsStatusPill(text: "OFF", color: .ikeruTextTertiary)
+                }
+            }
 
             VStack(alignment: .leading, spacing: IkeruTheme.Spacing.sm) {
                 Toggle(isOn: $preWarmEnabled) {
@@ -812,6 +831,49 @@ struct SettingsView: View {
             }
         } else {
             NotificationManager.shared.cancelWeeklyCheckIn()
+        }
+    }
+}
+
+// MARK: - Settings Status Pill
+//
+// Compact inline status indicator used in Settings section headers to show
+// state at a glance (e.g., `● SYNCED`, `2 ACTIVE`, `OFF`). A single dot plus
+// an all-caps label keeps it quiet enough not to compete with the title
+// while still providing the scanning affordance the design calls for.
+
+private struct SettingsStatusPill: View {
+    let text: String
+    var color: Color = .ikeruPrimaryAccent
+    var pulses: Bool = false
+
+    @State private var pulseOn = false
+
+    var body: some View {
+        HStack(spacing: 5) {
+            Circle()
+                .fill(color)
+                .frame(width: 6, height: 6)
+                .opacity(pulses && pulseOn ? 0.4 : 1.0)
+                .shadow(color: color.opacity(0.7), radius: 4)
+                .onAppear {
+                    if pulses {
+                        withAnimation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true)) {
+                            pulseOn.toggle()
+                        }
+                    }
+                }
+            Text(text)
+                .font(.system(size: 10, weight: .heavy))
+                .tracking(1.4)
+                .foregroundStyle(color)
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background {
+            Capsule()
+                .fill(color.opacity(0.10))
+                .overlay(Capsule().strokeBorder(color.opacity(0.25), lineWidth: 0.6))
         }
     }
 }

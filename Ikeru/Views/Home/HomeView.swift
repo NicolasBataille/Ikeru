@@ -4,9 +4,12 @@ import IkeruCore
 import os
 
 // MARK: - HomeView
+//
+// Wabi-sabi refined home. The hero card is proverb-centric (七転八起 promoted
+// to the focal element), rank sits as chrome (EnsoRank brush glyph + 第N段),
+// progression reads as carved segments not a gradient smear, and the stats
+// row weights "Due Now" as the action card over the two quieter metrics.
 
-/// Premium "Your World" home screen.
-/// Layout philosophy: generous breathing space, glass surfaces, calm typography.
 struct HomeView: View {
 
     @Environment(\.modelContext) private var modelContext
@@ -68,9 +71,9 @@ struct HomeView: View {
     @ViewBuilder
     private func homeContent(_ vm: HomeViewModel) -> some View {
         ScrollView(showsIndicators: false) {
-            VStack(spacing: IkeruTheme.Spacing.xl) {
+            VStack(spacing: IkeruTheme.Spacing.lg) {
                 topBar(vm)
-                heroSection(vm)
+                proverbHero(vm)
                 statsRow(vm)
                 primaryAction(vm)
                 if vm.hasLoaded && vm.dueCardCount == 0 {
@@ -110,7 +113,7 @@ struct HomeView: View {
 
     @ViewBuilder
     private func topBar(_ vm: HomeViewModel) -> some View {
-        HStack(alignment: .center) {
+        HStack(alignment: .bottom) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(timeOfDayGreeting().uppercased())
                     .font(.ikeruMicro)
@@ -130,121 +133,323 @@ struct HomeView: View {
                 }
             }
             Spacer()
-            // Streak / status pill
-            IkeruStatPill(
-                icon: "flame.fill",
-                value: "\(max(1, vm.level))",
-                label: "lvl",
-                tint: .ikeruPrimaryAccent
-            )
+            streakPill(streak: vm.dailyStreak)
         }
         .padding(.top, IkeruTheme.Spacing.xs)
     }
 
-    // MARK: - Hero
+    @ViewBuilder
+    private func streakPill(streak: Int) -> some View {
+        HStack(spacing: 7) {
+            Image(systemName: "flame.fill")
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(Color.ikeruPrimaryAccent)
+            Text("\(max(0, streak))")
+                .font(.system(size: 13, weight: .medium))
+                .foregroundStyle(Color.ikeruTextPrimary)
+            Text("day")
+                .font(.system(size: 11))
+                .foregroundStyle(Color.ikeruTextTertiary)
+                .tracking(0.4)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 7)
+        .background {
+            Capsule()
+                .fill(Color.white.opacity(0.05))
+                .overlay(Capsule().strokeBorder(Color.white.opacity(0.10), lineWidth: 0.6))
+        }
+    }
+
+    // MARK: - Proverb Hero
 
     @ViewBuilder
-    private func heroSection(_ vm: HomeViewModel) -> some View {
-        MeshHeroView(
-            level: vm.level,
-            totalXP: vm.xp,
-            displayName: vm.displayName,
-            recentAchievement: vm.recentAchievement
-        )
-        .frame(height: 260)
+    private func proverbHero(_ vm: HomeViewModel) -> some View {
+        let proverb = HomeProverb.dailyProverb(level: vm.level)
+        let progress = Double(vm.xpInCurrentLevel) / Double(max(1, vm.xpRequiredForLevel))
+
+        VStack(alignment: .leading, spacing: IkeruTheme.Spacing.lg) {
+            // Rank row — brush circle + 第N段 · APPRENTICE. Chrome, not focus.
+            HStack(spacing: 10) {
+                EnsoRankView(level: vm.level, size: 30)
+                Text(rankLabel(level: vm.level))
+                    .font(.system(size: 13, weight: .regular, design: .serif))
+                    .foregroundStyle(Color.ikeruPrimaryAccent)
+                    .tracking(1.8)
+                Text("·")
+                    .font(.system(size: 11))
+                    .foregroundStyle(Color.ikeruTextTertiary)
+                Text(rankTitle(level: vm.level).uppercased())
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(Color.ikeruTextSecondary)
+                    .tracking(2.2)
+                Spacer()
+            }
+
+            // Proverb — now owns the card.
+            VStack(alignment: .leading, spacing: 10) {
+                Text(proverb.kanji)
+                    .font(.system(size: 40, weight: .light, design: .serif))
+                    .foregroundStyle(Color.ikeruTextPrimary)
+                    .tracking(4)
+
+                Text(proverb.romaji)
+                    .font(.system(size: 12))
+                    .italic()
+                    .foregroundStyle(Color.ikeruTextTertiary)
+
+                Text(proverb.translation)
+                    .font(.system(size: 13))
+                    .foregroundStyle(Color.ikeruTextSecondary)
+                    .lineLimit(2)
+            }
+
+            // Experience — segmented ticks.
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(alignment: .firstTextBaseline) {
+                    Text("EXPERIENCE")
+                        .font(.ikeruMicro)
+                        .ikeruTracking(.micro)
+                        .foregroundStyle(Color.ikeruTextTertiary)
+                    Spacer()
+                    HStack(spacing: 0) {
+                        Text("\(vm.xpInCurrentLevel)")
+                            .foregroundStyle(Color.ikeruPrimaryAccent)
+                        Text(" / \(vm.xpRequiredForLevel)")
+                            .foregroundStyle(Color.ikeruTextTertiary)
+                    }
+                    .font(.system(size: 12, design: .monospaced))
+                }
+
+                SegmentedXPBarView(progress: progress)
+
+                Text("\(vm.xpToNextLevel) XP to next rank")
+                    .font(.system(size: 11))
+                    .foregroundStyle(Color.ikeruTextTertiary)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+            }
+        }
+        .padding(IkeruTheme.Spacing.lg)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background {
+            IkeruGlassSurface(
+                cornerRadius: IkeruTheme.Radius.lg,
+                tint: Color.ikeruPrimaryAccent,
+                tintOpacity: 0.04,
+                highlight: 0.16,
+                strokeOpacity: 0.14
+            )
+        }
+        .clipShape(RoundedRectangle(cornerRadius: IkeruTheme.Radius.lg, style: .continuous))
+        .shadow(color: Color.black.opacity(0.45), radius: 24, y: 10)
     }
 
     // MARK: - Stats Row
+    //
+    // Due Now is the action — weighted 1.4× and tinted gold with a live dot
+    // when work is waiting. Learned + Lootboxes sit quieter in single-fr cells.
 
     @ViewBuilder
     private func statsRow(_ vm: HomeViewModel) -> some View {
-        HStack(spacing: IkeruTheme.Spacing.sm) {
-            statCard(
+        HStack(alignment: .top, spacing: IkeruTheme.Spacing.sm) {
+            primaryStatCard(
                 icon: "tray.full",
                 value: "\(vm.dueCardCount)",
-                label: "Due",
-                tint: .ikeruPrimaryAccent
+                label: "Due Now",
+                caption: vm.dueCardCount > 0 ? "Ready for review" : "Nothing due",
+                showsLivePulse: vm.dueCardCount > 0
             )
+            .frame(maxWidth: .infinity)
+            .layoutPriority(1.4)
+
             statCard(
                 icon: "character.book.closed",
                 value: "\(vm.kanjiLearnedCount)",
                 label: "Learned",
+                caption: "items",
                 tint: .ikeruTertiaryAccent
             )
+            .frame(maxWidth: .infinity)
+
             statCard(
                 icon: "shippingbox",
                 value: "\(vm.unopenedLootBoxCount)",
-                label: "Lootboxes",
-                tint: .ikeruSecondaryAccent
+                label: "Loot",
+                caption: vm.unopenedLootBoxCount > 0 ? "unopened" : "earn some",
+                tint: vm.unopenedLootBoxCount > 0 ? .ikeruPrimaryAccent : .ikeruSecondaryAccent
             )
+            .frame(maxWidth: .infinity)
         }
+        .frame(minHeight: 108)
     }
 
     @ViewBuilder
-    private func statCard(icon: String, value: String, label: String, tint: Color) -> some View {
-        VStack(alignment: .leading, spacing: 14) {
-            // Icon in a small tinted circle
-            ZStack {
-                Circle()
-                    .fill(tint.opacity(0.14))
-                    .frame(width: 32, height: 32)
-                Image(systemName: icon)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(tint)
+    private func primaryStatCard(
+        icon: String,
+        value: String,
+        label: String,
+        caption: String,
+        showsLivePulse: Bool
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .center) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(Color.ikeruPrimaryAccent.opacity(0.15))
+                        .frame(width: 32, height: 32)
+                    Image(systemName: icon)
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(Color.ikeruPrimaryAccent)
+                }
+                Spacer()
+                if showsLivePulse {
+                    Circle()
+                        .fill(Color.ikeruPrimaryAccent)
+                        .frame(width: 6, height: 6)
+                        .shadow(color: Color.ikeruPrimaryAccent.opacity(0.8), radius: 4)
+                }
             }
 
-            VStack(alignment: .leading, spacing: 2) {
-                Text(value)
-                    .font(.system(size: 32, weight: .light, design: .default))
-                    .ikeruTracking(.heading)
-                    .foregroundStyle(Color.ikeruTextPrimary)
-                    .contentTransition(.numericText())
-                    .animation(.spring(response: 0.4, dampingFraction: 0.8), value: value)
+            Text(value)
+                .font(.system(size: 36, weight: .light))
+                .foregroundStyle(Color.ikeruTextPrimary)
+                .tracking(-1)
+                .contentTransition(.numericText())
+                .animation(.spring(response: 0.4, dampingFraction: 0.8), value: value)
 
+            VStack(alignment: .leading, spacing: 2) {
                 Text(label.uppercased())
-                    .font(.ikeruMicro)
-                    .ikeruTracking(.micro)
+                    .font(.system(size: 9, weight: .heavy))
+                    .tracking(2)
+                    .foregroundStyle(Color.ikeruPrimaryAccent.opacity(0.9))
+                Text(caption)
+                    .font(.system(size: 11))
                     .foregroundStyle(Color.ikeruTextTertiary)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.vertical, IkeruTheme.Spacing.md)
-        .padding(.horizontal, IkeruTheme.Spacing.md)
+        .padding(IkeruTheme.Spacing.md)
+        .background {
+            ZStack {
+                RoundedRectangle(cornerRadius: IkeruTheme.Radius.lg, style: .continuous)
+                    .fill(Color.ikeruPrimaryAccent.opacity(0.06))
+                RoundedRectangle(cornerRadius: IkeruTheme.Radius.lg, style: .continuous)
+                    .strokeBorder(Color.ikeruPrimaryAccent.opacity(0.22), lineWidth: 1)
+
+                // Corner warmth — gold radial pooling in the top-right.
+                RadialGradient(
+                    colors: [
+                        Color.ikeruPrimaryAccent.opacity(0.22),
+                        Color.ikeruPrimaryAccent.opacity(0)
+                    ],
+                    center: .init(x: 0.9, y: 0.1),
+                    startRadius: 0,
+                    endRadius: 90
+                )
+                .allowsHitTesting(false)
+            }
+            .clipShape(RoundedRectangle(cornerRadius: IkeruTheme.Radius.lg, style: .continuous))
+        }
+        .shadow(color: Color.black.opacity(0.3), radius: 16, y: 8)
+    }
+
+    @ViewBuilder
+    private func statCard(
+        icon: String,
+        value: String,
+        label: String,
+        caption: String,
+        tint: Color
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .fill(Color.white.opacity(0.05))
+                    .frame(width: 28, height: 28)
+                Image(systemName: icon)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(tint)
+            }
+
+            Text(value)
+                .font(.system(size: 28, weight: .light))
+                .foregroundStyle(Color.ikeruTextPrimary)
+                .tracking(-0.5)
+                .contentTransition(.numericText())
+                .animation(.spring(response: 0.4, dampingFraction: 0.8), value: value)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(label.uppercased())
+                    .font(.system(size: 9, weight: .heavy))
+                    .tracking(2)
+                    .foregroundStyle(Color.ikeruTextTertiary)
+                Text(caption)
+                    .font(.system(size: 11))
+                    .foregroundStyle(Color.ikeruTextTertiary)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(IkeruTheme.Spacing.md)
         .background {
             IkeruGlassSurface(
                 cornerRadius: IkeruTheme.Radius.lg,
-                tint: tint,
-                tintOpacity: 0.04,
-                highlight: 0.14,
-                strokeOpacity: 0.16
+                tint: .clear,
+                tintOpacity: 0.0,
+                highlight: 0.10,
+                strokeOpacity: 0.10
             )
         }
         .clipShape(RoundedRectangle(cornerRadius: IkeruTheme.Radius.lg, style: .continuous))
-        .shadow(color: Color.black.opacity(0.4), radius: 18, y: 8)
+        .shadow(color: Color.black.opacity(0.25), radius: 12, y: 6)
     }
 
     // MARK: - Primary action
 
     @ViewBuilder
     private func primaryAction(_ vm: HomeViewModel) -> some View {
-        VStack(spacing: IkeruTheme.Spacing.sm) {
-            Button {
-                startSession()
-            } label: {
-                HStack(spacing: IkeruTheme.Spacing.sm) {
+        Button {
+            startSession()
+        } label: {
+            HStack(alignment: .center) {
+                HStack(spacing: 10) {
                     Image(systemName: "play.fill")
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(.system(size: 13, weight: .semibold))
                     Text("Begin Session")
+                        .font(.system(size: 17, weight: .semibold))
                 }
-                .frame(maxWidth: .infinity)
+                Spacer()
+                Text(sessionDurationEstimate(vm))
+                    .font(.system(size: 12, weight: .medium, design: .monospaced))
+                    .foregroundStyle(Color(red: 0.16, green: 0.11, blue: 0.05).opacity(0.7))
             }
-            .ikeruButtonStyle(.primary)
-
-            Text(vm.sessionPreviewText)
-                .font(.ikeruCaption)
-                .foregroundStyle(Color.ikeruTextTertiary)
+            .frame(maxWidth: .infinity)
         }
+        .ikeruButtonStyle(.primary)
         .padding(.top, IkeruTheme.Spacing.xs)
+    }
+
+    private func sessionDurationEstimate(_ vm: HomeViewModel) -> String {
+        if vm.sessionPreviewCardCount > 0 {
+            return "~\(max(1, vm.sessionPreviewMinutes)) min"
+        }
+        return "ready"
+    }
+
+    // MARK: - Rank labels
+
+    private func rankLabel(level: Int) -> String {
+        "第\(level)段"
+    }
+
+    private func rankTitle(level: Int) -> String {
+        switch level {
+        case ..<3:  return "Novice"
+        case 3..<7: return "Apprentice"
+        case 7..<15: return "Student"
+        case 15..<25: return "Adept"
+        case 25..<40: return "Master"
+        default: return "Sage"
+        }
     }
 
     // MARK: - Helpers
@@ -290,6 +495,55 @@ struct HomeView: View {
             await svm.startSession()
             showSession = true
         }
+    }
+}
+
+// MARK: - Proverb pool
+//
+// Small curated list of Japanese proverbs (ことわざ). The Home hero rotates
+// through them by level so the card feels alive over time. Each proverb is
+// a short, lesson-forward sentence fit for a learning app — no obscure
+// idioms, no awkward translations.
+
+struct HomeProverb {
+    let kanji: String
+    let romaji: String
+    let translation: String
+
+    static let pool: [HomeProverb] = [
+        HomeProverb(
+            kanji: "七転八起",
+            romaji: "nana korobi ya oki",
+            translation: "Fall seven times, rise eight."
+        ),
+        HomeProverb(
+            kanji: "一期一会",
+            romaji: "ichi go ichi e",
+            translation: "One time, one meeting — treasure every encounter."
+        ),
+        HomeProverb(
+            kanji: "石の上にも三年",
+            romaji: "ishi no ue ni mo san nen",
+            translation: "Three years on a stone — persistence warms even cold ground."
+        ),
+        HomeProverb(
+            kanji: "千里の道も一歩から",
+            romaji: "senri no michi mo ippo kara",
+            translation: "A thousand-league journey begins with a single step."
+        ),
+        HomeProverb(
+            kanji: "塵も積もれば山となる",
+            romaji: "chiri mo tsumoreba yama to naru",
+            translation: "Even dust, piled high, becomes a mountain."
+        )
+    ]
+
+    static func dailyProverb(level: Int) -> HomeProverb {
+        // Seed by day + level so it changes daily but stays stable across
+        // re-renders of the same screen.
+        let day = Calendar.current.ordinality(of: .day, in: .year, for: Date()) ?? 0
+        let idx = abs(day + level) % pool.count
+        return pool[idx]
     }
 }
 

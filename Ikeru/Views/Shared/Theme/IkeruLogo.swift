@@ -216,13 +216,18 @@ private struct PetalSpec {
     let width: CGFloat
 }
 
+// Variant B · Calligraphic Taper — 5 petals (down from 6), with one hero
+// petal extended to length 0.27 (was 0.24). Widths trimmed to sit closer to
+// the stem so the bloom reads as a real open sakura rather than a rosette.
+// Paired with branch-ratio + strokeScale changes in `composition(...)`.
 private let petalSpecs: [PetalSpec] = [
-    PetalSpec(angle: -.pi * 0.95, length: 0.18, width: 0.55),  // far left
-    PetalSpec(angle: -.pi * 0.70, length: 0.22, width: 0.60),  // upper-left
-    PetalSpec(angle: -.pi * 0.48, length: 0.24, width: 0.62),  // top
-    PetalSpec(angle: -.pi * 0.25, length: 0.21, width: 0.58),  // upper-right
-    PetalSpec(angle: -.pi * 0.02, length: 0.18, width: 0.54),  // right
-    PetalSpec(angle:  .pi * 0.25, length: 0.15, width: 0.50)   // lower-right
+    PetalSpec(angle: -.pi * 0.95, length: 0.19, width: 0.50),  // far left
+    PetalSpec(angle: -.pi * 0.70, length: 0.24, width: 0.54),  // upper-left
+    PetalSpec(angle: -.pi * 0.48, length: 0.27, width: 0.56),  // top · hero petal
+    PetalSpec(angle: -.pi * 0.25, length: 0.22, width: 0.52),  // upper-right
+    PetalSpec(angle: -.pi * 0.02, length: 0.19, width: 0.48)   // right
+    // 6th petal (lower-right) removed — the flower now opens asymmetrically
+    // outward, aligning with wabi-sabi intentional incompletion.
 ]
 
 private let leafSpecs: [IkebanaLeafShape] = [
@@ -262,9 +267,10 @@ public struct IkeruLogoView: View {
     public var body: some View {
         GeometryReader { geo in
             let side = min(geo.size.width, geo.size.height)
-            // Scale the stroke with the canvas. `baseStrokeWidth` acts as a
-            // reference for a ~120pt canvas; scale proportionally.
-            let baseWidth = max(side * 0.055, baseStrokeWidth * side / 120.0)
+            // Variant B · Calligraphic Taper — strokeScale 0.060 → 0.068.
+            // Reference stroke weight scales with the canvas; `baseStrokeWidth`
+            // is the 120pt-canvas baseline for API compatibility.
+            let baseWidth = max(side * 0.068, baseStrokeWidth * side / 120.0)
 
             ZStack {
                 // Anchor knot — visually unifies the 3 branches at the pivot.
@@ -296,9 +302,13 @@ public struct IkeruLogoView: View {
 
     @ViewBuilder
     private func composition(baseWidth: CGFloat, bleed: Bool) -> some View {
-        let shinWidth  = baseWidth * 0.95
-        let soeWidth   = baseWidth * 0.72
-        let hikaeWidth = baseWidth * 0.55
+        // Variant B · Calligraphic Taper — shin thickens (0.95 → 1.10) and
+        // the two branches thin (soe 0.72 → 0.55, hikae 0.55 → 0.35) so the
+        // composition reads as a single confident gesture with secondary
+        // tapers, not three equal-weight strokes.
+        let shinWidth  = baseWidth * 1.10
+        let soeWidth   = baseWidth * 0.55
+        let hikaeWidth = baseWidth * 0.35
         let widthMul: CGFloat = bleed ? 1.6 : 1.0
 
         ZStack {

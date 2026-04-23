@@ -41,6 +41,24 @@ public final class HomeViewModel {
     /// Number of unopened lootboxes.
     public private(set) var unopenedLootBoxCount: Int = 0
 
+    /// Current consecutive daily-session streak (shown in the home streak pill).
+    public private(set) var dailyStreak: Int = 0
+
+    /// XP earned so far within the current level (0 ≤ value < xpForLevel(level)).
+    public var xpInCurrentLevel: Int {
+        RPGConstants.progressInLevel(totalXP: xp).current
+    }
+
+    /// XP required to complete the current level.
+    public var xpRequiredForLevel: Int {
+        RPGConstants.progressInLevel(totalXP: xp).required
+    }
+
+    /// XP remaining to reach the next rank.
+    public var xpToNextLevel: Int {
+        max(0, xpRequiredForLevel - xpInCurrentLevel)
+    }
+
     /// Whether data has been loaded at least once.
     public private(set) var hasLoaded: Bool = false
 
@@ -144,6 +162,7 @@ public final class HomeViewModel {
             xp = state.xp
             level = state.level
             unopenedLootBoxCount = state.unopenedLootBoxes.count
+            dailyStreak = state.currentDailyStreak
             EquippedCosmeticsBridge.sync(state: state)
 
             // Compute recent achievement from last inventory item
@@ -164,6 +183,7 @@ public final class HomeViewModel {
             level = 1
             recentAchievement = nil
             unopenedLootBoxCount = 0
+            dailyStreak = 0
         }
 
         xpForNextLevel = RPGConstants.xpForLevel(level)

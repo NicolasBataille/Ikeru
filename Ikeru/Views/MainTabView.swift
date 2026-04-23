@@ -28,7 +28,7 @@ enum AppTab: Int, CaseIterable, Identifiable {
         case .home: return "house"
         case .study: return "book.closed"
         case .companion: return "bubble.left"
-        case .rpg: return "shield"
+        case .rpg: return "mountain.2"            // path / summit metaphor
         case .settings: return "gearshape"
         }
     }
