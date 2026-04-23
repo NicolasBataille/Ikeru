@@ -20,14 +20,18 @@ struct ConversationView: View {
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
-                if viewModel.showWelcome {
+                if !viewModel.isAIAvailable {
+                    aiUnavailableSection
+                } else if viewModel.showWelcome {
                     welcomeSection
                 } else {
                     messageList
                 }
 
-                inputBar
-                    .padding(.bottom, 88) // Floating tab bar clearance
+                if viewModel.isAIAvailable {
+                    inputBar
+                        .padding(.bottom, 88) // Floating tab bar clearance
+                }
             }
         }
         .navigationTitle("Conversation")
@@ -41,6 +45,45 @@ struct ConversationView: View {
         .task {
             await viewModel.onAppear()
         }
+    }
+
+    // MARK: - AI Unavailable Section
+
+    private var aiUnavailableSection: some View {
+        VStack(spacing: IkeruTheme.Spacing.lg) {
+            Spacer()
+
+            Image(systemName: "bubble.left.and.text.bubble.right")
+                .font(.system(size: 56))
+                .foregroundStyle(Color.gray.opacity(0.5))
+
+            VStack(spacing: IkeruTheme.Spacing.sm) {
+                Text("AI not configured")
+                    .font(.ikeruHeading1)
+                    .foregroundStyle(.white)
+
+                Text("To chat with Sakura, set up an AI provider in Settings.")
+                    .font(.ikeruBody)
+                    .foregroundStyle(.ikeruTextSecondary)
+                    .multilineTextAlignment(.center)
+            }
+
+            NavigationLink {
+                AISettingsView()
+            } label: {
+                HStack(spacing: 10) {
+                    Text("Set Up AI")
+                    Image(systemName: "arrow.right")
+                        .font(.system(size: 14, weight: .semibold))
+                }
+                .frame(maxWidth: .infinity)
+            }
+            .ikeruButtonStyle(.primary)
+            .padding(.horizontal, IkeruTheme.Spacing.xl)
+
+            Spacer()
+        }
+        .padding(.horizontal, IkeruTheme.Spacing.lg)
     }
 
     // MARK: - Welcome Section

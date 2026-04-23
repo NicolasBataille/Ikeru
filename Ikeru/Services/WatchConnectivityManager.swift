@@ -48,8 +48,7 @@ final class WatchConnectivityManager: NSObject, ObservableObject {
         guard let container = modelContainer else { return }
 
         let context = container.mainContext
-        let descriptor = FetchDescriptor<RPGState>()
-        guard let state = try? context.fetch(descriptor).first else { return }
+        guard let state = ActiveProfileResolver.fetchActiveRPGState(in: context) else { return }
 
         let cardRepo = CardRepository(modelContainer: container)
         Task { @MainActor in
@@ -78,9 +77,8 @@ final class WatchConnectivityManager: NSObject, ObservableObject {
     private func processWatchResult(_ result: WatchSessionResult) {
         guard let container = modelContainer else { return }
         let context = container.mainContext
-        let descriptor = FetchDescriptor<RPGState>()
 
-        guard let state = try? context.fetch(descriptor).first else { return }
+        guard let state = ActiveProfileResolver.fetchActiveRPGState(in: context) else { return }
 
         state.xp += result.xpEarned
         state.level = RPGConstants.levelForXP(state.xp)
@@ -155,8 +153,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
         Task { @MainActor in
             guard let container = modelContainer else { return }
             let context = container.mainContext
-            let descriptor = FetchDescriptor<RPGState>()
-            guard let state = try? context.fetch(descriptor).first else { return }
+            guard let state = ActiveProfileResolver.fetchActiveRPGState(in: context) else { return }
 
             let localPayload = WatchSyncPayload(
                 xp: state.xp,

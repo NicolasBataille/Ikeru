@@ -1,0 +1,260 @@
+Here is the complete source code that generates Ikeru's app icon. The icon is NOT a static image file — it's rendered programmatically from SwiftUI shapes and Bézier curves. This means any refinement you suggest can be implemented precisely by adjusting the code parameters.
+
+## How the icon is built
+
+The icon is an **ikebana** (Japanese flower arrangement) motif, composed of:
+
+1. **Three branches** (traditional ikebana structure):
+   - **Shin** (主枝) — the main vertical stem, a cubic Bézier from the pivot point (bottom-center) up to the bloom
+   - **Soe** (副枝) — a secondary branch curving to the upper-left
+   - **Hikae** (控枝) — a tertiary branch curving to the lower-right
+   - Each branch is a stroked Path with round caps, different stroke widths (shin thickest, hikae thinnest)
+
+2. **Six petals** around the bloom center — each a closed Bézier shape at different angles, with varying length/width
+3. **Two leaves** on the main stem — almond-shaped quad curves
+4. **Bloom center** — a small filled circle at the flower's heart
+5. **Glow layer** — all strokes are drawn twice: once sharp, once blurred at 1.4x width and 40% opacity for the soft gold glow effect
+
+6. **Background** — a warm dark gradient from #1A1218 (top-left) → #0F0D14 → #0A0A0F (bottom-right), with a radial gold glow (#D4A574 at 22% opacity) centered behind the flower
+
+The single color used for all flower elements is **kintsugi gold #D4A574**.
+
+## Key parameters you can suggest changes to
+
+- `strokeScale: 0.060` — controls all branch thicknesses (currently 6% of icon size)
+- `shinWidth * 0.95`, `soeWidth * 0.72`, `hikaeWidth * 0.55` — relative thickness of each branch
+- `bleed blur radius: baseWidth * 1.4` at `opacity: 0.4` — the glow intensity
+- `RadialGradient opacity: 0.22` — background glow behind the flower
+- `padding(180)` out of 1024 — logo fills ~65% of the canvas
+- Petal specs: 6 petals with angles from -π*0.95 to +π*0.25, lengths 0.15–0.24, widths 0.50–0.62
+- Leaf positions and rotations
+
+## The complete source code
+
+```swift
+// AUTO-GENERATED ICON RENDERER
+// Standalone macOS SwiftPM executable. Renders the Ikeru app icon as a
+// fully-opaque 1024x1024 PNG.
+// Run with:  swift run --package-path scripts/AppIconGen
+
+import SwiftUI
+import AppKit
+import CoreGraphics
+import ImageIO
+import UniformTypeIdentifiers
+
+// MARK: - Geometry
+
+private enum Ikebana {
+    static let pivot = CGPoint(x: 0.42, y: 0.86)       // base of the arrangement
+    static let bloomCenter = CGPoint(x: 0.60, y: 0.20)  // flower center
+}
+
+// Main stem — cubic Bézier from pivot up to bloom
+struct IkebanaShinShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let w = rect.width, h = rect.height
+        func p(_ x: CGFloat, _ y: CGFloat) -> CGPoint {
+            CGPoint(x: rect.minX + w * x, y: rect.minY + h * y)
+        }
+        path.move(to: p(Ikebana.pivot.x, Ikebana.pivot.y))
+        path.addCurve(to: p(0.34, 0.55), control1: p(0.46, 0.76), control2: p(0.34, 0.66))
+        path.addCurve(to: p(Ikebana.bloomCenter.x, Ikebana.bloomCenter.y),
+                      control1: p(0.34, 0.42), control2: p(0.54, 0.28))
+        return path
+    }
+}
+
+// Secondary branch — curves upper-left
+struct IkebanaSoeShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let w = rect.width, h = rect.height
+        func p(_ x: CGFloat, _ y: CGFloat) -> CGPoint {
+            CGPoint(x: rect.minX + w * x, y: rect.minY + h * y)
+        }
+        path.move(to: p(Ikebana.pivot.x, Ikebana.pivot.y))
+        path.addCurve(to: p(0.12, 0.38), control1: p(0.46, 0.62), control2: p(0.22, 0.40))
+        return path
+    }
+}
+
+// Tertiary branch — curves lower-right
+struct IkebanaHikaeShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let w = rect.width, h = rect.height
+        func p(_ x: CGFloat, _ y: CGFloat) -> CGPoint {
+            CGPoint(x: rect.minX + w * x, y: rect.minY + h * y)
+        }
+        path.move(to: p(Ikebana.pivot.x, Ikebana.pivot.y))
+        path.addCurve(to: p(0.82, 0.74), control1: p(0.56, 0.94), control2: p(0.74, 0.86))
+        return path
+    }
+}
+
+// Almond-shaped leaf
+struct IkebanaLeafShape: Shape {
+    let center: CGPoint
+    let length: CGFloat
+    let rotation: Double
+
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let w = rect.width, h = rect.height
+        let cx = rect.minX + w * center.x
+        let cy = rect.minY + h * center.y
+        let side = min(w, h)
+        let len = side * length
+        let thick = len * 0.32
+        let cosR = CGFloat(cos(rotation)), sinR = CGFloat(sin(rotation))
+        func tx(_ lx: CGFloat, _ ly: CGFloat) -> CGPoint {
+            CGPoint(x: cx + lx * cosR - ly * sinR, y: cy + lx * sinR + ly * cosR)
+        }
+        path.move(to: tx(-len / 2, 0))
+        path.addQuadCurve(to: tx(len / 2, 0), control: tx(0, -thick))
+        path.addQuadCurve(to: tx(-len / 2, 0), control: tx(0, thick))
+        path.closeSubpath()
+        return path
+    }
+}
+
+// Single petal radiating from bloom center
+struct IkebanaPetalShape: Shape {
+    let angle: Double
+    let length: CGFloat
+    let width: CGFloat
+
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let w = rect.width, h = rect.height
+        let side = min(w, h)
+        let cx = rect.minX + w * Ikebana.bloomCenter.x
+        let cy = rect.minY + h * Ikebana.bloomCenter.y
+        let len = side * length
+        let half = len * width * 0.5
+        let cosA = CGFloat(cos(angle)), sinA = CGFloat(sin(angle))
+        func tx(_ lx: CGFloat, _ ly: CGFloat) -> CGPoint {
+            CGPoint(x: cx + lx * cosA - ly * sinA, y: cy + lx * sinA + ly * cosA)
+        }
+        path.move(to: tx(0, 0))
+        path.addCurve(to: tx(len, 0), control1: tx(len * 0.15, -half), control2: tx(len * 0.85, -half * 0.9))
+        path.addCurve(to: tx(0, 0), control1: tx(len * 0.85, half * 0.9), control2: tx(len * 0.15, half))
+        path.closeSubpath()
+        return path
+    }
+}
+
+// Bloom center dot
+struct BloomCenter: Shape {
+    func path(in rect: CGRect) -> Path {
+        let w = rect.width, h = rect.height
+        let side = min(w, h)
+        let r = side * 0.035
+        let c = CGPoint(x: rect.minX + w * Ikebana.bloomCenter.x, y: rect.minY + h * Ikebana.bloomCenter.y)
+        return Path(ellipseIn: CGRect(x: c.x - r, y: c.y - r, width: r * 2, height: r * 2))
+    }
+}
+
+// MARK: - Petal + Leaf specs
+
+private let petalSpecs: [(angle: Double, length: CGFloat, width: CGFloat)] = [
+    (-.pi * 0.95, 0.18, 0.55),
+    (-.pi * 0.70, 0.22, 0.60),
+    (-.pi * 0.48, 0.24, 0.62),  // largest petal
+    (-.pi * 0.25, 0.21, 0.58),
+    (-.pi * 0.02, 0.18, 0.54),
+    ( .pi * 0.25, 0.15, 0.50),  // smallest, bottom-right
+]
+
+private let leafSpecs = [
+    (center: CGPoint(x: 0.51, y: 0.58), length: CGFloat(0.20), rotation: -Double.pi / 3.5),
+    (center: CGPoint(x: 0.22, y: 0.55), length: CGFloat(0.17), rotation: -Double.pi * 0.62),
+]
+
+// MARK: - Colors
+
+private let goldAccent = Color(hex: 0xD4A574)  // kintsugi gold
+
+private let heroWarm = LinearGradient(
+    colors: [Color(hex: 0x1A1218), Color(hex: 0x0F0D14), Color(hex: 0x0A0A0F)],
+    startPoint: .topLeading, endPoint: .bottomTrailing
+)
+
+// MARK: - Logo composition
+
+struct IkeruLogoView: View {
+    var strokeScale: CGFloat = 0.060  // 6% of icon size = base stroke width
+    var tint: Color = goldAccent
+
+    var body: some View {
+        GeometryReader { geo in
+            let side = min(geo.size.width, geo.size.height)
+            let baseWidth = side * strokeScale
+            ZStack {
+                // Pivot dot at base
+                Circle().fill(tint)
+                    .frame(width: side * 0.045, height: side * 0.045)
+                    .position(x: side * Ikebana.pivot.x, y: side * Ikebana.pivot.y)
+                // Glow layer (blurred duplicate)
+                strokes(baseWidth: baseWidth, bleed: true)
+                    .blur(radius: baseWidth * 1.4)
+                    .opacity(0.4)
+                // Sharp layer
+                strokes(baseWidth: baseWidth, bleed: false)
+            }
+            .frame(width: side, height: side)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+        .aspectRatio(1, contentMode: .fit)
+    }
+
+    private func strokes(baseWidth: CGFloat, bleed: Bool) -> some View {
+        let widthMul: CGFloat = bleed ? 1.6 : 1.0
+        return ZStack {
+            IkebanaShinShape().stroke(tint, style: StrokeStyle(lineWidth: baseWidth * 0.95 * widthMul, lineCap: .round, lineJoin: .round))
+            IkebanaSoeShape().stroke(tint, style: StrokeStyle(lineWidth: baseWidth * 0.72 * widthMul, lineCap: .round, lineJoin: .round))
+            IkebanaHikaeShape().stroke(tint, style: StrokeStyle(lineWidth: baseWidth * 0.55 * widthMul, lineCap: .round, lineJoin: .round))
+            // Leaves
+            ForEach(0..<leafSpecs.count, id: \.self) { i in
+                IkebanaLeafShape(center: leafSpecs[i].center, length: leafSpecs[i].length, rotation: leafSpecs[i].rotation).fill(tint)
+            }
+            // Petals
+            ForEach(0..<petalSpecs.count, id: \.self) { i in
+                IkebanaPetalShape(angle: petalSpecs[i].angle, length: petalSpecs[i].length, width: petalSpecs[i].width).fill(tint)
+            }
+            BloomCenter().fill(tint.opacity(0.95))
+        }
+    }
+}
+
+// MARK: - Final icon composition
+
+struct AppIconView: View {
+    var body: some View {
+        ZStack {
+            heroWarm  // warm dark gradient background
+            // Radial gold glow behind the flower
+            RadialGradient(
+                colors: [Color(hex: 0xD4A574, opacity: 0.22), Color(hex: 0xD4A574, opacity: 0.0)],
+                center: UnitPoint(x: 0.58, y: 0.42),
+                startRadius: 40, endRadius: 620
+            )
+            IkeruLogoView().padding(180)  // logo fills ~65% of 1024x1024 canvas
+        }
+        .frame(width: 1024, height: 1024)
+    }
+}
+```
+
+## What I want you to do with this
+
+You now have the EXACT code that produces the icon. When suggesting icon refinements, reference the specific parameters:
+
+- "Increase strokeScale from 0.060 to 0.075 for thicker branches"
+- "Reduce glow opacity from 0.4 to 0.25 for subtlety"
+- "Increase padding from 180 to 220 so the logo breathes more"
+- etc.
+
+Show me mockup variations, and for each one tell me the parameter changes so I can regenerate the icon from code.

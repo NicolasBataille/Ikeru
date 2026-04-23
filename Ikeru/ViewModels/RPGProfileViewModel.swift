@@ -29,6 +29,15 @@ final class RPGProfileViewModel {
     /// Unopened lootboxes available for challenge.
     private(set) var unopenedLootBoxes: [LootBox] = []
 
+    /// Currently equipped title (shown under the player name). Nil if none.
+    private(set) var equippedTitle: LootItem?
+
+    /// Currently equipped theme (tints XP bar). Nil if none.
+    private(set) var equippedTheme: LootItem?
+
+    /// Currently equipped badges (up to 3), in equip order.
+    private(set) var equippedBadges: [LootItem] = []
+
     /// Whether data has been loaded.
     private(set) var hasLoaded: Bool = false
 
@@ -84,16 +93,18 @@ final class RPGProfileViewModel {
 
     func loadData() async {
         let context = modelContainer.mainContext
-        let descriptor = FetchDescriptor<RPGState>()
-        let results = (try? context.fetch(descriptor)) ?? []
 
-        if let state = results.first {
+        if let state = ActiveProfileResolver.fetchActiveRPGState(in: context) {
             level = state.level
             xp = state.xp
             totalReviews = state.totalReviewsCompleted
             attributes = state.attributes
             inventory = state.lootInventory
             unopenedLootBoxes = state.unopenedLootBoxes
+            equippedTitle = state.equippedTitle
+            equippedTheme = state.equippedTheme
+            equippedBadges = state.equippedBadges
+            EquippedCosmeticsBridge.sync(state: state)
 
             // Auto-sync newly unlocked attributes
             let newAttrs = RPGRewardService.newlyUnlockedAttributes(
@@ -111,5 +122,37 @@ final class RPGProfileViewModel {
 
         hasLoaded = true
         Logger.ui.debug("RPG profile loaded: level=\(self.level), xp=\(self.xp), attrs=\(self.attributes.count), items=\(self.inventory.count)")
+    }
+
+    // MARK: - Equip / Unequip
+
+    /// Toggles the equipped state of the given item and persists the change.
+    func toggleEquip(_ item: LootItem) {
+        let context = modelContainer.mainContext
+        guard let state = ActiveProfileResolver.fetchActiveRPGState(in: context) else { return }
+
+        EquipmentService.toggleEquip(item, in: state)
+
+        do {
+            try context.save()
+        } catch {
+            Logger.rpg.error("Failed to save equipment change: \(error.localizedDescription)")
+            return
+        }
+
+        equippedTitle = state.equippedTitle
+        equippedTheme = state.equippedTheme
+        equippedBadges = state.equippedBadges
+        EquippedCosmeticsBridge.sync(state: state)
+    }
+
+    /// True if the given item is currently equipped.
+    func isEquipped(_ item: LootItem) -> Bool {
+        switch item.category {
+        case .title: equippedTitle?.id == item.id
+        case .theme: equippedTheme?.id == item.id
+        case .badge: equippedBadges.contains { $0.id == item.id }
+        case .scroll: false
+        }
     }
 }

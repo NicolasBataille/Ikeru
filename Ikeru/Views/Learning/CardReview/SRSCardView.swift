@@ -37,76 +37,167 @@ enum SwipeDirection: Sendable {
     }
 }
 
-// MARK: - SRSCardView
+// MARK: - SRSCardView (deck)
 
+/// A 3-layer deck showing the current card plus up to two peeks stacked
+/// behind it. Promotions are smooth: when the front card flies off, the
+/// second layer rises into the current slot (matched via `matchedGeometryEffect`
+/// using each card's stable id), the third layer slides into the second, and
+/// a brand-new third layer fades in at the back.
 struct SRSCardView: View {
 
     let card: CardDTO
-    let nextCard: CardDTO?
+    /// Upcoming cards (first is slot-1 peek, second is slot-2, third is slot-3).
+    /// The deck dynamically renders as many peeks as the array provides — so
+    /// the visible stack depth naturally reflects how many reviews remain.
+    let upcomingCards: [CardDTO]
+    @Binding var isRevealed: Bool
     let onSwipe: (SwipeDirection) -> Void
 
     @State private var dragOffset: CGSize = .zero
     @State private var isDragging = false
-    @State private var isRevealed = false
     @State private var isFlyingOff = false
+    @State private var thresholdCrossed = false
 
-    /// Minimum drag distance before a grade registers.
-    private let swipeThreshold: CGFloat = 100
+    // Ephemeral "flying" state: when the user commits a swipe, we freeze the
+    // outgoing card's visuals here and advance the deck data IMMEDIATELY.
+    // The flying card animates off-screen as an overlay on top of the deck,
+    // letting the peek promote upward in parallel (no sequential dead-time).
+    @State private var flyingCard: CardDTO?
+    @State private var flyingOffset: CGSize = .zero
+    @State private var flyingRotation: Angle = .zero
+    @State private var flyingRevealed: Bool = false
+    @State private var flyingDirection: SwipeDirection?
 
-    /// Duration of the fly-off spring animation. Must complete before the
-    /// parent swaps in the next exercise (which destroys this view via `.id`).
-    private let flyOffDuration: TimeInterval = 0.28
+    @Namespace private var deckNamespace
+
+    /// Distance (in points) at which the grade indicator starts appearing.
+    private let indicatorAppearanceDistance: CGFloat = 20
+    /// Distance at which the grade is "committed" (haptic + visual snap).
+    private let commitThreshold: CGFloat = 110
+    /// Max rotation angle (degrees) at full drag extension.
+    private let maxRotation: Double = 12
+    /// Reference distance used to normalize rotation/tilt scaling.
+    private let rotationReference: CGFloat = 320
+
+    // Deck layer styling helpers — a single formula drives offset/scale/opacity
+    // per depth so the stack visually thickens with more remaining cards.
+    private func layerYOffset(forDepth depth: Int) -> CGFloat {
+        CGFloat(depth) * 18
+    }
+    private func layerScale(forDepth depth: Int) -> CGFloat {
+        max(0.80, 1.0 - CGFloat(depth) * 0.06)
+    }
+    private func layerOpacity(forDepth depth: Int) -> Double {
+        max(0.30, 1.0 - Double(depth) * 0.22)
+    }
 
     var body: some View {
         ZStack {
-            // Peeking card behind (next card preview)
-            if let nextCard {
-                peekingCard(for: nextCard)
+            // Peeks rendered back-to-front. Each layer's styling comes from
+            // `layerYOffset/Scale/Opacity(forDepth:)` so the stack naturally
+            // thickens with more remaining cards and collapses when few
+            // reviews remain.
+            ForEach(Array(upcomingCards.enumerated().reversed()), id: \.element.id) { index, peek in
+                let depth = index + 1
+                deckLayer(card: peek)
+                    .offset(y: layerYOffset(forDepth: depth))
+                    .scaleEffect(layerScale(forDepth: depth))
+                    .opacity(layerOpacity(forDepth: depth))
+                    .matchedGeometryEffect(id: peek.id, in: deckNamespace)
+                    .allowsHitTesting(false)
+                    .zIndex(Double(upcomingCards.count - index))
+                    .transition(.opacity.combined(with: .scale(scale: 0.92)))
             }
 
-            // Current interactive card
-            currentCard
-                .offset(dragOffset)
-                .rotationEffect(cardRotation)
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    guard !isFlyingOff else { return }
-                    withAnimation(.spring(response: 0.45, dampingFraction: 0.78)) {
-                        isRevealed.toggle()
+            // Current card (interactive front) ---------------------------------
+            // Hide the current slot while the very same card is still flying
+            // off. Otherwise there's a brief window (between our sync state
+            // reset and the async viewModel advance) where the stale card
+            // data re-renders at the centre, making it look like the swiped
+            // card "pops back" onto the stack.
+            //
+            // `.id(card.id)` forces a fresh view instance when the card
+            // changes so SwiftUI doesn't interpolate visual properties
+            // (border tint, shadow colour) from the outgoing card onto the
+            // incoming one. The matchedGeometryEffect still runs because it
+            // matches by namespace+id, not by view identity.
+            if flyingCard?.id != card.id {
+                currentCard
+                    .overlay(dragBorderOverlay)
+                    .overlay(alignment: .top) { gradeIndicator }
+                    .shadow(color: swipeGlowColor, radius: swipeGlowRadius, y: 0)
+                    .matchedGeometryEffect(id: card.id, in: deckNamespace)
+                    .id(card.id)
+                    .offset(dragOffset)
+                    .rotationEffect(cardRotation, anchor: .bottom)
+                    .rotation3DEffect(
+                        cardTiltY,
+                        axis: (x: 0, y: 1, z: 0),
+                        anchor: .center,
+                        anchorZ: 0,
+                        perspective: 0.4
+                    )
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        guard !isFlyingOff, flyingCard == nil else { return }
+                        withAnimation(.spring(response: 0.42, dampingFraction: 0.8)) {
+                            isRevealed.toggle()
+                        }
                     }
-                }
-                .gesture(dragGesture)
-                .overlay(alignment: .top) {
-                    gradeIndicator
-                }
+                    .highPriorityGesture(dragGesture, including: isRevealed ? .all : .subviews)
+                    .sensoryFeedback(.impact(weight: .medium), trigger: thresholdCrossed)
+                    .zIndex(1000)
+            }
+
+            // Flying card overlay (ephemeral) ----------------------------------
+            // Rendered ON TOP of the deck while the old card animates off-screen.
+            // The deck data has already advanced, so the new current card is
+            // rising into place behind this overlay.
+            if let flying = flyingCard {
+                flyingCardView(for: flying)
+                    .zIndex(2000)
+            }
         }
         .onChange(of: card.id) { _, _ in
-            // Reset reveal + drag when a new card slides in (parent re-creates
-            // the view via `.id(exercise.stableID)`, but be defensive).
-            isRevealed = false
             dragOffset = .zero
             isFlyingOff = false
+            thresholdCrossed = false
         }
     }
 
-    // MARK: - Current Card
+    // MARK: - Flying Card Overlay
+
+    @ViewBuilder
+    private func flyingCardView(for card: CardDTO) -> some View {
+        cardContent(for: card, revealed: flyingRevealed)
+            .ikeruCard(.interactive)
+            .overlay(flyingBorderOverlay)
+            .offset(flyingOffset)
+            .rotationEffect(flyingRotation, anchor: .bottom)
+            .allowsHitTesting(false)
+    }
+
+    @ViewBuilder
+    private var flyingBorderOverlay: some View {
+        if let direction = flyingDirection {
+            RoundedRectangle(cornerRadius: IkeruTheme.Radius.md, style: .continuous)
+                .strokeBorder(direction.color.opacity(0.85), lineWidth: 3)
+        }
+    }
+
+    // MARK: - Card Layers
 
     private var currentCard: some View {
         cardContent(for: card, revealed: isRevealed)
             .ikeruCard(.interactive)
     }
 
-    // MARK: - Peeking Card
-
-    private func peekingCard(for card: CardDTO) -> some View {
-        // The peek always shows the FRONT — it's a glimpse of what's coming,
-        // not a duplicate of the current card's back face.
+    /// A peek layer. Always shows the front of the card (never the answer)
+    /// and uses the slightly softer `.standard` card surface.
+    private func deckLayer(card: CardDTO) -> some View {
         cardContent(for: card, revealed: false)
             .ikeruCard(.standard)
-            .offset(y: 8)
-            .scaleEffect(0.96)
-            .opacity(0.6)
-            .allowsHitTesting(false)
     }
 
     // MARK: - Card Content
@@ -159,7 +250,6 @@ struct SRSCardView: View {
     @ViewBuilder
     private func cardBackContent(for card: CardDTO) -> some View {
         VStack(spacing: IkeruTheme.Spacing.sm) {
-            // Smaller front glyph as a reference at the top
             Text(card.front)
                 .font(.system(size: 64, weight: .regular, design: .serif))
                 .foregroundStyle(Color.ikeruTextSecondary)
@@ -172,43 +262,13 @@ struct SRSCardView: View {
         }
     }
 
-    // MARK: - Card Rotation
+    // MARK: - Dominant Direction (progressive)
 
-    private var cardRotation: Angle {
-        let maxRotation: Double = 15
-        let normalizedOffset = dragOffset.width / 300
-        let clampedRotation = max(-maxRotation, min(maxRotation, normalizedOffset * maxRotation))
-        return .degrees(clampedRotation)
-    }
-
-    // MARK: - Grade Indicator
-
-    @ViewBuilder
-    private var gradeIndicator: some View {
-        if let direction = dominantDirection, isDragging {
-            Text(direction.label)
-                .font(.ikeruHeading2)
-                .foregroundStyle(direction.color)
-                .padding(.horizontal, IkeruTheme.Spacing.md)
-                .padding(.vertical, IkeruTheme.Spacing.sm)
-                .background {
-                    RoundedRectangle(cornerRadius: IkeruTheme.Radius.sm)
-                        .fill(direction.color.opacity(0.2))
-                }
-                .padding(.top, IkeruTheme.Spacing.md)
-                .transition(.opacity)
-                .animation(.easeInOut(duration: 0.15), value: direction.label)
-        }
-    }
-
-    // MARK: - Dominant Direction
-
-    private var dominantDirection: SwipeDirection? {
+    private var currentDirection: SwipeDirection? {
         let absWidth = abs(dragOffset.width)
         let absHeight = abs(dragOffset.height)
         let maxDimension = max(absWidth, absHeight)
-
-        guard maxDimension >= swipeThreshold else { return nil }
+        guard maxDimension > indicatorAppearanceDistance else { return nil }
 
         if absWidth > absHeight {
             return dragOffset.width < 0 ? .left : .right
@@ -217,59 +277,231 @@ struct SRSCardView: View {
         }
     }
 
+    private var commitProgress: CGFloat {
+        let absWidth = abs(dragOffset.width)
+        let absHeight = abs(dragOffset.height)
+        let maxDimension = max(absWidth, absHeight)
+        let appearance = indicatorAppearanceDistance
+        guard maxDimension > appearance else { return 0 }
+        let commit = commitThreshold
+        let value = (maxDimension - appearance) / (commit - appearance)
+        return min(1, max(0, value))
+    }
+
+    // MARK: - Transforms
+
+    private var cardRotation: Angle {
+        let normalizedOffset = dragOffset.width / rotationReference
+        let clamped = max(-1, min(1, Double(normalizedOffset)))
+        return .degrees(clamped * maxRotation)
+    }
+
+    private var cardTiltY: Angle {
+        let normalized = dragOffset.width / (rotationReference * 2)
+        let clamped = max(-1, min(1, Double(normalized)))
+        return .degrees(clamped * 4)
+    }
+
+    // MARK: - Overlays
+
+    /// Colored border that grows thicker as the user approaches the commit
+    /// threshold. Gated on `isDragging && flyingCard == nil` so it can only
+    /// ever appear during an active drag on the live front card — never on
+    /// the promoted card or the ghost overlay.
+    @ViewBuilder
+    private var dragBorderOverlay: some View {
+        if let direction = currentDirection, isDragging, flyingCard == nil {
+            RoundedRectangle(cornerRadius: IkeruTheme.Radius.md, style: .continuous)
+                .strokeBorder(direction.color.opacity(0.5 + 0.45 * commitProgress),
+                              lineWidth: 1.5 + 2.5 * commitProgress)
+                .allowsHitTesting(false)
+        }
+    }
+
+    /// Soft outer glow that tints the card's shadow with the swipe color.
+    /// Also gated on active drag with no flying ghost.
+    private var swipeGlowColor: Color {
+        guard isDragging, flyingCard == nil, let direction = currentDirection else {
+            return Color.black.opacity(0.45)
+        }
+        return direction.color.opacity(0.35 + 0.35 * commitProgress)
+    }
+
+    private var swipeGlowRadius: CGFloat {
+        let base: CGFloat = 18
+        guard isDragging, flyingCard == nil, currentDirection != nil else { return base }
+        return base + 16 * commitProgress
+    }
+
+    @ViewBuilder
+    private var gradeIndicator: some View {
+        if let direction = currentDirection, isDragging {
+            Text(direction.label)
+                .font(.ikeruHeading2)
+                .foregroundStyle(direction.color)
+                .padding(.horizontal, IkeruTheme.Spacing.md)
+                .padding(.vertical, IkeruTheme.Spacing.sm)
+                .background {
+                    Capsule()
+                        .fill(direction.color.opacity(0.15 + 0.15 * commitProgress))
+                        .overlay {
+                            Capsule()
+                                .strokeBorder(direction.color.opacity(0.6 * commitProgress),
+                                              lineWidth: 1)
+                        }
+                }
+                .scaleEffect(0.85 + 0.15 * commitProgress)
+                .opacity(0.6 + 0.4 * commitProgress)
+                .padding(.top, -IkeruTheme.Spacing.md)
+                .transition(.scale(scale: 0.8).combined(with: .opacity))
+                .animation(.spring(response: 0.25, dampingFraction: 0.75), value: direction.label)
+                .animation(.spring(response: 0.2, dampingFraction: 0.8), value: commitProgress)
+        }
+    }
+
     // MARK: - Drag Gesture
 
     private var dragGesture: some Gesture {
-        DragGesture(minimumDistance: 8)
+        DragGesture(minimumDistance: 4)
             .onChanged { value in
-                guard !isFlyingOff else { return }
-                dragOffset = value.translation
+                guard !isFlyingOff, isRevealed else { return }
+
+                let raw = value.translation
+                let rubberBanded = rubberBand(raw)
+                dragOffset = rubberBanded
                 if !isDragging { isDragging = true }
-            }
-            .onEnded { _ in
-                isDragging = false
-                guard !isFlyingOff else { return }
-                if let direction = dominantDirection {
-                    isFlyingOff = true
 
-                    // Fly off screen in the swipe direction
-                    let flyDistance: CGFloat = 600
-                    let flyOffset: CGSize
-                    switch direction {
-                    case .left:
-                        flyOffset = CGSize(width: -flyDistance, height: 0)
-                    case .right:
-                        flyOffset = CGSize(width: flyDistance, height: 0)
-                    case .up:
-                        flyOffset = CGSize(width: 0, height: -flyDistance)
-                    case .down:
-                        flyOffset = CGSize(width: 0, height: flyDistance)
-                    }
-
-                    withAnimation(.easeOut(duration: flyOffDuration)) {
-                        dragOffset = flyOffset
-                    }
-
-                    // Notify the parent only AFTER the fly-off completes so the
-                    // current view isn't destroyed mid-animation by the parent
-                    // re-rendering with a new exercise (`.id(exercise.stableID)`).
-                    DispatchQueue.main.asyncAfter(deadline: .now() + flyOffDuration) {
-                        onSwipe(direction)
-                    }
-                } else {
-                    // Snap back
-                    withAnimation(.spring(duration: 0.3, bounce: 0.4)) {
-                        dragOffset = .zero
-                    }
+                let crossed = dominantDistance(of: raw) >= commitThreshold
+                if crossed && !thresholdCrossed {
+                    thresholdCrossed = true
+                } else if !crossed && thresholdCrossed {
+                    thresholdCrossed = false
                 }
             }
+            .onEnded { value in
+                isDragging = false
+                guard !isFlyingOff, isRevealed else {
+                    snapBack()
+                    return
+                }
+
+                let committed = dominantDistance(of: value.translation) >= commitThreshold
+                guard committed, let direction = currentDirection else {
+                    snapBack()
+                    thresholdCrossed = false
+                    return
+                }
+
+                flyOff(direction: direction, predictedEndLocation: value.predictedEndTranslation)
+            }
+    }
+
+    // MARK: - Gesture Helpers
+
+    private func dominantDistance(of translation: CGSize) -> CGFloat {
+        max(abs(translation.width), abs(translation.height))
+    }
+
+    private func rubberBand(_ translation: CGSize) -> CGSize {
+        func band(_ value: CGFloat) -> CGFloat {
+            let absValue = abs(value)
+            guard absValue > commitThreshold else { return value }
+            let excess = absValue - commitThreshold
+            let dampened = commitThreshold + excess * 0.45
+            return value < 0 ? -dampened : dampened
+        }
+        return CGSize(width: band(translation.width), height: band(translation.height))
+    }
+
+    private func snapBack() {
+        withAnimation(.spring(response: 0.35, dampingFraction: 0.68)) {
+            dragOffset = .zero
+        }
+        thresholdCrossed = false
+    }
+
+    /// Commits a swipe: snapshots the outgoing card into a flying overlay,
+    /// advances the deck data immediately, and animates the overlay off-screen
+    /// in parallel with the peek-to-current promotion (matchedGeometryEffect).
+    private func flyOff(direction: SwipeDirection, predictedEndLocation: CGSize) {
+        let minTravel: CGFloat = 700
+        let target: CGSize = {
+            switch direction {
+            case .left:
+                let x = min(-minTravel, predictedEndLocation.width)
+                return CGSize(width: x, height: predictedEndLocation.height)
+            case .right:
+                let x = max(minTravel, predictedEndLocation.width)
+                return CGSize(width: x, height: predictedEndLocation.height)
+            case .up:
+                let y = min(-minTravel, predictedEndLocation.height)
+                return CGSize(width: predictedEndLocation.width, height: y)
+            case .down:
+                let y = max(minTravel, predictedEndLocation.height)
+                return CGSize(width: predictedEndLocation.width, height: y)
+            }
+        }()
+
+        // Capture the outgoing card's visual state BEFORE resetting dragOffset.
+        let capturedOffset = dragOffset
+        let capturedRotation = cardRotation
+
+        // Apply the ghost's starting state AND reset the interactive drag
+        // state in a single animation-disabled transaction. Wrapping both in
+        // the same Transaction guarantees SwiftUI commits these values
+        // instantly for the current render — otherwise the withAnimation
+        // below would animate `flyingOffset` from its previous value (.zero)
+        // instead of from `capturedOffset`, causing the ghost to briefly
+        // appear at the centre before flying off.
+        var instant = Transaction()
+        instant.disablesAnimations = true
+        withTransaction(instant) {
+            flyingCard = card
+            flyingRevealed = isRevealed
+            flyingDirection = direction
+            flyingOffset = capturedOffset
+            flyingRotation = capturedRotation
+
+            dragOffset = .zero
+            isFlyingOff = true
+            thresholdCrossed = false
+            // Hide the answer BEFORE the new current card renders — otherwise
+            // the promoted peek briefly inherits isRevealed=true and flashes
+            // its answer for one frame.
+            isRevealed = false
+        }
+
+        // Advance data IMMEDIATELY — peek promotion starts now (this change
+        // IS animated by the parent's spring since it changes currentCard.id).
+        onSwipe(direction)
+
+        // Defer the fly-off animation to the NEXT run-loop tick so SwiftUI
+        // has already committed `flyingOffset = capturedOffset` above. Without
+        // this deferral, both assignments land in the same render pass and
+        // SwiftUI animates from the prior `.zero` — making the ghost appear
+        // to pop at the centre before flying off.
+        let flyOffDuration: TimeInterval = 0.34
+        let spinBias: Double = direction == .left ? -18 : (direction == .right ? 18 : 0)
+        DispatchQueue.main.async {
+            withAnimation(.timingCurve(0.25, 0.0, 0.25, 1.0, duration: flyOffDuration)) {
+                self.flyingOffset = target
+                self.flyingRotation = capturedRotation + .degrees(spinBias)
+            }
+        }
+
+        // Clear the overlay once it's safely off-screen and unlock interaction.
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(flyOffDuration + 0.05))
+            flyingCard = nil
+            flyingDirection = nil
+            isFlyingOff = false
+        }
     }
 }
 
 // MARK: - Swipe Direction Helpers
 
 extension SwipeDirection {
-    /// Determines the dominant swipe direction from a drag offset, or nil if below threshold.
     static func from(offset: CGSize, threshold: CGFloat) -> SwipeDirection? {
         let absWidth = abs(offset.width)
         let absHeight = abs(offset.height)
@@ -312,13 +544,37 @@ extension SwipeDirection {
         lapseCount: 0,
         leechFlag: false
     )
+    let after = CardDTO(
+        id: UUID(),
+        front: "\u{751F}",
+        back: "life",
+        type: .kanji,
+        fsrsState: FSRSState(),
+        easeFactor: 2.5,
+        interval: 0,
+        dueDate: Date(),
+        lapseCount: 0,
+        leechFlag: false
+    )
 
-    ZStack {
-        Color.ikeruBackground.ignoresSafeArea()
-        SRSCardView(card: card, nextCard: nextCard) { direction in
-            print("Swiped: \(direction.label)")
+    struct PreviewWrapper: View {
+        @State var revealed = true
+        let card: CardDTO
+        let upcoming: [CardDTO]
+        var body: some View {
+            ZStack {
+                Color.ikeruBackground.ignoresSafeArea()
+                SRSCardView(
+                    card: card,
+                    upcomingCards: upcoming,
+                    isRevealed: $revealed
+                ) { direction in
+                    print("Swiped: \(direction.label)")
+                }
+                .padding(IkeruTheme.Spacing.lg)
+            }
+            .preferredColorScheme(.dark)
         }
-        .padding(IkeruTheme.Spacing.lg)
     }
-    .preferredColorScheme(.dark)
+    return PreviewWrapper(card: card, upcoming: [nextCard, after])
 }

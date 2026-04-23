@@ -60,7 +60,8 @@ struct IkeruApp: App {
             ])
             let config = ModelConfiguration(
                 "Ikeru",
-                schema: schema
+                schema: schema,
+                cloudKitDatabase: .none  // Manual backup via CloudBackupManager, not auto-sync
             )
             modelContainer = try ModelContainer(
                 for: schema,
@@ -176,6 +177,12 @@ struct IkeruApp: App {
         }
 
         hasCheckedProfile = true
+
+        // One-shot: attach pre-existing (profile-less) cards to the active profile.
+        Task { @MainActor in
+            let repo = CardRepository(modelContainer: modelContainer)
+            await repo.attachOrphanCards()
+        }
     }
 
     // MARK: - Notification Scheduling

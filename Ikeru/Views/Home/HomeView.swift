@@ -14,6 +14,7 @@ struct HomeView: View {
     @State private var sessionViewModel: SessionViewModel?
     @State private var showSession = false
     @State private var heroAppeared = false
+    @AppStorage("ikeru.equippedTitleName") private var equippedTitleName: String = ""
 
     var body: some View {
         ZStack {
@@ -56,6 +57,9 @@ struct HomeView: View {
         .onReceive(NotificationCenter.default.publisher(for: .startReviewFromShortcut)) { _ in
             initializeViewModels()
             startSession()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .ikeruActiveProfileDidChange)) { _ in
+            Task { await viewModel?.loadData() }
         }
     }
 
@@ -117,6 +121,13 @@ struct HomeView: View {
                     .font(.ikeruDisplaySmall)
                     .ikeruTracking(.display)
                     .foregroundStyle(Color.ikeruTextPrimary)
+
+                if !equippedTitleName.isEmpty {
+                    Text(equippedTitleName.uppercased())
+                        .font(.ikeruMicro)
+                        .ikeruTracking(.micro)
+                        .foregroundStyle(Color.ikeruPrimaryAccent)
+                }
             }
             Spacer()
             // Streak / status pill

@@ -42,7 +42,7 @@ struct SettingsView: View {
         ZStack {
             IkeruScreenBackground()
 
-            ScrollView {
+            ScrollView(showsIndicators: false) {
                 VStack(spacing: IkeruTheme.Spacing.xl) {
                     topBar
 
@@ -55,11 +55,10 @@ struct SettingsView: View {
                     assetCacheSection
                     localRigSection
                     attributionSection
-
-                    Spacer(minLength: 200)
                 }
                 .padding(.horizontal, IkeruTheme.Spacing.md)
                 .padding(.top, IkeruTheme.Spacing.lg)
+                .padding(.bottom, 140) // clear of the floating tab bar
             }
         }
         .toolbar(.hidden, for: .navigationBar)
@@ -220,25 +219,17 @@ struct SettingsView: View {
                 newProfileName = ""
             }
         }
-        .confirmationDialog(
-            "Delete Profile?",
-            isPresented: Binding(
-                get: { profileToDelete != nil },
-                set: { if !$0 { profileToDelete = nil } }
-            ),
-            titleVisibility: .visible
-        ) {
-            if let profile = profileToDelete {
-                Button("Delete \(profile.displayName)", role: .destructive) {
+        .sheet(item: $profileToDelete) { profile in
+            DeleteProfileSheet(
+                profile: profile,
+                onConfirm: {
                     profileViewModel?.deleteProfile(profile)
                     profileToDelete = nil
+                },
+                onCancel: {
+                    profileToDelete = nil
                 }
-            }
-            Button("Cancel", role: .cancel) {
-                profileToDelete = nil
-            }
-        } message: {
-            Text("This will permanently delete the profile and all its learning data.")
+            )
         }
     }
 

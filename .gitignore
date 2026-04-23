@@ -57,3 +57,4 @@ sottaku-*.png
 # Local tool configs
 .playwright-mcp/
 .cursor/
+.claude/

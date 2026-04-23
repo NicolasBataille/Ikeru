@@ -1,0 +1,58 @@
+I'm sharing screenshots of Ikeru, my existing iOS app for learning Japanese. This is a LIVE app — it's already built and running. I'm NOT asking you to redesign from scratch. I want you to review what exists, keep what works well, and suggest targeted improvements.
+
+## Context
+
+Ikeru is a personal Japanese learning app built in SwiftUI. It uses FSRS spaced repetition for card reviews, with an RPG gamification layer (XP, levels, loot drops, equipped cosmetics). It's dark-mode only, designed for iPhone.
+
+## Design Direction (established from day one)
+
+The core aesthetic is **wabi-sabi** — the Japanese philosophy of imperfect, weathered, quiet beauty:
+
+- **Sumi ink black** backgrounds (#0A0A0F) — deep, warm-cool, never pure black
+- **Kintsugi gold** as primary accent (#D4A574) — the art of repairing with gold, embracing imperfection
+- **Sakura pink** (#E8B4B8) and **matcha green** (#7A8471) as supporting tones
+- **Washi paper white** text (#F5F2EC) — warm, never pure white
+- **Glass surfaces** — translucent layers with white at 6% fill, 12% stroke, 18% highlight. Cards float above the sumi background with soft warm shadows
+- **Negative space as a design element** — generous spacing (16/24/36pt), the calm comes from what's NOT there
+- **Movement through stillness** — animations are calm springs (0.28 response, 0.86 damping), never bouncy or aggressive
+- **NotoSerifJP** for kanji display, SF Pro for system text. Tight display tracking (-1.2), open micro tracking (+0.8)
+
+The rarity system uses coordinated colors: common (#8A8780 grey), rare (#6B92B5 dusk blue), epic (#9580B5 murasaki purple), legendary (#D4A574 gold — same as primary, earned).
+
+Full token reference:
+- Backgrounds: #0A0A0F, elevated #12121A, surface #18181F, surface-elevated #1F1F28
+- Success #8FBCA0 (moss), Warning #E0A062 (amber), Danger #C97064 (terracotta)
+- Text secondary #B8B5B0, tertiary #7A7770
+- Radius: sm 12, md 18, lg 24, xl 32, capsule 9999
+- Shadows: card (black 45%, r24, y8), glow (gold 25%, r32), elevated (black 60%, r40, y12)
+
+## What's in the screenshots
+
+I'm uploading 6 key screens:
+1. **Home screen** — greeting, hero card with level/proverb/XP, stat cards, "Begin Session" CTA
+2. **Card review (question)** — full-screen session, progress bar, large kana on glass card
+3. **Card review (answer)** — answer revealed, 4 grade buttons (Again/Hard/Good/Easy)
+4. **Session summary** — completion card, 2x2 stat grid, loot earned
+5. **RPG profile** — level, XP bar, attributes, equipped items
+6. **Inventory** — rarity-grouped grid of loot tiles
+
+## What I want from you
+
+**DO NOT redesign from scratch.** Instead:
+
+1. **Tell me what's working well** — which screens/elements already nail the wabi-sabi aesthetic and should be preserved as-is?
+
+2. **Suggest specific improvements** for each screen:
+   - Home: is the information hierarchy right? Hero card too dominant? Stats too small?
+   - Card review: the single kana on glass feels clean but isolated. How to add richness without losing focus?
+   - Session summary: too sparse? Should there be more celebration/visual reward?
+   - RPG profile: does the progression feel rewarding? The inventory grid with repeated items — how to make it feel like a trophy cabinet not a dump?
+   - Overall: spacing, typography weight, glass opacity, shadow depth — any micro-adjustments?
+
+3. **Show me mockups of the improved versions** — keep my EXACT color palette, fonts, glass system, and spacing tokens. Don't invent new colors or change the design language. Just refine it — tighter alignment, better hierarchy, richer moments where it matters, calmer where it doesn't.
+
+4. **XP/progress visibility** — the XP bar is a thin gold gradient bar. How to make progression feel more tangible without breaking the quiet aesthetic?
+
+5. **One bold suggestion** — if there's ONE thing you'd change that I'm not asking about, tell me.
+
+Think of this as a design review from a senior designer, not a rebrand. The foundation is solid — I want the polish pass.

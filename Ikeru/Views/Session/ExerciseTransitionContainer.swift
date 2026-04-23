@@ -20,34 +20,51 @@ struct ExerciseTransitionContainer: View {
     /// The current card for SRS review exercises.
     let currentCard: CardDTO?
 
-    /// The next card for peek/pre-load.
-    let nextCard: CardDTO?
+    /// Upcoming cards (up to 3). The deck view renders a peek for each.
+    let upcomingCards: [CardDTO]
 
     /// Feedback state for correct/incorrect overlay.
     let feedbackState: FeedbackState?
 
     @Namespace private var exerciseAnimation
+    @State private var isRevealed = false
 
     var body: some View {
         ZStack {
             if let exercise {
-                exerciseView(for: exercise)
-                    .matchedGeometryEffect(id: "exerciseCard", in: exerciseAnimation)
-                    .transition(
-                        .asymmetric(
-                            insertion: .move(edge: .trailing).combined(with: .opacity),
-                            removal: .move(edge: .leading).combined(with: .opacity)
+                // SRS reviews are rendered with a stable view identity so the
+                // DeckView's matchedGeometryEffect can smoothly promote peeks
+                // into the current slot when cards advance. Destroying the view
+                // via `.id()` on every card would break that animation.
+                if case .srsReview = exercise {
+                    srsReviewView
+                        .transition(.opacity)
+                } else {
+                    exerciseView(for: exercise)
+                        .matchedGeometryEffect(id: "exerciseCard", in: exerciseAnimation)
+                        .transition(
+                            .asymmetric(
+                                insertion: .promoteFromPeek,
+                                removal: .identity
+                            )
                         )
-                    )
-                    .id(exercise.stableID)
+                        .id(exercise.stableID)
+                }
             } else {
                 emptyStateView
             }
         }
         .animation(
-            .spring(duration: 0.4, bounce: 0.15),
+            .spring(response: 0.48, dampingFraction: 0.82),
+            value: currentCard?.id
+        )
+        .animation(
+            .spring(response: 0.42, dampingFraction: 0.82),
             value: exercise?.stableID
         )
+        .onChange(of: currentCard?.id) { _, _ in
+            isRevealed = false
+        }
     }
 
     // MARK: - Exercise View Router
@@ -142,24 +159,51 @@ struct ExerciseTransitionContainer: View {
 
                 SRSCardView(
                     card: card,
-                    nextCard: nextCard
+                    upcomingCards: upcomingCards,
+                    isRevealed: $isRevealed
                 ) { direction in
                     onSwipeGrade(direction)
                 }
                 .padding(.horizontal, IkeruTheme.Spacing.lg)
-                .overlay {
-                    feedbackOverlay
-                }
+                // NOTE: the old `.overlay { feedbackOverlay }` drew a 3pt green/red
+                // stroke around the whole deck for 300ms after each grade.
+                // That border bled onto the newly-promoted current card,
+                // making it look like the swipe colour carried over. The
+                // outgoing ghost already conveys the grade colour via its
+                // own border, so the deck-level feedback overlay is redundant.
 
                 Spacer()
 
-                GradeButtonsView { grade in
-                    onButtonGrade(grade)
+                if isRevealed {
+                    GradeButtonsView { grade in
+                        onButtonGrade(grade)
+                    }
+                    .padding(.horizontal, IkeruTheme.Spacing.md)
+                    .padding(.bottom, IkeruTheme.Spacing.md)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                } else {
+                    revealCallToAction
+                        .padding(.horizontal, IkeruTheme.Spacing.md)
+                        .padding(.bottom, IkeruTheme.Spacing.md)
+                        .transition(.opacity)
                 }
-                .padding(.horizontal, IkeruTheme.Spacing.md)
-                .padding(.bottom, IkeruTheme.Spacing.md)
             }
+            .animation(.spring(response: 0.35, dampingFraction: 0.85), value: isRevealed)
         }
+    }
+
+    // MARK: - Reveal Call To Action
+
+    private var revealCallToAction: some View {
+        Button {
+            withAnimation(.spring(response: 0.45, dampingFraction: 0.78)) {
+                isRevealed = true
+            }
+        } label: {
+            Text("Show answer")
+                .frame(maxWidth: .infinity)
+        }
+        .ikeruButtonStyle(.primary)
     }
 
     // MARK: - Placeholder Exercise View
@@ -236,6 +280,35 @@ struct ExerciseTransitionContainer: View {
         case .listening: Color(hex: IkeruTheme.Colors.Skills.listening)
         case .speaking: Color(hex: IkeruTheme.Colors.Skills.speaking)
         }
+    }
+}
+
+// MARK: - Promote From Peek Transition
+
+/// Matches SRSCardView.peekingCard styling (slightly smaller, offset, faded)
+/// when `active == true`, identity otherwise. Both states use the same
+/// concrete modifier type so `AnyTransition.modifier(active:identity:)`
+/// compiles without generic-parameter conflicts.
+private struct PromoteFromPeekModifier: ViewModifier {
+    let active: Bool
+
+    func body(content: Content) -> some View {
+        content
+            .scaleEffect(active ? 0.96 : 1.0)
+            .offset(y: active ? 8 : 0)
+            .opacity(active ? 0.0 : 1.0)
+    }
+}
+
+extension AnyTransition {
+    /// Insertion transition that animates a view from the peek position
+    /// (slightly smaller, offset down, faded) to full presentation.
+    /// Pairs cleanly with SRSCardView's fly-off dismissal.
+    static var promoteFromPeek: AnyTransition {
+        .modifier(
+            active: PromoteFromPeekModifier(active: true),
+            identity: PromoteFromPeekModifier(active: false)
+        )
     }
 }
 

@@ -15,7 +15,18 @@ public final class CardReviewViewModel {
     public private(set) var currentCard: CardDTO?
 
     /// The next card in the queue (for peek/pre-load), or nil.
-    public private(set) var nextCard: CardDTO?
+    public var nextCard: CardDTO? {
+        upcomingCards.first
+    }
+
+    /// The card two positions ahead in the queue, used to render the
+    /// deepest peek of the 3-deep deck stack.
+    public var cardAfterNext: CardDTO? {
+        upcomingCards.dropFirst().first
+    }
+
+    /// Upcoming cards after the current one (up to 3 entries).
+    public private(set) var upcomingCards: [CardDTO] = []
 
     /// Number of cards remaining in the review queue.
     public private(set) var remainingCount: Int = 0
@@ -138,11 +149,11 @@ public final class CardReviewViewModel {
     private func advanceToNextCard() {
         if reviewQueue.isEmpty {
             currentCard = nil
-            nextCard = nil
+            upcomingCards = []
             remainingCount = 0
         } else {
             currentCard = reviewQueue.removeFirst()
-            nextCard = reviewQueue.first
+            upcomingCards = Array(reviewQueue.prefix(3))
             remainingCount = reviewQueue.count + 1 // +1 for current card
         }
         cardStartTime = Date()

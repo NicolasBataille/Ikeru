@@ -44,12 +44,15 @@ public final class CardRepository: Sendable {
         await backgroundActor.card(by: id)
     }
 
-    /// Fetch all cards across all profiles.
-    /// NOTE: Currently unscoped to a specific profile. This is acceptable while
-    /// the app uses a single active profile context. Profile-scoped queries would
-    /// require changing the Card model relationship which is too risky to change now.
+    /// Fetch all cards belonging to the currently active profile.
     public func allCards() async -> [CardDTO] {
         await backgroundActor.allCards()
+    }
+
+    /// Attaches any orphan cards (profile == nil) to the active profile.
+    /// One-shot migration for users created before per-profile card scoping.
+    public func attachOrphanCards() async {
+        await backgroundActor.attachOrphanCards()
     }
 
     /// Delete a card by its ID.
@@ -161,6 +164,44 @@ public struct ReviewLogDTO: Sendable, Identifiable {
 @ModelActor
 actor CardModelActor {
 
+    // MARK: - Active Profile Scoping
+
+    /// Reads the UserDefaults-backed active profile id. Returns nil if unset.
+    private func activeProfileID() -> UUID? {
+        guard
+            let raw = UserDefaults.standard.string(forKey: UserProfile.activeProfileIDDefaultsKey),
+            !raw.isEmpty,
+            let id = UUID(uuidString: raw)
+        else { return nil }
+        return id
+    }
+
+    /// Fetches the currently-active UserProfile, or the oldest as a fallback.
+    private func fetchActiveProfile() -> UserProfile? {
+        if let id = activeProfileID() {
+            let predicate = #Predicate<UserProfile> { $0.id == id }
+            var descriptor = FetchDescriptor<UserProfile>(predicate: predicate)
+            descriptor.fetchLimit = 1
+            if let profile = (try? modelContext.fetch(descriptor))?.first {
+                return profile
+            }
+        }
+        var descriptor = FetchDescriptor<UserProfile>(
+            sortBy: [SortDescriptor(\.createdAt, order: .forward)]
+        )
+        descriptor.fetchLimit = 1
+        return (try? modelContext.fetch(descriptor))?.first
+    }
+
+    /// Returns cards belonging to the active profile (including legacy
+    /// orphans with `profile == nil`, once migrated). See `attachOrphanCards`.
+    private func activeProfileCards() -> [Card] {
+        guard let profile = fetchActiveProfile() else { return [] }
+        return profile.cards ?? []
+    }
+
+    // MARK: - CRUD (scoped to active profile)
+
     func createCard(
         front: String,
         back: String,
@@ -175,6 +216,7 @@ actor CardModelActor {
             dueDate: dueDate,
             leechFlag: leechFlag
         )
+        card.profile = fetchActiveProfile()
         modelContext.insert(card)
         try? modelContext.save()
         Logger.srs.debug("Created card: \(card.front)")
@@ -188,11 +230,21 @@ actor CardModelActor {
         return results.first?.toDTO()
     }
 
-    // NOTE: Returns all cards across all profiles — see CardRepository.allCards() comment.
+    /// All cards belonging to the active profile.
     func allCards() -> [CardDTO] {
-        let descriptor = FetchDescriptor<Card>()
-        let results = (try? modelContext.fetch(descriptor)) ?? []
-        return results.map { $0.toDTO() }
+        activeProfileCards().map { $0.toDTO() }
+    }
+
+    /// Attach any orphan cards (profile == nil) to the oldest profile.
+    /// Safe to call on every launch — no-op once all cards have a profile.
+    func attachOrphanCards() {
+        guard let fallback = fetchActiveProfile() else { return }
+        let predicate = #Predicate<Card> { $0.profile == nil }
+        let descriptor = FetchDescriptor(predicate: predicate)
+        guard let orphans = try? modelContext.fetch(descriptor), !orphans.isEmpty else { return }
+        for card in orphans { card.profile = fallback }
+        try? modelContext.save()
+        Logger.srs.info("Attached \(orphans.count) orphan cards to profile: \(fallback.displayName)")
     }
 
     func deleteCard(by id: UUID) {
@@ -208,25 +260,22 @@ actor CardModelActor {
     }
 
     func dueCards(before date: Date) -> [CardDTO] {
-        let predicate = #Predicate<Card> { $0.dueDate < date }
-        let descriptor = FetchDescriptor(predicate: predicate)
-        let results = (try? modelContext.fetch(descriptor)) ?? []
-        return results.map { $0.toDTO() }
+        activeProfileCards()
+            .filter { $0.dueDate < date }
+            .map { $0.toDTO() }
     }
 
     func leechCards() -> [CardDTO] {
-        let predicate = #Predicate<Card> { $0.leechFlag == true }
-        let descriptor = FetchDescriptor(predicate: predicate)
-        let results = (try? modelContext.fetch(descriptor)) ?? []
-        return results.map { $0.toDTO() }
+        activeProfileCards()
+            .filter { $0.leechFlag }
+            .map { $0.toDTO() }
     }
 
     func cards(byType type: CardType) -> [CardDTO] {
-        let typeRawValue = type.rawValue
-        let predicate = #Predicate<Card> { $0.typeRawValue == typeRawValue }
-        let descriptor = FetchDescriptor(predicate: predicate)
-        let results = (try? modelContext.fetch(descriptor)) ?? []
-        return results.map { $0.toDTO() }
+        let raw = type.rawValue
+        return activeProfileCards()
+            .filter { $0.typeRawValue == raw }
+            .map { $0.toDTO() }
     }
 
     func gradeCard(

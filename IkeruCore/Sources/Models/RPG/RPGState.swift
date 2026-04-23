@@ -31,6 +31,29 @@ public final class RPGState {
     /// Total sessions completed (used for lootbox milestone detection).
     public var totalSessionsCompleted: Int
 
+    /// Currently equipped title item id (category == .title). Nil if none.
+    public var equippedTitleID: UUID?
+
+    /// Currently equipped theme item id (category == .theme). Nil if none.
+    public var equippedThemeID: UUID?
+
+    /// JSON-encoded [UUID] of equipped badge ids (max 3).
+    public var equippedBadgeIDsData: Data?
+
+    /// Count of consecutive sessions that ended with zero drops.
+    /// Resets to 0 on any drop. Drives the pity timer in LootDropService.
+    public var sessionsSinceLastDrop: Int = 0
+
+    /// Date of the most recent completed session (day-resolution matters).
+    /// Used by SessionBonusService to detect first-session-of-day / streak.
+    public var lastSessionDate: Date?
+
+    /// Current consecutive daily-session streak.
+    public var currentDailyStreak: Int = 0
+
+    /// Highest daily streak reached, for posterity.
+    public var longestDailyStreak: Int = 0
+
     /// The user profile that owns this RPG state
     public var profile: UserProfile?
 
@@ -47,6 +70,13 @@ public final class RPGState {
         self.lootInventoryData = nil
         self.lootBoxesData = nil
         self.totalSessionsCompleted = 0
+        self.equippedTitleID = nil
+        self.equippedThemeID = nil
+        self.equippedBadgeIDsData = nil
+        self.sessionsSinceLastDrop = 0
+        self.lastSessionDate = nil
+        self.currentDailyStreak = 0
+        self.longestDailyStreak = 0
     }
 
     // MARK: - Attributes Accessors
@@ -146,5 +176,48 @@ public final class RPGState {
     /// Returns unopened lootboxes.
     public var unopenedLootBoxes: [LootBox] {
         lootBoxes.filter { !$0.opened }
+    }
+
+    // MARK: - Equipped Badges Accessors
+
+    /// Decoded equipped badge ids. Returns empty array if no data stored.
+    public var equippedBadgeIDs: [UUID] {
+        guard let data = equippedBadgeIDsData else { return [] }
+        do {
+            return try JSONDecoder().decode([UUID].self, from: data)
+        } catch {
+            Logger.rpg.error("Failed to decode equipped badges: \(error.localizedDescription)")
+            return []
+        }
+    }
+
+    /// Encodes and stores equipped badge ids (caller should enforce cap).
+    public func setEquippedBadgeIDs(_ ids: [UUID]) {
+        do {
+            self.equippedBadgeIDsData = try JSONEncoder().encode(ids)
+        } catch {
+            Logger.rpg.error("Failed to encode equipped badges: \(error.localizedDescription)")
+        }
+    }
+
+    // MARK: - Equipped Item Resolvers
+
+    /// Resolved equipped title item, if any and still present in inventory.
+    public var equippedTitle: LootItem? {
+        guard let id = equippedTitleID else { return nil }
+        return lootInventory.first { $0.id == id }
+    }
+
+    /// Resolved equipped theme item, if any and still present in inventory.
+    public var equippedTheme: LootItem? {
+        guard let id = equippedThemeID else { return nil }
+        return lootInventory.first { $0.id == id }
+    }
+
+    /// Resolved equipped badge items (up to 3), in the order they were equipped.
+    public var equippedBadges: [LootItem] {
+        let ids = equippedBadgeIDs
+        let inv = lootInventory
+        return ids.compactMap { id in inv.first { $0.id == id } }
     }
 }

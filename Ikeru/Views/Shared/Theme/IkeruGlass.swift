@@ -129,12 +129,15 @@ struct IkeruStatPill: View {
             Text(value)
                 .font(.ikeruStats)
                 .foregroundStyle(Color.ikeruTextPrimary)
+                .lineLimit(1)
             if let label {
                 Text(label)
                     .font(.ikeruCaption)
                     .foregroundStyle(Color.ikeruTextSecondary)
+                    .lineLimit(1)
             }
         }
+        .fixedSize(horizontal: true, vertical: false)
         .padding(.horizontal, 12)
         .padding(.vertical, 7)
         .background {

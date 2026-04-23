@@ -8,6 +8,12 @@ struct SessionSummaryView: View {
 
     let viewModel: SessionViewModel
 
+    @State private var heroAppeared = false
+    @State private var statsAppeared = false
+    @State private var lootAppeared = false
+    @State private var doneAppeared = false
+    @State private var isDismissing = false
+
     var body: some View {
         ZStack {
             IkeruScreenBackground()
@@ -17,26 +23,60 @@ struct SessionSummaryView: View {
                     Spacer(minLength: IkeruTheme.Spacing.xl)
 
                     heroHeader
+                        .opacity(heroAppeared ? 1 : 0)
+                        .offset(y: heroAppeared ? 0 : 18)
+                        .scaleEffect(heroAppeared ? 1 : 0.96)
 
                     statsGrid
+                        .opacity(statsAppeared ? 1 : 0)
+                        .offset(y: statsAppeared ? 0 : 18)
 
                     if viewModel.sessionLootCount > 0 {
                         lootCallout
+                            .opacity(lootAppeared ? 1 : 0)
+                            .offset(y: lootAppeared ? 0 : 18)
                     }
 
                     Spacer(minLength: IkeruTheme.Spacing.xl)
 
-                    Button("Done") {
-                        viewModel.dismissSession()
+                    Button {
+                        dismissSummary()
+                    } label: {
+                        Text("Done")
+                            .frame(maxWidth: .infinity)
                     }
                     .ikeruButtonStyle(.primary)
-                    .frame(maxWidth: .infinity)
+                    .opacity(doneAppeared ? 1 : 0)
+                    .offset(y: doneAppeared ? 0 : 12)
 
                     Spacer(minLength: 60)
                 }
                 .padding(.horizontal, IkeruTheme.Spacing.lg)
                 .padding(.top, IkeruTheme.Spacing.xl)
             }
+        }
+        .opacity(isDismissing ? 0 : 1)
+        .scaleEffect(isDismissing ? 0.98 : 1)
+        .onAppear(perform: playEntrance)
+    }
+
+    // MARK: - Entrance / Exit
+
+    private func playEntrance() {
+        let spring = Animation.spring(response: 0.55, dampingFraction: 0.82)
+        withAnimation(spring.delay(0.05)) { heroAppeared = true }
+        withAnimation(spring.delay(0.18)) { statsAppeared = true }
+        withAnimation(spring.delay(0.30)) { lootAppeared = true }
+        withAnimation(spring.delay(0.42)) { doneAppeared = true }
+    }
+
+    private func dismissSummary() {
+        withAnimation(.easeInOut(duration: 0.22)) {
+            isDismissing = true
+        }
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(180))
+            viewModel.dismissSession()
         }
     }
 

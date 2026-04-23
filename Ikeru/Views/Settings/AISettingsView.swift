@@ -35,14 +35,17 @@ struct AISettingsView: View {
 
     // MARK: - Provider catalogue (single source of truth)
 
-    private static let cloudProviders: [CloudProviderEntry] = [
+    private static let recommendedProviders: [CloudProviderEntry] = [
         CloudProviderEntry(
             id: "gemini",
             title: "Gemini",
-            subtitle: "Google AI Studio · Free tier",
+            subtitle: "Google AI Studio · Free tier · Recommended first provider",
             keychainKey: KeychainKeys.geminiAPIKey,
             signupURL: URL(string: "https://aistudio.google.com/apikey")!
         ),
+    ]
+
+    private static let advancedProviders: [CloudProviderEntry] = [
         CloudProviderEntry(
             id: "openrouter",
             title: "OpenRouter",
@@ -73,6 +76,8 @@ struct AISettingsView: View {
         ),
     ]
 
+    private static let allCloudProviders: [CloudProviderEntry] = recommendedProviders + advancedProviders
+
     private static let claudeProvider = CloudProviderEntry(
         id: "claude",
         title: "Claude (Paid · optional)",
@@ -90,11 +95,27 @@ struct AISettingsView: View {
                 VStack(spacing: IkeruTheme.Spacing.lg) {
                     foundationModelsSection
 
-                    ForEach(Self.cloudProviders) { entry in
+                    sectionHeader("Recommended")
+
+                    ForEach(Self.recommendedProviders) { entry in
                         cloudProviderSection(entry)
                     }
 
-                    cloudProviderSection(Self.claudeProvider)
+                    DisclosureGroup {
+                        VStack(spacing: IkeruTheme.Spacing.lg) {
+                            ForEach(Self.advancedProviders) { entry in
+                                cloudProviderSection(entry)
+                            }
+
+                            cloudProviderSection(Self.claudeProvider)
+                        }
+                        .padding(.top, IkeruTheme.Spacing.sm)
+                    } label: {
+                        Text("Advanced")
+                            .font(.ikeruHeading3)
+                            .foregroundStyle(.ikeruTextSecondary)
+                    }
+                    .tint(.ikeruTextSecondary)
 
                     localRigSection
                 }
@@ -383,7 +404,7 @@ struct AISettingsView: View {
 
     private func loadExistingConfiguration() {
         var found: Set<String> = []
-        for entry in Self.cloudProviders + [Self.claudeProvider] {
+        for entry in Self.allCloudProviders + [Self.claudeProvider] {
             do {
                 if let value = try keychainStore.load(key: entry.keychainKey), !value.isEmpty {
                     found.insert(entry.id)

@@ -134,20 +134,17 @@ public final class HomeViewModel {
 
     private func loadProfile() async {
         let context = modelContainer.mainContext
-        let descriptor = FetchDescriptor<UserProfile>()
-        let profiles = (try? context.fetch(descriptor)) ?? []
-        displayName = profiles.first?.displayName ?? ""
+        displayName = ActiveProfileResolver.fetchActiveProfile(in: context)?.displayName ?? ""
     }
 
     private func loadRPGState() async {
         let context = modelContainer.mainContext
-        let descriptor = FetchDescriptor<RPGState>()
-        let results = (try? context.fetch(descriptor)) ?? []
 
-        if let state = results.first {
+        if let state = ActiveProfileResolver.fetchActiveRPGState(in: context) {
             xp = state.xp
             level = state.level
             unopenedLootBoxCount = state.unopenedLootBoxes.count
+            EquippedCosmeticsBridge.sync(state: state)
 
             // Compute recent achievement from last inventory item
             let inventory = state.lootInventory

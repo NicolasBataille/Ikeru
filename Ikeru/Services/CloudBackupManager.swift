@@ -17,17 +17,24 @@ final class CloudBackupManager: ObservableObject {
     @Published private(set) var lastBackupDate: Date?
     @Published private(set) var lastError: BackupError?
 
-    /// Lazily resolved CKContainer — using a stored property crashes at init
-    /// when the app has no iCloud entitlements. Lazy + try lets the manager
-    /// degrade gracefully to "unavailable" when CloudKit isn't configured.
+    /// CloudKit container identifier — must match the entitlement in
+    /// `Ikeru.entitlements` (`com.apple.developer.icloud-container-identifiers`).
+    static let cloudContainerIdentifier = "iCloud.com.ikeru.app"
+
+    /// Whether iCloud backup is available on this build.
+    /// Flipped to `true` once the iCloud entitlements are active and uncommented
+    /// in `Ikeru.entitlements`. Until then, all backup/restore operations degrade
+    /// gracefully to `.iCloudUnavailable` without crashing.
+    ///
+    /// TODO: Set to `true` once the Apple Developer account is fully activated
+    ///       and the iCloud entitlements are uncommented.
+    static let iCloudEnabled = false
+
     private var _container: CKContainer?
     private var container: CKContainer? {
+        guard Self.iCloudEnabled else { return nil }
         if _container == nil {
-            // CKContainer.default() throws if no container identifier is set in entitlements.
-            // Wrap in a defensive check by first looking for the entitlement.
-            if Bundle.main.object(forInfoDictionaryKey: "com.apple.developer.icloud-container-identifiers") != nil {
-                _container = CKContainer.default()
-            }
+            _container = CKContainer(identifier: Self.cloudContainerIdentifier)
         }
         return _container
     }

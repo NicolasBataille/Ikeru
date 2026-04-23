@@ -45,6 +45,9 @@ struct RPGProfileView: View {
             }
             await viewModel?.loadData()
         }
+        .onReceive(NotificationCenter.default.publisher(for: .ikeruActiveProfileDidChange)) { _ in
+            Task { await viewModel?.loadData() }
+        }
     }
 
     // MARK: - Top Bar
@@ -79,6 +82,16 @@ struct RPGProfileView: View {
                         .font(.ikeruDisplayLarge)
                         .ikeruTracking(.display)
                         .foregroundStyle(Color.ikeruTextPrimary)
+                    if let title = vm.equippedTitle {
+                        Text(title.name.uppercased())
+                            .font(.ikeruMicro)
+                            .ikeruTracking(.micro)
+                            .foregroundStyle(rarityColor(title.rarity))
+                    }
+                    if !vm.equippedBadges.isEmpty {
+                        badgeCluster(vm.equippedBadges)
+                            .padding(.top, 2)
+                    }
                 }
                 Spacer()
                 Image(systemName: "shield.lefthalf.filled")
@@ -282,24 +295,71 @@ struct RPGProfileView: View {
     }
 
     private func inventoryItemCell(_ item: LootItem) -> some View {
-        VStack(spacing: IkeruTheme.Spacing.xs) {
-            Image(systemName: item.iconName)
-                .font(.system(size: 26, weight: .light))
-                .foregroundStyle(rarityColor(item.rarity))
+        let isEquipped = viewModel?.isEquipped(item) ?? false
+        let equippable = EquipmentService.isEquippable(item)
 
-            Text(item.name)
-                .font(.ikeruCaption)
-                .foregroundStyle(Color.ikeruTextPrimary)
-                .lineLimit(2)
-                .multilineTextAlignment(.center)
+        return Button {
+            guard equippable, let vm = viewModel else { return }
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.82)) {
+                vm.toggleEquip(item)
+            }
+        } label: {
+            VStack(spacing: IkeruTheme.Spacing.xs) {
+                Image(systemName: item.iconName)
+                    .font(.system(size: 26, weight: .light))
+                    .foregroundStyle(rarityColor(item.rarity))
+
+                Text(item.name)
+                    .font(.ikeruCaption)
+                    .foregroundStyle(Color.ikeruTextPrimary)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.center)
+            }
+            .frame(width: 76, height: 80)
+            .padding(IkeruTheme.Spacing.xs)
+            .ikeruGlass(
+                cornerRadius: IkeruTheme.Radius.md,
+                tint: rarityColor(item.rarity),
+                tintOpacity: isEquipped ? 0.22 : 0.10
+            )
+            .overlay(alignment: .topTrailing) {
+                if isEquipped {
+                    Image(systemName: "checkmark.seal.fill")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(rarityColor(item.rarity))
+                        .padding(6)
+                }
+            }
+            .overlay {
+                if isEquipped {
+                    RoundedRectangle(cornerRadius: IkeruTheme.Radius.md, style: .continuous)
+                        .strokeBorder(rarityColor(item.rarity).opacity(0.7), lineWidth: 1.2)
+                }
+            }
         }
-        .frame(width: 76, height: 80)
-        .padding(IkeruTheme.Spacing.xs)
-        .ikeruGlass(
-            cornerRadius: IkeruTheme.Radius.md,
-            tint: rarityColor(item.rarity),
-            tintOpacity: 0.10
-        )
+        .buttonStyle(.plain)
+        .disabled(!equippable)
+        .opacity(equippable ? 1.0 : 0.75)
+    }
+
+    // MARK: - Badge Cluster
+
+    @ViewBuilder
+    private func badgeCluster(_ badges: [LootItem]) -> some View {
+        HStack(spacing: 6) {
+            ForEach(badges) { badge in
+                Image(systemName: badge.iconName)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(rarityColor(badge.rarity))
+                    .frame(width: 22, height: 22)
+                    .background {
+                        Circle().fill(rarityColor(badge.rarity).opacity(0.14))
+                    }
+                    .overlay {
+                        Circle().strokeBorder(rarityColor(badge.rarity).opacity(0.35), lineWidth: 0.8)
+                    }
+            }
+        }
     }
 
     // MARK: - Helpers

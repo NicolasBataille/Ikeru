@@ -8,21 +8,28 @@ public enum LootDropService {
     // MARK: - Drop Probability
 
     /// Base probability of a loot drop per exercise completion.
-    static let baseDropRate: Double = 0.15
+    /// Nerfed from 0.15 → 0.05: loot is a rare punctuation, not an expected tax refund.
+    static let baseDropRate: Double = 0.05
+
+    /// Maximum drops allowed per session (session-cap guard).
+    public static let sessionDropCap: Int = 1
+
+    /// Number of consecutive empty sessions before a pity drop is forced.
+    public static let pityThreshold: Int = 5
 
     /// Determines if a loot drop should occur after an exercise.
-    /// Higher grades and longer streaks increase drop probability.
     /// - Parameters:
     ///   - grade: The grade achieved on the exercise.
-    ///   - consecutiveCorrect: Number of consecutive correct answers in the session.
+    ///   - sessionLootCount: Number of drops already received this session.
     ///   - randomValue: A random value (0.0 to 1.0) for testability. Pass nil for real randomness.
     /// - Returns: True if a loot drop should occur.
     public static func shouldDropLoot(
         grade: Grade,
-        consecutiveCorrect: Int,
+        sessionLootCount: Int,
         randomValue: Double? = nil
     ) -> Bool {
-        let probability = dropProbability(grade: grade, consecutiveCorrect: consecutiveCorrect)
+        if sessionLootCount >= sessionDropCap { return false }
+        let probability = dropProbability(grade: grade)
         let roll = randomValue ?? Double.random(in: 0..<1)
         let didDrop = roll < probability
         Logger.rpg.debug("Loot drop check: prob=\(probability, format: .fixed(precision: 3)), roll=\(roll, format: .fixed(precision: 3)), drop=\(didDrop)")
@@ -30,36 +37,38 @@ public enum LootDropService {
     }
 
     /// Computes the loot drop probability.
-    /// - Parameters:
-    ///   - grade: Exercise grade.
-    ///   - consecutiveCorrect: Streak count.
+    /// Streak bonus removed — loot rewards presence, not grind.
+    /// - Parameter grade: Exercise grade.
     /// - Returns: Probability between 0.0 and 1.0.
-    public static func dropProbability(grade: Grade, consecutiveCorrect: Int) -> Double {
+    public static func dropProbability(grade: Grade) -> Double {
         var prob = baseDropRate
-
-        // Grade bonus
         switch grade {
-        case .easy: prob += 0.10
-        case .good: prob += 0.05
+        case .easy: prob += 0.03
+        case .good: prob += 0.01
         case .hard: prob += 0.0
-        case .again: return 0.0 // No loot on failed reviews
+        case .again: return 0.0
         }
-
-        // Streak bonus: +2% per consecutive correct, capped at +20%
-        let streakBonus = min(0.20, Double(consecutiveCorrect) * 0.02)
-        prob += streakBonus
-
         return min(1.0, prob)
+    }
+
+    /// Whether a pity drop must be forced on session end.
+    /// Intended to be called after a session finished without a drop.
+    /// - Parameter sessionsSinceLastDrop: Count of consecutive sessions ending with no drop,
+    ///   including the session that just finished.
+    public static func shouldForcePityDrop(sessionsSinceLastDrop: Int) -> Bool {
+        sessionsSinceLastDrop >= pityThreshold
     }
 
     // MARK: - Drop Generation
 
     /// Generates a random loot item for a drop.
-    /// Rarity is determined by a weighted random roll.
-    /// - Parameter level: The player's current level (affects rarity weights).
-    /// - Returns: A newly generated loot item.
+    /// RNG drops now cap at Rare — Epic and Legendary are reserved for mastery
+    /// events (see `MasteryEventDetector`). This keeps random drops feeling
+    /// like small gifts while concentrating celebration on earned milestones.
+    /// - Parameter level: The player's current level (affects common/rare split).
+    /// - Returns: A newly generated loot item at common or rare.
     public static func generateDrop(level: Int) -> LootItem {
-        let rarity = rollRarity(level: level)
+        let rarity = rollRNGRarity(level: level)
         let template = randomTemplate(for: rarity)
 
         return LootItem(
@@ -72,30 +81,47 @@ public enum LootDropService {
 
     // MARK: - Rarity Roll
 
-    /// Rolls for a rarity tier based on weighted probabilities.
-    /// Higher levels shift weight toward rarer tiers.
+    /// Rolls for RNG rarity — capped at Rare.
+    /// Higher levels shift weight toward Rare.
     /// - Parameter level: Current player level.
-    /// - Returns: The rolled rarity tier.
-    static func rollRarity(level: Int) -> LootRarity {
-        // Base weights: common=60, rare=25, epic=12, legendary=3
-        // Level bonus shifts weight from common to higher tiers
+    /// - Returns: common or rare.
+    static func rollRNGRarity(level: Int) -> LootRarity {
         let levelBonus = min(20, level)
-        let commonWeight = max(30, 60 - levelBonus)
-        let rareWeight = 25 + (levelBonus / 2)
-        let epicWeight = 12 + (levelBonus / 3)
-        let legendaryWeight = 3 + (levelBonus / 5)
+        let commonWeight = max(55, 80 - levelBonus)
+        let rareWeight = 20 + levelBonus
 
-        let total = commonWeight + rareWeight + epicWeight + legendaryWeight
+        let total = commonWeight + rareWeight
         let roll = Int.random(in: 0..<total)
+        return roll < commonWeight ? .common : .rare
+    }
 
-        if roll < commonWeight {
-            return .common
-        } else if roll < commonWeight + rareWeight {
-            return .rare
-        } else if roll < commonWeight + rareWeight + epicWeight {
-            return .epic
-        } else {
-            return .legendary
+    // MARK: - Mastery Drops
+
+    /// Generates a loot item awarded for a specific mastery event.
+    /// Unlike RNG drops, these are guaranteed and carry semantic names tied
+    /// to what the learner just achieved.
+    /// - Parameter event: The mastery milestone that triggered this drop.
+    /// - Returns: A LootItem at the event's rarity tier with a themed name.
+    public static func generateMasteryDrop(for event: MasteryEvent) -> LootItem {
+        let template = masteryTemplate(for: event)
+        return LootItem(
+            category: template.category,
+            rarity: event.rarity,
+            name: template.name,
+            iconName: template.iconName
+        )
+    }
+
+    private static func masteryTemplate(for event: MasteryEvent) -> LootTemplate {
+        switch event {
+        case .graduation:
+            return LootTemplate(category: .badge, name: "First Steps", iconName: "leaf.fill")
+        case .leechRecovered:
+            return LootTemplate(category: .scroll, name: "Persistence Scroll", iconName: "scroll.fill")
+        case .longIntervalRecall:
+            return LootTemplate(category: .badge, name: "Lasting Memory", iconName: "brain.head.profile")
+        case .burned:
+            return LootTemplate(category: .title, name: "Burned In", iconName: "flame.fill")
         }
     }
 

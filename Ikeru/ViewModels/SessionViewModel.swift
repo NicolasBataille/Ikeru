@@ -48,9 +48,22 @@ public final class SessionViewModel {
 
     /// The next card for peek/pre-load, or nil.
     public var nextCard: CardDTO? {
-        let nextIndex = currentIndex + 1
-        guard nextIndex < sessionQueue.count else { return nil }
-        return sessionQueue[nextIndex]
+        upcomingCards.first
+    }
+
+    /// The card two positions ahead, used to render a 3-deep deck peek stack.
+    public var cardAfterNext: CardDTO? {
+        upcomingCards.dropFirst().first
+    }
+
+    /// Upcoming cards after the current one. Up to 3 entries are exposed so
+    /// the deck view can render a visual "stack" whose depth reflects how
+    /// many reviews remain.
+    public var upcomingCards: [CardDTO] {
+        let start = currentIndex + 1
+        let end = min(sessionQueue.count, start + 3)
+        guard start < end else { return [] }
+        return Array(sessionQueue[start..<end])
     }
 
     /// Progress fraction (0.0 to 1.0).
@@ -147,6 +160,12 @@ public final class SessionViewModel {
     /// Lootbox earned during this session (presented after session summary).
     public private(set) var earnedLootBox: LootBox?
 
+    /// XP bonus awarded at session end for daily engagement / streak (nil if none).
+    public private(set) var lastSessionBonus: SessionBonusService.Result?
+
+    /// Mastery events detected during this session (graduation, burns, etc.).
+    public private(set) var sessionMasteryEvents: [MasteryEvent] = []
+
     // MARK: - Dependencies
 
     private let plannerService: PlannerService
@@ -183,6 +202,8 @@ public final class SessionViewModel {
         consecutiveCorrect = 0
         sessionLootCount = 0
         earnedLootBox = nil
+        lastSessionBonus = nil
+        sessionMasteryEvents = []
         isPaused = false
         sessionStartTime = Date()
         cardStartTime = Date()
@@ -324,18 +345,27 @@ public final class SessionViewModel {
             levelUpLevel = result.newLevel
         }
 
-        // Track consecutive correct for loot drop probability
+        // Track consecutive correct (affects display only — no longer feeds loot RNG)
         if isCorrect {
             consecutiveCorrect += 1
         } else {
             consecutiveCorrect = 0
         }
 
-        // Check for loot drop
+        // Mastery events (Phase 3): pre-grade card state → forced drops at event rarity.
+        // Detected BEFORE RNG drop so they always take priority when both would fire.
         lastLootDrop = nil
-        if LootDropService.shouldDropLoot(
+        let masteryEvents = MasteryEventDetector.detect(preGradeCard: card, grade: grade)
+        if let event = masteryEvents.first {
+            let drop = LootDropService.generateMasteryDrop(for: event)
+            lastLootDrop = drop
+            sessionLootCount += 1
+            sessionMasteryEvents.append(event)
+            await persistLootDrop(drop)
+            Logger.rpg.info("Mastery drop: \(event.displayName) → \(drop.name) (\(drop.rarity.displayName))")
+        } else if LootDropService.shouldDropLoot(
             grade: grade,
-            consecutiveCorrect: consecutiveCorrect
+            sessionLootCount: sessionLootCount
         ) {
             let drop = LootDropService.generateDrop(level: currentLevel)
             lastLootDrop = drop
@@ -388,6 +418,7 @@ public final class SessionViewModel {
 
         if isSessionComplete {
             stopTimer()
+            await finalizeSession()
             await liveActivityManager.endActivity(
                 elapsedSeconds: Int(elapsedTime),
                 completedCount: reviewedCount,
@@ -399,6 +430,65 @@ public final class SessionViewModel {
                 "Session complete: \(self.reviewedCount) reviewed, \(self.xpEarned) XP earned"
             )
         }
+    }
+
+    // MARK: - Session Finalization
+
+    /// Applies end-of-session effects: daily/streak bonus and pity-drop check.
+    /// Runs once when the session's last card has been graded.
+    private func finalizeSession() async {
+        let now = Date()
+        let context = modelContainer.mainContext
+        guard let state = ActiveProfileResolver.fetchActiveRPGState(in: context) else { return }
+
+        // Pity timer — if no drop this session, bump counter and force a drop at threshold.
+        if sessionLootCount == 0 {
+            state.sessionsSinceLastDrop += 1
+            if LootDropService.shouldForcePityDrop(sessionsSinceLastDrop: state.sessionsSinceLastDrop) {
+                let drop = LootDropService.generateDrop(level: currentLevel)
+                state.addLootItem(drop)
+                lastLootDrop = drop
+                sessionLootCount += 1
+                state.sessionsSinceLastDrop = 0
+                Logger.rpg.info("Pity drop awarded: \(drop.name) (\(drop.rarity.displayName))")
+            }
+        } else {
+            state.sessionsSinceLastDrop = 0
+        }
+
+        // Session bonus (daily / streak).
+        let bonus = SessionBonusService.evaluate(
+            now: now,
+            lastSessionDate: state.lastSessionDate,
+            currentStreak: state.currentDailyStreak,
+            longestStreak: state.longestDailyStreak
+        )
+
+        if bonus.bonusXP > 0 {
+            totalXP += bonus.bonusXP
+            xpEarned += bonus.bonusXP
+            let newLevel = RPGConstants.levelForXP(totalXP)
+            if newLevel > currentLevel {
+                levelUpLevel = newLevel
+                currentLevel = newLevel
+            }
+            state.xp = totalXP
+            state.level = currentLevel
+            Logger.rpg.info("Session bonus: +\(bonus.bonusXP) XP (streak=\(bonus.newDailyStreak), newDay=\(bonus.isNewDay))")
+        }
+
+        state.currentDailyStreak = bonus.newDailyStreak
+        state.longestDailyStreak = bonus.newLongestStreak
+        state.lastSessionDate = now
+        state.totalSessionsCompleted += 1
+
+        do {
+            try context.save()
+        } catch {
+            Logger.rpg.error("Failed to persist session finalization: \(error.localizedDescription)")
+        }
+
+        lastSessionBonus = bonus
     }
 
     /// Grade from a swipe direction.
@@ -563,44 +653,33 @@ public final class SessionViewModel {
 
     // MARK: - RPG State Persistence
 
-    /// Fetches the existing RPGState, applies the given mutation, and saves.
-    /// Use this for all mutations on an already-created RPGState row.
+    /// Fetches the active profile's RPGState, applies the given mutation, and saves.
+    /// Use this for all mutations on the current-profile RPGState.
     private func withRPGState(_ body: (RPGState) throws -> Void) async {
         let context = modelContainer.mainContext
-        let descriptor = FetchDescriptor<RPGState>()
+        guard let state = ActiveProfileResolver.fetchActiveRPGState(in: context) else {
+            Logger.rpg.error("No active profile when mutating RPG state")
+            return
+        }
         do {
-            let results = try context.fetch(descriptor)
-            if let state = results.first {
-                try body(state)
-                try context.save()
-            }
+            try body(state)
+            try context.save()
         } catch {
             Logger.rpg.error("RPG state operation failed: \(error.localizedDescription)")
         }
     }
 
-    /// Loads RPGState from SwiftData, creating one if none exists.
+    /// Loads the active profile's RPG state, creating one if the profile lacks it.
     private func loadRPGState() async {
         let context = modelContainer.mainContext
-        let descriptor = FetchDescriptor<RPGState>()
-        do {
-            let results = try context.fetch(descriptor)
-            if let state = results.first {
-                totalXP = state.xp
-                currentLevel = state.level
-                Logger.rpg.debug("Loaded RPG state: xp=\(state.xp), level=\(state.level)")
-            } else {
-                let newState = RPGState()
-                context.insert(newState)
-                try context.save()
-                totalXP = 0
-                currentLevel = 1
-                Logger.rpg.info("Created initial RPG state")
-            }
-        } catch {
-            Logger.rpg.error("Failed to load RPG state: \(error.localizedDescription)")
+        if let state = ActiveProfileResolver.fetchActiveRPGState(in: context) {
+            totalXP = state.xp
+            currentLevel = state.level
+            Logger.rpg.debug("Loaded RPG state: xp=\(state.xp), level=\(state.level)")
+        } else {
             totalXP = 0
             currentLevel = 1
+            Logger.rpg.warning("No active profile — session starts with zero XP")
         }
     }
 

@@ -44,6 +44,10 @@ struct XPBarView: View {
 
     @State private var isPulsing = false
 
+    /// Name of the equipped theme cosmetic, if any. Read from UserDefaults so
+    /// every XP bar in the app reflects the current cosmetic without plumbing.
+    @AppStorage("ikeru.equippedThemeName") private var equippedThemeName: String = ""
+
     var body: some View {
         switch variant {
         case .full:
@@ -130,10 +134,13 @@ struct XPBarView: View {
     // MARK: - Gradient
 
     private var xpGradient: LinearGradient {
-        LinearGradient(
+        let palette = ThemePaletteService.palette(
+            forThemeName: equippedThemeName.isEmpty ? nil : equippedThemeName
+        )
+        return LinearGradient(
             colors: [
-                Color(hex: IkeruTheme.Colors.primaryAccent),   // amber
-                Color(hex: IkeruTheme.Colors.Rarity.legendary) // gold
+                Color(hex: palette.startHex),
+                Color(hex: palette.endHex)
             ],
             startPoint: .leading,
             endPoint: .trailing

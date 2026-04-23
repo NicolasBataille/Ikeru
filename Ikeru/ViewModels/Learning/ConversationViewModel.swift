@@ -71,8 +71,9 @@ public final class ConversationViewModel {
 
     /// Check AI availability on appear.
     public func onAppear() async {
-        // AI availability is managed by AIRouterService's tier status
-        isAIAvailable = true
+        await conversationService.aiRouter.refreshTierStatuses()
+        let statuses = conversationService.aiRouter.tierStatuses
+        isAIAvailable = statuses.values.contains { $0 == .available }
     }
 
     // MARK: - Send Message

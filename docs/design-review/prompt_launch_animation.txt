@@ -1,0 +1,34 @@
+I'm sharing the current app icon for Ikeru, my iOS Japanese learning app. I need two things:
+
+## 1. App Icon Review
+
+The attached screenshot (15_app_icon.png) shows the current icon: a golden ikebana flower/stem silhouette on a dark sumi-ink gradient background, with a soft gold glow behind the flower.
+
+The icon should embody the app's **wabi-sabi** design philosophy:
+- Kintsugi gold (#D4A574) — the art of repairing with gold, embracing imperfection
+- Sumi ink black (#0A0A0F) — deep Japanese calligraphy ink
+- Organic, hand-crafted feel — not corporate, not geometric
+- The "ikebana" (flower arrangement) motif connects to the app name "Ikeru" (生ける — to arrange flowers / to bring to life)
+
+**What I want:** Review the current icon. Does it read well at small sizes (home screen, notification)? Is the glow too much or just right? Does the silhouette feel premium or clip-art? Suggest 2-3 refinement options — keep the ikebana motif but explore: thicker/thinner stroke weight, glow intensity, background gradient direction, leaf placement. Show me mockups.
+
+## 2. Launch/Opening Animation Concept
+
+When the app opens, I want a brief (1-2 second) opening animation that transitions from the app icon into the home screen. The animation should feel like the app is **coming to life** — aligned with the wabi-sabi aesthetic.
+
+**Design tokens for reference:**
+- Background: #0A0A0F (sumi ink)
+- Primary accent: #D4A574 (kintsugi gold)
+- Glass surfaces: white at 6% fill
+- Animation springs: snappy 0.28 response / 0.86 damping
+- Typography: SF Pro + NotoSerifJP
+
+**Concept direction I'm thinking about:**
+- The golden flower from the icon could "bloom" — petals unfurling from a single point
+- Or: a single gold brushstroke sweeps across the dark canvas, leaving the app name in its wake (like shodō calligraphy)
+- Or: the icon's glow expands outward, dissolving into the home screen's mesh gradient hero card
+- The animation should feel like ink settling on washi paper — not explosive, not flashy, just... arriving
+
+**What I want:** Design 2-3 animation concept storyboards as frame sequences. Show the key poses (start → midpoint → settle). Use my exact colors. Each concept should be no more than 1.5 seconds total. Indicate which elements move, scale, fade, and at what spring values.
+
+Keep it quiet. Keep it Japanese. The best opening animation is one that makes you feel calm, not excited.

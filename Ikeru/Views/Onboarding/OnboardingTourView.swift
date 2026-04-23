@@ -19,6 +19,7 @@ struct OnboardingTourView: View {
 
     @Environment(\.dismiss) private var dismiss
     @State private var currentPage = 0
+    @State private var showAISetup = false
 
     private let pages: [OnboardingPage] = [
         OnboardingPage(
@@ -69,6 +70,11 @@ struct OnboardingTourView: View {
                     .padding(.bottom, IkeruTheme.Spacing.xxl)
             }
         }
+        .fullScreenCover(isPresented: $showAISetup, onDismiss: {
+            dismiss()
+        }) {
+            AISetupView()
+        }
     }
 
     // MARK: - Page Indicator
@@ -91,8 +97,8 @@ struct OnboardingTourView: View {
     // MARK: - Actions
 
     private func startLearning() {
-        Logger.ui.info("Onboarding tour completed — navigating to home")
-        dismiss()
+        Logger.ui.info("Onboarding tour completed — showing AI setup")
+        showAISetup = true
     }
 }
 
