@@ -106,6 +106,7 @@
 		8AEE9F8BE78788FDEBEF1F7B /* RPGProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13D5225E5540A893D5EA823D /* RPGProfileView.swift */; };
 		8EFA25811F530A1ED76EB8B2 /* PreWarmNotifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4E3A9795F94E20D35EBA364 /* PreWarmNotifier.swift */; };
 		8F797DDBE2D54C590F237849 /* LootDropView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 876AD9101EE9AB2CA2148935 /* LootDropView.swift */; };
+		8FE42D1296D1C55BB83BC1BB /* HankoStamp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25B2C6EAEDBB0C07B73E2710 /* HankoStamp.swift */; };
 		90422BEF9BC8E04D637D5227 /* KanjiStudyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15C00EAAA3BA98179DFE119D /* KanjiStudyView.swift */; };
 		91C9AABD240546C6C4380CFA /* FusumaRail.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FCAA1C6D8004A72C4233DEE /* FusumaRail.swift */; };
 		93BF5688D23C97D381684CDD /* PlaybackRateSelector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C436FC5E8920ED935DA2049 /* PlaybackRateSelector.swift */; };
@@ -244,6 +245,7 @@
 		248E0A33E3D0B2C6E89E4FBD /* SkillRadarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkillRadarView.swift; sourceTree = "<group>"; };
 		24AB1AB1DDE2D5EE0D52DA0C /* IkeruCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IkeruCard.swift; sourceTree = "<group>"; };
 		25A2EBFE2B6872980172B207 /* WatchHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchHomeView.swift; sourceTree = "<group>"; };
+		25B2C6EAEDBB0C07B73E2710 /* HankoStamp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HankoStamp.swift; sourceTree = "<group>"; };
 		25F5EC3E127B20A52562853D /* MeshHeroView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeshHeroView.swift; sourceTree = "<group>"; };
 		2CA34FB1B1DB4560EB47114B /* IkeruTabBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IkeruTabBar.swift; sourceTree = "<group>"; };
 		2DDE2DBC0AC80C3C72CCE6E1 /* AttributionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttributionView.swift; sourceTree = "<group>"; };
@@ -580,6 +582,7 @@
 				4FCAA1C6D8004A72C4233DEE /* FusumaRail.swift */,
 				C25AF36F3C7104A9671C3E1D /* SumiCornerFrame.swift */,
 				AB4EE3B167E71594816FFDAD /* MonCrest.swift */,
+				25B2C6EAEDBB0C07B73E2710 /* HankoStamp.swift */,
 			);
 			name = Tatami;
 			path = Tatami;
@@ -1303,6 +1306,7 @@
 				91C9AABD240546C6C4380CFA /* FusumaRail.swift in Sources */,
 				7BDD9E9FFFF5D8479593CBA0 /* SumiCornerFrame.swift in Sources */,
 				D47F7C461CF1CFA5343E2BA8 /* MonCrest.swift in Sources */,
+				8FE42D1296D1C55BB83BC1BB /* HankoStamp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
