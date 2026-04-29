@@ -192,8 +192,16 @@ theme directory clean and makes the Tatami vocabulary discoverable as a unit):
 | `RPGRankCrest.swift` | Wrapper for the RPG profile hero crest — torii + serif kanji. Keeps `EnsoRankView` for small sizes. |
 | `TatamiRoom.swift` | ViewModifier giving a view: solid fill + top/bottom fusuma rails + sumi corners + sharp 0px radius. Variants: `.standard`, `.accent` (gold-warmer), `.glass` (used sparingly — Liquid-Glass surface for hero cards only). |
 | `TatamiTokens.swift` | Vermilion (`#C73E33`), gold-dim (`#8A6D4A`), and other Tatami-specific colors. Stays out of `IkeruTheme.Colors` so existing surfaces don't shift. |
-| `BilingualLabel.swift` | Tiny helper for the JP · EN section-header pattern (mon + serif JP + middot + caps EN). |
+| `BilingualLabel.swift` | Tiny helper for the JP · EN/FR section-header pattern (mon + serif JP + middot + localized caps EN/FR). |
 | `SerifNumeral.swift` | Convenience for Noto Serif JP numerals at consistent weights/sizes. |
+
+Plus, under `Ikeru/Localization/` (new folder):
+
+| File | Purpose |
+|---|---|
+| `Localizable.xcstrings` | String Catalog with EN + FR translations for every UI string in the app. Owned by Xcode's editor. |
+| `AppLocale.swift` | `@Observable` (or `@AppStorage`-driven) service exposing `currentLocale: Locale` and `preference: LanguagePreference` (`system` / `en` / `fr`). Auto-detect rule lives here. |
+| `LanguagePickerView.swift` | Settings sheet with three rows (Auto / English / Français), tatami styling, hanko on the active row. |
 
 Marble PNG assets land in `Ikeru/Assets.xcassets/Tatami/Marble/`:
 `marble-1.imageset` … `marble-5.imageset`, each ~150-300KB at @3x. Generated
@@ -212,21 +220,29 @@ Each step ships independently — every commit leaves the app green and runnable
 
 1. **Foundations** — add the 11 new theme files above + 5 marble PNGs. Add
    `#Preview` for each component. No call sites changed yet.
-2. **Background swap** — replace `IkeruScreenBackground` body with the marble
+2. **Localization scaffolding** — add `fr` to `knownRegions`, create
+   `Localizable.xcstrings` (initially EN-only mirroring current strings),
+   add `AppLocale` service + root-level `\.locale` environment injection, add
+   the `言語 / Language` Settings row + picker sheet. Auto-detect rule live.
+   App still entirely English at this point — French translations land in
+   each screen's own pass.
+3. **Background swap** — replace `IkeruScreenBackground` body with the marble
    variant.
-3. **Home** — most-seen screen. Replace hero / stats / decks rendering with the
-   Tatami composition. `HomeViewModel` untouched.
-4. **Active Session (SRS Q/A)** — kana card + FSRS buttons.
-5. **Session Summary**.
-6. **RPG Profile** — including the new `ToriiFrame` + `RPGRankCrest`.
-7. **Study / Progress**.
-8. **Conversation / Companion**.
-9. **Settings**.
-10. **Tab bar** — last, because it's the most visible "this is a different app"
-    moment and we want the inside to be ready first.
+4. **Home** — most-seen screen. Replace hero / stats / decks rendering with the
+   Tatami composition; migrate every Home string into the catalog with FR
+   translations. `HomeViewModel` untouched.
+5. **Active Session (SRS Q/A)** — kana card + FSRS buttons + EN→FR migration.
+6. **Session Summary** + EN→FR migration.
+7. **RPG Profile** — including the new `ToriiFrame` + `RPGRankCrest` + EN→FR
+   migration.
+8. **Study / Progress** + EN→FR migration.
+9. **Conversation / Companion** + EN→FR migration.
+10. **Settings** + EN→FR migration.
+11. **Tab bar** — last, because it's the most visible "this is a different app"
+    moment and we want the inside to be ready first. EN→FR migration.
 
-After step 10: build green → installable → **stop**, hand to the user for the
-MobAI green-light before driving the device.
+After step 11: build green → installable → **stop**, hand to the user for the
+MobAI green-light before driving the device. Test in both EN and FR locales.
 
 ## Acceptance criteria
 
@@ -243,6 +259,9 @@ right-side phone in the Tatami HTML on these axes:
 - Tap targets unchanged (Apple HIG 44pt minimum on all rows / buttons).
 - Functional behavior unchanged — every test in `IkeruTests/` continues to
   pass without modification.
+- Every UI string visible to the user has a French translation in the String
+  Catalog. Switching the language in Settings updates the UI immediately
+  without an app relaunch. Auto-detect picks French on a French-locale device.
 
 ## Risks and mitigations
 
@@ -253,6 +272,92 @@ right-side phone in the Tatami HTML on these axes:
 | Kanji-only tab bar discoverability for new users | EN gloss directly under the kanji on every tab. Same widths, same tap targets. The design's argument is that after one session the kanji become learned anchors. |
 | Performance: 5 PNG assets per session | Each is ≤300KB, decoded once and held by SwiftUI's image cache. Marble background is one image-fill, no per-frame work. |
 | Existing `IkeruCard` call sites that aren't in the per-screen map (e.g. loot box, level-up, onboarding) | They keep `IkeruCard` for now. Tatami-fy them in a follow-up after the user reviews the main flows. |
+| French translation quality drift on long copy | Every translated string is reviewed in-context against its EN sibling. For onboarding-style longer copy added in future, mark the catalog entry as `Needs Review` until a native FR speaker confirms. |
+| Missing FR translation at runtime | String Catalog falls back to the development region (EN) automatically — no crash, just a single-language string. CI enforces "no missing FR keys" before any release that targets FR. |
+
+## UI Language (English / French)
+
+The app ships in **English and French**. Auto-detect on first launch, allow
+override in Settings.
+
+### Detection rule (when preference is `system`)
+
+Check `Locale.preferredLanguages.first` (the user's top preferred language on
+the device). If it starts with `"fr"` (covers `fr`, `fr-FR`, `fr-CA`, `fr-BE`,
+etc.), use French. Otherwise use English. This honors the user's explicit
+device-level language preference and degrades gracefully to English for any
+locale we don't yet support.
+
+### Storage
+
+`@AppStorage("ikeru.uiLanguage")` with one of three values:
+
+- `"system"` (default) — auto-detect via the rule above.
+- `"en"` — force English.
+- `"fr"` — force French.
+
+### Implementation approach
+
+- Add `fr` to the project's `knownRegions` (currently `Base, en`).
+- Create a **String Catalog** (`Localizable.xcstrings`) with all UI strings
+  in EN and FR. Modern Xcode 15+ approach — no manual `.lproj` directories.
+- Compute an `appLocale: Locale` at the root view from the stored preference.
+- Inject it via `.environment(\.locale, appLocale)` on `MainTabView` so every
+  `Text("...")` lookup automatically uses the chosen language.
+- For non-`Text` lookups (formatting, attributed strings) pass `locale:`
+  explicitly to `String(localized:locale:)`.
+
+### What gets localized
+
+- **All EN UI chrome** — buttons, section labels, settings rows, error
+  messages, accessibility labels, toasts.
+- **The English half of bilingual labels.** "本日 · TODAY" becomes
+  "本日 · AUJOURD'HUI". Implementation: split into a fixed JP prefix + middot
+  + a localized chrome string. The JP stays the same in both languages.
+
+### What is NEVER localized (content, not chrome)
+
+- Kana, kanji, romaji, vocabulary drill answers — the language being taught.
+- Japanese proverbs, their romaji, and their JP source forms. Only the
+  English/French *gloss* underneath ("Fall seven, rise eight" → "Sept fois
+  à terre, huit fois debout") is localized.
+- Rank labels (`第N段`), counters (`札`, `連`, `時`, `分`), and all kanji-only
+  glyphs.
+
+### Settings addition
+
+A new row in the existing Account/About cluster (no new section needed):
+
+```
+言語 / Language               [Auto · English]   ›
+```
+
+Tap → sheet with three options (Auto / English / Français), serif kanji
+on the left of each row, EN/FR label on the right of each, hanko-mark on
+the active row. Updates `@AppStorage` and the environment locale propagates
+immediately — **no app relaunch required** thanks to the `\.locale`
+environment approach.
+
+### Translation discipline
+
+- French translations done in-spec, by me, during the localization step.
+- French is **the same register** as English: terse, second-person, ALL CAPS
+  for kicker labels, sentence case for body. No formal "vous" — use casual
+  "tu" to match the app's intimate, mentor-student tone (matches Sakura's
+  voice).
+- Where the EN word is a Japanese loanword in common French use (e.g.,
+  "kanji", "kana", "ramen"), keep it untranslated.
+- Where a French word doesn't exist or sounds bureaucratic, prefer the
+  Japanese term over an awkward translation. "稽古" stays "稽古" — it's
+  content, not chrome.
+
+### Out of scope for this language pass
+
+- Right-to-left languages, additional locales (de, es, ja, etc.). Adding a
+  new language later means appending a column to the String Catalog —
+  architecturally trivial after this lands.
+- Localizing content data (deck names, card metadata) — that's a separate
+  data pipeline change.
 
 ## Out of scope (explicitly)
 
