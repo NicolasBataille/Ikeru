@@ -106,6 +106,7 @@
 		8EFA25811F530A1ED76EB8B2 /* PreWarmNotifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4E3A9795F94E20D35EBA364 /* PreWarmNotifier.swift */; };
 		8F797DDBE2D54C590F237849 /* LootDropView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 876AD9101EE9AB2CA2148935 /* LootDropView.swift */; };
 		90422BEF9BC8E04D637D5227 /* KanjiStudyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15C00EAAA3BA98179DFE119D /* KanjiStudyView.swift */; };
+		91C9AABD240546C6C4380CFA /* FusumaRail.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FCAA1C6D8004A72C4233DEE /* FusumaRail.swift */; };
 		93BF5688D23C97D381684CDD /* PlaybackRateSelector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C436FC5E8920ED935DA2049 /* PlaybackRateSelector.swift */; };
 		94FED3DFE4912D74155C44F1 /* InlineMnemonicView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99665C482D14C819E209167E /* InlineMnemonicView.swift */; };
 		96318E447330C86C4B8FF75B /* VocabularyStudyViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1F62206E7AC1CAC9A3335D5 /* VocabularyStudyViewModel.swift */; };
@@ -263,6 +264,7 @@
 		4C436FC5E8920ED935DA2049 /* PlaybackRateSelector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackRateSelector.swift; sourceTree = "<group>"; };
 		4D70646A260FBC5CBB22E479 /* ProgressDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressDashboardView.swift; sourceTree = "<group>"; };
 		4EBABD6C9A0B5F802FBA5DB2 /* RigJobsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RigJobsViewModel.swift; sourceTree = "<group>"; };
+		4FCAA1C6D8004A72C4233DEE /* FusumaRail.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FusumaRail.swift; sourceTree = "<group>"; };
 		50DC3FFD19212D20C2539520 /* KanaPoolSelectorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KanaPoolSelectorView.swift; sourceTree = "<group>"; };
 		533A0AED8744B2DC594EEFAC /* VocabularyDictionaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VocabularyDictionaryView.swift; sourceTree = "<group>"; };
 		5620682521309021B6102C49 /* TestFixtures.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestFixtures.swift; sourceTree = "<group>"; };
@@ -569,6 +571,7 @@
 			children = (
 				C36A9E890A5BA4545F916469 /* TatamiTokens.swift */,
 				E2F1FF648DFD4B06ACB9D5A1 /* SerifNumeral.swift */,
+				4FCAA1C6D8004A72C4233DEE /* FusumaRail.swift */,
 			);
 			name = Tatami;
 			path = Tatami;
@@ -1287,6 +1290,7 @@
 				3201547827523F9F7FCDDCAD /* XPGainView.swift in Sources */,
 				99E26C3CCDD74700B6074011 /* TatamiTokens.swift in Sources */,
 				1EB643DBDF51CC4C61434B2C /* SerifNumeral.swift in Sources */,
+				91C9AABD240546C6C4380CFA /* FusumaRail.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
