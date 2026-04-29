@@ -53,6 +53,7 @@ rig/assets/
 
 # Test screenshots
 sottaku-*.png
+tatami-*.png
 
 # Local tool configs
 .playwright-mcp/
