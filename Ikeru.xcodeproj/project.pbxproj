@@ -89,6 +89,7 @@
 		784365F25937638D410F69D3 /* ListeningViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5EC7CD071A02DEB1F3611E0 /* ListeningViewModelTests.swift */; };
 		78EBAB8487F09970D54B4F08 /* AISettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E027F7024C00861EDEA8A363 /* AISettingsView.swift */; };
 		7AD47972332D13661BE1885F /* HomeViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44FF091731003AFD23A516FF /* HomeViewModelTests.swift */; };
+		7BDD9E9FFFF5D8479593CBA0 /* SumiCornerFrame.swift in Sources */ = {isa = PBXBuildFile; fileRef = C25AF36F3C7104A9671C3E1D /* SumiCornerFrame.swift */; };
 		7C128D3DB683FE9C44385E9E /* HandwritingViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FB214E27E81F30D44CAD195 /* HandwritingViewModelTests.swift */; };
 		7E72F660CAB40ADDC65BD761 /* KanaRubyText.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64B31E5354E63498288CBC25 /* KanaRubyText.swift */; };
 		7EBC2982099C381560979F85 /* ToastManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8CB4D8F6D27886A95BBAC2D /* ToastManagerTests.swift */; };
@@ -355,6 +356,7 @@
 		BFC50EBFAD8E44D18F442E7C /* ExerciseTransitionContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseTransitionContainer.swift; sourceTree = "<group>"; };
 		C05F94E3AA1A7B8AC2AA9D70 /* LootRevealView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LootRevealView.swift; sourceTree = "<group>"; };
 		C153A64FF1D3081D81EEFDCC /* ActiveSessionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActiveSessionView.swift; sourceTree = "<group>"; };
+		C25AF36F3C7104A9671C3E1D /* SumiCornerFrame.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SumiCornerFrame.swift; sourceTree = "<group>"; };
 		C365C4F5BEDC3A891466ECC7 /* ToastManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToastManager.swift; sourceTree = "<group>"; };
 		C36A9E890A5BA4545F916469 /* TatamiTokens.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TatamiTokens.swift; sourceTree = "<group>"; };
 		C4A0D04EAEE23A91CAFB3F5F /* ActiveProfileResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActiveProfileResolver.swift; sourceTree = "<group>"; };
@@ -572,6 +574,7 @@
 				C36A9E890A5BA4545F916469 /* TatamiTokens.swift */,
 				E2F1FF648DFD4B06ACB9D5A1 /* SerifNumeral.swift */,
 				4FCAA1C6D8004A72C4233DEE /* FusumaRail.swift */,
+				C25AF36F3C7104A9671C3E1D /* SumiCornerFrame.swift */,
 			);
 			name = Tatami;
 			path = Tatami;
@@ -1291,6 +1294,7 @@
 				99E26C3CCDD74700B6074011 /* TatamiTokens.swift in Sources */,
 				1EB643DBDF51CC4C61434B2C /* SerifNumeral.swift in Sources */,
 				91C9AABD240546C6C4380CFA /* FusumaRail.swift in Sources */,
+				7BDD9E9FFFF5D8479593CBA0 /* SumiCornerFrame.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
