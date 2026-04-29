@@ -131,6 +131,7 @@
 		ABA74ED79DF7BC71F7543DBF /* ActiveSessionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C153A64FF1D3081D81EEFDCC /* ActiveSessionView.swift */; };
 		ABB829D69579D496F77AC77F /* ReadingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 406C6BA699B52A4C383A75E1 /* ReadingsView.swift */; };
 		AF2A856D7DBDC342722B07BD /* StrokeOrderExerciseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 903AD257C1627C8BC35CD73B /* StrokeOrderExerciseView.swift */; };
+		AF7E68B51D1243B8032E53E7 /* MarbleBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = D96B344D5EAABEB91F4B5EE2 /* MarbleBackground.swift */; };
 		B17A0F60ECC498D27BD06EF2 /* MonCrestTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AE864AF29ACDCF1CF6A9FEB /* MonCrestTests.swift */; };
 		B2142C70A1C6014266FB9F2E /* ShadowingExerciseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CD329CF724A6DBCD80A22CD /* ShadowingExerciseView.swift */; };
 		B3118C50A4B7018CE6CF5AE0 /* DrillUtilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDB2946DC6619B99A4BBD591 /* DrillUtilities.swift */; };
@@ -381,6 +382,7 @@
 		D2CBFF6AF9FE7C9F48E34A51 /* HoldToConfirmButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HoldToConfirmButton.swift; sourceTree = "<group>"; };
 		D5D9BA9F4FDA871221354B88 /* n5-content.sqlite */ = {isa = PBXFileReference; lastKnownFileType = file; path = "n5-content.sqlite"; sourceTree = "<group>"; };
 		D73A69C4AD84199B467D6CC9 /* ConversationViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationViewModelTests.swift; sourceTree = "<group>"; };
+		D96B344D5EAABEB91F4B5EE2 /* MarbleBackground.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MarbleBackground.swift; sourceTree = "<group>"; };
 		DABC761CD00B88F2CB2B98DF /* KanaQuizView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KanaQuizView.swift; sourceTree = "<group>"; };
 		DB8329720757C93EEDE0EF41 /* SessionIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionIntegrationTests.swift; sourceTree = "<group>"; };
 		DBDEA4C637B31C8705BEE907 /* PitchContourView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PitchContourView.swift; sourceTree = "<group>"; };
@@ -586,6 +588,7 @@
 				AB4EE3B167E71594816FFDAD /* MonCrest.swift */,
 				25B2C6EAEDBB0C07B73E2710 /* HankoStamp.swift */,
 				69C7077A729B04B8A3E50617 /* BilingualLabel.swift */,
+				D96B344D5EAABEB91F4B5EE2 /* MarbleBackground.swift */,
 			);
 			name = Tatami;
 			path = Tatami;
@@ -1311,6 +1314,7 @@
 				D47F7C461CF1CFA5343E2BA8 /* MonCrest.swift in Sources */,
 				8FE42D1296D1C55BB83BC1BB /* HankoStamp.swift in Sources */,
 				0140648B5E3FFD4029D23F8E /* BilingualLabel.swift in Sources */,
+				AF7E68B51D1243B8032E53E7 /* MarbleBackground.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
