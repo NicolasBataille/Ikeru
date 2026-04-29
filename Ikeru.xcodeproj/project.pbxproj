@@ -129,6 +129,7 @@
 		ABA74ED79DF7BC71F7543DBF /* ActiveSessionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C153A64FF1D3081D81EEFDCC /* ActiveSessionView.swift */; };
 		ABB829D69579D496F77AC77F /* ReadingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 406C6BA699B52A4C383A75E1 /* ReadingsView.swift */; };
 		AF2A856D7DBDC342722B07BD /* StrokeOrderExerciseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 903AD257C1627C8BC35CD73B /* StrokeOrderExerciseView.swift */; };
+		B17A0F60ECC498D27BD06EF2 /* MonCrestTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AE864AF29ACDCF1CF6A9FEB /* MonCrestTests.swift */; };
 		B2142C70A1C6014266FB9F2E /* ShadowingExerciseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CD329CF724A6DBCD80A22CD /* ShadowingExerciseView.swift */; };
 		B3118C50A4B7018CE6CF5AE0 /* DrillUtilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDB2946DC6619B99A4BBD591 /* DrillUtilities.swift */; };
 		B4D53BD2C72F596C888D6FAB /* KanjiStudyViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6C995B4118F51F9AD485135 /* KanjiStudyViewModelTests.swift */; };
@@ -155,6 +156,7 @@
 		CEDA5C519843F8F9E6D539DA /* KanaFlashcardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DB3671081E55064A6B6ADE5 /* KanaFlashcardView.swift */; };
 		CF13EFF3CE9BC5A619F0B16D /* IkeruWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = FAB097C7086A8C5F1549D53D /* IkeruWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		D00AC904AC8A13E4B9237F2E /* ProgressDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D70646A260FBC5CBB22E479 /* ProgressDashboardView.swift */; };
+		D47F7C461CF1CFA5343E2BA8 /* MonCrest.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB4EE3B167E71594816FFDAD /* MonCrest.swift */; };
 		D620F952CB6ED990AB51DB36 /* IkeruWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD4E32975E0ECE57675459EB /* IkeruWidgetBundle.swift */; };
 		D8D5457FC6070EDB4C44E5B7 /* RigJobsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EBABD6C9A0B5F802FBA5DB2 /* RigJobsViewModel.swift */; };
 		D8EB495D638484D9EAB4DC02 /* ShadowingViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A71BF12D4449340885A08FCA /* ShadowingViewModel.swift */; };
@@ -303,6 +305,7 @@
 		7822D645AD833A363D150831 /* ListeningViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListeningViewModel.swift; sourceTree = "<group>"; };
 		7A98FD4C07ADD0EB411EE77F /* CompanionChatSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompanionChatSheet.swift; sourceTree = "<group>"; };
 		7AA32DE9A1AC1EB7AC247E80 /* XPBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XPBarView.swift; sourceTree = "<group>"; };
+		7AE864AF29ACDCF1CF6A9FEB /* MonCrestTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MonCrestTests.swift; sourceTree = "<group>"; };
 		7B28B5F9A82603C231B759EB /* ListeningPassageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListeningPassageView.swift; sourceTree = "<group>"; };
 		7DEC565E5BC2D95F4A14BD0A /* KanjiDisplayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KanjiDisplayView.swift; sourceTree = "<group>"; };
 		8225047CD3C41A1364CD67FA /* Ikeru.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Ikeru.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -342,6 +345,7 @@
 		A91BD866585603D217E09761 /* MnemonicView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MnemonicView.swift; sourceTree = "<group>"; };
 		AA3FF1DB0EC4937D61375C15 /* EnsoRankView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnsoRankView.swift; sourceTree = "<group>"; };
 		AA8ABC5B44D456C6BD980427 /* DataExportManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataExportManager.swift; sourceTree = "<group>"; };
+		AB4EE3B167E71594816FFDAD /* MonCrest.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MonCrest.swift; sourceTree = "<group>"; };
 		AF20C958BD43ABB601BE2B23 /* ProfileViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileViewModelTests.swift; sourceTree = "<group>"; };
 		B04C74F735B5D471036C7A40 /* VocabularyDetailSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VocabularyDetailSheet.swift; sourceTree = "<group>"; };
 		B397E03A82EFF499E855C79D /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
@@ -575,6 +579,7 @@
 				E2F1FF648DFD4B06ACB9D5A1 /* SerifNumeral.swift */,
 				4FCAA1C6D8004A72C4233DEE /* FusumaRail.swift */,
 				C25AF36F3C7104A9671C3E1D /* SumiCornerFrame.swift */,
+				AB4EE3B167E71594816FFDAD /* MonCrest.swift */,
 			);
 			name = Tatami;
 			path = Tatami;
@@ -691,6 +696,7 @@
 				912009585675D42B2F7ED4D3 /* StrokeOrderIntegrationTests.swift */,
 				97DC0D8C7FA88DAEF99E751F /* StrokeOrderViewModelTests.swift */,
 				A8CB4D8F6D27886A95BBAC2D /* ToastManagerTests.swift */,
+				7AE864AF29ACDCF1CF6A9FEB /* MonCrestTests.swift */,
 			);
 			path = IkeruTests;
 			sourceTree = "<group>";
@@ -1134,6 +1140,7 @@
 				8416A09ACC39E1CDD672E983 /* StrokeOrderIntegrationTests.swift in Sources */,
 				2EDB743A773B1110D8D8160D /* StrokeOrderViewModelTests.swift in Sources */,
 				7EBC2982099C381560979F85 /* ToastManagerTests.swift in Sources */,
+				B17A0F60ECC498D27BD06EF2 /* MonCrestTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1295,6 +1302,7 @@
 				1EB643DBDF51CC4C61434B2C /* SerifNumeral.swift in Sources */,
 				91C9AABD240546C6C4380CFA /* FusumaRail.swift in Sources */,
 				7BDD9E9FFFF5D8479593CBA0 /* SumiCornerFrame.swift in Sources */,
+				D47F7C461CF1CFA5343E2BA8 /* MonCrest.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
