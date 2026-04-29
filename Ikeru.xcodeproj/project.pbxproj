@@ -110,6 +110,7 @@
 		96318E447330C86C4B8FF75B /* VocabularyStudyViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1F62206E7AC1CAC9A3335D5 /* VocabularyStudyViewModel.swift */; };
 		96B7AA4DDFCB52A92BA246C3 /* SessionViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8908562DCE1E539972918E03 /* SessionViewModelTests.swift */; };
 		98F793063A70505145D0FAFD /* RigSettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACB44C33C46EDA95CE1BA9E /* RigSettingsViewModel.swift */; };
+		99E26C3CCDD74700B6074011 /* TatamiTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = C36A9E890A5BA4545F916469 /* TatamiTokens.swift */; };
 		9B7FD90C901ED310BA49F1C6 /* SessionProgressBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 130C19D8358A2B30F37B94C9 /* SessionProgressBar.swift */; };
 		9BC4183DC3C8A7EC9B37686D /* HandwritingCanvasView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2435124626D304119CA77076 /* HandwritingCanvasView.swift */; };
 		9CE7075A738FC2C1627420CD /* ExerciseTransitionContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFC50EBFAD8E44D18F442E7C /* ExerciseTransitionContainer.swift */; };
@@ -352,6 +353,7 @@
 		C05F94E3AA1A7B8AC2AA9D70 /* LootRevealView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LootRevealView.swift; sourceTree = "<group>"; };
 		C153A64FF1D3081D81EEFDCC /* ActiveSessionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActiveSessionView.swift; sourceTree = "<group>"; };
 		C365C4F5BEDC3A891466ECC7 /* ToastManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToastManager.swift; sourceTree = "<group>"; };
+		C36A9E890A5BA4545F916469 /* TatamiTokens.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TatamiTokens.swift; sourceTree = "<group>"; };
 		C4A0D04EAEE23A91CAFB3F5F /* ActiveProfileResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActiveProfileResolver.swift; sourceTree = "<group>"; };
 		C4E3A9795F94E20D35EBA364 /* PreWarmNotifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreWarmNotifier.swift; sourceTree = "<group>"; };
 		C4EB5EA8CFACFEDD72045EB3 /* FontExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FontExtensions.swift; sourceTree = "<group>"; };
@@ -558,6 +560,15 @@
 				4D70646A260FBC5CBB22E479 /* ProgressDashboardView.swift */,
 			);
 			path = Home;
+			sourceTree = "<group>";
+		};
+		5149A5F03A554ACABB12389B /* Tatami */ = {
+			isa = PBXGroup;
+			children = (
+				C36A9E890A5BA4545F916469 /* TatamiTokens.swift */,
+			);
+			name = Tatami;
+			path = Tatami;
 			sourceTree = "<group>";
 		};
 		58EFC03C1940A4C5948A11CA /* Learning */ = {
@@ -888,6 +899,7 @@
 				CCAD9A4831D219D1C4FC0037 /* ToastView.swift */,
 				7AA32DE9A1AC1EB7AC247E80 /* XPBarView.swift */,
 				CE989EDC826A8D21056CC758 /* XPGainView.swift */,
+				5149A5F03A554ACABB12389B /* Tatami */,
 			);
 			path = Theme;
 			sourceTree = "<group>";
@@ -985,8 +997,6 @@
 				48B02306B9618FF189A631C9 /* PBXTargetDependency */,
 			);
 			name = IkeruTests;
-			packageProductDependencies = (
-			);
 			productName = IkeruTests;
 			productReference = 71F17C0E3B326F9F0C5D3E94 /* IkeruTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
@@ -1272,6 +1282,7 @@
 				A00ED71AC785B8E955FF9A08 /* WordDefinitionView.swift in Sources */,
 				B529F67EFA4A5DB91FD0B0E1 /* XPBarView.swift in Sources */,
 				3201547827523F9F7FCDDCAD /* XPGainView.swift in Sources */,
+				99E26C3CCDD74700B6074011 /* TatamiTokens.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
