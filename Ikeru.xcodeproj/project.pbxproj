@@ -60,6 +60,7 @@
 		4AF345C58ECC4AC605EACE5A /* CornerTicks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00356E3A4031A07E0D26E81C /* CornerTicks.swift */; };
 		4C300AF08D17073C30F03BA3 /* KanjiDisplayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DEC565E5BC2D95F4A14BD0A /* KanjiDisplayView.swift */; };
 		4CC1293E4E5E5F24872B7EB6 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 156EFFF0B204464405BC709E /* HomeView.swift */; };
+		4E81AA7325DF7696FFFA99B1 /* ToriiFrame.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65DEBB395B1A802524B7AF83 /* ToriiFrame.swift */; };
 		4EAB9553B308C0E627182D2D /* IkeruApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBF0809FE4E8A651003BFFB1 /* IkeruApp.swift */; };
 		4FC23EE5CBF8C86A98A855F6 /* WatchHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25A2EBFE2B6872980172B207 /* WatchHomeView.swift */; };
 		50621972E820A8D923FB54D9 /* ReadingPassageViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9350635C5EB9E93159CBD562 /* ReadingPassageViewModel.swift */; };
@@ -292,6 +293,7 @@
 		6443713592CC74FD3AECD921 /* IkeruGlass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IkeruGlass.swift; sourceTree = "<group>"; };
 		64B31E5354E63498288CBC25 /* KanaRubyText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KanaRubyText.swift; sourceTree = "<group>"; };
 		6554CA8A229ACD1B1EAF84B9 /* RigJobsViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RigJobsViewModelTests.swift; sourceTree = "<group>"; };
+		65DEBB395B1A802524B7AF83 /* ToriiFrame.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ToriiFrame.swift; sourceTree = "<group>"; };
 		66B13C680FC67DBFC91A70F7 /* WatchSessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchSessionManager.swift; sourceTree = "<group>"; };
 		674064B18632FB421FD3E37E /* VocabularyDrillModeSelector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VocabularyDrillModeSelector.swift; sourceTree = "<group>"; };
 		6955326534B6460E2F1B9C66 /* AppEnvironment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppEnvironment.swift; sourceTree = "<group>"; };
@@ -589,6 +591,7 @@
 				25B2C6EAEDBB0C07B73E2710 /* HankoStamp.swift */,
 				69C7077A729B04B8A3E50617 /* BilingualLabel.swift */,
 				D96B344D5EAABEB91F4B5EE2 /* MarbleBackground.swift */,
+				65DEBB395B1A802524B7AF83 /* ToriiFrame.swift */,
 			);
 			name = Tatami;
 			path = Tatami;
@@ -1315,6 +1318,7 @@
 				8FE42D1296D1C55BB83BC1BB /* HankoStamp.swift in Sources */,
 				0140648B5E3FFD4029D23F8E /* BilingualLabel.swift in Sources */,
 				AF7E68B51D1243B8032E53E7 /* MarbleBackground.swift in Sources */,
+				4E81AA7325DF7696FFFA99B1 /* ToriiFrame.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
