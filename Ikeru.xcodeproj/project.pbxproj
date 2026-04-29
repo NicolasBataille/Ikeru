@@ -28,6 +28,7 @@
 		17DB7846F569D06593954C9A /* KanaQuizView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBD4393D7B109F5CCFAA3DEE /* KanaQuizView.swift */; };
 		18215CF0553ABF951057A4E6 /* SkillBalanceBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10FD9A1B3124B1306DA628AB /* SkillBalanceBar.swift */; };
 		18FB9E310248D0E4180685FF /* PitchContourView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBDEA4C637B31C8705BEE907 /* PitchContourView.swift */; };
+		1EB643DBDF51CC4C61434B2C /* SerifNumeral.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2F1FF648DFD4B06ACB9D5A1 /* SerifNumeral.swift */; };
 		1F267C7F06B849E143C9F872 /* ProfileViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF20C958BD43ABB601BE2B23 /* ProfileViewModelTests.swift */; };
 		20A46053CB898DA6AEBA6697 /* RPGProfileViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FFDBE842988EF4A387035C1 /* RPGProfileViewModel.swift */; };
 		2332D3E825277DEE0E731926 /* CompanionChatSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A98FD4C07ADD0EB411EE77F /* CompanionChatSheet.swift */; };
@@ -377,6 +378,7 @@
 		E028A7B4AD2AB9F9E1802817 /* ReadingPassageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadingPassageView.swift; sourceTree = "<group>"; };
 		E199ACCB659AD0493D556C8C /* FillInBlankExerciseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FillInBlankExerciseView.swift; sourceTree = "<group>"; };
 		E2839E6E122B09254AB7E515 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		E2F1FF648DFD4B06ACB9D5A1 /* SerifNumeral.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SerifNumeral.swift; sourceTree = "<group>"; };
 		E3B790F00378454A3668D4EC /* IkeruCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = IkeruCore; path = IkeruCore; sourceTree = SOURCE_ROOT; };
 		E415FB60B6790A37E7C422E7 /* ImmersiveSessionViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImmersiveSessionViewTests.swift; sourceTree = "<group>"; };
 		E6662134E08023C0DBD738ED /* HandwritingExerciseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HandwritingExerciseView.swift; sourceTree = "<group>"; };
@@ -566,6 +568,7 @@
 			isa = PBXGroup;
 			children = (
 				C36A9E890A5BA4545F916469 /* TatamiTokens.swift */,
+				E2F1FF648DFD4B06ACB9D5A1 /* SerifNumeral.swift */,
 			);
 			name = Tatami;
 			path = Tatami;
@@ -1283,6 +1286,7 @@
 				B529F67EFA4A5DB91FD0B0E1 /* XPBarView.swift in Sources */,
 				3201547827523F9F7FCDDCAD /* XPGainView.swift in Sources */,
 				99E26C3CCDD74700B6074011 /* TatamiTokens.swift in Sources */,
+				1EB643DBDF51CC4C61434B2C /* SerifNumeral.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
