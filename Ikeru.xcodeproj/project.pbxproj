@@ -62,6 +62,7 @@
 		4CC1293E4E5E5F24872B7EB6 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 156EFFF0B204464405BC709E /* HomeView.swift */; };
 		4E81AA7325DF7696FFFA99B1 /* ToriiFrame.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65DEBB395B1A802524B7AF83 /* ToriiFrame.swift */; };
 		4EAB9553B308C0E627182D2D /* IkeruApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBF0809FE4E8A651003BFFB1 /* IkeruApp.swift */; };
+		4EAC3DD0955C25DD696BE48B /* RPGRankCrest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E465EC77CC660545388BC4E /* RPGRankCrest.swift */; };
 		4FC23EE5CBF8C86A98A855F6 /* WatchHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25A2EBFE2B6872980172B207 /* WatchHomeView.swift */; };
 		50621972E820A8D923FB54D9 /* ReadingPassageViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9350635C5EB9E93159CBD562 /* ReadingPassageViewModel.swift */; };
 		53CA5BB295FDB9CBF8535BE8 /* IkeruCore in Frameworks */ = {isa = PBXBuildFile; productRef = F1FCE9F34C02B01EDB2461B7 /* IkeruCore */; };
@@ -254,6 +255,7 @@
 		2DDE2DBC0AC80C3C72CCE6E1 /* AttributionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttributionView.swift; sourceTree = "<group>"; };
 		2DFC0A4678F7D8B667D36783 /* ShortcutsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutsManager.swift; sourceTree = "<group>"; };
 		2E10FA2BDC5455704DB5EDE7 /* DeleteProfileSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeleteProfileSheet.swift; sourceTree = "<group>"; };
+		2E465EC77CC660545388BC4E /* RPGRankCrest.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RPGRankCrest.swift; sourceTree = "<group>"; };
 		2FB214E27E81F30D44CAD195 /* HandwritingViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HandwritingViewModelTests.swift; sourceTree = "<group>"; };
 		33B41D44105A174C447228C4 /* ProgressDashboardViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressDashboardViewModel.swift; sourceTree = "<group>"; };
 		33CEED6C6C796647FAF4C683 /* NavigationCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationCoordinatorTests.swift; sourceTree = "<group>"; };
@@ -592,6 +594,7 @@
 				69C7077A729B04B8A3E50617 /* BilingualLabel.swift */,
 				D96B344D5EAABEB91F4B5EE2 /* MarbleBackground.swift */,
 				65DEBB395B1A802524B7AF83 /* ToriiFrame.swift */,
+				2E465EC77CC660545388BC4E /* RPGRankCrest.swift */,
 			);
 			name = Tatami;
 			path = Tatami;
@@ -1319,6 +1322,7 @@
 				0140648B5E3FFD4029D23F8E /* BilingualLabel.swift in Sources */,
 				AF7E68B51D1243B8032E53E7 /* MarbleBackground.swift in Sources */,
 				4E81AA7325DF7696FFFA99B1 /* ToriiFrame.swift in Sources */,
+				4EAC3DD0955C25DD696BE48B /* RPGRankCrest.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
