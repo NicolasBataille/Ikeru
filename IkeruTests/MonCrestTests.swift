@@ -2,6 +2,7 @@ import Testing
 import SwiftUI
 @testable import Ikeru
 
+@Suite("MonCrest")
 struct MonCrestTests {
     @Test("All four mon kinds render a non-empty path inside the bounds")
     func allKindsRender() {
