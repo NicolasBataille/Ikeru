@@ -850,6 +850,108 @@
           }
         }
       }
+    },
+    "Talk" : {
+      "comment" : "Companion tab kicker",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Talk"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parler"
+          }
+        }
+      }
+    },
+    "Patient. Specialty: keigo" : {
+      "comment" : "Sakura tutor description",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Patient. Specialty: keigo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Patiente. Spécialité : keigo"
+          }
+        }
+      }
+    },
+    "ONLINE" : {
+      "comment" : "Tutor status pill",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ONLINE"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "EN LIGNE"
+          }
+        }
+      }
+    },
+    "BEGIN CONVERSATION" : {
+      "comment" : "Companion CTA",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BEGIN CONVERSATION"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "COMMENCER LA CONVERSATION"
+          }
+        }
+      }
+    },
+    "Suggested topics" : {
+      "comment" : "Companion suggested-topics section header",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suggested topics"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sujets suggérés"
+          }
+        }
+      }
+    },
+    "Recent conversations" : {
+      "comment" : "Companion recent-conversations section header",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recent conversations"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Conversations récentes"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
