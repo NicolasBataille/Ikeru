@@ -21,7 +21,7 @@ struct HomeView: View {
 
     var body: some View {
         ZStack {
-            IkeruScreenBackground()
+            IkeruScreenBackground(variant: .home)
 
             if let vm = viewModel {
                 homeContent(vm)
