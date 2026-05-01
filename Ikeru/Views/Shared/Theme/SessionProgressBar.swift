@@ -19,16 +19,21 @@ struct SessionProgressBar: View {
     /// Estimated total session duration in seconds.
     let estimatedTotalTime: TimeInterval
 
+    /// Maximum visible segments before we collapse the trailing tail into a
+    /// single quiet capsule. Five reads as a scroll/handscroll rhythm and
+    /// keeps the bar calm even when a session has 20+ exercises.
+    private let visibleSegmentCount = 5
+
     var body: some View {
         VStack(spacing: IkeruTheme.Spacing.sm) {
             // Time labels
             timeLabelsRow
 
-            // Segmented progress bar
+            // Segmented progress bar (5-segment scroll line, with collapse
+            // for longer sessions). Replaces the earlier book/pencil/ear
+            // SF-Symbol row, which read as gamey clutter against the
+            // wabi-sabi direction.
             segmentedBar
-
-            // Skill type icons below segments
-            skillIconsRow
         }
         .padding(.horizontal, IkeruTheme.Spacing.md)
     }
@@ -51,19 +56,35 @@ struct SessionProgressBar: View {
 
     // MARK: - Segmented Bar
 
+    /// 5-segment scroll-line representation. For sessions of 5 or fewer
+    /// exercises every step gets its own segment; longer sessions are
+    /// quantised into 5 buckets so the bar always reads at the same rhythm.
     private var segmentedBar: some View {
-        HStack(spacing: 3) {
-            ForEach(Array(exercises.enumerated()), id: \.offset) { index, _ in
-                segmentView(at: index)
+        HStack(spacing: 4) {
+            ForEach(0..<visibleSegmentCount, id: \.self) { segmentIndex in
+                scrollSegment(at: segmentIndex)
             }
         }
         .frame(height: 6)
     }
 
-    private func segmentView(at index: Int) -> some View {
-        ZStack {
+    /// Returns the visible segment's filled state given the absolute progress.
+    /// `currentIndex` is the active exercise; we bucket it into the visible
+    /// segment count so 8/12/20 exercises all collapse to the same five-step
+    /// rhythm.
+    private func scrollSegment(at segmentIndex: Int) -> some View {
+        let totalSteps = max(1, exercises.count)
+        let progressFraction = Double(currentIndex) / Double(totalSteps)
+        let segmentFraction = Double(segmentIndex) / Double(visibleSegmentCount)
+        let nextSegmentFraction = Double(segmentIndex + 1) / Double(visibleSegmentCount)
+
+        let isFilled = progressFraction >= nextSegmentFraction
+        let isActive = progressFraction >= segmentFraction
+            && progressFraction < nextSegmentFraction
+
+        return ZStack {
             Capsule().fill(Color.white.opacity(0.08))
-            if index < currentIndex {
+            if isFilled {
                 Capsule().fill(
                     LinearGradient(
                         colors: [Color(hex: 0xE5BC8A), Color(hex: 0xD4A574)],
@@ -71,7 +92,7 @@ struct SessionProgressBar: View {
                         endPoint: .trailing
                     )
                 )
-            } else if index == currentIndex {
+            } else if isActive {
                 Capsule().fill(
                     LinearGradient(
                         colors: [Color(hex: 0xF5F2EC), Color(hex: 0xE0DDD7)],
@@ -88,38 +109,6 @@ struct SessionProgressBar: View {
             .spring(response: 0.42, dampingFraction: 0.86),
             value: currentIndex
         )
-    }
-
-    // MARK: - Skill Icons
-
-    private var skillIconsRow: some View {
-        HStack(spacing: 0) {
-            // Show icons only when there are a reasonable number
-            if exercises.count <= 12 {
-                ForEach(Array(exercises.enumerated()), id: \.offset) { index, exercise in
-                    Image(systemName: sfSymbol(for: exercise.skill))
-                        .font(.system(size: 8))
-                        .foregroundStyle(iconColor(at: index))
-                        .frame(maxWidth: .infinity)
-                }
-            } else {
-                // For many exercises, show a compact count
-                Text("\(currentIndex + 1)/\(exercises.count)")
-                    .font(.ikeruCaption)
-                    .foregroundStyle(.ikeruTextSecondary)
-                    .frame(maxWidth: .infinity)
-            }
-        }
-    }
-
-    private func iconColor(at index: Int) -> Color {
-        if index < currentIndex {
-            return .ikeruPrimaryAccent
-        } else if index == currentIndex {
-            return .white
-        } else {
-            return .ikeruTextSecondary
-        }
     }
 
     // MARK: - Helpers

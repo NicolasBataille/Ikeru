@@ -75,7 +75,9 @@ struct HomeView: View {
                 topBar(vm)
                 proverbHero(vm)
                 statsRow(vm)
+                skillRadarCard(vm)
                 primaryAction(vm)
+                sessionBreakdown(vm)
                 if vm.hasLoaded && vm.dueCardCount == 0 {
                     quietState
                 }
@@ -133,24 +135,22 @@ struct HomeView: View {
                 }
             }
             Spacer()
-            streakPill(streak: vm.dailyStreak)
+            levelPill(level: vm.level)
         }
         .padding(.top, IkeruTheme.Spacing.xs)
     }
 
+    // Level pill (top-right) per the design brief — replaces the earlier streak
+    // pill, which contradicted the product brief's anti-gamification stance
+    // ("no streaks, no gems, no daily login pressure").
     @ViewBuilder
-    private func streakPill(streak: Int) -> some View {
+    private func levelPill(level: Int) -> some View {
         HStack(spacing: 7) {
-            Image(systemName: "flame.fill")
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(Color.ikeruPrimaryAccent)
-            Text("\(max(0, streak))")
-                .font(.system(size: 13, weight: .medium))
+            EnsoRankView(level: level, size: 16)
+            Text("\u{7B2C}\(level)\u{6BB5}") // 第N段
+                .font(.system(size: 12, weight: .medium, design: .serif))
                 .foregroundStyle(Color.ikeruTextPrimary)
-            Text("day")
-                .font(.system(size: 11))
-                .foregroundStyle(Color.ikeruTextTertiary)
-                .tracking(0.4)
+                .tracking(1.4)
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 7)
@@ -232,16 +232,158 @@ struct HomeView: View {
         .padding(IkeruTheme.Spacing.lg)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background {
-            IkeruGlassSurface(
-                cornerRadius: IkeruTheme.Radius.lg,
-                tint: Color.ikeruPrimaryAccent,
-                tintOpacity: 0.04,
-                highlight: 0.16,
-                strokeOpacity: 0.14
-            )
+            // Mesh-gradient substrate (per ux-design-spec) topped with the
+            // wabi-sabi glass overlay. The mesh adds slow, calm motion that
+            // shifts palette as the player ranks up; the glass tames its
+            // brightness so the proverb stays the focal element.
+            ZStack {
+                MeshHeroBackground(level: vm.level, cornerRadius: IkeruTheme.Radius.lg)
+                IkeruGlassSurface(
+                    cornerRadius: IkeruTheme.Radius.lg,
+                    tint: Color.ikeruPrimaryAccent,
+                    tintOpacity: 0.04,
+                    highlight: 0.10,
+                    strokeOpacity: 0.14
+                )
+            }
         }
         .clipShape(RoundedRectangle(cornerRadius: IkeruTheme.Radius.lg, style: .continuous))
         .shadow(color: Color.black.opacity(0.45), radius: 24, y: 10)
+    }
+
+    // MARK: - Skill radar card
+
+    @ViewBuilder
+    private func skillRadarCard(_ vm: HomeViewModel) -> some View {
+        HStack(alignment: .center, spacing: IkeruTheme.Spacing.md) {
+            SkillRadarView(skillBalance: vm.skillBalance, variant: .mini)
+                .frame(width: 120, height: 120)
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text("BALANCE")
+                    .font(.ikeruMicro)
+                    .ikeruTracking(.micro)
+                    .foregroundStyle(Color.ikeruTextTertiary)
+
+                Text("Your four winds")
+                    .font(.system(size: 17, weight: .regular, design: .serif))
+                    .foregroundStyle(Color.ikeruTextPrimary)
+
+                skillRow("Reading", value: vm.skillBalance.reading)
+                skillRow("Listening", value: vm.skillBalance.listening)
+                skillRow("Writing", value: vm.skillBalance.writing)
+                skillRow("Speaking", value: vm.skillBalance.speaking)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(IkeruTheme.Spacing.md)
+        .background {
+            IkeruGlassSurface(
+                cornerRadius: IkeruTheme.Radius.lg,
+                tint: .clear,
+                tintOpacity: 0.0,
+                highlight: 0.10,
+                strokeOpacity: 0.10
+            )
+        }
+        .clipShape(RoundedRectangle(cornerRadius: IkeruTheme.Radius.lg, style: .continuous))
+    }
+
+    @ViewBuilder
+    private func skillRow(_ label: String, value: Double) -> some View {
+        HStack(spacing: 8) {
+            Text(label.uppercased())
+                .font(.system(size: 10, weight: .semibold))
+                .tracking(1.5)
+                .foregroundStyle(Color.ikeruTextSecondary)
+                .frame(width: 72, alignment: .leading)
+            ZStack(alignment: .leading) {
+                Capsule().fill(Color.white.opacity(0.06)).frame(height: 3)
+                Capsule()
+                    .fill(Color.ikeruPrimaryAccent.opacity(0.85))
+                    .frame(width: max(2, CGFloat(min(1, max(0, value))) * 80), height: 3)
+            }
+            .frame(width: 80)
+            Text("\(Int(min(1, max(0, value)) * 100))")
+                .font(.system(size: 10, design: .monospaced))
+                .foregroundStyle(Color.ikeruTextTertiary)
+        }
+    }
+
+    // MARK: - Session breakdown
+    //
+    // Quiet preview of what the next session contains: split between brand-new
+    // exposures and reviews. Sits under the CTA so the user knows what they're
+    // walking into without having to start the session first.
+
+    @ViewBuilder
+    private func sessionBreakdown(_ vm: HomeViewModel) -> some View {
+        if vm.sessionPreviewCardCount > 0 {
+            HStack(spacing: 0) {
+                breakdownCell(
+                    icon: "sparkles",
+                    label: "New",
+                    count: vm.sessionPreviewNewCount,
+                    tint: .ikeruSecondaryAccent
+                )
+                Divider()
+                    .frame(width: 0.6, height: 28)
+                    .overlay(Color.white.opacity(0.10))
+                breakdownCell(
+                    icon: "arrow.triangle.2.circlepath",
+                    label: "Review",
+                    count: vm.sessionPreviewReviewCount,
+                    tint: .ikeruPrimaryAccent
+                )
+                Divider()
+                    .frame(width: 0.6, height: 28)
+                    .overlay(Color.white.opacity(0.10))
+                breakdownCell(
+                    icon: "timer",
+                    label: "Approx",
+                    valueText: "\(max(1, vm.sessionPreviewMinutes))m",
+                    tint: .ikeruTertiaryAccent
+                )
+            }
+            .padding(.vertical, 10)
+            .padding(.horizontal, IkeruTheme.Spacing.sm)
+            .background {
+                IkeruGlassSurface(
+                    cornerRadius: IkeruTheme.Radius.md,
+                    tint: .clear,
+                    tintOpacity: 0.0,
+                    highlight: 0.08,
+                    strokeOpacity: 0.08
+                )
+            }
+            .clipShape(RoundedRectangle(cornerRadius: IkeruTheme.Radius.md, style: .continuous))
+        }
+    }
+
+    @ViewBuilder
+    private func breakdownCell(
+        icon: String,
+        label: String,
+        count: Int? = nil,
+        valueText: String? = nil,
+        tint: Color
+    ) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: icon)
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(tint)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(label.uppercased())
+                    .font(.system(size: 9, weight: .heavy))
+                    .tracking(1.6)
+                    .foregroundStyle(Color.ikeruTextTertiary)
+                Text(valueText ?? "\(count ?? 0)")
+                    .font(.system(size: 14, weight: .medium, design: .monospaced))
+                    .foregroundStyle(Color.ikeruTextPrimary)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 10)
     }
 
     // MARK: - Stats Row
@@ -500,10 +642,10 @@ struct HomeView: View {
 
 // MARK: - Proverb pool
 //
-// Small curated list of Japanese proverbs (ことわざ). The Home hero rotates
-// through them by level so the card feels alive over time. Each proverb is
-// a short, lesson-forward sentence fit for a learning app — no obscure
-// idioms, no awkward translations.
+// Curated 四字熟語 (yojijukugo) only — four-kanji idioms. Restricting the pool
+// to four-character entries keeps the hero typography stable: longer
+// proverbs (千里の道も一歩から, 塵も積もれば山となる) wrap and break the layout
+// because the kanji line is sized for four glyphs at 40pt with tracking 4.
 
 struct HomeProverb {
     let kanji: String
@@ -522,19 +664,24 @@ struct HomeProverb {
             translation: "One time, one meeting — treasure every encounter."
         ),
         HomeProverb(
-            kanji: "石の上にも三年",
-            romaji: "ishi no ue ni mo san nen",
-            translation: "Three years on a stone — persistence warms even cold ground."
+            kanji: "\u{6E29}\u{6545}\u{77E5}\u{65B0}", // 温故知新
+            romaji: "onko chishin",
+            translation: "Learn the new by warming the old."
         ),
         HomeProverb(
-            kanji: "千里の道も一歩から",
-            romaji: "senri no michi mo ippo kara",
-            translation: "A thousand-league journey begins with a single step."
+            kanji: "\u{4E00}\u{5FC3}\u{4E0D}\u{4E71}", // 一心不乱
+            romaji: "isshin furan",
+            translation: "One mind, no scattering — wholehearted focus."
         ),
         HomeProverb(
-            kanji: "塵も積もれば山となる",
-            romaji: "chiri mo tsumoreba yama to naru",
-            translation: "Even dust, piled high, becomes a mountain."
+            kanji: "\u{521D}\u{5FD7}\u{8CAB}\u{5FB9}", // 初志貫徹
+            romaji: "shoshi kantetsu",
+            translation: "Carry your first intention through to the end."
+        ),
+        HomeProverb(
+            kanji: "\u{6709}\u{8A00}\u{5B9F}\u{884C}", // 有言実行
+            romaji: "yūgen jikkō",
+            translation: "Words become deeds."
         )
     ]
 

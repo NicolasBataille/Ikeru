@@ -63,6 +63,11 @@ struct MainTabView: View {
             // Custom floating Liquid Glass tab bar
             IkeruTabBar(selection: $selectedTab, tabs: AppTab.allCases)
                 .ignoresSafeArea(.keyboard)
+
+            // Persistent companion avatar — Sakura is part of the surface,
+            // not just a tab. Hidden when the Companion tab is active so
+            // the floating glyph doesn't sit over the chat itself.
+            companionAvatarOverlay
         }
         .onAppear {
             initializeCompanionViewModel()
@@ -113,6 +118,34 @@ struct MainTabView: View {
             }
         }
         .animation(.spring(response: 0.42, dampingFraction: 0.86), value: selectedTab)
+    }
+
+    // MARK: - Companion Overlay
+    //
+    // Floats above the tab bar in the bottom-right gutter. Tap opens the
+    // companion chat sheet without changing tabs — quick access from any
+    // surface, in keeping with the original spec ("persistent companion
+    // overlay").
+
+    @ViewBuilder
+    private var companionAvatarOverlay: some View {
+        if selectedTab != .companion {
+            VStack {
+                Spacer()
+                HStack {
+                    Spacer()
+                    CompanionAvatarView(
+                        hasAttention: false,
+                        showBadge: false,
+                        onTap: { showCompanionChat = true }
+                    )
+                    .padding(.trailing, 20)
+                    .padding(.bottom, 100) // clears the floating tab bar
+                }
+            }
+            .ignoresSafeArea(.keyboard)
+            .transition(.opacity)
+        }
     }
 
     // MARK: - Companion Initialization

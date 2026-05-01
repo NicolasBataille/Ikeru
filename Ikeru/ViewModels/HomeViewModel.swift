@@ -41,8 +41,14 @@ public final class HomeViewModel {
     /// Number of unopened lootboxes.
     public private(set) var unopenedLootBoxCount: Int = 0
 
-    /// Current consecutive daily-session streak (shown in the home streak pill).
-    public private(set) var dailyStreak: Int = 0
+    /// Skill balance snapshot for the home radar card.
+    public private(set) var skillBalance: SkillBalanceSnapshot = SkillBalanceSnapshot()
+
+    /// Estimated number of new cards in the next session.
+    public private(set) var sessionPreviewNewCount: Int = 0
+
+    /// Estimated number of review cards in the next session.
+    public private(set) var sessionPreviewReviewCount: Int = 0
 
     /// XP earned so far within the current level (0 ≤ value < xpForLevel(level)).
     public var xpInCurrentLevel: Int {
@@ -108,6 +114,7 @@ public final class HomeViewModel {
     private let modelContainer: ModelContainer
     private let cardRepository: CardRepository
     private let plannerService: PlannerService
+    private let progressService: ProgressService
 
     // MARK: - Init
 
@@ -116,6 +123,7 @@ public final class HomeViewModel {
         let repo = CardRepository(modelContainer: modelContainer)
         self.cardRepository = repo
         self.plannerService = PlannerService(cardRepository: repo)
+        self.progressService = ProgressService(cardRepository: repo)
     }
 
     /// Initializer for testing with injected dependencies.
@@ -127,6 +135,7 @@ public final class HomeViewModel {
         self.modelContainer = modelContainer
         self.cardRepository = cardRepository
         self.plannerService = plannerService
+        self.progressService = ProgressService(cardRepository: cardRepository)
     }
 
     // MARK: - Data Loading
@@ -141,6 +150,7 @@ public final class HomeViewModel {
         await loadDueCardCount()
         await loadKanjiLearnedCount()
         await composeSessionPreview()
+        await loadSkillBalance()
 
         hasLoaded = true
 
@@ -162,7 +172,6 @@ public final class HomeViewModel {
             xp = state.xp
             level = state.level
             unopenedLootBoxCount = state.unopenedLootBoxes.count
-            dailyStreak = state.currentDailyStreak
             EquippedCosmeticsBridge.sync(state: state)
 
             // Compute recent achievement from last inventory item
@@ -183,7 +192,6 @@ public final class HomeViewModel {
             level = 1
             recentAchievement = nil
             unopenedLootBoxCount = 0
-            dailyStreak = 0
         }
 
         xpForNextLevel = RPGConstants.xpForLevel(level)
@@ -206,6 +214,26 @@ public final class HomeViewModel {
         sessionPreviewCardCount = queue.count
         // Roughly 1 minute per card, minimum 1
         sessionPreviewMinutes = max(1, queue.count)
+
+        // Approximate split between brand-new cards and reviews. A card is
+        // "new" when it has never been answered (reps == 0); everything else
+        // is a recurring review.
+        var newCount = 0
+        var reviewCount = 0
+        for card in queue {
+            if card.fsrsState.reps == 0 {
+                newCount += 1
+            } else {
+                reviewCount += 1
+            }
+        }
+        sessionPreviewNewCount = newCount
+        sessionPreviewReviewCount = reviewCount
         Logger.ui.debug("Session preview: \(queue.count) cards, ~\(self.sessionPreviewMinutes) min")
+    }
+
+    private func loadSkillBalance() async {
+        let data = await progressService.loadDashboardData()
+        skillBalance = data.skillBalance
     }
 }

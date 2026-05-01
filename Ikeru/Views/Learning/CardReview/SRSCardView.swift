@@ -228,7 +228,7 @@ struct SRSCardView: View {
 
             // Category micro-label pinned to the top of the card.
             VStack {
-                Text(categoryLabel(for: card.type))
+                Text(categoryLabel(for: card))
                     .font(.system(size: 10, weight: .semibold))
                     .tracking(3)
                     .foregroundStyle(
@@ -259,16 +259,43 @@ struct SRSCardView: View {
             }
         }
         .frame(maxWidth: .infinity)
-        .frame(height: 280)
+        .frame(minHeight: 320)
     }
 
-    private func categoryLabel(for type: CardType) -> String {
-        switch type {
-        case .kanji:     return "漢字 · KANJI"
-        case .vocabulary: return "語彙 · VOCAB"
-        case .grammar:   return "文法 · GRAMMAR"
-        case .listening: return "聴解 · LISTENING"
+    /// Picks a label by inspecting the front glyph's Unicode block when the
+    /// card is typed as `.kanji`. Beginner kana cards are seeded with type
+    /// `.kanji` upstream, so a pure switch on `CardType` would mislabel
+    /// hiragana/katakana as 漢字. Detection by scalar range is authoritative
+    /// regardless of how the seed data is typed.
+    private func categoryLabel(for card: CardDTO) -> String {
+        switch card.type {
+        case .kanji:
+            return kanjiOrKanaLabel(front: card.front)
+        case .vocabulary:
+            return "\u{8A9E}\u{5F59} \u{00B7} VOCAB"        // 語彙 · VOCAB
+        case .grammar:
+            return "\u{6587}\u{6CD5} \u{00B7} GRAMMAR"      // 文法 · GRAMMAR
+        case .listening:
+            return "\u{8074}\u{89E3} \u{00B7} LISTENING"    // 聴解 · LISTENING
         }
+    }
+
+    private func kanjiOrKanaLabel(front: String) -> String {
+        guard let scalar = front.unicodeScalars.first else {
+            return "\u{6F22}\u{5B57} \u{00B7} KANJI"
+        }
+        let v = scalar.value
+        // Hiragana block: U+3040..U+309F
+        if (0x3040...0x309F).contains(v) {
+            return "\u{3072}\u{3089}\u{304C}\u{306A} \u{00B7} HIRAGANA"
+        }
+        // Katakana block: U+30A0..U+30FF (and the phonetic extensions
+        // U+31F0..U+31FF for completeness)
+        if (0x30A0...0x30FF).contains(v) || (0x31F0...0x31FF).contains(v) {
+            return "\u{30AB}\u{30BF}\u{30AB}\u{30CA} \u{00B7} KATAKANA"
+        }
+        // Default: treat as kanji (CJK Unified Ideographs and extensions).
+        return "\u{6F22}\u{5B57} \u{00B7} KANJI"
     }
 
     @ViewBuilder

@@ -58,14 +58,19 @@ struct XPBarView: View {
     }
 
     // MARK: - Full Variant
+    //
+    // Rank chrome was removed here because the calling screens (RPGProfile,
+    // Home) now lead with `EnsoRankView` + 第N段 — the brushed glyph carries
+    // rank identity. Repeating "Lv. N" with a shield icon doubled the visual
+    // weight and contradicted the wabi-sabi refinement direction.
 
     private var fullVariant: some View {
-        VStack(spacing: IkeruTheme.Spacing.xs) {
-            // Level and XP text
+        VStack(alignment: .trailing, spacing: IkeruTheme.Spacing.xs) {
             HStack {
-                Label("Lv. \(level)", systemImage: "shield.fill")
-                    .font(.ikeruHeading3)
-                    .foregroundStyle(Color(hex: IkeruTheme.Colors.Rarity.legendary))
+                Text("EXPERIENCE")
+                    .font(.ikeruMicro)
+                    .ikeruTracking(.micro)
+                    .foregroundStyle(Color.ikeruTextTertiary)
 
                 Spacer()
 
