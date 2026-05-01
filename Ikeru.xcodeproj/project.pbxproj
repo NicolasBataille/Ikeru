@@ -93,6 +93,7 @@
 		75216F3246F319E6E8271D18 /* KanaDrillViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86F0467337CA5D848E771C8C /* KanaDrillViewModel.swift */; };
 		784365F25937638D410F69D3 /* ListeningViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5EC7CD071A02DEB1F3611E0 /* ListeningViewModelTests.swift */; };
 		78EBAB8487F09970D54B4F08 /* AISettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E027F7024C00861EDEA8A363 /* AISettingsView.swift */; };
+		7A80AB8856661612D39AAB05 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = E2EB369AB07C4479E312335A /* Localizable.xcstrings */; };
 		7AD47972332D13661BE1885F /* HomeViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44FF091731003AFD23A516FF /* HomeViewModelTests.swift */; };
 		7BDD9E9FFFF5D8479593CBA0 /* SumiCornerFrame.swift in Sources */ = {isa = PBXBuildFile; fileRef = C25AF36F3C7104A9671C3E1D /* SumiCornerFrame.swift */; };
 		7C128D3DB683FE9C44385E9E /* HandwritingViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FB214E27E81F30D44CAD195 /* HandwritingViewModelTests.swift */; };
@@ -401,6 +402,7 @@
 		E028A7B4AD2AB9F9E1802817 /* ReadingPassageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadingPassageView.swift; sourceTree = "<group>"; };
 		E199ACCB659AD0493D556C8C /* FillInBlankExerciseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FillInBlankExerciseView.swift; sourceTree = "<group>"; };
 		E2839E6E122B09254AB7E515 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		E2EB369AB07C4479E312335A /* Localizable.xcstrings */ = {isa = PBXFileReference; includeInIndex = 1; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		E2F1FF648DFD4B06ACB9D5A1 /* SerifNumeral.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SerifNumeral.swift; sourceTree = "<group>"; };
 		E3B790F00378454A3668D4EC /* IkeruCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = IkeruCore; path = IkeruCore; sourceTree = SOURCE_ROOT; };
 		E415FB60B6790A37E7C422E7 /* ImmersiveSessionViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImmersiveSessionViewTests.swift; sourceTree = "<group>"; };
@@ -885,6 +887,7 @@
 			isa = PBXGroup;
 			children = (
 				F8175DFE1144779F7DC87BB4 /* AppLocale.swift */,
+				E2EB369AB07C4479E312335A /* Localizable.xcstrings */,
 			);
 			name = Localization;
 			path = Localization;
@@ -1132,6 +1135,7 @@
 				2599E15EC556738138D16158 /* Assets.xcassets in Resources */,
 				EFFC7E378C0AE8C64CD48AEB /* PrivacyInfo.xcprivacy in Resources */,
 				699CDC8CCD6C70501B8AF94A /* n5-content.sqlite in Resources */,
+				7A80AB8856661612D39AAB05 /* Localizable.xcstrings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
