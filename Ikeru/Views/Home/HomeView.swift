@@ -115,29 +115,65 @@ struct HomeView: View {
 
     @ViewBuilder
     private func topBar(_ vm: HomeViewModel) -> some View {
-        HStack(alignment: .bottom) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(timeOfDayGreeting().uppercased())
-                    .font(.ikeruMicro)
-                    .ikeruTracking(.micro)
-                    .foregroundStyle(Color.ikeruTextTertiary)
-
-                Text(vm.displayName.isEmpty ? "Welcome" : vm.displayName)
-                    .font(.ikeruDisplaySmall)
-                    .ikeruTracking(.display)
-                    .foregroundStyle(Color.ikeruTextPrimary)
-
-                if !equippedTitleName.isEmpty {
-                    Text(equippedTitleName.uppercased())
-                        .font(.ikeruMicro)
-                        .ikeruTracking(.micro)
-                        .foregroundStyle(Color.ikeruPrimaryAccent)
-                }
+        VStack(alignment: .leading, spacing: 6) {
+            // Serif kanji date row — sits where the SF status time bar lives
+            HStack {
+                Spacer()
+                Text(serifJapaneseDate())
+                    .font(.system(size: 11, weight: .regular, design: .serif))
+                    .foregroundStyle(TatamiTokens.paperGhost)
+                    .tracking(1)
             }
-            Spacer()
-            levelPill(level: vm.level)
+
+            HStack(alignment: .bottom) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(timeOfDayGreetingJP())
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(Color.ikeruPrimaryAccent)
+                        .tracking(2.4)
+                        .textCase(.uppercase)
+
+                    HStack(spacing: 0) {
+                        Text(vm.displayName.isEmpty
+                             ? String(localized: "Welcome")
+                             : vm.displayName)
+                            .font(.system(size: 22, weight: .semibold))
+                            .foregroundStyle(Color.ikeruTextPrimary)
+                        Text("。")
+                            .font(.system(size: 22, weight: .semibold, design: .serif))
+                            .foregroundStyle(TatamiTokens.paperGhost)
+                    }
+
+                    if !equippedTitleName.isEmpty {
+                        Text(equippedTitleName.uppercased())
+                            .font(.ikeruMicro)
+                            .ikeruTracking(.micro)
+                            .foregroundStyle(Color.ikeruPrimaryAccent)
+                    }
+                }
+                Spacer()
+                levelPill(level: vm.level)
+            }
         }
         .padding(.top, IkeruTheme.Spacing.xs)
+    }
+
+    /// Returns "四月二十九日 · 火" (Japanese serif kanji date).
+    private func serifJapaneseDate() -> String {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "ja_JP")
+        f.dateFormat = "M月d日 · E"
+        return f.string(from: Date())
+    }
+
+    /// Returns "こんばんは" / "おはよう" / "こんにちは" depending on the hour.
+    private func timeOfDayGreetingJP() -> String {
+        let h = Calendar.current.component(.hour, from: Date())
+        switch h {
+        case 5..<11: return "おはよう"
+        case 11..<17: return "こんにちは"
+        default: return "こんばんは"
+        }
     }
 
     // Level pill (top-right) per the design brief — replaces the earlier streak
