@@ -3,18 +3,24 @@ import IkeruCore
 
 // MARK: - GradeButtonsView
 //
-// Four grade buttons with indicative next-due intervals under each label.
-// Intervals are *representative* — the real FSRS next-due depends on the
-// card's current state (stability, difficulty, lapse count). The chip
-// communicates the scheduler's direction so the user can grade with intent,
-// without pretending to show a pixel-accurate prediction.
+// Tatami-direction FSRS grade row: four sharp tatami buttons, each with a
+// kanji header (又 / 難 / 良 / 易), a colored sumi-corner frame, the
+// localized chrome label, and the indicative next-due interval rendered
+// as a serif numeral below.
+//
+// Indicative intervals are *representative* — the real FSRS next-due
+// depends on the card's current state (stability, difficulty, lapse
+// count). The numeral communicates the scheduler's direction so the user
+// can grade with intent, without pretending to show a pixel-accurate
+// prediction.
 
 struct GradeButtonsView: View {
 
     let onGrade: (Grade) -> Void
 
     /// Indicative due windows — tuned to "what a typical early-review card
-    /// would see after this grade". Kept terse to fit on a mobile row.
+    /// would see after this grade". Kept terse to fit on a mobile row and
+    /// surfaced as a serif numeral under each button.
     private let dueHints: [Grade: String] = [
         .again: "<1m",
         .hard:  "~6m",
@@ -22,56 +28,62 @@ struct GradeButtonsView: View {
         .easy:  "4d"
     ]
 
-    var body: some View {
-        HStack(spacing: IkeruTheme.Spacing.sm) {
-            gradeButton(grade: .again, label: "Again",
-                        color: Color.ikeruDanger)
-            gradeButton(grade: .hard,  label: "Hard",
-                        color: Color.ikeruWarning)
-            gradeButton(grade: .good,  label: "Good",
-                        color: Color.ikeruPrimaryAccent, primary: true)
-            gradeButton(grade: .easy,  label: "Easy",
-                        color: Color.ikeruSuccess)
-        }
+    private struct GradeSpec {
+        let grade: Grade
+        let kanji: String
+        let label: LocalizedStringKey
+        let color: Color
     }
 
-    // MARK: - Grade Button
+    /// Color-coded specs for the four FSRS grades. Colors come from the
+    /// Tatami direction: vermilion warns "again", muted brown signals
+    /// effort ("hard"), gold rewards a confident "good", green frees an
+    /// easy review.
+    private var specs: [GradeSpec] {
+        [
+            .init(grade: .again, kanji: "\u{53C8}", label: "Again",   // 又
+                  color: TatamiTokens.vermilion),
+            .init(grade: .hard,  kanji: "\u{96E3}", label: "Hard",    // 難
+                  color: Color(red: 0.627, green: 0.451, blue: 0.302)),
+            .init(grade: .good,  kanji: "\u{826F}", label: "Good",    // 良
+                  color: Color.ikeruPrimaryAccent),
+            .init(grade: .easy,  kanji: "\u{6613}", label: "Easy",    // 易
+                  color: Color(red: 0.616, green: 0.729, blue: 0.486))
+        ]
+    }
 
-    private func gradeButton(
-        grade: Grade,
-        label: String,
-        color: Color,
-        primary: Bool = false
-    ) -> some View {
-        Button {
-            onGrade(grade)
-        } label: {
-            VStack(spacing: 4) {
-                Text(label)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(primary ? Color(red: 0.16, green: 0.11, blue: 0.05) : color)
-                Text(dueHints[grade] ?? "")
-                    .font(.system(size: 10, weight: .regular, design: .monospaced))
-                    .foregroundStyle(
-                        primary
-                            ? Color(red: 0.16, green: 0.11, blue: 0.05).opacity(0.7)
-                            : Color.ikeruTextTertiary
-                    )
-            }
-            .frame(maxWidth: .infinity)
-            .frame(height: 60)
-            .background {
-                if primary {
-                    RoundedRectangle(cornerRadius: IkeruTheme.Radius.md, style: .continuous)
-                        .fill(LinearGradient.ikeruGold)
-                } else {
-                    RoundedRectangle(cornerRadius: IkeruTheme.Radius.md, style: .continuous)
-                        .fill(color.opacity(0.14))
-                        .overlay {
-                            RoundedRectangle(cornerRadius: IkeruTheme.Radius.md, style: .continuous)
-                                .strokeBorder(color.opacity(0.35), lineWidth: 1)
-                        }
+    var body: some View {
+        HStack(spacing: 8) {
+            ForEach(specs, id: \.grade) { spec in
+                Button {
+                    onGrade(spec.grade)
+                } label: {
+                    VStack(spacing: 4) {
+                        Text(spec.kanji)
+                            .font(.system(size: 18, weight: .light, design: .serif))
+                            .foregroundStyle(spec.color)
+                            .padding(.bottom, 2)
+                        Text(spec.label)
+                            .font(.system(size: 11, weight: .bold))
+                            .tracking(1)
+                            .foregroundStyle(Color.ikeruTextPrimary)
+                            .textCase(.uppercase)
+                        SerifNumeral(
+                            dueHints[spec.grade] ?? "",
+                            size: 10,
+                            weight: .regular,
+                            color: TatamiTokens.paperGhost
+                        )
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(Color(red: 0.102, green: 0.102, blue: 0.133))
+                    .overlay(alignment: .top) {
+                        Rectangle().fill(spec.color).frame(height: 1)
+                    }
+                    .sumiCorners(color: spec.color, size: 8, weight: 1.2, inset: -1)
                 }
+                .buttonStyle(.plain)
             }
         }
     }

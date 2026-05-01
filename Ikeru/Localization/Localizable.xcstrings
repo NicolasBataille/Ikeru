@@ -1,6 +1,23 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "Again" : {
+      "comment" : "FSRS grade button label",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Again"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Encore"
+          }
+        }
+      }
+    },
     "Approx" : {
       "comment" : "Session preview: approximate duration",
       "localizations" : {
@@ -69,6 +86,23 @@
         }
       }
     },
+    "Easy" : {
+      "comment" : "FSRS grade button label",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Easy"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Facile"
+          }
+        }
+      }
+    },
     "days" : {
       "comment" : "Tiny suffix after the STREAK count",
       "localizations" : {
@@ -86,6 +120,23 @@
         }
       }
     },
+    "Good" : {
+      "comment" : "FSRS grade button label",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Good"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bien"
+          }
+        }
+      }
+    },
     "Grammar" : {
       "comment" : "Bilingual chrome label paired with 文法 on SRS grammar cards",
       "localizations" : {
@@ -99,6 +150,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Grammaire"
+          }
+        }
+      }
+    },
+    "Hard" : {
+      "comment" : "FSRS grade button label",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hard"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Difficile"
           }
         }
       }
