@@ -86,6 +86,91 @@
         }
       }
     },
+    "Grammar" : {
+      "comment" : "Bilingual chrome label paired with 文法 on SRS grammar cards",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grammar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grammaire"
+          }
+        }
+      }
+    },
+    "Hiragana" : {
+      "comment" : "Bilingual chrome label paired with 平仮名 on SRS hiragana cards",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hiragana"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hiragana"
+          }
+        }
+      }
+    },
+    "Kanji" : {
+      "comment" : "Bilingual chrome label paired with 漢字 on SRS kanji cards",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kanji"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kanji"
+          }
+        }
+      }
+    },
+    "Katakana" : {
+      "comment" : "Bilingual chrome label paired with 片仮名 on SRS katakana cards",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Katakana"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Katakana"
+          }
+        }
+      }
+    },
+    "Vocabulary" : {
+      "comment" : "Bilingual chrome label paired with 語彙 on SRS vocabulary cards",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vocabulary"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vocabulaire"
+          }
+        }
+      }
+    },
     "Decks" : {
       "comment" : "Bilingual chrome label paired with 稽古場 on Home",
       "localizations" : {

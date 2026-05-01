@@ -171,7 +171,7 @@ struct SRSCardView: View {
     @ViewBuilder
     private func flyingCardView(for card: CardDTO) -> some View {
         cardContent(for: card, revealed: flyingRevealed)
-            .ikeruCard(.interactive)
+            .tatamiRoom(.glass, padding: EdgeInsets(top: 28, leading: 28, bottom: 28, trailing: 28))
             .overlay(flyingBorderOverlay)
             .offset(flyingOffset)
             .rotationEffect(flyingRotation, anchor: .bottom)
@@ -190,14 +190,14 @@ struct SRSCardView: View {
 
     private var currentCard: some View {
         cardContent(for: card, revealed: isRevealed)
-            .ikeruCard(.interactive)
+            .tatamiRoom(.glass, padding: EdgeInsets(top: 28, leading: 28, bottom: 28, trailing: 28))
     }
 
     /// A peek layer. Always shows the front of the card (never the answer)
-    /// and uses the slightly softer `.standard` card surface.
+    /// and uses the slightly softer `.standard` Tatami room surface.
     private func deckLayer(card: CardDTO) -> some View {
         cardContent(for: card, revealed: false)
-            .ikeruCard(.standard)
+            .tatamiRoom(.standard, padding: EdgeInsets(top: 28, leading: 28, bottom: 28, trailing: 28))
     }
 
     // MARK: - Card Content
@@ -218,25 +218,13 @@ struct SRSCardView: View {
                     .transition(.opacity.combined(with: .scale(scale: 0.92)))
             }
 
-            // Scroll-mount corner ticks — tint shifts gold on reveal.
-            CornerTicks(
-                color: revealed
-                    ? Color.ikeruPrimaryAccent.opacity(0.40)
-                    : Color.white.opacity(0.14)
-            )
-            .allowsHitTesting(false)
-
-            // Category micro-label pinned to the top of the card.
+            // Bilingual deck label pinned to the top of the card. Replaces the
+            // earlier tracked-uppercase category chip — the Tatami direction
+            // uses serif Japanese + uppercase Latin chrome for category copy.
             VStack {
-                Text(categoryLabel(for: card))
-                    .font(.system(size: 10, weight: .semibold))
-                    .tracking(3)
-                    .foregroundStyle(
-                        revealed
-                            ? Color.ikeruPrimaryAccent
-                            : Color.ikeruTextTertiary
-                    )
-                    .padding(.top, 14)
+                let pair = bilingualLabelPair(for: card)
+                BilingualLabel(japanese: pair.japanese, chrome: pair.chrome)
+                    .padding(.top, 6)
                 Spacer()
             }
             .allowsHitTesting(false)
@@ -255,66 +243,78 @@ struct SRSCardView: View {
                         HintChip(icon: "star", label: "Mark")
                     }
                 }
-                .padding(.bottom, 14)
+                .padding(.bottom, 6)
             }
         }
         .frame(maxWidth: .infinity)
-        .frame(minHeight: 320)
+        .frame(minHeight: 360)
     }
 
-    /// Picks a label by inspecting the front glyph's Unicode block when the
-    /// card is typed as `.kanji`. Beginner kana cards are seeded with type
-    /// `.kanji` upstream, so a pure switch on `CardType` would mislabel
-    /// hiragana/katakana as 漢字. Detection by scalar range is authoritative
-    /// regardless of how the seed data is typed.
-    private func categoryLabel(for card: CardDTO) -> String {
+    /// Returns the `(japanese, chrome)` pair used by `BilingualLabel` at the
+    /// top of every card. The chrome value is a `LocalizedStringKey` so it
+    /// flows through `Localizable.xcstrings` and switches with the active
+    /// app language.
+    ///
+    /// Beginner kana cards are seeded with type `.kanji` upstream, so a
+    /// pure switch on `CardType` would mislabel hiragana/katakana as 漢字.
+    /// Detection by scalar range stays authoritative for `.kanji` cards.
+    private func bilingualLabelPair(for card: CardDTO) -> (japanese: String, chrome: LocalizedStringKey) {
         switch card.type {
         case .kanji:
-            return kanjiOrKanaLabel(front: card.front)
+            return kanjiOrKanaLabelPair(front: card.front)
         case .vocabulary:
-            return "\u{8A9E}\u{5F59} \u{00B7} VOCAB"        // 語彙 · VOCAB
+            return ("\u{8A9E}\u{5F59}", "Vocabulary")          // 語彙
         case .grammar:
-            return "\u{6587}\u{6CD5} \u{00B7} GRAMMAR"      // 文法 · GRAMMAR
+            return ("\u{6587}\u{6CD5}", "Grammar")             // 文法
         case .listening:
-            return "\u{8074}\u{89E3} \u{00B7} LISTENING"    // 聴解 · LISTENING
+            return ("\u{8074}\u{89E3}", "Listening")           // 聴解
         }
     }
 
-    private func kanjiOrKanaLabel(front: String) -> String {
+    private func kanjiOrKanaLabelPair(front: String) -> (japanese: String, chrome: LocalizedStringKey) {
         guard let scalar = front.unicodeScalars.first else {
-            return "\u{6F22}\u{5B57} \u{00B7} KANJI"
+            return ("\u{6F22}\u{5B57}", "Kanji")               // 漢字
         }
         let v = scalar.value
         // Hiragana block: U+3040..U+309F
         if (0x3040...0x309F).contains(v) {
-            return "\u{3072}\u{3089}\u{304C}\u{306A} \u{00B7} HIRAGANA"
+            return ("\u{5E73}\u{4EEE}\u{540D}", "Hiragana")    // 平仮名
         }
         // Katakana block: U+30A0..U+30FF (and the phonetic extensions
         // U+31F0..U+31FF for completeness)
         if (0x30A0...0x30FF).contains(v) || (0x31F0...0x31FF).contains(v) {
-            return "\u{30AB}\u{30BF}\u{30AB}\u{30CA} \u{00B7} KATAKANA"
+            return ("\u{7247}\u{4EEE}\u{540D}", "Katakana")    // 片仮名
         }
         // Default: treat as kanji (CJK Unified Ideographs and extensions).
-        return "\u{6F22}\u{5B57} \u{00B7} KANJI"
+        return ("\u{6F22}\u{5B57}", "Kanji")                   // 漢字
     }
 
     @ViewBuilder
     private func cardFrontContent(for card: CardDTO) -> some View {
         switch card.type {
         case .kanji:
+            // Tatami: large light serif with a warm gold shadow. The kana is
+            // the room's centrepiece — let it breathe.
             Text(card.front)
-                .font(.kanjiHero)
-                .foregroundStyle(Color.ikeruKanjiText)
+                .font(.system(size: 200, weight: .light, design: .serif))
+                .foregroundStyle(Color.ikeruTextPrimary)
+                .shadow(color: Color.ikeruPrimaryAccent.opacity(0.25), radius: 32, y: 4)
+                .minimumScaleFactor(0.4)
+                .lineLimit(1)
 
         case .vocabulary:
             Text(card.front)
-                .font(.kanjiDisplay)
-                .foregroundStyle(Color.ikeruKanjiText)
+                .font(.system(size: 96, weight: .light, design: .serif))
+                .foregroundStyle(Color.ikeruTextPrimary)
+                .shadow(color: Color.ikeruPrimaryAccent.opacity(0.22), radius: 28, y: 4)
+                .multilineTextAlignment(.center)
+                .minimumScaleFactor(0.4)
+                .lineLimit(2)
 
         case .grammar:
             Text(card.front)
-                .font(.ikeruHeading2)
-                .foregroundStyle(.white)
+                .font(.system(size: 36, weight: .regular, design: .serif))
+                .foregroundStyle(Color.ikeruTextPrimary)
                 .multilineTextAlignment(.center)
 
         case .listening:
@@ -323,7 +323,7 @@ struct SRSCardView: View {
                     .font(.system(size: 40))
                     .foregroundStyle(Color.ikeruPrimaryAccent)
                 Text(card.front)
-                    .font(.ikeruBody)
+                    .font(.system(size: 22, weight: .regular, design: .serif))
                     .foregroundStyle(.ikeruTextSecondary)
             }
         }

@@ -20,7 +20,7 @@ struct CardReviewView: View {
 
     var body: some View {
         ZStack {
-            Color.ikeruBackground
+            IkeruScreenBackground(variant: .session)
                 .ignoresSafeArea()
 
             content
@@ -133,9 +133,25 @@ struct CardReviewView: View {
                 .font(.ikeruCaption)
                 .foregroundStyle(.ikeruTextSecondary)
 
-            ProgressView(value: viewModel.sessionProgress)
-                .tint(Color.ikeruPrimaryAccent)
-                .padding(.horizontal, IkeruTheme.Spacing.lg)
+            // Tatami fusuma rail: a 3px gold-dim base with a 1px live-progress
+            // rail inset, glowing softly with the primary accent. Replaces the
+            // earlier rounded `ProgressView` pill — Tatami is sharp-edged.
+            ZStack(alignment: .leading) {
+                Rectangle()
+                    .fill(TatamiTokens.goldDim.opacity(0.3))
+                    .frame(height: 3)
+                GeometryReader { geo in
+                    Rectangle()
+                        .fill(Color.ikeruPrimaryAccent)
+                        .frame(
+                            width: geo.size.width * CGFloat(viewModel.sessionProgress),
+                            height: 1
+                        )
+                        .shadow(color: Color.ikeruPrimaryAccent.opacity(0.6), radius: 6)
+                }
+                .frame(height: 3)
+            }
+            .padding(.horizontal, 22)
         }
         .padding(.top, IkeruTheme.Spacing.md)
     }
