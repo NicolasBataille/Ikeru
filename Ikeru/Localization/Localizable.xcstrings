@@ -868,6 +868,23 @@
         }
       }
     },
+    "Study" : {
+      "comment" : "Tab bar label for the Study (dictionary) tab",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Study"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Étude"
+          }
+        }
+      }
+    },
     "Patient. Specialty: keigo" : {
       "comment" : "Sakura tutor description",
       "localizations" : {
