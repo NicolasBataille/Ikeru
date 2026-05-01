@@ -88,6 +88,7 @@
 		6B447B08EC87253CC183BF68 /* WatchQuizViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE61F033B42BC3AD5742F25A /* WatchQuizViewModel.swift */; };
 		6D12C66C7BF2FEF680E3D41E /* IkeruTabBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CA34FB1B1DB4560EB47114B /* IkeruTabBar.swift */; };
 		6DA42A5338F4B35DF64928BF /* HomeViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1DF2E350075F0F6C4CFE5D5 /* HomeViewModel.swift */; };
+		6EA6827DBFDB13AB36CC70E3 /* AppLocaleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 531B47B6B7F7F130B40693F7 /* AppLocaleTests.swift */; };
 		74B4D3FE0B47F78C209AAA7E /* VocabularyFlashcardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 958B33760E0EE64FAB9C4894 /* VocabularyFlashcardView.swift */; };
 		75216F3246F319E6E8271D18 /* KanaDrillViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86F0467337CA5D848E771C8C /* KanaDrillViewModel.swift */; };
 		784365F25937638D410F69D3 /* ListeningViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5EC7CD071A02DEB1F3611E0 /* ListeningViewModelTests.swift */; };
@@ -119,6 +120,7 @@
 		96B7AA4DDFCB52A92BA246C3 /* SessionViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8908562DCE1E539972918E03 /* SessionViewModelTests.swift */; };
 		98F793063A70505145D0FAFD /* RigSettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACB44C33C46EDA95CE1BA9E /* RigSettingsViewModel.swift */; };
 		99E26C3CCDD74700B6074011 /* TatamiTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = C36A9E890A5BA4545F916469 /* TatamiTokens.swift */; };
+		99E2914D358333A6A8868962 /* AppLocale.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8175DFE1144779F7DC87BB4 /* AppLocale.swift */; };
 		9B7FD90C901ED310BA49F1C6 /* SessionProgressBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 130C19D8358A2B30F37B94C9 /* SessionProgressBar.swift */; };
 		9BC4183DC3C8A7EC9B37686D /* HandwritingCanvasView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2435124626D304119CA77076 /* HandwritingCanvasView.swift */; };
 		9CE7075A738FC2C1627420CD /* ExerciseTransitionContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFC50EBFAD8E44D18F442E7C /* ExerciseTransitionContainer.swift */; };
@@ -277,6 +279,7 @@
 		4EBABD6C9A0B5F802FBA5DB2 /* RigJobsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RigJobsViewModel.swift; sourceTree = "<group>"; };
 		4FCAA1C6D8004A72C4233DEE /* FusumaRail.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FusumaRail.swift; sourceTree = "<group>"; };
 		50DC3FFD19212D20C2539520 /* KanaPoolSelectorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KanaPoolSelectorView.swift; sourceTree = "<group>"; };
+		531B47B6B7F7F130B40693F7 /* AppLocaleTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppLocaleTests.swift; sourceTree = "<group>"; };
 		533A0AED8744B2DC594EEFAC /* VocabularyDictionaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VocabularyDictionaryView.swift; sourceTree = "<group>"; };
 		5620682521309021B6102C49 /* TestFixtures.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestFixtures.swift; sourceTree = "<group>"; };
 		5628B43A53BA4F60FC2FAA4E /* VocabularyDictionaryViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VocabularyDictionaryViewModel.swift; sourceTree = "<group>"; };
@@ -412,6 +415,7 @@
 		F0B25FD2BC64C88BF9B170AC /* OnboardingTourView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingTourView.swift; sourceTree = "<group>"; };
 		F1DF2E350075F0F6C4CFE5D5 /* HomeViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewModel.swift; sourceTree = "<group>"; };
 		F75C1AD94292B42125242E1C /* StandByFlashcardWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StandByFlashcardWidget.swift; sourceTree = "<group>"; };
+		F8175DFE1144779F7DC87BB4 /* AppLocale.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppLocale.swift; sourceTree = "<group>"; };
 		F8BD1F07D5A033139C8C8A83 /* SessionSummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionSummaryView.swift; sourceTree = "<group>"; };
 		FAB097C7086A8C5F1549D53D /* IkeruWidget.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = IkeruWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		FACB44C33C46EDA95CE1BA9E /* RigSettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RigSettingsViewModel.swift; sourceTree = "<group>"; };
@@ -715,6 +719,7 @@
 				97DC0D8C7FA88DAEF99E751F /* StrokeOrderViewModelTests.swift */,
 				A8CB4D8F6D27886A95BBAC2D /* ToastManagerTests.swift */,
 				7AE864AF29ACDCF1CF6A9FEB /* MonCrestTests.swift */,
+				531B47B6B7F7F130B40693F7 /* AppLocaleTests.swift */,
 			);
 			path = IkeruTests;
 			sourceTree = "<group>";
@@ -876,6 +881,15 @@
 			path = Kana;
 			sourceTree = "<group>";
 		};
+		DCA3D805EECBC21DFAF3B6A2 /* Localization */ = {
+			isa = PBXGroup;
+			children = (
+				F8175DFE1144779F7DC87BB4 /* AppLocale.swift */,
+			);
+			name = Localization;
+			path = Localization;
+			sourceTree = "<group>";
+		};
 		E45B0D5EEA672824C9F2E14D /* Settings */ = {
 			isa = PBXGroup;
 			children = (
@@ -960,6 +974,7 @@
 				994C26AB9900AD67DA28FFB0 /* Views */,
 				9BC828DB0D8D10873566FFC0 /* Ikeru.entitlements */,
 				358B47E0F54AAFD423C1BAAD /* Info.plist */,
+				DCA3D805EECBC21DFAF3B6A2 /* Localization */,
 			);
 			path = Ikeru;
 			sourceTree = "<group>";
@@ -1160,6 +1175,7 @@
 				2EDB743A773B1110D8D8160D /* StrokeOrderViewModelTests.swift in Sources */,
 				7EBC2982099C381560979F85 /* ToastManagerTests.swift in Sources */,
 				B17A0F60ECC498D27BD06EF2 /* MonCrestTests.swift in Sources */,
+				6EA6827DBFDB13AB36CC70E3 /* AppLocaleTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1328,6 +1344,7 @@
 				4E81AA7325DF7696FFFA99B1 /* ToriiFrame.swift in Sources */,
 				4EAC3DD0955C25DD696BE48B /* RPGRankCrest.swift in Sources */,
 				1BE2E314473DE427EAA5E20A /* TatamiRoom.swift in Sources */,
+				99E2914D358333A6A8868962 /* AppLocale.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
