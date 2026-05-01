@@ -35,6 +35,40 @@
         }
       }
     },
+    "days" : {
+      "comment" : "Tiny suffix after the STREAK count",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "days"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "jours"
+          }
+        }
+      }
+    },
+    "Decks" : {
+      "comment" : "Bilingual chrome label paired with 稽古場 on Home",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Decks"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Decks"
+          }
+        }
+      }
+    },
     "Experience" : {
       "comment" : "Bilingual chrome label for the XP progress section on the Home hero",
       "localizations" : {
@@ -48,6 +82,57 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Expérience"
+          }
+        }
+      }
+    },
+    "kanji" : {
+      "comment" : "Tiny suffix after the LEARNED count",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "kanji"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "kanji"
+          }
+        }
+      }
+    },
+    "LEARNED" : {
+      "comment" : "Stat card label",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LEARNED"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "APPRIS"
+          }
+        }
+      }
+    },
+    "STREAK" : {
+      "comment" : "Stat card label",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "STREAK"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SÉRIE"
           }
         }
       }

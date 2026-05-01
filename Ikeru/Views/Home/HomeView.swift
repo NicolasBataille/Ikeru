@@ -432,161 +432,56 @@ struct HomeView: View {
 
     // MARK: - Stats Row
     //
-    // Due Now is the action — weighted 1.4× and tinted gold with a live dot
-    // when work is waiting. Learned + Lootboxes sit quieter in single-fr cells.
+    // Two Tatami rooms — Learned (kanji) and Streak (days) — each with a mon
+    // crest and a serif numeral. Due Now lives in the proverb hero now.
+    //
+    // Note: HomeViewModel does not currently expose a streak property; the
+    // anti-gamification stance keeps the home shell streak-free. The card is
+    // rendered with 0 days as a structural placeholder so layout matches the
+    // spec without functional change to the VM.
 
     @ViewBuilder
     private func statsRow(_ vm: HomeViewModel) -> some View {
-        HStack(alignment: .top, spacing: IkeruTheme.Spacing.sm) {
-            primaryStatCard(
-                icon: "tray.full",
-                value: "\(vm.dueCardCount)",
-                label: "Due Now",
-                caption: vm.dueCardCount > 0 ? "Ready for review" : "Nothing due",
-                showsLivePulse: vm.dueCardCount > 0
-            )
-            .frame(maxWidth: .infinity)
+        HStack(alignment: .top, spacing: 12) {
+            // Learned (1.4× weight)
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(spacing: 6) {
+                    MonCrest(kind: .asanoha, size: 11, color: .ikeruPrimaryAccent)
+                    Text("LEARNED", comment: "Stat card label")
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundStyle(TatamiTokens.paperGhost)
+                        .tracking(1.4)
+                }
+                HStack(alignment: .firstTextBaseline, spacing: 4) {
+                    SerifNumeral(vm.kanjiLearnedCount, size: 32)
+                    Text("kanji", comment: "Tiny suffix after the LEARNED count")
+                        .font(.system(size: 11, design: .serif))
+                        .foregroundStyle(TatamiTokens.paperGhost)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .tatamiRoom(.standard, padding: 14)
             .layoutPriority(1.4)
 
-            statCard(
-                icon: "character.book.closed",
-                value: "\(vm.kanjiLearnedCount)",
-                label: "Learned",
-                caption: "items",
-                tint: .ikeruTertiaryAccent
-            )
-            .frame(maxWidth: .infinity)
-
-            statCard(
-                icon: "shippingbox",
-                value: "\(vm.unopenedLootBoxCount)",
-                label: "Loot",
-                caption: vm.unopenedLootBoxCount > 0 ? "unopened" : "earn some",
-                tint: vm.unopenedLootBoxCount > 0 ? .ikeruPrimaryAccent : .ikeruSecondaryAccent
-            )
-            .frame(maxWidth: .infinity)
-        }
-        .frame(minHeight: 108)
-    }
-
-    @ViewBuilder
-    private func primaryStatCard(
-        icon: String,
-        value: String,
-        label: String,
-        caption: String,
-        showsLivePulse: Bool
-    ) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .center) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(Color.ikeruPrimaryAccent.opacity(0.15))
-                        .frame(width: 32, height: 32)
-                    Image(systemName: icon)
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(Color.ikeruPrimaryAccent)
+            // Streak — placeholder 0 (no streak surfaced on Home shell yet)
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(spacing: 6) {
+                    MonCrest(kind: .genji, size: 11, color: .ikeruPrimaryAccent)
+                    Text("STREAK", comment: "Stat card label")
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundStyle(TatamiTokens.paperGhost)
+                        .tracking(1.4)
                 }
-                Spacer()
-                if showsLivePulse {
-                    Circle()
-                        .fill(Color.ikeruPrimaryAccent)
-                        .frame(width: 6, height: 6)
-                        .shadow(color: Color.ikeruPrimaryAccent.opacity(0.8), radius: 4)
+                HStack(alignment: .firstTextBaseline, spacing: 4) {
+                    SerifNumeral(0, size: 32)
+                    Text("days", comment: "Tiny suffix after the STREAK count")
+                        .font(.system(size: 11, design: .serif))
+                        .foregroundStyle(TatamiTokens.paperGhost)
                 }
             }
-
-            Text(value)
-                .font(.system(size: 36, weight: .light))
-                .foregroundStyle(Color.ikeruTextPrimary)
-                .tracking(-1)
-                .contentTransition(.numericText())
-                .animation(.spring(response: 0.4, dampingFraction: 0.8), value: value)
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(label.uppercased())
-                    .font(.system(size: 9, weight: .heavy))
-                    .tracking(2)
-                    .foregroundStyle(Color.ikeruPrimaryAccent.opacity(0.9))
-                Text(caption)
-                    .font(.system(size: 11))
-                    .foregroundStyle(Color.ikeruTextTertiary)
-            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .tatamiRoom(.standard, padding: 14)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(IkeruTheme.Spacing.md)
-        .background {
-            ZStack {
-                RoundedRectangle(cornerRadius: IkeruTheme.Radius.lg, style: .continuous)
-                    .fill(Color.ikeruPrimaryAccent.opacity(0.06))
-                RoundedRectangle(cornerRadius: IkeruTheme.Radius.lg, style: .continuous)
-                    .strokeBorder(Color.ikeruPrimaryAccent.opacity(0.22), lineWidth: 1)
-
-                // Corner warmth — gold radial pooling in the top-right.
-                RadialGradient(
-                    colors: [
-                        Color.ikeruPrimaryAccent.opacity(0.22),
-                        Color.ikeruPrimaryAccent.opacity(0)
-                    ],
-                    center: .init(x: 0.9, y: 0.1),
-                    startRadius: 0,
-                    endRadius: 90
-                )
-                .allowsHitTesting(false)
-            }
-            .clipShape(RoundedRectangle(cornerRadius: IkeruTheme.Radius.lg, style: .continuous))
-        }
-        .shadow(color: Color.black.opacity(0.3), radius: 16, y: 8)
-    }
-
-    @ViewBuilder
-    private func statCard(
-        icon: String,
-        value: String,
-        label: String,
-        caption: String,
-        tint: Color
-    ) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .fill(Color.white.opacity(0.05))
-                    .frame(width: 28, height: 28)
-                Image(systemName: icon)
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(tint)
-            }
-
-            Text(value)
-                .font(.system(size: 28, weight: .light))
-                .foregroundStyle(Color.ikeruTextPrimary)
-                .tracking(-0.5)
-                .contentTransition(.numericText())
-                .animation(.spring(response: 0.4, dampingFraction: 0.8), value: value)
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(label.uppercased())
-                    .font(.system(size: 9, weight: .heavy))
-                    .tracking(2)
-                    .foregroundStyle(Color.ikeruTextTertiary)
-                Text(caption)
-                    .font(.system(size: 11))
-                    .foregroundStyle(Color.ikeruTextTertiary)
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(IkeruTheme.Spacing.md)
-        .background {
-            IkeruGlassSurface(
-                cornerRadius: IkeruTheme.Radius.lg,
-                tint: .clear,
-                tintOpacity: 0.0,
-                highlight: 0.10,
-                strokeOpacity: 0.10
-            )
-        }
-        .clipShape(RoundedRectangle(cornerRadius: IkeruTheme.Radius.lg, style: .continuous))
-        .shadow(color: Color.black.opacity(0.25), radius: 12, y: 6)
     }
 
     // MARK: - Primary action
