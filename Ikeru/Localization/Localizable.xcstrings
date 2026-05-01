@@ -1,6 +1,74 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "BEGIN PRACTICE" : {
+      "comment" : "Hero CTA on Home",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BEGIN PRACTICE"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "COMMENCER"
+          }
+        }
+      }
+    },
+    "CARDS DUE" : {
+      "comment" : "Hero stat label on Home",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CARDS DUE"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "À RÉVISER"
+          }
+        }
+      }
+    },
+    "Experience" : {
+      "comment" : "Bilingual chrome label for the XP progress section on the Home hero",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Experience"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Expérience"
+          }
+        }
+      }
+    },
+    "Today" : {
+      "comment" : "Bilingual chrome label paired with 本日 on the Home hero",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Today"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aujourd’hui"
+          }
+        }
+      }
+    },
     "Welcome" : {
       "comment" : "Fallback greeting on Home when no display name is set",
       "localizations" : {
@@ -14,6 +82,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bienvenue"
+          }
+        }
+      }
+    },
+    "%lld XP to next rank" : {
+      "comment" : "Subtle XP-remaining label on the Home hero",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld XP to next rank"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld XP avant le grade suivant"
           }
         }
       }

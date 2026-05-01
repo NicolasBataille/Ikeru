@@ -204,87 +204,95 @@ struct HomeView: View {
         let proverb = HomeProverb.dailyProverb(level: vm.level)
         let progress = Double(vm.xpInCurrentLevel) / Double(max(1, vm.xpRequiredForLevel))
 
-        VStack(alignment: .leading, spacing: IkeruTheme.Spacing.lg) {
-            // Rank row — brush circle + 第N段 · APPRENTICE. Chrome, not focus.
-            HStack(spacing: 10) {
-                EnsoRankView(level: vm.level, size: 30)
-                Text(rankLabel(level: vm.level))
-                    .font(.system(size: 13, weight: .regular, design: .serif))
-                    .foregroundStyle(Color.ikeruPrimaryAccent)
-                    .tracking(1.8)
-                Text("·")
-                    .font(.system(size: 11))
-                    .foregroundStyle(Color.ikeruTextTertiary)
-                Text(rankTitle(level: vm.level).uppercased())
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(Color.ikeruTextSecondary)
-                    .tracking(2.2)
+        VStack(alignment: .leading, spacing: 14) {
+            // Top row — bilingual "本日 · TODAY" + Hanko stamp when work is due
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 8) {
+                    BilingualLabel(japanese: "本日", chrome: "Today", mon: nil)
+                    Text(proverb.kanji)
+                        .font(.system(size: 19, weight: .regular, design: .serif))
+                        .foregroundStyle(Color.ikeruTextPrimary)
+                        .lineLimit(1)
+                        .tracking(2)
+                    Text(proverb.translation)
+                        .font(.system(size: 11))
+                        .italic()
+                        .foregroundStyle(TatamiTokens.paperGhost)
+                }
                 Spacer()
+                if vm.dueCardCount > 0 {
+                    HankoStamp(kanji: "急", size: 36)
+                }
             }
 
-            // Proverb — now owns the card.
-            VStack(alignment: .leading, spacing: 10) {
-                Text(proverb.kanji)
-                    .font(.system(size: 40, weight: .light, design: .serif))
-                    .foregroundStyle(Color.ikeruTextPrimary)
-                    .tracking(4)
-
-                Text(proverb.romaji)
-                    .font(.system(size: 12))
-                    .italic()
-                    .foregroundStyle(Color.ikeruTextTertiary)
-
-                Text(proverb.translation)
-                    .font(.system(size: 13))
+            // Due count — large serif numeral
+            HStack(alignment: .firstTextBaseline, spacing: 10) {
+                SerifNumeral(vm.dueCardCount, size: 56, color: .ikeruTextPrimary)
+                Text("CARDS DUE", comment: "Hero stat label on Home")
+                    .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(Color.ikeruTextSecondary)
-                    .lineLimit(2)
+                    .tracking(1.4)
+                    .textCase(.uppercase)
             }
 
-            // Experience — segmented ticks.
-            VStack(alignment: .leading, spacing: 10) {
+            // Practice CTA — sharp gold, bilingual, sumi corners
+            Button {
+                startSession()
+            } label: {
+                HStack {
+                    Spacer()
+                    Text("稽古を始める · ")
+                        .font(.system(size: 13, weight: .regular, design: .serif))
+                    Text("BEGIN PRACTICE", comment: "Hero CTA on Home")
+                        .font(.system(size: 13, weight: .bold))
+                        .tracking(1.6)
+                    Spacer()
+                }
+                .foregroundStyle(Color.ikeruBackground)
+                .padding(.vertical, 14)
+                .background(Color.ikeruPrimaryAccent)
+                .sumiCorners(color: Color.ikeruBackground.opacity(0.6), size: 6, weight: 1.2, inset: -1)
+            }
+            .buttonStyle(.plain)
+
+            // XP progress — fusuma rail with serif numerals
+            VStack(alignment: .leading, spacing: 8) {
                 HStack(alignment: .firstTextBaseline) {
-                    Text("EXPERIENCE")
-                        .font(.ikeruMicro)
-                        .ikeruTracking(.micro)
-                        .foregroundStyle(Color.ikeruTextTertiary)
+                    BilingualLabel(japanese: "経験", chrome: "Experience", mon: nil)
                     Spacer()
                     HStack(spacing: 0) {
-                        Text("\(vm.xpInCurrentLevel)")
-                            .foregroundStyle(Color.ikeruPrimaryAccent)
-                        Text(" / \(vm.xpRequiredForLevel)")
-                            .foregroundStyle(Color.ikeruTextTertiary)
+                        SerifNumeral(vm.xpInCurrentLevel, size: 12,
+                                     weight: .regular, color: .ikeruPrimaryAccent)
+                        Text(" / ")
+                            .font(.system(size: 12, design: .serif))
+                            .foregroundStyle(TatamiTokens.paperGhost)
+                        SerifNumeral(vm.xpRequiredForLevel, size: 12,
+                                     weight: .regular, color: TatamiTokens.paperGhost)
                     }
-                    .font(.system(size: 12, design: .monospaced))
                 }
 
-                SegmentedXPBarView(progress: progress)
+                // Hairline fusuma progress
+                ZStack(alignment: .leading) {
+                    Rectangle()
+                        .fill(TatamiTokens.goldDim.opacity(0.3))
+                        .frame(height: 1)
+                    GeometryReader { geo in
+                        Rectangle()
+                            .fill(Color.ikeruPrimaryAccent)
+                            .frame(width: geo.size.width * progress, height: 1)
+                            .shadow(color: .ikeruPrimaryAccent.opacity(0.6), radius: 3)
+                    }
+                    .frame(height: 1)
+                }
 
-                Text("\(vm.xpToNextLevel) XP to next rank")
+                Text("\(vm.xpToNextLevel) XP to next rank",
+                     comment: "Subtle XP-remaining label on the Home hero")
                     .font(.system(size: 11))
-                    .foregroundStyle(Color.ikeruTextTertiary)
+                    .foregroundStyle(TatamiTokens.paperGhost)
                     .frame(maxWidth: .infinity, alignment: .trailing)
             }
         }
-        .padding(IkeruTheme.Spacing.lg)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background {
-            // Mesh-gradient substrate (per ux-design-spec) topped with the
-            // wabi-sabi glass overlay. The mesh adds slow, calm motion that
-            // shifts palette as the player ranks up; the glass tames its
-            // brightness so the proverb stays the focal element.
-            ZStack {
-                MeshHeroBackground(level: vm.level, cornerRadius: IkeruTheme.Radius.lg)
-                IkeruGlassSurface(
-                    cornerRadius: IkeruTheme.Radius.lg,
-                    tint: Color.ikeruPrimaryAccent,
-                    tintOpacity: 0.04,
-                    highlight: 0.10,
-                    strokeOpacity: 0.14
-                )
-            }
-        }
-        .clipShape(RoundedRectangle(cornerRadius: IkeruTheme.Radius.lg, style: .continuous))
-        .shadow(color: Color.black.opacity(0.45), radius: 24, y: 10)
+        .tatamiRoom(.glass, padding: 20)
     }
 
     // MARK: - Skill radar card
