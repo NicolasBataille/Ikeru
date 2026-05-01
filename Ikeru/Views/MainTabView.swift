@@ -50,6 +50,7 @@ struct MainTabView: View {
     @State private var showCompanionChat = false
     @State private var companionViewModel: CompanionChatViewModel?
     @State private var presentAISettings = CommandLine.arguments.contains("-presentAISettings")
+    @State private var appLocale = AppLocale()
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -80,6 +81,8 @@ struct MainTabView: View {
                     .presentationBackground(.ultraThinMaterial)
             }
         }
+        .environment(\.locale, appLocale.currentLocale)
+        .environment(appLocale)
         .fullScreenCover(isPresented: $presentAISettings) {
             NavigationStack {
                 AISettingsView()
