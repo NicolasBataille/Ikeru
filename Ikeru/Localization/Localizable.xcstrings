@@ -1,6 +1,40 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "Approx" : {
+      "comment" : "Session preview: approximate duration",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Approx"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Approx."
+          }
+        }
+      }
+    },
+    "BALANCE" : {
+      "comment" : "Skill balance section header on Home",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BALANCE"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ÉQUILIBRE"
+          }
+        }
+      }
+    },
     "BEGIN PRACTICE" : {
       "comment" : "Hero CTA on Home",
       "localizations" : {
@@ -120,6 +154,91 @@
         }
       }
     },
+    "Listening" : {
+      "comment" : "Skill name in the BALANCE card",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Listening"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Écoute"
+          }
+        }
+      }
+    },
+    "New" : {
+      "comment" : "Session preview: number of brand-new cards",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nouveaux"
+          }
+        }
+      }
+    },
+    "Reading" : {
+      "comment" : "Skill name in the BALANCE card",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reading"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lecture"
+          }
+        }
+      }
+    },
+    "Review" : {
+      "comment" : "Session preview: number of review cards",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Review"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Révision"
+          }
+        }
+      }
+    },
+    "Speaking" : {
+      "comment" : "Skill name in the BALANCE card",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Speaking"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parole"
+          }
+        }
+      }
+    },
     "STREAK" : {
       "comment" : "Stat card label",
       "localizations" : {
@@ -167,6 +286,40 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bienvenue"
+          }
+        }
+      }
+    },
+    "Writing" : {
+      "comment" : "Skill name in the BALANCE card",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Writing"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Écriture"
+          }
+        }
+      }
+    },
+    "Your four winds" : {
+      "comment" : "Poetic subtitle for the skill balance card",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your four winds"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tes quatre vents"
           }
         }
       }

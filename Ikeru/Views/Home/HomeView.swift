@@ -304,12 +304,12 @@ struct HomeView: View {
                 .frame(width: 120, height: 120)
 
             VStack(alignment: .leading, spacing: 8) {
-                Text("BALANCE")
+                Text("BALANCE", comment: "Skill balance section header on Home")
                     .font(.ikeruMicro)
                     .ikeruTracking(.micro)
                     .foregroundStyle(Color.ikeruTextTertiary)
 
-                Text("Your four winds")
+                Text("Your four winds", comment: "Poetic subtitle for the skill balance card")
                     .font(.system(size: 17, weight: .regular, design: .serif))
                     .foregroundStyle(Color.ikeruTextPrimary)
 
@@ -320,26 +320,17 @@ struct HomeView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(IkeruTheme.Spacing.md)
-        .background {
-            IkeruGlassSurface(
-                cornerRadius: IkeruTheme.Radius.lg,
-                tint: .clear,
-                tintOpacity: 0.0,
-                highlight: 0.10,
-                strokeOpacity: 0.10
-            )
-        }
-        .clipShape(RoundedRectangle(cornerRadius: IkeruTheme.Radius.lg, style: .continuous))
+        .tatamiRoom(.standard, padding: 14)
     }
 
     @ViewBuilder
-    private func skillRow(_ label: String, value: Double) -> some View {
+    private func skillRow(_ label: LocalizedStringKey, value: Double) -> some View {
         HStack(spacing: 8) {
-            Text(label.uppercased())
+            Text(label)
                 .font(.system(size: 10, weight: .semibold))
                 .tracking(1.5)
                 .foregroundStyle(Color.ikeruTextSecondary)
+                .textCase(.uppercase)
                 .frame(width: 72, alignment: .leading)
             ZStack(alignment: .leading) {
                 Capsule().fill(Color.white.opacity(0.06)).frame(height: 3)
@@ -366,7 +357,7 @@ struct HomeView: View {
             HStack(spacing: 0) {
                 breakdownCell(
                     icon: "sparkles",
-                    label: "New",
+                    label: Text("New", comment: "Session preview: number of brand-new cards"),
                     count: vm.sessionPreviewNewCount,
                     tint: .ikeruSecondaryAccent
                 )
@@ -375,7 +366,7 @@ struct HomeView: View {
                     .overlay(Color.white.opacity(0.10))
                 breakdownCell(
                     icon: "arrow.triangle.2.circlepath",
-                    label: "Review",
+                    label: Text("Review", comment: "Session preview: number of review cards"),
                     count: vm.sessionPreviewReviewCount,
                     tint: .ikeruPrimaryAccent
                 )
@@ -384,30 +375,19 @@ struct HomeView: View {
                     .overlay(Color.white.opacity(0.10))
                 breakdownCell(
                     icon: "timer",
-                    label: "Approx",
+                    label: Text("Approx", comment: "Session preview: approximate duration"),
                     valueText: "\(max(1, vm.sessionPreviewMinutes))m",
                     tint: .ikeruTertiaryAccent
                 )
             }
-            .padding(.vertical, 10)
-            .padding(.horizontal, IkeruTheme.Spacing.sm)
-            .background {
-                IkeruGlassSurface(
-                    cornerRadius: IkeruTheme.Radius.md,
-                    tint: .clear,
-                    tintOpacity: 0.0,
-                    highlight: 0.08,
-                    strokeOpacity: 0.08
-                )
-            }
-            .clipShape(RoundedRectangle(cornerRadius: IkeruTheme.Radius.md, style: .continuous))
+            .tatamiRoom(.standard, padding: 14)
         }
     }
 
     @ViewBuilder
     private func breakdownCell(
         icon: String,
-        label: String,
+        label: Text,
         count: Int? = nil,
         valueText: String? = nil,
         tint: Color
@@ -417,10 +397,11 @@ struct HomeView: View {
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundStyle(tint)
             VStack(alignment: .leading, spacing: 1) {
-                Text(label.uppercased())
+                label
                     .font(.system(size: 9, weight: .heavy))
                     .tracking(1.6)
                     .foregroundStyle(Color.ikeruTextTertiary)
+                    .textCase(.uppercase)
                 Text(valueText ?? "\(count ?? 0)")
                     .font(.system(size: 14, weight: .medium, design: .monospaced))
                     .foregroundStyle(Color.ikeruTextPrimary)
