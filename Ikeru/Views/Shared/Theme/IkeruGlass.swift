@@ -174,38 +174,24 @@ public struct IkeruDivider: View {
 
 // MARK: - Premium Background
 
-/// Use as the root background of any screen. Combines deep base + radial warmth + grain.
+/// Use as the root background of any screen. Renders the Tatami marble
+/// texture beneath the ink base. The `variant` parameter picks one of the
+/// 5 baked marble PNGs deterministically per screen — see `MarbleVariant`
+/// for the screen → variant mapping. Default is `.auxiliary` (Study /
+/// Companion / Settings / Tab-bar overlay).
 public struct IkeruScreenBackground: View {
-    public init() {}
+    let variant: MarbleVariant
+
+    public init(variant: MarbleVariant = .auxiliary) {
+        self.variant = variant
+    }
+
     public var body: some View {
         ZStack {
-            Color.ikeruBackground
-
-            // Top warm radial glow
-            RadialGradient(
-                colors: [
-                    Color(hex: 0xD4A574, opacity: 0.10),
-                    Color(hex: 0xD4A574, opacity: 0.0)
-                ],
-                center: .init(x: 0.85, y: 0.05),
-                startRadius: 0,
-                endRadius: 480
-            )
-            .blendMode(.screen)
-
-            // Bottom-left cool radial
-            RadialGradient(
-                colors: [
-                    Color(hex: 0x6B92B5, opacity: 0.06),
-                    Color(hex: 0x6B92B5, opacity: 0.0)
-                ],
-                center: .init(x: 0.1, y: 0.95),
-                startRadius: 0,
-                endRadius: 420
-            )
-            .blendMode(.screen)
+            Color.ikeruBackground.ignoresSafeArea()
+            MarbleBackground(variant: variant)
+                .opacity(0.95)
         }
-        .ignoresSafeArea()
     }
 }
 
