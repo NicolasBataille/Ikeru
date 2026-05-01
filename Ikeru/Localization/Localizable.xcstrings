@@ -69,6 +69,23 @@
         }
       }
     },
+    "CARDS" : {
+      "comment" : "Summary stat label",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CARDS"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CARTES"
+          }
+        }
+      }
+    },
     "CARDS DUE" : {
       "comment" : "Hero stat label on Home",
       "localizations" : {
@@ -82,6 +99,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "À RÉVISER"
+          }
+        }
+      }
+    },
+    "CONTINUE" : {
+      "comment" : "Summary primary CTA",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CONTINUE"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CONTINUER"
           }
         }
       }
@@ -341,6 +375,40 @@
         }
       }
     },
+    "NEW LEARNED" : {
+      "comment" : "Summary split-cell label",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "NEW LEARNED"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "NOUVEAUX"
+          }
+        }
+      }
+    },
+    "Practice complete" : {
+      "comment" : "Session summary headline",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Practice complete"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Séance terminée"
+          }
+        }
+      }
+    },
     "Reading" : {
       "comment" : "Skill name in the BALANCE card",
       "localizations" : {
@@ -358,6 +426,40 @@
         }
       }
     },
+    "RECALL" : {
+      "comment" : "Summary stat label",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "RECALL"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "RAPPEL"
+          }
+        }
+      }
+    },
+    "RE-LEARN" : {
+      "comment" : "Summary split-cell label",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "RE-LEARN"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "À REVOIR"
+          }
+        }
+      }
+    },
     "Review" : {
       "comment" : "Session preview: number of review cards",
       "localizations" : {
@@ -371,6 +473,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Révision"
+          }
+        }
+      }
+    },
+    "REVIEW MISTAKES" : {
+      "comment" : "Summary secondary CTA",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "REVIEW MISTAKES"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "REVOIR LES ERREURS"
           }
         }
       }
@@ -405,6 +524,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "SÉRIE"
+          }
+        }
+      }
+    },
+    "TIME" : {
+      "comment" : "Summary stat label",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TIME"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TEMPS"
           }
         }
       }
@@ -456,6 +592,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Écriture"
+          }
+        }
+      }
+    },
+    "XP EARNED" : {
+      "comment" : "Summary XP label",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "XP EARNED"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "XP GAGNÉS"
           }
         }
       }
