@@ -21,6 +21,8 @@ struct RPGProfileView: View {
                     VStack(spacing: IkeruTheme.Spacing.xl) {
                         topBar(vm)
                         heroSection(vm)
+                        achievementsSection(vm)
+                        nextRankSection(vm)
                         lootBoxSection(vm)
                         attributesSection(vm)
                         inventorySection(vm)
@@ -68,37 +70,20 @@ struct RPGProfileView: View {
     }
 
     // MARK: - Hero Section
+    //
+    // Tatami direction: hero rank crest is now the torii frame (`RPGRankCrest`)
+    // wrapping the rank kanji. Use only at sizes ≥ 80; smaller rank glyphs
+    // (e.g. inside Home pills) keep `EnsoRankView`.
 
     @ViewBuilder
     private func heroSection(_ vm: RPGProfileViewModel) -> some View {
         VStack(spacing: IkeruTheme.Spacing.lg) {
-            HStack(alignment: .center, spacing: IkeruTheme.Spacing.lg) {
-                // Enso crest — brush circle with the level numeral inside.
-                // Replaces the heraldic shield; 段 (dan) carries the rank word.
-                EnsoRankView(level: vm.level, size: 96)
+            rankCrest(vm)
 
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("第\(vm.level)段")
-                        .font(.system(size: 15, weight: .regular, design: .serif))
-                        .foregroundStyle(Color.ikeruPrimaryAccent)
-                        .tracking(2)
-                    Text(rankTitle(level: vm.level).uppercased())
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(Color.ikeruTextPrimary)
-                        .tracking(2.4)
-                    if let title = vm.equippedTitle {
-                        Text(title.name.uppercased())
-                            .font(.ikeruMicro)
-                            .ikeruTracking(.micro)
-                            .foregroundStyle(rarityColor(title.rarity))
-                            .padding(.top, 4)
-                    }
-                    if !vm.equippedBadges.isEmpty {
-                        badgeCluster(vm.equippedBadges)
-                            .padding(.top, 4)
-                    }
-                }
-                Spacer(minLength: 0)
+            // Equipped cosmetics belong in the hero room — keep them under
+            // the torii so the user sees what they're wearing alongside rank.
+            if vm.equippedTitle != nil || !vm.equippedBadges.isEmpty {
+                equippedRow(vm)
             }
 
             XPBarView(totalXP: vm.xp, level: vm.level, variant: .full)
@@ -124,7 +109,174 @@ struct RPGProfileView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .ikeruCard(.hero)
+    }
+
+    // MARK: - Rank Crest (Torii)
+
+    @ViewBuilder
+    private func rankCrest(_ vm: RPGProfileViewModel) -> some View {
+        let progress = vm.progressInLevel
+        HStack(alignment: .center, spacing: 22) {
+            RPGRankCrest(level: vm.level, size: 96)
+                .frame(width: 96, height: 96)
+            VStack(alignment: .leading, spacing: 4) {
+                Text("第\(rankKanji(vm.level))段")
+                    .font(.system(size: 22, weight: .light, design: .serif))
+                    .foregroundStyle(Color.ikeruTextPrimary)
+                Text(rankTitle(level: vm.level).uppercased())
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(Color.ikeruPrimaryAccent)
+                    .tracking(2)
+                HStack(spacing: 0) {
+                    SerifNumeral(progress.current, size: 12, color: TatamiTokens.paperGhost)
+                    Text(" / ")
+                        .font(.system(size: 12, design: .serif))
+                        .foregroundStyle(TatamiTokens.paperGhost)
+                    SerifNumeral(progress.required, size: 12, color: TatamiTokens.paperGhost)
+                    Text(" XP")
+                        .font(.system(size: 12))
+                        .foregroundStyle(TatamiTokens.paperGhost)
+                }
+                .padding(.top, 6)
+                ZStack(alignment: .leading) {
+                    Rectangle().fill(TatamiTokens.goldDim.opacity(0.2)).frame(height: 1)
+                    GeometryReader { geo in
+                        Rectangle()
+                            .fill(Color.ikeruPrimaryAccent)
+                            .frame(width: geo.size.width * vm.progressFraction, height: 1)
+                    }
+                    .frame(height: 1)
+                }
+                .padding(.top, 4)
+            }
+            Spacer(minLength: 0)
+        }
+        .tatamiRoom(.glass, padding: 22)
+    }
+
+    @ViewBuilder
+    private func equippedRow(_ vm: RPGProfileViewModel) -> some View {
+        HStack(spacing: IkeruTheme.Spacing.sm) {
+            if let title = vm.equippedTitle {
+                Text(title.name.uppercased())
+                    .font(.ikeruMicro)
+                    .ikeruTracking(.micro)
+                    .foregroundStyle(rarityColor(title.rarity))
+            }
+            if !vm.equippedBadges.isEmpty {
+                badgeCluster(vm.equippedBadges)
+            }
+            Spacer(minLength: 0)
+        }
+    }
+
+    // MARK: - Achievements Section
+    //
+    // The view-model does not surface achievements yet, so this renders a
+    // static demo row with the 5 kanji from the Tatami plan
+    // (初, 七, 百, 千, 極). When `RPGProfileViewModel` gains an
+    // `achievements: [Achievement]` collection (.id, .kanji, .label, .earned),
+    // wire it up here. Mirrors the streak placeholder pattern from T4.
+
+    @ViewBuilder
+    private func achievementsSection(_ vm: RPGProfileViewModel) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            BilingualLabel(japanese: "勲章", chrome: "Achievements", mon: .asanoha)
+            HStack(alignment: .top, spacing: 14) {
+                ForEach(demoAchievements(for: vm), id: \.id) { ach in
+                    achievementCell(ach)
+                }
+            }
+        }
+        .tatamiRoom(.standard, padding: 16)
+    }
+
+    @ViewBuilder
+    private func achievementCell(_ ach: DemoAchievement) -> some View {
+        VStack(spacing: 6) {
+            if ach.earned {
+                HankoStamp(kanji: ach.kanji, size: 42)
+            } else {
+                Text(ach.kanji)
+                    .font(.system(size: 22, weight: .light, design: .serif))
+                    .foregroundStyle(TatamiTokens.paperGhost)
+                    .frame(width: 42, height: 42)
+                    .overlay(
+                        Rectangle()
+                            .strokeBorder(
+                                TatamiTokens.paperGhost,
+                                style: StrokeStyle(lineWidth: 1, dash: [3, 3])
+                            )
+                    )
+                    .opacity(0.55)
+            }
+            Text(ach.label)
+                .font(.system(size: 9, weight: .semibold))
+                .foregroundStyle(TatamiTokens.paperGhost)
+                .tracking(1)
+                .frame(maxWidth: 56)
+                .multilineTextAlignment(.center)
+        }
+    }
+
+    /// Lightweight value type used by the static demo row above. Once the
+    /// view-model exposes real achievements, replace this with the model
+    /// type and delete `demoAchievements(for:)`.
+    private struct DemoAchievement: Identifiable {
+        let id: String
+        let kanji: String
+        let label: String
+        let earned: Bool
+    }
+
+    private func demoAchievements(for vm: RPGProfileViewModel) -> [DemoAchievement] {
+        // Earn thresholds are quietly tied to the few signals the view-model
+        // does surface (level, total reviews) so the row at least responds
+        // to actual progress while we wait for real wiring.
+        [
+            DemoAchievement(id: "first",   kanji: "初", label: "First step",  earned: vm.totalReviews > 0),
+            DemoAchievement(id: "seven",   kanji: "七", label: "7-day arc",   earned: vm.level >= 2),
+            DemoAchievement(id: "hundred", kanji: "百", label: "100 cards",   earned: vm.totalReviews >= 100),
+            DemoAchievement(id: "thousand",kanji: "千", label: "1000 cards",  earned: vm.totalReviews >= 1000),
+            DemoAchievement(id: "kiwami",  kanji: "極", label: "Mastery",     earned: vm.level >= 10)
+        ]
+    }
+
+    // MARK: - Next Rank Section
+
+    @ViewBuilder
+    private func nextRankSection(_ vm: RPGProfileViewModel) -> some View {
+        let progress = vm.progressInLevel
+        let xpToNext = max(0, progress.required - progress.current)
+        VStack(alignment: .leading, spacing: 10) {
+            BilingualLabel(japanese: "次の段", chrome: "Next rank", mon: .genji)
+            HStack(spacing: 16) {
+                RPGRankCrest(level: vm.level + 1, size: 56, dashed: true)
+                    .frame(width: 56, height: 56)
+                    .opacity(0.5)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("第\(rankKanji(vm.level + 1))段 · \(rankTitle(level: vm.level + 1))")
+                        .font(.system(size: 16, design: .serif))
+                        .foregroundStyle(Color.ikeruTextPrimary)
+                    Text("\(xpToNext) XP to advance",
+                         comment: "RPG next rank caption — format string `%lld XP to advance`")
+                        .font(.system(size: 11))
+                        .foregroundStyle(TatamiTokens.paperGhost)
+                }
+                Spacer(minLength: 0)
+                SerifNumeral("\(xpToNext) XP →", size: 11, color: .ikeruPrimaryAccent)
+            }
+        }
+        .tatamiRoom(.standard, padding: 16)
+    }
+
+    // MARK: - Rank kanji helper
+
+    /// Daiji-style numerals for the dan rank label. Falls back to the ASCII
+    /// numeral past the prepared range — same convention as `RPGRankCrest`.
+    private func rankKanji(_ n: Int) -> String {
+        let lookup = ["", "一", "二", "三", "四", "五", "六", "七", "八", "九", "十"]
+        return lookup.indices.contains(n) ? lookup[n] : "\(n)"
     }
 
     // MARK: - Loot Box Section

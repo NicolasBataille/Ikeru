@@ -630,6 +630,23 @@
         }
       }
     },
+    "%lld XP to advance" : {
+      "comment" : "RPG next rank caption — XP remaining to the next dan",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld XP to advance"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld XP pour avancer"
+          }
+        }
+      }
+    },
     "%lld XP to next rank" : {
       "comment" : "Subtle XP-remaining label on the Home hero",
       "localizations" : {
@@ -643,6 +660,91 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%lld XP avant le grade suivant"
+          }
+        }
+      }
+    },
+    "Achievements" : {
+      "comment" : "RPG section header — earned milestones",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Achievements"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Distinctions"
+          }
+        }
+      }
+    },
+    "Cards" : {
+      "comment" : "Generic stat label — count of cards",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cards"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cartes"
+          }
+        }
+      }
+    },
+    "Hours" : {
+      "comment" : "Generic stat label — count of hours",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hours"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heures"
+          }
+        }
+      }
+    },
+    "Next rank" : {
+      "comment" : "RPG section header — preview of the next dan",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Next rank"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prochain grade"
+          }
+        }
+      }
+    },
+    "Streak" : {
+      "comment" : "Generic stat label — consecutive days",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Streak"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Série"
           }
         }
       }
