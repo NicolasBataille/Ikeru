@@ -8,7 +8,7 @@ import SwiftUI
 //
 // Sits behind every screen as the first layer of the Tatami visual stack.
 
-enum MarbleVariant: String, Sendable, CaseIterable {
+public enum MarbleVariant: String, Sendable, CaseIterable {
     case home          = "marble-1"
     case session       = "marble-2"
     case summary       = "marble-3"
@@ -16,10 +16,14 @@ enum MarbleVariant: String, Sendable, CaseIterable {
     case auxiliary     = "marble-5"  // Study, Companion, Settings, Tab-bar
 }
 
-struct MarbleBackground: View {
-    let variant: MarbleVariant
+public struct MarbleBackground: View {
+    public let variant: MarbleVariant
 
-    var body: some View {
+    public init(variant: MarbleVariant) {
+        self.variant = variant
+    }
+
+    public var body: some View {
         Image(variant.rawValue)
             .resizable()
             .scaledToFill()
