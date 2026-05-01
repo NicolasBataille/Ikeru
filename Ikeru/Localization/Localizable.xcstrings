@@ -748,6 +748,108 @@
           }
         }
       }
+    },
+    "Based on your last 90 reviews" : {
+      "comment" : "JLPT estimate sub-caption",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Based on your last 90 reviews"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Calculé sur tes 90 dernières révisions"
+          }
+        }
+      }
+    },
+    "JLPT estimate" : {
+      "comment" : "Bilingual chrome label paired with 推定 on the Study tab JLPT hero",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "JLPT estimate"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estimation JLPT"
+          }
+        }
+      }
+    },
+    "Progress" : {
+      "comment" : "Bilingual chrome label paired with 進歩 on the Study tab",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Progress"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Progrès"
+          }
+        }
+      }
+    },
+    "READY FOR %@" : {
+      "comment" : "JLPT readiness label",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "READY FOR %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PRÊT POUR %@"
+          }
+        }
+      }
+    },
+    "Skill balance" : {
+      "comment" : "Bilingual chrome label paired with 技能 on the Study tab",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skill balance"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Équilibre des compétences"
+          }
+        }
+      }
+    },
+    "Your study" : {
+      "comment" : "Study tab heading",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your study"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tes études"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

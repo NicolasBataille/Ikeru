@@ -3,8 +3,13 @@ import SwiftData
 import IkeruCore
 
 // MARK: - ProgressDashboardView
+//
+// Tatami-direction Study tab. JLPT estimate hero (glass), skill-balance
+// room with hairline progress per skill, and a fusuma-railed decks list.
+// Kana / Dictionary entry links are preserved because they are existing
+// functional surfaces — they keep IkeruCard styling for now since they
+// belong to navigation rather than study analytics.
 
-/// Full progress dashboard showing skill radar, JLPT estimate, review queue, and trends.
 struct ProgressDashboardView: View {
 
     @Environment(\.modelContext) private var modelContext
@@ -12,7 +17,8 @@ struct ProgressDashboardView: View {
 
     var body: some View {
         ZStack {
-            IkeruScreenBackground()
+            IkeruScreenBackground(variant: .auxiliary)
+                .ignoresSafeArea()
 
             if let vm = viewModel, vm.hasLoaded {
                 dashboardContent(vm)
@@ -35,36 +41,36 @@ struct ProgressDashboardView: View {
     @ViewBuilder
     private func dashboardContent(_ vm: ProgressDashboardViewModel) -> some View {
         ScrollView {
-            VStack(spacing: IkeruTheme.Spacing.xl) {
-                topBar
+            VStack(alignment: .leading, spacing: 20) {
+                header
                 kanaEntryLink
                 dictionaryEntryLink
-                jlptEstimateCard(vm)
-                skillRadarSection(vm)
-                reviewQueueSection(vm)
-                monthlyTrendsSection(vm)
-
-                Spacer(minLength: 200)
+                jlptHero(vm)
+                skillBalanceSection(vm)
+                decksSection
             }
-            .padding(.horizontal, IkeruTheme.Spacing.md)
-            .padding(.top, IkeruTheme.Spacing.lg)
+            .padding(.horizontal, 22)
+            .padding(.top, 18)
+            .padding(.bottom, 140)
         }
     }
 
-    // MARK: - Top Bar
+    // MARK: - Header
 
-    private var topBar: some View {
+    private var header: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("YOUR PATH")
-                .font(.ikeruMicro)
-                .ikeruTracking(.micro)
-                .foregroundStyle(Color.ikeruTextTertiary)
-            Text("Progress")
-                .font(.ikeruDisplaySmall)
-                .ikeruTracking(.display)
-                .foregroundStyle(Color.ikeruTextPrimary)
+            BilingualLabel(japanese: "進歩", chrome: "Progress")
+            HStack(spacing: 0) {
+                Text("Your study", comment: "Study tab heading")
+                    .font(.system(size: 22, weight: .semibold))
+                    .foregroundStyle(Color.ikeruTextPrimary)
+                Text("。")
+                    .font(.system(size: 22, weight: .semibold, design: .serif))
+                    .foregroundStyle(TatamiTokens.paperGhost)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.bottom, 6)
     }
 
     // MARK: - Kana entry link
@@ -133,238 +139,236 @@ struct ProgressDashboardView: View {
         .buttonStyle(.plain)
     }
 
-    // MARK: - JLPT Estimate
+    // MARK: - JLPT Hero
 
     @ViewBuilder
-    private func jlptEstimateCard(_ vm: ProgressDashboardViewModel) -> some View {
-        VStack(alignment: .leading, spacing: IkeruTheme.Spacing.md) {
-            IkeruSectionHeader(title: "JLPT Estimate", eyebrow: "Mastery")
+    private func jlptHero(_ vm: ProgressDashboardViewModel) -> some View {
+        let level = vm.jlptEstimate.level
+        let percent = Int(vm.jlptEstimate.masteryFraction * 100)
+        let progress = max(0, min(1, vm.jlptEstimate.masteryFraction))
 
-            HStack(alignment: .lastTextBaseline) {
-                Text(vm.jlptEstimate.level)
-                    .font(.ikeruDisplayLarge)
-                    .ikeruTracking(.display)
-                    .foregroundStyle(LinearGradient.ikeruGold)
-
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 4) {
+                    BilingualLabel(japanese: "推定", chrome: "JLPT estimate")
+                    Text("Based on your last 90 reviews",
+                         comment: "JLPT estimate sub-caption")
+                        .font(.system(size: 12, design: .serif))
+                        .italic()
+                        .foregroundStyle(Color.ikeruTextSecondary)
+                }
                 Spacer()
-
-                VStack(alignment: .trailing, spacing: 4) {
-                    Text(vm.jlptDisplayText)
-                        .font(.ikeruBody)
-                        .foregroundStyle(Color.ikeruTextPrimary)
-
-                    Text("\(vm.jlptEstimate.masteredCount)/\(vm.jlptEstimate.totalRequired) items")
-                        .font(.ikeruCaption)
-                        .foregroundStyle(Color.ikeruTextSecondary)
-                }
+                HankoStamp(kanji: level, size: 42)
             }
 
-            jlptProgressBar(fraction: vm.jlptEstimate.masteryFraction)
-        }
-        .ikeruCard(.hero)
-    }
-
-    @ViewBuilder
-    private func jlptProgressBar(fraction: Double) -> some View {
-        GeometryReader { geometry in
-            ZStack(alignment: .leading) {
-                Capsule()
-                    .fill(Color.white.opacity(0.08))
-
-                Capsule()
-                    .fill(LinearGradient.ikeruGold)
-                    .frame(width: geometry.size.width * min(1.0, max(0, fraction)))
-                    .animation(
-                        .spring(response: 0.42, dampingFraction: 0.86),
-                        value: fraction
-                    )
-            }
-        }
-        .frame(height: 8)
-    }
-
-    // MARK: - Skill Radar
-
-    @ViewBuilder
-    private func skillRadarSection(_ vm: ProgressDashboardViewModel) -> some View {
-        VStack(alignment: .leading, spacing: IkeruTheme.Spacing.md) {
-            IkeruSectionHeader(title: "Skill Balance", eyebrow: "Strengths")
-
-            SkillRadarView(
-                skillBalance: vm.skillBalance,
-                variant: .full
-            )
-            .frame(maxWidth: .infinity)
-        }
-        .ikeruCard(.standard)
-    }
-
-    // MARK: - Review Queue
-
-    @ViewBuilder
-    private func reviewQueueSection(_ vm: ProgressDashboardViewModel) -> some View {
-        VStack(alignment: .leading, spacing: IkeruTheme.Spacing.md) {
-            IkeruSectionHeader(title: "Review Queue", eyebrow: "Today")
-
-            HStack(spacing: IkeruTheme.Spacing.md) {
-                reviewStatTile(
-                    value: "\(vm.dueNowCount)",
-                    label: "Due Now",
-                    tint: vm.dueNowCount > 0
-                        ? Color.ikeruSecondaryAccent
-                        : Color.ikeruTertiaryAccent
-                )
-
-                reviewStatTile(
-                    value: "\(vm.dueTodayCount)",
-                    label: "Due Today",
-                    tint: Color.ikeruPrimaryAccent
-                )
-            }
-
-            if !vm.forecast.isEmpty {
-                forecastChart(vm)
-                    .padding(.top, IkeruTheme.Spacing.sm)
-            }
-        }
-        .ikeruCard(.standard)
-    }
-
-    @ViewBuilder
-    private func reviewStatTile(
-        value: String,
-        label: String,
-        tint: Color
-    ) -> some View {
-        VStack(spacing: IkeruTheme.Spacing.xs) {
-            Text(value)
-                .font(.ikeruStatsLarge)
-                .foregroundStyle(tint)
-
-            Text(label.uppercased())
-                .font(.ikeruMicro)
-                .ikeruTracking(.micro)
-                .foregroundStyle(Color.ikeruTextTertiary)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, IkeruTheme.Spacing.md)
-        .ikeruGlass(
-            cornerRadius: IkeruTheme.Radius.md,
-            tint: tint,
-            tintOpacity: 0.08
-        )
-    }
-
-    @ViewBuilder
-    private func forecastChart(_ vm: ProgressDashboardViewModel) -> some View {
-        VStack(alignment: .leading, spacing: IkeruTheme.Spacing.sm) {
-            Text("7-DAY FORECAST")
-                .font(.ikeruMicro)
-                .ikeruTracking(.micro)
-                .foregroundStyle(Color.ikeruTextTertiary)
-
-            HStack(alignment: .bottom, spacing: IkeruTheme.Spacing.xs) {
-                ForEach(vm.forecast) { entry in
-                    VStack(spacing: 4) {
-                        Text("\(entry.cardsDue)")
-                            .font(.system(size: 10, design: .monospaced))
-                            .foregroundStyle(Color.ikeruTextSecondary)
-
-                        let h = barHeight(value: entry.cardsDue, maxValue: vm.forecastMaxValue)
-
-                        Capsule()
-                            .fill(LinearGradient.ikeruGold)
-                            .frame(height: h)
-                            .animation(
-                                .spring(response: 0.42, dampingFraction: 0.86),
-                                value: entry.cardsDue
-                            )
-
-                        Text(entry.dayLabel)
-                            .font(.system(size: 9))
-                            .foregroundStyle(Color.ikeruTextTertiary)
-                            .lineLimit(1)
-                    }
-                    .frame(maxWidth: .infinity)
-                }
-            }
-            .frame(height: 100)
-        }
-    }
-
-    // MARK: - Monthly Trends
-
-    @ViewBuilder
-    private func monthlyTrendsSection(_ vm: ProgressDashboardViewModel) -> some View {
-        VStack(alignment: .leading, spacing: IkeruTheme.Spacing.md) {
-            IkeruSectionHeader(title: "Monthly Progress", eyebrow: "Trends")
-
-            if !vm.monthlySnapshots.isEmpty {
-                monthlyChart(vm)
-            } else {
-                Text("Start reviewing to see trends.")
-                    .font(.ikeruCaption)
+            HStack(alignment: .firstTextBaseline) {
+                SerifNumeral(percent, size: 48)
+                Text("%")
+                    .font(.system(size: 12))
+                    .foregroundStyle(TatamiTokens.paperGhost)
+                    .tracking(1.4)
+                Spacer()
+                Text("READY FOR \(level)",
+                     comment: "JLPT readiness label")
+                    .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(Color.ikeruTextSecondary)
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(.vertical, IkeruTheme.Spacing.md)
+                    .tracking(1.2)
+            }
+
+            ZStack(alignment: .leading) {
+                Rectangle()
+                    .fill(TatamiTokens.goldDim.opacity(0.3))
+                    .frame(height: 3)
+                GeometryReader { geo in
+                    Rectangle()
+                        .fill(Color.ikeruPrimaryAccent)
+                        .frame(width: geo.size.width * progress, height: 1)
+                }
+                .frame(height: 3)
             }
         }
-        .ikeruCard(.standard)
+        .tatamiRoom(.glass, padding: 22)
+    }
+
+    // MARK: - Skill Balance
+
+    @ViewBuilder
+    private func skillBalanceSection(_ vm: ProgressDashboardViewModel) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            BilingualLabel(japanese: "技能", chrome: "Skill balance", mon: .asanoha)
+            VStack(spacing: 14) {
+                ForEach(skillRows(vm.skillBalance)) { skill in
+                    skillRowView(skill)
+                }
+            }
+        }
+        .tatamiRoom(.standard, padding: 20)
     }
 
     @ViewBuilder
-    private func monthlyChart(_ vm: ProgressDashboardViewModel) -> some View {
-        HStack(alignment: .bottom, spacing: IkeruTheme.Spacing.sm) {
-            ForEach(vm.monthlySnapshots) { snapshot in
-                VStack(spacing: 4) {
-                    Text("\(snapshot.cardsMastered)")
-                        .font(.system(size: 10, design: .monospaced))
-                        .foregroundStyle(Color.ikeruTextSecondary)
-
-                    let h = barHeight(value: snapshot.cardsMastered, maxValue: vm.monthlyMaxValue)
-
-                    Capsule()
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    Color.ikeruTertiaryAccent.opacity(0.4),
-                                    Color.ikeruTertiaryAccent
-                                ],
-                                startPoint: .bottom,
-                                endPoint: .top
-                            )
-                        )
-                        .frame(height: h)
-                        .animation(
-                            .spring(response: 0.42, dampingFraction: 0.86),
-                            value: snapshot.cardsMastered
-                        )
-
-                    Text(snapshot.monthLabel)
-                        .font(.system(size: 10))
-                        .foregroundStyle(Color.ikeruTextTertiary)
+    private func skillRowView(_ skill: SkillRow) -> some View {
+        HStack(spacing: 10) {
+            MonCrest(kind: skill.mon, size: 16, color: .ikeruPrimaryAccent)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(skill.name)
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(Color.ikeruTextSecondary)
+                    .tracking(1)
+                ZStack(alignment: .leading) {
+                    Rectangle()
+                        .fill(Color(red: 0.094, green: 0.094, blue: 0.122))
+                        .frame(height: 2)
+                    GeometryReader { geo in
+                        Rectangle()
+                            .fill(Color.ikeruPrimaryAccent.opacity(0.85))
+                            .frame(width: geo.size.width * skill.progress, height: 2)
+                    }
+                    .frame(height: 2)
                 }
-                .frame(maxWidth: .infinity)
+            }
+            SerifNumeral(Int(skill.progress * 100), size: 14, color: .ikeruPrimaryAccent)
+        }
+    }
+
+    // MARK: - Decks
+
+    private var decksSection: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            BilingualLabel(japanese: "稽古場", chrome: "Decks", mon: .kikkou)
+                .padding(.bottom, 10)
+            // ProgressDashboardViewModel does not yet expose per-deck
+            // counts, so the rows below are derived structurally from a
+            // static deck catalog — mirrors the T4 streak / T7 achievements
+            // placeholder pattern. When the VM gains a `decks` property
+            // these can be swapped for `vm.decks`.
+            ForEach(Array(placeholderDecks.enumerated()), id: \.offset) { index, deck in
+                deckRow(deck, isFirst: index == 0)
             }
         }
-        .frame(height: 100)
+    }
+
+    @ViewBuilder
+    private func deckRow(_ deck: DeckRow, isFirst: Bool) -> some View {
+        HStack(spacing: 12) {
+            MonCrest(kind: deck.mon, size: 16, color: .ikeruPrimaryAccent)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(deck.japanese)
+                    .font(.system(size: 15, design: .serif))
+                    .foregroundStyle(Color.ikeruTextPrimary)
+                Text(deck.english)
+                    .font(.system(size: 11))
+                    .foregroundStyle(TatamiTokens.paperGhost)
+                ZStack(alignment: .leading) {
+                    Rectangle()
+                        .fill(Color(red: 0.094, green: 0.094, blue: 0.122))
+                        .frame(width: 80, height: 1)
+                    Rectangle()
+                        .fill(Color.ikeruPrimaryAccent.opacity(0.7))
+                        .frame(width: 80 * deck.progress, height: 1)
+                }
+            }
+            Spacer()
+            HStack(spacing: 4) {
+                SerifNumeral(deck.learned, size: 14, color: .ikeruPrimaryAccent)
+                Text("/\(deck.total)")
+                    .font(.system(size: 12, design: .serif))
+                    .foregroundStyle(TatamiTokens.paperGhost)
+            }
+            Text("LEARNED")
+                .font(.system(size: 9, weight: .semibold))
+                .foregroundStyle(TatamiTokens.paperGhost)
+                .tracking(1.2)
+        }
+        .padding(.vertical, 14)
+        .padding(.horizontal, 4)
+        .overlay(alignment: .top) {
+            if isFirst {
+                Rectangle()
+                    .fill(TatamiTokens.goldDim.opacity(0.7))
+                    .frame(height: 1)
+            }
+        }
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(Color.ikeruPrimaryAccent.opacity(0.3))
+                .frame(height: 1)
+        }
     }
 
     // MARK: - Helpers
-
-    private func barHeight(value: Int, maxValue: Int) -> CGFloat {
-        let maxBarHeight: CGFloat = 60
-        let minBarHeight: CGFloat = 4
-        guard maxValue > 0 else { return minBarHeight }
-        let fraction = Double(value) / Double(maxValue)
-        return max(minBarHeight, maxBarHeight * fraction)
-    }
 
     private func initializeViewModel() {
         guard viewModel == nil else { return }
         let container = modelContext.container
         viewModel = ProgressDashboardViewModel(modelContainer: container)
     }
+
+    private func skillRows(_ balance: SkillBalanceSnapshot) -> [SkillRow] {
+        // Derive per-skill mons by hashing the skill name into MonKind.allCases
+        // — same pattern as deck mon assignment; keeps a stable mapping.
+        let entries: [(String, Double)] = [
+            ("READING", balance.reading),
+            ("WRITING", balance.writing),
+            ("LISTENING", balance.listening),
+            ("SPEAKING", balance.speaking)
+        ]
+        return entries.map { (name, value) in
+            SkillRow(
+                id: name,
+                name: name,
+                progress: max(0, min(1, value)),
+                mon: monForName(name)
+            )
+        }
+    }
+
+    /// Static deck fixture used until ProgressDashboardViewModel exposes deck
+    /// summaries. Mirrors the kana/vocabulary surfaces the app actually
+    /// teaches today; values are 0/0 so no false progress is implied.
+    private var placeholderDecks: [DeckRow] {
+        let names: [(jp: String, en: String)] = [
+            ("ひらがな", "Hiragana"),
+            ("カタカナ", "Katakana"),
+            ("漢字", "Kanji"),
+            ("語彙", "Vocabulary")
+        ]
+        return names.map { entry in
+            DeckRow(
+                japanese: entry.jp,
+                english: entry.en,
+                learned: 0,
+                total: 0,
+                progress: 0,
+                mon: monForName(entry.en)
+            )
+        }
+    }
+
+    /// Hash a stable string into one of the four `MonKind` cases. Keeps the
+    /// crest assignment deterministic for a given deck/skill name.
+    private func monForName(_ name: String) -> MonKind {
+        let cases = MonKind.allCases
+        let hash = abs(name.unicodeScalars.reduce(0) { $0 &+ Int($1.value) })
+        return cases[hash % cases.count]
+    }
+}
+
+// MARK: - Local row models
+
+private struct SkillRow: Identifiable {
+    let id: String
+    let name: String
+    let progress: Double
+    let mon: MonKind
+}
+
+private struct DeckRow {
+    let japanese: String
+    let english: String
+    let learned: Int
+    let total: Int
+    let progress: Double
+    let mon: MonKind
 }
 
 // MARK: - Preview
