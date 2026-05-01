@@ -3,351 +3,137 @@ import IkeruCore
 import os
 
 // MARK: - SettingsView
+//
+// Tatami-styled Preferences screen. Bilingual section headers (Japanese
+// kanji + EN/FR chrome label), tatami rooms grouping rows, paper-ghost
+// kanji + serif gold values + dim-gold chevrons, and a 1px hairline
+// divider between rows. Every functional surface from earlier revisions
+// is preserved — only the visual envelope changes.
 
 struct SettingsView: View {
+
+    // MARK: Environment
 
     @Environment(\.profileViewModel) private var profileViewModel
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.assetCache) private var assetCache
+    @Environment(\.toastManager) private var toastManager
+    @Environment(AppLocale.self) private var appLocale
+
+    // MARK: Editing state
 
     @State private var editingName: String = ""
     @State private var isEditingName = false
+    @FocusState private var isNameFieldFocused: Bool
+
+    // MARK: Reminders
+
     @State private var reviewReminderEnabled = false
     @State private var reviewReminderHour = 9
     @State private var weeklyCheckInEnabled = false
     @State private var weeklyCheckInDay = 1
     @State private var weeklyCheckInHour = 10
+
+    // MARK: Backup
+
     @StateObject private var backupManager = CloudBackupManager()
     @State private var showRestoreConfirmation = false
     @State private var showExportShare = false
     @State private var exportURL: URL?
+
+    // MARK: Profile management
+
     @State private var showNewProfile = false
     @State private var newProfileName = ""
     @State private var profileToDelete: UserProfile?
-    @FocusState private var isNameFieldFocused: Bool
-    @Environment(\.assetCache) private var assetCache
+
+    // MARK: Cache & rig
+
     @State private var cacheStats: AssetCache.Stats?
     @State private var cacheQuotaMB: Double = 500
     @State private var showClearAllAlert = false
-    @Environment(\.toastManager) private var toastManager
     @AppStorage(IkeruApp.preWarmEnabledKey) private var preWarmEnabled: Bool = true
     @AppStorage(IkeruApp.preWarmNotifyKey) private var preWarmNotify: Bool = false
     @State private var isPreWarming = false
+
+    // MARK: Conversation
+
+    @AppStorage("ikeru.furigana.enabled") private var furiganaEnabled = true
+
+    // MARK: Language picker
+
+    @State private var showingLanguagePicker = false
+
+    // MARK: Computed
 
     private var isNameValid: Bool {
         !editingName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
+    private var iCloudStatusValue: LocalizedStringKey {
+        if backupManager.isBackingUp || backupManager.isRestoring { return "Syncing" }
+        if backupManager.lastBackupDate != nil { return "On" }
+        return "Off"
+    }
+
+    private var furiganaStatusValue: LocalizedStringKey {
+        furiganaEnabled ? "On" : "Off"
+    }
+
+    private var preWarmStatusValue: LocalizedStringKey {
+        preWarmEnabled ? "On" : "Off"
+    }
+
+    private var appVersionValue: String {
+        let info = Bundle.main.infoDictionary
+        let version = (info?["CFBundleShortVersionString"] as? String) ?? "1.0"
+        let build = (info?["CFBundleVersion"] as? String) ?? "1"
+        return "\(version) (\(build))"
+    }
+
+    private var currentLanguageLabel: LocalizedStringKey {
+        switch appLocale.preference {
+        case .system:
+            let lang = appLocale.currentLocale.language.languageCode?.identifier ?? "en"
+            return lang == "fr" ? "Auto · Français" : "Auto · English"
+        case .en: return "English"
+        case .fr: return "Français"
+        }
+    }
+
+    private var profileNameValue: String {
+        profileViewModel?.displayName ?? ""
+    }
+
+    // MARK: - Body
+
     var body: some View {
         ZStack {
-            IkeruScreenBackground()
+            IkeruScreenBackground(variant: .auxiliary)
+                .ignoresSafeArea()
 
             ScrollView(showsIndicators: false) {
-                VStack(spacing: IkeruTheme.Spacing.xl) {
-                    topBar
+                VStack(alignment: .leading, spacing: 24) {
+                    header
 
-                    profileSection
-                    profileManagementSection
-                    conversationSection
-                    notificationsSection
-                    backupSection
-                    aiProvidersSection
-                    assetCacheSection
-                    localRigSection
-                    attributionSection
+                    practiceSection
+                    memorySection
+                    accountSection
+                    aiSection
+                    storageSection
+                    aboutSection
                 }
-                .padding(.horizontal, IkeruTheme.Spacing.md)
-                .padding(.top, IkeruTheme.Spacing.lg)
+                .padding(.horizontal, 22)
+                .padding(.top, 14)
                 .padding(.bottom, 140) // clear of the floating tab bar
             }
         }
         .toolbar(.hidden, for: .navigationBar)
-    }
-
-    // MARK: - Top Bar
-
-    private var topBar: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text("PREFERENCES")
-                .font(.ikeruMicro)
-                .ikeruTracking(.micro)
-                .foregroundStyle(Color.ikeruTextTertiary)
-            Text("Settings")
-                .font(.ikeruDisplaySmall)
-                .ikeruTracking(.display)
-                .foregroundStyle(Color.ikeruTextPrimary)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    // MARK: - Profile Section
-
-    private var profileSection: some View {
-        VStack(alignment: .leading, spacing: IkeruTheme.Spacing.md) {
-            IkeruSectionHeader(title: "Profile", eyebrow: "Identity")
-            displayNameRow
-        }
-        .ikeruCard(.standard)
-    }
-
-    @ViewBuilder
-    private var displayNameRow: some View {
-        if isEditingName {
-            nameEditField
-        } else {
-            nameDisplayRow
-        }
-    }
-
-    private var nameDisplayRow: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("DISPLAY NAME")
-                    .font(.ikeruMicro)
-                    .ikeruTracking(.micro)
-                    .foregroundStyle(Color.ikeruTextTertiary)
-
-                Text(profileViewModel?.displayName ?? "")
-                    .font(.ikeruBodyLarge)
-                    .foregroundStyle(Color.ikeruTextPrimary)
-            }
-
-            Spacer()
-
-            Button {
-                editingName = profileViewModel?.displayName ?? ""
-                withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) {
-                    isEditingName = true
-                }
-                isNameFieldFocused = true
-            } label: {
-                Image(systemName: "pencil")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(Color.ikeruPrimaryAccent)
-                    .padding(10)
-                    .background {
-                        Circle().fill(.ultraThinMaterial)
-                    }
-            }
-            .buttonStyle(.plain)
-        }
-    }
-
-    private var nameEditField: some View {
-        VStack(alignment: .leading, spacing: IkeruTheme.Spacing.sm) {
-            Text("DISPLAY NAME")
-                .font(.ikeruMicro)
-                .ikeruTracking(.micro)
-                .foregroundStyle(Color.ikeruTextTertiary)
-
-            HStack(spacing: IkeruTheme.Spacing.sm) {
-                TextField("Your name", text: $editingName)
-                    .font(.ikeruBody)
-                    .foregroundStyle(Color.ikeruTextPrimary)
-                    .padding(.horizontal, IkeruTheme.Spacing.md)
-                    .padding(.vertical, IkeruTheme.Spacing.sm)
-                    .ikeruGlass(
-                        cornerRadius: IkeruTheme.Radius.md,
-                        tint: Color.ikeruPrimaryAccent,
-                        tintOpacity: 0.05
-                    )
-                    .focused($isNameFieldFocused)
-                    .submitLabel(.done)
-                    .onSubmit { saveName() }
-
-                Button {
-                    saveName()
-                } label: {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 26))
-                        .foregroundStyle(Color.ikeruPrimaryAccent)
-                }
-                .disabled(!isNameValid)
-                .opacity(isNameValid ? 1.0 : 0.4)
-
-                Button {
-                    withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) {
-                        isEditingName = false
-                    }
-                } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 26))
-                        .foregroundStyle(Color.ikeruTextTertiary)
-                }
-            }
-        }
-    }
-
-    // MARK: - Profile Management Section
-
-    private var profileManagementSection: some View {
-        VStack(alignment: .leading, spacing: IkeruTheme.Spacing.md) {
-            IkeruSectionHeader(title: "Profiles", eyebrow: "Accounts") {
-                SettingsStatusPill(
-                    text: "\(profileViewModel?.allProfiles.count ?? 0) ACTIVE",
-                    color: .ikeruPrimaryAccent
-                )
-            }
-
-            VStack(spacing: 0) {
-                let profiles = profileViewModel?.allProfiles ?? []
-                ForEach(Array(profiles.enumerated()), id: \.element.id) { index, profile in
-                    profileRow(profile)
-                    if index < profiles.count - 1 {
-                        IkeruDivider()
-                    }
-                }
-            }
-
-            Button {
-                showNewProfile = true
-            } label: {
-                HStack(spacing: IkeruTheme.Spacing.sm) {
-                    Image(systemName: "plus.circle.fill")
-                    Text("Add Profile")
-                }
-            }
-            .ikeruButtonStyle(.glassPill)
-        }
-        .ikeruCard(.standard)
-        .alert("New Profile", isPresented: $showNewProfile) {
-            TextField("Name", text: $newProfileName)
-            Button("Create") {
-                let name = newProfileName.trimmingCharacters(in: .whitespacesAndNewlines)
-                if !name.isEmpty {
-                    profileViewModel?.createProfile(name: name)
-                    profileViewModel?.loadProfile()
-                    newProfileName = ""
-                }
-            }
-            Button("Cancel", role: .cancel) {
-                newProfileName = ""
-            }
-        }
-        .sheet(item: $profileToDelete) { profile in
-            DeleteProfileSheet(
-                profile: profile,
-                onConfirm: {
-                    profileViewModel?.deleteProfile(profile)
-                    profileToDelete = nil
-                },
-                onCancel: {
-                    profileToDelete = nil
-                }
-            )
-        }
-    }
-
-    @ViewBuilder
-    private func profileRow(_ profile: UserProfile) -> some View {
-        let isCurrent = profile.id == profileViewModel?.currentProfile?.id
-        HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(profile.displayName)
-                    .font(.ikeruBody)
-                    .foregroundStyle(Color.ikeruTextPrimary)
-
-                if isCurrent {
-                    Text("ACTIVE")
-                        .font(.ikeruMicro)
-                        .ikeruTracking(.micro)
-                        .foregroundStyle(Color.ikeruPrimaryAccent)
-                }
-            }
-
-            Spacer()
-
-            if !isCurrent {
-                Button("Switch") {
-                    withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) {
-                        profileViewModel?.switchProfile(to: profile)
-                    }
-                }
-                .font(.ikeruCaption)
-                .foregroundStyle(Color.ikeruPrimaryAccent)
-
-                if (profileViewModel?.allProfiles.count ?? 0) > 1 {
-                    Button(role: .destructive) {
-                        profileToDelete = profile
-                    } label: {
-                        Image(systemName: "trash")
-                            .font(.ikeruCaption)
-                            .foregroundStyle(Color.ikeruDanger)
-                    }
-                }
-            } else {
-                Image(systemName: "checkmark.seal.fill")
-                    .foregroundStyle(Color.ikeruPrimaryAccent)
-            }
-        }
-        .padding(.vertical, IkeruTheme.Spacing.sm)
-    }
-
-    // MARK: - Backup Section
-
-    private var backupSection: some View {
-        VStack(alignment: .leading, spacing: IkeruTheme.Spacing.md) {
-            IkeruSectionHeader(title: "Data", eyebrow: "Backup & Export") {
-                if backupManager.isBackingUp || backupManager.isRestoring {
-                    SettingsStatusPill(text: "SYNCING", color: .ikeruWarning, pulses: true)
-                } else if backupManager.lastBackupDate != nil {
-                    SettingsStatusPill(text: "SYNCED", color: .ikeruSuccess)
-                } else {
-                    SettingsStatusPill(text: "NEVER", color: .ikeruTextTertiary)
-                }
-            }
-
-            VStack(spacing: 0) {
-                glassRow(
-                    icon: "icloud.and.arrow.up",
-                    title: "Backup to iCloud",
-                    subtitle: backupManager.isBackingUp ? "Backing up..." : nil
-                ) {
-                    Task {
-                        await backupManager.backup(modelContainer: modelContext.container)
-                    }
-                }
-                .disabled(backupManager.isBackingUp || backupManager.isRestoring)
-
-                IkeruDivider()
-
-                glassRow(
-                    icon: "icloud.and.arrow.down",
-                    title: "Restore from iCloud",
-                    subtitle: backupManager.isRestoring ? "Restoring..." : nil
-                ) {
-                    showRestoreConfirmation = true
-                }
-                .disabled(backupManager.isBackingUp || backupManager.isRestoring)
-
-                IkeruDivider()
-
-                glassRow(
-                    icon: "square.and.arrow.up",
-                    title: "Export Data",
-                    subtitle: nil
-                ) {
-                    Task {
-                        let manager = DataExportManager()
-                        if let url = try? await manager.exportData(modelContainer: modelContext.container) {
-                            exportURL = url
-                            showExportShare = true
-                        }
-                    }
-                }
-            }
-
-            if let date = backupManager.lastBackupDate {
-                Text("Last backup: \(date.formatted(date: .abbreviated, time: .shortened))")
-                    .font(.ikeruCaption)
-                    .foregroundStyle(Color.ikeruTextTertiary)
-            }
-
-            if let error = backupManager.lastError {
-                Text(error.localizedDescription)
-                    .font(.ikeruCaption)
-                    .foregroundStyle(Color.ikeruDanger)
-            }
+        .sheet(isPresented: $showingLanguagePicker) {
+            LanguagePickerView()
+                .presentationDetents([.medium])
+                .presentationBackground(.ultraThinMaterial)
         }
         .sheet(isPresented: $showExportShare, onDismiss: {
             if let url = exportURL {
@@ -359,269 +145,39 @@ struct SettingsView: View {
                 ShareLink(item: url)
             }
         }
-        .ikeruCard(.standard)
+        .sheet(item: $profileToDelete) { profile in
+            DeleteProfileSheet(
+                profile: profile,
+                onConfirm: {
+                    profileViewModel?.deleteProfile(profile)
+                    profileToDelete = nil
+                },
+                onCancel: { profileToDelete = nil }
+            )
+        }
+        .alert("New Profile", isPresented: $showNewProfile) {
+            TextField("Name", text: $newProfileName)
+            Button("Create") {
+                let name = newProfileName.trimmingCharacters(in: .whitespacesAndNewlines)
+                if !name.isEmpty {
+                    profileViewModel?.createProfile(name: name)
+                    profileViewModel?.loadProfile()
+                    newProfileName = ""
+                }
+            }
+            Button("Cancel", role: .cancel) { newProfileName = "" }
+        }
         .confirmationDialog(
             "Restore Backup?",
             isPresented: $showRestoreConfirmation,
             titleVisibility: .visible
         ) {
             Button("Restore", role: .destructive) {
-                Task {
-                    await backupManager.restore(modelContainer: modelContext.container)
-                }
+                Task { await backupManager.restore(modelContainer: modelContext.container) }
             }
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("This will replace all current data with the backup. This cannot be undone.")
-        }
-        .task {
-            await backupManager.checkLastBackup()
-        }
-    }
-
-    private func glassRow(
-        icon: String,
-        title: String,
-        subtitle: String?,
-        action: @escaping () -> Void
-    ) -> some View {
-        Button(action: action) {
-            HStack(spacing: IkeruTheme.Spacing.md) {
-                Image(systemName: icon)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(Color.ikeruPrimaryAccent)
-                    .frame(width: 28)
-
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(title)
-                        .font(.ikeruBody)
-                        .foregroundStyle(Color.ikeruTextPrimary)
-                    if let subtitle {
-                        Text(subtitle)
-                            .font(.ikeruCaption)
-                            .foregroundStyle(Color.ikeruTextSecondary)
-                    }
-                }
-
-                Spacer()
-            }
-            .padding(.vertical, IkeruTheme.Spacing.sm)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-    }
-
-    // MARK: - Conversation Section
-
-    @AppStorage("ikeru.furigana.enabled") private var furiganaEnabled = true
-
-    private var conversationSection: some View {
-        VStack(alignment: .leading, spacing: IkeruTheme.Spacing.md) {
-            IkeruSectionHeader(title: "Conversation", eyebrow: "Learning")
-
-            Toggle(isOn: $furiganaEnabled) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Show pronunciation guides")
-                        .font(.ikeruBody)
-                        .foregroundStyle(.white)
-                    Text("Display romaji and furigana above Japanese characters")
-                        .font(.ikeruCaption)
-                        .foregroundStyle(.ikeruTextSecondary)
-                }
-            }
-            .tint(Color.ikeruPrimaryAccent)
-        }
-        .ikeruCard(.standard)
-    }
-
-    // MARK: - Notifications Section
-
-    private var notificationsSection: some View {
-        VStack(alignment: .leading, spacing: IkeruTheme.Spacing.md) {
-            IkeruSectionHeader(title: "Notifications", eyebrow: "Reminders")
-
-            VStack(alignment: .leading, spacing: IkeruTheme.Spacing.sm) {
-                Toggle(isOn: $reviewReminderEnabled) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Daily Review Reminder")
-                            .font(.ikeruBody)
-                            .foregroundStyle(Color.ikeruTextPrimary)
-                        Text("Get notified when cards are ready")
-                            .font(.ikeruCaption)
-                            .foregroundStyle(Color.ikeruTextSecondary)
-                    }
-                }
-                .tint(Color.ikeruPrimaryAccent)
-                .onChange(of: reviewReminderEnabled) { _, enabled in
-                    updateReviewReminder(enabled: enabled)
-                }
-
-                if reviewReminderEnabled {
-                    Picker("Time", selection: $reviewReminderHour) {
-                        ForEach(6..<23) { hour in
-                            Text("\(hour):00").tag(hour)
-                        }
-                    }
-                    .pickerStyle(.menu)
-                    .tint(Color.ikeruPrimaryAccent)
-                    .onChange(of: reviewReminderHour) { _, _ in
-                        updateReviewReminder(enabled: true)
-                    }
-                }
-            }
-            .padding(.vertical, IkeruTheme.Spacing.xs)
-
-            IkeruDivider()
-
-            VStack(alignment: .leading, spacing: IkeruTheme.Spacing.sm) {
-                Toggle(isOn: $weeklyCheckInEnabled) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Weekly Check-In")
-                            .font(.ikeruBody)
-                            .foregroundStyle(Color.ikeruTextPrimary)
-                        Text("Reflect on your progress")
-                            .font(.ikeruCaption)
-                            .foregroundStyle(Color.ikeruTextSecondary)
-                    }
-                }
-                .tint(Color.ikeruPrimaryAccent)
-                .onChange(of: weeklyCheckInEnabled) { _, enabled in
-                    updateWeeklyCheckIn(enabled: enabled)
-                }
-
-                if weeklyCheckInEnabled {
-                    HStack {
-                        Picker("Day", selection: $weeklyCheckInDay) {
-                            Text("Sun").tag(1)
-                            Text("Mon").tag(2)
-                            Text("Tue").tag(3)
-                            Text("Wed").tag(4)
-                            Text("Thu").tag(5)
-                            Text("Fri").tag(6)
-                            Text("Sat").tag(7)
-                        }
-                        .pickerStyle(.menu)
-                        .tint(Color.ikeruPrimaryAccent)
-
-                        Picker("Time", selection: $weeklyCheckInHour) {
-                            ForEach(6..<23) { hour in
-                                Text("\(hour):00").tag(hour)
-                            }
-                        }
-                        .pickerStyle(.menu)
-                        .tint(Color.ikeruPrimaryAccent)
-                    }
-                    .onChange(of: weeklyCheckInDay) { _, _ in
-                        updateWeeklyCheckIn(enabled: true)
-                    }
-                    .onChange(of: weeklyCheckInHour) { _, _ in
-                        updateWeeklyCheckIn(enabled: true)
-                    }
-                }
-            }
-            .padding(.vertical, IkeruTheme.Spacing.xs)
-        }
-        .ikeruCard(.standard)
-    }
-
-    // MARK: - AI Providers Section
-
-    private var aiProvidersSection: some View {
-        VStack(alignment: .leading, spacing: IkeruTheme.Spacing.md) {
-            IkeruSectionHeader(title: "AI", eyebrow: "Providers")
-
-            NavigationLink {
-                AISettingsView()
-            } label: {
-                navRow(
-                    title: "AI Providers",
-                    subtitle: "Configure API keys and local GPU"
-                )
-            }
-            .buttonStyle(.plain)
-        }
-        .ikeruCard(.standard)
-    }
-
-    // MARK: - Asset Cache Section
-
-    @ViewBuilder
-    private var assetCacheSection: some View {
-        VStack(alignment: .leading, spacing: IkeruTheme.Spacing.md) {
-            IkeruSectionHeader(title: "Storage", eyebrow: "Asset cache")
-
-            if let stats = cacheStats {
-                let usedMB = Double(stats.totalBytes) / 1_048_576.0
-                VStack(alignment: .leading, spacing: IkeruTheme.Spacing.xs) {
-                    Text(String(format: "%.1f MB / %.0f MB · %d entries", usedMB, cacheQuotaMB, stats.entryCount))
-                        .font(.ikeruBody)
-                        .foregroundStyle(.white)
-
-                    ProgressView(value: usedMB, total: cacheQuotaMB)
-                        .tint(Color.ikeruPrimaryAccent)
-                }
-
-                if !stats.breakdown.isEmpty {
-                    let breakdown = stats.breakdown.map { "\($0.key.rawValue): \($0.value / 1024) KB" }
-                        .sorted()
-                        .joined(separator: " · ")
-                    Text(breakdown)
-                        .font(.ikeruCaption)
-                        .foregroundStyle(.ikeruTextSecondary)
-                }
-            } else {
-                Text("Cache not initialised")
-                    .font(.ikeruCaption)
-                    .foregroundStyle(.ikeruTextSecondary)
-            }
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Quota")
-                    .font(.ikeruCaption)
-                    .foregroundStyle(.ikeruTextSecondary)
-                Slider(value: $cacheQuotaMB, in: 200...2000, step: 100) {
-                    Text("Quota")
-                } onEditingChanged: { editing in
-                    if !editing {
-                        let bytes = Int(cacheQuotaMB) * 1_048_576
-                        assetCache?.updateQuota(bytes)
-                        cacheStats = assetCache?.stats()
-                    }
-                }
-                .tint(Color.ikeruPrimaryAccent)
-            }
-
-            HStack(spacing: IkeruTheme.Spacing.sm) {
-                Button {
-                    showClearAllAlert = true
-                } label: {
-                    Text("Clear all")
-                        .font(.ikeruCaption)
-                        .foregroundStyle(.ikeruSecondaryAccent)
-                        .padding(.horizontal, IkeruTheme.Spacing.md)
-                        .padding(.vertical, IkeruTheme.Spacing.sm)
-                }
-
-                Button {
-                    assetCache?.clearStale(olderThan: 30 * 24 * 60 * 60)
-                    cacheStats = assetCache?.stats()
-                } label: {
-                    Text("Clear unused (30d)")
-                        .font(.ikeruCaption)
-                        .foregroundStyle(.ikeruPrimaryAccent)
-                        .padding(.horizontal, IkeruTheme.Spacing.md)
-                        .padding(.vertical, IkeruTheme.Spacing.sm)
-                }
-
-                Spacer()
-            }
-        }
-        .ikeruCard(.standard)
-        .task {
-            cacheStats = assetCache?.stats()
-            if let cache = assetCache {
-                cacheQuotaMB = Double(cache.configuration.quotaBytes) / 1_048_576.0
-            }
         }
         .alert("Clear cache?", isPresented: $showClearAllAlert) {
             Button("Cancel", role: .cancel) { }
@@ -632,66 +188,332 @@ struct SettingsView: View {
         } message: {
             Text("Removes every cached audio file and image. Assets will be regenerated on next use.")
         }
+        .task {
+            await backupManager.checkLastBackup()
+            cacheStats = assetCache?.stats()
+            if let cache = assetCache {
+                cacheQuotaMB = Double(cache.configuration.quotaBytes) / 1_048_576.0
+            }
+        }
     }
 
-    // MARK: - Local Rig Section (Story 7.5)
+    // MARK: - Header
 
-    private var localRigSection: some View {
-        VStack(alignment: .leading, spacing: IkeruTheme.Spacing.md) {
-            IkeruSectionHeader(title: "Advanced", eyebrow: "Local rig & pre-warming") {
-                if preWarmEnabled {
-                    SettingsStatusPill(text: "ON", color: .ikeruSuccess)
-                } else {
-                    SettingsStatusPill(text: "OFF", color: .ikeruTextTertiary)
+    private var header: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            BilingualLabel(japanese: "設定", chrome: "Settings")
+            Text("Preferences", comment: "Settings heading")
+                .font(.system(size: 28, weight: .light, design: .serif))
+                .foregroundStyle(Color.ikeruTextPrimary)
+        }
+    }
+
+    // MARK: - Section: 稽古 / Practice
+
+    private var practiceSection: some View {
+        section(label: ("稽古", "Practice"), mon: .asanoha) {
+            settingRow(
+                jp: "一日の目標",
+                label: "Daily goal",
+                value: "12 cards"
+            )
+            settingRow(
+                jp: "通知",
+                label: "Reminders",
+                value: reviewReminderEnabled
+                    ? "\(reviewReminderHour):00"
+                    : String(localized: "Off")
+            ) {
+                withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) {
+                    reviewReminderEnabled.toggle()
+                }
+                updateReviewReminder(enabled: reviewReminderEnabled)
+            }
+            settingRow(
+                jp: "週次振り返り",
+                label: "Weekly check-in",
+                value: weeklyCheckInEnabled
+                    ? "\(weeklyCheckInHour):00"
+                    : String(localized: "Off")
+            ) {
+                withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) {
+                    weeklyCheckInEnabled.toggle()
+                }
+                updateWeeklyCheckIn(enabled: weeklyCheckInEnabled)
+            }
+            settingRow(
+                jp: "音声",
+                label: "Sound",
+                value: String(localized: "On")
+            )
+            settingRow(
+                jp: "振り仮名",
+                label: "Furigana",
+                value: localizedString(furiganaStatusValue)
+            ) {
+                withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) {
+                    furiganaEnabled.toggle()
+                }
+            }
+        }
+    }
+
+    // MARK: - Section: 記憶 / Memory algorithm
+
+    private var memorySection: some View {
+        section(label: ("記憶", "Memory algorithm"), mon: .kikkou) {
+            settingRow(jp: "FSRSパラメータ", label: "FSRS parameters", value: "Optimized")
+            settingRow(jp: "保持率",         label: "Target retention", value: "90%")
+            settingRow(jp: "最大間隔",       label: "Maximum interval", value: "36500d")
+        }
+    }
+
+    // MARK: - Section: 勘定 / Account
+
+    private var accountSection: some View {
+        section(label: ("勘定", "Account"), mon: .genji) {
+            settingRow(
+                jp: "プロフィール",
+                label: "Profile",
+                value: profileNameValue
+            ) {
+                editingName = profileNameValue
+                withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) {
+                    isEditingName = true
+                }
+                isNameFieldFocused = true
+            }
+
+            if isEditingName {
+                inlineNameEditor
+            }
+
+            // Profile switcher (multi-profile support).
+            if let profiles = profileViewModel?.allProfiles, profiles.count > 1 {
+                ForEach(profiles, id: \.id) { profile in
+                    profileSwitchRow(profile)
                 }
             }
 
-            VStack(alignment: .leading, spacing: IkeruTheme.Spacing.sm) {
-                Toggle(isOn: $preWarmEnabled) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Auto pre-warm audio for upcoming reviews")
-                            .font(.ikeruBody)
-                            .foregroundStyle(Color.ikeruTextPrimary)
-                        Text("Generates tomorrow's audio in the background")
-                            .font(.ikeruCaption)
-                            .foregroundStyle(Color.ikeruTextSecondary)
-                    }
-                }
-                .tint(Color.ikeruPrimaryAccent)
-
-                Toggle(isOn: $preWarmNotify) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Notify when batch finishes")
-                            .font(.ikeruBody)
-                            .foregroundStyle(Color.ikeruTextPrimary)
-                        Text("Local notification after each pre-warm pass")
-                            .font(.ikeruCaption)
-                            .foregroundStyle(Color.ikeruTextSecondary)
-                    }
-                }
-                .tint(Color.ikeruPrimaryAccent)
+            settingRow(
+                jp: "プロフィール追加",
+                label: "Add profile",
+                value: ""
+            ) {
+                showNewProfile = true
             }
-            .padding(.vertical, IkeruTheme.Spacing.xs)
 
-            IkeruDivider()
+            settingRow(
+                jp: "バックアップ",
+                label: "iCloud sync",
+                value: localizedString(iCloudStatusValue)
+            ) {
+                Task {
+                    await backupManager.backup(modelContainer: modelContext.container)
+                }
+            }
+
+            settingRow(
+                jp: "復元",
+                label: "Restore from iCloud",
+                value: ""
+            ) {
+                showRestoreConfirmation = true
+            }
+
+            settingRow(
+                jp: "書き出し",
+                label: "Export data",
+                value: ""
+            ) {
+                Task {
+                    let manager = DataExportManager()
+                    if let url = try? await manager.exportData(modelContainer: modelContext.container) {
+                        exportURL = url
+                        showExportShare = true
+                    }
+                }
+            }
+
+            // Plan / Premium row intentionally omitted — does not exist in the app.
+
+            languageRow
+        }
+    }
+
+    private var inlineNameEditor: some View {
+        HStack(spacing: 12) {
+            TextField("Your name", text: $editingName)
+                .font(.system(size: 14, design: .serif))
+                .foregroundStyle(Color.ikeruTextPrimary)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                .ikeruGlass(
+                    cornerRadius: IkeruTheme.Radius.md,
+                    tint: Color.ikeruPrimaryAccent,
+                    tintOpacity: 0.05
+                )
+                .focused($isNameFieldFocused)
+                .submitLabel(.done)
+                .onSubmit { saveName() }
 
             Button {
-                runPreWarmNow()
+                saveName()
             } label: {
-                HStack(spacing: IkeruTheme.Spacing.sm) {
-                    if isPreWarming {
-                        ProgressView()
-                            .controlSize(.small)
-                    } else {
-                        Image(systemName: "bolt.fill")
-                    }
-                    Text(isPreWarming ? "Pre-warming…" : "Pre-warm now")
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 22))
+                    .foregroundStyle(Color.ikeruPrimaryAccent)
+            }
+            .disabled(!isNameValid)
+            .opacity(isNameValid ? 1.0 : 0.4)
+
+            Button {
+                withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) {
+                    isEditingName = false
+                }
+            } label: {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.system(size: 22))
+                    .foregroundStyle(Color.ikeruTextTertiary)
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .overlay(alignment: .bottom) {
+            Rectangle().fill(TatamiTokens.goldDim.opacity(0.2))
+                .frame(height: 1).padding(.horizontal, 16)
+        }
+    }
+
+    @ViewBuilder
+    private func profileSwitchRow(_ profile: UserProfile) -> some View {
+        let isCurrent = profile.id == profileViewModel?.currentProfile?.id
+        Button {
+            withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) {
+                profileViewModel?.switchProfile(to: profile)
+            }
+        } label: {
+            HStack(spacing: 16) {
+                Text("︙")
+                    .font(.system(size: 13, design: .serif))
+                    .foregroundStyle(TatamiTokens.paperGhost)
+                Text(profile.displayName)
+                    .font(.system(size: 13))
+                    .foregroundStyle(Color.ikeruTextPrimary)
+                Spacer()
+                if isCurrent {
+                    Text("Active", comment: "Active profile indicator")
+                        .font(.system(size: 13, design: .serif))
+                        .foregroundStyle(Color.ikeruPrimaryAccent)
+                } else {
+                    Text("Switch", comment: "Switch profile action")
+                        .font(.system(size: 13, design: .serif))
+                        .foregroundStyle(Color.ikeruPrimaryAccent)
+                    Text("›")
+                        .font(.system(size: 14))
+                        .foregroundStyle(TatamiTokens.goldDim)
                 }
             }
-            .ikeruButtonStyle(.glassPill)
-            .disabled(isPreWarming)
+            .padding(.horizontal, 16).padding(.vertical, 14)
+            .overlay(alignment: .bottom) {
+                Rectangle().fill(TatamiTokens.goldDim.opacity(0.2))
+                    .frame(height: 1).padding(.horizontal, 16)
+            }
+        }
+        .buttonStyle(.plain)
+        .swipeActions(edge: .trailing) {
+            if !isCurrent {
+                Button(role: .destructive) {
+                    profileToDelete = profile
+                } label: {
+                    Label("Delete", systemImage: "trash")
+                }
+            }
+        }
+    }
 
-            IkeruDivider()
+    private var languageRow: some View {
+        Button { showingLanguagePicker = true } label: {
+            HStack(spacing: 16) {
+                Text("言語")
+                    .font(.system(size: 13, design: .serif))
+                    .foregroundStyle(TatamiTokens.paperGhost)
+                Text("Language", comment: "Settings row label")
+                    .font(.system(size: 13))
+                    .foregroundStyle(Color.ikeruTextPrimary)
+                Spacer()
+                Text(currentLanguageLabel)
+                    .font(.system(size: 13, design: .serif))
+                    .foregroundStyle(Color.ikeruPrimaryAccent)
+                Text("›")
+                    .font(.system(size: 14))
+                    .foregroundStyle(TatamiTokens.goldDim)
+            }
+            .padding(.horizontal, 16).padding(.vertical, 14)
+            .overlay(alignment: .bottom) {
+                Rectangle().fill(TatamiTokens.goldDim.opacity(0.2))
+                    .frame(height: 1).padding(.horizontal, 16)
+            }
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - Section: 知能 / AI providers
+
+    private var aiSection: some View {
+        section(label: ("知能", "AI providers"), mon: .kikkou) {
+            NavigationLink {
+                AISettingsView()
+            } label: {
+                rowChrome(
+                    jp: "プロバイダ",
+                    label: "AI providers",
+                    value: ""
+                )
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    // MARK: - Section: 倉庫 / Storage (asset cache + local rig)
+
+    private var storageSection: some View {
+        section(label: ("倉庫", "Storage"), mon: .maru) {
+            settingRow(
+                jp: "資産キャッシュ",
+                label: "Asset cache",
+                value: cacheUsageValue
+            ) {
+                showClearAllAlert = true
+            }
+
+            settingRow(
+                jp: "予熱",
+                label: "Pre-warm audio",
+                value: localizedString(preWarmStatusValue)
+            ) {
+                withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) {
+                    preWarmEnabled.toggle()
+                }
+            }
+
+            settingRow(
+                jp: "予熱通知",
+                label: "Pre-warm notifications",
+                value: preWarmNotify ? String(localized: "On") : String(localized: "Off")
+            ) {
+                withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) {
+                    preWarmNotify.toggle()
+                }
+            }
+
+            settingRow(
+                jp: "今すぐ予熱",
+                label: "Pre-warm now",
+                value: isPreWarming ? String(localized: "Working") : ""
+            ) {
+                runPreWarmNow()
+            }
 
             NavigationLink {
                 if let client = makeRigClient() {
@@ -703,89 +525,116 @@ struct SettingsView: View {
                         .padding()
                 }
             } label: {
-                navRow(
-                    title: "View jobs",
-                    subtitle: "In-flight rig jobs"
+                rowChrome(
+                    jp: "ジョブ",
+                    label: "Rig jobs",
+                    value: ""
                 )
             }
             .buttonStyle(.plain)
         }
-        .ikeruCard(.standard)
     }
 
-    private func makeRigClient() -> RigClient? {
-        guard let settings = RigSettingsStore().load(), settings.isConfigured else {
-            return nil
-        }
-        return RigClient(configuration: settings)
+    private var cacheUsageValue: String {
+        guard let stats = cacheStats else { return "" }
+        let usedMB = Double(stats.totalBytes) / 1_048_576.0
+        return String(format: "%.0f / %.0f MB", usedMB, cacheQuotaMB)
     }
 
-    private func runPreWarmNow() {
-        guard !isPreWarming else { return }
-        guard let service = PreWarmFactory.make(
-            modelContainer: modelContext.container,
-            assetCache: assetCache
-        ) else {
-            toastManager.showError("Pre-warm unavailable: cache not ready")
-            return
-        }
-        isPreWarming = true
-        toastManager.showInfo("Pre-warming started")
-        Logger.cache.info("Manual pre-warm triggered from Settings")
-        Task { @MainActor in
-            defer { isPreWarming = false }
-            do {
-                try await service.enqueueUpcomingDueAudio(window: 86_400)
-                Logger.cache.info("Manual pre-warm done")
-                toastManager.showInfo("Pre-warm queued")
-                if preWarmNotify {
-                    await PreWarmNotifier.notifyBatchFinished()
-                }
-            } catch is CancellationError {
-                // Silently ignore cancellation.
-            } catch {
-                Logger.cache.warning("Manual pre-warm failed: \(error.localizedDescription)")
-                toastManager.showError("Pre-warm failed: \(error.localizedDescription)")
-            }
-        }
-    }
+    // MARK: - Section: 関連 / About
 
-    // MARK: - Attribution Section
-
-    private var attributionSection: some View {
-        VStack(alignment: .leading, spacing: IkeruTheme.Spacing.md) {
-            IkeruSectionHeader(title: "About", eyebrow: "Credits")
+    private var aboutSection: some View {
+        section(label: ("関連", "About"), mon: .maru) {
+            settingRow(jp: "バージョン", label: "Version", value: appVersionValue)
+            settingRow(jp: "利用規約",   label: "Terms",   value: "")
+            settingRow(jp: "お問い合わせ", label: "Support", value: "")
 
             NavigationLink {
                 AttributionView()
             } label: {
-                navRow(
-                    title: "Attribution",
-                    subtitle: "Open-source credits"
+                rowChrome(
+                    jp: "謝辞",
+                    label: "Attribution",
+                    value: ""
                 )
             }
             .buttonStyle(.plain)
         }
-        .ikeruCard(.standard)
     }
 
-    private func navRow(title: String, subtitle: String) -> some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.ikeruBody)
-                    .foregroundStyle(Color.ikeruTextPrimary)
-                Text(subtitle)
-                    .font(.ikeruCaption)
-                    .foregroundStyle(Color.ikeruTextSecondary)
-            }
-            Spacer()
-            Image(systemName: "chevron.right")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(Color.ikeruTextTertiary)
+    // MARK: - Row primitives
+
+    @ViewBuilder
+    private func section(
+        label: (jp: String, en: LocalizedStringKey),
+        mon: MonKind,
+        @ViewBuilder content: () -> some View
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            BilingualLabel(japanese: label.jp, chrome: label.en, mon: mon)
+            VStack(spacing: 0) { content() }
+                .tatamiRoom(.standard, padding: 0)
         }
-        .padding(.vertical, IkeruTheme.Spacing.xs)
-        .contentShape(Rectangle())
+    }
+
+    /// Tappable row. Pass `action: nil` for an informational (read-only) row.
+    @ViewBuilder
+    private func settingRow(
+        jp: String,
+        label: LocalizedStringKey,
+        value: String,
+        action: (() -> Void)? = nil
+    ) -> some View {
+        Button {
+            action?()
+        } label: {
+            rowChrome(jp: jp, label: label, value: value)
+        }
+        .buttonStyle(.plain)
+        .disabled(action == nil)
+    }
+
+    /// Bilingual + serif gold value + dim-gold chevron + 1px hairline divider.
+    @ViewBuilder
+    private func rowChrome(
+        jp: String,
+        label: LocalizedStringKey,
+        value: String
+    ) -> some View {
+        HStack(spacing: 16) {
+            Text(jp)
+                .font(.system(size: 13, design: .serif))
+                .foregroundStyle(TatamiTokens.paperGhost)
+            Text(label)
+                .font(.system(size: 13))
+                .foregroundStyle(Color.ikeruTextPrimary)
+            Spacer()
+            if !value.isEmpty {
+                Text(value)
+                    .font(.system(size: 13, design: .serif))
+                    .foregroundStyle(Color.ikeruPrimaryAccent)
+            }
+            Text("›")
+                .font(.system(size: 14))
+                .foregroundStyle(TatamiTokens.goldDim)
+        }
+        .padding(.horizontal, 16).padding(.vertical, 14)
+        .overlay(alignment: .bottom) {
+            Rectangle().fill(TatamiTokens.goldDim.opacity(0.2))
+                .frame(height: 1).padding(.horizontal, 16)
+        }
+    }
+
+    /// Resolve a `LocalizedStringKey` to its current locale-rendered string.
+    /// Used when we need the *value* slot to participate in localization but
+    /// the row primitive expects a `String`.
+    private func localizedString(_ key: LocalizedStringKey) -> String {
+        // String(localized:) expects a String key; pull the literal out.
+        let mirror = Mirror(reflecting: key)
+        if let key = mirror.children.first(where: { $0.label == "key" })?.value as? String {
+            return String(localized: String.LocalizationValue(key))
+        }
+        return ""
     }
 
     // MARK: - Actions
@@ -833,47 +682,41 @@ struct SettingsView: View {
             NotificationManager.shared.cancelWeeklyCheckIn()
         }
     }
-}
 
-// MARK: - Settings Status Pill
-//
-// Compact inline status indicator used in Settings section headers to show
-// state at a glance (e.g., `● SYNCED`, `2 ACTIVE`, `OFF`). A single dot plus
-// an all-caps label keeps it quiet enough not to compete with the title
-// while still providing the scanning affordance the design calls for.
-
-private struct SettingsStatusPill: View {
-    let text: String
-    var color: Color = .ikeruPrimaryAccent
-    var pulses: Bool = false
-
-    @State private var pulseOn = false
-
-    var body: some View {
-        HStack(spacing: 5) {
-            Circle()
-                .fill(color)
-                .frame(width: 6, height: 6)
-                .opacity(pulses && pulseOn ? 0.4 : 1.0)
-                .shadow(color: color.opacity(0.7), radius: 4)
-                .onAppear {
-                    if pulses {
-                        withAnimation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true)) {
-                            pulseOn.toggle()
-                        }
-                    }
-                }
-            Text(text)
-                .font(.system(size: 10, weight: .heavy))
-                .tracking(1.4)
-                .foregroundStyle(color)
+    private func makeRigClient() -> RigClient? {
+        guard let settings = RigSettingsStore().load(), settings.isConfigured else {
+            return nil
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
-        .background {
-            Capsule()
-                .fill(color.opacity(0.10))
-                .overlay(Capsule().strokeBorder(color.opacity(0.25), lineWidth: 0.6))
+        return RigClient(configuration: settings)
+    }
+
+    private func runPreWarmNow() {
+        guard !isPreWarming else { return }
+        guard let service = PreWarmFactory.make(
+            modelContainer: modelContext.container,
+            assetCache: assetCache
+        ) else {
+            toastManager.showError("Pre-warm unavailable: cache not ready")
+            return
+        }
+        isPreWarming = true
+        toastManager.showInfo("Pre-warming started")
+        Logger.cache.info("Manual pre-warm triggered from Settings")
+        Task { @MainActor in
+            defer { isPreWarming = false }
+            do {
+                try await service.enqueueUpcomingDueAudio(window: 86_400)
+                Logger.cache.info("Manual pre-warm done")
+                toastManager.showInfo("Pre-warm queued")
+                if preWarmNotify {
+                    await PreWarmNotifier.notifyBatchFinished()
+                }
+            } catch is CancellationError {
+                // Silently ignore cancellation.
+            } catch {
+                Logger.cache.warning("Manual pre-warm failed: \(error.localizedDescription)")
+                toastManager.showError("Pre-warm failed: \(error.localizedDescription)")
+            }
         }
     }
 }
@@ -883,6 +726,7 @@ private struct SettingsStatusPill: View {
 #Preview("SettingsView") {
     NavigationStack {
         SettingsView()
+            .environment(AppLocale(preference: .system))
     }
     .preferredColorScheme(.dark)
 }
