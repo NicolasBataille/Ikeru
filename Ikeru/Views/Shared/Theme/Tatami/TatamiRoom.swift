@@ -38,12 +38,16 @@ struct TatamiRoomModifier: ViewModifier {
     private var roomBackground: some View {
         switch variant {
         case .standard:
-            Rectangle().fill(Color(red: 0.102, green: 0.102, blue: 0.133)) // #1A1A22
+            // Slight transparency so the marble paper grain + gold veins
+            // still read through every card. The marble PNG asset itself
+            // is now bright enough that the card can be mostly opaque
+            // for legible text without losing the Tatami signature.
+            Rectangle().fill(Color(red: 0.102, green: 0.102, blue: 0.133).opacity(0.78)) // #1A1A22 ~78%
         case .accent:
             LinearGradient(
                 colors: [
-                    Color(red: 0.122, green: 0.102, blue: 0.071),  // #1F1A12
-                    Color(red: 0.102, green: 0.086, blue: 0.071)   // #1A1612
+                    Color(red: 0.122, green: 0.102, blue: 0.071, opacity: 0.82),  // #1F1A12 ~82%
+                    Color(red: 0.102, green: 0.086, blue: 0.071, opacity: 0.82)   // #1A1612 ~82%
                 ],
                 startPoint: .top,
                 endPoint: .bottom
@@ -52,8 +56,8 @@ struct TatamiRoomModifier: ViewModifier {
             ZStack {
                 LinearGradient(
                     colors: [
-                        Color(red: 0.157, green: 0.118, blue: 0.071, opacity: 0.55),
-                        Color(red: 0.110, green: 0.086, blue: 0.071, opacity: 0.45)
+                        Color(red: 0.157, green: 0.118, blue: 0.071, opacity: 0.5),
+                        Color(red: 0.110, green: 0.086, blue: 0.071, opacity: 0.4)
                     ],
                     startPoint: .top,
                     endPoint: .bottom

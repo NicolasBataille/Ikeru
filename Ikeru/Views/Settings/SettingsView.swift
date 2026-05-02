@@ -348,10 +348,12 @@ struct SettingsView: View {
                 .foregroundStyle(Color.ikeruTextPrimary)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 10)
-                .ikeruGlass(
-                    cornerRadius: IkeruTheme.Radius.md,
-                    tint: Color.ikeruPrimaryAccent,
-                    tintOpacity: 0.05
+                .background(Color.ikeruBackground.opacity(0.55))
+                .sumiCorners(
+                    color: Color.ikeruPrimaryAccent,
+                    size: 6,
+                    weight: 1.0,
+                    inset: -1
                 )
                 .focused($isNameFieldFocused)
                 .submitLabel(.done)

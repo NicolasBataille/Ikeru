@@ -56,9 +56,11 @@ struct SessionProgressBar: View {
 
     // MARK: - Segmented Bar
 
-    /// 5-segment scroll-line representation. For sessions of 5 or fewer
-    /// exercises every step gets its own segment; longer sessions are
-    /// quantised into 5 buckets so the bar always reads at the same rhythm.
+    /// 5-segment fusuma rail. For sessions of 5 or fewer exercises every
+    /// step gets its own panel; longer sessions are quantised into 5
+    /// buckets so the bar always reads at the same rhythm. Paired
+    /// FusumaRail hairlines frame the row above and below to honor the
+    /// Tatami spec's "fusuma progress".
     private var segmentedBar: some View {
         HStack(spacing: 4) {
             ForEach(0..<visibleSegmentCount, id: \.self) { segmentIndex in
@@ -66,6 +68,9 @@ struct SessionProgressBar: View {
             }
         }
         .frame(height: 6)
+        .padding(.vertical, 4)
+        .overlay(alignment: .top)    { FusumaRail(opacity: 0.6) }
+        .overlay(alignment: .bottom) { FusumaRail(opacity: 0.6, inverted: true) }
     }
 
     /// Returns the visible segment's filled state given the absolute progress.
@@ -83,9 +88,9 @@ struct SessionProgressBar: View {
             && progressFraction < nextSegmentFraction
 
         return ZStack {
-            Capsule().fill(Color.white.opacity(0.08))
+            Rectangle().fill(Color.white.opacity(0.08))
             if isFilled {
-                Capsule().fill(
+                Rectangle().fill(
                     LinearGradient(
                         colors: [Color(hex: 0xE5BC8A), Color(hex: 0xD4A574)],
                         startPoint: .leading,
@@ -93,7 +98,7 @@ struct SessionProgressBar: View {
                     )
                 )
             } else if isActive {
-                Capsule().fill(
+                Rectangle().fill(
                     LinearGradient(
                         colors: [Color(hex: 0xF5F2EC), Color(hex: 0xE0DDD7)],
                         startPoint: .top,
@@ -103,7 +108,7 @@ struct SessionProgressBar: View {
             }
         }
         .overlay(
-            Capsule().strokeBorder(Color.white.opacity(0.06), lineWidth: 0.5)
+            Rectangle().strokeBorder(Color.white.opacity(0.06), lineWidth: 0.5)
         )
         .animation(
             .spring(response: 0.42, dampingFraction: 0.86),

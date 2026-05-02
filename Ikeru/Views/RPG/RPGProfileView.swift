@@ -479,10 +479,15 @@ struct RPGProfileView: View {
             }
             .frame(width: 76, height: 80)
             .padding(IkeruTheme.Spacing.xs)
-            .ikeruGlass(
-                cornerRadius: IkeruTheme.Radius.md,
-                tint: rarityColor(item.rarity),
-                tintOpacity: isEquipped ? 0.22 : 0.10
+            .background(
+                rarityColor(item.rarity)
+                    .opacity(isEquipped ? 0.18 : 0.08)
+            )
+            .sumiCorners(
+                color: rarityColor(item.rarity),
+                size: 8,
+                weight: isEquipped ? 1.4 : 1.0,
+                inset: -1
             )
             .overlay(alignment: .topTrailing) {
                 if isEquipped {

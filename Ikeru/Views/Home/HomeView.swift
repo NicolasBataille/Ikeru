@@ -423,8 +423,12 @@ struct HomeView: View {
 
     @ViewBuilder
     private func statsRow(_ vm: HomeViewModel) -> some View {
+        // Equal-width split: each tile gets exactly half of the row. Earlier
+        // versions used `.layoutPriority(1.4)` on the Learned tile to favor it,
+        // but that caused the Streak tile to collapse to a ~6pt sliver because
+        // the priority delta let Learned consume nearly all available width.
         HStack(alignment: .top, spacing: 12) {
-            // Learned (1.4× weight)
+            // Learned
             VStack(alignment: .leading, spacing: 8) {
                 HStack(spacing: 6) {
                     MonCrest(kind: .asanoha, size: 11, color: .ikeruPrimaryAccent)
@@ -432,17 +436,18 @@ struct HomeView: View {
                         .font(.system(size: 9, weight: .bold))
                         .foregroundStyle(TatamiTokens.paperGhost)
                         .tracking(1.4)
+                        .lineLimit(1)
                 }
                 HStack(alignment: .firstTextBaseline, spacing: 4) {
                     SerifNumeral(vm.kanjiLearnedCount, size: 32)
                     Text("kanji", comment: "Tiny suffix after the LEARNED count")
                         .font(.system(size: 11, design: .serif))
                         .foregroundStyle(TatamiTokens.paperGhost)
+                        .lineLimit(1)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .tatamiRoom(.standard, padding: 14)
-            .layoutPriority(1.4)
 
             // Streak — placeholder 0 (no streak surfaced on Home shell yet)
             VStack(alignment: .leading, spacing: 8) {
@@ -452,12 +457,14 @@ struct HomeView: View {
                         .font(.system(size: 9, weight: .bold))
                         .foregroundStyle(TatamiTokens.paperGhost)
                         .tracking(1.4)
+                        .lineLimit(1)
                 }
                 HStack(alignment: .firstTextBaseline, spacing: 4) {
                     SerifNumeral(0, size: 32)
                     Text("days", comment: "Tiny suffix after the STREAK count")
                         .font(.system(size: 11, design: .serif))
                         .foregroundStyle(TatamiTokens.paperGhost)
+                        .lineLimit(1)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)

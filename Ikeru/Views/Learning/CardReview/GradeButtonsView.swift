@@ -41,7 +41,7 @@ struct GradeButtonsView: View {
     /// easy review.
     private var specs: [GradeSpec] {
         [
-            .init(grade: .again, kanji: "\u{53C8}", label: "Again",   // 又
+            .init(grade: .again, kanji: "\u{518D}", label: "Again",   // 再
                   color: TatamiTokens.vermilion),
             .init(grade: .hard,  kanji: "\u{96E3}", label: "Hard",    // 難
                   color: Color(red: 0.627, green: 0.451, blue: 0.302)),

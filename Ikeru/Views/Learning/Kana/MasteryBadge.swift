@@ -1,16 +1,17 @@
 import SwiftUI
 import IkeruCore
 
-/// Tiny visual indicator for a `MasteryLevel`: emoji with optional label.
+/// Tiny visual indicator for a `MasteryLevel`: serif kanji glyph + optional label.
 struct MasteryBadge: View {
 
     let level: MasteryLevel
     var showLabel: Bool = false
 
     var body: some View {
-        HStack(spacing: 3) {
-            Text(level.emoji)
-                .font(.system(size: 11))
+        HStack(spacing: 4) {
+            Text(level.glyph)
+                .font(.system(size: 12, design: .serif))
+                .foregroundStyle(Color.ikeruPrimaryAccent)
             if showLabel {
                 Text(level.label)
                     .font(.ikeruMicro)

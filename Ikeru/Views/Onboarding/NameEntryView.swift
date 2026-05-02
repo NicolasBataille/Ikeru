@@ -103,23 +103,20 @@ struct NameEntryView: View {
         TextField(
             "",
             text: $name,
-            prompt: Text("Your name").foregroundStyle(Color.ikeruTextTertiary)
+            prompt: Text("Your name").foregroundStyle(TatamiTokens.paperGhost)
         )
-        .font(.system(size: 22, weight: .regular))
+        .font(.system(size: 22, weight: .regular, design: .serif))
         .foregroundStyle(Color.ikeruTextPrimary)
         .multilineTextAlignment(.center)
         .padding(.vertical, IkeruTheme.Spacing.md)
         .padding(.horizontal, IkeruTheme.Spacing.lg)
-        .background {
-            IkeruGlassSurface(
-                cornerRadius: IkeruTheme.Radius.lg,
-                tint: isNameFieldFocused ? .ikeruPrimaryAccent : .clear,
-                tintOpacity: isNameFieldFocused ? 0.10 : 0.0,
-                strokeOpacity: isNameFieldFocused ? 0.30 : 0.18,
-                strokeWidth: isNameFieldFocused ? 1.0 : 0.6
-            )
-        }
-        .clipShape(RoundedRectangle(cornerRadius: IkeruTheme.Radius.lg, style: .continuous))
+        .background(Color.ikeruBackground.opacity(isNameFieldFocused ? 0.45 : 0.55))
+        .sumiCorners(
+            color: isNameFieldFocused ? .ikeruPrimaryAccent : TatamiTokens.goldDim,
+            size: 10,
+            weight: isNameFieldFocused ? 1.5 : 1.0,
+            inset: -1
+        )
         .animation(.spring(response: 0.32, dampingFraction: 0.86), value: isNameFieldFocused)
         .focused($isNameFieldFocused)
         .submitLabel(.continue)
@@ -135,9 +132,17 @@ struct NameEntryView: View {
             submitName()
         } label: {
             HStack(spacing: 10) {
+                Text("\u{7D9A}\u{3051}\u{308B}")  // 続ける
+                    .font(.system(size: 15, design: .serif))
+                Text("·")
+                    .font(.system(size: 15, weight: .light))
+                    .foregroundStyle(Color(red: 0.16, green: 0.11, blue: 0.05).opacity(0.55))
                 Text("Continue")
-                Image(systemName: "arrow.right")
                     .font(.system(size: 14, weight: .semibold))
+                    .tracking(1.0)
+                    .textCase(.uppercase)
+                Image(systemName: "arrow.right")
+                    .font(.system(size: 13, weight: .semibold))
             }
             .frame(maxWidth: .infinity)
         }

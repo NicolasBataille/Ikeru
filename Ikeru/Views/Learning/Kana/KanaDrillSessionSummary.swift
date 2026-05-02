@@ -17,19 +17,23 @@ struct KanaDrillSessionSummary: View {
         guard total > 0 else { return 0 }
         return Double(correct) / Double(total)
     }
-    private var emoji: String {
-        if total == 0 { return "🌿" }
-        if wrong == 0 { return "🎉" }
-        if accuracy >= 0.5 { return "🌿" }
-        return "🌧️"
+    /// Tatami-direction summary glyph (single-char kanji), replacing
+    /// the prior plant/weather emojis. `極` rewards a clean run, `修`
+    /// signals training is needed, `道` is the neutral / quiet state.
+    private var glyph: String {
+        if total == 0 { return "\u{9053}" }   // 道
+        if wrong == 0 { return "\u{6975}" }   // 極
+        if accuracy >= 0.5 { return "\u{9053}" }  // 道
+        return "\u{4FEE}"                     // 修
     }
 
     var body: some View {
         VStack(spacing: IkeruTheme.Spacing.lg) {
             Spacer()
 
-            Text(emoji)
-                .font(.system(size: 80))
+            Text(glyph)
+                .font(.system(size: 80, weight: .light, design: .serif))
+                .foregroundStyle(Color.ikeruPrimaryAccent)
 
             VStack(spacing: 6) {
                 Text("Session complete")

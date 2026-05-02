@@ -69,6 +69,7 @@ struct MainTabView: View {
             // the floating glyph doesn't sit over the chat itself.
             companionAvatarOverlay
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onAppear {
             initializeCompanionViewModel()
         }

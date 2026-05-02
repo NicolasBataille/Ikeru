@@ -6,7 +6,7 @@ import IkeruCore
 // Kanji-only tab bar for the Tatami direction. Replaces the previous
 // SF-Symbol-based liquid-glass capsule with a flat tatami strip:
 //   - Active marker: a gold MonCrest above the kanji label.
-//   - Inactive cells: dim paperGhost kanji + EN caps, no mon.
+//   - Inactive cells: dim paperGhost kanji, no mon.
 //   - Background: .ultraThinMaterial behind a top FusumaRail.
 //
 // Selection still drives `MainTabView`'s routing — only the rendering
@@ -61,22 +61,16 @@ private struct TatamiTabCell: View {
                     Color.clear.frame(height: 10)
                 }
                 Text(japaneseLabel)
-                    .font(.system(size: 13, design: .serif))
+                    .font(.system(size: 17, design: .serif))
                     .foregroundStyle(
                         isActive ? Color.ikeruPrimaryAccent : TatamiTokens.paperGhost
                     )
-                Text(englishLabel)
-                    .font(.system(size: 9, weight: .semibold))
-                    .foregroundStyle(
-                        isActive ? Color.ikeruTextSecondary : TatamiTokens.paperGhost
-                    )
-                    .tracking(1.2)
-                    .textCase(.uppercase)
             }
             .frame(maxWidth: .infinity)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(accessibilityLabel)
     }
 
     private var japaneseLabel: String {
@@ -89,7 +83,7 @@ private struct TatamiTabCell: View {
         }
     }
 
-    private var englishLabel: LocalizedStringKey {
+    private var accessibilityLabel: LocalizedStringKey {
         switch tab {
         case .home:      return "Practice"
         case .study:     return "Study"

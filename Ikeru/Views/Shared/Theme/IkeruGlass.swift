@@ -188,9 +188,8 @@ public struct IkeruScreenBackground: View {
 
     public var body: some View {
         ZStack {
-            Color.ikeruBackground.ignoresSafeArea()
+            Color.ikeruBackground
             MarbleBackground(variant: variant)
-                .opacity(0.95)
         }
     }
 }
