@@ -13,8 +13,11 @@ import os
 struct HomeView: View {
 
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.displayMode) private var displayMode
+    @Environment(\.displayModeRepository) private var displayModeRepo
     @State private var viewModel: HomeViewModel?
     @State private var sessionViewModel: SessionViewModel?
+    @State private var suggestionController: DisplayModeSuggestionCardController?
     @State private var showSession = false
     @State private var heroAppeared = false
     @AppStorage("ikeru.equippedTitleName") private var equippedTitleName: String = ""
@@ -41,12 +44,16 @@ struct HomeView: View {
         .task {
             initializeViewModels()
             await viewModel?.loadData()
+            await refreshSuggestionController()
             withAnimation(.spring(response: 0.55, dampingFraction: 0.86).delay(0.05)) {
                 heroAppeared = true
             }
             if CommandLine.arguments.contains("-autoStartSession") {
                 startSession()
             }
+        }
+        .onChange(of: displayMode) { _, new in
+            suggestionController?.setMode(new)
         }
         .onAppear {
             if viewModel != nil {
@@ -62,8 +69,32 @@ struct HomeView: View {
             startSession()
         }
         .onReceive(NotificationCenter.default.publisher(for: .ikeruActiveProfileDidChange)) { _ in
-            Task { await viewModel?.loadData() }
+            Task {
+                await viewModel?.loadData()
+                await refreshSuggestionController()
+            }
         }
+    }
+
+    // MARK: - Suggestion Card Controller
+
+    private func refreshSuggestionController() async {
+        guard let profileID = ActiveProfileResolver.activeProfileID(),
+              let vm = viewModel
+        else { return }
+
+        let controller = suggestionController ?? DisplayModeSuggestionCardController(
+            profileID: profileID,
+            currentMode: displayMode
+        )
+        controller.setMode(displayMode)
+        let signals = await vm.advancedThresholdSignals()
+        controller.onSignalsChanged(
+            streak: signals.streak,
+            reviews: signals.reviews,
+            mastery: signals.mastery
+        )
+        suggestionController = controller
     }
 
     // MARK: - Home Content
@@ -72,6 +103,15 @@ struct HomeView: View {
     private func homeContent(_ vm: HomeViewModel) -> some View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: IkeruTheme.Spacing.lg) {
+                if let controller = suggestionController, controller.shouldShow {
+                    DisplayModeSuggestionCard(
+                        onAccept: {
+                            displayModeRepo?.set(.tatami)
+                            controller.dismiss()
+                        },
+                        onDismiss: { controller.dismiss() }
+                    )
+                }
                 topBar(vm)
                 proverbHero(vm)
                 statsRow(vm)
