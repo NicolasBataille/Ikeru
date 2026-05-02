@@ -1,10 +1,12 @@
 import SwiftUI
+import IkeruCore
 
 // MARK: - BilingualLabel
 //
-// The section-header pattern: optional mon + serif Japanese + middot +
-// uppercase chrome label (EN or FR). Used everywhere a "TODAY", "DECKS",
-// "SETTINGS"-style label lives in the current app.
+// Mode-aware section header. In `.tatami` it's the original kanji-first
+// pattern (mon + serif Japanese + middot + uppercase chrome). In
+// `.beginner` it inverts: chrome label is primary, with an optional faint
+// romaji suffix to keep the language hint without dominating.
 //
 // The Japanese half is fixed content (it's what the app teaches); the
 // `chrome` parameter flows through localization so it switches with the
@@ -17,8 +19,38 @@ struct BilingualLabel: View {
     /// is already localized at the call site.
     let chrome: LocalizedStringKey
     var mon: MonKind? = nil
+    /// Optional romaji rendered as a faint suffix in beginner mode.
+    /// Pass nil to render no romaji caption.
+    var romaji: String? = nil
+
+    @Environment(\.displayMode) private var displayMode
 
     var body: some View {
+        switch displayMode {
+        case .beginner:
+            beginnerBody
+        case .tatami:
+            tatamiBody
+        }
+    }
+
+    private var beginnerBody: some View {
+        HStack(spacing: 6) {
+            if let mon {
+                MonCrest(kind: mon, size: 10, color: TatamiTokens.goldDim.opacity(0.55))
+            }
+            Text(chrome)
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(Color.ikeruTextPrimary)
+            if let romaji {
+                Text(romaji)
+                    .font(.system(size: 11, weight: .regular))
+                    .foregroundStyle(TatamiTokens.paperGhost.opacity(0.7))
+            }
+        }
+    }
+
+    private var tatamiBody: some View {
         HStack(spacing: 8) {
             if let mon {
                 MonCrest(kind: mon, size: 11, color: TatamiTokens.goldDim)
