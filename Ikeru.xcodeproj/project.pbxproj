@@ -105,6 +105,7 @@
 		8079EBD85DD413FB6BA17D40 /* MnemonicView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A91BD866585603D217E09761 /* MnemonicView.swift */; };
 		80928CE01894C7B023866E4A /* ChatBubbleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C682D70A5C43E544AC5BF0B3 /* ChatBubbleView.swift */; };
 		8220FF72EE512779FDF93501 /* NameEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 457B840A63725833DFB68E38 /* NameEntryView.swift */; };
+		8257F348CC35EF70D949638F /* IkeruTabBar+Beginner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A7D16815AC81DEBD891D317 /* IkeruTabBar+Beginner.swift */; };
 		836C1B472140C783C1043D13 /* DisplayModeEnvironmentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45CECCE4FCC052EECE84795A /* DisplayModeEnvironmentTests.swift */; };
 		83FB41C31894E425E395AAE8 /* KanaPoolViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A62F54ADD5EEB679762E17C /* KanaPoolViewModel.swift */; };
 		8416A09ACC39E1CDD672E983 /* StrokeOrderIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 912009585675D42B2F7ED4D3 /* StrokeOrderIntegrationTests.swift */; };
@@ -271,6 +272,7 @@
 		358B47E0F54AAFD423C1BAAD /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		35E5B9D83D4ACDC6DF4C19B3 /* LaunchAnimationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchAnimationView.swift; sourceTree = "<group>"; };
 		37FFFD4E2CCB71F726EE7A52 /* RigJobsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RigJobsView.swift; sourceTree = "<group>"; };
+		3A7D16815AC81DEBD891D317 /* IkeruTabBar+Beginner.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "IkeruTabBar+Beginner.swift"; sourceTree = "<group>"; };
 		406C6BA699B52A4C383A75E1 /* ReadingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadingsView.swift; sourceTree = "<group>"; };
 		40C5ECF5A9EA8B982657904C /* RadicalDecompositionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadicalDecompositionView.swift; sourceTree = "<group>"; };
 		41DE2FB348D4D1AFBF4143ED /* IkeruWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = IkeruWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -962,6 +964,7 @@
 				5149A5F03A554ACABB12389B /* Tatami */,
 				DF592A46DD722401D4C46FC4 /* DisplayModeEnvironment.swift */,
 				01AF19EF339E6EF510BEBC0A /* IkeruTabBar+Rail.swift */,
+				3A7D16815AC81DEBD891D317 /* IkeruTabBar+Beginner.swift */,
 			);
 			path = Theme;
 			sourceTree = "<group>";
@@ -1365,6 +1368,7 @@
 				C4B37AEF0AEE863FEFADF4A4 /* LanguagePickerView.swift in Sources */,
 				316D4831B3DC06ADDAF246C5 /* DisplayModeEnvironment.swift in Sources */,
 				590241F0210BFF8E0D27403B /* IkeruTabBar+Rail.swift in Sources */,
+				8257F348CC35EF70D949638F /* IkeruTabBar+Beginner.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
