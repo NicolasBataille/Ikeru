@@ -3,19 +3,17 @@ import IkeruCore
 
 // MARK: - Tatami Tab Bar
 //
-// Kanji-only tab bar for the Tatami direction. Replaces the previous
-// SF-Symbol-based liquid-glass capsule with a flat tatami strip:
-//   - Active marker: a gold MonCrest above the kanji label.
-//   - Inactive cells: dim paperGhost kanji, no mon.
-//   - Background: .ultraThinMaterial behind a top FusumaRail.
-//
-// Selection still drives `MainTabView`'s routing — only the rendering
-// changes; `AppTab` and the binding are untouched.
+// Mode-aware tab bar. In `.beginner` it renders SF Symbols + localized
+// labels (BeginnerTabCell). In `.tatami` it renders the kanji-only
+// strip (TatamiTabCell). Both modes share a sliding kintsugi gold rail
+// driven by `matchedGeometryEffect`.
 
 struct IkeruTabBar: View {
 
     @Binding var selection: AppTab
     let tabs: [AppTab]
+    @Environment(\.displayMode) private var displayMode
+    @Namespace private var railNamespace
 
     private static let tapSpring: Animation =
         .spring(response: 0.35, dampingFraction: 0.86)
@@ -23,15 +21,24 @@ struct IkeruTabBar: View {
     var body: some View {
         HStack(spacing: 0) {
             ForEach(tabs) { tab in
-                TatamiTabCell(
-                    tab: tab,
-                    isActive: selection == tab,
-                    onTap: {
-                        withAnimation(Self.tapSpring) {
-                            selection = tab
-                        }
+                Group {
+                    switch displayMode {
+                    case .beginner:
+                        BeginnerTabCell(
+                            tab: tab,
+                            isActive: selection == tab,
+                            railNamespace: railNamespace,
+                            onTap: { tap(tab) }
+                        )
+                    case .tatami:
+                        TatamiTabCell(
+                            tab: tab,
+                            isActive: selection == tab,
+                            railNamespace: railNamespace,
+                            onTap: { tap(tab) }
+                        )
                     }
-                )
+                }
             }
         }
         .padding(.horizontal, 22)
@@ -43,6 +50,10 @@ struct IkeruTabBar: View {
         }
         .sensoryFeedback(.selection, trigger: selection)
     }
+
+    private func tap(_ tab: AppTab) {
+        withAnimation(Self.tapSpring) { selection = tab }
+    }
 }
 
 // MARK: - Tatami Tab Cell
@@ -50,6 +61,7 @@ struct IkeruTabBar: View {
 private struct TatamiTabCell: View {
     let tab: AppTab
     let isActive: Bool
+    let railNamespace: Namespace.ID
     let onTap: () -> Void
 
     var body: some View {
@@ -65,6 +77,13 @@ private struct TatamiTabCell: View {
                     .foregroundStyle(
                         isActive ? Color.ikeruPrimaryAccent : TatamiTokens.paperGhost
                     )
+                ZStack {
+                    Color.clear.frame(height: 5)
+                    if isActive {
+                        KintsugiTabRail()
+                            .matchedGeometryEffect(id: "tab-rail", in: railNamespace)
+                    }
+                }
             }
             .frame(maxWidth: .infinity)
             .contentShape(Rectangle())
