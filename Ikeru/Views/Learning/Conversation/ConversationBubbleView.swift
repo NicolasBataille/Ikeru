@@ -10,7 +10,17 @@ struct ConversationBubbleView: View {
 
     let message: ConversationMessage
     @AppStorage("ikeru.furigana.enabled") private var furiganaEnabled = true
+    @AppStorage("ikeru.furigana.userTouched") private var furiganaUserTouched = false
+    @Environment(\.displayMode) private var displayMode
     @State private var selectedHint: VocabularyHint?
+
+    private var effectiveFurigana: Bool {
+        ReadingAidResolver(
+            mode: displayMode,
+            userTouched: furiganaUserTouched,
+            storedValue: furiganaEnabled
+        ).effective
+    }
 
     var body: some View {
         HStack {
@@ -53,7 +63,7 @@ struct ConversationBubbleView: View {
             KanaRubyText(
                 message.content,
                 textColor: textColor,
-                showFurigana: furiganaEnabled
+                showFurigana: effectiveFurigana
             )
         } else {
             Text(message.content)

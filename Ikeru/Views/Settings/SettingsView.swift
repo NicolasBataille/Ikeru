@@ -60,6 +60,7 @@ struct SettingsView: View {
     // MARK: Conversation
 
     @AppStorage("ikeru.furigana.enabled") private var furiganaEnabled = true
+    @AppStorage("ikeru.furigana.userTouched") private var furiganaUserTouched = false
 
     // MARK: Language picker
 
@@ -254,6 +255,7 @@ struct SettingsView: View {
             ) {
                 withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) {
                     furiganaEnabled.toggle()
+                    furiganaUserTouched = true
                 }
             }
         }

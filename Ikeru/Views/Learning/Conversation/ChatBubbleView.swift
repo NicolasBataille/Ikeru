@@ -17,6 +17,16 @@ struct ChatBubbleView: View {
     let content: String
     let variant: ChatBubbleVariant
     @AppStorage("ikeru.furigana.enabled") private var furiganaEnabled = true
+    @AppStorage("ikeru.furigana.userTouched") private var furiganaUserTouched = false
+    @Environment(\.displayMode) private var displayMode
+
+    private var effectiveFurigana: Bool {
+        ReadingAidResolver(
+            mode: displayMode,
+            userTouched: furiganaUserTouched,
+            storedValue: furiganaEnabled
+        ).effective
+    }
 
     // MARK: - Body
 
@@ -76,7 +86,7 @@ struct ChatBubbleView: View {
             KanaRubyText(
                 text,
                 textColor: textColor,
-                showFurigana: variant == .companion && furiganaEnabled
+                showFurigana: variant == .companion && effectiveFurigana
             )
 
         case .kanji(let character):
