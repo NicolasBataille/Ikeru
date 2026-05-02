@@ -225,6 +225,40 @@
     "+%@ XP": {},
     "+%@ XP earned": {},
     "~%@ min": {},
+    "A guide by your side": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A guide by your side"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un guide à tes côtés"
+          }
+        }
+      }
+    },
+    "A path from curious to fluent": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A path from curious to fluent"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un chemin de curieux à courant"
+          }
+        }
+      }
+    },
     "About": {
       "comment": "Settings section header",
       "extractionState": "stale",
@@ -573,6 +607,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Calculé sur tes 90 dernières révisions"
+          }
+        }
+      }
+    },
+    "Begin": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Begin"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Commencer"
           }
         }
       }
@@ -1050,6 +1101,23 @@
         }
       }
     },
+    "Export your data first if you want to keep a copy.": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Export your data first if you want to keep a copy."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exporte tes données d'abord si tu veux en garder une copie."
+          }
+        }
+      }
+    },
     "Failed to generate mnemonic. Tap regenerate to try again.": {
       "localizations": {
         "en": {
@@ -1224,7 +1292,22 @@
         }
       }
     },
-    "Hiragana & katakana, par groupes": {},
+    "Hiragana & katakana, by groups": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hiragana & katakana, by groups"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hiragana et katakana, par groupes"
+          }
+        }
+      }
+    },
     "Hours": {
       "comment": "Generic stat label — count of hours",
       "extractionState": "stale",
@@ -1453,7 +1536,22 @@
       }
     },
     "Level: %@": {},
-    "Listen": {},
+    "Listen": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Listen"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Écouter"
+          }
+        }
+      }
+    },
     "Listening": {
       "comment": "Skill name in the BALANCE card",
       "extractionState": "stale",
@@ -1535,6 +1633,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Défi du coffre !"
+          }
+        }
+      }
+    },
+    "Master kana, kanji, grammar, and conversation — one step at a time, at your own pace.": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Master kana, kanji, grammar, and conversation — one step at a time, at your own pace."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maîtrise les kana, kanji, la grammaire et la conversation — un pas à la fois, à ton rythme."
           }
         }
       }
@@ -2939,7 +3054,22 @@
     "Transcript": {},
     "Try again": {},
     "typing...": {},
-    "Unlocks at Lv. %@": {},
+    "Unlocks at Lv. %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unlocks at Lv. %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se débloque au niv. %@"
+          }
+        }
+      }
+    },
     "Version": {
       "comment": "Settings row label (app version)",
       "extractionState": "stale",
@@ -3116,7 +3246,58 @@
         }
       }
     },
+    "You'll start with hiragana — the first writing system. Let's begin your Japanese adventure.": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You'll start with hiragana — the first writing system. Let's begin your Japanese adventure."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tu commenceras par les hiragana — le premier système d'écriture. Lance ton aventure japonaise."
+          }
+        }
+      }
+    },
+    "Your AI companion adapts to you, celebrates your wins, and helps when things get tough.": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your AI companion adapts to you, celebrates your wins, and helps when things get tough."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ton compagnon IA s'adapte à toi, célèbre tes victoires et t'aide dans les moments difficiles."
+          }
+        }
+      }
+    },
     "Your answer": {},
+    "Your first lesson awaits": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your first lesson awaits"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ta première leçon t'attend"
+          }
+        }
+      }
+    },
     "Your four winds": {
       "comment": "Poetic subtitle for the skill balance card",
       "localizations": {
@@ -3266,149 +3447,230 @@
         }
       }
     },
+    "続ける": {},
     "続ける · ": {},
     "言語": {},
     "辞": {},
-    "Hiragana & katakana, by groups": {
+    "Reviews": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Hiragana & katakana, by groups"
+            "value": "Reviews"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Hiragana et katakana, par groupes"
+            "value": "Révisions"
           }
         }
       }
     },
-    "A path from curious to fluent": {
+    "Items": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "A path from curious to fluent"
+            "value": "Items"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Un chemin de curieux à courant"
+            "value": "Objets"
           }
         }
       }
     },
-    "A guide by your side": {
+    "Attributes": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "A guide by your side"
+            "value": "Attributes"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Un guide à tes côtés"
+            "value": "Atouts"
           }
         }
       }
     },
-    "Begin": {
+    "Inventory": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Begin"
+            "value": "Inventory"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Commencer"
+            "value": "Inventaire"
           }
         }
       }
     },
-    "Your first lesson awaits": {
+    "Skill profile": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Your first lesson awaits"
+            "value": "Skill profile"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ta première leçon t'attend"
+            "value": "Profil de compétences"
           }
         }
       }
     },
-    "Master kana, kanji, grammar, and conversation — one step at a time, at your own pace.": {
+    "Treasures": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Master kana, kanji, grammar, and conversation — one step at a time, at your own pace."
+            "value": "Treasures"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Maîtrise les kana, kanji, la grammaire et la conversation — un pas à la fois, à ton rythme."
+            "value": "Trésors"
           }
         }
       }
     },
-    "Your AI companion adapts to you, celebrates your wins, and helps when things get tough.": {
+    "First step": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Your AI companion adapts to you, celebrates your wins, and helps when things get tough."
+            "value": "First step"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ton compagnon IA s'adapte à toi, célèbre tes victoires et t'aide dans les moments difficiles."
+            "value": "Premier pas"
           }
         }
       }
     },
-    "You'll start with hiragana — the first writing system. Let's begin your Japanese adventure.": {
+    "7-day arc": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "You'll start with hiragana — the first writing system. Let's begin your Japanese adventure."
+            "value": "7-day arc"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tu commenceras par les hiragana — le premier système d'écriture. Lance ton aventure japonaise."
+            "value": "Cycle de 7 jours"
           }
         }
       }
     },
-    "Export your data first if you want to keep a copy.": {
+    "100 cards": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Export your data first if you want to keep a copy."
+            "value": "100 cards"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Exporte tes données d'abord si tu veux en garder une copie."
+            "value": "100 cartes"
+          }
+        }
+      }
+    },
+    "1000 cards": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1000 cards"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1000 cartes"
+          }
+        }
+      }
+    },
+    "Mastery": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mastery"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maîtrise"
+          }
+        }
+      }
+    },
+    "Hint": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hint"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Indice"
+          }
+        }
+      }
+    },
+    "Mark": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mark"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marquer"
+          }
+        }
+      }
+    },
+    "ready": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ready"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "prêt"
           }
         }
       }

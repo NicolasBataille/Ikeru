@@ -89,26 +89,54 @@ struct RPGProfileView: View {
             XPBarView(totalXP: vm.xp, level: vm.level, variant: .full)
 
             HStack(spacing: IkeruTheme.Spacing.sm) {
-                IkeruStatPill(
-                    icon: "rectangle.stack",
-                    value: "\(vm.totalReviews)",
-                    label: "reviews"
+                tatamiStatChip(
+                    glyph: "\u{53C8}",            // 又  — repetitions
+                    value: vm.totalReviews,
+                    label: "Reviews",
+                    tint: Color.ikeruPrimaryAccent
                 )
-                IkeruStatPill(
-                    icon: "bag",
-                    value: "\(vm.inventory.count)",
-                    label: "items",
+                tatamiStatChip(
+                    glyph: "\u{8CA1}",            // 財  — treasures / inventory
+                    value: vm.inventory.count,
+                    label: "Items",
                     tint: Color.ikeruSecondaryAccent
                 )
-                IkeruStatPill(
-                    icon: "sparkles",
-                    value: "\(vm.unlockedAttributes.count)",
-                    label: "attrs",
+                tatamiStatChip(
+                    glyph: "\u{529B}",            // 力  — power / attribute
+                    value: vm.unlockedAttributes.count,
+                    label: "Attributes",
                     tint: Color.ikeruTertiaryAccent
                 )
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
+    }
+
+    /// Tatami-direction stat chip: serif kanji glyph + serif numeral +
+    /// caps EN/FR label, framed by sumi corners. Replaces `IkeruStatPill`
+    /// (which was glass-tinted) for the Profile header row.
+    private func tatamiStatChip(
+        glyph: String,
+        value: Int,
+        label: LocalizedStringKey,
+        tint: Color
+    ) -> some View {
+        HStack(spacing: 8) {
+            Text(glyph)
+                .font(.system(size: 16, weight: .light, design: .serif))
+                .foregroundStyle(tint)
+            SerifNumeral(value, size: 16, color: Color.ikeruTextPrimary)
+            Text(label)
+                .font(.system(size: 9, weight: .bold))
+                .tracking(1.2)
+                .textCase(.uppercase)
+                .foregroundStyle(TatamiTokens.paperGhost)
+        }
+        .fixedSize(horizontal: true, vertical: false)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(tint.opacity(0.08))
+        .sumiCorners(color: tint, size: 6, weight: 1.0, inset: -1)
     }
 
     // MARK: - Rank Crest (Torii)
@@ -336,7 +364,7 @@ struct RPGProfileView: View {
     @ViewBuilder
     private func attributesSection(_ vm: RPGProfileViewModel) -> some View {
         VStack(alignment: .leading, spacing: IkeruTheme.Spacing.md) {
-            IkeruSectionHeader(title: "Attributes", eyebrow: "Skill profile")
+            BilingualLabel(japanese: "\u{529B}", chrome: "Attributes", mon: .kikkou)
 
             VStack(spacing: 0) {
                 let unlocked = vm.unlockedAttributes
@@ -347,12 +375,14 @@ struct RPGProfileView: View {
                 ForEach(Array(all.enumerated()), id: \.element.0.id) { index, pair in
                     attributeRow(pair.0, isLocked: pair.1)
                     if index < all.count - 1 {
-                        IkeruDivider()
+                        Rectangle()
+                            .fill(TatamiTokens.goldDim.opacity(0.18))
+                            .frame(height: 1)
                     }
                 }
             }
         }
-        .ikeruCard(.standard)
+        .tatamiRoom(.standard, padding: IkeruTheme.Spacing.md)
     }
 
     private func attributeRow(_ attr: RPGAttribute, isLocked: Bool) -> some View {
@@ -419,7 +449,7 @@ struct RPGProfileView: View {
     @ViewBuilder
     private func inventorySection(_ vm: RPGProfileViewModel) -> some View {
         VStack(alignment: .leading, spacing: IkeruTheme.Spacing.md) {
-            IkeruSectionHeader(title: "Inventory", eyebrow: "Treasures")
+            BilingualLabel(japanese: "\u{8CA1}", chrome: "Inventory", mon: .maru)
 
             if vm.inventory.isEmpty {
                 Text("Complete sessions to earn loot.")
@@ -435,7 +465,7 @@ struct RPGProfileView: View {
                 }
             }
         }
-        .ikeruCard(.standard)
+        .tatamiRoom(.standard, padding: IkeruTheme.Spacing.md)
     }
 
     private func rarityGroupSection(rarity: LootRarity, items: [LootItem]) -> some View {

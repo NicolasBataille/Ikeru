@@ -79,29 +79,12 @@ struct ProgressDashboardView: View {
         NavigationLink {
             KanaPoolSelectorView()
         } label: {
-            HStack(spacing: IkeruTheme.Spacing.md) {
-                ZStack {
-                    Circle()
-                        .fill(Color.ikeruPrimaryAccent.opacity(0.14))
-                        .frame(width: 38, height: 38)
-                    Text("あ")
-                        .font(.system(size: 20, weight: .regular, design: .serif))
-                        .foregroundStyle(Color.ikeruPrimaryAccent)
-                }
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Kana")
-                        .font(.ikeruHeading3)
-                        .foregroundStyle(Color.ikeruTextPrimary)
-                    Text("Hiragana & katakana, by groups")
-                        .font(.ikeruCaption)
-                        .foregroundStyle(Color.ikeruTextSecondary)
-                }
-                Spacer()
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(Color.ikeruTextTertiary)
-            }
-            .ikeruCard(.interactive)
+            entryRow(
+                glyph: "\u{3042}",                  // あ
+                glyphTint: Color.ikeruPrimaryAccent,
+                title: "Kana",
+                subtitle: "Hiragana & katakana, by groups"
+            )
         }
         .buttonStyle(.plain)
     }
@@ -112,31 +95,43 @@ struct ProgressDashboardView: View {
         NavigationLink {
             VocabularyDictionaryView()
         } label: {
-            HStack(spacing: IkeruTheme.Spacing.md) {
-                ZStack {
-                    Circle()
-                        .fill(Color.ikeruSecondaryAccent.opacity(0.14))
-                        .frame(width: 38, height: 38)
-                    Text("辞")
-                        .font(.system(size: 20, weight: .regular, design: .serif))
-                        .foregroundStyle(Color.ikeruSecondaryAccent)
-                }
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Dictionary")
-                        .font(.ikeruHeading3)
-                        .foregroundStyle(Color.ikeruTextPrimary)
-                    Text("Personal vocabulary collection")
-                        .font(.ikeruCaption)
-                        .foregroundStyle(Color.ikeruTextSecondary)
-                }
-                Spacer()
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(Color.ikeruTextTertiary)
-            }
-            .ikeruCard(.interactive)
+            entryRow(
+                glyph: "\u{8F9E}",                  // 辞
+                glyphTint: Color.ikeruSecondaryAccent,
+                title: "Dictionary",
+                subtitle: "Personal vocabulary collection"
+            )
         }
         .buttonStyle(.plain)
+    }
+
+    /// Tatami-direction entry row. Replaces the prior `.ikeruCard(.interactive)`
+    /// which still reads as liquid-glass against the Tatami direction.
+    private func entryRow(
+        glyph: String,
+        glyphTint: Color,
+        title: LocalizedStringKey,
+        subtitle: LocalizedStringKey
+    ) -> some View {
+        HStack(spacing: IkeruTheme.Spacing.md) {
+            Text(glyph)
+                .font(.system(size: 22, weight: .light, design: .serif))
+                .foregroundStyle(glyphTint)
+                .frame(width: 38, height: 38)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.ikeruHeading3)
+                    .foregroundStyle(Color.ikeruTextPrimary)
+                Text(subtitle)
+                    .font(.ikeruCaption)
+                    .foregroundStyle(Color.ikeruTextSecondary)
+            }
+            Spacer()
+            Image(systemName: "chevron.right")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(TatamiTokens.paperGhost)
+        }
+        .tatamiRoom(.standard, padding: IkeruTheme.Spacing.md)
     }
 
     // MARK: - JLPT Hero
