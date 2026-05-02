@@ -58,8 +58,38 @@
     },
     "%@ cards": {},
     "%@ cards ready": {},
-    "%@ cards remaining": {},
-    "%@ characters selected": {},
+    "%@ cards remaining": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ cards remaining"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ cartes restantes"
+          }
+        }
+      }
+    },
+    "%@ characters selected": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ characters selected"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ caractères sélectionnés"
+          }
+        }
+      }
+    },
     "%@ correct · %@ missed": {
       "localizations": {
         "en": {
@@ -67,19 +97,69 @@
             "state": "new",
             "value": "%1$@ correct · %2$@ missed"
           }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ correct · %@ manqué"
+          }
         }
       }
     },
     "%@ exercises": {},
     "%@ words": {},
-    "%@ words due for review": {},
-    "%@ words ready for review": {},
+    "%@ words due for review": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ words due for review"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ mots à réviser"
+          }
+        }
+      }
+    },
+    "%@ words ready for review": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ words ready for review"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ mots prêts à réviser"
+          }
+        }
+      }
+    },
     "%@ XP": {},
     "%@ XP to advance": {
       "comment": "RPG next rank caption — format string `%lld XP to advance`"
     },
     "%@ XP to next rank": {
-      "comment": "Subtle XP-remaining label on the Home hero"
+      "comment": "Subtle XP-remaining label on the Home hero",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ XP to next rank"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ XP avant le grade suivant"
+          }
+        }
+      }
     },
     "%@.": {},
     "%@/%@": {
@@ -163,7 +243,22 @@
         }
       }
     },
-    "Accent position: %@": {},
+    "Accent position: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Accent position: %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Position de l'accent : %@"
+          }
+        }
+      }
+    },
     "Account": {
       "comment": "Settings section header",
       "extractionState": "stale",
@@ -343,7 +438,22 @@
         }
       }
     },
-    "Ask me anything about Japanese!": {},
+    "Ask me anything about Japanese!": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ask me anything about Japanese!"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pose-moi toutes tes questions sur le japonais !"
+          }
+        }
+      }
+    },
     "Asset cache": {
       "comment": "Settings row showing on-device cached audio/image usage",
       "extractionState": "stale",
@@ -587,7 +697,22 @@
       }
     },
     "Clear": {},
-    "Come back later when you have cards to review.": {},
+    "Come back later when you have cards to review.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Come back later when you have cards to review."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reviens plus tard quand tu auras des cartes à réviser."
+          }
+        }
+      }
+    },
     "Complete sessions to earn loot.": {
       "localizations": {
         "en": {
@@ -647,7 +772,22 @@
         }
       }
     },
-    "Construct the sentence": {},
+    "Construct the sentence": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Construct the sentence"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Construis la phrase"
+          }
+        }
+      }
+    },
     "Continue": {},
     "CONTINUE": {
       "comment": "Summary primary CTA",
@@ -842,7 +982,22 @@
     },
     "ERROR": {},
     "Example Sentences": {},
-    "Exercises Complete!": {},
+    "Exercises Complete!": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exercises Complete!"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exercices terminés !"
+          }
+        }
+      }
+    },
     "Experience": {
       "comment": "Bilingual chrome label for the XP progress section on the Home hero",
       "localizations": {
@@ -879,9 +1034,54 @@
         }
       }
     },
-    "Export your data before deleting if you want to keep a backup.": {},
-    "Failed to generate mnemonic. Tap regenerate to try again.": {},
-    "Failed to load content": {},
+    "Export your data before deleting if you want to keep a backup.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Export your data before deleting if you want to keep a backup."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exporte tes données avant de supprimer si tu veux en garder une sauvegarde."
+          }
+        }
+      }
+    },
+    "Failed to generate mnemonic. Tap regenerate to try again.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Failed to generate mnemonic. Tap regenerate to try again."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Échec de la génération. Touche régénérer pour réessayer."
+          }
+        }
+      }
+    },
+    "Failed to load content": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Failed to load content"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Échec du chargement du contenu"
+          }
+        }
+      }
+    },
     "FSRS parameters": {
       "comment": "Settings row label (FSRS algorithm parameters)",
       "extractionState": "stale",
@@ -918,7 +1118,22 @@
         }
       }
     },
-    "Generating mnemonic...": {},
+    "Generating mnemonic...": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Generating mnemonic..."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Génération du moyen mnémotechnique…"
+          }
+        }
+      }
+    },
     "Get a free key from Google AI Studio": {},
     "Get free key": {},
     "Good": {
@@ -957,7 +1172,22 @@
         }
       }
     },
-    "Great work! Come back later for more reviews.": {},
+    "Great work! Come back later for more reviews.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Great work! Come back later for more reviews."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bon travail ! Reviens plus tard pour d'autres révisions."
+          }
+        }
+      }
+    },
     "Hard": {
       "comment": "FSRS grade button label",
       "extractionState": "stale",
@@ -1032,7 +1262,22 @@
       }
     },
     "Ikeru is made possible by these open-source resources.": {},
-    "In your Dictionary": {},
+    "In your Dictionary": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In your Dictionary"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dans ton dictionnaire"
+          }
+        }
+      }
+    },
     "JLPT estimate": {
       "comment": "Bilingual chrome label paired with 推定 on the Study tab JLPT hero",
       "extractionState": "stale",
@@ -1229,8 +1474,38 @@
     },
     "Listening Passage": {},
     "Loading cards...": {},
-    "Loading content...": {},
-    "Loading passage...": {},
+    "Loading content...": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Loading content..."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chargement du contenu…"
+          }
+        }
+      }
+    },
+    "Loading passage...": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Loading passage..."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chargement du passage…"
+          }
+        }
+      }
+    },
     "Loading profile data…": {
       "localizations": {
         "en": {
@@ -1248,7 +1523,22 @@
       }
     },
     "Local Rig": {},
-    "Lootbox Challenge!": {},
+    "Lootbox Challenge!": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lootbox Challenge!"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Défi du coffre !"
+          }
+        }
+      }
+    },
     "MASTERY": {},
     "Mastery: %@": {},
     "Maximum interval": {
@@ -1288,7 +1578,22 @@
         }
       }
     },
-    "Microphone Access Required": {},
+    "Microphone Access Required": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Microphone Access Required"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Accès au microphone requis"
+          }
+        }
+      }
+    },
     "Mnemonic": {},
     "MODE": {},
     "MY DICTIONARY": {},
@@ -1345,9 +1650,54 @@
         }
       }
     },
-    "No cards available for this mode.": {},
-    "No characters recognized": {},
-    "No encounters logged yet.": {},
+    "No cards available for this mode.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No cards available for this mode."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune carte disponible dans ce mode."
+          }
+        }
+      }
+    },
+    "No characters recognized": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No characters recognized"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun caractère reconnu"
+          }
+        }
+      }
+    },
+    "No encounters logged yet.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No encounters logged yet."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune rencontre enregistrée pour l'instant."
+          }
+        }
+      }
+    },
     "No exercises available": {
       "localizations": {
         "en": {
@@ -1365,12 +1715,72 @@
       }
     },
     "No jobs tracked yet. Generate audio or images to populate this list.": {},
-    "No mnemonic available yet.": {},
+    "No mnemonic available yet.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No mnemonic available yet."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun moyen mnémotechnique pour l'instant."
+          }
+        }
+      }
+    },
     "No radicals found": {},
-    "No stroke data available": {},
-    "No vocabulary found": {},
+    "No stroke data available": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No stroke data available"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune donnée de trait disponible"
+          }
+        }
+      }
+    },
+    "No vocabulary found": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No vocabulary found"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun vocabulaire trouvé"
+          }
+        }
+      }
+    },
     "No words yet": {},
-    "No worries — try again!": {},
+    "No worries — try again!": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No worries — try again!"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pas de souci — réessaie !"
+          }
+        }
+      }
+    },
     "Off": {
       "comment": "Settings row value indicating an option is disabled",
       "extractionState": "stale",
@@ -1763,8 +2173,38 @@
       }
     },
     "Remove": {},
-    "Remove from Dictionary": {},
-    "Removes every cached audio file and image. Assets will be regenerated on next use.": {},
+    "Remove from Dictionary": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove from Dictionary"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retirer du dictionnaire"
+          }
+        }
+      }
+    },
+    "Removes every cached audio file and image. Assets will be regenerated on next use.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Removes every cached audio file and image. Assets will be regenerated on next use."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprime tous les fichiers audio et images en cache. Les ressources seront régénérées à la prochaine utilisation."
+          }
+        }
+      }
+    },
     "Restart": {},
     "Restore from iCloud": {
       "comment": "Settings row triggering the iCloud restore confirmation",
@@ -1854,8 +2294,38 @@
     },
     "Runs on-device. No key, no network, no quota.": {},
     "Sakura": {},
-    "Sakura needs an AI provider to chat with you.": {},
-    "Sakura、 your sensei。": {},
+    "Sakura needs an AI provider to chat with you.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sakura needs an AI provider to chat with you."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sakura a besoin d'un fournisseur d'IA pour discuter avec toi."
+          }
+        }
+      }
+    },
+    "Sakura、 your sensei。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sakura、 your sensei。"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sakura、 ta senseï。"
+          }
+        }
+      }
+    },
     "Save": {},
     "Score %@ in %@s": {
       "localizations": {
@@ -1878,7 +2348,22 @@
         }
       }
     },
-    "Select groups to study": {},
+    "Select groups to study": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Select groups to study"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisis les groupes à étudier"
+          }
+        }
+      }
+    },
     "Sentence %@": {},
     "Session complete": {},
     "Session Paused": {
@@ -1918,7 +2403,22 @@
         }
       }
     },
-    "Shadowing exercises need microphone and speech recognition access to work. Please enable them in Settings.": {},
+    "Shadowing exercises need microphone and speech recognition access to work. Please enable them in Settings.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shadowing exercises need microphone and speech recognition access to work. Please enable them in Settings."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les exercices de répétition nécessitent l'accès au microphone et à la reconnaissance vocale. Active-les dans les Réglages."
+          }
+        }
+      }
+    },
     "Show answer": {
       "localizations": {
         "en": {
@@ -1935,7 +2435,22 @@
         }
       }
     },
-    "Show more (%@ remaining)": {},
+    "Show more (%@ remaining)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show more (%@ remaining)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Afficher plus (%@ restants)"
+          }
+        }
+      }
+    },
     "Skill balance": {
       "comment": "Bilingual chrome label paired with 技能 on the Study tab",
       "extractionState": "stale",
@@ -1990,7 +2505,22 @@
         }
       }
     },
-    "Start Learning": {},
+    "Start Learning": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start Learning"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Commencer à apprendre"
+          }
+        }
+      }
+    },
     "Start Session": {
       "localizations": {
         "en": {
@@ -2168,13 +2698,58 @@
         }
       }
     },
-    "Tap & hold in study mode for full details": {},
-    "Tap the correct answer!": {},
+    "Tap & hold in study mode for full details": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap & hold in study mode for full details"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reste appuyé en mode étude pour tous les détails"
+          }
+        }
+      }
+    },
+    "Tap the correct answer!": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap the correct answer!"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Touche la bonne réponse !"
+          }
+        }
+      }
+    },
     "Tap to %@": {},
     "Tap to dismiss": {},
     "Tap to listen": {},
     "Tap to reveal": {},
-    "Tap vocabulary chips in Sakura chat to add words to your dictionary.": {},
+    "Tap vocabulary chips in Sakura chat to add words to your dictionary.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap vocabulary chips in Sakura chat to add words to your dictionary."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Touche les puces de vocabulaire dans le chat de Sakura pour ajouter des mots au dictionnaire."
+          }
+        }
+      }
+    },
     "Target retention": {
       "comment": "Settings row label (FSRS target retention rate)",
       "extractionState": "stale",
@@ -2220,6 +2795,12 @@
             "state": "new",
             "value": "The character for %1$@ is %2$@"
           }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le caractère pour %@ est %@"
+          }
         }
       }
     },
@@ -2239,9 +2820,54 @@
         }
       }
     },
-    "This will delete all messages in this conversation.": {},
-    "This will remove the word and all its encounter history.": {},
-    "This will replace all current data with the backup. This cannot be undone.": {},
+    "This will delete all messages in this conversation.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This will delete all messages in this conversation."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cela supprimera tous les messages de cette conversation."
+          }
+        }
+      }
+    },
+    "This will remove the word and all its encounter history.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This will remove the word and all its encounter history."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cela supprimera le mot et tout son historique de rencontres."
+          }
+        }
+      }
+    },
+    "This will replace all current data with the backup. This cannot be undone.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This will replace all current data with the backup. This cannot be undone."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cela remplacera toutes les données actuelles par la sauvegarde. Action irréversible."
+          }
+        }
+      }
+    },
     "TIME": {
       "comment": "Summary stat label",
       "localizations": {
@@ -2259,8 +2885,38 @@
         }
       }
     },
-    "Time's Up!": {},
-    "To chat with Sakura, set up an AI provider in Settings.": {},
+    "Time's Up!": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Time's Up!"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Temps écoulé !"
+          }
+        }
+      }
+    },
+    "To chat with Sakura, set up an AI provider in Settings.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "To chat with Sakura, set up an AI provider in Settings."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pour discuter avec Sakura, configure un fournisseur d'IA dans les Réglages."
+          }
+        }
+      }
+    },
     "Today": {
       "comment": "Bilingual chrome label paired with 本日 on the Home hero",
       "extractionState": "stale",
@@ -2322,7 +2978,22 @@
     },
     "VOCABULARY": {},
     "Vocabulary Drill": {},
-    "Vocabulary drill finished": {},
+    "Vocabulary drill finished": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vocabulary drill finished"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exercice de vocabulaire terminé"
+          }
+        }
+      }
+    },
     "Weekly check-in": {
       "comment": "Settings row label for the weekly progress reminder",
       "extractionState": "stale",
@@ -2360,7 +3031,22 @@
       }
     },
     "Well done": {},
-    "What should\nwe call you?": {},
+    "What should\nwe call you?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "What should\nwe call you?"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comment\nveux-tu être appelé(e) ?"
+          }
+        }
+      }
+    },
     "Working": {
       "comment": "Generic in-progress indicator (e.g. pre-warming)",
       "extractionState": "stale",
@@ -2379,7 +3065,22 @@
         }
       }
     },
-    "Write the character freehand": {},
+    "Write the character freehand": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Write the character freehand"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Écris le caractère à main levée"
+          }
+        }
+      }
+    },
     "Writing": {
       "comment": "Skill name in the BALANCE card",
       "extractionState": "stale",
@@ -2433,7 +3134,22 @@
         }
       }
     },
-    "Your Japanese conversation partner": {},
+    "Your Japanese conversation partner": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your Japanese conversation partner"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ta partenaire de conversation japonaise"
+          }
+        }
+      }
+    },
     "YOUR JOURNEY": {
       "localizations": {
         "en": {
@@ -2450,9 +3166,54 @@
         }
       }
     },
-    "YOUR JOURNEY BEGINS": {},
-    "Your name": {},
-    "Your pronunciation": {},
+    "YOUR JOURNEY BEGINS": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "YOUR JOURNEY BEGINS"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TON CHEMIN COMMENCE"
+          }
+        }
+      }
+    },
+    "Your name": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your name"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ton prénom"
+          }
+        }
+      }
+    },
+    "Your pronunciation": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your pronunciation"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ta prononciation"
+          }
+        }
+      }
+    },
     "Your study": {
       "comment": "Study tab heading",
       "localizations": {
@@ -2520,6 +3281,134 @@
           "stringUnit": {
             "state": "translated",
             "value": "Hiragana et katakana, par groupes"
+          }
+        }
+      }
+    },
+    "A path from curious to fluent": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A path from curious to fluent"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un chemin de curieux à courant"
+          }
+        }
+      }
+    },
+    "A guide by your side": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A guide by your side"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un guide à tes côtés"
+          }
+        }
+      }
+    },
+    "Begin": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Begin"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Commencer"
+          }
+        }
+      }
+    },
+    "Your first lesson awaits": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your first lesson awaits"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ta première leçon t'attend"
+          }
+        }
+      }
+    },
+    "Master kana, kanji, grammar, and conversation — one step at a time, at your own pace.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Master kana, kanji, grammar, and conversation — one step at a time, at your own pace."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maîtrise les kana, kanji, la grammaire et la conversation — un pas à la fois, à ton rythme."
+          }
+        }
+      }
+    },
+    "Your AI companion adapts to you, celebrates your wins, and helps when things get tough.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your AI companion adapts to you, celebrates your wins, and helps when things get tough."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ton compagnon IA s'adapte à toi, célèbre tes victoires et t'aide dans les moments difficiles."
+          }
+        }
+      }
+    },
+    "You'll start with hiragana — the first writing system. Let's begin your Japanese adventure.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You'll start with hiragana — the first writing system. Let's begin your Japanese adventure."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tu commenceras par les hiragana — le premier système d'écriture. Lance ton aventure japonaise."
+          }
+        }
+      }
+    },
+    "Export your data first if you want to keep a copy.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Export your data first if you want to keep a copy."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exporte tes données d'abord si tu veux en garder une copie."
           }
         }
       }
