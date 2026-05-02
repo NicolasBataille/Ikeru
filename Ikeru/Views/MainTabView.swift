@@ -111,19 +111,53 @@ struct MainTabView: View {
 
     // MARK: - Tab content
 
+    @State private var liveOffsetFraction: CGFloat = 1 // home is index 1 within the pager
+
+    private var learningPagerIndex: Binding<Int> {
+        Binding(
+            get: {
+                switch selectedTab {
+                case .study: return 0
+                case .home:  return 1
+                case .rpg:   return 2
+                default:     return 1
+                }
+            },
+            set: { new in
+                switch new {
+                case 0: selectedTab = .study
+                case 2: selectedTab = .rpg
+                default: selectedTab = .home
+                }
+            }
+        )
+    }
+
     @ViewBuilder
     private var tabContent: some View {
         ZStack {
-            ForEach(AppTab.allCases) { tab in
-                if selectedTab == tab {
-                    TabContentView(tab: tab)
-                        .transition(
-                            .asymmetric(
-                                insertion: .opacity.combined(with: .scale(scale: 0.98)),
-                                removal: .opacity
-                            )
-                        )
-                }
+            switch selectedTab {
+            case .study, .home, .rpg:
+                PagedLearningStack(
+                    pageCount: 3,
+                    activeIndex: learningPagerIndex,
+                    liveOffsetFraction: $liveOffsetFraction,
+                    content: { index in
+                        switch index {
+                        case 0: TabContentView(tab: .study)
+                        case 1: TabContentView(tab: .home)
+                        case 2: TabContentView(tab: .rpg)
+                        default: Color.clear
+                        }
+                    }
+                )
+                .transition(.opacity)
+            case .companion:
+                TabContentView(tab: .companion)
+                    .transition(.opacity)
+            case .settings:
+                TabContentView(tab: .settings)
+                    .transition(.opacity)
             }
         }
         .animation(.spring(response: 0.42, dampingFraction: 0.86), value: selectedTab)
