@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import Combine
 import IkeruCore
 
 // MARK: - Tab Definition
@@ -51,6 +52,9 @@ struct MainTabView: View {
     @State private var companionViewModel: CompanionChatViewModel?
     @State private var presentAISettings = CommandLine.arguments.contains("-presentAISettings")
     @State private var appLocale = AppLocale()
+    @State private var displayMode: DisplayMode = .beginner
+    @State private var displayModeRepo: (any DisplayModePreferenceRepository)?
+    @State private var displayModeCancellable: AnyCancellable?
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -72,6 +76,7 @@ struct MainTabView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onAppear {
             initializeCompanionViewModel()
+            initializeDisplayModeRepo()
         }
         .onReceive(NotificationCenter.default.publisher(for: .startQuizFromShortcut)) { _ in
             selectedTab = .home
@@ -89,6 +94,7 @@ struct MainTabView: View {
         }
         .environment(\.locale, appLocale.currentLocale)
         .environment(appLocale)
+        .environment(\.displayMode, displayMode)
         .fullScreenCover(isPresented: $presentAISettings) {
             NavigationStack {
                 AISettingsView()
@@ -147,6 +153,29 @@ struct MainTabView: View {
             .ignoresSafeArea(.keyboard)
             .transition(.opacity)
         }
+    }
+
+    // MARK: - Display Mode Initialization
+
+    private func initializeDisplayModeRepo() {
+        guard displayModeRepo == nil else { return }
+        let container = modelContext.container
+        let repo = UserDefaultsDisplayModePreferenceRepository(
+            defaults: .standard,
+            activeProfileID: { ActiveProfileResolver.activeProfileID() },
+            profileCreatedAt: { id in
+                let context = container.mainContext
+                let descriptor = FetchDescriptor<UserProfile>(
+                    predicate: #Predicate { $0.id == id }
+                )
+                return (try? context.fetch(descriptor))?.first?.createdAt
+            }
+        )
+        self.displayModeRepo = repo
+        self.displayMode = repo.current()
+        self.displayModeCancellable = repo.publisher
+            .receive(on: DispatchQueue.main)
+            .sink { mode in self.displayMode = mode }
     }
 
     // MARK: - Companion Initialization
