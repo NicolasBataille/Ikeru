@@ -72,6 +72,7 @@
 		56C0FAA75C6A9BDAD06FC62E /* ToastView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCAD9A4831D219D1C4FC0037 /* ToastView.swift */; };
 		588F16A9AD56FA5DE5DDB103 /* ImmersiveSessionViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E415FB60B6790A37E7C422E7 /* ImmersiveSessionViewTests.swift */; };
 		58BECF1D8B55499034C3F5AA /* IkeruButtonStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 631CDAB692FF8F02FB5E77FD /* IkeruButtonStyle.swift */; };
+		590241F0210BFF8E0D27403B /* IkeruTabBar+Rail.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01AF19EF339E6EF510BEBC0A /* IkeruTabBar+Rail.swift */; };
 		5A12D68CE875C055EFB12733 /* LootBoxChallengeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 470D3E9716A0BCBE20FBD7D8 /* LootBoxChallengeView.swift */; };
 		5B188F1ABB8FDAC523D264FD /* StrokeOrderViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 605EB123E5636067D0104242 /* StrokeOrderViewModel.swift */; };
 		5D6DB2EC7FDC91D838A51BF6 /* AISetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20F7294FBF874E97C93D7639 /* AISetupView.swift */; };
@@ -235,6 +236,7 @@
 
 /* Begin PBXFileReference section */
 		00356E3A4031A07E0D26E81C /* CornerTicks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CornerTicks.swift; sourceTree = "<group>"; };
+		01AF19EF339E6EF510BEBC0A /* IkeruTabBar+Rail.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "IkeruTabBar+Rail.swift"; sourceTree = "<group>"; };
 		03B24C86EFCA15EB15DF8BD4 /* SessionPreviewCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionPreviewCard.swift; sourceTree = "<group>"; };
 		03D5EA041D7435198DDAE364 /* KintsugiHairline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KintsugiHairline.swift; sourceTree = "<group>"; };
 		06D4DC8FC49CC9C5B56F5438 /* IkeruWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = IkeruWidget.entitlements; sourceTree = "<group>"; };
@@ -959,6 +961,7 @@
 				CE989EDC826A8D21056CC758 /* XPGainView.swift */,
 				5149A5F03A554ACABB12389B /* Tatami */,
 				DF592A46DD722401D4C46FC4 /* DisplayModeEnvironment.swift */,
+				01AF19EF339E6EF510BEBC0A /* IkeruTabBar+Rail.swift */,
 			);
 			path = Theme;
 			sourceTree = "<group>";
@@ -1361,6 +1364,7 @@
 				99E2914D358333A6A8868962 /* AppLocale.swift in Sources */,
 				C4B37AEF0AEE863FEFADF4A4 /* LanguagePickerView.swift in Sources */,
 				316D4831B3DC06ADDAF246C5 /* DisplayModeEnvironment.swift in Sources */,
+				590241F0210BFF8E0D27403B /* IkeruTabBar+Rail.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
