@@ -92,7 +92,7 @@ struct ProgressDashboardView: View {
                     Text("Kana")
                         .font(.ikeruHeading3)
                         .foregroundStyle(Color.ikeruTextPrimary)
-                    Text("Hiragana & katakana, par groupes")
+                    Text("Hiragana & katakana, by groups")
                         .font(.ikeruCaption)
                         .foregroundStyle(Color.ikeruTextSecondary)
                 }
