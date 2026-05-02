@@ -32,6 +32,7 @@
 		1BE2E314473DE427EAA5E20A /* TatamiRoom.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70AD0FF8A5A420DD4D1E32C9 /* TatamiRoom.swift */; };
 		1EB643DBDF51CC4C61434B2C /* SerifNumeral.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2F1FF648DFD4B06ACB9D5A1 /* SerifNumeral.swift */; };
 		1F267C7F06B849E143C9F872 /* ProfileViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF20C958BD43ABB601BE2B23 /* ProfileViewModelTests.swift */; };
+		205D80613A068A92C245B81A /* DisplayModeToggleRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF87E7A18DDA1BE176F0B8CE /* DisplayModeToggleRow.swift */; };
 		20A46053CB898DA6AEBA6697 /* RPGProfileViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FFDBE842988EF4A387035C1 /* RPGProfileViewModel.swift */; };
 		2332D3E825277DEE0E731926 /* CompanionChatSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A98FD4C07ADD0EB411EE77F /* CompanionChatSheet.swift */; };
 		24B1C98084294C7E17812BF1 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8CF84F59DAF36277A923CF3 /* SettingsView.swift */; };
@@ -372,6 +373,7 @@
 		AB4EE3B167E71594816FFDAD /* MonCrest.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MonCrest.swift; sourceTree = "<group>"; };
 		AF20C958BD43ABB601BE2B23 /* ProfileViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileViewModelTests.swift; sourceTree = "<group>"; };
 		AF5EE898AF9C8846B82F6918 /* DensityAware.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DensityAware.swift; sourceTree = "<group>"; };
+		AF87E7A18DDA1BE176F0B8CE /* DisplayModeToggleRow.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DisplayModeToggleRow.swift; sourceTree = "<group>"; };
 		B04C74F735B5D471036C7A40 /* VocabularyDetailSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VocabularyDetailSheet.swift; sourceTree = "<group>"; };
 		B397E03A82EFF499E855C79D /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		B46DF69A2A765C203CB58B09 /* SessionLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionLiveActivity.swift; sourceTree = "<group>"; };
@@ -915,6 +917,7 @@
 				2E10FA2BDC5455704DB5EDE7 /* DeleteProfileSheet.swift */,
 				37FFFD4E2CCB71F726EE7A52 /* RigJobsView.swift */,
 				B8CF84F59DAF36277A923CF3 /* SettingsView.swift */,
+				AF87E7A18DDA1BE176F0B8CE /* DisplayModeToggleRow.swift */,
 			);
 			path = Settings;
 			sourceTree = "<group>";
@@ -1373,6 +1376,7 @@
 				590241F0210BFF8E0D27403B /* IkeruTabBar+Rail.swift in Sources */,
 				8257F348CC35EF70D949638F /* IkeruTabBar+Beginner.swift in Sources */,
 				B2A19C98B279E06BB89BFFB4 /* DensityAware.swift in Sources */,
+				205D80613A068A92C245B81A /* DisplayModeToggleRow.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

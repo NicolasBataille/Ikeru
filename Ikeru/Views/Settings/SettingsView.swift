@@ -118,6 +118,7 @@ struct SettingsView: View {
                     header
 
                     practiceSection
+                    displaySection
                     memorySection
                     accountSection
                     aiSection
@@ -254,6 +255,20 @@ struct SettingsView: View {
                 withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) {
                     furiganaEnabled.toggle()
                 }
+            }
+        }
+    }
+
+    // MARK: - Section: 表示 / Display
+
+    @Environment(\.displayModeRepository) private var displayModeRepo
+
+    private var displaySection: some View {
+        section(label: ("表示", "Display"), mon: .kikkou) {
+            if let repo = displayModeRepo {
+                DisplayModeToggleRow(repository: repo)
+                    .padding(.horizontal, IkeruTheme.Spacing.md)
+                    .padding(.vertical, IkeruTheme.Spacing.sm)
             }
         }
     }

@@ -96,6 +96,7 @@ struct MainTabView: View {
         .environment(\.locale, appLocale.currentLocale)
         .environment(appLocale)
         .environment(\.displayMode, displayMode)
+        .environment(\.displayModeRepository, displayModeRepo)
         .fullScreenCover(isPresented: $presentAISettings) {
             NavigationStack {
                 AISettingsView()
