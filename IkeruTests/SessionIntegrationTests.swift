@@ -13,7 +13,22 @@ struct SessionIntegrationTests {
     private func makeContainer() throws -> ModelContainer {
         let schema = Schema([UserProfile.self, Card.self, ReviewLog.self, RPGState.self])
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
-        return try ModelContainer(for: schema, configurations: [config])
+        // Reset cross-test active-profile leakage from UserDefaults.
+        ActiveProfileResolver.setActiveProfileID(nil)
+        let container = try ModelContainer(for: schema, configurations: [config])
+        // Seed an active profile so the repository's per-profile queries
+        // (and ContentSeedService) see this test's inserted cards.
+        let profile = UserProfile(displayName: "Test")
+        container.mainContext.insert(profile)
+        try container.mainContext.save()
+        ActiveProfileResolver.setActiveProfileID(profile.id)
+        return container
+    }
+
+    /// Returns the active profile of `container` (always non-nil because
+    /// `makeContainer` seeds one).
+    private func activeProfile(_ container: ModelContainer) -> UserProfile? {
+        ActiveProfileResolver.fetchActiveProfile(in: container.mainContext)
     }
 
     // MARK: - Full Flow Tests
@@ -164,7 +179,8 @@ struct SessionIntegrationTests {
         let container = try makeContainer()
         let context = container.mainContext
 
-        // Create 4 due cards
+        // Create 4 due cards attached to the active profile.
+        let profile = activeProfile(container)
         for i in 0..<4 {
             let card = Card(
                 front: "Card \(i)",
@@ -172,6 +188,7 @@ struct SessionIntegrationTests {
                 type: .kanji,
                 dueDate: Date().addingTimeInterval(-3600)
             )
+            card.profile = profile
             context.insert(card)
         }
         try context.save()

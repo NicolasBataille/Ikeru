@@ -13,6 +13,8 @@ struct SessionViewModelTests {
     private func makeContainer() throws -> ModelContainer {
         let schema = Schema([UserProfile.self, Card.self, ReviewLog.self, RPGState.self])
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
+        // Clear cross-test active-profile leakage from UserDefaults.
+        ActiveProfileResolver.setActiveProfileID(nil)
         return try ModelContainer(for: schema, configurations: [config])
     }
 
@@ -26,8 +28,24 @@ struct SessionViewModelTests {
         )
     }
 
+    /// Returns the active profile, creating one (and persisting its id)
+    /// when missing. Cards must be attached to a profile because
+    /// `CardRepository` queries are scoped to `profile.cards`.
+    private func ensureProfile(container: ModelContainer) throws -> UserProfile {
+        let context = container.mainContext
+        if let existing = ActiveProfileResolver.fetchActiveProfile(in: context) {
+            return existing
+        }
+        let profile = UserProfile(displayName: "Test")
+        context.insert(profile)
+        try context.save()
+        ActiveProfileResolver.setActiveProfileID(profile.id)
+        return profile
+    }
+
     private func seedDueCards(container: ModelContainer, count: Int) throws -> [UUID] {
         let context = container.mainContext
+        let profile = try ensureProfile(container: container)
         var ids: [UUID] = []
         for i in 0..<count {
             let card = Card(
@@ -36,6 +54,7 @@ struct SessionViewModelTests {
                 type: .kanji,
                 dueDate: Date().addingTimeInterval(-3600)
             )
+            card.profile = profile
             context.insert(card)
             ids.append(card.id)
         }
