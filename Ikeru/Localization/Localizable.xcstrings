@@ -225,6 +225,57 @@
     "+%@ XP": {},
     "+%@ XP earned": {},
     "~%@ min": {},
+    "7-day arc": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "7-day arc"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cycle de 7 jours"
+          }
+        }
+      }
+    },
+    "100 cards": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "100 cards"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "100 cartes"
+          }
+        }
+      }
+    },
+    "1000 cards": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1000 cards"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1000 cartes"
+          }
+        }
+      }
+    },
     "A guide by your side": {
       "extractionState": "stale",
       "localizations": {
@@ -502,6 +553,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Cache de ressources"
+          }
+        }
+      }
+    },
+    "Attributes": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Attributes"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Atouts"
           }
         }
       }
@@ -948,6 +1016,7 @@
     "Detail: %@": {},
     "Detected: %@型": {},
     "Dictionary": {
+      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -1150,6 +1219,23 @@
         }
       }
     },
+    "First step": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "First step"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Premier pas"
+          }
+        }
+      }
+    },
     "FSRS parameters": {
       "comment": "Settings row label (FSRS algorithm parameters)",
       "extractionState": "stale",
@@ -1274,6 +1360,23 @@
         }
       }
     },
+    "Hint": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hint"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Indice"
+          }
+        }
+      }
+    },
     "Hiragana": {
       "comment": "Bilingual chrome label paired with 平仮名 on SRS hiragana cards",
       "extractionState": "stale",
@@ -1293,6 +1396,7 @@
       }
     },
     "Hiragana & katakana, by groups": {
+      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -1361,6 +1465,40 @@
         }
       }
     },
+    "Inventory": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inventory"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inventaire"
+          }
+        }
+      }
+    },
+    "Items": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Items"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Objets"
+          }
+        }
+      }
+    },
     "JLPT estimate": {
       "comment": "Bilingual chrome label paired with 推定 on the Study tab JLPT hero",
       "extractionState": "stale",
@@ -1380,6 +1518,7 @@
       }
     },
     "Kana": {
+      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -1637,6 +1776,23 @@
         }
       }
     },
+    "Mark": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mark"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marquer"
+          }
+        }
+      }
+    },
     "Master kana, kanji, grammar, and conversation — one step at a time, at your own pace.": {
       "extractionState": "stale",
       "localizations": {
@@ -1650,6 +1806,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Maîtrise les kana, kanji, la grammaire et la conversation — un pas à la fois, à ton rythme."
+          }
+        }
+      }
+    },
+    "Mastery": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mastery"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maîtrise"
           }
         }
       }
@@ -1988,6 +2161,7 @@
     },
     "PC bridge for VOICEVOX TTS and future heavy models": {},
     "Personal vocabulary collection": {
+      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -2199,6 +2373,23 @@
       }
     },
     "Reading Guide": {},
+    "ready": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ready"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "prêt"
+          }
+        }
+      }
+    },
     "READY FOR %@": {
       "comment": "JLPT readiness label",
       "localizations": {
@@ -2369,6 +2560,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "REVOIR LES ERREURS"
+          }
+        }
+      }
+    },
+    "Reviews": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reviews"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Révisions"
           }
         }
       }
@@ -2580,6 +2788,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Équilibre des compétences"
+          }
+        }
+      }
+    },
+    "Skill profile": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skill profile"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Profil de compétences"
           }
         }
       }
@@ -3052,6 +3277,23 @@
     },
     "TRAINING MODE": {},
     "Transcript": {},
+    "Treasures": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Treasures"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trésors"
+          }
+        }
+      }
+    },
     "Try again": {},
     "typing...": {},
     "Unlocks at Lv. %@": {
@@ -3412,7 +3654,6 @@
         }
       }
     },
-    "あ": {},
     "さ": {},
     "七転び八起き · Fall seven, rise eight": {
       "localizations": {
@@ -3450,227 +3691,223 @@
     "続ける": {},
     "続ける · ": {},
     "言語": {},
-    "辞": {},
-    "Reviews": {
+    "Tab.Chat": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Reviews"
+            "value": "Chat"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Révisions"
+            "value": "Chat"
           }
         }
       }
     },
-    "Items": {
+    "Tab.Study": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Items"
+            "value": "Study"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Objets"
+            "value": "Étude"
           }
         }
       }
     },
-    "Attributes": {
+    "Tab.Home": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Attributes"
+            "value": "Home"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Atouts"
+            "value": "Accueil"
           }
         }
       }
     },
-    "Inventory": {
+    "Tab.Rank": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Inventory"
+            "value": "Rank"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Inventaire"
+            "value": "Rang"
           }
         }
       }
     },
-    "Skill profile": {
+    "Tab.Settings": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Skill profile"
+            "value": "Settings"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Profil de compétences"
+            "value": "Réglages"
           }
         }
       }
     },
-    "Treasures": {
+    "Settings.InterfaceTatami.Title": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Treasures"
+            "value": "Tatami interface"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Trésors"
+            "value": "Interface Tatami"
           }
         }
       }
     },
-    "First step": {
+    "Settings.InterfaceTatami.Subtitle": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "First step"
+            "value": "Kanji throughout, translations hidden"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Premier pas"
+            "value": "Kanji partout, traductions masquées"
           }
         }
       }
     },
-    "7-day arc": {
+    "Settings.InterfaceTatami.HelpOff": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "7-day arc"
+            "value": "Designed for learners comfortable with Japanese."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cycle de 7 jours"
+            "value": "Conçu pour les apprenants à l'aise avec le japonais."
           }
         }
       }
     },
-    "100 cards": {
+    "Settings.InterfaceTatami.HelpOn": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "100 cards"
+            "value": "To return to beginner-friendly mode, turn this off."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "100 cartes"
+            "value": "Pour revenir au mode beginner-friendly, désactive ici."
           }
         }
       }
     },
-    "1000 cards": {
+    "DisplayMode.Suggestion.Title": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "1000 cards"
+            "value": "You're reading Japanese with ease now."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "1000 cartes"
+            "value": "Tu lis maintenant le japonais avec aisance."
           }
         }
       }
     },
-    "Mastery": {
+    "DisplayMode.Suggestion.Body": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Mastery"
+            "value": "Activate the Tatami interface — kanji throughout, romaji and translations hidden by default. A mode for confirmed learners. Adjustable any time in Settings."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Maîtrise"
+            "value": "Active l'interface Tatami — kanji partout, romaji et traductions masqués par défaut. Un mode pour les apprenants confirmés. Ajustable à tout moment dans Réglages."
           }
         }
       }
     },
-    "Hint": {
+    "DisplayMode.Suggestion.Accept": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Hint"
+            "value": "Try it"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Indice"
+            "value": "Essayer"
           }
         }
       }
     },
-    "Mark": {
+    "DisplayMode.Suggestion.Later": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Mark"
+            "value": "Later"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Marquer"
-          }
-        }
-      }
-    },
-    "ready": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ready"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "prêt"
+            "value": "Plus tard"
           }
         }
       }
