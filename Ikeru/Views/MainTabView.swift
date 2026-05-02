@@ -6,11 +6,12 @@ import IkeruCore
 // MARK: - Tab Definition
 
 enum AppTab: Int, CaseIterable, Identifiable {
-    case home
-    case study
-    case companion
-    case rpg
-    case settings
+    // -startTab=N maps to: 0=companion, 1=study, 2=home (default), 3=rpg, 4=settings
+    case companion   // tap-only, position 0
+    case study       // swipe pager left
+    case home        // swipe pager center (default)
+    case rpg         // swipe pager right
+    case settings    // tap-only, position 4
 
     var id: Int { rawValue }
 
