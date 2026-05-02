@@ -89,20 +89,23 @@ struct RPGProfileView: View {
             XPBarView(totalXP: vm.xp, level: vm.level, variant: .full)
 
             HStack(spacing: IkeruTheme.Spacing.sm) {
-                tatamiStatChip(
-                    glyph: "\u{53C8}",            // 又  — repetitions
+                DensityAwareStatChip(
+                    kanjiGlyph: "\u{53C8}",                       // 又
+                    symbolName: "arrow.triangle.2.circlepath",
                     value: vm.totalReviews,
                     label: "Reviews",
                     tint: Color.ikeruPrimaryAccent
                 )
-                tatamiStatChip(
-                    glyph: "\u{8CA1}",            // 財  — treasures / inventory
+                DensityAwareStatChip(
+                    kanjiGlyph: "\u{8CA1}",                       // 財
+                    symbolName: "cube.fill",
                     value: vm.inventory.count,
                     label: "Items",
                     tint: Color.ikeruSecondaryAccent
                 )
-                tatamiStatChip(
-                    glyph: "\u{529B}",            // 力  — power / attribute
+                DensityAwareStatChip(
+                    kanjiGlyph: "\u{529B}",                       // 力
+                    symbolName: "bolt.fill",
                     value: vm.unlockedAttributes.count,
                     label: "Attributes",
                     tint: Color.ikeruTertiaryAccent
@@ -110,33 +113,6 @@ struct RPGProfileView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-    }
-
-    /// Tatami-direction stat chip: serif kanji glyph + serif numeral +
-    /// caps EN/FR label, framed by sumi corners. Replaces `IkeruStatPill`
-    /// (which was glass-tinted) for the Profile header row.
-    private func tatamiStatChip(
-        glyph: String,
-        value: Int,
-        label: LocalizedStringKey,
-        tint: Color
-    ) -> some View {
-        HStack(spacing: 8) {
-            Text(glyph)
-                .font(.system(size: 16, weight: .light, design: .serif))
-                .foregroundStyle(tint)
-            SerifNumeral(value, size: 16, color: Color.ikeruTextPrimary)
-            Text(label)
-                .font(.system(size: 9, weight: .bold))
-                .tracking(1.2)
-                .textCase(.uppercase)
-                .foregroundStyle(TatamiTokens.paperGhost)
-        }
-        .fixedSize(horizontal: true, vertical: false)
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
-        .background(tint.opacity(0.08))
-        .sumiCorners(color: tint, size: 6, weight: 1.0, inset: -1)
     }
 
     // MARK: - Rank Crest (Torii)

@@ -144,6 +144,7 @@
 		AF7E68B51D1243B8032E53E7 /* MarbleBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = D96B344D5EAABEB91F4B5EE2 /* MarbleBackground.swift */; };
 		B17A0F60ECC498D27BD06EF2 /* MonCrestTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AE864AF29ACDCF1CF6A9FEB /* MonCrestTests.swift */; };
 		B2142C70A1C6014266FB9F2E /* ShadowingExerciseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CD329CF724A6DBCD80A22CD /* ShadowingExerciseView.swift */; };
+		B2A19C98B279E06BB89BFFB4 /* DensityAware.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF5EE898AF9C8846B82F6918 /* DensityAware.swift */; };
 		B3118C50A4B7018CE6CF5AE0 /* DrillUtilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDB2946DC6619B99A4BBD591 /* DrillUtilities.swift */; };
 		B4D53BD2C72F596C888D6FAB /* KanjiStudyViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6C995B4118F51F9AD485135 /* KanjiStudyViewModelTests.swift */; };
 		B529F67EFA4A5DB91FD0B0E1 /* XPBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AA32DE9A1AC1EB7AC247E80 /* XPBarView.swift */; };
@@ -370,6 +371,7 @@
 		AA8ABC5B44D456C6BD980427 /* DataExportManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataExportManager.swift; sourceTree = "<group>"; };
 		AB4EE3B167E71594816FFDAD /* MonCrest.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MonCrest.swift; sourceTree = "<group>"; };
 		AF20C958BD43ABB601BE2B23 /* ProfileViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileViewModelTests.swift; sourceTree = "<group>"; };
+		AF5EE898AF9C8846B82F6918 /* DensityAware.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DensityAware.swift; sourceTree = "<group>"; };
 		B04C74F735B5D471036C7A40 /* VocabularyDetailSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VocabularyDetailSheet.swift; sourceTree = "<group>"; };
 		B397E03A82EFF499E855C79D /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		B46DF69A2A765C203CB58B09 /* SessionLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionLiveActivity.swift; sourceTree = "<group>"; };
@@ -965,6 +967,7 @@
 				DF592A46DD722401D4C46FC4 /* DisplayModeEnvironment.swift */,
 				01AF19EF339E6EF510BEBC0A /* IkeruTabBar+Rail.swift */,
 				3A7D16815AC81DEBD891D317 /* IkeruTabBar+Beginner.swift */,
+				AF5EE898AF9C8846B82F6918 /* DensityAware.swift */,
 			);
 			path = Theme;
 			sourceTree = "<group>";
@@ -1369,6 +1372,7 @@
 				316D4831B3DC06ADDAF246C5 /* DisplayModeEnvironment.swift in Sources */,
 				590241F0210BFF8E0D27403B /* IkeruTabBar+Rail.swift in Sources */,
 				8257F348CC35EF70D949638F /* IkeruTabBar+Beginner.swift in Sources */,
+				B2A19C98B279E06BB89BFFB4 /* DensityAware.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
