@@ -45,6 +45,7 @@
 		2EDB743A773B1110D8D8160D /* StrokeOrderViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97DC0D8C7FA88DAEF99E751F /* StrokeOrderViewModelTests.swift */; };
 		2F6B8C98160163965120553D /* HandwritingViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F4FD0C67B08C1DEFCC562B6 /* HandwritingViewModel.swift */; };
 		304CBAE51DC419CE521E9941 /* VocabularyDrillSummary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 084D2D52890467EFF5C93131 /* VocabularyDrillSummary.swift */; };
+		316D4831B3DC06ADDAF246C5 /* DisplayModeEnvironment.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF592A46DD722401D4C46FC4 /* DisplayModeEnvironment.swift */; };
 		318AD0DC566D55CF8F54F721 /* AttributionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DDE2DBC0AC80C3C72CCE6E1 /* AttributionView.swift */; };
 		3201547827523F9F7FCDDCAD /* XPGainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE989EDC826A8D21056CC758 /* XPGainView.swift */; };
 		32F0852EF70ED1BB88171793 /* KanaDrillModeSelector.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEE55E655DAC68F122F04B9D /* KanaDrillModeSelector.swift */; };
@@ -103,6 +104,7 @@
 		8079EBD85DD413FB6BA17D40 /* MnemonicView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A91BD866585603D217E09761 /* MnemonicView.swift */; };
 		80928CE01894C7B023866E4A /* ChatBubbleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C682D70A5C43E544AC5BF0B3 /* ChatBubbleView.swift */; };
 		8220FF72EE512779FDF93501 /* NameEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 457B840A63725833DFB68E38 /* NameEntryView.swift */; };
+		836C1B472140C783C1043D13 /* DisplayModeEnvironmentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45CECCE4FCC052EECE84795A /* DisplayModeEnvironmentTests.swift */; };
 		83FB41C31894E425E395AAE8 /* KanaPoolViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A62F54ADD5EEB679762E17C /* KanaPoolViewModel.swift */; };
 		8416A09ACC39E1CDD672E983 /* StrokeOrderIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 912009585675D42B2F7ED4D3 /* StrokeOrderIntegrationTests.swift */; };
 		85204B34AEE5C56B01857C3C /* StandByFlashcardWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = F75C1AD94292B42125242E1C /* StandByFlashcardWidget.swift */; };
@@ -273,6 +275,7 @@
 		432F33D5FCBBD072BE009810 /* MasteryBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MasteryBadge.swift; sourceTree = "<group>"; };
 		44FF091731003AFD23A516FF /* HomeViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewModelTests.swift; sourceTree = "<group>"; };
 		457B840A63725833DFB68E38 /* NameEntryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NameEntryView.swift; sourceTree = "<group>"; };
+		45CECCE4FCC052EECE84795A /* DisplayModeEnvironmentTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DisplayModeEnvironmentTests.swift; sourceTree = "<group>"; };
 		46AB2F335A1FD2EC78D8993E /* SessionConfigView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionConfigView.swift; sourceTree = "<group>"; };
 		46F48E350D03281741ABCA19 /* ListeningIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListeningIntegrationTests.swift; sourceTree = "<group>"; };
 		470D3E9716A0BCBE20FBD7D8 /* LootBoxChallengeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LootBoxChallengeView.swift; sourceTree = "<group>"; };
@@ -400,6 +403,7 @@
 		DBDEA4C637B31C8705BEE907 /* PitchContourView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PitchContourView.swift; sourceTree = "<group>"; };
 		DE61F033B42BC3AD5742F25A /* WatchQuizViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchQuizViewModel.swift; sourceTree = "<group>"; };
 		DF141412A4CE1AAA9CA80398 /* ColorExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorExtensions.swift; sourceTree = "<group>"; };
+		DF592A46DD722401D4C46FC4 /* DisplayModeEnvironment.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DisplayModeEnvironment.swift; sourceTree = "<group>"; };
 		E027F7024C00861EDEA8A363 /* AISettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AISettingsView.swift; sourceTree = "<group>"; };
 		E028A7B4AD2AB9F9E1802817 /* ReadingPassageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadingPassageView.swift; sourceTree = "<group>"; };
 		E199ACCB659AD0493D556C8C /* FillInBlankExerciseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FillInBlankExerciseView.swift; sourceTree = "<group>"; };
@@ -724,6 +728,7 @@
 				A8CB4D8F6D27886A95BBAC2D /* ToastManagerTests.swift */,
 				7AE864AF29ACDCF1CF6A9FEB /* MonCrestTests.swift */,
 				531B47B6B7F7F130B40693F7 /* AppLocaleTests.swift */,
+				45CECCE4FCC052EECE84795A /* DisplayModeEnvironmentTests.swift */,
 			);
 			path = IkeruTests;
 			sourceTree = "<group>";
@@ -953,6 +958,7 @@
 				7AA32DE9A1AC1EB7AC247E80 /* XPBarView.swift */,
 				CE989EDC826A8D21056CC758 /* XPGainView.swift */,
 				5149A5F03A554ACABB12389B /* Tatami */,
+				DF592A46DD722401D4C46FC4 /* DisplayModeEnvironment.swift */,
 			);
 			path = Theme;
 			sourceTree = "<group>";
@@ -1183,6 +1189,7 @@
 				7EBC2982099C381560979F85 /* ToastManagerTests.swift in Sources */,
 				B17A0F60ECC498D27BD06EF2 /* MonCrestTests.swift in Sources */,
 				6EA6827DBFDB13AB36CC70E3 /* AppLocaleTests.swift in Sources */,
+				836C1B472140C783C1043D13 /* DisplayModeEnvironmentTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1353,6 +1360,7 @@
 				1BE2E314473DE427EAA5E20A /* TatamiRoom.swift in Sources */,
 				99E2914D358333A6A8868962 /* AppLocale.swift in Sources */,
 				C4B37AEF0AEE863FEFADF4A4 /* LanguagePickerView.swift in Sources */,
+				316D4831B3DC06ADDAF246C5 /* DisplayModeEnvironment.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
