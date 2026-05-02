@@ -62,3 +62,4 @@ tatami-*.png
 
 # QA screenshots (working artifacts, not source)
 docs/design-specs/qa-shots/
+.superpowers/
