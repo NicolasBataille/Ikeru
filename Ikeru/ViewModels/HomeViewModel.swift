@@ -68,6 +68,11 @@ public final class HomeViewModel {
     /// Whether data has been loaded at least once.
     public private(set) var hasLoaded: Bool = false
 
+    /// Whether Home should show 「今日は休 / Rest day」 instead of the
+    /// session CTA. Driven by `RestDayDetector.shouldShowRestDay(...)`.
+    /// Refreshed by `refreshRestDay()` whenever the Home view appears.
+    public private(set) var restDayActive: Bool = false
+
     // MARK: - Computed
 
     /// Whether there are cards ready to review.
@@ -136,6 +141,41 @@ public final class HomeViewModel {
         self.cardRepository = cardRepository
         self.plannerService = plannerService
         self.progressService = ProgressService(cardRepository: cardRepository)
+    }
+
+    // MARK: - Rest Day
+
+    /// Re-evaluates whether Home should show the 「今日は休 / Rest day」
+    /// state. Composes a `LearnerSnapshot` from current cards + active
+    /// `RPGState.lastSessionDate`, and runs it through `RestDayDetector`.
+    /// Call from `HomeView`'s `.task` modifier.
+    public func refreshRestDay() async {
+        let cards = await cardRepository.allCards()
+        let context = modelContainer.mainContext
+        let lastSession = ActiveProfileResolver
+            .fetchActiveRPGState(in: context)?.lastSessionDate
+        let balances: [SkillType: Double] = [
+            .reading:   skillBalance.reading,
+            .listening: skillBalance.listening,
+            .writing:   skillBalance.writing,
+            .speaking:  skillBalance.speaking,
+        ]
+        let snapshot = LearnerSnapshot(
+            jlptLevel: .n5,
+            vocabularyMasteredFamiliarPlus: 0,
+            kanjiMasteredFamiliarPlus: 0,
+            hiraganaMastered: false,
+            katakanaMastered: false,
+            grammarPointsFamiliarPlus: 0,
+            listeningAccuracyLast30: 0,
+            listeningRecallLast30Days: 0,
+            skillBalances: balances,
+            dueCardCount: cards.filter { $0.dueDate <= Date() }.count,
+            hasNewContentQueued: cards.contains(where: { $0.fsrsState.reps == 0 }),
+            lastSessionAt: lastSession
+        )
+        restDayActive = RestDayDetector.shouldShowRestDay(profile: snapshot, now: Date())
+        Logger.rpg.info("restDay.\(self.restDayActive ? "shown" : "hidden", privacy: .public)")
     }
 
     // MARK: - Data Loading
