@@ -116,7 +116,6 @@ struct HomeView: View {
                 proverbHero(vm)
                 statsRow(vm)
                 skillRadarCard(vm)
-                primaryAction(vm)
                 sessionBreakdown(vm)
                 if vm.hasLoaded && vm.dueCardCount == 0 {
                     quietState
