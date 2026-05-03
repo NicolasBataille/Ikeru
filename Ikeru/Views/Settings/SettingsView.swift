@@ -663,10 +663,10 @@ struct SettingsView: View {
         .disabled(action == nil)
     }
 
-    /// Settings row with a toggleable on/off and a custom trailing block
-    /// (e.g. inline pickers when enabled, "Off" text when not). The whole
-    /// row toggles state on tap; inner controls (Picker menus) catch their
-    /// own taps without firing the outer toggle.
+    /// Settings row with a real on/off Toggle on the right and an optional
+    /// inline trailing block (e.g. value-pickers shown only when enabled).
+    /// The Toggle is the source of truth for ON/OFF; the rest of the row
+    /// is read-only — no implicit tap toggles.
     private func reminderToggleRow<Trailing: View>(
         jp: String,
         label: LocalizedStringKey,
@@ -674,76 +674,87 @@ struct SettingsView: View {
         onToggleChange: @escaping (Bool) -> Void,
         @ViewBuilder trailing: () -> Trailing
     ) -> some View {
-        Button {
-            withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) {
-                isOn.wrappedValue.toggle()
-            }
-            onToggleChange(isOn.wrappedValue)
-        } label: {
-            HStack(spacing: 16) {
-                Text(jp)
-                    .font(.system(size: 13, design: .serif))
-                    .foregroundStyle(TatamiTokens.paperGhost)
-                Text(label)
-                    .font(.system(size: 13))
-                    .foregroundStyle(Color.ikeruTextPrimary)
-                Spacer()
+        HStack(spacing: 12) {
+            Text(jp)
+                .font(.system(size: 13, design: .serif))
+                .foregroundStyle(TatamiTokens.paperGhost)
+            Text(label)
+                .font(.system(size: 13))
+                .foregroundStyle(Color.ikeruTextPrimary)
+                .lineLimit(1)
+                .layoutPriority(0)
+            Spacer(minLength: 8)
+            if isOn.wrappedValue {
                 trailing()
-                Text("›")
-                    .font(.system(size: 14))
-                    .foregroundStyle(TatamiTokens.goldDim)
             }
-            .padding(.horizontal, 16).padding(.vertical, 12)
-            .overlay(alignment: .bottom) {
-                Rectangle().fill(TatamiTokens.goldDim.opacity(0.2))
-                    .frame(height: 1).padding(.horizontal, 16)
-            }
+            Toggle("", isOn: isOn)
+                .labelsHidden()
+                .tint(Color.ikeruPrimaryAccent)
+                .scaleEffect(0.85)
+                .frame(width: 44, alignment: .trailing)
+                .onChange(of: isOn.wrappedValue) { _, new in
+                    onToggleChange(new)
+                }
         }
-        .buttonStyle(.plain)
+        .padding(.horizontal, 16).padding(.vertical, 10)
+        .overlay(alignment: .bottom) {
+            Rectangle().fill(TatamiTokens.goldDim.opacity(0.2))
+                .frame(height: 1).padding(.horizontal, 16)
+        }
     }
 
-    /// Inline native menu picker for hour-of-day (00:00 … 23:00).
+    /// Inline hour menu — gold value text with no extra chevron. Tap to
+    /// reveal a native menu of 24 hours.
     private func inlineHourPicker(
         selected: Binding<Int>,
         onChange: @escaping (Int) -> Void
     ) -> some View {
-        Picker("", selection: selected) {
+        Menu {
             ForEach(0..<24, id: \.self) { h in
-                Text(String(format: "%02d:00", h))
-                    .font(.system(size: 13, design: .serif))
-                    .tag(h)
+                Button(String(format: "%02d:00", h)) {
+                    selected.wrappedValue = h
+                    onChange(h)
+                }
             }
+        } label: {
+            Text(String(format: "%02d:00", selected.wrappedValue))
+                .font(.system(size: 13, design: .serif))
+                .foregroundStyle(Color.ikeruPrimaryAccent)
+                .lineLimit(1)
+                .fixedSize(horizontal: true, vertical: false)
         }
-        .pickerStyle(.menu)
-        .tint(Color.ikeruPrimaryAccent)
-        .font(.system(size: 13, design: .serif))
-        .labelsHidden()
-        .lineLimit(1)
-        .fixedSize(horizontal: true, vertical: false)
-        .onChange(of: selected.wrappedValue) { _, new in onChange(new) }
     }
 
-    /// Inline native menu picker for weekday (1=Sunday … 7=Saturday).
-    /// Uses short weekday names (Mon/Tue/… or Lun./Mar./…) so the value
-    /// stays compact and never wraps.
+    /// Inline weekday menu (1=Sunday … 7=Saturday) with localized short
+    /// names (Mon/Tue/… or Lun./Mar./…). Gold value text, no chevron.
     private func inlineWeekdayPicker(
         selected: Binding<Int>,
         onChange: @escaping (Int) -> Void
     ) -> some View {
-        Picker("", selection: selected) {
+        Menu {
             ForEach(1...7, id: \.self) { d in
-                Text(shortWeekdayName(d))
-                    .font(.system(size: 13, design: .serif))
-                    .tag(d)
+                Button(weekdayName(d)) {
+                    selected.wrappedValue = d
+                    onChange(d)
+                }
             }
+        } label: {
+            Text(shortWeekdayName(selected.wrappedValue))
+                .font(.system(size: 13, design: .serif))
+                .foregroundStyle(Color.ikeruPrimaryAccent)
+                .lineLimit(1)
+                .fixedSize(horizontal: true, vertical: false)
         }
-        .pickerStyle(.menu)
-        .tint(Color.ikeruPrimaryAccent)
-        .font(.system(size: 13, design: .serif))
-        .labelsHidden()
-        .lineLimit(1)
-        .fixedSize(horizontal: true, vertical: false)
-        .onChange(of: selected.wrappedValue) { _, new in onChange(new) }
+    }
+
+    /// Full localized weekday name (used inside the menu list, where space
+    /// allows the longer form: "Monday", "lundi", …).
+    private func weekdayName(_ weekday: Int) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale.current
+        let symbols = formatter.weekdaySymbols ?? []
+        let idx = max(1, min(7, weekday)) - 1
+        return symbols[idx].capitalized
     }
 
     /// Short localized weekday name (e.g. "Mon", "Lun.").

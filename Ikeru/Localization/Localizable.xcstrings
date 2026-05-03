@@ -2223,7 +2223,6 @@
     },
     "Off": {
       "comment": "Settings row value indicating an option is disabled",
-      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -2608,6 +2607,40 @@
           "stringUnit": {
             "state": "translated",
             "value": "RAPPEL"
+          }
+        }
+      }
+    },
+    "Reminder.Hour": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hour"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Heure"
+          }
+        }
+      }
+    },
+    "Reminder.Weekday": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Day"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jour"
           }
         }
       }
@@ -3769,7 +3802,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Bilan hebdomadaire"
+            "value": "Bilan hebdo."
           }
         }
       }
@@ -4082,41 +4115,7 @@
     "続ける": {},
     "続ける · ": {},
     "言語": {},
-    "道": {},
-    "Reminder.Hour": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Hour"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Heure"
-          }
-        }
-      }
-    },
-    "Reminder.Weekday": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Day"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Jour"
-          }
-        }
-      }
-    }
+    "道": {}
   },
   "version": "1.0"
 }
