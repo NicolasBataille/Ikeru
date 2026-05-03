@@ -232,12 +232,10 @@ struct SettingsView: View {
                 updateReviewReminder(enabled: reviewReminderEnabled)
             }
             if reviewReminderEnabled {
-                stepperRow(
+                hourPickerRow(
                     jp: "時刻",
                     label: "Reminder.Hour",
-                    value: $reviewReminderHour,
-                    range: 0...23,
-                    format: { "\($0):00" }
+                    selected: $reviewReminderHour
                 ) { newValue in
                     Task {
                         await NotificationManager.shared.scheduleReviewReminder(
@@ -271,12 +269,10 @@ struct SettingsView: View {
                         )
                     }
                 }
-                stepperRow(
+                hourPickerRow(
                     jp: "時刻",
                     label: "Reminder.Hour",
-                    value: $weeklyCheckInHour,
-                    range: 0...23,
-                    format: { "\($0):00" }
+                    selected: $weeklyCheckInHour
                 ) { newValue in
                     Task {
                         await NotificationManager.shared.scheduleWeeklyCheckIn(
@@ -656,15 +652,12 @@ struct SettingsView: View {
         .disabled(action == nil)
     }
 
-    /// Inline stepper row for picking an integer value (e.g. reminder hour).
-    /// Renders the same chrome as `settingRow` but with a `Stepper` instead
-    /// of a tap target.
-    private func stepperRow(
+    /// Inline hour-picker row. Tapping the value reveals a native menu of
+    /// 24 hours so the user can jump to any hour in one tap.
+    private func hourPickerRow(
         jp: String,
         label: LocalizedStringKey,
-        value: Binding<Int>,
-        range: ClosedRange<Int>,
-        format: @escaping (Int) -> String,
+        selected: Binding<Int>,
         onChange: @escaping (Int) -> Void
     ) -> some View {
         HStack(spacing: 16) {
@@ -675,67 +668,54 @@ struct SettingsView: View {
                 .font(.system(size: 13))
                 .foregroundStyle(Color.ikeruTextPrimary)
             Spacer()
-            Stepper(
-                value: value,
-                in: range,
-                step: 1,
-                onEditingChanged: { editing in
-                    if !editing { onChange(value.wrappedValue) }
+            Picker("", selection: selected) {
+                ForEach(0..<24, id: \.self) { h in
+                    Text(String(format: "%02d:00", h)).tag(h)
                 }
-            ) {
-                Text(format(value.wrappedValue))
-                    .font(.system(size: 13, design: .serif))
-                    .foregroundStyle(Color.ikeruPrimaryAccent)
             }
+            .pickerStyle(.menu)
+            .tint(Color.ikeruPrimaryAccent)
             .labelsHidden()
-            Text(format(value.wrappedValue))
-                .font(.system(size: 13, design: .serif))
-                .foregroundStyle(Color.ikeruPrimaryAccent)
+            .onChange(of: selected.wrappedValue) { _, new in onChange(new) }
         }
-        .padding(.horizontal, 16).padding(.vertical, 10)
+        .padding(.horizontal, 16).padding(.vertical, 12)
         .overlay(alignment: .bottom) {
             Rectangle().fill(TatamiTokens.goldDim.opacity(0.2))
                 .frame(height: 1).padding(.horizontal, 16)
         }
     }
 
-    /// Inline weekday picker (1=Sunday … 7=Saturday). Tapping cycles to the
-    /// next weekday so the row stays compact.
+    /// Inline weekday picker row. Native menu listing the 7 weekday names
+    /// (1=Sunday … 7=Saturday) localized to the active locale.
     private func weekdayPickerRow(
         jp: String,
         label: LocalizedStringKey,
         selected: Binding<Int>,
         onChange: @escaping (Int) -> Void
     ) -> some View {
-        Button {
-            withAnimation(.spring(response: 0.4, dampingFraction: 0.86)) {
-                let next = (selected.wrappedValue % 7) + 1
-                selected.wrappedValue = next
-                onChange(next)
+        HStack(spacing: 16) {
+            Text(jp)
+                .font(.system(size: 13, design: .serif))
+                .foregroundStyle(TatamiTokens.paperGhost)
+            Text(label)
+                .font(.system(size: 13))
+                .foregroundStyle(Color.ikeruTextPrimary)
+            Spacer()
+            Picker("", selection: selected) {
+                ForEach(1...7, id: \.self) { d in
+                    Text(weekdayName(d)).tag(d)
+                }
             }
-        } label: {
-            HStack(spacing: 16) {
-                Text(jp)
-                    .font(.system(size: 13, design: .serif))
-                    .foregroundStyle(TatamiTokens.paperGhost)
-                Text(label)
-                    .font(.system(size: 13))
-                    .foregroundStyle(Color.ikeruTextPrimary)
-                Spacer()
-                Text(weekdayName(selected.wrappedValue))
-                    .font(.system(size: 13, design: .serif))
-                    .foregroundStyle(Color.ikeruPrimaryAccent)
-                Text("›")
-                    .font(.system(size: 14))
-                    .foregroundStyle(TatamiTokens.goldDim)
-            }
-            .padding(.horizontal, 16).padding(.vertical, 14)
-            .overlay(alignment: .bottom) {
-                Rectangle().fill(TatamiTokens.goldDim.opacity(0.2))
-                    .frame(height: 1).padding(.horizontal, 16)
-            }
+            .pickerStyle(.menu)
+            .tint(Color.ikeruPrimaryAccent)
+            .labelsHidden()
+            .onChange(of: selected.wrappedValue) { _, new in onChange(new) }
         }
-        .buttonStyle(.plain)
+        .padding(.horizontal, 16).padding(.vertical, 12)
+        .overlay(alignment: .bottom) {
+            Rectangle().fill(TatamiTokens.goldDim.opacity(0.2))
+                .frame(height: 1).padding(.horizontal, 16)
+        }
     }
 
     /// Localized weekday name. iOS conventions: 1=Sunday … 7=Saturday.
