@@ -29,11 +29,11 @@ struct SettingsView: View {
 
     // MARK: Reminders
 
-    @State private var reviewReminderEnabled = false
-    @State private var reviewReminderHour = 9
-    @State private var weeklyCheckInEnabled = false
-    @State private var weeklyCheckInDay = 1
-    @State private var weeklyCheckInHour = 10
+    @AppStorage("ikeru.reviewReminder.enabled") private var reviewReminderEnabled = false
+    @AppStorage("ikeru.reviewReminder.hour") private var reviewReminderHour = 9
+    @AppStorage("ikeru.weeklyCheckIn.enabled") private var weeklyCheckInEnabled = false
+    @AppStorage("ikeru.weeklyCheckIn.day") private var weeklyCheckInDay = 1
+    @AppStorage("ikeru.weeklyCheckIn.hour") private var weeklyCheckInHour = 10
 
     // MARK: Backup
 
