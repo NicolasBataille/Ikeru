@@ -28,8 +28,7 @@ struct KanaPoolSelectorView: View {
                 bottomBar(vm)
             }
         }
-        .navigationTitle("Kana")
-        .navigationBarTitleDisplayMode(.inline)
+        .toolbar(.hidden, for: .navigationBar)
         .task {
             initializeIfNeeded()
             await viewModel?.loadMasteries()
@@ -201,7 +200,7 @@ struct KanaPoolSelectorView: View {
 
     /// Vertical clearance reserved for the floating Liquid Glass tab bar so
     /// the action buttons stay above the tab bar's hit-zone.
-    private static let floatingTabBarClearance: CGFloat = 88
+    private static let floatingTabBarClearance: CGFloat = 120
 
     @ViewBuilder
     private func bottomBar(_ vm: KanaPoolViewModel) -> some View {
