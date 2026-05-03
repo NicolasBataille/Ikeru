@@ -41,6 +41,10 @@ final class RPGProfileViewModel {
     /// Whether data has been loaded.
     private(set) var hasLoaded: Bool = false
 
+    /// Four-winds skill balance for the Rang skill-balance card. Loaded
+    /// lazily via `loadSkillBalance()` after the main `loadData()` pass.
+    private(set) var skillBalance: SkillBalanceSnapshot?
+
     // MARK: - Computed
 
     /// XP progress fraction in current level (0.0 to 1.0).
@@ -82,11 +86,14 @@ final class RPGProfileViewModel {
     // MARK: - Dependencies
 
     private let modelContainer: ModelContainer
+    private let progressService: ProgressService
 
     // MARK: - Init
 
     init(modelContainer: ModelContainer) {
         self.modelContainer = modelContainer
+        let repo = CardRepository(modelContainer: modelContainer)
+        self.progressService = ProgressService(cardRepository: repo)
     }
 
     // MARK: - Data Loading
@@ -122,6 +129,13 @@ final class RPGProfileViewModel {
 
         hasLoaded = true
         Logger.ui.debug("RPG profile loaded: level=\(self.level), xp=\(self.xp), attrs=\(self.attributes.count), items=\(self.inventory.count)")
+    }
+
+    /// Loads the four-winds skill balance shown on the Rang tab. Called
+    /// from `RPGProfileView`'s `.task` after `loadData()` completes.
+    func loadSkillBalance() async {
+        let data = await progressService.loadDashboardData()
+        skillBalance = data.skillBalance
     }
 
     // MARK: - Equip / Unequip

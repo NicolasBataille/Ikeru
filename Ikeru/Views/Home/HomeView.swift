@@ -116,7 +116,6 @@ struct HomeView: View {
                 topBar(vm)
                 proverbHero(vm)
                 statsRow(vm)
-                skillRadarCard(vm)
                 sessionBreakdown(vm)
                 if vm.hasLoaded && vm.dueCardCount == 0 {
                     quietState
@@ -365,56 +364,6 @@ struct HomeView: View {
             }
         }
         .tatamiRoom(.glass, padding: 20)
-    }
-
-    // MARK: - Skill radar card
-
-    @ViewBuilder
-    private func skillRadarCard(_ vm: HomeViewModel) -> some View {
-        HStack(alignment: .center, spacing: IkeruTheme.Spacing.md) {
-            SkillRadarView(skillBalance: vm.skillBalance, variant: .mini)
-                .frame(width: 120, height: 120)
-
-            VStack(alignment: .leading, spacing: 8) {
-                Text("BALANCE", comment: "Skill balance section header on Home")
-                    .font(.ikeruMicro)
-                    .ikeruTracking(.micro)
-                    .foregroundStyle(Color.ikeruTextTertiary)
-
-                Text("Your four winds", comment: "Poetic subtitle for the skill balance card")
-                    .font(.system(size: 17, weight: .regular, design: .serif))
-                    .foregroundStyle(Color.ikeruTextPrimary)
-
-                skillRow("Reading", value: vm.skillBalance.reading)
-                skillRow("Listening", value: vm.skillBalance.listening)
-                skillRow("Writing", value: vm.skillBalance.writing)
-                skillRow("Speaking", value: vm.skillBalance.speaking)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-        }
-        .tatamiRoom(.standard, padding: 14)
-    }
-
-    @ViewBuilder
-    private func skillRow(_ label: LocalizedStringKey, value: Double) -> some View {
-        HStack(spacing: 8) {
-            Text(label)
-                .font(.system(size: 10, weight: .semibold))
-                .tracking(1.5)
-                .foregroundStyle(Color.ikeruTextSecondary)
-                .textCase(.uppercase)
-                .frame(width: 72, alignment: .leading)
-            ZStack(alignment: .leading) {
-                Capsule().fill(Color.white.opacity(0.06)).frame(height: 3)
-                Capsule()
-                    .fill(Color.ikeruPrimaryAccent.opacity(0.85))
-                    .frame(width: max(2, CGFloat(min(1, max(0, value))) * 80), height: 3)
-            }
-            .frame(width: 80)
-            Text("\(Int(min(1, max(0, value)) * 100))")
-                .font(.system(size: 10, design: .monospaced))
-                .foregroundStyle(Color.ikeruTextTertiary)
-        }
     }
 
     // MARK: - Session breakdown

@@ -25,6 +25,9 @@ struct RPGProfileView: View {
                         nextRankSection(vm)
                         lootBoxSection(vm)
                         attributesSection(vm)
+                        if let balance = vm.skillBalance {
+                            skillBalanceCard(balance)
+                        }
                         inventorySection(vm)
 
                         Spacer(minLength: 200)
@@ -46,6 +49,7 @@ struct RPGProfileView: View {
                 viewModel = RPGProfileViewModel(modelContainer: modelContext.container)
             }
             await viewModel?.loadData()
+            await viewModel?.loadSkillBalance()
         }
         .onReceive(NotificationCenter.default.publisher(for: .ikeruActiveProfileDidChange)) { _ in
             Task { await viewModel?.loadData() }
@@ -417,6 +421,39 @@ struct RPGProfileView: View {
                 .font(.ikeruStats)
                 .foregroundStyle(Color.ikeruTextSecondary)
                 .frame(width: 28, alignment: .trailing)
+        }
+    }
+
+    // MARK: - Skill Balance Card
+
+    @ViewBuilder
+    private func skillBalanceCard(_ balance: SkillBalanceSnapshot) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            BilingualLabel(japanese: "\u{6280}\u{80FD}", chrome: "Skill balance", mon: .asanoha)
+            HStack(alignment: .center, spacing: 16) {
+                SkillRadarView(skillBalance: balance, variant: .mini)
+                    .frame(width: 110, height: 110)
+                VStack(alignment: .leading, spacing: 6) {
+                    skillRow("Reading",   value: balance.reading)
+                    skillRow("Listening", value: balance.listening)
+                    skillRow("Writing",   value: balance.writing)
+                    skillRow("Speaking",  value: balance.speaking)
+                }
+                Spacer(minLength: 0)
+            }
+        }
+        .tatamiRoom(.standard, padding: 20)
+    }
+
+    private func skillRow(_ label: LocalizedStringKey, value: Double) -> some View {
+        HStack(spacing: 8) {
+            Text(label)
+                .font(.system(size: 12))
+                .foregroundStyle(Color.ikeruTextSecondary)
+            Spacer(minLength: 0)
+            Text("\(Int(min(1, max(0, value)) * 100))")
+                .font(.system(size: 12, design: .monospaced))
+                .foregroundStyle(Color.ikeruPrimaryAccent)
         }
     }
 
