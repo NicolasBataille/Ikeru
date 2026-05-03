@@ -10,7 +10,7 @@ import IkeruCore
 
 struct HintChip: View {
     let icon: String
-    let label: String
+    let label: LocalizedStringKey
     var action: (() -> Void)? = nil
 
     var body: some View {

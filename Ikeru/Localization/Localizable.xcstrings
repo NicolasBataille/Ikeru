@@ -1032,6 +1032,74 @@
         }
       }
     },
+    "DisplayMode.Suggestion.Accept": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Try it"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Essayer"
+          }
+        }
+      }
+    },
+    "DisplayMode.Suggestion.Body": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activate the Tatami interface — kanji throughout, romaji and translations hidden by default. A mode for confirmed learners. Adjustable any time in Settings."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Active l'interface Tatami — kanji partout, romaji et traductions masqués par défaut. Un mode pour les apprenants confirmés. Ajustable à tout moment dans Réglages."
+          }
+        }
+      }
+    },
+    "DisplayMode.Suggestion.Later": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Later"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plus tard"
+          }
+        }
+      }
+    },
+    "DisplayMode.Suggestion.Title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You're reading Japanese with ease now."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tu lis maintenant le japonais avec aisance."
+          }
+        }
+      }
+    },
     "Drill Due Words": {},
     "Duration": {
       "localizations": {
@@ -2726,6 +2794,74 @@
         }
       }
     },
+    "Settings.InterfaceTatami.HelpOff": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Designed for learners comfortable with Japanese."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conçu pour les apprenants à l'aise avec le japonais."
+          }
+        }
+      }
+    },
+    "Settings.InterfaceTatami.HelpOn": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "To return to beginner-friendly mode, turn this off."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pour revenir au mode beginner-friendly, désactive ici."
+          }
+        }
+      }
+    },
+    "Settings.InterfaceTatami.Subtitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kanji throughout, translations hidden"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kanji partout, traductions masquées"
+          }
+        }
+      }
+    },
+    "Settings.InterfaceTatami.Title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tatami interface"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Interface Tatami"
+          }
+        }
+      }
+    },
     "Shadowing exercises need microphone and speech recognition access to work. Please enable them in Settings.": {
       "localizations": {
         "en": {
@@ -3016,6 +3152,91 @@
           "stringUnit": {
             "state": "translated",
             "value": "En cours"
+          }
+        }
+      }
+    },
+    "Tab.Chat": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chat"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chat"
+          }
+        }
+      }
+    },
+    "Tab.Home": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Home"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Accueil"
+          }
+        }
+      }
+    },
+    "Tab.Rank": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rank"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rang"
+          }
+        }
+      }
+    },
+    "Tab.Settings": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Settings"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réglages"
+          }
+        }
+      }
+    },
+    "Tab.Study": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Study"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Étude"
           }
         }
       }
@@ -3691,223 +3912,88 @@
     "続ける": {},
     "続ける · ": {},
     "言語": {},
-    "Tab.Chat": {
+    "道": {},
+    "Card.Hint.Listen": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Chat"
+            "value": "Listen"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Chat"
+            "value": "Écouter"
           }
         }
       }
     },
-    "Tab.Study": {
+    "Card.Hint.Strokes": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Study"
+            "value": "Strokes"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Étude"
+            "value": "Tracés"
           }
         }
       }
     },
-    "Tab.Home": {
+    "Card.Hint.Example": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Home"
+            "value": "Example"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Accueil"
+            "value": "Exemple"
           }
         }
       }
     },
-    "Tab.Rank": {
+    "Card.Hint.Hint": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Rank"
+            "value": "Hint"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Rang"
+            "value": "Indice"
           }
         }
       }
     },
-    "Tab.Settings": {
+    "Card.Hint.Mark": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Settings"
+            "value": "Mark"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Réglages"
-          }
-        }
-      }
-    },
-    "Settings.InterfaceTatami.Title": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tatami interface"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Interface Tatami"
-          }
-        }
-      }
-    },
-    "Settings.InterfaceTatami.Subtitle": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Kanji throughout, translations hidden"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Kanji partout, traductions masquées"
-          }
-        }
-      }
-    },
-    "Settings.InterfaceTatami.HelpOff": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Designed for learners comfortable with Japanese."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Conçu pour les apprenants à l'aise avec le japonais."
-          }
-        }
-      }
-    },
-    "Settings.InterfaceTatami.HelpOn": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "To return to beginner-friendly mode, turn this off."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pour revenir au mode beginner-friendly, désactive ici."
-          }
-        }
-      }
-    },
-    "DisplayMode.Suggestion.Title": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "You're reading Japanese with ease now."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tu lis maintenant le japonais avec aisance."
-          }
-        }
-      }
-    },
-    "DisplayMode.Suggestion.Body": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Activate the Tatami interface — kanji throughout, romaji and translations hidden by default. A mode for confirmed learners. Adjustable any time in Settings."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Active l'interface Tatami — kanji partout, romaji et traductions masqués par défaut. Un mode pour les apprenants confirmés. Ajustable à tout moment dans Réglages."
-          }
-        }
-      }
-    },
-    "DisplayMode.Suggestion.Accept": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Try it"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Essayer"
-          }
-        }
-      }
-    },
-    "DisplayMode.Suggestion.Later": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Later"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Plus tard"
+            "value": "Marquer"
           }
         }
       }

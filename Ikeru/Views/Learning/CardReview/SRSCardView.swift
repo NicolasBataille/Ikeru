@@ -234,13 +234,13 @@ struct SRSCardView: View {
                 Spacer()
                 HStack(spacing: 8) {
                     if revealed {
-                        HintChip(icon: "ear", label: "Listen")
-                        HintChip(icon: "pencil.line", label: "Strokes")
-                        HintChip(icon: "text.bubble", label: "Example")
+                        HintChip(icon: "ear", label: "Card.Hint.Listen")
+                        HintChip(icon: "pencil.line", label: "Card.Hint.Strokes")
+                        HintChip(icon: "text.bubble", label: "Card.Hint.Example")
                     } else {
-                        HintChip(icon: "ear", label: "Listen")
-                        HintChip(icon: "eye", label: "Hint")
-                        HintChip(icon: "star", label: "Mark")
+                        HintChip(icon: "ear", label: "Card.Hint.Listen")
+                        HintChip(icon: "eye", label: "Card.Hint.Hint")
+                        HintChip(icon: "star", label: "Card.Hint.Mark")
                     }
                 }
                 .padding(.bottom, 6)
