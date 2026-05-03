@@ -26,11 +26,18 @@ struct ConversationView: View {
                     welcomeSection
                 } else {
                     messageList
+                        // Tap (not drag) anywhere on the message list dismisses
+                        // the keyboard so the user can scroll/read without it.
+                        .onTapGesture {
+                            UIApplication.shared.sendAction(
+                                #selector(UIResponder.resignFirstResponder),
+                                to: nil, from: nil, for: nil
+                            )
+                        }
                 }
 
                 if viewModel.isAIAvailable {
                     inputBar
-                        .padding(.bottom, 88) // Floating tab bar clearance
                 }
             }
         }
