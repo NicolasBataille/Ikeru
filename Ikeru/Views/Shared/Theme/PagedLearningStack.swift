@@ -1,7 +1,8 @@
 import SwiftUI
 import IkeruCore
 
-// MARK: - Pure-logic helper
+// MARK: - Pure-logic helper (retained for reference; unused since the pager
+// switched to a native ScrollView+.paging implementation below).
 //
 // Lives outside the view so it's unit-testable without bringing up SwiftUI.
 struct PagedLearningStackLogic {
@@ -44,80 +45,60 @@ struct PagedLearningStackLogic {
 
 // MARK: - PagedLearningStack
 //
-// Horizontal pager over a fixed array of pages. Active index is bound
-// externally so the surrounding tab bar can render the rail position.
-// While dragging, `liveOffsetFraction` reports a value in
-// `[0, pageCount-1]` for live rail interpolation.
+// Horizontal pager over a fixed array of pages. Backed by a native iOS 17
+// horizontal ScrollView with `.scrollTargetBehavior(.paging)` so the
+// UIScrollView gesture-priority logic applies: inner horizontal scrollers
+// (e.g. the kana preset bar) claim pans they can absorb; the parent pager
+// only takes pans when the inner scroller has nothing left to scroll.
+//
+// `liveOffsetFraction` is updated when the active page changes (snap, not
+// finger-tracked) — the kintsugi rail still animates smoothly between
+// indices via the tab bar's `matchedGeometryEffect`.
 
 struct PagedLearningStack<Content: View>: View {
 
     let pageCount: Int
     @Binding var activeIndex: Int
-    /// 0 ... pageCount-1, fractional during drag.
+    /// 0 ... pageCount-1. Updated post-snap when the active page changes.
     @Binding var liveOffsetFraction: CGFloat
     @ViewBuilder let content: (Int) -> Content
 
-    @State private var dragTranslation: CGFloat = 0
+    /// Local mirror that drives `scrollPosition(id:)`. Sync'd with
+    /// `activeIndex` in both directions via `.onChange`.
+    @State private var scrolledIndex: Int?
 
     var body: some View {
-        GeometryReader { proxy in
-            let width = proxy.size.width
-            let logic = PagedLearningStackLogic(width: width, pageCount: pageCount)
-            let damped = logic.rubberBandedOffset(
-                currentIndex: activeIndex,
-                dragTranslation: dragTranslation
-            )
-
-            HStack(spacing: 0) {
+        ScrollView(.horizontal, showsIndicators: false) {
+            LazyHStack(spacing: 0) {
                 ForEach(0..<pageCount, id: \.self) { index in
-                    if abs(index - activeIndex) <= 1 {
-                        content(index)
-                            .frame(width: width)
-                    } else {
-                        Color.clear.frame(width: width) // page placeholder
-                    }
+                    content(index)
+                        .containerRelativeFrame(.horizontal)
+                        .id(index)
                 }
             }
-            .frame(width: width * CGFloat(pageCount), alignment: .leading)
-            .offset(x: -CGFloat(activeIndex) * width + damped)
-            .contentShape(Rectangle())
-            // simultaneousGesture so the inner ScrollViews on each page keep
-            // their vertical pan, while horizontal-dominant drags still feed
-            // the pager. The `guard` below filters vertical-leaning drags
-            // and short, jittery drags inside inner horizontal scrollers
-            // (e.g. the kana preset bar) before the pager engages.
-            .simultaneousGesture(
-                DragGesture(minimumDistance: 14)
-                    .onChanged { value in
-                        let h = abs(value.translation.width)
-                        let v = abs(value.translation.height)
-                        // Require a real commitment to horizontal motion AND
-                        // a minimum sustained displacement before engaging.
-                        // The 26pt floor prevents inner horizontal scrollers
-                        // (kana preset bar, future carousels) from triggering
-                        // a tab change on incidental short flicks.
-                        guard h > v * 1.6, h > 26 else { return }
-                        dragTranslation = value.translation.width
-                        let fractional = CGFloat(activeIndex) - damped / width
-                        liveOffsetFraction = fractional
-                    }
-                    .onEnded { value in
-                        let predicted = value.predictedEndTranslation.width - value.translation.width
-                        let next = logic.commit(
-                            currentIndex: activeIndex,
-                            dragTranslation: value.translation.width,
-                            velocity: predicted
-                        )
-                        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                            activeIndex = next
-                            dragTranslation = 0
-                            liveOffsetFraction = CGFloat(next)
-                        }
-                    }
-            )
-            .onChange(of: activeIndex) { _, new in
+            .scrollTargetLayout()
+        }
+        .scrollTargetBehavior(.paging)
+        .scrollPosition(id: $scrolledIndex)
+        .scrollClipDisabled()
+        .onAppear {
+            if scrolledIndex == nil {
+                scrolledIndex = activeIndex
+                liveOffsetFraction = CGFloat(activeIndex)
+            }
+        }
+        .onChange(of: activeIndex) { _, new in
+            // External selection (tap on a tab cell) → scroll to that page.
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                scrolledIndex = new
                 liveOffsetFraction = CGFloat(new)
             }
+        }
+        .onChange(of: scrolledIndex) { _, new in
+            // User-driven scroll → propagate to external binding.
+            guard let new, new != activeIndex else { return }
+            activeIndex = new
+            liveOffsetFraction = CGFloat(new)
         }
     }
 }
