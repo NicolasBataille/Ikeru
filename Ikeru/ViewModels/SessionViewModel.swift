@@ -169,20 +169,32 @@ public final class SessionViewModel {
     // MARK: - Dependencies
 
     private let plannerService: PlannerService
+    private let sessionPlanner: any SessionPlanner
+    private let unlockService: any ExerciseUnlockService
     private let cardRepository: CardRepository
     private let modelContainer: ModelContainer
     private let liveActivityManager = LiveActivityManager()
     private var cardStartTime: Date = Date()
     private var timerTask: Task<Void, Never>?
 
+    /// User-tunable target session duration (minutes). Read from `@AppStorage`
+    /// so changes in Settings reflect immediately without rebuilding the VM.
+    @ObservationIgnored
+    @AppStorage("ikeru.session.defaultDurationMinutes")
+    private var defaultDurationMinutes: Int = 15
+
     // MARK: - Init
 
     public init(
         plannerService: PlannerService,
         cardRepository: CardRepository,
-        modelContainer: ModelContainer
+        modelContainer: ModelContainer,
+        sessionPlanner: any SessionPlanner = DefaultSessionPlanner(),
+        unlockService: any ExerciseUnlockService = DefaultExerciseUnlockService()
     ) {
         self.plannerService = plannerService
+        self.sessionPlanner = sessionPlanner
+        self.unlockService = unlockService
         self.cardRepository = cardRepository
         self.modelContainer = modelContainer
     }
@@ -213,15 +225,37 @@ public final class SessionViewModel {
         elapsedTime = 0
     }
 
-    /// Composes a session queue via PlannerService and starts the session.
+    /// Composes a session queue via the new `SessionPlanner` pipeline and
+    /// starts the session. Builds a `LearnerSnapshot` from the live card
+    /// pool, resolves unlocked exercise types, and asks the planner for a
+    /// home-recommendation plan tuned to `defaultDurationMinutes`.
     public func startSession() async {
-        let queue = await plannerService.composeSession()
-        sessionQueue = queue
-        resetSessionState()
-        estimatedCardCount = queue.count
+        let cards = await cardRepository.allCards()
+        let snapshot = await buildSnapshot(cards: cards)
+        let unlockedTypes = unlockService.unlockedTypes(profile: snapshot)
+        let inputs = SessionPlannerInputs(
+            source: .homeRecommendation,
+            durationMinutes: defaultDurationMinutes,
+            profile: snapshot,
+            unlockedTypes: unlockedTypes,
+            availableCards: cards
+        )
+        let plan = await sessionPlanner.compose(inputs: inputs)
 
-        // Build exercise list from cards (each card is an SRS review)
-        sessionExercises = queue.map { .srsReview($0) }
+        // Extract CardDTOs from SRS review exercises for the swipeable queue.
+        // Non-SRS exercises (variety / new content tiles) are still tracked
+        // in `sessionExercises` so immersive mode can render them.
+        let srsCards = plan.exercises.compactMap { exercise -> CardDTO? in
+            if case .srsReview(let card) = exercise { return card }
+            return nil
+        }
+
+        sessionQueue = srsCards
+        resetSessionState()
+        estimatedCardCount = plan.exercises.count
+
+        // Store full exercise list for immersive mode.
+        sessionExercises = plan.exercises
 
         // Start timer
         startTimer()
@@ -230,9 +264,11 @@ public final class SessionViewModel {
         await loadRPGState()
 
         // Start Live Activity for Dynamic Island
-        liveActivityManager.startActivity(totalExercises: queue.count)
+        liveActivityManager.startActivity(totalExercises: plan.exercises.count)
 
-        Logger.ui.info("Session started with \(queue.count) cards")
+        Logger.ui.info(
+            "Session started via SessionPlanner: \(plan.exercises.count) exercises (\(srsCards.count) SRS), ~\(plan.estimatedDurationMinutes)min"
+        )
     }
 
     /// Computes a session preview without starting the session.
@@ -726,6 +762,37 @@ public final class SessionViewModel {
             state.addLootBox(box)
             Logger.rpg.info("Lootbox persisted: \(box.challengeType.displayName)")
         }
+    }
+
+    // MARK: - Learner Snapshot
+
+    /// Builds a `LearnerSnapshot` from the current card pool + active
+    /// profile state. Pure delegation to `LearnerSnapshotBuilder.build(...)`
+    /// — no side effects beyond reading the active RPG state for the
+    /// `lastSessionAt` timestamp.
+    ///
+    /// Currently passes `0`/`empty` for fields the app does not yet
+    /// track (grammar mastery, listening accuracy/recall, skill
+    /// balances). These will be wired up as the supporting services land.
+    private func buildSnapshot(cards: [CardDTO]) async -> LearnerSnapshot {
+        let now = Date()
+        let progressService = ProgressService(cardRepository: cardRepository)
+        let progress = await progressService.loadDashboardData(now: now)
+        let jlptLevel = JLPTLevel(rawValue: progress.jlptEstimate.level.lowercased()) ?? .n5
+        let lastSession = ActiveProfileResolver
+            .fetchActiveRPGState(in: modelContainer.mainContext)?
+            .lastSessionDate
+        return LearnerSnapshotBuilder.build(
+            cards: cards,
+            jlptLevel: jlptLevel,
+            grammarPointsFamiliarPlus: 0,
+            listeningAccuracyLast30: 0,
+            listeningRecallLast30Days: 0,
+            skillBalances: [:],
+            hasNewContentQueued: cards.contains(where: { $0.fsrsState.reps == 0 }),
+            lastSessionAt: lastSession,
+            now: now
+        )
     }
 
 }
