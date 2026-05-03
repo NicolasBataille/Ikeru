@@ -35,6 +35,11 @@ struct SettingsView: View {
     @AppStorage("ikeru.weeklyCheckIn.day") private var weeklyCheckInDay = 1
     @AppStorage("ikeru.weeklyCheckIn.hour") private var weeklyCheckInHour = 10
 
+    // MARK: Session
+
+    /// Default session length in minutes — Home CTA + Étude → Compose initial value.
+    @AppStorage("ikeru.session.defaultDurationMinutes") private var defaultDurationMinutes = 15
+
     // MARK: Backup
 
     @StateObject private var backupManager = CloudBackupManager()
