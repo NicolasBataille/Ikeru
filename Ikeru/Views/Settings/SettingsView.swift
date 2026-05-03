@@ -663,10 +663,10 @@ struct SettingsView: View {
         .disabled(action == nil)
     }
 
-    /// Settings row with a real on/off Toggle on the right and an optional
-    /// inline trailing block (e.g. value-pickers shown only when enabled).
-    /// The Toggle is the source of truth for ON/OFF; the rest of the row
-    /// is read-only — no implicit tap toggles.
+    /// Settings row with a custom Tatami on/off toggle on the right and
+    /// an optional inline trailing block (value-pickers shown only when
+    /// enabled). Toggle is the source of truth for ON/OFF; tap on inner
+    /// menu values opens their respective pickers without firing toggle.
     private func reminderToggleRow<Trailing: View>(
         jp: String,
         label: LocalizedStringKey,
@@ -674,37 +674,34 @@ struct SettingsView: View {
         onToggleChange: @escaping (Bool) -> Void,
         @ViewBuilder trailing: () -> Trailing
     ) -> some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 10) {
             Text(jp)
                 .font(.system(size: 13, design: .serif))
                 .foregroundStyle(TatamiTokens.paperGhost)
+                .lineLimit(1)
+                .fixedSize(horizontal: true, vertical: false)
             Text(label)
                 .font(.system(size: 13))
                 .foregroundStyle(Color.ikeruTextPrimary)
                 .lineLimit(1)
-                .layoutPriority(0)
-            Spacer(minLength: 8)
+                .layoutPriority(1)
+                .fixedSize(horizontal: true, vertical: false)
+            Spacer(minLength: 4)
             if isOn.wrappedValue {
                 trailing()
+                    .padding(.trailing, 4)
             }
-            Toggle("", isOn: isOn)
-                .labelsHidden()
-                .tint(Color.ikeruPrimaryAccent)
-                .scaleEffect(0.85)
-                .frame(width: 44, alignment: .trailing)
-                .onChange(of: isOn.wrappedValue) { _, new in
-                    onToggleChange(new)
-                }
+            TatamiToggle(isOn: isOn, onChange: onToggleChange)
         }
-        .padding(.horizontal, 16).padding(.vertical, 10)
+        .padding(.horizontal, 16).padding(.vertical, 12)
         .overlay(alignment: .bottom) {
             Rectangle().fill(TatamiTokens.goldDim.opacity(0.2))
                 .frame(height: 1).padding(.horizontal, 16)
         }
     }
 
-    /// Inline hour menu — gold value text with no extra chevron. Tap to
-    /// reveal a native menu of 24 hours.
+    /// Inline hour menu — gold value + small ▾ hint that the cell opens a
+    /// list. Tap reveals a native menu of 24 hours.
     private func inlineHourPicker(
         selected: Binding<Int>,
         onChange: @escaping (Int) -> Void
@@ -717,16 +714,22 @@ struct SettingsView: View {
                 }
             }
         } label: {
-            Text(String(format: "%02d:00", selected.wrappedValue))
-                .font(.system(size: 13, design: .serif))
-                .foregroundStyle(Color.ikeruPrimaryAccent)
-                .lineLimit(1)
-                .fixedSize(horizontal: true, vertical: false)
+            HStack(spacing: 3) {
+                Text(String(format: "%02d:00", selected.wrappedValue))
+                    .font(.system(size: 13, design: .serif))
+                    .foregroundStyle(Color.ikeruPrimaryAccent)
+                Text("\u{25BE}") // ▾
+                    .font(.system(size: 9))
+                    .foregroundStyle(TatamiTokens.goldDim)
+            }
+            .lineLimit(1)
+            .fixedSize(horizontal: true, vertical: false)
         }
     }
 
-    /// Inline weekday menu (1=Sunday … 7=Saturday) with localized short
-    /// names (Mon/Tue/… or Lun./Mar./…). Gold value text, no chevron.
+    /// Inline weekday menu (1=Sunday … 7=Saturday). Localized short names
+    /// inline on the cell (Mon/Tue/… or Lun./Mar./…), full names inside
+    /// the dropdown. Same ▾ list-hint as `inlineHourPicker`.
     private func inlineWeekdayPicker(
         selected: Binding<Int>,
         onChange: @escaping (Int) -> Void
@@ -739,11 +742,16 @@ struct SettingsView: View {
                 }
             }
         } label: {
-            Text(shortWeekdayName(selected.wrappedValue))
-                .font(.system(size: 13, design: .serif))
-                .foregroundStyle(Color.ikeruPrimaryAccent)
-                .lineLimit(1)
-                .fixedSize(horizontal: true, vertical: false)
+            HStack(spacing: 3) {
+                Text(shortWeekdayName(selected.wrappedValue))
+                    .font(.system(size: 13, design: .serif))
+                    .foregroundStyle(Color.ikeruPrimaryAccent)
+                Text("\u{25BE}") // ▾
+                    .font(.system(size: 9))
+                    .foregroundStyle(TatamiTokens.goldDim)
+            }
+            .lineLimit(1)
+            .fixedSize(horizontal: true, vertical: false)
         }
     }
 
