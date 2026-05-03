@@ -18,14 +18,42 @@ struct SessionViewModelTests {
         return try ModelContainer(for: schema, configurations: [config])
     }
 
-    private func makeViewModel(container: ModelContainer) -> SessionViewModel {
+    /// Constructs a `SessionViewModel` whose composition is driven by a
+    /// `MockSessionPlanner`. The mock's plan defaults to `.empty`; tests
+    /// that need a deterministic queue should call `plannerWithSeededCards(...)`
+    /// to populate it before invoking `startSession`.
+    private func makeViewModel(
+        container: ModelContainer,
+        sessionPlanner: any SessionPlanner = MockSessionPlanner()
+    ) -> SessionViewModel {
         let repo = CardRepository(modelContainer: container)
         let planner = PlannerService(cardRepository: repo)
         return SessionViewModel(
             plannerService: planner,
             cardRepository: repo,
-            modelContainer: container
+            modelContainer: container,
+            sessionPlanner: sessionPlanner
         )
+    }
+
+    /// Builds a `MockSessionPlanner` that returns a plan composed of exactly
+    /// the SRS reviews for the cards already seeded in `container`. Tests use
+    /// this so the queue shape is independent of `DefaultSessionPlanner`'s
+    /// 40/30/20/10 budget composition (which adds variety / new-content
+    /// tiles whose count tests don't control).
+    private func plannerWithSeededCards(
+        container: ModelContainer
+    ) async -> MockSessionPlanner {
+        let repo = CardRepository(modelContainer: container)
+        let cards = await repo.allCards()
+        let exercises = cards.map { ExerciseItem.srsReview($0) }
+        let planner = MockSessionPlanner()
+        planner.plan = SessionPlan(
+            exercises: exercises,
+            estimatedDurationMinutes: max(1, exercises.count / 3),
+            exerciseBreakdown: [.reading: exercises.count]
+        )
+        return planner
     }
 
     /// Returns the active profile, creating one (and persisting its id)
@@ -41,6 +69,22 @@ struct SessionViewModelTests {
         try context.save()
         ActiveProfileResolver.setActiveProfileID(profile.id)
         return profile
+    }
+
+    /// Marks the active profile's RPGState as "already had a session today"
+    /// so `SessionBonusService.evaluate` returns `bonusXP == 0` when the test
+    /// session reaches `finalizeSession`. Use in tests that grade every card
+    /// (so the session completes) and assert on raw per-card XP values.
+    /// Without this, the first-session-of-day bonus (+30 XP) inflates
+    /// `xpEarned`/`totalXP` and breaks fine-grained XP assertions.
+    private func suppressFirstSessionBonus(container: ModelContainer) throws {
+        let context = container.mainContext
+        _ = try ensureProfile(container: container)
+        guard let state = ActiveProfileResolver.fetchActiveRPGState(in: context) else {
+            return
+        }
+        state.lastSessionDate = Date()
+        try context.save()
     }
 
     private func seedDueCards(container: ModelContainer, count: Int) throws -> [UUID] {
@@ -68,7 +112,8 @@ struct SessionViewModelTests {
     func startSessionSetsActive() async throws {
         let container = try makeContainer()
         _ = try seedDueCards(container: container, count: 3)
-        let vm = makeViewModel(container: container)
+        let planner = await plannerWithSeededCards(container: container)
+        let vm = makeViewModel(container: container, sessionPlanner: planner)
 
         await vm.startSession()
 
@@ -99,7 +144,8 @@ struct SessionViewModelTests {
     func gradeAndAdvanceAdvances() async throws {
         let container = try makeContainer()
         _ = try seedDueCards(container: container, count: 3)
-        let vm = makeViewModel(container: container)
+        let planner = await plannerWithSeededCards(container: container)
+        let vm = makeViewModel(container: container, sessionPlanner: planner)
 
         await vm.startSession()
         let firstCardId = vm.currentCard?.id
@@ -111,59 +157,69 @@ struct SessionViewModelTests {
         #expect(vm.reviewedCount == 1)
     }
 
-    @Test("gradeAndAdvance earns 10 XP for good grade")
-    func gradeGoodEarns10XP() async throws {
+    @Test("gradeAndAdvance earns flat XP for good grade")
+    func gradeGoodEarnsFlatXP() async throws {
         let container = try makeContainer()
         _ = try seedDueCards(container: container, count: 1)
-        let vm = makeViewModel(container: container)
+        try suppressFirstSessionBonus(container: container)
+        let planner = await plannerWithSeededCards(container: container)
+        let vm = makeViewModel(container: container, sessionPlanner: planner)
 
         await vm.startSession()
         await vm.gradeAndAdvance(grade: .good)
 
-        #expect(vm.xpEarned == 10)
+        #expect(vm.xpEarned == RPGConstants.xpForGrade(.good))
     }
 
-    @Test("gradeAndAdvance earns 10 XP for easy grade")
-    func gradeEasyEarns10XP() async throws {
+    @Test("gradeAndAdvance earns flat XP for easy grade")
+    func gradeEasyEarnsFlatXP() async throws {
         let container = try makeContainer()
         _ = try seedDueCards(container: container, count: 1)
-        let vm = makeViewModel(container: container)
+        try suppressFirstSessionBonus(container: container)
+        let planner = await plannerWithSeededCards(container: container)
+        let vm = makeViewModel(container: container, sessionPlanner: planner)
 
         await vm.startSession()
         await vm.gradeAndAdvance(grade: .easy)
 
-        #expect(vm.xpEarned == 10)
+        #expect(vm.xpEarned == RPGConstants.xpForGrade(.easy))
     }
 
-    @Test("gradeAndAdvance earns 5 XP for hard grade")
-    func gradeHardEarns5XP() async throws {
+    @Test("gradeAndAdvance earns flat XP for hard grade")
+    func gradeHardEarnsFlatXP() async throws {
         let container = try makeContainer()
         _ = try seedDueCards(container: container, count: 1)
-        let vm = makeViewModel(container: container)
+        try suppressFirstSessionBonus(container: container)
+        let planner = await plannerWithSeededCards(container: container)
+        let vm = makeViewModel(container: container, sessionPlanner: planner)
 
         await vm.startSession()
         await vm.gradeAndAdvance(grade: .hard)
 
-        #expect(vm.xpEarned == 5)
+        #expect(vm.xpEarned == RPGConstants.xpForGrade(.hard))
     }
 
-    @Test("gradeAndAdvance earns 2 XP for again grade")
-    func gradeAgainEarns2XP() async throws {
+    @Test("gradeAndAdvance earns reduced XP for again grade")
+    func gradeAgainEarnsReducedXP() async throws {
         let container = try makeContainer()
         _ = try seedDueCards(container: container, count: 1)
-        let vm = makeViewModel(container: container)
+        try suppressFirstSessionBonus(container: container)
+        let planner = await plannerWithSeededCards(container: container)
+        let vm = makeViewModel(container: container, sessionPlanner: planner)
 
         await vm.startSession()
         await vm.gradeAndAdvance(grade: .again)
 
-        #expect(vm.xpEarned == 2)
+        #expect(vm.xpEarned == RPGConstants.xpForGrade(.again))
     }
 
     @Test("Session completes when all cards graded")
     func sessionCompletesWhenAllGraded() async throws {
         let container = try makeContainer()
         _ = try seedDueCards(container: container, count: 2)
-        let vm = makeViewModel(container: container)
+        try suppressFirstSessionBonus(container: container)
+        let planner = await plannerWithSeededCards(container: container)
+        let vm = makeViewModel(container: container, sessionPlanner: planner)
 
         await vm.startSession()
         await vm.gradeAndAdvance(grade: .good)
@@ -172,14 +228,15 @@ struct SessionViewModelTests {
         #expect(vm.isSessionComplete == true)
         #expect(vm.currentCard == nil)
         #expect(vm.reviewedCount == 2)
-        #expect(vm.xpEarned == 20) // 10 + 10
+        #expect(vm.xpEarned == 2 * RPGConstants.xpForGrade(.good))
     }
 
     @Test("Session progress tracks correctly")
     func sessionProgressTracks() async throws {
         let container = try makeContainer()
         _ = try seedDueCards(container: container, count: 4)
-        let vm = makeViewModel(container: container)
+        let planner = await plannerWithSeededCards(container: container)
+        let vm = makeViewModel(container: container, sessionPlanner: planner)
 
         await vm.startSession()
         #expect(vm.sessionProgress == 0.0)
@@ -197,7 +254,8 @@ struct SessionViewModelTests {
     func pauseSessionSetsFlag() async throws {
         let container = try makeContainer()
         _ = try seedDueCards(container: container, count: 2)
-        let vm = makeViewModel(container: container)
+        let planner = await plannerWithSeededCards(container: container)
+        let vm = makeViewModel(container: container, sessionPlanner: planner)
 
         await vm.startSession()
         vm.pauseSession()
@@ -209,7 +267,8 @@ struct SessionViewModelTests {
     func resumeSessionClearsFlag() async throws {
         let container = try makeContainer()
         _ = try seedDueCards(container: container, count: 2)
-        let vm = makeViewModel(container: container)
+        let planner = await plannerWithSeededCards(container: container)
+        let vm = makeViewModel(container: container, sessionPlanner: planner)
 
         await vm.startSession()
         vm.pauseSession()
@@ -222,7 +281,8 @@ struct SessionViewModelTests {
     func pauseResumePreservesState() async throws {
         let container = try makeContainer()
         _ = try seedDueCards(container: container, count: 3)
-        let vm = makeViewModel(container: container)
+        let planner = await plannerWithSeededCards(container: container)
+        let vm = makeViewModel(container: container, sessionPlanner: planner)
 
         await vm.startSession()
         await vm.gradeAndAdvance(grade: .good) // Review first card
@@ -246,7 +306,8 @@ struct SessionViewModelTests {
     func endSessionWithPartialProgress() async throws {
         let container = try makeContainer()
         _ = try seedDueCards(container: container, count: 5)
-        let vm = makeViewModel(container: container)
+        let planner = await plannerWithSeededCards(container: container)
+        let vm = makeViewModel(container: container, sessionPlanner: planner)
 
         await vm.startSession()
         await vm.gradeAndAdvance(grade: .good)
@@ -256,7 +317,7 @@ struct SessionViewModelTests {
 
         #expect(vm.isSessionComplete == true)
         #expect(vm.reviewedCount == 2) // Only 2 were actually reviewed
-        #expect(vm.xpEarned == 20) // 10 + 10
+        #expect(vm.xpEarned == 2 * RPGConstants.xpForGrade(.good))
     }
 
     // MARK: - Dismiss Tests
@@ -265,7 +326,8 @@ struct SessionViewModelTests {
     func dismissSessionResetsState() async throws {
         let container = try makeContainer()
         _ = try seedDueCards(container: container, count: 3)
-        let vm = makeViewModel(container: container)
+        let planner = await plannerWithSeededCards(container: container)
+        let vm = makeViewModel(container: container, sessionPlanner: planner)
 
         await vm.startSession()
         await vm.gradeAndAdvance(grade: .good)
@@ -284,7 +346,8 @@ struct SessionViewModelTests {
     func nextCardPeek() async throws {
         let container = try makeContainer()
         _ = try seedDueCards(container: container, count: 3)
-        let vm = makeViewModel(container: container)
+        let planner = await plannerWithSeededCards(container: container)
+        let vm = makeViewModel(container: container, sessionPlanner: planner)
 
         await vm.startSession()
 
@@ -297,7 +360,8 @@ struct SessionViewModelTests {
     func nextCardNilOnLastCard() async throws {
         let container = try makeContainer()
         _ = try seedDueCards(container: container, count: 2)
-        let vm = makeViewModel(container: container)
+        let planner = await plannerWithSeededCards(container: container)
+        let vm = makeViewModel(container: container, sessionPlanner: planner)
 
         await vm.startSession()
         await vm.gradeAndAdvance(grade: .good)
@@ -313,20 +377,24 @@ struct SessionViewModelTests {
     func gradeAndAdvanceUpdatesTotalXP() async throws {
         let container = try makeContainer()
         _ = try seedDueCards(container: container, count: 1)
-        let vm = makeViewModel(container: container)
+        try suppressFirstSessionBonus(container: container)
+        let planner = await plannerWithSeededCards(container: container)
+        let vm = makeViewModel(container: container, sessionPlanner: planner)
 
         await vm.startSession()
         #expect(vm.totalXP == 0)
 
         await vm.gradeAndAdvance(grade: .good)
-        #expect(vm.totalXP == 10)
+        #expect(vm.totalXP == RPGConstants.xpForGrade(.good))
     }
 
     @Test("gradeAndAdvance persists RPG state to SwiftData")
     func gradeAndAdvancePersistsRPGState() async throws {
         let container = try makeContainer()
         _ = try seedDueCards(container: container, count: 1)
-        let vm = makeViewModel(container: container)
+        try suppressFirstSessionBonus(container: container)
+        let planner = await plannerWithSeededCards(container: container)
+        let vm = makeViewModel(container: container, sessionPlanner: planner)
 
         await vm.startSession()
         await vm.gradeAndAdvance(grade: .good)
@@ -335,14 +403,15 @@ struct SessionViewModelTests {
         let descriptor = FetchDescriptor<RPGState>()
         let states = try container.mainContext.fetch(descriptor)
         #expect(states.count == 1)
-        #expect(states.first?.xp == 10)
+        #expect(states.first?.xp == RPGConstants.xpForGrade(.good))
     }
 
     @Test("startSession creates RPGState if none exists")
     func startSessionCreatesRPGState() async throws {
         let container = try makeContainer()
         _ = try seedDueCards(container: container, count: 1)
-        let vm = makeViewModel(container: container)
+        let planner = await plannerWithSeededCards(container: container)
+        let vm = makeViewModel(container: container, sessionPlanner: planner)
 
         await vm.startSession()
 
@@ -357,15 +426,38 @@ struct SessionViewModelTests {
     func xpAccumulatesAcrossGrades() async throws {
         let container = try makeContainer()
         _ = try seedDueCards(container: container, count: 3)
-        let vm = makeViewModel(container: container)
+        try suppressFirstSessionBonus(container: container)
+        let planner = await plannerWithSeededCards(container: container)
+        let vm = makeViewModel(container: container, sessionPlanner: planner)
 
         await vm.startSession()
-        await vm.gradeAndAdvance(grade: .good)  // +10
-        await vm.gradeAndAdvance(grade: .hard)   // +5
-        await vm.gradeAndAdvance(grade: .again)  // +2
+        await vm.gradeAndAdvance(grade: .good)
+        await vm.gradeAndAdvance(grade: .hard)
+        await vm.gradeAndAdvance(grade: .again)
 
-        #expect(vm.xpEarned == 17)
-        #expect(vm.totalXP == 17)
+        let expected = RPGConstants.xpForGrade(.good)
+            + RPGConstants.xpForGrade(.hard)
+            + RPGConstants.xpForGrade(.again)
+        #expect(vm.xpEarned == expected)
+        #expect(vm.totalXP == expected)
     }
 
+}
+
+// MARK: - Test Doubles
+
+/// Test-only `SessionPlanner` that returns a fixed `SessionPlan` regardless
+/// of inputs. Lets tests assert against a deterministic queue shape without
+/// being coupled to `DefaultSessionPlanner`'s 40/30/20/10 budget composition
+/// (which adds variety / new-content tiles whose count is not under the
+/// individual test's control).
+final class MockSessionPlanner: SessionPlanner, @unchecked Sendable {
+
+    /// Plan returned by `compose(...)`. Defaults to `.empty`; configure
+    /// before `startSession()` to drive a specific scenario.
+    var plan: SessionPlan = .empty
+
+    func compose(inputs: SessionPlannerInputs) async -> SessionPlan {
+        plan
+    }
 }
