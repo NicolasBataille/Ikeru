@@ -43,6 +43,11 @@ struct CompanionTabView: View {
             initializeViewModel()
             await refreshAIAvailability()
         }
+        // Re-probe each time the tab becomes visible so settings changes
+        // (e.g., user just deleted a provider key) are reflected immediately.
+        .onAppear {
+            Task { await refreshAIAvailability() }
+        }
         .fullScreenCover(isPresented: $showConversation) {
             if let viewModel {
                 NavigationStack {
