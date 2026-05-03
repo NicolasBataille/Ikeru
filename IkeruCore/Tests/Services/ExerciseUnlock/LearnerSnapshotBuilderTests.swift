@@ -8,10 +8,10 @@ struct LearnerSnapshotBuilderTests {
     @Test("Builds vocab + kanji familiar+ counts from cards")
     func vocabKanjiCounts() {
         let cards = [
-            fixture(type: .vocabulary, stability: 8.0, reps: 3),                    // familiar
-            fixture(type: .vocabulary, stability: 0.5, reps: 1),                    // learning (excluded)
-            fixture(type: .kanji, front: "\u{4E00}", stability: 30.0, reps: 5),     // mastered
-            fixture(type: .kanji, front: "\u{4E8C}", stability: 8.0, reps: 4),      // familiar
+            fixture(type: .vocabulary, front: "vocab1", stability: 8.0, reps: 3),     // familiar
+            fixture(type: .vocabulary, front: "vocab2", stability: 0.5, reps: 1),     // learning (excluded)
+            fixture(type: .kanji, front: "\u{4E00}", stability: 30.0, reps: 5),       // mastered
+            fixture(type: .kanji, front: "\u{4E8C}", stability: 8.0, reps: 4),        // familiar
         ]
         let s = LearnerSnapshotBuilder.build(
             cards: cards,
@@ -28,12 +28,120 @@ struct LearnerSnapshotBuilderTests {
         #expect(s.kanjiMasteredFamiliarPlus == 2)
     }
 
-    @Test("Detects hiragana mastery when all 46 syllabary cards are familiar+")
+    @Test("hiraganaMastered flips only when all 46 base kana are familiar+ (vocab cards)")
     func hiraganaDetection() {
-        let allHiragana = "あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん"
-        var cards: [CardDTO] = []
+        let allHiragana = Array("あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん")
+        #expect(allHiragana.count == 46)
+
+        // 45 of 46 — gate must NOT flip.
+        var fortyFiveCards: [CardDTO] = []
+        for ch in allHiragana.prefix(45) {
+            fortyFiveCards.append(fixture(type: .vocabulary, front: String(ch), stability: 8.0, reps: 4))
+        }
+        #expect(fortyFiveCards.count == 45)
+
+        let sFortyFive = LearnerSnapshotBuilder.build(
+            cards: fortyFiveCards,
+            jlptLevel: .n5,
+            grammarPointsFamiliarPlus: 0,
+            listeningAccuracyLast30: 0,
+            listeningRecallLast30Days: 0,
+            skillBalances: [:],
+            hasNewContentQueued: false,
+            lastSessionAt: nil,
+            now: Date()
+        )
+        #expect(sFortyFive.hiraganaMastered == false)
+
+        // All 46 — gate must flip true. Match production seeding (`.vocabulary`).
+        var fortySixCards: [CardDTO] = []
         for ch in allHiragana {
-            cards.append(fixture(type: .kanji, front: String(ch), stability: 8.0, reps: 4))
+            fortySixCards.append(fixture(type: .vocabulary, front: String(ch), stability: 8.0, reps: 4))
+        }
+        #expect(fortySixCards.count == 46)
+
+        let sFortySix = LearnerSnapshotBuilder.build(
+            cards: fortySixCards,
+            jlptLevel: .n5,
+            grammarPointsFamiliarPlus: 0,
+            listeningAccuracyLast30: 0,
+            listeningRecallLast30Days: 0,
+            skillBalances: [:],
+            hasNewContentQueued: false,
+            lastSessionAt: nil,
+            now: Date()
+        )
+        #expect(sFortySix.hiraganaMastered)
+        #expect(sFortySix.katakanaMastered == false)
+    }
+
+    @Test("katakanaMastered flips only when all 46 base kana are familiar+ (vocab cards)")
+    func katakanaDetection() {
+        let allKatakana = Array("アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン")
+        #expect(allKatakana.count == 46)
+
+        // 45 of 46 — gate must NOT flip.
+        var fortyFiveCards: [CardDTO] = []
+        for ch in allKatakana.prefix(45) {
+            fortyFiveCards.append(fixture(type: .vocabulary, front: String(ch), stability: 8.0, reps: 4))
+        }
+
+        let sFortyFive = LearnerSnapshotBuilder.build(
+            cards: fortyFiveCards,
+            jlptLevel: .n5,
+            grammarPointsFamiliarPlus: 0,
+            listeningAccuracyLast30: 0,
+            listeningRecallLast30Days: 0,
+            skillBalances: [:],
+            hasNewContentQueued: false,
+            lastSessionAt: nil,
+            now: Date()
+        )
+        #expect(sFortyFive.katakanaMastered == false)
+
+        // All 46.
+        var fortySixCards: [CardDTO] = []
+        for ch in allKatakana {
+            fortySixCards.append(fixture(type: .vocabulary, front: String(ch), stability: 8.0, reps: 4))
+        }
+
+        let sFortySix = LearnerSnapshotBuilder.build(
+            cards: fortySixCards,
+            jlptLevel: .n5,
+            grammarPointsFamiliarPlus: 0,
+            listeningAccuracyLast30: 0,
+            listeningRecallLast30Days: 0,
+            skillBalances: [:],
+            hasNewContentQueued: false,
+            lastSessionAt: nil,
+            now: Date()
+        )
+        #expect(sFortySix.katakanaMastered)
+        #expect(sFortySix.hiraganaMastered == false)
+    }
+
+    @Test("Dakuten / voiced kana don't count toward base 46 mastery")
+    func dakutenDoesNotCountTowardKana() {
+        // 40 base hiragana + 6 dakuten (が ぎ ぐ げ ご ざ) = 46 cards total,
+        // but only 40 of the base 46 are mastered → gate must NOT flip.
+        let baseFronts = Array("あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらり") // 40 chars
+        #expect(baseFronts.count == 40)
+
+        let dakutenFronts: [String] = [
+            "\u{304C}", // が
+            "\u{304E}", // ぎ
+            "\u{3050}", // ぐ
+            "\u{3052}", // げ
+            "\u{3054}", // ご
+            "\u{3056}", // ざ
+        ]
+
+        var cards: [CardDTO] = []
+        for ch in baseFronts {
+            cards.append(fixture(type: .vocabulary, front: String(ch), stability: 8.0, reps: 4))
+        }
+        for front in dakutenFronts {
+            cards.append(fixture(type: .vocabulary, front: front, stability: 8.0, reps: 4))
         }
         #expect(cards.count == 46)
 
@@ -48,7 +156,27 @@ struct LearnerSnapshotBuilderTests {
             lastSessionAt: nil,
             now: Date()
         )
-        #expect(s.hiraganaMastered)
+        #expect(s.hiraganaMastered == false)
+    }
+
+    @Test("kanjiMasteredFamiliarPlus counts only true kanji (not kana, not vocab)")
+    func kanjiCountsTrueKanjiOnly() {
+        let cards = [
+            fixture(type: .kanji, front: "\u{4E00}", stability: 8.0, reps: 4), // 一 — true kanji
+        ]
+        let s = LearnerSnapshotBuilder.build(
+            cards: cards,
+            jlptLevel: .n5,
+            grammarPointsFamiliarPlus: 0,
+            listeningAccuracyLast30: 0,
+            listeningRecallLast30Days: 0,
+            skillBalances: [:],
+            hasNewContentQueued: false,
+            lastSessionAt: nil,
+            now: Date()
+        )
+        #expect(s.kanjiMasteredFamiliarPlus == 1)
+        #expect(s.hiraganaMastered == false)
         #expect(s.katakanaMastered == false)
     }
 
@@ -72,6 +200,12 @@ struct LearnerSnapshotBuilderTests {
             now: now
         )
         #expect(s.dueCardCount == 2)
+    }
+
+    @Test("Base-kana constant sets contain exactly 46 characters each")
+    func boundsConstants() {
+        #expect(LearnerSnapshotBuilder.baseHiragana.count == 46)
+        #expect(LearnerSnapshotBuilder.baseKatakana.count == 46)
     }
 
     /// Mirrors the actual `CardDTO` init in
