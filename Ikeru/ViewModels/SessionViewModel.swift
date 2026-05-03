@@ -598,6 +598,33 @@ public final class SessionViewModel {
         isPaused = false
         showAbandonConfirmation = false
         stopTimer()
+
+        Task { await processNewlyUnlocked() }
+    }
+
+    /// After the session ends, compute the new `LearnerSnapshot` and grant
+    /// a one-time `Loot.NewExerciseUnlocked` badge for each `ExerciseType`
+    /// that crossed its unlock threshold during the session.
+    private func processNewlyUnlocked() async {
+        let cards = await cardRepository.allCards()
+        let snapshot = await buildSnapshot(cards: cards)
+        let context = modelContainer.mainContext
+        guard let state = ActiveProfileResolver.fetchActiveRPGState(in: context) else { return }
+        let previous = state.acknowledgedUnlocks
+        let delta = unlockService.newlyUnlocked(profile: snapshot, previous: previous)
+        guard !delta.isEmpty else { return }
+        for type in delta {
+            let drop = LootItem(
+                category: .badge,
+                rarity: .rare,
+                name: String(localized: "Loot.NewExerciseUnlocked"),
+                iconName: "leaf.fill"
+            )
+            state.addLootItem(drop)
+            Logger.rpg.info("unlock.granted type=\(type.rawValue, privacy: .public)")
+        }
+        state.acknowledgedUnlocks = previous.union(delta)
+        try? context.save()
     }
 
     /// Dismisses the session completely (called after summary).

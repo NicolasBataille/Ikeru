@@ -4132,6 +4132,23 @@
           }
         }
       }
+    },
+    "Loot.NewExerciseUnlocked": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New practice unlocked"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nouvelle pratique débloquée"
+          }
+        }
+      }
     }
   },
   "version": "1.0"
