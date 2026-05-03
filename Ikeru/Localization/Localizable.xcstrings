@@ -4387,6 +4387,142 @@
           }
         }
       }
+    },
+    "Etude.Lock.Vocab": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld / %lld vocab to unlock"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld / %lld mots pour débloquer"
+          }
+        }
+      }
+    },
+    "Etude.Lock.Kanji": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld / %lld kanji to unlock"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld / %lld kanji pour débloquer"
+          }
+        }
+      }
+    },
+    "Etude.Lock.Hiragana": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Master hiragana to unlock"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maîtrise les hiragana pour débloquer"
+          }
+        }
+      }
+    },
+    "Etude.Lock.Katakana": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Master katakana to unlock"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maîtrise les katakana pour débloquer"
+          }
+        }
+      }
+    },
+    "Etude.Lock.Grammar": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld / %lld grammar to unlock"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld / %lld points de grammaire pour débloquer"
+          }
+        }
+      }
+    },
+    "Etude.Lock.ListenAccuracy": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld%% on last %lld listens"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld%% sur %lld dernières écoutes"
+          }
+        }
+      }
+    },
+    "Etude.Lock.ListenRecall": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld%% recall over %lld days"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld%% de rappel sur %lld jours"
+          }
+        }
+      }
+    },
+    "Etude.Lock.JLPT": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reach %@ to unlock"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Atteins %@ pour débloquer"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

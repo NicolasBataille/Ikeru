@@ -119,6 +119,7 @@
 		88D106140718312AFFC69671 /* KanaQuizView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DABC761CD00B88F2CB2B98DF /* KanaQuizView.swift */; };
 		89472D6F07C417CF74A6F34D /* FontExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4EB5EA8CFACFEDD72045EB3 /* FontExtensions.swift */; };
 		8AEE9F8BE78788FDEBEF1F7B /* RPGProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13D5225E5540A893D5EA823D /* RPGProfileView.swift */; };
+		8C45A9F1BCA0BBF74EE90B6C /* ExerciseTypeTile.swift in Sources */ = {isa = PBXBuildFile; fileRef = E68D50EE629315196AF29E6F /* ExerciseTypeTile.swift */; };
 		8EFA25811F530A1ED76EB8B2 /* PreWarmNotifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4E3A9795F94E20D35EBA364 /* PreWarmNotifier.swift */; };
 		8F797DDBE2D54C590F237849 /* LootDropView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 876AD9101EE9AB2CA2148935 /* LootDropView.swift */; };
 		8FE42D1296D1C55BB83BC1BB /* HankoStamp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25B2C6EAEDBB0C07B73E2710 /* HankoStamp.swift */; };
@@ -433,6 +434,7 @@
 		E3B790F00378454A3668D4EC /* IkeruCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = IkeruCore; path = IkeruCore; sourceTree = SOURCE_ROOT; };
 		E415FB60B6790A37E7C422E7 /* ImmersiveSessionViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImmersiveSessionViewTests.swift; sourceTree = "<group>"; };
 		E6662134E08023C0DBD738ED /* HandwritingExerciseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HandwritingExerciseView.swift; sourceTree = "<group>"; };
+		E68D50EE629315196AF29E6F /* ExerciseTypeTile.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ExerciseTypeTile.swift; sourceTree = "<group>"; };
 		E725C72DE5BC3FCCF6797E99 /* ListeningExerciseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListeningExerciseView.swift; sourceTree = "<group>"; };
 		EBEFE3A537DA4FB93E2E2B46 /* GradeButtonsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GradeButtonsView.swift; sourceTree = "<group>"; };
 		EBF0809FE4E8A651003BFFB1 /* IkeruApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IkeruApp.swift; sourceTree = "<group>"; };
@@ -761,6 +763,7 @@
 			isa = PBXGroup;
 			children = (
 				8B5F9AFBF29B1350D52D4527 /* ExerciseTileTokens.swift */,
+				E68D50EE629315196AF29E6F /* ExerciseTypeTile.swift */,
 			);
 			name = Etude;
 			path = Etude;
@@ -1410,6 +1413,7 @@
 				219635F7339BD0A520869E9D /* DisplayModeSuggestionCard.swift in Sources */,
 				0A53BBFFB15FC953A5B00198 /* TatamiToggle.swift in Sources */,
 				FA5A4AF157B85BF08B3EE4D9 /* ExerciseTileTokens.swift in Sources */,
+				8C45A9F1BCA0BBF74EE90B6C /* ExerciseTypeTile.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
