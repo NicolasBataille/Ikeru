@@ -164,6 +164,7 @@
 		BE51F2E828552A87D898A01B /* HapticPitchDrillView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5835C532A5799C48001C02D1 /* HapticPitchDrillView.swift */; };
 		BEE0EC302B51BA5C52D75402 /* KanaDrillViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D97512A99D55C0A04CB5169 /* KanaDrillViewModelTests.swift */; };
 		BF45D9ACC0C1A84F62E338D5 /* LevelUpView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6288ACD8B355DCD027711C8B /* LevelUpView.swift */; };
+		C3982205C144A760AAD6F427 /* CustomPlannerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04DC5CAF88426C1309C3B6F5 /* CustomPlannerSheet.swift */; };
 		C3C088775E85F7B1F020235C /* ProgressDashboardViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33B41D44105A174C447228C4 /* ProgressDashboardViewModel.swift */; };
 		C4AA3905DE90177682E212A8 /* ReadingPassageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E028A7B4AD2AB9F9E1802817 /* ReadingPassageView.swift */; };
 		C4B37AEF0AEE863FEFADF4A4 /* LanguagePickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF577B22FC29A2FA15CD6A15 /* LanguagePickerView.swift */; };
@@ -250,6 +251,7 @@
 		01AF19EF339E6EF510BEBC0A /* IkeruTabBar+Rail.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "IkeruTabBar+Rail.swift"; sourceTree = "<group>"; };
 		03B24C86EFCA15EB15DF8BD4 /* SessionPreviewCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionPreviewCard.swift; sourceTree = "<group>"; };
 		03D5EA041D7435198DDAE364 /* KintsugiHairline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KintsugiHairline.swift; sourceTree = "<group>"; };
+		04DC5CAF88426C1309C3B6F5 /* CustomPlannerSheet.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CustomPlannerSheet.swift; sourceTree = "<group>"; };
 		06D4DC8FC49CC9C5B56F5438 /* IkeruWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = IkeruWidget.entitlements; sourceTree = "<group>"; };
 		084D2D52890467EFF5C93131 /* VocabularyDrillSummary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VocabularyDrillSummary.swift; sourceTree = "<group>"; };
 		0962CAD661B7DE355E691364 /* CompanionAvatarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompanionAvatarView.swift; sourceTree = "<group>"; };
@@ -767,6 +769,7 @@
 				8B5F9AFBF29B1350D52D4527 /* ExerciseTileTokens.swift */,
 				E68D50EE629315196AF29E6F /* ExerciseTypeTile.swift */,
 				36572F12CDC9A610333A05E1 /* EtudeBrowseGrid.swift */,
+				04DC5CAF88426C1309C3B6F5 /* CustomPlannerSheet.swift */,
 			);
 			name = Etude;
 			path = Etude;
@@ -1418,6 +1421,7 @@
 				FA5A4AF157B85BF08B3EE4D9 /* ExerciseTileTokens.swift in Sources */,
 				8C45A9F1BCA0BBF74EE90B6C /* ExerciseTypeTile.swift in Sources */,
 				309DB751717B27220C1D0D6F /* EtudeBrowseGrid.swift in Sources */,
+				C3982205C144A760AAD6F427 /* CustomPlannerSheet.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
