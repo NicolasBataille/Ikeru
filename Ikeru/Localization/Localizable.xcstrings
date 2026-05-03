@@ -4149,6 +4149,40 @@
           }
         }
       }
+    },
+    "Home.RestDay.Title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "REST DAY"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "JOUR DE REPOS"
+          }
+        }
+      }
+    },
+    "Home.RestDay.Body": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You're balanced and reviews are clear. Honor the rest."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tu es équilibré et tes révisions sont à jour. Honore le repos."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

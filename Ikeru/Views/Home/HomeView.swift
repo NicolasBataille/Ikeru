@@ -44,6 +44,7 @@ struct HomeView: View {
         .task {
             initializeViewModels()
             await viewModel?.loadData()
+            await viewModel?.refreshRestDay()
             await refreshSuggestionController()
             withAnimation(.spring(response: 0.55, dampingFraction: 0.86).delay(0.05)) {
                 heroAppeared = true
@@ -236,6 +237,33 @@ struct HomeView: View {
         }
     }
 
+    // MARK: - Rest Day Block
+
+    /// Wabi-minimal rest-day surface. Replaces the gold CTA when
+    /// `vm.restDayActive` is true (no due cards, balanced skills, no
+    /// new content queued, last session within 24h). 24h after the last
+    /// session the CTA returns regardless.
+    private var restDayBlock: some View {
+        VStack(spacing: 6) {
+            Text("\u{4ECA}\u{65E5}\u{306F}\u{4F11}") // 今日は休
+                .font(.system(size: 26, design: .serif))
+                .foregroundStyle(Color.ikeruPrimaryAccent)
+            Text("Home.RestDay.Title", comment: "Rest day chrome label")
+                .font(.system(size: 11, weight: .semibold))
+                .tracking(1.6)
+                .foregroundStyle(Color.ikeruTextSecondary)
+            Text("Home.RestDay.Body", comment: "Rest day body copy")
+                .font(.system(size: 11))
+                .italic()
+                .foregroundStyle(TatamiTokens.paperGhost)
+                .multilineTextAlignment(.center)
+                .padding(.top, 4)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 20)
+        .padding(.horizontal, 12)
+    }
+
     // MARK: - Proverb Hero
 
     @ViewBuilder
@@ -274,25 +302,30 @@ struct HomeView: View {
                     .textCase(.uppercase)
             }
 
-            // Practice CTA — sharp gold, bilingual, sumi corners
-            Button {
-                startSession()
-            } label: {
-                HStack {
-                    Spacer()
-                    Text("稽古を始める · ")
-                        .font(.system(size: 13, weight: .regular, design: .serif))
-                    Text("BEGIN PRACTICE", comment: "Hero CTA on Home")
-                        .font(.system(size: 13, weight: .bold))
-                        .tracking(1.6)
-                    Spacer()
+            // Practice CTA — sharp gold, bilingual, sumi corners.
+            // Replaced by the rest-day surface when conditions hold.
+            if vm.restDayActive {
+                restDayBlock
+            } else {
+                Button {
+                    startSession()
+                } label: {
+                    HStack {
+                        Spacer()
+                        Text("稽古を始める · ")
+                            .font(.system(size: 13, weight: .regular, design: .serif))
+                        Text("BEGIN PRACTICE", comment: "Hero CTA on Home")
+                            .font(.system(size: 13, weight: .bold))
+                            .tracking(1.6)
+                        Spacer()
+                    }
+                    .foregroundStyle(Color.ikeruBackground)
+                    .padding(.vertical, 14)
+                    .background(Color.ikeruPrimaryAccent)
+                    .sumiCorners(color: Color.ikeruBackground.opacity(0.6), size: 6, weight: 1.2, inset: -1)
                 }
-                .foregroundStyle(Color.ikeruBackground)
-                .padding(.vertical, 14)
-                .background(Color.ikeruPrimaryAccent)
-                .sumiCorners(color: Color.ikeruBackground.opacity(0.6), size: 6, weight: 1.2, inset: -1)
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
 
             // XP progress — fusuma rail with serif numerals
             VStack(alignment: .leading, spacing: 8) {
