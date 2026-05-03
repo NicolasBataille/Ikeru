@@ -3997,6 +3997,91 @@
           }
         }
       }
+    },
+    "Sakura.NoAI.Title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sakura is offline"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sakura est hors ligne"
+          }
+        }
+      }
+    },
+    "Sakura.NoAI.Body": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No AI provider is configured yet. To chat with Sakura, set up a provider (cloud or on-device) in Settings → AI."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun fournisseur IA n'est encore configuré. Pour discuter avec Sakura, configure un fournisseur (cloud ou local) dans Réglages → IA."
+          }
+        }
+      }
+    },
+    "Sakura.NoAI.Setup": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Set up AI"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Configurer l'IA"
+          }
+        }
+      }
+    },
+    "Sakura.NoAI.BannerTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conversations are disabled"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les conversations sont désactivées"
+          }
+        }
+      }
+    },
+    "Sakura.NoAI.BannerBody": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Configure an AI provider in Settings → AI to chat with Sakura."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Configure un fournisseur IA dans Réglages → IA pour discuter avec Sakura."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

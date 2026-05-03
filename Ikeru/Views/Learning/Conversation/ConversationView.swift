@@ -53,33 +53,41 @@ struct ConversationView: View {
         VStack(spacing: IkeruTheme.Spacing.lg) {
             Spacer()
 
-            Image(systemName: "bubble.left.and.text.bubble.right")
-                .font(.system(size: 56))
-                .foregroundStyle(Color.gray.opacity(0.5))
+            Text("\u{6843}") // 桜
+                .font(.system(size: 64, weight: .light, design: .serif))
+                .foregroundStyle(Color.ikeruPrimaryAccent.opacity(0.45))
 
             VStack(spacing: IkeruTheme.Spacing.sm) {
-                Text("AI not configured")
-                    .font(.ikeruHeading1)
-                    .foregroundStyle(.white)
-
-                Text("To chat with Sakura, set up an AI provider in Settings.")
-                    .font(.ikeruBody)
-                    .foregroundStyle(.ikeruTextSecondary)
+                Text("Sakura.NoAI.Title")
+                    .font(.system(size: 22, weight: .light, design: .serif))
+                    .foregroundStyle(Color.ikeruTextPrimary)
                     .multilineTextAlignment(.center)
+
+                Text("Sakura.NoAI.Body")
+                    .font(.system(size: 14))
+                    .foregroundStyle(Color.ikeruTextSecondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, IkeruTheme.Spacing.lg)
             }
 
             NavigationLink {
                 AISettingsView()
             } label: {
                 HStack(spacing: 10) {
-                    Text("Set Up AI")
-                    Image(systemName: "arrow.right")
-                        .font(.system(size: 14, weight: .semibold))
+                    Image(systemName: "gearshape.fill")
+                        .font(.system(size: 13, weight: .semibold))
+                    Text("Sakura.NoAI.Setup")
+                        .font(.system(size: 13, weight: .bold))
+                        .tracking(1.4)
                 }
-                .frame(maxWidth: .infinity)
+                .foregroundStyle(Color.ikeruBackground)
+                .padding(.horizontal, 18)
+                .padding(.vertical, 12)
+                .background(Color.ikeruPrimaryAccent)
+                .sumiCorners(color: Color.ikeruBackground.opacity(0.6),
+                             size: 6, weight: 1.2, inset: -1)
             }
-            .ikeruButtonStyle(.primary)
-            .padding(.horizontal, IkeruTheme.Spacing.xl)
+            .buttonStyle(.plain)
 
             Spacer()
         }

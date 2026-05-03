@@ -15,6 +15,8 @@ struct CompanionTabView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var viewModel: ConversationViewModel?
     @State private var showConversation = false
+    @State private var hasCheckedAI = false
+    @State private var aiAvailable = false
 
     var body: some View {
         ZStack {
@@ -24,6 +26,9 @@ struct CompanionTabView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 22) {
                     header
+                    if hasCheckedAI && !aiAvailable {
+                        noAIBanner
+                    }
                     tutorCard
                     suggestedTopics
                     recentConversations
@@ -36,6 +41,7 @@ struct CompanionTabView: View {
         .toolbar(.hidden, for: .navigationBar)
         .task {
             initializeViewModel()
+            await refreshAIAvailability()
         }
         .fullScreenCover(isPresented: $showConversation) {
             if let viewModel {
@@ -123,11 +129,12 @@ struct CompanionTabView: View {
                 }
                 .foregroundStyle(Color.ikeruBackground)
                 .padding(.vertical, 14)
-                .background(Color.ikeruPrimaryAccent)
+                .background(aiAvailable ? Color.ikeruPrimaryAccent : Color.ikeruPrimaryAccent.opacity(0.35))
                 .sumiCorners(color: Color.ikeruBackground.opacity(0.6),
                              size: 6, weight: 1.2, inset: -1)
             }
             .buttonStyle(.plain)
+            .disabled(!aiAvailable)
         }
         .tatamiRoom(.glass, padding: 20)
     }
@@ -149,6 +156,16 @@ struct CompanionTabView: View {
         Button {
             onTopicTap(topic)
         } label: {
+            topicRowLabel(topic, isFirst: isFirst)
+        }
+        .buttonStyle(.plain)
+        .disabled(!aiAvailable)
+        .opacity(aiAvailable ? 1 : 0.45)
+    }
+
+    @ViewBuilder
+    private func topicRowLabel(_ topic: DemoConversationTopic, isFirst: Bool) -> some View {
+        Group {
             HStack(spacing: 12) {
                 MonCrest(kind: topic.mon, size: 14, color: .ikeruPrimaryAccent)
                 VStack(alignment: .leading, spacing: 2) {
@@ -179,7 +196,6 @@ struct CompanionTabView: View {
                 Rectangle().fill(Color.ikeruPrimaryAccent.opacity(0.3)).frame(height: 1)
             }
         }
-        .buttonStyle(.plain)
     }
 
     // MARK: - Recent Conversations
@@ -209,6 +225,32 @@ struct CompanionTabView: View {
         }
     }
 
+    // MARK: - No-AI Banner
+
+    private var noAIBanner: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(Color.ikeruWarning)
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Sakura.NoAI.BannerTitle")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(Color.ikeruTextPrimary)
+                Text("Sakura.NoAI.BannerBody")
+                    .font(.system(size: 12))
+                    .foregroundStyle(Color.ikeruTextSecondary)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(14)
+        .background(Color.ikeruWarning.opacity(0.08))
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(Color.ikeruWarning.opacity(0.4), lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+    }
+
     // MARK: - Actions
 
     private func onBeginConversation() {
@@ -222,6 +264,13 @@ struct CompanionTabView: View {
         // this is where it would hand off the seeded prompt.
         guard viewModel != nil else { return }
         showConversation = true
+    }
+
+    private func refreshAIAvailability() async {
+        guard let vm = viewModel else { return }
+        await vm.onAppear()
+        aiAvailable = vm.isAIAvailable
+        hasCheckedAI = true
     }
 
     // MARK: - Initialization
