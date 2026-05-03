@@ -354,15 +354,23 @@ public final class SessionViewModel {
 
         // Mastery events (Phase 3): pre-grade card state → forced drops at event rarity.
         // Detected BEFORE RNG drop so they always take priority when both would fire.
+        // Named mastery drops (e.g. "First Steps") are once-per-profile — if the
+        // inventory already contains the drop, skip it. Otherwise the same badge
+        // would re-appear every time a new card is graded Good/Easy.
         lastLootDrop = nil
         let masteryEvents = MasteryEventDetector.detect(preGradeCard: card, grade: grade)
         if let event = masteryEvents.first {
             let drop = LootDropService.generateMasteryDrop(for: event)
-            lastLootDrop = drop
-            sessionLootCount += 1
-            sessionMasteryEvents.append(event)
-            await persistLootDrop(drop)
-            Logger.rpg.info("Mastery drop: \(event.displayName) → \(drop.name) (\(drop.rarity.displayName))")
+            let alreadyOwned = await inventoryContains(name: drop.name)
+            if !alreadyOwned {
+                lastLootDrop = drop
+                sessionLootCount += 1
+                sessionMasteryEvents.append(event)
+                await persistLootDrop(drop)
+                Logger.rpg.info("Mastery drop: \(event.displayName) → \(drop.name) (\(drop.rarity.displayName))")
+            } else {
+                Logger.rpg.info("Mastery drop skipped (\(drop.name) already in inventory)")
+            }
         } else if LootDropService.shouldDropLoot(
             grade: grade,
             sessionLootCount: sessionLootCount
@@ -698,6 +706,18 @@ public final class SessionViewModel {
             state.addLootItem(item)
             Logger.rpg.info("Loot drop persisted: \(item.name) (\(item.rarity.displayName))")
         }
+    }
+
+    /// Returns true if the active profile's RPG inventory already contains a
+    /// loot item with the given name. Used to dedup once-per-profile named
+    /// mastery rewards like "First Steps" so they aren't re-awarded on every
+    /// new card graded Good/Easy.
+    private func inventoryContains(name: String) async -> Bool {
+        let context = modelContainer.mainContext
+        guard let state = ActiveProfileResolver.fetchActiveRPGState(in: context) else {
+            return false
+        }
+        return state.lootInventory.contains { $0.name == name }
     }
 
     /// Persists a lootbox to the RPG state.
