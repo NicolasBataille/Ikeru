@@ -80,23 +80,29 @@ struct PagedLearningStack<Content: View>: View {
             }
             .frame(width: width * CGFloat(pageCount), alignment: .leading)
             .offset(x: -CGFloat(activeIndex) * width + damped)
-            .gesture(
-                DragGesture(minimumDistance: 12)
+            .contentShape(Rectangle())
+            // simultaneousGesture so the inner ScrollViews on each page keep
+            // their vertical pan, while horizontal-dominant drags still feed
+            // the pager. The `guard` below filters vertical-leaning drags.
+            .simultaneousGesture(
+                DragGesture(minimumDistance: 18)
                     .onChanged { value in
-                        // Only horizontal-dominated drags engage.
-                        guard abs(value.translation.width) > abs(value.translation.height) else {
-                            return
-                        }
+                        // Only engage on horizontal-dominant drags (factor 1.5
+                        // gives a clear bias toward vertical scrolling on
+                        // ambiguous near-diagonal pans).
+                        let h = abs(value.translation.width)
+                        let v = abs(value.translation.height)
+                        guard h > v * 1.5 else { return }
                         dragTranslation = value.translation.width
                         let fractional = CGFloat(activeIndex) - damped / width
                         liveOffsetFraction = fractional
                     }
                     .onEnded { value in
-                        let v = value.predictedEndTranslation.width - value.translation.width
+                        let predicted = value.predictedEndTranslation.width - value.translation.width
                         let next = logic.commit(
                             currentIndex: activeIndex,
                             dragTranslation: value.translation.width,
-                            velocity: v
+                            velocity: predicted
                         )
                         withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
                             activeIndex = next
