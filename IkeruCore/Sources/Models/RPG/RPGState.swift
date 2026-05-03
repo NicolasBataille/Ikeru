@@ -40,6 +40,11 @@ public final class RPGState {
     /// JSON-encoded [UUID] of equipped badge ids (max 3).
     public var equippedBadgeIDsData: Data?
 
+    /// JSON-encoded `Set<ExerciseType>`. Tracks which types have already
+    /// been awarded their one-time 「新しい稽古」 unlock badge so re-running
+    /// the unlock service doesn't re-award them.
+    public var acknowledgedUnlocksData: Data?
+
     /// Count of consecutive sessions that ended with zero drops.
     /// Resets to 0 on any drop. Drives the pity timer in LootDropService.
     public var sessionsSinceLastDrop: Int = 0
@@ -176,6 +181,30 @@ public final class RPGState {
     /// Returns unopened lootboxes.
     public var unopenedLootBoxes: [LootBox] {
         lootBoxes.filter { !$0.opened }
+    }
+
+    // MARK: - Acknowledged Unlocks Accessors
+
+    /// Decoded set of `ExerciseType` already acknowledged. Returns empty
+    /// when no data stored. Used by `ExerciseUnlockService.newlyUnlocked`
+    /// to dedup the one-time 「新しい稽古」 unlock badge.
+    public var acknowledgedUnlocks: Set<ExerciseType> {
+        get {
+            guard let data = acknowledgedUnlocksData else { return [] }
+            do {
+                return try JSONDecoder().decode(Set<ExerciseType>.self, from: data)
+            } catch {
+                Logger.rpg.error("Failed to decode acknowledged unlocks: \(error.localizedDescription)")
+                return []
+            }
+        }
+        set {
+            do {
+                acknowledgedUnlocksData = try JSONEncoder().encode(newValue)
+            } catch {
+                Logger.rpg.error("Failed to encode acknowledged unlocks: \(error.localizedDescription)")
+            }
+        }
     }
 
     // MARK: - Equipped Badges Accessors
