@@ -1,6 +1,6 @@
 import Foundation
 
-/// Result of evaluating an `ExerciseType` against a `ProfileSnapshot`.
+/// Result of evaluating an `ExerciseType` against a `LearnerSnapshot`.
 public enum ExerciseUnlockState: Sendable, Equatable {
     case unlocked
     case locked(reason: ExerciseLockReason)
