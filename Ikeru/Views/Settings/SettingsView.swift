@@ -219,6 +219,7 @@ struct SettingsView: View {
                 label: "Daily goal",
                 value: "12 cards"
             )
+            sessionDurationRow()
             reminderToggleRow(
                 jp: "通知",
                 label: "Reminders",
@@ -772,6 +773,41 @@ struct SettingsView: View {
         let symbols = formatter.shortWeekdaySymbols ?? []
         let idx = max(1, min(7, weekday)) - 1
         return symbols[idx].capitalized
+    }
+
+    /// Default session length picker. Tappable value shows the current
+    /// duration with a small list-hint chevron; menu offers 5/15/30/45.
+    private func sessionDurationRow() -> some View {
+        HStack(spacing: 10) {
+            Text("\u{6642}\u{9593}") // 時間
+                .font(.system(size: 13, design: .serif))
+                .foregroundStyle(TatamiTokens.paperGhost)
+            Text("Settings.SessionDuration")
+                .font(.system(size: 13))
+                .foregroundStyle(Color.ikeruTextPrimary)
+            Spacer(minLength: 4)
+            Menu {
+                ForEach([5, 15, 30, 45], id: \.self) { minutes in
+                    Button("\(minutes) min") { defaultDurationMinutes = minutes }
+                }
+            } label: {
+                HStack(spacing: 3) {
+                    Text("\(defaultDurationMinutes) min")
+                        .font(.system(size: 13, design: .serif))
+                        .foregroundStyle(Color.ikeruPrimaryAccent)
+                    Text("\u{25BE}") // ▾
+                        .font(.system(size: 9))
+                        .foregroundStyle(TatamiTokens.goldDim)
+                }
+                .lineLimit(1)
+                .fixedSize(horizontal: true, vertical: false)
+            }
+        }
+        .padding(.horizontal, 16).padding(.vertical, 12)
+        .overlay(alignment: .bottom) {
+            Rectangle().fill(TatamiTokens.goldDim.opacity(0.2))
+                .frame(height: 1).padding(.horizontal, 16)
+        }
     }
 
     /// Bilingual + serif gold value + dim-gold chevron + 1px hairline divider.

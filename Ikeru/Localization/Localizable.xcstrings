@@ -225,6 +225,7 @@
     "+%@ XP": {},
     "+%@ XP earned": {},
     "~%@ min": {},
+    "▾": {},
     "7-day arc": {
       "extractionState": "stale",
       "localizations": {
@@ -2240,7 +2241,6 @@
     },
     "On": {
       "comment": "Settings row value indicating an option is enabled",
-      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -4115,7 +4115,24 @@
     "続ける": {},
     "続ける · ": {},
     "言語": {},
-    "道": {}
+    "道": {},
+    "Settings.SessionDuration": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Default session length"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Durée par défaut"
+          }
+        }
+      }
+    }
   },
   "version": "1.0"
 }
