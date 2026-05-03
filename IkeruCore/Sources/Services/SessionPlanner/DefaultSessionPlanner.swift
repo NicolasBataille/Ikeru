@@ -1,7 +1,10 @@
 import Foundation
 import os
 
-/// Concrete `SessionPlanner`. Pure: deterministic from inputs; no I/O.
+/// Concrete `SessionPlanner`. Structurally deterministic from inputs;
+/// content selection within each segment is randomised (`randomElement()`)
+/// from the available card pool, so the *shape* of the plan is stable
+/// per-day but specific exercise content varies. No I/O.
 ///
 /// Home composition follows a 40/30/20/10 segment skeleton:
 ///   - 40 % review wave (FSRS-due cards)
@@ -114,6 +117,13 @@ public struct DefaultSessionPlanner: SessionPlanner {
         }
         // `levels` reserved for future content-pool filtering; not yet
         // wired because content packs aren't tagged by JLPT yet.
+        // `levels` is reserved for future content-pool filtering; not yet
+        // wired because content packs aren't tagged by JLPT yet. Surface
+        // this loud-and-clear in logs so callers know their filter was a no-op.
+        if !levels.isEmpty {
+            let names = levels.map(\.rawValue).joined(separator: ",")
+            Logger.learningLoop.info("studyCustom: jlptLevels filtering not yet implemented — ignoring \(names, privacy: .public)")
+        }
         _ = levels
         return finalize(exercises: exercises)
     }
@@ -204,6 +214,13 @@ public struct DefaultSessionPlanner: SessionPlanner {
     private func synthesise(type: ExerciseType, availableCards: [CardDTO]) -> ExerciseItem {
         switch type {
         case .kanaStudy, .kanjiStudy:
+            // KNOWN ISSUE: kanaStudy synthesises an .kanjiStudy ExerciseItem
+            // payload because ExerciseItem has no .kanaStudy case yet. This
+            // means a kana drill is reported as 60s (kanjiStudy duration)
+            // instead of the 25s the type-level estimate uses, slightly
+            // inflating the plan's reported duration. Tracked as a
+            // model-level follow-up: add `case kanaStudy(String)` to
+            // ExerciseItem and route here.
             let kanjiCards = availableCards.filter { $0.type == .kanji }
             return .kanjiStudy(kanjiCards.randomElement()?.front ?? "\u{4E00}")
         case .vocabularyStudy:
