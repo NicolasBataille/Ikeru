@@ -83,16 +83,20 @@ struct PagedLearningStack<Content: View>: View {
             .contentShape(Rectangle())
             // simultaneousGesture so the inner ScrollViews on each page keep
             // their vertical pan, while horizontal-dominant drags still feed
-            // the pager. The `guard` below filters vertical-leaning drags.
+            // the pager. The `guard` below filters vertical-leaning drags
+            // and short, jittery drags inside inner horizontal scrollers
+            // (e.g. the kana preset bar) before the pager engages.
             .simultaneousGesture(
-                DragGesture(minimumDistance: 18)
+                DragGesture(minimumDistance: 14)
                     .onChanged { value in
-                        // Only engage on horizontal-dominant drags (factor 1.5
-                        // gives a clear bias toward vertical scrolling on
-                        // ambiguous near-diagonal pans).
                         let h = abs(value.translation.width)
                         let v = abs(value.translation.height)
-                        guard h > v * 1.5 else { return }
+                        // Require a real commitment to horizontal motion AND
+                        // a minimum sustained displacement before engaging.
+                        // The 26pt floor prevents inner horizontal scrollers
+                        // (kana preset bar, future carousels) from triggering
+                        // a tab change on incidental short flicks.
+                        guard h > v * 1.6, h > 26 else { return }
                         dragTranslation = value.translation.width
                         let fractional = CGFloat(activeIndex) - damped / width
                         liveOffsetFraction = fractional
