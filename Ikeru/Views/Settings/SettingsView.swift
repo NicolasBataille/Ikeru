@@ -670,12 +670,17 @@ struct SettingsView: View {
             Spacer()
             Picker("", selection: selected) {
                 ForEach(0..<24, id: \.self) { h in
-                    Text(String(format: "%02d:00", h)).tag(h)
+                    Text(String(format: "%02d:00", h))
+                        .font(.system(size: 13, design: .serif))
+                        .tag(h)
                 }
             }
             .pickerStyle(.menu)
             .tint(Color.ikeruPrimaryAccent)
+            .font(.system(size: 13, design: .serif))
             .labelsHidden()
+            .lineLimit(1)
+            .fixedSize(horizontal: true, vertical: false)
             .onChange(of: selected.wrappedValue) { _, new in onChange(new) }
         }
         .padding(.horizontal, 16).padding(.vertical, 12)
@@ -703,12 +708,17 @@ struct SettingsView: View {
             Spacer()
             Picker("", selection: selected) {
                 ForEach(1...7, id: \.self) { d in
-                    Text(weekdayName(d)).tag(d)
+                    Text(weekdayName(d))
+                        .font(.system(size: 13, design: .serif))
+                        .tag(d)
                 }
             }
             .pickerStyle(.menu)
             .tint(Color.ikeruPrimaryAccent)
+            .font(.system(size: 13, design: .serif))
             .labelsHidden()
+            .lineLimit(1)
+            .fixedSize(horizontal: true, vertical: false)
             .onChange(of: selected.wrappedValue) { _, new in onChange(new) }
         }
         .padding(.horizontal, 16).padding(.vertical, 12)
