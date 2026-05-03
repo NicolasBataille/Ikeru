@@ -48,6 +48,7 @@
 		2EDB743A773B1110D8D8160D /* StrokeOrderViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97DC0D8C7FA88DAEF99E751F /* StrokeOrderViewModelTests.swift */; };
 		2F6B8C98160163965120553D /* HandwritingViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F4FD0C67B08C1DEFCC562B6 /* HandwritingViewModel.swift */; };
 		304CBAE51DC419CE521E9941 /* VocabularyDrillSummary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 084D2D52890467EFF5C93131 /* VocabularyDrillSummary.swift */; };
+		309DB751717B27220C1D0D6F /* EtudeBrowseGrid.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36572F12CDC9A610333A05E1 /* EtudeBrowseGrid.swift */; };
 		316D4831B3DC06ADDAF246C5 /* DisplayModeEnvironment.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF592A46DD722401D4C46FC4 /* DisplayModeEnvironment.swift */; };
 		318AD0DC566D55CF8F54F721 /* AttributionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DDE2DBC0AC80C3C72CCE6E1 /* AttributionView.swift */; };
 		3201547827523F9F7FCDDCAD /* XPGainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE989EDC826A8D21056CC758 /* XPGainView.swift */; };
@@ -280,6 +281,7 @@
 		33CEED6C6C796647FAF4C683 /* NavigationCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationCoordinatorTests.swift; sourceTree = "<group>"; };
 		358B47E0F54AAFD423C1BAAD /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		35E5B9D83D4ACDC6DF4C19B3 /* LaunchAnimationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchAnimationView.swift; sourceTree = "<group>"; };
+		36572F12CDC9A610333A05E1 /* EtudeBrowseGrid.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = EtudeBrowseGrid.swift; sourceTree = "<group>"; };
 		37FFFD4E2CCB71F726EE7A52 /* RigJobsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RigJobsView.swift; sourceTree = "<group>"; };
 		3A7D16815AC81DEBD891D317 /* IkeruTabBar+Beginner.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "IkeruTabBar+Beginner.swift"; sourceTree = "<group>"; };
 		406C6BA699B52A4C383A75E1 /* ReadingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadingsView.swift; sourceTree = "<group>"; };
@@ -764,6 +766,7 @@
 			children = (
 				8B5F9AFBF29B1350D52D4527 /* ExerciseTileTokens.swift */,
 				E68D50EE629315196AF29E6F /* ExerciseTypeTile.swift */,
+				36572F12CDC9A610333A05E1 /* EtudeBrowseGrid.swift */,
 			);
 			name = Etude;
 			path = Etude;
@@ -1414,6 +1417,7 @@
 				0A53BBFFB15FC953A5B00198 /* TatamiToggle.swift in Sources */,
 				FA5A4AF157B85BF08B3EE4D9 /* ExerciseTileTokens.swift in Sources */,
 				8C45A9F1BCA0BBF74EE90B6C /* ExerciseTypeTile.swift in Sources */,
+				309DB751717B27220C1D0D6F /* EtudeBrowseGrid.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
