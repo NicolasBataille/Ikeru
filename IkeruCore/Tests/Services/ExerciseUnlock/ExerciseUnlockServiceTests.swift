@@ -37,8 +37,22 @@ struct ExerciseUnlockServiceTests {
         #expect(service.state(for: .grammarExercise, profile: p) == .unlocked)
     }
 
-    @Test("readingPassage requires 100 vocab + 50 kanji")
+    @Test("sentenceConstruction requires 5 grammar points familiar+")
+    func sentenceConstructionThreshold() {
+        let below = LearnerSnapshot.empty.with(\.grammarPointsFamiliarPlus, 4)
+        let at = LearnerSnapshot.empty.with(\.grammarPointsFamiliarPlus, 5)
+        #expect(service.state(for: .sentenceConstruction, profile: below)
+            == .locked(reason: .grammarPointsMastered(required: 5, current: 4)))
+        #expect(service.state(for: .sentenceConstruction, profile: at) == .unlocked)
+    }
+
+    @Test("readingPassage requires 100 vocab + 50 kanji (vocab check first)")
     func readingPassageCompound() {
+        // Both unmet: lock reason names vocab (the first guard).
+        let neither = LearnerSnapshot.empty
+        #expect(service.state(for: .readingPassage, profile: neither)
+            == .locked(reason: .vocabularyMastered(required: 100, current: 0)))
+        // Vocab met, kanji short: lock reason names kanji.
         var p = LearnerSnapshot.empty
             .with(\.vocabularyMasteredFamiliarPlus, 100)
             .with(\.kanjiMasteredFamiliarPlus, 49)
@@ -48,8 +62,13 @@ struct ExerciseUnlockServiceTests {
         #expect(service.state(for: .readingPassage, profile: p) == .unlocked)
     }
 
-    @Test("writingPractice requires both kana scripts + 50 vocab")
+    @Test("writingPractice requires both kana scripts + 50 vocab (hiragana checked first)")
     func writingPracticeCompound() {
+        // No kana at all: lock reason names hiragana (the first guard).
+        let noKana = LearnerSnapshot.empty
+        #expect(service.state(for: .writingPractice, profile: noKana)
+            == .locked(reason: .kanaMastered(syllabary: .hiragana)))
+        // Hiragana mastered, katakana not: lock reason names katakana.
         var p = LearnerSnapshot.empty
             .with(\.hiraganaMastered, true)
             .with(\.katakanaMastered, false)
