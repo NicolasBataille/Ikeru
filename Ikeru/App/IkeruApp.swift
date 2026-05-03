@@ -183,6 +183,52 @@ struct IkeruApp: App {
             let repo = CardRepository(modelContainer: modelContainer)
             await repo.attachOrphanCards()
         }
+
+        // One-shot migration: existing profiles predate the unlock-tracking
+        // model and have an empty `acknowledgedUnlocks`. Without backfill,
+        // every threshold they already cross would fire as "new practice
+        // unlocked" the first time the unlock service re-evaluates them.
+        // Run once, when `acknowledgedUnlocks` is empty.
+        Task { @MainActor in
+            let context = modelContainer.mainContext
+            guard let state = ActiveProfileResolver.fetchActiveRPGState(in: context),
+                  state.acknowledgedUnlocks.isEmpty else { return }
+            let fetchedCards: [Card] = (try? context.fetch(FetchDescriptor<Card>())) ?? []
+            let cards: [CardDTO] = fetchedCards.map { card in
+                CardDTO(
+                    id: card.id,
+                    front: card.front,
+                    back: card.back,
+                    type: card.type,
+                    fsrsState: card.fsrsState,
+                    easeFactor: card.easeFactor,
+                    interval: card.interval,
+                    dueDate: card.dueDate,
+                    lapseCount: card.lapseCount,
+                    leechFlag: card.leechFlag
+                )
+            }
+            let snapshot = LearnerSnapshotBuilder.build(
+                cards: cards,
+                jlptLevel: .n5,
+                grammarPointsFamiliarPlus: 0,
+                listeningAccuracyLast30: 0,
+                listeningRecallLast30Days: 0,
+                skillBalances: [:],
+                hasNewContentQueued: false,
+                lastSessionAt: state.lastSessionDate,
+                now: Date()
+            )
+            state.acknowledgedUnlocks = UnlockBackfillService.backfill(
+                previous: state.acknowledgedUnlocks,
+                profile: snapshot,
+                unlockService: DefaultExerciseUnlockService()
+            )
+            try? context.save()
+            Logger.rpg.info(
+                "unlock.backfill applied — acknowledged=\(state.acknowledgedUnlocks.count, privacy: .public)"
+            )
+        }
     }
 
     // MARK: - Notification Scheduling
