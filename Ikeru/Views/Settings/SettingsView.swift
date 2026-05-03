@@ -219,69 +219,80 @@ struct SettingsView: View {
                 label: "Daily goal",
                 value: "12 cards"
             )
-            settingRow(
+            reminderToggleRow(
                 jp: "通知",
                 label: "Reminders",
-                value: reviewReminderEnabled
-                    ? "\(reviewReminderHour):00"
-                    : String(localized: "Off")
-            ) {
-                withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) {
-                    reviewReminderEnabled.toggle()
-                }
-                updateReviewReminder(enabled: reviewReminderEnabled)
-            }
-            if reviewReminderEnabled {
-                hourPickerRow(
-                    jp: "時刻",
-                    label: "Reminder.Hour",
-                    selected: $reviewReminderHour
-                ) { newValue in
-                    Task {
-                        await NotificationManager.shared.scheduleReviewReminder(
-                            hour: newValue
+                isOn: $reviewReminderEnabled,
+                onToggleChange: { enabled in
+                    updateReviewReminder(enabled: enabled)
+                },
+                trailing: {
+                    if reviewReminderEnabled {
+                        AnyView(
+                            inlineHourPicker(
+                                selected: $reviewReminderHour,
+                                onChange: { newValue in
+                                    Task {
+                                        await NotificationManager.shared.scheduleReviewReminder(
+                                            hour: newValue
+                                        )
+                                    }
+                                }
+                            )
+                        )
+                    } else {
+                        AnyView(
+                            Text("Off")
+                                .font(.system(size: 13, design: .serif))
+                                .foregroundStyle(TatamiTokens.paperGhost)
                         )
                     }
                 }
-            }
-            settingRow(
+            )
+            reminderToggleRow(
                 jp: "週次振り返り",
                 label: "Weekly check-in",
-                value: weeklyCheckInEnabled
-                    ? "\(weeklyCheckInHour):00"
-                    : String(localized: "Off")
-            ) {
-                withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) {
-                    weeklyCheckInEnabled.toggle()
-                }
-                updateWeeklyCheckIn(enabled: weeklyCheckInEnabled)
-            }
-            if weeklyCheckInEnabled {
-                weekdayPickerRow(
-                    jp: "曜日",
-                    label: "Reminder.Weekday",
-                    selected: $weeklyCheckInDay
-                ) { newDay in
-                    Task {
-                        await NotificationManager.shared.scheduleWeeklyCheckIn(
-                            weekday: newDay,
-                            hour: weeklyCheckInHour
+                isOn: $weeklyCheckInEnabled,
+                onToggleChange: { enabled in
+                    updateWeeklyCheckIn(enabled: enabled)
+                },
+                trailing: {
+                    if weeklyCheckInEnabled {
+                        AnyView(
+                            HStack(spacing: 8) {
+                                inlineWeekdayPicker(
+                                    selected: $weeklyCheckInDay,
+                                    onChange: { newDay in
+                                        Task {
+                                            await NotificationManager.shared.scheduleWeeklyCheckIn(
+                                                weekday: newDay,
+                                                hour: weeklyCheckInHour
+                                            )
+                                        }
+                                    }
+                                )
+                                inlineHourPicker(
+                                    selected: $weeklyCheckInHour,
+                                    onChange: { newValue in
+                                        Task {
+                                            await NotificationManager.shared.scheduleWeeklyCheckIn(
+                                                weekday: weeklyCheckInDay,
+                                                hour: newValue
+                                            )
+                                        }
+                                    }
+                                )
+                            }
+                        )
+                    } else {
+                        AnyView(
+                            Text("Off")
+                                .font(.system(size: 13, design: .serif))
+                                .foregroundStyle(TatamiTokens.paperGhost)
                         )
                     }
                 }
-                hourPickerRow(
-                    jp: "時刻",
-                    label: "Reminder.Hour",
-                    selected: $weeklyCheckInHour
-                ) { newValue in
-                    Task {
-                        await NotificationManager.shared.scheduleWeeklyCheckIn(
-                            weekday: weeklyCheckInDay,
-                            hour: newValue
-                        )
-                    }
-                }
-            }
+            )
             settingRow(
                 jp: "音声",
                 label: "Sound",
@@ -652,87 +663,94 @@ struct SettingsView: View {
         .disabled(action == nil)
     }
 
-    /// Inline hour-picker row. Tapping the value reveals a native menu of
-    /// 24 hours so the user can jump to any hour in one tap.
-    private func hourPickerRow(
+    /// Settings row with a toggleable on/off and a custom trailing block
+    /// (e.g. inline pickers when enabled, "Off" text when not). The whole
+    /// row toggles state on tap; inner controls (Picker menus) catch their
+    /// own taps without firing the outer toggle.
+    private func reminderToggleRow<Trailing: View>(
         jp: String,
         label: LocalizedStringKey,
+        isOn: Binding<Bool>,
+        onToggleChange: @escaping (Bool) -> Void,
+        @ViewBuilder trailing: () -> Trailing
+    ) -> some View {
+        Button {
+            withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) {
+                isOn.wrappedValue.toggle()
+            }
+            onToggleChange(isOn.wrappedValue)
+        } label: {
+            HStack(spacing: 16) {
+                Text(jp)
+                    .font(.system(size: 13, design: .serif))
+                    .foregroundStyle(TatamiTokens.paperGhost)
+                Text(label)
+                    .font(.system(size: 13))
+                    .foregroundStyle(Color.ikeruTextPrimary)
+                Spacer()
+                trailing()
+                Text("›")
+                    .font(.system(size: 14))
+                    .foregroundStyle(TatamiTokens.goldDim)
+            }
+            .padding(.horizontal, 16).padding(.vertical, 12)
+            .overlay(alignment: .bottom) {
+                Rectangle().fill(TatamiTokens.goldDim.opacity(0.2))
+                    .frame(height: 1).padding(.horizontal, 16)
+            }
+        }
+        .buttonStyle(.plain)
+    }
+
+    /// Inline native menu picker for hour-of-day (00:00 … 23:00).
+    private func inlineHourPicker(
         selected: Binding<Int>,
         onChange: @escaping (Int) -> Void
     ) -> some View {
-        HStack(spacing: 16) {
-            Text(jp)
-                .font(.system(size: 13, design: .serif))
-                .foregroundStyle(TatamiTokens.paperGhost)
-            Text(label)
-                .font(.system(size: 13))
-                .foregroundStyle(Color.ikeruTextPrimary)
-            Spacer()
-            Picker("", selection: selected) {
-                ForEach(0..<24, id: \.self) { h in
-                    Text(String(format: "%02d:00", h))
-                        .font(.system(size: 13, design: .serif))
-                        .tag(h)
-                }
+        Picker("", selection: selected) {
+            ForEach(0..<24, id: \.self) { h in
+                Text(String(format: "%02d:00", h))
+                    .font(.system(size: 13, design: .serif))
+                    .tag(h)
             }
-            .pickerStyle(.menu)
-            .tint(Color.ikeruPrimaryAccent)
-            .font(.system(size: 13, design: .serif))
-            .labelsHidden()
-            .lineLimit(1)
-            .fixedSize(horizontal: true, vertical: false)
-            .onChange(of: selected.wrappedValue) { _, new in onChange(new) }
         }
-        .padding(.horizontal, 16).padding(.vertical, 12)
-        .overlay(alignment: .bottom) {
-            Rectangle().fill(TatamiTokens.goldDim.opacity(0.2))
-                .frame(height: 1).padding(.horizontal, 16)
-        }
+        .pickerStyle(.menu)
+        .tint(Color.ikeruPrimaryAccent)
+        .font(.system(size: 13, design: .serif))
+        .labelsHidden()
+        .lineLimit(1)
+        .fixedSize(horizontal: true, vertical: false)
+        .onChange(of: selected.wrappedValue) { _, new in onChange(new) }
     }
 
-    /// Inline weekday picker row. Native menu listing the 7 weekday names
-    /// (1=Sunday … 7=Saturday) localized to the active locale.
-    private func weekdayPickerRow(
-        jp: String,
-        label: LocalizedStringKey,
+    /// Inline native menu picker for weekday (1=Sunday … 7=Saturday).
+    /// Uses short weekday names (Mon/Tue/… or Lun./Mar./…) so the value
+    /// stays compact and never wraps.
+    private func inlineWeekdayPicker(
         selected: Binding<Int>,
         onChange: @escaping (Int) -> Void
     ) -> some View {
-        HStack(spacing: 16) {
-            Text(jp)
-                .font(.system(size: 13, design: .serif))
-                .foregroundStyle(TatamiTokens.paperGhost)
-            Text(label)
-                .font(.system(size: 13))
-                .foregroundStyle(Color.ikeruTextPrimary)
-            Spacer()
-            Picker("", selection: selected) {
-                ForEach(1...7, id: \.self) { d in
-                    Text(weekdayName(d))
-                        .font(.system(size: 13, design: .serif))
-                        .tag(d)
-                }
+        Picker("", selection: selected) {
+            ForEach(1...7, id: \.self) { d in
+                Text(shortWeekdayName(d))
+                    .font(.system(size: 13, design: .serif))
+                    .tag(d)
             }
-            .pickerStyle(.menu)
-            .tint(Color.ikeruPrimaryAccent)
-            .font(.system(size: 13, design: .serif))
-            .labelsHidden()
-            .lineLimit(1)
-            .fixedSize(horizontal: true, vertical: false)
-            .onChange(of: selected.wrappedValue) { _, new in onChange(new) }
         }
-        .padding(.horizontal, 16).padding(.vertical, 12)
-        .overlay(alignment: .bottom) {
-            Rectangle().fill(TatamiTokens.goldDim.opacity(0.2))
-                .frame(height: 1).padding(.horizontal, 16)
-        }
+        .pickerStyle(.menu)
+        .tint(Color.ikeruPrimaryAccent)
+        .font(.system(size: 13, design: .serif))
+        .labelsHidden()
+        .lineLimit(1)
+        .fixedSize(horizontal: true, vertical: false)
+        .onChange(of: selected.wrappedValue) { _, new in onChange(new) }
     }
 
-    /// Localized weekday name. iOS conventions: 1=Sunday … 7=Saturday.
-    private func weekdayName(_ weekday: Int) -> String {
+    /// Short localized weekday name (e.g. "Mon", "Lun.").
+    private func shortWeekdayName(_ weekday: Int) -> String {
         let formatter = DateFormatter()
         formatter.locale = Locale.current
-        let symbols = formatter.weekdaySymbols ?? []
+        let symbols = formatter.shortWeekdaySymbols ?? []
         let idx = max(1, min(7, weekday)) - 1
         return symbols[idx].capitalized
     }
