@@ -10,6 +10,7 @@
 		00C45E3806F4F41DF942E46A /* WatchConnectivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6DF718512A3E4A694744447 /* WatchConnectivityManager.swift */; };
 		0140648B5E3FFD4029D23F8E /* BilingualLabel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69C7077A729B04B8A3E50617 /* BilingualLabel.swift */; };
 		024CE65C4F899FACD02F82AB /* IkeruLogo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CE66823D49245E40B9FB5AE /* IkeruLogo.swift */; };
+		02CD127A519AC0865600390C /* EtudeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 641C149490C9056EFCD19CBC /* EtudeView.swift */; };
 		03266CA2AC2C8FE09FF324D2 /* SentenceConstructionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60A2A898AE8FA9CED4206F98 /* SentenceConstructionView.swift */; };
 		03A18AE27633E99C6225720C /* ColorExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF141412A4CE1AAA9CA80398 /* ColorExtensions.swift */; };
 		0739B3B0FF59FACA5FD474F3 /* SegmentedXPBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AA9FE40FCBDF803116B44AB /* SegmentedXPBarView.swift */; };
@@ -165,7 +166,7 @@
 		BEE0EC302B51BA5C52D75402 /* KanaDrillViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D97512A99D55C0A04CB5169 /* KanaDrillViewModelTests.swift */; };
 		BF45D9ACC0C1A84F62E338D5 /* LevelUpView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6288ACD8B355DCD027711C8B /* LevelUpView.swift */; };
 		C3982205C144A760AAD6F427 /* CustomPlannerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04DC5CAF88426C1309C3B6F5 /* CustomPlannerSheet.swift */; };
-		C3C088775E85F7B1F020235C /* ProgressDashboardViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33B41D44105A174C447228C4 /* ProgressDashboardViewModel.swift */; };
+		C3C088775E85F7B1F020235C /* EtudeViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33B41D44105A174C447228C4 /* EtudeViewModel.swift */; };
 		C4AA3905DE90177682E212A8 /* ReadingPassageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E028A7B4AD2AB9F9E1802817 /* ReadingPassageView.swift */; };
 		C4B37AEF0AEE863FEFADF4A4 /* LanguagePickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF577B22FC29A2FA15CD6A15 /* LanguagePickerView.swift */; };
 		C5AFFF3C83FD80FF4E57B0EB /* ConversationViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D08B33E031522EEA0E701C84 /* ConversationViewModel.swift */; };
@@ -178,7 +179,6 @@
 		CA1E4BC77111ADC4E439BCB7 /* KanaDrillSessionSummary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6999560B934B111F55D2F3E5 /* KanaDrillSessionSummary.swift */; };
 		CEDA5C519843F8F9E6D539DA /* KanaFlashcardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DB3671081E55064A6B6ADE5 /* KanaFlashcardView.swift */; };
 		CF13EFF3CE9BC5A619F0B16D /* IkeruWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = FAB097C7086A8C5F1549D53D /* IkeruWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		D00AC904AC8A13E4B9237F2E /* ProgressDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D70646A260FBC5CBB22E479 /* ProgressDashboardView.swift */; };
 		D47F7C461CF1CFA5343E2BA8 /* MonCrest.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB4EE3B167E71594816FFDAD /* MonCrest.swift */; };
 		D620F952CB6ED990AB51DB36 /* IkeruWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD4E32975E0ECE57675459EB /* IkeruWidgetBundle.swift */; };
 		D8D5457FC6070EDB4C44E5B7 /* RigJobsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EBABD6C9A0B5F802FBA5DB2 /* RigJobsViewModel.swift */; };
@@ -279,7 +279,7 @@
 		2E10FA2BDC5455704DB5EDE7 /* DeleteProfileSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeleteProfileSheet.swift; sourceTree = "<group>"; };
 		2E465EC77CC660545388BC4E /* RPGRankCrest.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RPGRankCrest.swift; sourceTree = "<group>"; };
 		2FB214E27E81F30D44CAD195 /* HandwritingViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HandwritingViewModelTests.swift; sourceTree = "<group>"; };
-		33B41D44105A174C447228C4 /* ProgressDashboardViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressDashboardViewModel.swift; sourceTree = "<group>"; };
+		33B41D44105A174C447228C4 /* EtudeViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EtudeViewModel.swift; sourceTree = "<group>"; };
 		33CEED6C6C796647FAF4C683 /* NavigationCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationCoordinatorTests.swift; sourceTree = "<group>"; };
 		358B47E0F54AAFD423C1BAAD /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		35E5B9D83D4ACDC6DF4C19B3 /* LaunchAnimationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchAnimationView.swift; sourceTree = "<group>"; };
@@ -298,7 +298,6 @@
 		46F48E350D03281741ABCA19 /* ListeningIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListeningIntegrationTests.swift; sourceTree = "<group>"; };
 		470D3E9716A0BCBE20FBD7D8 /* LootBoxChallengeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LootBoxChallengeView.swift; sourceTree = "<group>"; };
 		4C436FC5E8920ED935DA2049 /* PlaybackRateSelector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackRateSelector.swift; sourceTree = "<group>"; };
-		4D70646A260FBC5CBB22E479 /* ProgressDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressDashboardView.swift; sourceTree = "<group>"; };
 		4EBABD6C9A0B5F802FBA5DB2 /* RigJobsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RigJobsViewModel.swift; sourceTree = "<group>"; };
 		4FCAA1C6D8004A72C4233DEE /* FusumaRail.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FusumaRail.swift; sourceTree = "<group>"; };
 		50DC3FFD19212D20C2539520 /* KanaPoolSelectorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KanaPoolSelectorView.swift; sourceTree = "<group>"; };
@@ -319,6 +318,7 @@
 		6288ACD8B355DCD027711C8B /* LevelUpView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LevelUpView.swift; sourceTree = "<group>"; };
 		631CDAB692FF8F02FB5E77FD /* IkeruButtonStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IkeruButtonStyle.swift; sourceTree = "<group>"; };
 		6340F44EB5D85320D1D1B58D /* DiffHighlightView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiffHighlightView.swift; sourceTree = "<group>"; };
+		641C149490C9056EFCD19CBC /* EtudeView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = EtudeView.swift; sourceTree = "<group>"; };
 		6443713592CC74FD3AECD921 /* IkeruGlass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IkeruGlass.swift; sourceTree = "<group>"; };
 		64B31E5354E63498288CBC25 /* KanaRubyText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KanaRubyText.swift; sourceTree = "<group>"; };
 		6554CA8A229ACD1B1EAF84B9 /* RigJobsViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RigJobsViewModelTests.swift; sourceTree = "<group>"; };
@@ -617,7 +617,6 @@
 			children = (
 				156EFFF0B204464405BC709E /* HomeView.swift */,
 				25F5EC3E127B20A52562853D /* MeshHeroView.swift */,
-				4D70646A260FBC5CBB22E479 /* ProgressDashboardView.swift */,
 				41D44ABC57C7E863A27392FD /* DisplayModeSuggestionCard.swift */,
 			);
 			path = Home;
@@ -770,6 +769,7 @@
 				E68D50EE629315196AF29E6F /* ExerciseTypeTile.swift */,
 				36572F12CDC9A610333A05E1 /* EtudeBrowseGrid.swift */,
 				04DC5CAF88426C1309C3B6F5 /* CustomPlannerSheet.swift */,
+				641C149490C9056EFCD19CBC /* EtudeView.swift */,
 			);
 			name = Etude;
 			path = Etude;
@@ -834,7 +834,7 @@
 				A485AB1DAF8DF6C7F9DDAE61 /* RPG */,
 				F1DF2E350075F0F6C4CFE5D5 /* HomeViewModel.swift */,
 				5FF30B9862993AD81B2EA938 /* ProfileViewModel.swift */,
-				33B41D44105A174C447228C4 /* ProgressDashboardViewModel.swift */,
+				33B41D44105A174C447228C4 /* EtudeViewModel.swift */,
 				4EBABD6C9A0B5F802FBA5DB2 /* RigJobsViewModel.swift */,
 				FACB44C33C46EDA95CE1BA9E /* RigSettingsViewModel.swift */,
 				9FFDBE842988EF4A387035C1 /* RPGProfileViewModel.swift */,
@@ -1347,8 +1347,7 @@
 				6264BDA72959D5123E44F75D /* PreWarmFactory.swift in Sources */,
 				8EFA25811F530A1ED76EB8B2 /* PreWarmNotifier.swift in Sources */,
 				E6D5C29E18595B7C6DEF7878 /* ProfileViewModel.swift in Sources */,
-				D00AC904AC8A13E4B9237F2E /* ProgressDashboardView.swift in Sources */,
-				C3C088775E85F7B1F020235C /* ProgressDashboardViewModel.swift in Sources */,
+				C3C088775E85F7B1F020235C /* EtudeViewModel.swift in Sources */,
 				8AEE9F8BE78788FDEBEF1F7B /* RPGProfileView.swift in Sources */,
 				20A46053CB898DA6AEBA6697 /* RPGProfileViewModel.swift in Sources */,
 				DCCF0B7EBE77A847DB43B406 /* RadicalDecompositionView.swift in Sources */,
@@ -1422,6 +1421,7 @@
 				8C45A9F1BCA0BBF74EE90B6C /* ExerciseTypeTile.swift in Sources */,
 				309DB751717B27220C1D0D6F /* EtudeBrowseGrid.swift in Sources */,
 				C3982205C144A760AAD6F427 /* CustomPlannerSheet.swift in Sources */,
+				02CD127A519AC0865600390C /* EtudeView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

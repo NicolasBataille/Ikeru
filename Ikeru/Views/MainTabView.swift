@@ -256,7 +256,7 @@ private struct TabContentView: View {
         case .home:
             HomeView()
         case .study:
-            ProgressDashboardView()
+            EtudeView()
         case .companion:
             CompanionTabView()
         case .rpg:

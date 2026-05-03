@@ -4625,6 +4625,40 @@
           }
         }
       }
+    },
+    "Etude.Title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Practice library"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bibliothèque de pratique"
+          }
+        }
+      }
+    },
+    "Etude.Compose.Row": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compose a session"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Composer une session"
+          }
+        }
+      }
     }
   },
   "version": "1.0"
