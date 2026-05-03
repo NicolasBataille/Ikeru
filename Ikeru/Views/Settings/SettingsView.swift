@@ -231,6 +231,21 @@ struct SettingsView: View {
                 }
                 updateReviewReminder(enabled: reviewReminderEnabled)
             }
+            if reviewReminderEnabled {
+                stepperRow(
+                    jp: "時刻",
+                    label: "Reminder.Hour",
+                    value: $reviewReminderHour,
+                    range: 0...23,
+                    format: { "\($0):00" }
+                ) { newValue in
+                    Task {
+                        await NotificationManager.shared.scheduleReviewReminder(
+                            hour: newValue
+                        )
+                    }
+                }
+            }
             settingRow(
                 jp: "週次振り返り",
                 label: "Weekly check-in",
@@ -242,6 +257,34 @@ struct SettingsView: View {
                     weeklyCheckInEnabled.toggle()
                 }
                 updateWeeklyCheckIn(enabled: weeklyCheckInEnabled)
+            }
+            if weeklyCheckInEnabled {
+                weekdayPickerRow(
+                    jp: "曜日",
+                    label: "Reminder.Weekday",
+                    selected: $weeklyCheckInDay
+                ) { newDay in
+                    Task {
+                        await NotificationManager.shared.scheduleWeeklyCheckIn(
+                            weekday: newDay,
+                            hour: weeklyCheckInHour
+                        )
+                    }
+                }
+                stepperRow(
+                    jp: "時刻",
+                    label: "Reminder.Hour",
+                    value: $weeklyCheckInHour,
+                    range: 0...23,
+                    format: { "\($0):00" }
+                ) { newValue in
+                    Task {
+                        await NotificationManager.shared.scheduleWeeklyCheckIn(
+                            weekday: weeklyCheckInDay,
+                            hour: newValue
+                        )
+                    }
+                }
             }
             settingRow(
                 jp: "音声",
@@ -611,6 +654,97 @@ struct SettingsView: View {
         }
         .buttonStyle(.plain)
         .disabled(action == nil)
+    }
+
+    /// Inline stepper row for picking an integer value (e.g. reminder hour).
+    /// Renders the same chrome as `settingRow` but with a `Stepper` instead
+    /// of a tap target.
+    private func stepperRow(
+        jp: String,
+        label: LocalizedStringKey,
+        value: Binding<Int>,
+        range: ClosedRange<Int>,
+        format: @escaping (Int) -> String,
+        onChange: @escaping (Int) -> Void
+    ) -> some View {
+        HStack(spacing: 16) {
+            Text(jp)
+                .font(.system(size: 13, design: .serif))
+                .foregroundStyle(TatamiTokens.paperGhost)
+            Text(label)
+                .font(.system(size: 13))
+                .foregroundStyle(Color.ikeruTextPrimary)
+            Spacer()
+            Stepper(
+                value: value,
+                in: range,
+                step: 1,
+                onEditingChanged: { editing in
+                    if !editing { onChange(value.wrappedValue) }
+                }
+            ) {
+                Text(format(value.wrappedValue))
+                    .font(.system(size: 13, design: .serif))
+                    .foregroundStyle(Color.ikeruPrimaryAccent)
+            }
+            .labelsHidden()
+            Text(format(value.wrappedValue))
+                .font(.system(size: 13, design: .serif))
+                .foregroundStyle(Color.ikeruPrimaryAccent)
+        }
+        .padding(.horizontal, 16).padding(.vertical, 10)
+        .overlay(alignment: .bottom) {
+            Rectangle().fill(TatamiTokens.goldDim.opacity(0.2))
+                .frame(height: 1).padding(.horizontal, 16)
+        }
+    }
+
+    /// Inline weekday picker (1=Sunday … 7=Saturday). Tapping cycles to the
+    /// next weekday so the row stays compact.
+    private func weekdayPickerRow(
+        jp: String,
+        label: LocalizedStringKey,
+        selected: Binding<Int>,
+        onChange: @escaping (Int) -> Void
+    ) -> some View {
+        Button {
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.86)) {
+                let next = (selected.wrappedValue % 7) + 1
+                selected.wrappedValue = next
+                onChange(next)
+            }
+        } label: {
+            HStack(spacing: 16) {
+                Text(jp)
+                    .font(.system(size: 13, design: .serif))
+                    .foregroundStyle(TatamiTokens.paperGhost)
+                Text(label)
+                    .font(.system(size: 13))
+                    .foregroundStyle(Color.ikeruTextPrimary)
+                Spacer()
+                Text(weekdayName(selected.wrappedValue))
+                    .font(.system(size: 13, design: .serif))
+                    .foregroundStyle(Color.ikeruPrimaryAccent)
+                Text("›")
+                    .font(.system(size: 14))
+                    .foregroundStyle(TatamiTokens.goldDim)
+            }
+            .padding(.horizontal, 16).padding(.vertical, 14)
+            .overlay(alignment: .bottom) {
+                Rectangle().fill(TatamiTokens.goldDim.opacity(0.2))
+                    .frame(height: 1).padding(.horizontal, 16)
+            }
+        }
+        .buttonStyle(.plain)
+    }
+
+    /// Localized weekday name. iOS conventions: 1=Sunday … 7=Saturday.
+    private func weekdayName(_ weekday: Int) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale.current
+        let symbols = formatter.weekdaySymbols ?? []
+        let idx = max(1, min(7, weekday)) - 1
+        return symbols[idx].capitalized
     }
 
     /// Bilingual + serif gold value + dim-gold chevron + 1px hairline divider.

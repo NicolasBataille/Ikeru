@@ -435,7 +435,6 @@
         }
       }
     },
-    "AI not configured": {},
     "AI providers": {
       "comment": "Settings section / row for AI provider configuration",
       "extractionState": "stale",
@@ -747,6 +746,91 @@
       }
     },
     "Candidates": {},
+    "Card.Hint.Example": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Example"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exemple"
+          }
+        }
+      }
+    },
+    "Card.Hint.Hint": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hint"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Indice"
+          }
+        }
+      }
+    },
+    "Card.Hint.Listen": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Listen"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Écouter"
+          }
+        }
+      }
+    },
+    "Card.Hint.Mark": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mark"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marquer"
+          }
+        }
+      }
+    },
+    "Card.Hint.Strokes": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Strokes"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tracés"
+          }
+        }
+      }
+    },
     "Cards": {
       "comment": "Generic stat label — count of cards",
       "extractionState": "stale",
@@ -2717,6 +2801,91 @@
         }
       }
     },
+    "Sakura.NoAI.BannerBody": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Configure an AI provider in Settings → AI to chat with Sakura."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Configure un fournisseur IA dans Réglages → IA pour discuter avec Sakura."
+          }
+        }
+      }
+    },
+    "Sakura.NoAI.BannerTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conversations are disabled"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les conversations sont désactivées"
+          }
+        }
+      }
+    },
+    "Sakura.NoAI.Body": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No AI provider is configured yet. To chat with Sakura, set up a provider (cloud or on-device) in Settings → AI."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun fournisseur IA n'est encore configuré. Pour discuter avec Sakura, configure un fournisseur (cloud ou local) dans Réglages → IA."
+          }
+        }
+      }
+    },
+    "Sakura.NoAI.Setup": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Set up AI"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Configurer l'IA"
+          }
+        }
+      }
+    },
+    "Sakura.NoAI.Title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sakura is offline"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sakura est hors ligne"
+          }
+        }
+      }
+    },
     "Save": {},
     "Score %@ in %@s": {
       "localizations": {
@@ -2775,7 +2944,6 @@
     },
     "Session Preview": {},
     "Set up a free Gemini key for AI features": {},
-    "Set Up AI": {},
     "Settings": {
       "comment": "Settings screen kicker label and tab title",
       "extractionState": "stale",
@@ -3463,6 +3631,7 @@
       }
     },
     "To chat with Sakura, set up an AI provider in Settings.": {
+      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -3895,6 +4064,7 @@
     "中": {},
     "会話を始める · ": {},
     "札": {},
+    "桃": {},
     "桜": {},
     "稽古を始める · ": {},
     "稽古終わり": {},
@@ -3913,172 +4083,36 @@
     "続ける · ": {},
     "言語": {},
     "道": {},
-    "Card.Hint.Listen": {
+    "Reminder.Hour": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Listen"
+            "value": "Hour"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Écouter"
+            "value": "Heure"
           }
         }
       }
     },
-    "Card.Hint.Strokes": {
+    "Reminder.Weekday": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Strokes"
+            "value": "Day"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tracés"
-          }
-        }
-      }
-    },
-    "Card.Hint.Example": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Example"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Exemple"
-          }
-        }
-      }
-    },
-    "Card.Hint.Hint": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Hint"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Indice"
-          }
-        }
-      }
-    },
-    "Card.Hint.Mark": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mark"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Marquer"
-          }
-        }
-      }
-    },
-    "Sakura.NoAI.Title": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sakura is offline"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sakura est hors ligne"
-          }
-        }
-      }
-    },
-    "Sakura.NoAI.Body": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No AI provider is configured yet. To chat with Sakura, set up a provider (cloud or on-device) in Settings → AI."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aucun fournisseur IA n'est encore configuré. Pour discuter avec Sakura, configure un fournisseur (cloud ou local) dans Réglages → IA."
-          }
-        }
-      }
-    },
-    "Sakura.NoAI.Setup": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Set up AI"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Configurer l'IA"
-          }
-        }
-      }
-    },
-    "Sakura.NoAI.BannerTitle": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Conversations are disabled"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Les conversations sont désactivées"
-          }
-        }
-      }
-    },
-    "Sakura.NoAI.BannerBody": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Configure an AI provider in Settings → AI to chat with Sakura."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Configure un fournisseur IA dans Réglages → IA pour discuter avec Sakura."
+            "value": "Jour"
           }
         }
       }
