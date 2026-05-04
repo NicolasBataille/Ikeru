@@ -35,6 +35,11 @@ public final class SessionViewModel {
     /// Count of new items learned (first-time reviews).
     public private(set) var newItemsLearned: Int = 0
 
+    /// Cards graded `.again` during the current session — i.e. mistakes.
+    /// Drives the "Review mistakes" CTA on the summary screen. Reset on
+    /// every session start (including when re-starting in mistakes mode).
+    public private(set) var missedCardIDs: Set<UUID> = []
+
     /// Whether the session is complete (all cards reviewed).
     public var isSessionComplete: Bool {
         isActive && currentIndex >= sessionQueue.count
@@ -212,6 +217,7 @@ public final class SessionViewModel {
         levelUpLevel = nil
         lastLootDrop = nil
         consecutiveCorrect = 0
+        missedCardIDs = []
         sessionLootCount = 0
         earnedLootBox = nil
         lastSessionBonus = nil
@@ -268,6 +274,31 @@ public final class SessionViewModel {
 
         Logger.ui.info(
             "Session started via SessionPlanner: \(plan.exercises.count) exercises (\(srsCards.count) SRS), ~\(plan.estimatedDurationMinutes)min"
+        )
+    }
+
+    /// Restarts the session with only the cards graded `.again` in the
+    /// previous session. Drives the summary screen's "Review mistakes" CTA.
+    /// No-op if the missed-set is empty (button should be hidden in that
+    /// case, but the guard keeps callers safe).
+    public func startReviewMistakes() async {
+        let mistakeIDs = missedCardIDs
+        guard !mistakeIDs.isEmpty else { return }
+        let allCards = await cardRepository.allCards()
+        let mistakes = allCards.filter { mistakeIDs.contains($0.id) }
+        guard !mistakes.isEmpty else { return }
+
+        sessionQueue = mistakes
+        resetSessionState()
+        estimatedCardCount = mistakes.count
+        sessionExercises = mistakes.map { ExerciseItem.srsReview($0) }
+
+        startTimer()
+        await loadRPGState()
+        liveActivityManager.startActivity(totalExercises: mistakes.count)
+
+        Logger.ui.info(
+            "Review-mistakes session started: \(mistakes.count) cards"
         )
     }
 
@@ -348,6 +379,12 @@ public final class SessionViewModel {
         // Show feedback
         let isCorrect = grade == .good || grade == .easy
         feedbackState = isCorrect ? .correct : .incorrect
+
+        // Track .again grades so the summary's "Review mistakes" CTA can
+        // re-queue them as a focused mini-session.
+        if grade == .again {
+            missedCardIDs.insert(card.id)
+        }
 
         Logger.srs.debug(
             "Grading card \(card.front): grade=\(grade.rawValue), responseTime=\(responseTimeMs)ms"

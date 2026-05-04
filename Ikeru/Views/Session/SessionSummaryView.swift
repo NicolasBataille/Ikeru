@@ -72,12 +72,14 @@ struct SessionSummaryView: View {
             verticalHairline
 
             VStack(spacing: 6) {
-                HStack(alignment: .firstTextBaseline, spacing: 1) {
-                    SerifNumeral(recallPercentage, size: 56, color: .ikeruPrimaryAccent)
-                    Text("%")
-                        .font(.system(size: 18, design: .serif))
-                        .foregroundStyle(TatamiTokens.paperGhost)
-                }
+                // 100% used to wrap onto two lines because the column width
+                // couldn't host "100" at 56pt + a "%" beside it. Combine
+                // into a single Text so it scales as one unit.
+                Text("\(recallPercentage)%")
+                    .font(.system(size: 56, weight: .light, design: .serif))
+                    .foregroundStyle(Color.ikeruPrimaryAccent)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
                 Text("RECALL", comment: "Summary stat label")
                     .font(.system(size: 10, weight: .semibold))
                     .foregroundStyle(Color.ikeruTextSecondary)
@@ -201,15 +203,19 @@ struct SessionSummaryView: View {
             }
             .buttonStyle(.plain)
 
-            Button { onReviewMistakes() } label: {
-                Text("REVIEW MISTAKES", comment: "Summary secondary CTA")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(Color.ikeruTextSecondary)
-                    .tracking(1.4)
-                    .padding(.vertical, 12)
-                    .frame(maxWidth: .infinity)
+            // Hide the secondary CTA when there are no mistakes — there's
+            // nothing to re-queue, so the button would dead-end.
+            if !viewModel.missedCardIDs.isEmpty {
+                Button { onReviewMistakes() } label: {
+                    Text("REVIEW MISTAKES", comment: "Summary secondary CTA")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(Color.ikeruTextSecondary)
+                        .tracking(1.4)
+                        .padding(.vertical, 12)
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
         }
     }
 
@@ -220,9 +226,7 @@ struct SessionSummaryView: View {
     }
 
     private func onReviewMistakes() {
-        // Review-mistakes flow is not yet wired — preserve dismiss behavior
-        // so the secondary button still closes the summary cleanly.
-        viewModel.dismissSession()
+        Task { await viewModel.startReviewMistakes() }
     }
 
     // MARK: - Derived display values
