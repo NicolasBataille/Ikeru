@@ -182,28 +182,21 @@ struct ExerciseTransitionContainer: View {
                     .padding(.bottom, IkeruTheme.Spacing.md)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                 } else {
-                    revealCallToAction
-                        .padding(.horizontal, IkeruTheme.Spacing.md)
+                    // Tap-to-reveal is handled directly by `SRSCardView`'s
+                    // tap gesture. A quiet caption hints at the affordance
+                    // without the visual weight of a primary button.
+                    Text("Tap card to reveal", comment: "Hint shown below the SRS card before reveal — replaces the old 'Show answer' button")
+                        .font(.system(size: 11, weight: .semibold))
+                        .tracking(2)
+                        .textCase(.uppercase)
+                        .foregroundStyle(TatamiTokens.paperGhost)
+                        .frame(maxWidth: .infinity)
                         .padding(.bottom, IkeruTheme.Spacing.md)
                         .transition(.opacity)
                 }
             }
             .animation(.spring(response: 0.35, dampingFraction: 0.85), value: isRevealed)
         }
-    }
-
-    // MARK: - Reveal Call To Action
-
-    private var revealCallToAction: some View {
-        Button {
-            withAnimation(.spring(response: 0.45, dampingFraction: 0.78)) {
-                isRevealed = true
-            }
-        } label: {
-            Text("Show answer")
-                .frame(maxWidth: .infinity)
-        }
-        .ikeruButtonStyle(.primary)
     }
 
     // MARK: - Placeholder Exercise View

@@ -25,9 +25,7 @@ struct DisplayModeToggleRow: View {
                         .foregroundStyle(Color.ikeruTextSecondary)
                 }
                 Spacer()
-                Toggle("", isOn: $isTatamiOn)
-                    .labelsHidden()
-                    .tint(Color.ikeruPrimaryAccent)
+                TatamiToggle(isOn: $isTatamiOn) { _ in }
             }
             Text(isTatamiOn
                  ? "Settings.InterfaceTatami.HelpOn"
