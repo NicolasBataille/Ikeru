@@ -40,6 +40,13 @@ public final class SessionViewModel {
     /// every session start (including when re-starting in mistakes mode).
     public private(set) var missedCardIDs: Set<UUID> = []
 
+    /// Total cards graded `.good` or `.easy` this session. Used by the
+    /// summary's recall % — *not* `consecutiveCorrect`, because that
+    /// resets on any miss and made recall always read 0% the moment the
+    /// user hit a single .hard or .again, even if every other card was
+    /// correct.
+    public private(set) var correctCount: Int = 0
+
     /// Whether this session was launched via the "Review mistakes" CTA.
     /// In `.reviewMistakes` mode, a card graded `.again` is re-queued at
     /// the end of `sessionQueue` (up to `maxRetriesPerCard`) so the user
@@ -234,6 +241,7 @@ public final class SessionViewModel {
         levelUpLevel = nil
         lastLootDrop = nil
         consecutiveCorrect = 0
+        correctCount = 0
         missedCardIDs = []
         sessionMode = .normal
         retryCounts = [:]
@@ -440,9 +448,10 @@ public final class SessionViewModel {
         let isCorrect = grade == .good || grade == .easy
         feedbackState = isCorrect ? .correct : .incorrect
 
-        // Track .again grades so the summary's "Review mistakes" CTA can
-        // re-queue them as a focused mini-session.
-        if grade == .again {
+        // Track .again *and* .hard grades as mistakes — both indicate the
+        // user struggled with the card. Drives the summary's "Review
+        // mistakes" CTA and the mistakes-mode intra-session re-queue.
+        if grade == .again || grade == .hard {
             missedCardIDs.insert(card.id)
 
             // Mistakes-mode intra-session re-queue: when the user fails a
@@ -498,6 +507,7 @@ public final class SessionViewModel {
         // Track consecutive correct (affects display only — no longer feeds loot RNG)
         if isCorrect {
             consecutiveCorrect += 1
+            correctCount += 1
         } else {
             consecutiveCorrect = 0
         }

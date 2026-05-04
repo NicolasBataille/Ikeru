@@ -18,20 +18,27 @@ struct CustomPlannerSheet: View {
     @State private var selectedLevels: Set<JLPTLevel> = [.n5]
 
     var body: some View {
-        ZStack {
-            IkeruScreenBackground()
-            ScrollView {
-                VStack(alignment: .leading, spacing: 28) {
-                    header
-                    sectionTypes
-                    sectionLevels
-                    sectionDuration
-                    composeButton
+        // NavigationStack gives the sheet proper top safe-area handling
+        // (the previous ZStack-only layout cropped the title under the
+        // status bar). Nav bar is hidden because we render our own
+        // tatami-styled header inside the scroll view.
+        NavigationStack {
+            ZStack {
+                IkeruScreenBackground()
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 32) {
+                        header
+                        sectionTypes
+                        sectionLevels
+                        sectionDuration
+                        composeButton
+                    }
+                    .padding(.horizontal, 22)
+                    .padding(.top, 8)
+                    .padding(.bottom, 40)
                 }
-                .padding(.horizontal, 22)
-                .padding(.top, 14)
-                .padding(.bottom, 40)
             }
+            .toolbar(.hidden, for: .navigationBar)
         }
         .onAppear {
             if let restored = try? JSONDecoder().decode(Set<ExerciseType>.self, from: lastTypesData),
@@ -47,29 +54,39 @@ struct CustomPlannerSheet: View {
 
     // MARK: - Header
 
+    /// Two-row header — top: small dismiss "X" pinned right; bottom:
+    /// centered serif title with a kanji eyebrow. Gives the title full
+    /// horizontal room (no longer wraps to two lines next to a button).
     private var header: some View {
-        HStack(alignment: .center) {
-            VStack(alignment: .leading, spacing: 4) {
-                BilingualLabel(japanese: "\u{7DE8}\u{6210}", chrome: "Compose")
-                Text("Etude.Compose.Title")
-                    .font(.system(size: 26, weight: .light, design: .serif))
-                    .foregroundStyle(Color.ikeruTextPrimary)
+        VStack(spacing: 16) {
+            HStack {
+                Spacer()
+                Button { dismiss() } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(Color.ikeruTextSecondary)
+                        .frame(width: 36, height: 36)
+                        .background {
+                            Circle().fill(.ultraThinMaterial)
+                        }
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(Text("Etude.Compose.Cancel"))
             }
-            Spacer()
-            Button { dismiss() } label: {
-                Text("Etude.Compose.Cancel")
-                    .font(.system(size: 12, weight: .semibold))
-                    .tracking(1.6)
-                    .textCase(.uppercase)
+
+            VStack(spacing: 4) {
+                Text("\u{7DE8}\u{6210}")             // 編成
+                    .font(.system(size: 13, weight: .regular, design: .serif))
                     .foregroundStyle(TatamiTokens.paperGhost)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .overlay(
-                        Rectangle()
-                            .strokeBorder(TatamiTokens.goldDim, lineWidth: 0.6)
-                    )
+                Text("Etude.Compose.Title")
+                    .font(.system(size: 30, weight: .light, design: .serif))
+                    .italic()
+                    .foregroundStyle(Color.ikeruTextPrimary)
+                    .multilineTextAlignment(.center)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.7)
             }
-            .buttonStyle(.plain)
+            .frame(maxWidth: .infinity)
         }
     }
 

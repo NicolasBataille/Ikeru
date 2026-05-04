@@ -237,14 +237,14 @@ struct SessionSummaryView: View {
 
     private var cardsCount: Int { viewModel.reviewedCount }
 
-    /// Approximate recall percentage. The session view-model does not track
-    /// per-grade correctness; `consecutiveCorrect` is the closest available
-    /// signal. When all reviews ended with a streak, recall reads as 100%;
-    /// otherwise it is the proportion of cards in the active correct streak
-    /// over the total reviewed. Returns 0 when no cards reviewed.
+    /// Recall percentage = total correct grades over total reviewed.
+    /// Uses the dedicated `correctCount` (incremented per-card) instead of
+    /// the streak-based `consecutiveCorrect`, which used to read 0% the
+    /// moment the user hit a single .hard or .again even if every other
+    /// card was correct. Returns 0 when no cards reviewed.
     private var recallPercentage: Int {
         guard viewModel.reviewedCount > 0 else { return 0 }
-        let ratio = Double(viewModel.consecutiveCorrect) / Double(viewModel.reviewedCount)
+        let ratio = Double(viewModel.correctCount) / Double(viewModel.reviewedCount)
         return Int((ratio * 100).rounded())
     }
 

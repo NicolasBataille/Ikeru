@@ -60,15 +60,22 @@ struct RPGProfileView: View {
 
     @ViewBuilder
     private func topBar(_ vm: RPGProfileViewModel) -> some View {
-        // Single serif title — the prior eyebrow ("YOUR JOURNEY" /
-        // "TON CHEMIN") was visual clutter and felt video-gamey alongside
-        // the wabi-sabi voice. The serif weight gives the rename room
-        // to breathe without an additional caption.
-        Text("RPG Profile")
-            .font(.system(size: 32, weight: .light, design: .serif))
-            .foregroundStyle(Color.ikeruTextPrimary)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.top, IkeruTheme.Spacing.sm)
+        // Centered serif title with a tiny kanji eyebrow above. The
+        // eyebrow recovers the bilingual feel that was lost when the
+        // "TON CHEMIN" all-caps eyebrow was removed, but quieter — a
+        // single character at half the title weight, breathing through.
+        VStack(spacing: 4) {
+            Text("\u{9053}")           // 道 — "the way"
+                .font(.system(size: 13, weight: .regular, design: .serif))
+                .foregroundStyle(TatamiTokens.paperGhost)
+            Text("RPG Profile")
+                .font(.system(size: 36, weight: .light, design: .serif))
+                .italic()
+                .foregroundStyle(Color.ikeruTextPrimary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.top, IkeruTheme.Spacing.lg)
+        .padding(.bottom, IkeruTheme.Spacing.xs)
     }
 
     // MARK: - Hero Section
