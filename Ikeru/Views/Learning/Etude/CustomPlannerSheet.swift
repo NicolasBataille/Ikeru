@@ -7,13 +7,15 @@ struct CustomPlannerSheet: View {
     let onCompose: (Set<ExerciseType>, Set<JLPTLevel>, Int) -> Void
 
     @Environment(\.dismiss) private var dismiss
-    @AppStorage("ikeru.session.defaultDurationMinutes") private var initialDuration = 15
+    // Picker binds directly to AppStorage so the Compose sheet is the
+    // single source of truth for the default session length. Settings
+    // used to mirror this row; it was removed when the picker moved here.
+    @AppStorage("ikeru.session.defaultDurationMinutes") private var duration = 15
     @AppStorage("ikeru.etude.lastTypes") private var lastTypesData: Data = .init()
     @AppStorage("ikeru.etude.lastLevels") private var lastLevelsData: Data = .init()
 
     @State private var selectedTypes: Set<ExerciseType> = []
     @State private var selectedLevels: Set<JLPTLevel> = [.n5]
-    @State private var duration: Int = 15
 
     var body: some View {
         NavigationStack {
@@ -35,7 +37,6 @@ struct CustomPlannerSheet: View {
                 }
             }
             .onAppear {
-                duration = initialDuration
                 if let restored = try? JSONDecoder().decode(Set<ExerciseType>.self, from: lastTypesData),
                    !restored.isEmpty {
                     selectedTypes = restored.intersection(unlockedTypes)
