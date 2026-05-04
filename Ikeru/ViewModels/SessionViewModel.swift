@@ -40,6 +40,23 @@ public final class SessionViewModel {
     /// every session start (including when re-starting in mistakes mode).
     public private(set) var missedCardIDs: Set<UUID> = []
 
+    /// Whether this session was launched via the "Review mistakes" CTA.
+    /// In `.reviewMistakes` mode, a card graded `.again` is re-queued at
+    /// the end of `sessionQueue` (up to `maxRetriesPerCard`) so the user
+    /// actually drills the failures intra-session instead of waiting for
+    /// the next summary screen to start a new session.
+    public enum SessionMode: Sendable {
+        case normal
+        case reviewMistakes
+    }
+    public private(set) var sessionMode: SessionMode = .normal
+
+    /// How many times a single card has been re-queued during the
+    /// current session. Capped at `maxRetriesPerCard` so a stuck card
+    /// can't loop forever.
+    private var retryCounts: [UUID: Int] = [:]
+    private static let maxRetriesPerCard = 2
+
     /// Whether the session is complete (all cards reviewed).
     public var isSessionComplete: Bool {
         isActive && currentIndex >= sessionQueue.count
@@ -218,6 +235,8 @@ public final class SessionViewModel {
         lastLootDrop = nil
         consecutiveCorrect = 0
         missedCardIDs = []
+        sessionMode = .normal
+        retryCounts = [:]
         sessionLootCount = 0
         earnedLootBox = nil
         lastSessionBonus = nil
@@ -330,6 +349,7 @@ public final class SessionViewModel {
 
         sessionQueue = mistakes
         resetSessionState()
+        sessionMode = .reviewMistakes
         estimatedCardCount = mistakes.count
         sessionExercises = mistakes.map { ExerciseItem.srsReview($0) }
 
@@ -424,6 +444,23 @@ public final class SessionViewModel {
         // re-queue them as a focused mini-session.
         if grade == .again {
             missedCardIDs.insert(card.id)
+
+            // Mistakes-mode intra-session re-queue: when the user fails a
+            // card during a "Review mistakes" session, append it back to
+            // the end of the queue so they actually re-drill the failure
+            // before the session ends. Capped at `maxRetriesPerCard` to
+            // prevent a stuck card from looping forever.
+            if sessionMode == .reviewMistakes {
+                let retries = retryCounts[card.id, default: 0]
+                if retries < Self.maxRetriesPerCard {
+                    retryCounts[card.id] = retries + 1
+                    sessionQueue.append(card)
+                    sessionExercises.append(.srsReview(card))
+                    Logger.srs.info(
+                        "Mistakes-mode requeue: \(card.front, privacy: .public) (retry \(retries + 1)/\(Self.maxRetriesPerCard, privacy: .public))"
+                    )
+                }
+            }
         }
 
         Logger.srs.debug(
