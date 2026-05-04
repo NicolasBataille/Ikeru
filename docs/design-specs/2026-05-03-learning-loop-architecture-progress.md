@@ -1,11 +1,11 @@
 # Spec A — Learning Loop Architecture · Implementation Progress
 
-**Date paused:** 2026-05-03
+**Date complete:** 2026-05-04
 **Branch:** `design/wabi-refinements` (pushed to `origin`)
 **Spec:** `docs/design-specs/2026-05-03-learning-loop-architecture-design.md` (commit `7cbe2ba`)
 **Plan:** `docs/design-specs/2026-05-03-learning-loop-architecture-plan.md` (commit `b356a21`)
 
-**Status:** **21 of 25 tasks complete** · 4 remaining · all committed and pushed.
+**Status:** **25 of 25 tasks complete** · smoke-tested, build green, ready to PR.
 
 ---
 
@@ -197,6 +197,84 @@ These were noted in code review or implementation but deliberately not fixed inl
 5. Task 25 is manual — run on the simulator; capture a checklist of which acceptance items pass and which surface the deferred follow-ups noted above.
 
 The branch is currently a fork from `master`. When all 25 are green and Spec B / Spec C work hasn't started, Spec A is ready to PR.
+
+---
+
+## Smoke test results — 2026-05-04
+
+Tasks 22–24 implemented inline (per the hybrid execution choice); Task 25
+ran on the iPhone 17 simulator. Two real bugs surfaced and were fixed in
+this branch; the rest of the surface findings are pre-existing UX work
+that belongs in separate specs.
+
+### Mechanically verified (no taps required)
+
+| Source of truth | Verdict |
+|---|---|
+| Clean build (`** BUILD SUCCEEDED **`) | ✓ |
+| Cold install + cold launch | ✓ |
+| `-skipOnboarding` debug flag → MainTabView | ✓ |
+| Home shows one CTA only (`稽古を始める · COMMENCER`) | ✓ |
+| Quiet state ("Tout est à jour — savoure le calme") on no due cards | ✓ |
+| Four-winds card absent from Home (Task 22) | ✓ |
+| `[com.ikeru:rpg] unlock.backfill applied — acknowledged=4` on first launch (Task 23) | ✓ |
+
+### Walked through (user-driven taps)
+
+| # | Surface | Verdict |
+|---|---|---|
+| 5 | Locked tile shows lock-reason hint, tap is disabled | ✓ |
+| 6 | Compose disabled until ≥1 type and ≥1 level selected | ✓ |
+| 7 | Compose-submit dismisses without launching ActiveSessionView | ✓ confirms documented gap |
+| 9 | Chat (no AI provider) — pre-existing message preserved | ✓ |
+| 10 (mechanism) | Session runs end-to-end, XP awarded, badges granted | ✓ |
+
+### Spec-A bugs surfaced and fixed inline
+
+| # | Issue | Commit |
+|---|---|---|
+| 4 | Étude lock-reason tiles rendered raw catalog keys (`Etude.Lock.Vocab 0 50`) because `String(localized: "Foo \(x) \(y)")` keys the lookup on the interpolated form, but the catalog stores bare keys with `%lld` placeholders inside the value. Fixed by `String(format: String(localized: "Foo"), …)`. Hiragana / Katakana arms (no interpolation) already worked. | `e747d9f` |
+| 1 | "Durée par défaut" row in Réglages had no context — moved fully into the Compose sheet (Étude → 編成). The segmented picker now binds directly to `@AppStorage("ikeru.session.defaultDurationMinutes")`, making Compose the single source of truth. Settings row + helper + AppStorage backing removed. UserDefaults key unchanged, so existing values survive. | `6d33bae` |
+
+### Out of Spec A — captured for future specs
+
+These all surfaced from smoke-test screenshots but are pre-existing UX
+work that the four-segment / unlock / Étude rework did not touch. Not
+fixed here; surfaced verbatim so the next spec captures them.
+
+| Surface | Finding |
+|---|---|
+| Réglages | Tatami "Interface Tatami" toggle should adopt the custom toggle button style (consistency with reminder/weekday rows). |
+| Rang | "TON CHEMIN" header runs into the status bar — needs vertical padding. |
+| Rang | Rename "Profil RPG" — that wording isn't in keeping with the wabi-sabi voice. |
+| Rang | Rank kanji (e.g. 第二段) want a *furigana* reading rendered above. |
+| Kana drill | Replace the prominent "Afficher la réponse" button with a small tap-to-reveal indicator on the card itself. |
+| Kana drill | After reveal, card is too tall once the four grade buttons appear; the kana glyph and romaji are then too small. |
+| Kana drill | "Quitter cette séance" sheet doesn't pick up the tatami styling. |
+| Kana drill | Card needs a subtle directional hint while swiping, showing which grade the swipe will commit. |
+| Kana drill | Mid-swipe the card is too transparent — apply a glass-opacity background so cards behind don't bleed through. |
+| Kana drill | "Séance terminée" result screen isn't fully wabi-sabi; some labels wrap awkwardly. |
+| Kana drill | "REVOIR LES ERREURS" button on the result screen is non-functional (no-op tap). |
+| Étude | "Compose → submit" still does not navigate into the active-session UI; `lastComposedPlan` is set, navigation handoff missing. (Already a documented deferred follow-up.) |
+| Étude | Single-tile tap on an unlocked tile only logs (no single-surface drill yet). (Already a documented deferred follow-up.) |
+
+### Build / test state at completion
+
+- `xcodebuild -scheme Ikeru -destination 'platform=iOS Simulator,name=iPhone 17' build` → `** BUILD SUCCEEDED **` after every commit on this branch.
+- `swift test --package-path IkeruCore --filter UnlockBackfillServiceTests` → 3/3 pass.
+- All Spec-A-relevant test suites green: `LearnerSnapshot`, `LearnerSnapshotBuilder`, `ExerciseUnlockService`, `RPGStateAcknowledgedUnlocks`, `VarietyPoolResolver`, `RestDayDetector`, `DefaultSessionPlanner`, `ExerciseType`, plus the new `UnlockBackfillService`.
+- Pre-existing red suites unrelated to this work (`RPGService`, `Colors`, `Typography`, `Spacing`, `CardRepository`, `KanaCardRepository`, `ContentSeedService`, `PlannerServiceTests`, `ProgressServiceTests`) remain failing — captured as known instability outside Spec A scope.
+
+### Final commit stack on `design/wabi-refinements`
+
+| Commit | Title |
+|---|---|
+| `c215b65` | refactor(rpg): four-winds skill balance moved from Home to Rang |
+| `452ecb3` | feat(unlock): one-shot UnlockBackfillService — populate day-1 + already-earned on first launch |
+| `440a12f` | deprecate(planner): mark composeAdaptiveSession deprecated; remove obsolete adaptive tests |
+| `e747d9f` | fix(etude): localized lock hints render translated text instead of raw keys |
+| `6d33bae` | refactor(settings): move default-duration picker fully into Compose sheet |
+| (this doc) | docs(progress): Spec A · 25/25 with smoke-test results |
 
 ---
 
