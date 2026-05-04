@@ -333,8 +333,10 @@ struct SRSCardView: View {
     private func cardBackContent(for card: CardDTO) -> some View {
         VStack(spacing: IkeruTheme.Spacing.md) {
             Text(card.front)
-                .font(.system(size: 64, weight: .regular, design: .serif))
+                .font(.system(size: 120, weight: .light, design: .serif))
                 .foregroundStyle(Color.ikeruTextSecondary)
+                .minimumScaleFactor(0.5)
+                .lineLimit(1)
 
             // Kintsugi repair seam — the gold hairline between what you saw
             // and what you now know. Fades at the edges so it reads as a
@@ -343,9 +345,10 @@ struct SRSCardView: View {
                 .frame(maxWidth: 140)
 
             Text(card.back)
-                .font(.system(size: 40, weight: .semibold, design: .rounded))
+                .font(.system(size: 52, weight: .semibold, design: .rounded))
                 .foregroundStyle(Color.ikeruPrimaryAccent)
                 .multilineTextAlignment(.center)
+                .minimumScaleFactor(0.5)
                 .padding(.horizontal, IkeruTheme.Spacing.md)
         }
     }

@@ -100,7 +100,7 @@ struct ActiveSessionView: View {
                         .foregroundStyle(Color.ikeruTextTertiary)
 
                     Text("Leave this session?")
-                        .font(.ikeruHeading2)
+                        .font(.system(size: 22, weight: .regular, design: .serif))
                         .foregroundStyle(Color.ikeruTextPrimary)
                         .multilineTextAlignment(.center)
 
@@ -131,9 +131,8 @@ struct ActiveSessionView: View {
                     .ikeruButtonStyle(.ghost)
                 }
             }
-            .padding(IkeruTheme.Spacing.xl)
             .frame(maxWidth: 360)
-            .ikeruCard(.elevated)
+            .tatamiRoom(.glass, padding: IkeruTheme.Spacing.xl)
             .padding(.horizontal, IkeruTheme.Spacing.lg)
             .transition(
                 .scale(scale: 0.92).combined(with: .opacity)
