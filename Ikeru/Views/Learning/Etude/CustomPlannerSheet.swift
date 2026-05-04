@@ -18,45 +18,67 @@ struct CustomPlannerSheet: View {
     @State private var selectedLevels: Set<JLPTLevel> = [.n5]
 
     var body: some View {
-        NavigationStack {
+        ZStack {
+            IkeruScreenBackground()
             ScrollView {
-                VStack(alignment: .leading, spacing: 24) {
+                VStack(alignment: .leading, spacing: 28) {
+                    header
                     sectionTypes
                     sectionLevels
                     sectionDuration
                     composeButton
                 }
-                .padding(20)
+                .padding(.horizontal, 22)
+                .padding(.top, 14)
+                .padding(.bottom, 40)
             }
-            .background(Color.ikeruBackground.ignoresSafeArea())
-            .navigationTitle(Text("Etude.Compose.Title"))
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Etude.Compose.Cancel") { dismiss() }
-                }
+        }
+        .onAppear {
+            if let restored = try? JSONDecoder().decode(Set<ExerciseType>.self, from: lastTypesData),
+               !restored.isEmpty {
+                selectedTypes = restored.intersection(unlockedTypes)
             }
-            .onAppear {
-                if let restored = try? JSONDecoder().decode(Set<ExerciseType>.self, from: lastTypesData),
-                   !restored.isEmpty {
-                    selectedTypes = restored.intersection(unlockedTypes)
-                }
-                if let restored = try? JSONDecoder().decode(Set<JLPTLevel>.self, from: lastLevelsData),
-                   !restored.isEmpty {
-                    selectedLevels = restored
-                }
+            if let restored = try? JSONDecoder().decode(Set<JLPTLevel>.self, from: lastLevelsData),
+               !restored.isEmpty {
+                selectedLevels = restored
             }
         }
     }
 
+    // MARK: - Header
+
+    private var header: some View {
+        HStack(alignment: .center) {
+            VStack(alignment: .leading, spacing: 4) {
+                BilingualLabel(japanese: "\u{7DE8}\u{6210}", chrome: "Compose")
+                Text("Etude.Compose.Title")
+                    .font(.system(size: 26, weight: .light, design: .serif))
+                    .foregroundStyle(Color.ikeruTextPrimary)
+            }
+            Spacer()
+            Button { dismiss() } label: {
+                Text("Etude.Compose.Cancel")
+                    .font(.system(size: 12, weight: .semibold))
+                    .tracking(1.6)
+                    .textCase(.uppercase)
+                    .foregroundStyle(TatamiTokens.paperGhost)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .overlay(
+                        Rectangle()
+                            .strokeBorder(TatamiTokens.goldDim, lineWidth: 0.6)
+                    )
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
     private var sectionTypes: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Etude.Compose.Types")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(Color.ikeruTextSecondary)
+        VStack(alignment: .leading, spacing: 10) {
+            sectionLabel(japanese: "\u{7A3D}\u{53E4}", chrome: "Etude.Compose.Types")
             FlowChips(items: ExerciseType.allCases.filter { unlockedTypes.contains($0) }) { type in
                 ChipButton(
-                    label: ExerciseTileTokens.label(for: type),
+                    label: Text(ExerciseTileTokens.label(for: type)),
                     isSelected: selectedTypes.contains(type)
                 ) {
                     if selectedTypes.contains(type) { selectedTypes.remove(type) }
@@ -67,13 +89,11 @@ struct CustomPlannerSheet: View {
     }
 
     private var sectionLevels: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Etude.Compose.Levels")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(Color.ikeruTextSecondary)
+        VStack(alignment: .leading, spacing: 10) {
+            sectionLabel(japanese: "\u{7D1A}", chrome: "Etude.Compose.Levels")
             FlowChips(items: JLPTLevel.allCases) { level in
                 ChipButton(
-                    label: LocalizedStringKey(level.displayLabel),
+                    label: Text(verbatim: level.displayLabel),
                     isSelected: selectedLevels.contains(level)
                 ) {
                     if selectedLevels.contains(level) { selectedLevels.remove(level) }
@@ -83,15 +103,36 @@ struct CustomPlannerSheet: View {
         }
     }
 
+    /// Duration picker now uses the same chip pattern as types/levels
+    /// instead of an iOS native segmented control. Visual consistency
+    /// with the rest of the wabi-sabi chrome.
     private var sectionDuration: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Etude.Compose.Duration")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(Color.ikeruTextSecondary)
-            Picker("", selection: $duration) {
-                ForEach([5, 15, 30, 45], id: \.self) { Text("\($0) min").tag($0) }
+        VStack(alignment: .leading, spacing: 10) {
+            sectionLabel(japanese: "\u{6642}\u{9593}", chrome: "Etude.Compose.Duration")
+            FlowChips(items: [5, 15, 30, 45]) { minutes in
+                ChipButton(
+                    label: Text(verbatim: "\(minutes) min"),
+                    isSelected: duration == minutes
+                ) {
+                    duration = minutes
+                }
             }
-            .pickerStyle(.segmented)
+        }
+    }
+
+    /// Bilingual section header — kanji eyebrow + localized chrome label.
+    /// Replaces the prior plain-text labels for visual consistency with
+    /// the rest of the app's wabi-sabi chrome.
+    private func sectionLabel(japanese: String, chrome: LocalizedStringKey) -> some View {
+        HStack(spacing: 8) {
+            Text(japanese)
+                .font(.system(size: 13, design: .serif))
+                .foregroundStyle(TatamiTokens.paperGhost)
+            Text(chrome)
+                .font(.system(size: 11, weight: .semibold))
+                .tracking(1.6)
+                .textCase(.uppercase)
+                .foregroundStyle(Color.ikeruTextSecondary)
         }
     }
 
@@ -104,19 +145,24 @@ struct CustomPlannerSheet: View {
         } label: {
             HStack {
                 Spacer()
+                Text("\u{7DE8}\u{6210}\u{30FB}")
+                    .font(.system(size: 13, weight: .regular, design: .serif))
                 Text("Etude.Compose.Action")
                     .font(.system(size: 13, weight: .bold))
                     .tracking(1.6)
                 Spacer()
             }
             .foregroundStyle(Color.ikeruBackground)
-            .padding(.vertical, 14)
+            .padding(.vertical, 16)
             .background(canCompose
                         ? Color.ikeruPrimaryAccent
                         : Color.ikeruPrimaryAccent.opacity(0.35))
+            .sumiCorners(color: Color.ikeruBackground.opacity(0.6),
+                         size: 6, weight: 1.2, inset: -1)
         }
         .buttonStyle(.plain)
         .disabled(!canCompose)
+        .padding(.top, 10)
     }
 
     private var canCompose: Bool {
@@ -182,12 +228,12 @@ private struct FlowLayout: Layout {
 }
 
 private struct ChipButton: View {
-    let label: LocalizedStringKey
+    let label: Text
     let isSelected: Bool
     let onTap: () -> Void
     var body: some View {
         Button(action: onTap) {
-            Text(label)
+            label
                 .font(.system(size: 12, weight: .medium))
                 .padding(.horizontal, 12).padding(.vertical, 6)
                 .foregroundStyle(isSelected ? Color.ikeruBackground : Color.ikeruTextPrimary)

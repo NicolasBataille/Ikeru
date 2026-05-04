@@ -17,6 +17,11 @@ struct EtudeView: View {
     @State private var unlockedTypes: Set<ExerciseType> = []
     @State private var sessionViewModel: SessionViewModel?
     @State private var showSession = false
+    /// Compose params buffered while the sheet dismisses. SwiftUI can't
+    /// present a `fullScreenCover` while a `sheet` is still mid-dismiss
+    /// (the previous attempt deadlocked the UI). The sheet's `onDismiss`
+    /// reads this and drives the session launch once dismissal completes.
+    @State private var pendingCompose: (Set<ExerciseType>, Set<JLPTLevel>, Int)?
     private let unlockService: any ExerciseUnlockService = DefaultExerciseUnlockService()
 
     var body: some View {
@@ -41,9 +46,10 @@ struct EtudeView: View {
         }
         .toolbar(.hidden, for: .navigationBar)
         .task { await initialize() }
-        .sheet(isPresented: $showCompose) {
+        .sheet(isPresented: $showCompose, onDismiss: drainPendingCompose) {
             CustomPlannerSheet(unlockedTypes: unlockedTypes) { types, levels, duration in
-                launchCustomSession(types: types, levels: levels, duration: duration)
+                pendingCompose = (types, levels, duration)
+                // Sheet self-dismisses; `drainPendingCompose` runs after.
             }
         }
         .fullScreenCover(isPresented: $showSession) {
@@ -54,6 +60,16 @@ struct EtudeView: View {
                     }
             }
         }
+    }
+
+    /// Reads the buffered compose params (set while the sheet was up)
+    /// after the sheet has fully dismissed and triggers the session
+    /// launch. Avoids the SwiftUI deadlock that happens when a
+    /// fullScreenCover is presented while a sheet is still mid-dismiss.
+    private func drainPendingCompose() {
+        guard let params = pendingCompose else { return }
+        pendingCompose = nil
+        launchCustomSession(types: params.0, levels: params.1, duration: params.2)
     }
 
     /// Composes a session via `SessionViewModel` from the Compose sheet's
