@@ -191,6 +191,15 @@ struct SRSCardView: View {
     private var currentCard: some View {
         cardContent(for: card, revealed: isRevealed)
             .tatamiRoom(.glass, padding: EdgeInsets(top: 28, leading: 28, bottom: 28, trailing: 28))
+            // While dragging the glass card, the cards behind in the deck
+            // bleed through and read as a distracting visual halo. An
+            // opaque underlay only during drag eliminates the see-through
+            // without dimming the calm idle look.
+            .background(
+                Rectangle()
+                    .fill(Color.ikeruBackground.opacity(isDragging ? 0.85 : 0))
+                    .animation(.easeInOut(duration: 0.18), value: isDragging)
+            )
     }
 
     /// A peek layer. Always shows the front of the card (never the answer)
