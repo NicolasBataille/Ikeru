@@ -71,6 +71,8 @@ struct RPGProfileView: View {
                 .foregroundStyle(Color.ikeruTextPrimary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        // Eyebrow used to sit right against the iOS status bar; lower it.
+        .padding(.top, IkeruTheme.Spacing.sm)
     }
 
     // MARK: - Hero Section
@@ -128,9 +130,17 @@ struct RPGProfileView: View {
             RPGRankCrest(level: vm.level, size: 96)
                 .frame(width: 96, height: 96)
             VStack(alignment: .leading, spacing: 4) {
-                Text("第\(rankKanji(vm.level))段")
-                    .font(.system(size: 22, weight: .light, design: .serif))
-                    .foregroundStyle(Color.ikeruTextPrimary)
+                // Furigana (振り仮名): tiny hiragana reading sits above the
+                // rank kanji so non-native readers know how to say it.
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("だい・\(rankReading(vm.level))・だん")
+                        .font(.system(size: 9, weight: .regular, design: .serif))
+                        .tracking(2)
+                        .foregroundStyle(TatamiTokens.paperGhost)
+                    Text("第\(rankKanji(vm.level))段")
+                        .font(.system(size: 22, weight: .light, design: .serif))
+                        .foregroundStyle(Color.ikeruTextPrimary)
+                }
                 Text(rankTitle(level: vm.level).uppercased())
                     .font(.system(size: 11, weight: .bold))
                     .foregroundStyle(Color.ikeruPrimaryAccent)
@@ -263,6 +273,10 @@ struct RPGProfileView: View {
                     .frame(width: 56, height: 56)
                     .opacity(0.5)
                 VStack(alignment: .leading, spacing: 2) {
+                    Text("だい・\(rankReading(vm.level + 1))・だん")
+                        .font(.system(size: 8, weight: .regular, design: .serif))
+                        .tracking(1)
+                        .foregroundStyle(TatamiTokens.paperGhost.opacity(0.7))
                     Text("第\(rankKanji(vm.level + 1))段 · \(rankTitle(level: vm.level + 1))")
                         .font(.system(size: 16, design: .serif))
                         .foregroundStyle(Color.ikeruTextPrimary)
@@ -284,6 +298,18 @@ struct RPGProfileView: View {
     /// numeral past the prepared range — same convention as `RPGRankCrest`.
     private func rankKanji(_ n: Int) -> String {
         let lookup = ["", "一", "二", "三", "四", "五", "六", "七", "八", "九", "十"]
+        return lookup.indices.contains(n) ? lookup[n] : "\(n)"
+    }
+
+    /// Hiragana reading for the rank numeral kanji — paired with
+    /// `rankKanji(_:)` in the furigana row above the rank label
+    /// ("第N段" → "だい・<reading>・だん"). Falls back to the ASCII
+    /// numeral past the prepared range so high custom levels still read.
+    private func rankReading(_ n: Int) -> String {
+        let lookup = [
+            "", "いち", "に", "さん", "よん", "ご",
+            "ろく", "なな", "はち", "きゅう", "じゅう"
+        ]
         return lookup.indices.contains(n) ? lookup[n] : "\(n)"
     }
 
