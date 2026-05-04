@@ -38,23 +38,28 @@ struct ExerciseTypeTile: View {
     }
 
     private func lockHint(_ reason: ExerciseLockReason) -> String {
+        // `String(localized: "Foo \(x) \(y)")` keys the lookup on the
+        // *interpolated* form ("Foo %lld %lld"), but the catalog stores
+        // bare keys ("Etude.Lock.Vocab") with format placeholders in the
+        // value ("%lld / %lld vocab to unlock"). Look up by bare key and
+        // apply `String(format:)` so the placeholders actually substitute.
         switch reason {
         case .vocabularyMastered(let req, let cur):
-            return String(localized: "Etude.Lock.Vocab \(cur) \(req)")
+            return String(format: String(localized: "Etude.Lock.Vocab"), cur, req)
         case .kanjiMastered(let req, let cur):
-            return String(localized: "Etude.Lock.Kanji \(cur) \(req)")
+            return String(format: String(localized: "Etude.Lock.Kanji"), cur, req)
         case .kanaMastered(let script):
             return script == .hiragana
                 ? String(localized: "Etude.Lock.Hiragana")
                 : String(localized: "Etude.Lock.Katakana")
         case .grammarPointsMastered(let req, let cur):
-            return String(localized: "Etude.Lock.Grammar \(cur) \(req)")
+            return String(format: String(localized: "Etude.Lock.Grammar"), cur, req)
         case .listeningAccuracyOver(let req, _, let win):
-            return String(localized: "Etude.Lock.ListenAccuracy \(Int(req * 100)) \(win)")
+            return String(format: String(localized: "Etude.Lock.ListenAccuracy"), Int(req * 100), win)
         case .listeningRecallOver(let req, _, let days):
-            return String(localized: "Etude.Lock.ListenRecall \(Int(req * 100)) \(days)")
+            return String(format: String(localized: "Etude.Lock.ListenRecall"), Int(req * 100), days)
         case .jlptLevelReached(let req, _):
-            return String(localized: "Etude.Lock.JLPT \(req.displayLabel)")
+            return String(format: String(localized: "Etude.Lock.JLPT"), req.displayLabel)
         }
     }
 }
