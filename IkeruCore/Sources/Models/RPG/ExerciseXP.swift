@@ -35,3 +35,16 @@ extension ExerciseXP {
         }
     }
 }
+
+extension ExerciseXP {
+    public static func award(type: ExerciseType, level: JLPTLevel, grade: Grade?) -> Int {
+        let base: Int
+        switch rule(for: type, grade: grade) {
+        case .perGrade(let g, let bonus):
+            base = RPGConstants.xpForGrade(g) + bonus
+        case .perCompletion(let b):
+            base = b
+        }
+        return Int((Double(base) * multiplier(for: level)).rounded())
+    }
+}
