@@ -23,3 +23,15 @@ public enum ExerciseXP {
         }
     }
 }
+
+extension ExerciseXP {
+    public static func multiplier(for level: JLPTLevel) -> Double {
+        switch level {
+        case .n5: return 1.00
+        case .n4: return 1.15
+        case .n3: return 1.30
+        case .n2: return 1.50
+        case .n1: return 1.75
+        }
+    }
+}
