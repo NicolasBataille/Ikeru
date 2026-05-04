@@ -15,6 +15,8 @@ struct EtudeView: View {
     @State private var showCompose = false
     @State private var snapshot: LearnerSnapshot = .empty
     @State private var unlockedTypes: Set<ExerciseType> = []
+    @State private var sessionViewModel: SessionViewModel?
+    @State private var showSession = false
     private let unlockService: any ExerciseUnlockService = DefaultExerciseUnlockService()
 
     var body: some View {
@@ -41,8 +43,46 @@ struct EtudeView: View {
         .task { await initialize() }
         .sheet(isPresented: $showCompose) {
             CustomPlannerSheet(unlockedTypes: unlockedTypes) { types, levels, duration in
-                viewModel?.startCustomSession(types: types, levels: levels, duration: duration)
+                launchCustomSession(types: types, levels: levels, duration: duration)
             }
+        }
+        .fullScreenCover(isPresented: $showSession) {
+            if let svm = sessionViewModel {
+                ActiveSessionView(viewModel: svm)
+                    .onChange(of: svm.isActive) { _, isActive in
+                        if !isActive { showSession = false }
+                    }
+            }
+        }
+    }
+
+    /// Composes a session via `SessionViewModel` from the Compose sheet's
+    /// chosen types / levels / duration, then presents `ActiveSessionView`
+    /// full-screen. Replaces the previous behaviour where Compose-submit
+    /// only stored `lastComposedPlan` and never navigated.
+    private func launchCustomSession(
+        types: Set<ExerciseType>,
+        levels: Set<JLPTLevel>,
+        duration: Int
+    ) {
+        let container = modelContext.container
+        if sessionViewModel == nil {
+            let repo = CardRepository(modelContainer: container)
+            let planner = PlannerService(cardRepository: repo)
+            sessionViewModel = SessionViewModel(
+                plannerService: planner,
+                cardRepository: repo,
+                modelContainer: container
+            )
+        }
+        guard let svm = sessionViewModel else { return }
+        Task {
+            await svm.startStudyCustomSession(
+                types: types,
+                levels: levels,
+                duration: duration
+            )
+            showSession = true
         }
     }
 

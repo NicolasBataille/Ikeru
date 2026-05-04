@@ -277,6 +277,46 @@ public final class SessionViewModel {
         )
     }
 
+    /// Composes a custom session from the Étude → Compose sheet. Same
+    /// pipeline as `startSession()` but with `.studyCustom` as the planner
+    /// source so the planner respects the user's chosen exercise types
+    /// and JLPT levels rather than the home recommendation skeleton.
+    public func startStudyCustomSession(
+        types: Set<ExerciseType>,
+        levels: Set<JLPTLevel>,
+        duration: Int
+    ) async {
+        let cards = await cardRepository.allCards()
+        let snapshot = await buildSnapshot(cards: cards)
+        let unlockedTypes = unlockService.unlockedTypes(profile: snapshot)
+        let inputs = SessionPlannerInputs(
+            source: .studyCustom(types: types, jlptLevels: levels),
+            durationMinutes: duration,
+            profile: snapshot,
+            unlockedTypes: unlockedTypes,
+            availableCards: cards
+        )
+        let plan = await sessionPlanner.compose(inputs: inputs)
+
+        let srsCards = plan.exercises.compactMap { exercise -> CardDTO? in
+            if case .srsReview(let card) = exercise { return card }
+            return nil
+        }
+
+        sessionQueue = srsCards
+        resetSessionState()
+        estimatedCardCount = plan.exercises.count
+        sessionExercises = plan.exercises
+
+        startTimer()
+        await loadRPGState()
+        liveActivityManager.startActivity(totalExercises: plan.exercises.count)
+
+        Logger.ui.info(
+            "Study custom session started: \(plan.exercises.count) exercises (\(srsCards.count) SRS), ~\(plan.estimatedDurationMinutes)min"
+        )
+    }
+
     /// Restarts the session with only the cards graded `.again` in the
     /// previous session. Drives the summary screen's "Review mistakes" CTA.
     /// No-op if the missed-set is empty (button should be hidden in that
