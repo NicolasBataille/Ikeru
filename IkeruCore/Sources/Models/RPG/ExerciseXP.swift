@@ -4,3 +4,22 @@ public enum ExerciseXPRule: Sendable, Equatable {
     case perGrade(grade: Grade, bonus: Int)
     case perCompletion(base: Int)
 }
+
+public enum ExerciseXP {
+    public static func rule(for type: ExerciseType, grade: Grade?) -> ExerciseXPRule {
+        switch type {
+        case .kanaStudy:           return .perGrade(grade: grade ?? .good, bonus: 0)
+        case .kanjiStudy:          return .perGrade(grade: grade ?? .good, bonus: 2)
+        case .vocabularyStudy:     return .perGrade(grade: grade ?? .good, bonus: 0)
+        case .fillInBlank:         return .perGrade(grade: grade ?? .good, bonus: 1)
+        case .grammarExercise:     return .perCompletion(base: 8)
+        case .sentenceConstruction:return .perCompletion(base: 12)
+        case .readingPassage:      return .perCompletion(base: 25)
+        case .writingPractice:     return .perCompletion(base: 18)
+        case .listeningSubtitled:  return .perCompletion(base: 10)
+        case .listeningUnsubtitled:return .perCompletion(base: 14)
+        case .speakingPractice:    return .perCompletion(base: 16)
+        case .sakuraConversation:  return .perCompletion(base: 20)
+        }
+    }
+}
