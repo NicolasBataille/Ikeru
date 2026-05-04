@@ -745,9 +745,15 @@ public final class SessionViewModel {
         showAbandonConfirmation = false
     }
 
-    /// Progress description for the abandon dialog (e.g., "You've completed 3 of 8 exercises").
+    /// Progress description for the abandon dialog (e.g. "You've completed
+    /// 3 of 8 exercises"). Uses an explicit format-string lookup so the
+    /// catalog can carry placeholders rather than the interpolated form.
     public var abandonProgressDescription: String {
-        "You've completed \(reviewedCount) of \(sessionExercises.count) exercises"
+        String(
+            format: String(localized: "Session.AbandonProgress"),
+            reviewedCount,
+            sessionExercises.count
+        )
     }
 
     // MARK: - Timer

@@ -60,19 +60,15 @@ struct RPGProfileView: View {
 
     @ViewBuilder
     private func topBar(_ vm: RPGProfileViewModel) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text("YOUR JOURNEY")
-                .font(.ikeruMicro)
-                .ikeruTracking(.micro)
-                .foregroundStyle(Color.ikeruTextTertiary)
-            Text("RPG Profile")
-                .font(.ikeruDisplaySmall)
-                .ikeruTracking(.display)
-                .foregroundStyle(Color.ikeruTextPrimary)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        // Eyebrow used to sit right against the iOS status bar; lower it.
-        .padding(.top, IkeruTheme.Spacing.sm)
+        // Single serif title — the prior eyebrow ("YOUR JOURNEY" /
+        // "TON CHEMIN") was visual clutter and felt video-gamey alongside
+        // the wabi-sabi voice. The serif weight gives the rename room
+        // to breathe without an additional caption.
+        Text("RPG Profile")
+            .font(.system(size: 32, weight: .light, design: .serif))
+            .foregroundStyle(Color.ikeruTextPrimary)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.top, IkeruTheme.Spacing.sm)
     }
 
     // MARK: - Hero Section

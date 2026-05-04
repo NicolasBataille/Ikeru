@@ -3499,6 +3499,24 @@
     "Sakura" : {
 
     },
+    "Session.AbandonProgress" : {
+      "comment" : "Progress label inside the abandon-confirmation overlay. %1 = cards completed, %2 = total exercises.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You've completed %1$lld of %2$lld exercises"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu as terminé %1$lld de %2$lld exercices"
+          }
+        }
+      }
+    },
     "Sakura needs an AI provider to chat with you." : {
       "localizations" : {
         "en" : {
@@ -4204,6 +4222,9 @@
         }
       }
     },
+    "Tap card to reveal" : {
+      "comment" : "Hint shown below the SRS card before reveal — replaces the old 'Show answer' button"
+    },
     "Tap the correct answer!" : {
       "localizations" : {
         "en" : {
@@ -4838,6 +4859,9 @@
     "さ" : {
 
     },
+    "だい・%@・だん" : {
+
+    },
     "七転び八起き · Fall seven, rise eight" : {
       "localizations" : {
         "en" : {
@@ -4861,9 +4885,6 @@
 
     },
     "会話を始める · " : {
-
-    },
-    "時間" : {
 
     },
     "札" : {
