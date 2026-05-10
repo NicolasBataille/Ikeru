@@ -3,7 +3,7 @@
 **Date:** 2026-05-10
 **Branch:** design/wabi-refinements (continuation of Spec A and Spec B)
 **Author:** Nico
-**Status:** Draft — awaiting approval before plan
+**Status:** Implemented — 2026-05-10, smoke-tested, ready to PR. See [progress doc](./2026-05-10-progress-formulas-progress.md).
 
 ---
 
