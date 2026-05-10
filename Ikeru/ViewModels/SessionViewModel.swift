@@ -583,6 +583,14 @@ public final class SessionViewModel {
             await MainActor.run { self.skillContribution = snap }
         }
 
+        // 10% sampled telemetry — high-volume event, full coverage would
+        // bloat the log. Sampling rate documented in the design doc.
+        if Int.random(in: 0..<100) < 10 {
+            Logger.ui.info(
+                "xp.attributed type=\(exerciseType.rawValue) level=\(self.sessionJLPTLevel.rawValue) finalXP=\(xpAmount)"
+            )
+        }
+
         // Persist RPG state
         await persistRPGState()
 
@@ -685,13 +693,22 @@ public final class SessionViewModel {
             // observe `isSessionComplete` (computed: currentIndex >=
             // sessionQueue.count) route to the summary even when the time
             // budget — not the queue — fired the end.
+            let queueDrained = reviewedCount >= sessionQueue.count
             if currentIndex < sessionQueue.count {
                 currentIndex = sessionQueue.count
                 currentExerciseIndex = sessionExercises.count
             }
-            Logger.ui.info(
-                "Session complete: \(self.reviewedCount) reviewed, \(self.xpEarned) XP earned"
-            )
+            let budgetMinutes = self.endPolicy?.durationBudgetMinutes ?? 0
+            let queueLength = self.sessionQueue.count
+            if queueDrained {
+                Logger.ui.info(
+                    "session.ended.queue durationMinutes=\(budgetMinutes) elapsedSeconds=\(Int(self.elapsedTime)) completedCount=\(self.reviewedCount) queueLength=\(queueLength) xpEarned=\(self.xpEarned)"
+                )
+            } else {
+                Logger.ui.info(
+                    "session.ended.budget durationMinutes=\(budgetMinutes) elapsedSeconds=\(Int(self.elapsedTime)) completedCount=\(self.reviewedCount) queueLength=\(queueLength) xpEarned=\(self.xpEarned)"
+                )
+            }
         }
     }
 

@@ -1,5 +1,6 @@
 import SwiftUI
 import IkeruCore
+import os
 
 // MARK: - SessionSummaryView
 //
@@ -33,6 +34,12 @@ struct SessionSummaryView: View {
                 .padding(.top, 20)
                 .padding(.bottom, 40)
             }
+        }
+        .onAppear {
+            let c = viewModel.skillContribution
+            Logger.ui.info(
+                "summary.contribution.viewed reading=\(c.reading) writing=\(c.writing) listening=\(c.listening) speaking=\(c.speaking)"
+            )
         }
     }
 
