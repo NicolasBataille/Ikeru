@@ -128,7 +128,7 @@ public final class ProgressService: Sendable {
         let dueNow = await cardRepository.dueCards(before: now)
 
         let skillBalance = computeSkillBalance(allCards: allCards)
-        let jlptEstimate = computeJLPTEstimate(allCards: allCards)
+        let jlptEstimate = computeJLPTReadinessEstimate(allCards: allCards, now: now)
         let dueTodayCount = computeDueTodayCount(allCards: allCards, now: now)
         let forecast = computeForecast(allCards: allCards, now: now)
         let snapshots = computeMonthlySnapshots(allCards: allCards, now: now)
@@ -194,38 +194,41 @@ public final class ProgressService: Sendable {
 
     // MARK: - JLPT Estimate
 
-    /// Estimates JLPT level based on total mastered vocabulary + kanji.
-    /// N5 ≈ 100 items, N4 ≈ 300, N3 ≈ 650, N2 ≈ 1000, N1 ≈ 2000
-    private func computeJLPTEstimate(allCards: [CardDTO]) -> JLPTEstimate {
-        let mastered = allCards.filter { $0.fsrsState.reps > 0 }.count
-
-        let levels: [(level: String, threshold: Int)] = [
-            ("N5", 100),
-            ("N4", 300),
-            ("N3", 650),
-            ("N2", 1000),
-            ("N1", 2000)
-        ]
-
-        // Find the highest level the learner is working toward
-        for (level, threshold) in levels {
-            if mastered < threshold {
-                let fraction = Double(mastered) / Double(threshold)
-                return JLPTEstimate(
-                    level: level,
-                    masteryFraction: fraction,
-                    masteredCount: mastered,
-                    totalRequired: threshold
-                )
-            }
-        }
-
-        // Beyond N1
+    /// Estimates JLPT readiness through `JLPTReadinessFormula`. Replaces
+    /// the legacy "count any card with reps > 0" heuristic, which spiked
+    /// after kana onboarding (kana cards are `.vocabulary` with
+    /// `jlptLevel == nil`). The new pipeline routes through
+    /// `LearnerSnapshotBuilder` so untagged cards never contribute to the
+    /// per-level pool, and the report's `bestFit` is the highest level
+    /// where every requirement axis (vocab/kanji/grammar/listen/recall)
+    /// crosses the readiness threshold.
+    ///
+    /// `JLPTReadinessFormula.compute` does NOT read `snapshot.jlptLevel`;
+    /// the snapshot is built with `.n5` as a placeholder so the dashboard
+    /// computation stays pure (no need to look up the user's profile).
+    private func computeJLPTReadinessEstimate(
+        allCards: [CardDTO],
+        now: Date
+    ) -> JLPTEstimate {
+        let snapshot = LearnerSnapshotBuilder.build(
+            cards: allCards,
+            jlptLevel: .n5,
+            grammarPointsFamiliarPlus: 0,
+            listeningAccuracyLast30: 0,
+            listeningRecallLast30Days: 0,
+            skillBalances: [:],
+            hasNewContentQueued: false,
+            lastSessionAt: nil,
+            now: now
+        )
+        let report = JLPTReadinessFormula.compute(snapshot: snapshot)
+        let bestFitReq = JLPTReadinessRequirements.requirements(for: report.bestFit)
+        let masteredVocab = snapshot.vocabularyMasteredAtOrBelow[report.bestFit] ?? 0
         return JLPTEstimate(
-            level: "N1",
-            masteryFraction: 1.0,
-            masteredCount: mastered,
-            totalRequired: 2000
+            level: report.bestFit.displayName,
+            masteryFraction: report.bestFitConfidence,
+            masteredCount: masteredVocab,
+            totalRequired: bestFitReq.vocab
         )
     }
 
