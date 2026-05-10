@@ -65,6 +65,13 @@ public final class RPGState {
     /// the `acknowledgedUnlocks` precedent set by Spec A's UnlockBackfill.
     public var jlptBackfillVersion: Int = 0
 
+    /// Last `JLPTReadinessReport.bestFit` raw value observed when the
+    /// dashboard data was loaded. Used by the app layer to detect upward
+    /// level crossings (Spec C `readiness.bestFit.changed` telemetry) —
+    /// `nil` for fresh profiles; updated to the current best-fit on every
+    /// dashboard load.
+    public var lastReadinessBestFit: String?
+
     /// The user profile that owns this RPG state
     public var profile: UserProfile?
 

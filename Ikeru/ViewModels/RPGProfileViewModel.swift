@@ -133,9 +133,27 @@ final class RPGProfileViewModel {
 
     /// Loads the four-winds skill balance shown on the Rang tab. Called
     /// from `RPGProfileView`'s `.task` after `loadData()` completes.
+    /// Also detects upward JLPT bestFit crossings for telemetry — fires
+    /// `readiness.bestFit.changed` once per upward boundary cross and
+    /// persists the new bestFit on `RPGState.lastReadinessBestFit`.
     func loadSkillBalance() async {
         let data = await progressService.loadDashboardData()
         skillBalance = data.skillBalance
+
+        let context = modelContainer.mainContext
+        guard let state = ActiveProfileResolver.fetchActiveRPGState(in: context) else { return }
+        let currentBestFit = JLPTLevel(rawValue: data.jlptEstimate.level.lowercased()) ?? .n5
+        if let lastRaw = state.lastReadinessBestFit,
+           let last = JLPTLevel(rawValue: lastRaw),
+           currentBestFit > last {
+            Logger.rpg.info(
+                "readiness.bestFit.changed from=\(last.rawValue, privacy: .public) to=\(currentBestFit.rawValue, privacy: .public)"
+            )
+        }
+        if state.lastReadinessBestFit != currentBestFit.rawValue {
+            state.lastReadinessBestFit = currentBestFit.rawValue
+            try? context.save()
+        }
     }
 
     // MARK: - Equip / Unequip
