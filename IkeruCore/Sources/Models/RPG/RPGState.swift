@@ -59,6 +59,12 @@ public final class RPGState {
     /// Highest daily streak reached, for posterity.
     public var longestDailyStreak: Int = 0
 
+    /// One-shot JLPT backfill schema version. `0` means the backfill has not
+    /// run yet; `1` means it has completed. Existing rows decode as `0` so
+    /// the boot-time backfill task fires once for migrating users. Mirrors
+    /// the `acknowledgedUnlocks` precedent set by Spec A's UnlockBackfill.
+    public var jlptBackfillVersion: Int = 0
+
     /// The user profile that owns this RPG state
     public var profile: UserProfile?
 
