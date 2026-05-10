@@ -276,8 +276,15 @@ struct IkeruApp: App {
             }
 
             state.jlptBackfillVersion = 1
-            try? context.save()
-            Logger.rpg.info("jlpt.backfill complete count=\(taggedCount, privacy: .public)")
+            do {
+                try context.save()
+                Logger.rpg.info("jlpt.backfill complete count=\(taggedCount, privacy: .public)")
+            } catch {
+                // Roll back the in-memory version flag so the next launch
+                // retries the backfill instead of silently skipping it.
+                state.jlptBackfillVersion = 0
+                Logger.rpg.error("jlpt.backfill save.failed error=\(error.localizedDescription, privacy: .public)")
+            }
         }
     }
 

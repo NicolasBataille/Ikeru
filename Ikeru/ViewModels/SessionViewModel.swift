@@ -587,7 +587,7 @@ public final class SessionViewModel {
         // bloat the log. Sampling rate documented in the design doc.
         if Int.random(in: 0..<100) < 10 {
             Logger.ui.info(
-                "xp.attributed type=\(exerciseType.rawValue) level=\(self.sessionJLPTLevel.rawValue) finalXP=\(xpAmount)"
+                "xp.attributed type=\(exerciseType.rawValue, privacy: .public) level=\(self.sessionJLPTLevel.rawValue, privacy: .public) finalXP=\(xpAmount, privacy: .public)"
             )
         }
 
@@ -702,11 +702,11 @@ public final class SessionViewModel {
             let queueLength = self.sessionQueue.count
             if queueDrained {
                 Logger.ui.info(
-                    "session.ended.queue durationMinutes=\(budgetMinutes) elapsedSeconds=\(Int(self.elapsedTime)) completedCount=\(self.reviewedCount) queueLength=\(queueLength) xpEarned=\(self.xpEarned)"
+                    "session.ended.queue durationMinutes=\(budgetMinutes, privacy: .public) elapsedSeconds=\(Int(self.elapsedTime), privacy: .public) completedCount=\(self.reviewedCount, privacy: .public) queueLength=\(queueLength, privacy: .public) xpEarned=\(self.xpEarned, privacy: .public)"
                 )
             } else {
                 Logger.ui.info(
-                    "session.ended.budget durationMinutes=\(budgetMinutes) elapsedSeconds=\(Int(self.elapsedTime)) completedCount=\(self.reviewedCount) queueLength=\(queueLength) xpEarned=\(self.xpEarned)"
+                    "session.ended.budget durationMinutes=\(budgetMinutes, privacy: .public) elapsedSeconds=\(Int(self.elapsedTime), privacy: .public) completedCount=\(self.reviewedCount, privacy: .public) queueLength=\(queueLength, privacy: .public) xpEarned=\(self.xpEarned, privacy: .public)"
                 )
             }
         }
@@ -917,7 +917,11 @@ public final class SessionViewModel {
 
     // MARK: - Timer
 
-    /// Starts the ContinuousClock-based timer that increments elapsedTime every second.
+    /// Drives `elapsedTime` from wall-clock difference vs `sessionStartTime`.
+    /// Using `Date().timeIntervalSince(...)` (rather than incrementing a
+    /// counter on each tick) means a backgrounded app catches up on the
+    /// real elapsed time the moment it resumes — required for the
+    /// session-end budget cut-off to fire correctly after suspension.
     private func startTimer() {
         guard !isTimerRunning else { return }
         isTimerRunning = true
@@ -926,7 +930,7 @@ public final class SessionViewModel {
             while !Task.isCancelled {
                 try? await clock.sleep(for: .seconds(1))
                 guard !Task.isCancelled else { break }
-                self.elapsedTime += 1
+                self.elapsedTime = Date().timeIntervalSince(self.sessionStartTime)
                 self.checkOneMinuteRemaining()
             }
         }

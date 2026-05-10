@@ -17,6 +17,10 @@ struct SessionSummaryView: View {
 
     let viewModel: SessionViewModel
 
+    /// Guards `summary.contribution.viewed` telemetry so swipe-back
+    /// re-entries don't double-count the event for funnel analysis.
+    @State private var hasLoggedContribution: Bool = false
+
     var body: some View {
         ZStack {
             IkeruScreenBackground(variant: .summary)
@@ -36,9 +40,11 @@ struct SessionSummaryView: View {
             }
         }
         .onAppear {
+            guard !hasLoggedContribution else { return }
+            hasLoggedContribution = true
             let c = viewModel.skillContribution
             Logger.ui.info(
-                "summary.contribution.viewed reading=\(c.reading) writing=\(c.writing) listening=\(c.listening) speaking=\(c.speaking)"
+                "summary.contribution.viewed reading=\(c.reading, privacy: .public) writing=\(c.writing, privacy: .public) listening=\(c.listening, privacy: .public) speaking=\(c.speaking, privacy: .public)"
             )
         }
     }

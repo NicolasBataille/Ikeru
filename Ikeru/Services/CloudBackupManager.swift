@@ -300,7 +300,8 @@ final class CloudBackupManager: ObservableObject {
                 interval: cardSnap.interval,
                 dueDate: cardSnap.dueDate,
                 lapseCount: cardSnap.lapseCount,
-                leechFlag: cardSnap.leechFlag
+                leechFlag: cardSnap.leechFlag,
+                jlptLevel: cardSnap.jlptLevel
             )
             // Preserve original ID
             card.id = cardSnap.id
