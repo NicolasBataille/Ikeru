@@ -122,6 +122,11 @@ public final class SessionViewModel {
     /// Whether the ContinuousClock timer is actively ticking.
     public private(set) var isTimerRunning: Bool = false
 
+    /// Fires once when the active session crosses the (durationBudget − 60s)
+    /// mark. Drives the "1 minute remaining" toast on `ActiveSessionView`.
+    /// Reset to false on each new session.
+    public private(set) var oneMinuteRemainingFired: Bool = false
+
     /// Formatted elapsed time string (MM:SS).
     public var elapsedTimeFormatted: String {
         formatTime(elapsedTime)
@@ -277,6 +282,7 @@ public final class SessionViewModel {
         showAbandonConfirmation = false
         elapsedTime = 0
         endPolicy = nil
+        oneMinuteRemainingFired = false
     }
 
     /// Composes a session queue via the new `SessionPlanner` pipeline and
@@ -859,7 +865,19 @@ public final class SessionViewModel {
                 try? await clock.sleep(for: .seconds(1))
                 guard !Task.isCancelled else { break }
                 self.elapsedTime += 1
+                self.checkOneMinuteRemaining()
             }
+        }
+    }
+
+    /// Sets `oneMinuteRemainingFired` once when elapsed crosses the
+    /// (budget − 60s) threshold. Idempotent — drives a single toast.
+    private func checkOneMinuteRemaining() {
+        guard !oneMinuteRemainingFired,
+              let policy = endPolicy else { return }
+        let threshold = policy.durationBudgetMinutes * 60 - 60
+        if Int(elapsedTime) >= threshold {
+            oneMinuteRemainingFired = true
         }
     }
 

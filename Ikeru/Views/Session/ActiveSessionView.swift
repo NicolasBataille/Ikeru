@@ -18,6 +18,7 @@ struct ActiveSessionView: View {
     @State private var levelUpLevel: Int?
     @State private var lootDrop: LootItem?
     @State private var dragOffset: CGFloat = 0
+    @State private var showOneMinuteToast = false
 
     var body: some View {
         ZStack {
@@ -70,6 +71,33 @@ struct ActiveSessionView: View {
             if newValue != nil, let drop = viewModel.lastLootDrop {
                 lootDrop = drop
                 viewModel.clearLootDrop()
+            }
+        }
+        .overlay(alignment: .top) {
+            if showOneMinuteToast {
+                Text(
+                    "Session.OneMinuteRemaining",
+                    comment: "Toast shown 60s before time budget ends the session"
+                )
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(Color.ikeruTextPrimary)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                .tatamiRoom(.glass, padding: 0)
+                .padding(.top, 12)
+                .transition(.opacity.combined(with: .move(edge: .top)))
+            }
+        }
+        .onChange(of: viewModel.oneMinuteRemainingFired) { _, fired in
+            guard fired else { return }
+            withAnimation(.easeInOut(duration: 0.25)) {
+                showOneMinuteToast = true
+            }
+            Task {
+                try? await Task.sleep(for: .seconds(3))
+                withAnimation(.easeInOut(duration: 0.25)) {
+                    showOneMinuteToast = false
+                }
             }
         }
     }

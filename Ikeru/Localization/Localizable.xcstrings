@@ -140,9 +140,6 @@
     "%@ exercises" : {
 
     },
-    "%@ min" : {
-
-    },
     "%@ words" : {
 
     },
@@ -3499,24 +3496,6 @@
     "Sakura" : {
 
     },
-    "Session.AbandonProgress" : {
-      "comment" : "Progress label inside the abandon-confirmation overlay. %1 = cards completed, %2 = total exercises.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "You've completed %1$lld of %2$lld exercises"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tu as terminé %1$lld de %2$lld exercices"
-          }
-        }
-      }
-    },
     "Sakura needs an AI provider to chat with you." : {
       "localizations" : {
         "en" : {
@@ -3700,6 +3679,42 @@
     },
     "Session Preview" : {
 
+    },
+    "Session.AbandonProgress" : {
+      "comment" : "Progress label inside the abandon-confirmation overlay. %1 = cards completed, %2 = total exercises.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You've completed %1$lld of %2$lld exercises"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu as terminé %1$lld de %2$lld exercices"
+          }
+        }
+      }
+    },
+    "Session.OneMinuteRemaining" : {
+      "comment" : "Toast shown 60s before time budget ends the session.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 minute remaining"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une minute restante"
+          }
+        }
+      }
     },
     "Set up a free Gemini key for AI features" : {
 
@@ -4775,6 +4790,7 @@
       }
     },
     "YOUR JOURNEY" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -4922,6 +4938,9 @@
 
     },
     "編成" : {
+
+    },
+    "編成・" : {
 
     },
     "言語" : {
