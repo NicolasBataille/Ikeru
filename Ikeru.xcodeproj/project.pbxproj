@@ -174,6 +174,7 @@
 		D11E7E1000000000C002A001 /* DailyTermBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = D11E7E1000000000A002A001 /* DailyTermBanner.swift */; };
 		D11E7E1000000000C003A001 /* DailyTermRevealView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D11E7E1000000000A003A001 /* DailyTermRevealView.swift */; };
 		D11E7E1000000000C004A001 /* DailyTermHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D11E7E1000000000A004A001 /* DailyTermHistoryView.swift */; };
+		D11E7E1000000000C005A001 /* DailyTermViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D11E7E1000000000A005A001 /* DailyTermViewModelTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -380,6 +381,7 @@
 		D11E7E1000000000A002A001 /* DailyTermBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DailyTermBanner.swift; path = Ikeru/Views/Home/DailyTermBanner.swift; sourceTree = SOURCE_ROOT; };
 		D11E7E1000000000A003A001 /* DailyTermRevealView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DailyTermRevealView.swift; path = Ikeru/Views/Home/DailyTermRevealView.swift; sourceTree = SOURCE_ROOT; };
 		D11E7E1000000000A004A001 /* DailyTermHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DailyTermHistoryView.swift; path = Ikeru/Views/Home/DailyTermHistoryView.swift; sourceTree = SOURCE_ROOT; };
+		D11E7E1000000000A005A001 /* DailyTermViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyTermViewModelTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -635,6 +637,7 @@
 				769F5F51519266322B36DD05 /* AdaptiveSessionViewModelTests.swift */,
 				13AC955C7BA5C06F2A873D40 /* CardReviewViewModelTests.swift */,
 				D73A69C4AD84199B467D6CC9 /* ConversationViewModelTests.swift */,
+				D11E7E1000000000A005A001 /* DailyTermViewModelTests.swift */,
 				2FB214E27E81F30D44CAD195 /* HandwritingViewModelTests.swift */,
 				44FF091731003AFD23A516FF /* HomeViewModelTests.swift */,
 				E415FB60B6790A37E7C422E7 /* ImmersiveSessionViewTests.swift */,
@@ -1047,6 +1050,7 @@
 				B645B881692E0AE7FE378DE4 /* AdaptiveSessionViewModelTests.swift in Sources */,
 				46BC1FB8F57C080AAF0EB987 /* CardReviewViewModelTests.swift in Sources */,
 				EBB22606F9278C7CBC1604BF /* ConversationViewModelTests.swift in Sources */,
+				D11E7E1000000000C005A001 /* DailyTermViewModelTests.swift in Sources */,
 				7C128D3DB683FE9C44385E9E /* HandwritingViewModelTests.swift in Sources */,
 				7AD47972332D13661BE1885F /* HomeViewModelTests.swift in Sources */,
 				588F16A9AD56FA5DE5DDB103 /* ImmersiveSessionViewTests.swift in Sources */,

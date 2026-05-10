@@ -5,12 +5,38 @@ import IkeruCore
 
 /// History of past daily terms — both seen and missed. Tapping a row
 /// opens the same reveal popup so a learner can catch up on the days
-/// they didn't open Ikeru.
+/// they didn't open Ikeru, or revisit a term they already saw.
 struct DailyTermHistoryView: View {
 
     let terms: [DailyTermDTO]
     var onSelect: (DailyTermDTO) -> Void
     var onDismiss: () -> Void
+
+    @State private var filter: Filter = .all
+
+    enum Filter: String, CaseIterable, Identifiable {
+        case all
+        case missed
+        case seen
+
+        var id: String { rawValue }
+
+        var label: String {
+            switch self {
+            case .all:    return "All"
+            case .missed: return "Missed"
+            case .seen:   return "Seen"
+            }
+        }
+    }
+
+    private var filtered: [DailyTermDTO] {
+        switch filter {
+        case .all:    return terms
+        case .missed: return terms.filter { $0.revealedAt == nil }
+        case .seen:   return terms.filter { $0.revealedAt != nil }
+        }
+    }
 
     var body: some View {
         ZStack {
@@ -19,12 +45,13 @@ struct DailyTermHistoryView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: IkeruTheme.Spacing.lg) {
                     header
+                    filterPicker
 
-                    if terms.isEmpty {
+                    if filtered.isEmpty {
                         emptyState
                     } else {
                         VStack(spacing: IkeruTheme.Spacing.sm) {
-                            ForEach(terms) { term in
+                            ForEach(filtered) { term in
                                 row(term)
                             }
                         }
@@ -67,10 +94,54 @@ struct DailyTermHistoryView: View {
                 .font(.ikeruMicro)
                 .ikeruTracking(.micro)
                 .foregroundStyle(Color.ikeruTextTertiary)
-            Text("Catch up on missed days")
+            Text("Your discovery trail")
                 .font(.ikeruDisplaySmall)
                 .ikeruTracking(.display)
                 .foregroundStyle(Color.ikeruTextPrimary)
+        }
+    }
+
+    private var filterPicker: some View {
+        HStack(spacing: IkeruTheme.Spacing.xs) {
+            ForEach(Filter.allCases) { option in
+                let count = terms.filter { term in
+                    switch option {
+                    case .all:    return true
+                    case .missed: return term.revealedAt == nil
+                    case .seen:   return term.revealedAt != nil
+                    }
+                }.count
+                Button {
+                    withAnimation(.spring(response: 0.36, dampingFraction: 0.86)) {
+                        filter = option
+                    }
+                } label: {
+                    HStack(spacing: 6) {
+                        Text(option.label)
+                            .font(.ikeruCaption)
+                        Text("\(count)")
+                            .font(.ikeruMicro)
+                            .ikeruTracking(.micro)
+                            .foregroundStyle(Color.ikeruTextTertiary)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 7)
+                    .foregroundStyle(filter == option ? Color.ikeruTextPrimary : Color.ikeruTextSecondary)
+                    .background {
+                        Capsule()
+                            .fill(filter == option
+                                  ? Color.ikeruPrimaryAccent.opacity(0.16)
+                                  : Color.white.opacity(0.04))
+                    }
+                    .overlay(
+                        Capsule().strokeBorder(
+                            filter == option ? Color.ikeruPrimaryAccent.opacity(0.4) : Color.white.opacity(0.08),
+                            lineWidth: 0.6
+                        )
+                    )
+                }
+                .buttonStyle(.plain)
+            }
         }
     }
 
@@ -79,10 +150,12 @@ struct DailyTermHistoryView: View {
             Image(systemName: "sparkles")
                 .font(.system(size: 28, weight: .light))
                 .foregroundStyle(Color.ikeruPrimaryAccent.opacity(0.6))
-            Text("No past terms yet")
+            Text(filter == .all ? "No past terms yet" : "Nothing here for this filter")
                 .font(.ikeruBody)
                 .foregroundStyle(Color.ikeruTextSecondary)
-            Text("Each day's term will appear here once a new one arrives.")
+            Text(filter == .all
+                 ? "Each day's term will appear here once a new one arrives."
+                 : "Switch filter to see your other terms.")
                 .font(.ikeruCaption)
                 .foregroundStyle(Color.ikeruTextTertiary)
                 .multilineTextAlignment(.center)
@@ -134,7 +207,7 @@ struct DailyTermHistoryView: View {
                 IkeruGlassSurface(
                     cornerRadius: IkeruTheme.Radius.lg,
                     tint: term.revealedAt == nil ? Color.ikeruWarning : Color.ikeruPrimaryAccent,
-                    tintOpacity: term.revealedAt == nil ? 0.06 : 0.04,
+                    tintOpacity: term.revealedAt == nil ? 0.08 : 0.04,
                     highlight: 0.12,
                     strokeOpacity: 0.14
                 )
@@ -147,16 +220,14 @@ struct DailyTermHistoryView: View {
 
     @ViewBuilder
     private func statusIndicator(_ term: DailyTermDTO) -> some View {
+        let isMissed = term.revealedAt == nil
         ZStack {
             Circle()
-                .fill(
-                    (term.revealedAt == nil ? Color.ikeruWarning : Color.ikeruSuccess)
-                        .opacity(0.18)
-                )
+                .fill((isMissed ? Color.ikeruWarning : Color.ikeruSuccess).opacity(0.18))
                 .frame(width: 32, height: 32)
-            Image(systemName: term.revealedAt == nil ? "envelope.fill" : "checkmark")
+            Image(systemName: isMissed ? "envelope.fill" : "checkmark")
                 .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(term.revealedAt == nil ? Color.ikeruWarning : Color.ikeruSuccess)
+                .foregroundStyle(isMissed ? Color.ikeruWarning : Color.ikeruSuccess)
         }
     }
 

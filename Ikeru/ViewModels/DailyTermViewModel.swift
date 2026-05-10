@@ -7,11 +7,14 @@ import os
 
 /// View model coordinating the daily term feature on the Home screen.
 ///
-/// Owns three pieces of state surfaced to the UI:
+/// Owns the state surfaced to the UI:
 /// - `today`: the term scheduled for the current day, generated lazily.
 /// - `yesterday`: yesterday's term (if any), used for the discreet reminder.
-/// - `missed`: a recent history of past terms (most-recent first), with
-///   `revealedAt == nil` items called out as missed.
+/// - `recent`: a recent history of past terms (most-recent first), both
+///   seen and missed. The view distinguishes them visually via
+///   `revealedAt`.
+/// - `missed`: convenience accessor — terms in `recent` with no
+///   `revealedAt` set.
 @MainActor
 @Observable
 public final class DailyTermViewModel {
@@ -20,11 +23,14 @@ public final class DailyTermViewModel {
 
     public private(set) var today: DailyTermDTO?
     public private(set) var yesterday: DailyTermDTO?
-    public private(set) var missed: [DailyTermDTO] = []
+    public private(set) var recent: [DailyTermDTO] = []
     public private(set) var hasLoaded: Bool = false
 
-    /// Whether the user added today's term to their dictionary during this session.
-    public private(set) var addedToDictionaryThisSession: Bool = false
+    /// Past terms with no `revealedAt` — convenience for callers that
+    /// only want missed days.
+    public var missed: [DailyTermDTO] {
+        recent.filter { $0.revealedAt == nil }
+    }
 
     /// Whether today's term has not yet been opened by the user — drives the banner.
     public var todayNeedsReveal: Bool {
@@ -43,6 +49,10 @@ public final class DailyTermViewModel {
     private let dailyTermRepository: DailyTermRepository
     private let vocabularyRepository: VocabularyRepository
 
+    /// Calendar day represented by the currently-loaded `today`. Used to
+    /// detect when a midnight rollover should re-load.
+    private var currentDay: Date?
+
     // MARK: - Init
 
     public init(modelContainer: ModelContainer) {
@@ -55,13 +65,14 @@ public final class DailyTermViewModel {
 
     // MARK: - Loading
 
-    /// Loads (and lazily generates) the term for today, plus yesterday and the
-    /// missed-terms list. Cheap to call from `onAppear`.
+    /// Loads (and lazily generates) the term for today, plus yesterday
+    /// and the recent history. Cheap to call from `onAppear`.
     public func load(now: Date = Date()) async {
         guard isFeatureEnabled else {
             today = nil
             yesterday = nil
-            missed = []
+            recent = []
+            currentDay = nil
             hasLoaded = true
             return
         }
@@ -69,10 +80,10 @@ public final class DailyTermViewModel {
         let dictionaryWords = Set((await vocabularyRepository.allEntries()).map(\.word))
         let todayDTO = await service.termForDay(now, existingDictionaryWords: dictionaryWords)
         today = todayDTO
-        addedToDictionaryThisSession = todayDTO.addedToDictionary
+        currentDay = Calendar.current.startOfDay(for: now)
 
         yesterday = await service.previousDayTerm(before: now)
-        missed = await service.missedTerms(before: now, limit: 14)
+        recent = await service.recentTerms(before: now, limit: 30)
 
         hasLoaded = true
         Logger.dailyTerm.debug(
@@ -80,36 +91,51 @@ public final class DailyTermViewModel {
         )
     }
 
+    /// Re-loads only if the calendar day has changed since the last load.
+    /// Used by the home view to handle midnight rollover and time-zone
+    /// changes without a full re-fetch on every `onAppear`.
+    public func reloadIfDayChanged(now: Date = Date()) async {
+        let day = Calendar.current.startOfDay(for: now)
+        if currentDay != day {
+            await load(now: now)
+        }
+    }
+
     // MARK: - Mutations
 
     /// Marks today's term (or any past term) as opened — drives the
     /// "missed" → "revealed" transition in the history.
-    public func markRevealed(_ term: DailyTermDTO) async {
-        guard term.revealedAt == nil else { return }
+    /// - Returns: an updated DTO snapshot if a change was made, otherwise nil.
+    @discardableResult
+    public func markRevealed(_ term: DailyTermDTO, now: Date = Date()) async -> DailyTermDTO? {
+        guard term.revealedAt == nil else { return nil }
         await service.markRevealed(termId: term.id)
-        if term.id == today?.id, let updated = today {
-            today = DailyTermDTO(
-                id: updated.id,
-                date: updated.date,
-                word: updated.word,
-                reading: updated.reading,
-                pronunciation: updated.pronunciation,
-                meaning: updated.meaning,
-                caption: updated.caption,
-                jlptLevel: updated.jlptLevel,
-                revealedAt: Date(),
-                addedToDictionary: updated.addedToDictionary,
-                createdAt: updated.createdAt
-            )
+        let updated = DailyTermDTO(
+            id: term.id,
+            date: term.date,
+            word: term.word,
+            reading: term.reading,
+            pronunciation: term.pronunciation,
+            meaning: term.meaning,
+            caption: term.caption,
+            jlptLevel: term.jlptLevel,
+            revealedAt: now,
+            addedToDictionary: term.addedToDictionary,
+            createdAt: term.createdAt
+        )
+        if term.id == today?.id {
+            today = updated
         }
-        // Refresh the missed list so the row disappears from "missed".
-        missed = await service.missedTerms(limit: 14)
+        recent = await service.recentTerms(before: now, limit: 30)
+        return updated
     }
 
-    /// Adds the term to the user's personal dictionary and remembers the
+    /// Adds the term to the user's personal dictionary and stores the
     /// link on the daily term row.
-    public func addToDictionary(_ term: DailyTermDTO) async {
-        guard !term.addedToDictionary else { return }
+    /// - Returns: an updated DTO snapshot if the write succeeded, otherwise nil.
+    @discardableResult
+    public func addToDictionary(_ term: DailyTermDTO, now: Date = Date()) async -> DailyTermDTO? {
+        guard !term.addedToDictionary else { return nil }
         _ = await vocabularyRepository.addEntry(
             word: term.word,
             reading: term.reading,
@@ -118,23 +144,25 @@ public final class DailyTermViewModel {
         )
         await service.markAddedToDictionary(termId: term.id)
 
-        if term.id == today?.id, let current = today {
-            today = DailyTermDTO(
-                id: current.id,
-                date: current.date,
-                word: current.word,
-                reading: current.reading,
-                pronunciation: current.pronunciation,
-                meaning: current.meaning,
-                caption: current.caption,
-                jlptLevel: current.jlptLevel,
-                revealedAt: current.revealedAt,
-                addedToDictionary: true,
-                createdAt: current.createdAt
-            )
-            addedToDictionaryThisSession = true
+        let updated = DailyTermDTO(
+            id: term.id,
+            date: term.date,
+            word: term.word,
+            reading: term.reading,
+            pronunciation: term.pronunciation,
+            meaning: term.meaning,
+            caption: term.caption,
+            jlptLevel: term.jlptLevel,
+            revealedAt: term.revealedAt,
+            addedToDictionary: true,
+            createdAt: term.createdAt
+        )
+        if term.id == today?.id {
+            today = updated
         }
+        recent = await service.recentTerms(before: now, limit: 30)
         Logger.dailyTerm.info("Daily term added to dictionary: \(term.word, privacy: .public)")
+        return updated
     }
 }
 
@@ -151,4 +179,12 @@ public enum DailyTermSettings {
 
     public static let defaultHour = 9
     public static let defaultMinute = 0
+}
+
+// MARK: - Notification names
+
+extension Notification.Name {
+    /// Posted when the user taps the daily-term local notification.
+    /// `HomeView` listens for this to present the reveal sheet.
+    public static let openDailyTerm = Notification.Name("ikeru.dailyterm.open")
 }

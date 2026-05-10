@@ -3,6 +3,29 @@ import SwiftData
 import IkeruCore
 import os
 
+#if canImport(UIKit)
+import UIKit
+#endif
+
+// MARK: - DailyTermSheet
+
+/// Single source of truth for which daily-term sheet is showing.
+/// Driving all sheets via one Identifiable enum lets SwiftUI handle the
+/// cross-fade between e.g. "history" and "reveal a history row" — stacked
+/// `.sheet` modifiers can only present one at a time and silently swallow
+/// transitions on iOS.
+private enum DailyTermSheet: Identifiable {
+    case reveal(DailyTermDTO)
+    case history
+
+    var id: String {
+        switch self {
+        case .reveal(let term): return "reveal-\(term.id)"
+        case .history: return "history"
+        }
+    }
+}
+
 // MARK: - HomeView
 
 /// Premium "Your World" home screen.
@@ -10,14 +33,13 @@ import os
 struct HomeView: View {
 
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.scenePhase) private var scenePhase
     @State private var viewModel: HomeViewModel?
     @State private var sessionViewModel: SessionViewModel?
     @State private var dailyTermViewModel: DailyTermViewModel?
     @State private var showSession = false
     @State private var heroAppeared = false
-    @State private var showDailyTermReveal = false
-    @State private var showDailyTermHistory = false
-    @State private var historyTermSelection: DailyTermDTO?
+    @State private var dailyTermSheet: DailyTermSheet?
     @AppStorage(DailyTermSettings.enabledKey) private var dailyTermEnabled: Bool = false
 
     var body: some View {
@@ -39,53 +61,8 @@ struct HomeView: View {
                     }
             }
         }
-        .sheet(isPresented: $showDailyTermReveal) {
-            if let dvm = dailyTermViewModel, let term = dvm.today {
-                DailyTermRevealView(
-                    term: term,
-                    isAddedToDictionary: dvm.addedToDictionaryThisSession,
-                    onAddToDictionary: {
-                        Task { await dvm.addToDictionary(term) }
-                    },
-                    onDismiss: { showDailyTermReveal = false },
-                    onShowHistory: {
-                        showDailyTermReveal = false
-                        showDailyTermHistory = true
-                    }
-                )
-                .presentationDetents([.large])
-                .presentationDragIndicator(.visible)
-                .task { await dvm.markRevealed(term) }
-            }
-        }
-        .sheet(isPresented: $showDailyTermHistory) {
-            if let dvm = dailyTermViewModel {
-                DailyTermHistoryView(
-                    terms: dvm.missed,
-                    onSelect: { term in
-                        historyTermSelection = term
-                    },
-                    onDismiss: { showDailyTermHistory = false }
-                )
-                .presentationDetents([.large])
-                .presentationDragIndicator(.visible)
-            }
-        }
-        .sheet(item: $historyTermSelection) { term in
-            if let dvm = dailyTermViewModel {
-                DailyTermRevealView(
-                    term: term,
-                    isAddedToDictionary: term.addedToDictionary,
-                    onAddToDictionary: {
-                        Task { await dvm.addToDictionary(term) }
-                    },
-                    onDismiss: { historyTermSelection = nil },
-                    onShowHistory: { historyTermSelection = nil }
-                )
-                .presentationDetents([.large])
-                .presentationDragIndicator(.visible)
-                .task { await dvm.markRevealed(term) }
-            }
+        .sheet(item: $dailyTermSheet) { sheet in
+            dailyTermSheetContent(sheet)
         }
         .task {
             initializeViewModels()
@@ -101,7 +78,12 @@ struct HomeView: View {
         .onAppear {
             if viewModel != nil {
                 Task { await viewModel?.loadData() }
-                Task { await dailyTermViewModel?.load() }
+                Task { await dailyTermViewModel?.reloadIfDayChanged() }
+            }
+        }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active {
+                Task { await dailyTermViewModel?.reloadIfDayChanged() }
             }
         }
         .onChange(of: dailyTermEnabled) { _, _ in
@@ -114,6 +96,52 @@ struct HomeView: View {
         .onReceive(NotificationCenter.default.publisher(for: .startReviewFromShortcut)) { _ in
             initializeViewModels()
             startSession()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .openDailyTerm)) { _ in
+            Task {
+                await dailyTermViewModel?.reloadIfDayChanged()
+                if let term = dailyTermViewModel?.today {
+                    dailyTermSheet = .reveal(term)
+                }
+            }
+        }
+        #if canImport(UIKit)
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.significantTimeChangeNotification)) { _ in
+            Task { await dailyTermViewModel?.reloadIfDayChanged() }
+        }
+        #endif
+    }
+
+    // MARK: - Daily-term sheet content
+
+    @ViewBuilder
+    private func dailyTermSheetContent(_ sheet: DailyTermSheet) -> some View {
+        switch sheet {
+        case .reveal(let snapshot):
+            if let dvm = dailyTermViewModel {
+                DailyTermRevealHostView(
+                    initialTerm: snapshot,
+                    viewModel: dvm,
+                    onDismiss: { dailyTermSheet = nil },
+                    onShowHistory: { dailyTermSheet = .history }
+                )
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
+            }
+        case .history:
+            if let dvm = dailyTermViewModel {
+                DailyTermHistoryView(
+                    terms: dvm.recent,
+                    onSelect: { term in
+                        // SwiftUI re-keys the sheet by the new `id`, no manual
+                        // dismiss-then-present dance needed.
+                        dailyTermSheet = .reveal(term)
+                    },
+                    onDismiss: { dailyTermSheet = nil }
+                )
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
+            }
         }
     }
 
@@ -211,14 +239,14 @@ struct HomeView: View {
                 DailyTermBanner(
                     term: term,
                     yesterday: dvm.yesterday,
-                    onTap: { showDailyTermReveal = true }
+                    onTap: { dailyTermSheet = .reveal(term) }
                 )
                 .transition(.move(edge: .top).combined(with: .opacity))
             } else {
                 DailyTermRevealedPill(
                     term: term,
                     yesterday: dvm.yesterday,
-                    onTap: { showDailyTermReveal = true }
+                    onTap: { dailyTermSheet = .reveal(term) }
                 )
                 .transition(.opacity)
             }

@@ -98,6 +98,16 @@ public struct DailyTermService: Sendable {
     // MARK: - Selection
 
     /// Pure selection function — exposed for tests.
+    ///
+    /// Algorithm:
+    /// 1. Drop catalog entries already present in `usedWords`.
+    /// 2. If the working pool is empty (every catalog word has been used),
+    ///    fall back to the full catalog and use the date seed both for
+    ///    scoring and as the modulo index, so consecutive days continue
+    ///    to vary instead of locking on a single word.
+    /// 3. Score each candidate by the number of overlapping tags with the
+    ///    day's tags (season/weekday/month). Pick from the top-scoring
+    ///    bucket, tiebroken by `dateSeed`.
     public func pickCandidate(
         for day: Date,
         excluding usedWords: Set<String>
@@ -106,9 +116,6 @@ public struct DailyTermService: Sendable {
         let seed = Self.dateSeed(for: day, calendar: calendar)
 
         let pool = catalog.filter { !usedWords.contains($0.word) }
-
-        // No candidates left — restart the rotation but keep the date-aware
-        // tiebreak, scoring against the full catalog.
         let workingPool = pool.isEmpty ? catalog : pool
 
         let scored: [(candidate: DailyTermCandidate, score: Int)] = workingPool.map { candidate in
@@ -126,12 +133,16 @@ public struct DailyTermService: Sendable {
             topCandidates = workingPool
         }
 
-        let index = Int(seed % UInt64(max(topCandidates.count, 1)))
-        return topCandidates[index]
+        // Stable order so the seed → index mapping is deterministic
+        // regardless of the catalog literal order.
+        let ordered = topCandidates.sorted { $0.word < $1.word }
+        let index = Int(seed % UInt64(max(ordered.count, 1)))
+        return ordered[index]
     }
 
-    /// Composes a date-aware caption for the term, in the spirit
-    /// "today's term: [flavour], on a [season/weekday] morning…".
+    /// Composes a date-aware caption for the term. Rotates among a few
+    /// wrapping templates so the daily prompt doesn't read identically
+    /// every day.
     public func composeCaption(
         for candidate: DailyTermCandidate,
         on day: Date
@@ -143,7 +154,18 @@ public struct DailyTermService: Sendable {
         if dayPhrase.isEmpty {
             return candidate.flavour
         }
-        return "On this \(dayPhrase): \(candidate.flavour)."
+
+        // Pick a template deterministically — same day → same caption,
+        // different days alternate phrasings to avoid sounding formulaic.
+        let templates: [(String, String) -> String] = [
+            { phrase, flavour in "On this \(phrase): \(flavour)." },
+            { phrase, flavour in "For your \(phrase): \(flavour)." },
+            { phrase, flavour in "A word for a \(phrase) — \(flavour)." },
+            { phrase, flavour in "\(flavour). Suited to a \(phrase)." }
+        ]
+        let seed = Self.dateSeed(for: day, calendar: calendar)
+        let template = templates[Int(seed % UInt64(templates.count))]
+        return template(dayPhrase, candidate.flavour)
     }
 
     // MARK: - Date helpers

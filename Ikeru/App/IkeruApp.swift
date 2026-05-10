@@ -112,6 +112,7 @@ struct IkeruApp: App {
                 .toastOverlay()
                 .task {
                     initializeProfileViewModel()
+                    NotificationManager.shared.registerAsDelegate()
                     WatchConnectivityManager.shared.activate(modelContainer: modelContainer)
                     await scheduleNotificationsFromSettings()
                     schedulePreWarmTask()

@@ -145,7 +145,7 @@ public enum DailyTermCatalog {
         DailyTermCandidate(
             word: "金継ぎ",
             reading: "きんつぎ",
-            pronunciation: "kin-tsu-gi",
+            pronunciation: "ki-n-tsu-gi",
             meaning: "the art of repairing pottery with gold lacquer",
             flavour: "broken things, mended in gold — the seam is treated as part of the object's story, not a flaw to hide",
             jlptLevel: .n1,
@@ -286,7 +286,7 @@ public enum DailyTermCatalog {
         DailyTermCandidate(
             word: "風物詩",
             reading: "ふうぶつし",
-            pronunciation: "fuu-bu-tsu-shi",
+            pronunciation: "fu-u-bu-tsu-shi",
             meaning: "the small things that signal a particular season",
             flavour: "the first cicada in July, the first scarf in October — the seasonal cues a culture keeps a list of",
             jlptLevel: nil,
@@ -322,7 +322,7 @@ public enum DailyTermCatalog {
         DailyTermCandidate(
             word: "森林浴",
             reading: "しんりんよく",
-            pronunciation: "shin-rin-yo-ku",
+            pronunciation: "shi-n-ri-n-yo-ku",
             meaning: "forest bathing — being in a forest just to be in it",
             flavour: "a Japanese-coined prescription for stress: walk into a forest and stay there for a while. No phone, no goal",
             jlptLevel: .n1,
@@ -331,7 +331,7 @@ public enum DailyTermCatalog {
         DailyTermCandidate(
             word: "積ん読",
             reading: "つんどく",
-            pronunciation: "tsun-doku",
+            pronunciation: "tsu-n-do-ku",
             meaning: "buying books and letting them pile up unread",
             flavour: "the very specific joy and shame of buying books faster than you can read them. Older than the internet — and the internet has only made it worse",
             jlptLevel: .n1,
@@ -368,15 +368,6 @@ public enum DailyTermCatalog {
         // MARK: Specific cultural rituals
 
         DailyTermCandidate(
-            word: "花見",
-            reading: "はなみ",
-            pronunciation: "ha-na-mi",
-            meaning: "cherry blossom viewing",
-            flavour: "the ritual of slowing down for a week each spring just to sit under blooming sakura — picnic optional, attendance compulsory",
-            jlptLevel: .n5,
-            tags: ["spring", "march", "april", "weekend"]
-        ),
-        DailyTermCandidate(
             word: "月見",
             reading: "つきみ",
             pronunciation: "tsu-ki-mi",
@@ -404,7 +395,7 @@ public enum DailyTermCatalog {
             tags: ["autumn", "october", "november", "weekend"]
         ),
         DailyTermCandidate(
-            word: "炬燵",
+            word: "こたつ",
             reading: "こたつ",
             pronunciation: "ko-ta-tsu",
             meaning: "low table with a heater and a quilt over it",
@@ -415,11 +406,20 @@ public enum DailyTermCatalog {
         DailyTermCandidate(
             word: "初詣",
             reading: "はつもうで",
-            pronunciation: "hatsu-mou-de",
+            pronunciation: "ha-tsu-mo-u-de",
             meaning: "the year's first visit to a shrine",
             flavour: "the first shrine visit of the new year — half tradition, half excuse to get some fresh air on January 1st",
             jlptLevel: nil,
             tags: ["winter", "january"]
+        ),
+        DailyTermCandidate(
+            word: "桜前線",
+            reading: "さくらぜんせん",
+            pronunciation: "sa-ku-ra-zen-sen",
+            meaning: "the cherry-blossom front",
+            flavour: "the imaginary weather front along which sakura bloom — covered on the news every spring like an actual storm system",
+            jlptLevel: nil,
+            tags: ["spring", "march", "april"]
         ),
         DailyTermCandidate(
             word: "五月病",
@@ -433,15 +433,6 @@ public enum DailyTermCatalog {
 
         // MARK: Verbs and expressions worth noticing
 
-        DailyTermCandidate(
-            word: "頑張る",
-            reading: "がんばる",
-            pronunciation: "gan-ba-ru",
-            meaning: "to persist, to do one's best",
-            flavour: "the verb the language uses for both 'good luck' and 'hang in there'. Hard to translate cleanly because it's also a value",
-            jlptLevel: .n5,
-            tags: ["self", "monday", "any"]
-        ),
         DailyTermCandidate(
             word: "お疲れ様",
             reading: "おつかれさま",
@@ -462,10 +453,10 @@ public enum DailyTermCatalog {
         ),
         DailyTermCandidate(
             word: "面倒くさい",
-            reading: "めんどくさい",
-            pronunciation: "men-do-ku-sai",
+            reading: "めんどうくさい",
+            pronunciation: "men-do-u-ku-sa-i",
             meaning: "what a pain; can't be bothered",
-            flavour: "the word every Japanese person has muttered at a Monday morning email. Endlessly applicable",
+            flavour: "the word every Japanese person has muttered at a Monday morning email. Endlessly applicable (often contracted to めんどくさい in speech)",
             jlptLevel: .n3,
             tags: ["mood", "monday", "any"]
         ),
@@ -508,11 +499,98 @@ public enum DailyTermCatalog {
         DailyTermCandidate(
             word: "起承転結",
             reading: "きしょうてんけつ",
-            pronunciation: "ki-shou-ten-ketsu",
+            pronunciation: "ki-sho-u-ten-ke-tsu",
             meaning: "four-act narrative structure: intro, develop, twist, resolve",
             flavour: "the Japanese counterpart to the three-act structure — but with a twist instead of a climax. A different shape for telling stories",
             jlptLevel: nil,
             tags: ["aesthetic", "any"]
+        ),
+
+        // MARK: Social grammar — niche but discoverable
+
+        DailyTermCandidate(
+            word: "空気を読む",
+            reading: "くうきをよむ",
+            pronunciation: "ku-u-ki-wo-yo-mu",
+            meaning: "to read the air — to sense the unspoken mood of a room",
+            flavour: "the social skill the language treats as a literacy. To not read the air is `KY` — a real, used insult",
+            jlptLevel: nil,
+            tags: ["society", "any"]
+        ),
+        DailyTermCandidate(
+            word: "根回し",
+            reading: "ねまわし",
+            pronunciation: "ne-ma-wa-shi",
+            meaning: "preparing the ground — informal consensus-building before a meeting",
+            flavour: "literally 'going around the roots'. The art of having every important conversation *before* the official meeting, so the meeting itself is the easy part",
+            jlptLevel: nil,
+            tags: ["society", "industrial", "monday", "tuesday"]
+        ),
+        DailyTermCandidate(
+            word: "本末転倒",
+            reading: "ほんまつてんとう",
+            pronunciation: "hon-ma-tsu-ten-to-u",
+            meaning: "putting the trivial before the essential",
+            flavour: "literally 'root and tip, upside down'. The four-character verdict on any project that polished the wrong thing",
+            jlptLevel: nil,
+            tags: ["self", "industrial", "any"]
+        ),
+        DailyTermCandidate(
+            word: "井の中の蛙",
+            reading: "いのなかのかわず",
+            pronunciation: "i-no-na-ka-no-ka-wa-zu",
+            meaning: "a frog in a well — someone with a narrow worldview",
+            flavour: "from a Zhuangzi parable — the frog at the bottom of a well thinks the patch of sky overhead is the whole sky. A gentle warning to anyone confident in a small pond",
+            jlptLevel: nil,
+            tags: ["aesthetic", "any"]
+        ),
+
+        // MARK: Modern phenomena
+
+        DailyTermCandidate(
+            word: "走馬灯",
+            reading: "そうまとう",
+            pronunciation: "so-u-ma-to-u",
+            meaning: "a revolving lantern; figuratively, life flashing before one's eyes",
+            flavour: "named after a paper lantern with rotating cut-outs. The word the language reaches for when memories suddenly cycle past, fast and lit from within",
+            jlptLevel: nil,
+            tags: ["aesthetic", "evening", "autumn", "any"]
+        ),
+        DailyTermCandidate(
+            word: "終活",
+            reading: "しゅうかつ",
+            pronunciation: "shu-u-ka-tsu",
+            meaning: "preparing in advance for the end of one's life",
+            flavour: "a word coined in the 2000s — the practical version of putting affairs in order. Funeral plans, will, possessions sorted while you're still here",
+            jlptLevel: nil,
+            tags: ["self", "any"]
+        ),
+        DailyTermCandidate(
+            word: "わざわざ",
+            reading: "わざわざ",
+            pronunciation: "wa-za-wa-za",
+            meaning: "going out of one's way to do something",
+            flavour: "the adverb that thanks someone for the effort *and* gently scolds them for it at the same time. A whole feeling, packaged in four mora",
+            jlptLevel: .n3,
+            tags: ["expression", "any"]
+        ),
+        DailyTermCandidate(
+            word: "一目惚れ",
+            reading: "ひとめぼれ",
+            pronunciation: "hi-to-me-bo-re",
+            meaning: "love at first sight",
+            flavour: "literally 'one-look infatuation'. Used as comfortably for a person as for a notebook in a stationery shop",
+            jlptLevel: nil,
+            tags: ["mood", "any"]
+        ),
+        DailyTermCandidate(
+            word: "物寂しい",
+            reading: "ものさびしい",
+            pronunciation: "mo-no-sa-bi-shi-i",
+            meaning: "vaguely, atmospherically lonely",
+            flavour: "the loneliness of a place rather than a person — an empty platform, a closed shop in October. Distinct from plain `さびしい`",
+            jlptLevel: nil,
+            tags: ["mood", "autumn", "evening"]
         )
     ]
 }

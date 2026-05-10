@@ -865,6 +865,7 @@ struct SettingsView: View {
                     )
                 } else {
                     reviewReminderEnabled = false
+                    toastManager.showError("Notifications are off — enable them in iOS Settings")
                 }
             }
         } else {
@@ -881,13 +882,19 @@ struct SettingsView: View {
                         hour: dailyTermHour,
                         minute: dailyTermMinute
                     )
+                    toastManager.showInfo("Daily term reminder set for \(formattedTime(dailyTermHour, dailyTermMinute))")
                 } else {
                     dailyTermEnabled = false
+                    toastManager.showError("Notifications are off — enable them in iOS Settings to receive the daily term")
                 }
             }
         } else {
             NotificationManager.shared.cancelDailyTermReminder()
         }
+    }
+
+    private func formattedTime(_ hour: Int, _ minute: Int) -> String {
+        String(format: "%02d:%02d", hour, minute)
     }
 
     private func updateWeeklyCheckIn(enabled: Bool) {

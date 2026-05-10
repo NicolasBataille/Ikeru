@@ -6,14 +6,27 @@ import os
 
 // MARK: - NotificationManager
 
-/// Manages local push notifications for SRS review reminders and weekly check-ins.
-/// Positive framing only — "X cards ready", never "X days missed".
+/// Manages local push notifications for SRS review reminders, weekly
+/// check-ins, and the daily term reveal. Positive framing only — "X cards
+/// ready", never "X days missed".
+///
+/// Also routes notification taps via `UNUserNotificationCenterDelegate`
+/// so deep-link payloads (e.g. the daily-term reminder) can wake the
+/// matching surface in the app.
 @MainActor
-final class NotificationManager {
+final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
 
     static let shared = NotificationManager()
 
-    private init() {}
+    /// Hooks the manager up as the user-notification centre delegate so it
+    /// can react to taps and foreground deliveries. Idempotent.
+    func registerAsDelegate() {
+        UNUserNotificationCenter.current().delegate = self
+    }
+
+    private override init() {
+        super.init()
+    }
 
     // MARK: - Authorization
 
@@ -163,9 +176,12 @@ final class NotificationManager {
 
         let content = UNMutableNotificationContent()
         content.title = "A new word is waiting"
-        content.body = "Today's term is ready to discover — open Ikeru to reveal it."
+        content.body = "Today's term is ready to discover — tap to reveal it."
         content.sound = .default
-        content.categoryIdentifier = "DAILY_TERM"
+        content.categoryIdentifier = Self.dailyTermCategory
+        // Carry a routing hint so the delegate can deep-link without
+        // having to inspect the request identifier.
+        content.userInfo = ["ikeru.deeplink": "dailyTerm"]
 
         var dateComponents = DateComponents()
         dateComponents.hour = max(0, min(23, hour))
@@ -197,6 +213,39 @@ final class NotificationManager {
     }
 
     static let dailyTermIdentifier = "ikeru.dailyterm.daily"
+    static let dailyTermCategory = "DAILY_TERM"
+
+    // MARK: - UNUserNotificationCenterDelegate
+
+    /// Foreground delivery — show the banner so the user notices, but
+    /// don't auto-route to the reveal sheet (they may be mid-task).
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        willPresent notification: UNNotification,
+        withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+    ) {
+        completionHandler([.banner, .sound, .list])
+    }
+
+    /// Tap response — if the daily-term reminder, post a notification so
+    /// the home view can present the reveal sheet.
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        didReceive response: UNNotificationResponse,
+        withCompletionHandler completionHandler: @escaping () -> Void
+    ) {
+        defer { completionHandler() }
+        guard response.actionIdentifier == UNNotificationDefaultActionIdentifier else { return }
+
+        let content = response.notification.request.content
+        let isDailyTerm = response.notification.request.identifier == Self.dailyTermIdentifier
+            || (content.userInfo["ikeru.deeplink"] as? String) == "dailyTerm"
+
+        if isDailyTerm {
+            Logger.ui.info("Daily term notification tapped — routing to reveal")
+            NotificationCenter.default.post(name: .openDailyTerm, object: nil)
+        }
+    }
 
     // MARK: - Cancel
 
