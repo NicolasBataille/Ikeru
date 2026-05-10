@@ -121,6 +121,10 @@ public struct CardDTO: Sendable, Identifiable {
     public let dueDate: Date
     public let lapseCount: Int
     public let leechFlag: Bool
+    /// Optional JLPT level tag. `nil` for legacy/untagged cards (e.g. kana,
+    /// user-authored). Populated by `JLPTBackfillService` for known seed
+    /// vocabulary and kanji.
+    public let jlptLevel: JLPTLevel?
 
     public init(
         id: UUID,
@@ -132,7 +136,8 @@ public struct CardDTO: Sendable, Identifiable {
         interval: Int,
         dueDate: Date,
         lapseCount: Int,
-        leechFlag: Bool
+        leechFlag: Bool,
+        jlptLevel: JLPTLevel? = nil
     ) {
         self.id = id
         self.front = front
@@ -144,6 +149,7 @@ public struct CardDTO: Sendable, Identifiable {
         self.dueDate = dueDate
         self.lapseCount = lapseCount
         self.leechFlag = leechFlag
+        self.jlptLevel = jlptLevel
     }
 }
 
