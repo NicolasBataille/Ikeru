@@ -4065,6 +4065,78 @@
         }
       }
     },
+    "Summary.Listening" : {
+      "comment" : "Four-winds skill label on session summary — listening.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LISTENING"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ÉCOUTE"
+          }
+        }
+      }
+    },
+    "Summary.Reading" : {
+      "comment" : "Four-winds skill label on session summary — reading.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "READING"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LECTURE"
+          }
+        }
+      }
+    },
+    "Summary.Speaking" : {
+      "comment" : "Four-winds skill label on session summary — speaking.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SPEAKING"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PAROLE"
+          }
+        }
+      }
+    },
+    "Summary.Writing" : {
+      "comment" : "Four-winds skill label on session summary — writing.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "WRITING"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ÉCRITURE"
+          }
+        }
+      }
+    },
     "Support" : {
       "comment" : "Settings row label (contact support)",
       "extractionState" : "stale",

@@ -24,6 +24,7 @@ struct SessionSummaryView: View {
                 VStack(spacing: 18) {
                     triumphHeader
                     heroStatRow
+                    fourWindsRow
                     xpGainRail
                     splitCells
                     actions
@@ -33,6 +34,48 @@ struct SessionSummaryView: View {
                 .padding(.bottom, 40)
             }
         }
+    }
+
+    // MARK: - Four Winds Contribution Row
+
+    /// Per-skill XP earned this session, presented as four equal cells
+    /// crested with `MonKind`. Skills with zero contribution dim to
+    /// paper-ghost so the user reads the session's *shape* at a glance.
+    private var fourWindsRow: some View {
+        HStack(spacing: 10) {
+            windCell(label: "Summary.Reading", japanese: "読",
+                     mon: .asanoha, value: viewModel.skillContribution.reading)
+            windCell(label: "Summary.Writing", japanese: "書",
+                     mon: .genji, value: viewModel.skillContribution.writing)
+            windCell(label: "Summary.Listening", japanese: "聴",
+                     mon: .kikkou, value: viewModel.skillContribution.listening)
+            windCell(label: "Summary.Speaking", japanese: "話",
+                     mon: .maru, value: viewModel.skillContribution.speaking)
+        }
+    }
+
+    @ViewBuilder
+    private func windCell(label: LocalizedStringKey, japanese: String,
+                           mon: MonKind, value: Int) -> some View {
+        let isActive = value > 0
+        VStack(spacing: 6) {
+            HStack(spacing: 4) {
+                MonCrest(kind: mon, size: 11,
+                         color: isActive ? Color.ikeruPrimaryAccent : TatamiTokens.paperGhost)
+                Text(japanese)
+                    .font(.system(size: 11, design: .serif))
+                    .foregroundStyle(isActive ? Color.ikeruTextPrimary : TatamiTokens.paperGhost)
+            }
+            Text("+\(value)")
+                .font(.system(size: 22, weight: .light, design: .serif))
+                .foregroundStyle(isActive ? Color.ikeruPrimaryAccent : TatamiTokens.paperGhost)
+            Text(label)
+                .font(.system(size: 9, weight: .semibold))
+                .tracking(1.4)
+                .foregroundStyle(Color.ikeruTextSecondary)
+        }
+        .frame(maxWidth: .infinity)
+        .tatamiRoom(.standard, padding: 12)
     }
 
     // MARK: - Triumph Header
