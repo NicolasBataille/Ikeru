@@ -17,6 +17,9 @@ public struct LearnerSnapshot: Sendable, Equatable {
     public let dueCardCount: Int
     public let hasNewContentQueued: Bool
     public let lastSessionAt: Date?
+    public let vocabularyMasteredAtOrBelow: [JLPTLevel: Int]
+    public let kanjiMasteredAtOrBelow: [JLPTLevel: Int]
+    public let grammarPointsMasteredAtOrBelow: [JLPTLevel: Int]
 
     public init(
         jlptLevel: JLPTLevel,
@@ -30,7 +33,10 @@ public struct LearnerSnapshot: Sendable, Equatable {
         skillBalances: [SkillType: Double],
         dueCardCount: Int,
         hasNewContentQueued: Bool,
-        lastSessionAt: Date?
+        lastSessionAt: Date?,
+        vocabularyMasteredAtOrBelow: [JLPTLevel: Int] = [:],
+        kanjiMasteredAtOrBelow: [JLPTLevel: Int] = [:],
+        grammarPointsMasteredAtOrBelow: [JLPTLevel: Int] = [:]
     ) {
         self.jlptLevel = jlptLevel
         self.vocabularyMasteredFamiliarPlus = vocabularyMasteredFamiliarPlus
@@ -44,6 +50,9 @@ public struct LearnerSnapshot: Sendable, Equatable {
         self.dueCardCount = dueCardCount
         self.hasNewContentQueued = hasNewContentQueued
         self.lastSessionAt = lastSessionAt
+        self.vocabularyMasteredAtOrBelow = vocabularyMasteredAtOrBelow
+        self.kanjiMasteredAtOrBelow = kanjiMasteredAtOrBelow
+        self.grammarPointsMasteredAtOrBelow = grammarPointsMasteredAtOrBelow
     }
 
     /// `(maxSkill - minSkill) / maxSkill`. Returns 0 when no balances or
