@@ -24,16 +24,45 @@ public struct DailyTermService: Sendable {
 
     private let repository: DailyTermRepository
     private let catalog: [DailyTermCandidate]
+    private let catalogByWord: [String: DailyTermCandidate]
     private let calendar: Calendar
+    private let locale: Locale
 
     public init(
         repository: DailyTermRepository,
         catalog: [DailyTermCandidate] = DailyTermCatalog.all,
-        calendar: Calendar = .current
+        calendar: Calendar = .current,
+        locale: Locale = .current
     ) {
         self.repository = repository
         self.catalog = catalog
+        self.catalogByWord = Dictionary(uniqueKeysWithValues: catalog.map { ($0.word, $0) })
         self.calendar = calendar
+        self.locale = locale
+    }
+
+    /// Re-derives meaning + caption from the catalog at the service's
+    /// current locale, ignoring whatever was persisted on the DailyTerm
+    /// row at creation time. This is what makes the feature "switch
+    /// language" — existing rows pick up FR text the moment the app
+    /// runs in French.
+    private func localized(_ dto: DailyTermDTO) -> DailyTermDTO {
+        guard let candidate = catalogByWord[dto.word] else { return dto }
+        let meaning = candidate.localizedMeaning(for: locale)
+        let caption = composeCaption(for: candidate, on: dto.date)
+        return DailyTermDTO(
+            id: dto.id,
+            date: dto.date,
+            word: dto.word,
+            reading: dto.reading,
+            pronunciation: dto.pronunciation,
+            meaning: meaning,
+            caption: caption,
+            jlptLevel: dto.jlptLevel,
+            revealedAt: dto.revealedAt,
+            addedToDictionary: dto.addedToDictionary,
+            createdAt: dto.createdAt
+        )
     }
 
     // MARK: - Public API
@@ -49,16 +78,20 @@ public struct DailyTermService: Sendable {
         let normalised = calendar.startOfDay(for: day)
 
         if let existing = await repository.term(on: normalised) {
-            return existing
+            return localized(existing)
         }
 
         let usedWords = await repository.usedWords()
             .union(existingDictionaryWords)
 
         let candidate = pickCandidate(for: normalised, excluding: usedWords)
-        let caption = composeCaption(for: candidate, on: normalised)
+        // Persist the English text as a safety net (back-compat with rows
+        // that may be read by a future build without locale awareness).
+        // Reads always re-derive via `localized(_:)` so the persisted
+        // string is treated as dead-but-present.
+        let caption = composeCaption(for: candidate, on: normalised, locale: Locale(identifier: "en"))
 
-        return await repository.upsertTerm(
+        let stored = await repository.upsertTerm(
             on: normalised,
             word: candidate.word,
             reading: candidate.reading,
@@ -67,6 +100,7 @@ public struct DailyTermService: Sendable {
             caption: caption,
             jlptLevel: candidate.jlptLevel
         )
+        return localized(stored)
     }
 
     /// Term scheduled for the day immediately preceding `day`, if one exists.
@@ -74,20 +108,20 @@ public struct DailyTermService: Sendable {
     public func previousDayTerm(before day: Date = Date()) async -> DailyTermDTO? {
         let normalised = calendar.startOfDay(for: day)
         let recent = await repository.termsBefore(normalised, limit: 1)
-        return recent.first
+        return recent.first.map(localized)
     }
 
     /// Past terms (most-recent first), capped at `limit`.
     public func recentTerms(before day: Date = Date(), limit: Int = 30) async -> [DailyTermDTO] {
         let normalised = calendar.startOfDay(for: day)
-        return await repository.termsBefore(normalised, limit: limit)
+        return await repository.termsBefore(normalised, limit: limit).map(localized)
     }
 
     /// Past terms the user never opened — surfaced in the "missed terms" list.
     public func missedTerms(before day: Date = Date(), limit: Int = 30) async -> [DailyTermDTO] {
         let normalised = calendar.startOfDay(for: day)
         let recent = await repository.termsBefore(normalised, limit: limit)
-        return recent.filter { $0.revealedAt == nil }
+        return recent.filter { $0.revealedAt == nil }.map(localized)
     }
 
     public func markRevealed(termId: UUID) async {
@@ -145,30 +179,54 @@ public struct DailyTermService: Sendable {
 
     /// Composes a date-aware caption for the term. Rotates among a few
     /// wrapping templates so the daily prompt doesn't read identically
-    /// every day.
+    /// every day. Locale-aware so the FR app sees French phrasing.
     public func composeCaption(
         for candidate: DailyTermCandidate,
         on day: Date
     ) -> String {
-        let weekdayPhrase = Self.weekdayPhrase(for: day, calendar: calendar)
-        let seasonPhrase = Self.seasonPhrase(for: day, calendar: calendar)
+        composeCaption(for: candidate, on: day, locale: locale)
+    }
+
+    /// Locale-overridable variant — useful for tests and for persisting
+    /// a back-compat English caption alongside FR rendering.
+    public func composeCaption(
+        for candidate: DailyTermCandidate,
+        on day: Date,
+        locale: Locale
+    ) -> String {
+        let isFR = locale.language.languageCode?.identifier == "fr"
+        let flavour = candidate.localizedFlavour(for: locale)
+
+        let weekdayPhrase = isFR
+            ? Self.weekdayPhraseFR(for: day, calendar: calendar)
+            : Self.weekdayPhrase(for: day, calendar: calendar)
+        let seasonPhrase = isFR
+            ? Self.seasonPhraseFR(for: day, calendar: calendar)
+            : Self.seasonPhrase(for: day, calendar: calendar)
         let dayPhrase = "\(weekdayPhrase) \(seasonPhrase)".trimmingCharacters(in: .whitespaces)
 
         if dayPhrase.isEmpty {
-            return candidate.flavour
+            return flavour
         }
 
         // Pick a template deterministically — same day → same caption,
         // different days alternate phrasings to avoid sounding formulaic.
-        let templates: [(String, String) -> String] = [
+        let templatesEN: [(String, String) -> String] = [
             { phrase, flavour in "On this \(phrase): \(flavour)." },
             { phrase, flavour in "For your \(phrase): \(flavour)." },
             { phrase, flavour in "A word for a \(phrase) — \(flavour)." },
             { phrase, flavour in "\(flavour). Suited to a \(phrase)." }
         ]
+        let templatesFR: [(String, String) -> String] = [
+            { phrase, flavour in "En ce \(phrase) : \(flavour)." },
+            { phrase, flavour in "Pour ton \(phrase) : \(flavour)." },
+            { phrase, flavour in "Un mot pour un \(phrase) — \(flavour)." },
+            { phrase, flavour in "\(flavour). Pour un \(phrase)." }
+        ]
+        let templates = isFR ? templatesFR : templatesEN
         let seed = Self.dateSeed(for: day, calendar: calendar)
         let template = templates[Int(seed % UInt64(templates.count))]
-        return template(dayPhrase, candidate.flavour)
+        return template(dayPhrase, flavour)
     }
 
     // MARK: - Date helpers
@@ -243,6 +301,33 @@ public struct DailyTermService: Sendable {
         case 9, 10, 11: return "autumn day"
         case 12, 1, 2: return "winter day"
         default: return "day"
+        }
+    }
+
+    /// French equivalents — masculine forms so they combine cleanly with
+    /// season adjectives. Used when the service's locale is `fr`.
+    static func weekdayPhraseFR(for day: Date, calendar: Calendar) -> String {
+        let weekday = calendar.component(.weekday, from: day)
+        switch weekday {
+        case 1: return "dimanche tranquille"
+        case 2: return "lundi de reprise"
+        case 3: return "mardi"
+        case 4: return "mercredi de mi-semaine"
+        case 5: return "jeudi"
+        case 6: return "vendredi qui approche"
+        case 7: return "samedi paisible"
+        default: return ""
+        }
+    }
+
+    static func seasonPhraseFR(for day: Date, calendar: Calendar) -> String {
+        let month = calendar.component(.month, from: day)
+        switch month {
+        case 3, 4, 5: return "printanier"
+        case 6, 7, 8: return "estival"
+        case 9, 10, 11: return "automnal"
+        case 12, 1, 2: return "hivernal"
+        default: return ""
         }
     }
 }

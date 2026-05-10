@@ -21,7 +21,7 @@ struct DailyTermHistoryView: View {
 
         var id: String { rawValue }
 
-        var label: String {
+        var label: LocalizedStringKey {
             switch self {
             case .all:    return "All"
             case .missed: return "Missed"

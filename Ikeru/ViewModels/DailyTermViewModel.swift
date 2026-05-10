@@ -55,12 +55,14 @@ public final class DailyTermViewModel {
 
     // MARK: - Init
 
-    public init(modelContainer: ModelContainer) {
+    public init(modelContainer: ModelContainer, locale: Locale = .current) {
         let dailyTermRepo = DailyTermRepository(modelContainer: modelContainer)
         let vocabRepo = VocabularyRepository(modelContainer: modelContainer)
         self.dailyTermRepository = dailyTermRepo
         self.vocabularyRepository = vocabRepo
-        self.service = DailyTermService(repository: dailyTermRepo)
+        // Pass the app-resolved locale so the service renders FR text
+        // when the user has chosen French (independently of the OS locale).
+        self.service = DailyTermService(repository: dailyTermRepo, locale: locale)
     }
 
     // MARK: - Loading

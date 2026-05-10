@@ -179,6 +179,11 @@
 		CA1E4BC77111ADC4E439BCB7 /* KanaDrillSessionSummary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6999560B934B111F55D2F3E5 /* KanaDrillSessionSummary.swift */; };
 		CEDA5C519843F8F9E6D539DA /* KanaFlashcardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DB3671081E55064A6B6ADE5 /* KanaFlashcardView.swift */; };
 		CF13EFF3CE9BC5A619F0B16D /* IkeruWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = FAB097C7086A8C5F1549D53D /* IkeruWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		D11E7E1000000000C001A001 /* DailyTermViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D11E7E1000000000A001A001 /* DailyTermViewModel.swift */; };
+		D11E7E1000000000C002A001 /* DailyTermBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = D11E7E1000000000A002A001 /* DailyTermBanner.swift */; };
+		D11E7E1000000000C003A001 /* DailyTermRevealView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D11E7E1000000000A003A001 /* DailyTermRevealView.swift */; };
+		D11E7E1000000000C004A001 /* DailyTermHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D11E7E1000000000A004A001 /* DailyTermHistoryView.swift */; };
+		D11E7E1000000000C005A001 /* DailyTermViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D11E7E1000000000A005A001 /* DailyTermViewModelTests.swift */; };
 		D47F7C461CF1CFA5343E2BA8 /* MonCrest.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB4EE3B167E71594816FFDAD /* MonCrest.swift */; };
 		D620F952CB6ED990AB51DB36 /* IkeruWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD4E32975E0ECE57675459EB /* IkeruWidgetBundle.swift */; };
 		D8D5457FC6070EDB4C44E5B7 /* RigJobsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EBABD6C9A0B5F802FBA5DB2 /* RigJobsViewModel.swift */; };
@@ -213,11 +218,6 @@
 		FDA86090738921E4E18E79CE /* SessionSummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8BD1F07D5A033139C8C8A83 /* SessionSummaryView.swift */; };
 		FDC87A32E50CF633C3BDC97D /* HoldToConfirmButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2CBFF6AF9FE7C9F48E34A51 /* HoldToConfirmButton.swift */; };
 		FF89BFE59885EB3742A25989 /* HandwritingExerciseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6662134E08023C0DBD738ED /* HandwritingExerciseView.swift */; };
-		D11E7E1000000000C001A001 /* DailyTermViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D11E7E1000000000A001A001 /* DailyTermViewModel.swift */; };
-		D11E7E1000000000C002A001 /* DailyTermBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = D11E7E1000000000A002A001 /* DailyTermBanner.swift */; };
-		D11E7E1000000000C003A001 /* DailyTermRevealView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D11E7E1000000000A003A001 /* DailyTermRevealView.swift */; };
-		D11E7E1000000000C004A001 /* DailyTermHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D11E7E1000000000A004A001 /* DailyTermHistoryView.swift */; };
-		D11E7E1000000000C005A001 /* DailyTermViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D11E7E1000000000A005A001 /* DailyTermViewModelTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -350,7 +350,7 @@
 		7AE864AF29ACDCF1CF6A9FEB /* MonCrestTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MonCrestTests.swift; sourceTree = "<group>"; };
 		7B28B5F9A82603C231B759EB /* ListeningPassageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListeningPassageView.swift; sourceTree = "<group>"; };
 		7DEC565E5BC2D95F4A14BD0A /* KanjiDisplayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KanjiDisplayView.swift; sourceTree = "<group>"; };
-		8225047CD3C41A1364CD67FA /* Ikeru.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Ikeru.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		8225047CD3C41A1364CD67FA /* Ikeru.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Ikeru.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		86F0467337CA5D848E771C8C /* KanaDrillViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KanaDrillViewModel.swift; sourceTree = "<group>"; };
 		876AD9101EE9AB2CA2148935 /* LootDropView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LootDropView.swift; sourceTree = "<group>"; };
 		8908562DCE1E539972918E03 /* SessionViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionViewModelTests.swift; sourceTree = "<group>"; };
@@ -394,7 +394,7 @@
 		AF5EE898AF9C8846B82F6918 /* DensityAware.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DensityAware.swift; sourceTree = "<group>"; };
 		AF87E7A18DDA1BE176F0B8CE /* DisplayModeToggleRow.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DisplayModeToggleRow.swift; sourceTree = "<group>"; };
 		B04C74F735B5D471036C7A40 /* VocabularyDetailSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VocabularyDetailSheet.swift; sourceTree = "<group>"; };
-		B397E03A82EFF499E855C79D /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		B397E03A82EFF499E855C79D /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		B46DF69A2A765C203CB58B09 /* SessionLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionLiveActivity.swift; sourceTree = "<group>"; };
 		B5EC7CD071A02DEB1F3611E0 /* ListeningViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListeningViewModelTests.swift; sourceTree = "<group>"; };
 		B5FD009AD0E461931F7476EE /* IkeruFlowLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IkeruFlowLayout.swift; sourceTree = "<group>"; };
@@ -423,6 +423,11 @@
 		CE989EDC826A8D21056CC758 /* XPGainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XPGainView.swift; sourceTree = "<group>"; };
 		D08B33E031522EEA0E701C84 /* ConversationViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationViewModel.swift; sourceTree = "<group>"; };
 		D08D4F4B23347E79AF13DD74 /* MountainGlyph.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MountainGlyph.swift; sourceTree = "<group>"; };
+		D11E7E1000000000A001A001 /* DailyTermViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DailyTermViewModel.swift; path = Ikeru/ViewModels/DailyTermViewModel.swift; sourceTree = SOURCE_ROOT; };
+		D11E7E1000000000A002A001 /* DailyTermBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DailyTermBanner.swift; path = Ikeru/Views/Home/DailyTermBanner.swift; sourceTree = SOURCE_ROOT; };
+		D11E7E1000000000A003A001 /* DailyTermRevealView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DailyTermRevealView.swift; path = Ikeru/Views/Home/DailyTermRevealView.swift; sourceTree = SOURCE_ROOT; };
+		D11E7E1000000000A004A001 /* DailyTermHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DailyTermHistoryView.swift; path = Ikeru/Views/Home/DailyTermHistoryView.swift; sourceTree = SOURCE_ROOT; };
+		D11E7E1000000000A005A001 /* DailyTermViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyTermViewModelTests.swift; sourceTree = "<group>"; };
 		D1F62206E7AC1CAC9A3335D5 /* VocabularyStudyViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VocabularyStudyViewModel.swift; sourceTree = "<group>"; };
 		D2CBFF6AF9FE7C9F48E34A51 /* HoldToConfirmButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HoldToConfirmButton.swift; sourceTree = "<group>"; };
 		D5D9BA9F4FDA871221354B88 /* n5-content.sqlite */ = {isa = PBXFileReference; lastKnownFileType = file; path = "n5-content.sqlite"; sourceTree = "<group>"; };
@@ -438,9 +443,9 @@
 		E028A7B4AD2AB9F9E1802817 /* ReadingPassageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadingPassageView.swift; sourceTree = "<group>"; };
 		E199ACCB659AD0493D556C8C /* FillInBlankExerciseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FillInBlankExerciseView.swift; sourceTree = "<group>"; };
 		E2839E6E122B09254AB7E515 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		E2EB369AB07C4479E312335A /* Localizable.xcstrings */ = {isa = PBXFileReference; includeInIndex = 1; path = Localizable.xcstrings; sourceTree = "<group>"; };
+		E2EB369AB07C4479E312335A /* Localizable.xcstrings */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		E2F1FF648DFD4B06ACB9D5A1 /* SerifNumeral.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SerifNumeral.swift; sourceTree = "<group>"; };
-		E3B790F00378454A3668D4EC /* IkeruCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = IkeruCore; path = IkeruCore; sourceTree = SOURCE_ROOT; };
+		E3B790F00378454A3668D4EC /* IkeruCore */ = {isa = PBXFileReference; lastKnownFileType = folder; path = IkeruCore; sourceTree = SOURCE_ROOT; };
 		E415FB60B6790A37E7C422E7 /* ImmersiveSessionViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImmersiveSessionViewTests.swift; sourceTree = "<group>"; };
 		E6662134E08023C0DBD738ED /* HandwritingExerciseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HandwritingExerciseView.swift; sourceTree = "<group>"; };
 		E68D50EE629315196AF29E6F /* ExerciseTypeTile.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ExerciseTypeTile.swift; sourceTree = "<group>"; };
@@ -463,11 +468,6 @@
 		FD7E0BEDFFAF72A3409B8B08 /* ProgressComplication.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressComplication.swift; sourceTree = "<group>"; };
 		FDB2946DC6619B99A4BBD591 /* DrillUtilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DrillUtilities.swift; sourceTree = "<group>"; };
 		FEE55E655DAC68F122F04B9D /* KanaDrillModeSelector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KanaDrillModeSelector.swift; sourceTree = "<group>"; };
-		D11E7E1000000000A001A001 /* DailyTermViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DailyTermViewModel.swift; path = Ikeru/ViewModels/DailyTermViewModel.swift; sourceTree = SOURCE_ROOT; };
-		D11E7E1000000000A002A001 /* DailyTermBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DailyTermBanner.swift; path = Ikeru/Views/Home/DailyTermBanner.swift; sourceTree = SOURCE_ROOT; };
-		D11E7E1000000000A003A001 /* DailyTermRevealView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DailyTermRevealView.swift; path = Ikeru/Views/Home/DailyTermRevealView.swift; sourceTree = SOURCE_ROOT; };
-		D11E7E1000000000A004A001 /* DailyTermHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DailyTermHistoryView.swift; path = Ikeru/Views/Home/DailyTermHistoryView.swift; sourceTree = SOURCE_ROOT; };
-		D11E7E1000000000A005A001 /* DailyTermViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyTermViewModelTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -650,7 +650,6 @@
 				2E465EC77CC660545388BC4E /* RPGRankCrest.swift */,
 				70AD0FF8A5A420DD4D1E32C9 /* TatamiRoom.swift */,
 			);
-			name = Tatami;
 			path = Tatami;
 			sourceTree = "<group>";
 		};
@@ -785,7 +784,6 @@
 				04DC5CAF88426C1309C3B6F5 /* CustomPlannerSheet.swift */,
 				641C149490C9056EFCD19CBC /* EtudeView.swift */,
 			);
-			name = Etude;
 			path = Etude;
 			sourceTree = "<group>";
 		};
@@ -954,7 +952,6 @@
 				E2EB369AB07C4479E312335A /* Localizable.xcstrings */,
 				BF577B22FC29A2FA15CD6A15 /* LanguagePickerView.swift */,
 			);
-			name = Localization;
 			path = Localization;
 			sourceTree = "<group>";
 		};
@@ -1168,7 +1165,6 @@
 						ProvisioningStyle = Automatic;
 					};
 					EDDB8F3812DC1BC18F32017C = {
-						DevelopmentTeam = N84YXYF2NZ;
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -1501,6 +1497,7 @@
 				CODE_SIGN_ENTITLEMENTS = Ikeru/Ikeru.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = N84YXYF2NZ;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Ikeru/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -1701,6 +1698,7 @@
 				CODE_SIGN_ENTITLEMENTS = Ikeru/Ikeru.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = N84YXYF2NZ;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Ikeru/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
