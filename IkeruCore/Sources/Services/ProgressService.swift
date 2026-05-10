@@ -222,6 +222,17 @@ public final class ProgressService: Sendable {
             now: now
         )
         let report = JLPTReadinessFormula.compute(snapshot: snapshot)
+
+        // 10% sampled telemetry — high-volume event (every dashboard load).
+        // Same sampling pattern as Spec B's `xp.attributed` event in
+        // SessionViewModel; keeps log volume manageable while preserving
+        // enough signal to chart readiness over time.
+        if Int.random(in: 0..<100) < 10 {
+            Logger.rpg.info(
+                "readiness.computed bestFit=\(report.bestFit.rawValue) confidence=\(report.bestFitConfidence) n5=\(report.perLevel[.n5] ?? 0) n4=\(report.perLevel[.n4] ?? 0) n3=\(report.perLevel[.n3] ?? 0) n2=\(report.perLevel[.n2] ?? 0) n1=\(report.perLevel[.n1] ?? 0)"
+            )
+        }
+
         let bestFitReq = JLPTReadinessRequirements.requirements(for: report.bestFit)
         let masteredVocab = snapshot.vocabularyMasteredAtOrBelow[report.bestFit] ?? 0
         return JLPTEstimate(
