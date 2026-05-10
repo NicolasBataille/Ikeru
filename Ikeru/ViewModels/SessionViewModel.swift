@@ -69,6 +69,21 @@ public final class SessionViewModel {
         isActive && currentIndex >= sessionQueue.count
     }
 
+    /// Whether the session should end now — queue exhausted OR the
+    /// time-budget end policy fired. Card flashcards always finish at a
+    /// clean transition point, so `.completeAfterCurrent` and
+    /// `.completeNow` collapse into a single "stop" decision here.
+    public var shouldEndSession: Bool {
+        if isSessionComplete { return true }
+        guard let policy = endPolicy else { return false }
+        let action = policy.evaluate(state: SessionEndState(
+            elapsedSeconds: Int(elapsedTime),
+            completedCount: reviewedCount,
+            activeItemInFlight: false
+        ))
+        return action != .continueSession
+    }
+
     /// The current card being reviewed, or nil if complete.
     public var currentCard: CardDTO? {
         guard currentIndex < sessionQueue.count else { return nil }
@@ -206,6 +221,11 @@ public final class SessionViewModel {
     private var cardStartTime: Date = Date()
     private var timerTask: Task<Void, Never>?
 
+    /// Policy that decides when an active session ends. Built when the
+    /// session starts; nil between sessions. Drives both queue-exhaustion
+    /// and time-budget-exhaustion exits.
+    private var endPolicy: SessionEndPolicy?
+
     /// User-tunable target session duration (minutes). Read from `@AppStorage`
     /// so changes in Settings reflect immediately without rebuilding the VM.
     @ObservationIgnored
@@ -256,6 +276,7 @@ public final class SessionViewModel {
         currentExerciseIndex = 0
         showAbandonConfirmation = false
         elapsedTime = 0
+        endPolicy = nil
     }
 
     /// Composes a session queue via the new `SessionPlanner` pipeline and
@@ -289,6 +310,11 @@ public final class SessionViewModel {
 
         // Store full exercise list for immersive mode.
         sessionExercises = plan.exercises
+
+        endPolicy = SessionEndPolicy(
+            durationBudgetMinutes: defaultDurationMinutes,
+            queueLength: plan.exercises.count
+        )
 
         // Start timer
         startTimer()
@@ -335,6 +361,11 @@ public final class SessionViewModel {
         estimatedCardCount = plan.exercises.count
         sessionExercises = plan.exercises
 
+        endPolicy = SessionEndPolicy(
+            durationBudgetMinutes: duration,
+            queueLength: plan.exercises.count
+        )
+
         startTimer()
         await loadRPGState()
         liveActivityManager.startActivity(totalExercises: plan.exercises.count)
@@ -360,6 +391,11 @@ public final class SessionViewModel {
         sessionMode = .reviewMistakes
         estimatedCardCount = mistakes.count
         sessionExercises = mistakes.map { ExerciseItem.srsReview($0) }
+
+        endPolicy = SessionEndPolicy(
+            durationBudgetMinutes: defaultDurationMinutes,
+            queueLength: mistakes.count
+        )
 
         startTimer()
         await loadRPGState()
@@ -584,7 +620,7 @@ public final class SessionViewModel {
             await persistLootBox(box)
         }
 
-        if isSessionComplete {
+        if shouldEndSession {
             stopTimer()
             await finalizeSession()
             await liveActivityManager.endActivity(
@@ -594,6 +630,14 @@ public final class SessionViewModel {
                 xpEarned: xpEarned,
                 streakCount: consecutiveCorrect
             )
+            // Force the queue pointer past the last card so views that
+            // observe `isSessionComplete` (computed: currentIndex >=
+            // sessionQueue.count) route to the summary even when the time
+            // budget — not the queue — fired the end.
+            if currentIndex < sessionQueue.count {
+                currentIndex = sessionQueue.count
+                currentExerciseIndex = sessionExercises.count
+            }
             Logger.ui.info(
                 "Session complete: \(self.reviewedCount) reviewed, \(self.xpEarned) XP earned"
             )
