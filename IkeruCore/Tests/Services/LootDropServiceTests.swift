@@ -8,45 +8,44 @@ struct LootDropServiceTests {
 
     @Test("Failed review (again) never drops loot")
     func againGradeNeverDrops() {
-        let prob = LootDropService.dropProbability(grade: .again, consecutiveCorrect: 100)
+        let prob = LootDropService.dropProbability(grade: .again)
         #expect(prob == 0.0)
     }
 
     @Test("Easy grade has highest drop probability")
     func easyGradeHighestProb() {
-        let easy = LootDropService.dropProbability(grade: .easy, consecutiveCorrect: 0)
-        let good = LootDropService.dropProbability(grade: .good, consecutiveCorrect: 0)
-        let hard = LootDropService.dropProbability(grade: .hard, consecutiveCorrect: 0)
+        let easy = LootDropService.dropProbability(grade: .easy)
+        let good = LootDropService.dropProbability(grade: .good)
+        let hard = LootDropService.dropProbability(grade: .hard)
         #expect(easy > good)
         #expect(good > hard)
     }
 
-    @Test("Streak bonus increases probability")
-    func streakBonusIncreasesProb() {
-        let noStreak = LootDropService.dropProbability(grade: .good, consecutiveCorrect: 0)
-        let streak5 = LootDropService.dropProbability(grade: .good, consecutiveCorrect: 5)
-        let streak10 = LootDropService.dropProbability(grade: .good, consecutiveCorrect: 10)
-        #expect(streak5 > noStreak)
-        #expect(streak10 > streak5)
+    @Test("Easy grade never drops if session cap reached")
+    func easyGradeCapReached() {
+        let dropped = LootDropService.shouldDropLoot(
+            grade: .easy, sessionLootCount: 3, randomValue: 0.0
+        )
+        #expect(!dropped)
     }
 
-    @Test("Streak bonus is capped at 20%")
-    func streakBonusCapped() {
-        let streak50 = LootDropService.dropProbability(grade: .good, consecutiveCorrect: 50)
-        let streak100 = LootDropService.dropProbability(grade: .good, consecutiveCorrect: 100)
-        #expect(streak50 == streak100) // Both hit the cap
+    @Test("Good grade has medium drop probability")
+    func goodGradeProb() {
+        let prob = LootDropService.dropProbability(grade: .good)
+        #expect(prob > 0.0)
+        #expect(prob < 1.0)
     }
 
     @Test("shouldDropLoot returns true when roll is below probability")
     func shouldDropLootDeterministic() {
-        // Easy with 0 streak = 0.25 probability
+        // Easy grade has base prob + 0.03
         let dropped = LootDropService.shouldDropLoot(
-            grade: .easy, consecutiveCorrect: 0, randomValue: 0.1
+            grade: .easy, sessionLootCount: 0, randomValue: 0.01
         )
         #expect(dropped)
 
         let notDropped = LootDropService.shouldDropLoot(
-            grade: .easy, consecutiveCorrect: 0, randomValue: 0.9
+            grade: .easy, sessionLootCount: 0, randomValue: 0.99
         )
         #expect(!notDropped)
     }
