@@ -101,11 +101,16 @@ public struct CardSnapshot: Codable, Sendable {
     public let reps: Int
     public let lapseCount: Int
     public let leechFlag: Bool
+    /// Optional JLPT level tag. `nil` for legacy/untagged cards. Backward
+    /// compatible with backups written before this field existed (decoder
+    /// treats a missing key as `nil`).
+    public let jlptLevel: JLPTLevel?
 
     public init(
         id: UUID, front: String, back: String, type: String,
         dueDate: Date, easeFactor: Double, interval: Int,
-        reps: Int, lapseCount: Int, leechFlag: Bool
+        reps: Int, lapseCount: Int, leechFlag: Bool,
+        jlptLevel: JLPTLevel? = nil
     ) {
         self.id = id
         self.front = front
@@ -117,6 +122,7 @@ public struct CardSnapshot: Codable, Sendable {
         self.reps = reps
         self.lapseCount = lapseCount
         self.leechFlag = leechFlag
+        self.jlptLevel = jlptLevel
     }
 }
 
