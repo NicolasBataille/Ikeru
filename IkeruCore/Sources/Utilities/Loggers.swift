@@ -32,4 +32,7 @@ extension Logger {
 
     /// Vocabulary dictionary and encounter tracking
     public static let vocabulary = Logger(subsystem: subsystem, category: "vocabulary")
+
+    /// Daily term selection, persistence and notifications
+    public static let dailyTerm = Logger(subsystem: subsystem, category: "dailyTerm")
 }

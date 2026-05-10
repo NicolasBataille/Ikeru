@@ -170,6 +170,10 @@
 		F99671B5F564DEA0F4B3C41B /* NavigationCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7A35CBDE82C399C0BDE9E67 /* NavigationCoordinator.swift */; };
 		FDA86090738921E4E18E79CE /* SessionSummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8BD1F07D5A033139C8C8A83 /* SessionSummaryView.swift */; };
 		FF89BFE59885EB3742A25989 /* HandwritingExerciseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6662134E08023C0DBD738ED /* HandwritingExerciseView.swift */; };
+		D11E7E1000000000C001A001 /* DailyTermViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D11E7E1000000000A001A001 /* DailyTermViewModel.swift */; };
+		D11E7E1000000000C002A001 /* DailyTermBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = D11E7E1000000000A002A001 /* DailyTermBanner.swift */; };
+		D11E7E1000000000C003A001 /* DailyTermRevealView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D11E7E1000000000A003A001 /* DailyTermRevealView.swift */; };
+		D11E7E1000000000C004A001 /* DailyTermHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D11E7E1000000000A004A001 /* DailyTermHistoryView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -372,6 +376,10 @@
 		FD4E32975E0ECE57675459EB /* IkeruWidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IkeruWidgetBundle.swift; sourceTree = "<group>"; };
 		FD7E0BEDFFAF72A3409B8B08 /* ProgressComplication.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressComplication.swift; sourceTree = "<group>"; };
 		FEE55E655DAC68F122F04B9D /* KanaDrillModeSelector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KanaDrillModeSelector.swift; sourceTree = "<group>"; };
+		D11E7E1000000000A001A001 /* DailyTermViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DailyTermViewModel.swift; path = Ikeru/ViewModels/DailyTermViewModel.swift; sourceTree = SOURCE_ROOT; };
+		D11E7E1000000000A002A001 /* DailyTermBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DailyTermBanner.swift; path = Ikeru/Views/Home/DailyTermBanner.swift; sourceTree = SOURCE_ROOT; };
+		D11E7E1000000000A003A001 /* DailyTermRevealView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DailyTermRevealView.swift; path = Ikeru/Views/Home/DailyTermRevealView.swift; sourceTree = SOURCE_ROOT; };
+		D11E7E1000000000A004A001 /* DailyTermHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DailyTermHistoryView.swift; path = Ikeru/Views/Home/DailyTermHistoryView.swift; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -527,6 +535,9 @@
 		50287D79DC47EDEB28CCE168 /* Home */ = {
 			isa = PBXGroup;
 			children = (
+				D11E7E1000000000A002A001 /* DailyTermBanner.swift */,
+				D11E7E1000000000A004A001 /* DailyTermHistoryView.swift */,
+				D11E7E1000000000A003A001 /* DailyTermRevealView.swift */,
 				156EFFF0B204464405BC709E /* HomeView.swift */,
 				25F5EC3E127B20A52562853D /* MeshHeroView.swift */,
 				4D70646A260FBC5CBB22E479 /* ProgressDashboardView.swift */,
@@ -700,6 +711,7 @@
 			isa = PBXGroup;
 			children = (
 				867A3CA926C8EDBF228F4F2F /* Learning */,
+				D11E7E1000000000A001A001 /* DailyTermViewModel.swift */,
 				F1DF2E350075F0F6C4CFE5D5 /* HomeViewModel.swift */,
 				5FF30B9862993AD81B2EA938 /* ProfileViewModel.swift */,
 				33B41D44105A174C447228C4 /* ProgressDashboardViewModel.swift */,
@@ -1085,6 +1097,10 @@
 				80928CE01894C7B023866E4A /* ChatBubbleView.swift in Sources */,
 				A91A182B2779D86CD983FE2A /* CloudBackupManager.swift in Sources */,
 				03A18AE27633E99C6225720C /* ColorExtensions.swift in Sources */,
+				D11E7E1000000000C002A001 /* DailyTermBanner.swift in Sources */,
+				D11E7E1000000000C004A001 /* DailyTermHistoryView.swift in Sources */,
+				D11E7E1000000000C003A001 /* DailyTermRevealView.swift in Sources */,
+				D11E7E1000000000C001A001 /* DailyTermViewModel.swift in Sources */,
 				F8B54EFE3D06A1D370D8FED4 /* CompanionAvatarView.swift in Sources */,
 				2332D3E825277DEE0E731926 /* CompanionChatSheet.swift in Sources */,
 				B8984A48353B6EE06C997BAD /* CompanionChatViewModel.swift in Sources */,

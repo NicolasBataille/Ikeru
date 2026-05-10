@@ -34,6 +34,10 @@ struct SettingsView: View {
     @AppStorage(IkeruApp.preWarmNotifyKey) private var preWarmNotify: Bool = false
     @State private var isPreWarming = false
 
+    @AppStorage(DailyTermSettings.enabledKey) private var dailyTermEnabled: Bool = false
+    @AppStorage(DailyTermSettings.hourKey) private var dailyTermHour: Int = DailyTermSettings.defaultHour
+    @AppStorage(DailyTermSettings.minuteKey) private var dailyTermMinute: Int = DailyTermSettings.defaultMinute
+
     private var isNameValid: Bool {
         !editingName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
@@ -49,6 +53,7 @@ struct SettingsView: View {
                     profileSection
                     profileManagementSection
                     conversationSection
+                    dailyTermSection
                     notificationsSection
                     backupSection
                     aiProvidersSection
@@ -520,6 +525,67 @@ struct SettingsView: View {
         .ikeruCard(.standard)
     }
 
+    // MARK: - Daily Term Section
+
+    private var dailyTermSection: some View {
+        VStack(alignment: .leading, spacing: IkeruTheme.Spacing.md) {
+            IkeruSectionHeader(title: "Term of the Day", eyebrow: "Discovery")
+
+            VStack(alignment: .leading, spacing: IkeruTheme.Spacing.sm) {
+                Toggle(isOn: $dailyTermEnabled) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("New term every day")
+                            .font(.ikeruBody)
+                            .foregroundStyle(Color.ikeruTextPrimary)
+                        Text("A word or expression that isn't already in your dictionary, with a fresh description tied to the day")
+                            .font(.ikeruCaption)
+                            .foregroundStyle(Color.ikeruTextSecondary)
+                    }
+                }
+                .tint(Color.ikeruPrimaryAccent)
+                .onChange(of: dailyTermEnabled) { _, enabled in
+                    updateDailyTermReminder(enabled: enabled)
+                }
+
+                if dailyTermEnabled {
+                    HStack {
+                        Text("Notify at")
+                            .font(.ikeruCaption)
+                            .foregroundStyle(Color.ikeruTextSecondary)
+                        Spacer()
+                        Picker("Hour", selection: $dailyTermHour) {
+                            ForEach(0..<24) { hour in
+                                Text(String(format: "%02d", hour)).tag(hour)
+                            }
+                        }
+                        .pickerStyle(.menu)
+                        .tint(Color.ikeruPrimaryAccent)
+
+                        Text(":")
+                            .font(.ikeruBody)
+                            .foregroundStyle(Color.ikeruTextSecondary)
+
+                        Picker("Minute", selection: $dailyTermMinute) {
+                            ForEach([0, 15, 30, 45], id: \.self) { minute in
+                                Text(String(format: "%02d", minute)).tag(minute)
+                            }
+                        }
+                        .pickerStyle(.menu)
+                        .tint(Color.ikeruPrimaryAccent)
+                    }
+                    .onChange(of: dailyTermHour) { _, _ in
+                        updateDailyTermReminder(enabled: true)
+                    }
+                    .onChange(of: dailyTermMinute) { _, _ in
+                        updateDailyTermReminder(enabled: true)
+                    }
+                }
+            }
+            .padding(.vertical, IkeruTheme.Spacing.xs)
+        }
+        .ikeruCard(.standard)
+    }
+
     // MARK: - AI Providers Section
 
     private var aiProvidersSection: some View {
@@ -803,6 +869,24 @@ struct SettingsView: View {
             }
         } else {
             NotificationManager.shared.cancelReviewReminders()
+        }
+    }
+
+    private func updateDailyTermReminder(enabled: Bool) {
+        if enabled {
+            Task {
+                let authorized = await NotificationManager.shared.requestAuthorization()
+                if authorized {
+                    await NotificationManager.shared.scheduleDailyTermReminder(
+                        hour: dailyTermHour,
+                        minute: dailyTermMinute
+                    )
+                } else {
+                    dailyTermEnabled = false
+                }
+            }
+        } else {
+            NotificationManager.shared.cancelDailyTermReminder()
         }
     }
 

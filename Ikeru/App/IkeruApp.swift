@@ -57,6 +57,7 @@ struct IkeruApp: App {
                 AssetManifest.self,
                 VocabularyEntry.self,
                 VocabularyEncounter.self,
+                DailyTerm.self,
             ])
             let config = ModelConfiguration(
                 "Ikeru",
@@ -203,6 +204,19 @@ struct IkeruApp: App {
                     weekday: settings.weeklyCheckInDay,
                     hour: settings.weeklyCheckInHour
                 )
+            }
+        }
+
+        // Daily term reminder is configured via UserDefaults (the Settings
+        // view writes there directly via @AppStorage).
+        if UserDefaults.standard.bool(forKey: DailyTermSettings.enabledKey) {
+            let authorized = await manager.requestAuthorization()
+            if authorized {
+                let hour = UserDefaults.standard.object(forKey: DailyTermSettings.hourKey) as? Int
+                    ?? DailyTermSettings.defaultHour
+                let minute = UserDefaults.standard.object(forKey: DailyTermSettings.minuteKey) as? Int
+                    ?? DailyTermSettings.defaultMinute
+                await manager.scheduleDailyTermReminder(hour: hour, minute: minute)
             }
         }
     }

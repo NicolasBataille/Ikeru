@@ -12,8 +12,13 @@ struct HomeView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var viewModel: HomeViewModel?
     @State private var sessionViewModel: SessionViewModel?
+    @State private var dailyTermViewModel: DailyTermViewModel?
     @State private var showSession = false
     @State private var heroAppeared = false
+    @State private var showDailyTermReveal = false
+    @State private var showDailyTermHistory = false
+    @State private var historyTermSelection: DailyTermDTO?
+    @AppStorage(DailyTermSettings.enabledKey) private var dailyTermEnabled: Bool = false
 
     var body: some View {
         ZStack {
@@ -34,9 +39,58 @@ struct HomeView: View {
                     }
             }
         }
+        .sheet(isPresented: $showDailyTermReveal) {
+            if let dvm = dailyTermViewModel, let term = dvm.today {
+                DailyTermRevealView(
+                    term: term,
+                    isAddedToDictionary: dvm.addedToDictionaryThisSession,
+                    onAddToDictionary: {
+                        Task { await dvm.addToDictionary(term) }
+                    },
+                    onDismiss: { showDailyTermReveal = false },
+                    onShowHistory: {
+                        showDailyTermReveal = false
+                        showDailyTermHistory = true
+                    }
+                )
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
+                .task { await dvm.markRevealed(term) }
+            }
+        }
+        .sheet(isPresented: $showDailyTermHistory) {
+            if let dvm = dailyTermViewModel {
+                DailyTermHistoryView(
+                    terms: dvm.missed,
+                    onSelect: { term in
+                        historyTermSelection = term
+                    },
+                    onDismiss: { showDailyTermHistory = false }
+                )
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
+            }
+        }
+        .sheet(item: $historyTermSelection) { term in
+            if let dvm = dailyTermViewModel {
+                DailyTermRevealView(
+                    term: term,
+                    isAddedToDictionary: term.addedToDictionary,
+                    onAddToDictionary: {
+                        Task { await dvm.addToDictionary(term) }
+                    },
+                    onDismiss: { historyTermSelection = nil },
+                    onShowHistory: { historyTermSelection = nil }
+                )
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
+                .task { await dvm.markRevealed(term) }
+            }
+        }
         .task {
             initializeViewModels()
             await viewModel?.loadData()
+            await dailyTermViewModel?.load()
             withAnimation(.spring(response: 0.55, dampingFraction: 0.86).delay(0.05)) {
                 heroAppeared = true
             }
@@ -47,7 +101,11 @@ struct HomeView: View {
         .onAppear {
             if viewModel != nil {
                 Task { await viewModel?.loadData() }
+                Task { await dailyTermViewModel?.load() }
             }
+        }
+        .onChange(of: dailyTermEnabled) { _, _ in
+            Task { await dailyTermViewModel?.load() }
         }
         .onReceive(NotificationCenter.default.publisher(for: .startQuizFromShortcut)) { _ in
             initializeViewModels()
@@ -67,6 +125,7 @@ struct HomeView: View {
             VStack(spacing: IkeruTheme.Spacing.xl) {
                 topBar(vm)
                 heroSection(vm)
+                dailyTermSection
                 statsRow(vm)
                 primaryAction(vm)
                 if vm.hasLoaded && vm.dueCardCount == 0 {
@@ -141,6 +200,29 @@ struct HomeView: View {
             recentAchievement: vm.recentAchievement
         )
         .frame(height: 260)
+    }
+
+    // MARK: - Daily Term
+
+    @ViewBuilder
+    private var dailyTermSection: some View {
+        if dailyTermEnabled, let dvm = dailyTermViewModel, let term = dvm.today {
+            if dvm.todayNeedsReveal {
+                DailyTermBanner(
+                    term: term,
+                    yesterday: dvm.yesterday,
+                    onTap: { showDailyTermReveal = true }
+                )
+                .transition(.move(edge: .top).combined(with: .opacity))
+            } else {
+                DailyTermRevealedPill(
+                    term: term,
+                    yesterday: dvm.yesterday,
+                    onTap: { showDailyTermReveal = true }
+                )
+                .transition(.opacity)
+            }
+        }
     }
 
     // MARK: - Stats Row
@@ -256,6 +338,7 @@ struct HomeView: View {
         let container = modelContext.container
 
         viewModel = HomeViewModel(modelContainer: container)
+        dailyTermViewModel = DailyTermViewModel(modelContainer: container)
 
         let repo = CardRepository(modelContainer: container)
         let planner = PlannerService(cardRepository: repo)

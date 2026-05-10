@@ -151,6 +151,53 @@ final class NotificationManager {
         }
     }
 
+    // MARK: - Daily Term
+
+    /// Schedules a recurring local notification for the daily term reveal.
+    /// - Parameters:
+    ///   - hour: Hour of day (0-23).
+    ///   - minute: Minute (0-59).
+    func scheduleDailyTermReminder(hour: Int, minute: Int) async {
+        let center = UNUserNotificationCenter.current()
+        center.removePendingNotificationRequests(withIdentifiers: [Self.dailyTermIdentifier])
+
+        let content = UNMutableNotificationContent()
+        content.title = "A new word is waiting"
+        content.body = "Today's term is ready to discover — open Ikeru to reveal it."
+        content.sound = .default
+        content.categoryIdentifier = "DAILY_TERM"
+
+        var dateComponents = DateComponents()
+        dateComponents.hour = max(0, min(23, hour))
+        dateComponents.minute = max(0, min(59, minute))
+
+        let trigger = UNCalendarNotificationTrigger(
+            dateMatching: dateComponents,
+            repeats: true
+        )
+
+        let request = UNNotificationRequest(
+            identifier: Self.dailyTermIdentifier,
+            content: content,
+            trigger: trigger
+        )
+
+        do {
+            try await center.add(request)
+            Logger.ui.info("Daily term reminder scheduled at \(dateComponents.hour ?? 0):\(String(format: "%02d", dateComponents.minute ?? 0))")
+        } catch {
+            Logger.ui.error("Failed to schedule daily term reminder: \(error.localizedDescription)")
+        }
+    }
+
+    /// Removes the daily term reminder.
+    func cancelDailyTermReminder() {
+        UNUserNotificationCenter.current()
+            .removePendingNotificationRequests(withIdentifiers: [Self.dailyTermIdentifier])
+    }
+
+    static let dailyTermIdentifier = "ikeru.dailyterm.daily"
+
     // MARK: - Cancel
 
     /// Removes all scheduled notifications.
