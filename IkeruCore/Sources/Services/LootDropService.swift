@@ -112,10 +112,14 @@ public enum LootDropService {
         for event: MasteryEvent,
         learnerLevel: JLPTLevel
     ) -> LootItem {
+        let rarity = BadgeRamping.rarity(for: event, learnerLevel: learnerLevel)
         let template = masteryTemplate(for: event)
+        Logger.rpg.info(
+            "badge.granted.ramped event=\(event.rawValue) level=\(learnerLevel.rawValue) rarity=\(rarity.rawValue)"
+        )
         return LootItem(
             category: template.category,
-            rarity: BadgeRamping.rarity(for: event, learnerLevel: learnerLevel),
+            rarity: rarity,
             name: template.name,
             iconName: template.iconName
         )
