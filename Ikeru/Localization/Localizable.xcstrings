@@ -1,0 +1,5026 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "" : {
+
+    },
+    " " : {
+
+    },
+    " / " : {
+
+    },
+    " XP" : {
+
+    },
+    "-" : {
+
+    },
+    "--" : {
+
+    },
+    "︙" : {
+
+    },
+    "。" : {
+
+    },
+    "·" : {
+
+    },
+    "‹" : {
+
+    },
+    "›" : {
+
+    },
+    "(%@)" : {
+
+    },
+    "%" : {
+
+    },
+    "%@" : {
+
+    },
+    "%@ / %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ / %2$@"
+          }
+        }
+      }
+    },
+    "%@ / %@ correct" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ / %2$@ correct"
+          }
+        }
+      }
+    },
+    "%@ / %@ XP" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ / %2$@ XP"
+          }
+        }
+      }
+    },
+    "%@ %@%%" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ %2$@%%"
+          }
+        }
+      }
+    },
+    "%@ cards" : {
+
+    },
+    "%@ cards ready" : {
+
+    },
+    "%@ cards remaining" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ cards remaining"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ cartes restantes"
+          }
+        }
+      }
+    },
+    "%@ characters selected" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ characters selected"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ caractères sélectionnés"
+          }
+        }
+      }
+    },
+    "%@ correct · %@ missed" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ correct · %2$@ missed"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ correct · %@ manqué"
+          }
+        }
+      }
+    },
+    "%@ exercises" : {
+
+    },
+    "%@ words" : {
+
+    },
+    "%@ words due for review" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ words due for review"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ mots à réviser"
+          }
+        }
+      }
+    },
+    "%@ words ready for review" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ words ready for review"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ mots prêts à réviser"
+          }
+        }
+      }
+    },
+    "%@ XP" : {
+
+    },
+    "%@ XP to advance" : {
+      "comment" : "RPG next rank caption — format string `%lld XP to advance`"
+    },
+    "%@ XP to next rank" : {
+      "comment" : "Subtle XP-remaining label on the Home hero",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ XP to next rank"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ XP avant le grade suivant"
+          }
+        }
+      }
+    },
+    "%@." : {
+
+    },
+    "%@/%@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@/%2$@"
+          }
+        }
+      }
+    },
+    "%@/%@ correct" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@/%2$@ correct"
+          }
+        }
+      }
+    },
+    "%@%%" : {
+
+    },
+    "%@m" : {
+
+    },
+    "%@s" : {
+
+    },
+    "%@分" : {
+
+    },
+    "%lld XP to advance" : {
+      "comment" : "RPG next rank caption — XP remaining to the next dan",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld XP to advance"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld XP pour avancer"
+          }
+        }
+      }
+    },
+    "%lld XP to next rank" : {
+      "comment" : "Subtle XP-remaining label on the Home hero",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld XP to next rank"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld XP avant le grade suivant"
+          }
+        }
+      }
+    },
+    "+%@ XP" : {
+
+    },
+    "+%@ XP earned" : {
+
+    },
+    "~%@ min" : {
+
+    },
+    "▾" : {
+
+    },
+    "7-day arc" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "7-day arc"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cycle de 7 jours"
+          }
+        }
+      }
+    },
+    "100 cards" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "100 cards"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "100 cartes"
+          }
+        }
+      }
+    },
+    "1000 cards" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1000 cards"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1000 cartes"
+          }
+        }
+      }
+    },
+    "A guide by your side" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A guide by your side"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un guide à tes côtés"
+          }
+        }
+      }
+    },
+    "A path from curious to fluent" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A path from curious to fluent"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un chemin de curieux à courant"
+          }
+        }
+      }
+    },
+    "About" : {
+      "comment" : "Settings section header",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "About"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "À propos"
+          }
+        }
+      }
+    },
+    "Accent position: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Accent position: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Position de l'accent : %@"
+          }
+        }
+      }
+    },
+    "Account" : {
+      "comment" : "Settings section header",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Account"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compte"
+          }
+        }
+      }
+    },
+    "Achievements" : {
+      "comment" : "RPG section header — earned milestones",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Achievements"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Distinctions"
+          }
+        }
+      }
+    },
+    "Active" : {
+      "comment" : "Active profile indicator",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Active"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actif"
+          }
+        }
+      }
+    },
+    "Add profile" : {
+      "comment" : "Settings row that opens the new-profile dialog",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add profile"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter un profil"
+          }
+        }
+      }
+    },
+    "Add to Dictionary" : {
+
+    },
+    "Advanced" : {
+
+    },
+    "Again" : {
+      "comment" : "FSRS grade button label",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Again"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Encore"
+          }
+        }
+      }
+    },
+    "AI providers" : {
+      "comment" : "Settings section / row for AI provider configuration",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI providers"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fournisseurs IA"
+          }
+        }
+      }
+    },
+    "AI Setup" : {
+
+    },
+    "All caught up — enjoy the calm" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All caught up — enjoy the calm"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tout est à jour — savoure le calme"
+          }
+        }
+      }
+    },
+    "All caught up!" : {
+
+    },
+    "ALL CLEAR" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ALL CLEAR"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TERRAIN DÉGAGÉ"
+          }
+        }
+      }
+    },
+    "All learning progress for this profile will be permanently erased." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All learning progress for this profile will be permanently erased."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toute la progression de ce profil sera effacée définitivement."
+          }
+        }
+      }
+    },
+    "Apple FoundationModels" : {
+
+    },
+    "Apple FoundationModels is available on your device. No setup required." : {
+
+    },
+    "Approx" : {
+      "comment" : "Session preview: approximate duration",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Approx"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Approx."
+          }
+        }
+      }
+    },
+    "Ask me anything about Japanese!" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ask me anything about Japanese!"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pose-moi toutes tes questions sur le japonais !"
+          }
+        }
+      }
+    },
+    "Asset cache" : {
+      "comment" : "Settings row showing on-device cached audio/image usage",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Asset cache"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cache de ressources"
+          }
+        }
+      }
+    },
+    "Attributes" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Attributes"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atouts"
+          }
+        }
+      }
+    },
+    "Attribution" : {
+      "comment" : "Settings row opening the open-source credits view",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Attribution"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Crédits"
+          }
+        }
+      }
+    },
+    "Audio exercises excluded" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Audio exercises excluded"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exercices audio exclus"
+          }
+        }
+      }
+    },
+    "Auto · English" : {
+      "comment" : "Language picker auto-detection value (resolves to English)",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auto · English"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auto · Anglais"
+          }
+        }
+      }
+    },
+    "Auto · Français" : {
+      "comment" : "Language picker auto-detection value (resolves to French)",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auto · Français"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auto · Français"
+          }
+        }
+      }
+    },
+    "Available words" : {
+
+    },
+    "BALANCE" : {
+      "comment" : "Skill balance section header on Home",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BALANCE"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ÉQUILIBRE"
+          }
+        }
+      }
+    },
+    "Based on your last 90 reviews" : {
+      "comment" : "JLPT estimate sub-caption",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Based on your last 90 reviews"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Calculé sur tes 90 dernières révisions"
+          }
+        }
+      }
+    },
+    "Begin" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Begin"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Commencer"
+          }
+        }
+      }
+    },
+    "BEGIN CONVERSATION" : {
+      "comment" : "Companion CTA",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BEGIN CONVERSATION"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "COMMENCER LA CONVERSATION"
+          }
+        }
+      }
+    },
+    "BEGIN PRACTICE" : {
+      "comment" : "Hero CTA on Home",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BEGIN PRACTICE"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "COMMENCER"
+          }
+        }
+      }
+    },
+    "Begin Session" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Begin Session"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Commencer la séance"
+          }
+        }
+      }
+    },
+    "Candidates" : {
+
+    },
+    "Card.Hint.Example" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Example"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exemple"
+          }
+        }
+      }
+    },
+    "Card.Hint.Hint" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hint"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Indice"
+          }
+        }
+      }
+    },
+    "Card.Hint.Listen" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Listen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Écouter"
+          }
+        }
+      }
+    },
+    "Card.Hint.Mark" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mark"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marquer"
+          }
+        }
+      }
+    },
+    "Card.Hint.Strokes" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Strokes"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tracés"
+          }
+        }
+      }
+    },
+    "Cards" : {
+      "comment" : "Generic stat label — count of cards",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cards"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cartes"
+          }
+        }
+      }
+    },
+    "CARDS" : {
+      "comment" : "Summary stat label",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CARDS"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CARTES"
+          }
+        }
+      }
+    },
+    "CARDS DUE" : {
+      "comment" : "Hero stat label on Home",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CARDS DUE"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "À RÉVISER"
+          }
+        }
+      }
+    },
+    "Choose how much time you have" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose how much time you have"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisis ton temps disponible"
+          }
+        }
+      }
+    },
+    "Clear" : {
+
+    },
+    "Come back later when you have cards to review." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Come back later when you have cards to review."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reviens plus tard quand tu auras des cartes à réviser."
+          }
+        }
+      }
+    },
+    "Complete sessions to earn loot." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Complete sessions to earn loot."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Termine des séances pour gagner des récompenses."
+          }
+        }
+      }
+    },
+    "Configure rig first in AI Providers" : {
+      "comment" : "Placeholder shown in rig jobs view when no rig is configured",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configure rig first in AI Providers"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configurez d'abord le rig dans Fournisseurs IA"
+          }
+        }
+      }
+    },
+    "Configure Session" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configure Session"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configurer la séance"
+          }
+        }
+      }
+    },
+    "Connected · voicevox=%@ · gpu=%@ · v%@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Connected · voicevox=%1$@ · gpu=%2$@ · v%3$@"
+          }
+        }
+      }
+    },
+    "Construct the sentence" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Construct the sentence"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Construis la phrase"
+          }
+        }
+      }
+    },
+    "Continue" : {
+
+    },
+    "CONTINUE" : {
+      "comment" : "Summary primary CTA",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CONTINUE"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CONTINUER"
+          }
+        }
+      }
+    },
+    "Correct answer:" : {
+
+    },
+    "Correct: %@" : {
+
+    },
+    "Correct!" : {
+
+    },
+    "Daily goal" : {
+      "comment" : "Settings row label",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Daily goal"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Objectif quotidien"
+          }
+        }
+      }
+    },
+    "DANGER ZONE" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DANGER ZONE"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ZONE DANGEREUSE"
+          }
+        }
+      }
+    },
+    "days" : {
+      "comment" : "Tiny suffix after the STREAK count",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "days"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "jours"
+          }
+        }
+      }
+    },
+    "Decks" : {
+      "comment" : "Bilingual chrome label paired with 稽古場 on Home",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Decks"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Decks"
+          }
+        }
+      }
+    },
+    "Delete Profile" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete Profile"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer le profil"
+          }
+        }
+      }
+    },
+    "Detail: %@" : {
+
+    },
+    "Detected: %@型" : {
+
+    },
+    "Dictionary" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dictionary"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dictionnaire"
+          }
+        }
+      }
+    },
+    "DisplayMode.Suggestion.Accept" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Try it"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Essayer"
+          }
+        }
+      }
+    },
+    "DisplayMode.Suggestion.Body" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activate the Tatami interface — kanji throughout, romaji and translations hidden by default. A mode for confirmed learners. Adjustable any time in Settings."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Active l'interface Tatami — kanji partout, romaji et traductions masqués par défaut. Un mode pour les apprenants confirmés. Ajustable à tout moment dans Réglages."
+          }
+        }
+      }
+    },
+    "DisplayMode.Suggestion.Later" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Later"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plus tard"
+          }
+        }
+      }
+    },
+    "DisplayMode.Suggestion.Title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You're reading Japanese with ease now."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu lis maintenant le japonais avec aisance."
+          }
+        }
+      }
+    },
+    "Drill Due Words" : {
+
+    },
+    "Duration" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Duration"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Durée"
+          }
+        }
+      }
+    },
+    "Easy" : {
+      "comment" : "FSRS grade button label",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Easy"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Facile"
+          }
+        }
+      }
+    },
+    "ENCOUNTER HISTORY" : {
+
+    },
+    "End Session" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "End Session"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terminer la séance"
+          }
+        }
+      }
+    },
+    "END SESSION" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "END SESSION"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TERMINER"
+          }
+        }
+      }
+    },
+    "ERROR" : {
+
+    },
+    "Etude.Compose.Action" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "COMPOSE"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "COMPOSER"
+          }
+        }
+      }
+    },
+    "Etude.Compose.Cancel" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancel"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annuler"
+          }
+        }
+      }
+    },
+    "Etude.Compose.Duration" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Duration"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Durée"
+          }
+        }
+      }
+    },
+    "Etude.Compose.Levels" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "JLPT levels"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Niveaux JLPT"
+          }
+        }
+      }
+    },
+    "Etude.Compose.Row" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compose a session"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Composer une session"
+          }
+        }
+      }
+    },
+    "Etude.Compose.Title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compose a session"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Composer une session"
+          }
+        }
+      }
+    },
+    "Etude.Compose.Types" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exercise types"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Types d'exercice"
+          }
+        }
+      }
+    },
+    "Etude.Lock.Grammar" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld / %lld grammar to unlock"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld / %lld points de grammaire pour débloquer"
+          }
+        }
+      }
+    },
+    "Etude.Lock.Hiragana" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Master hiragana to unlock"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maîtrise les hiragana pour débloquer"
+          }
+        }
+      }
+    },
+    "Etude.Lock.JLPT" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reach %@ to unlock"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atteins %@ pour débloquer"
+          }
+        }
+      }
+    },
+    "Etude.Lock.Kanji" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld / %lld kanji to unlock"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld / %lld kanji pour débloquer"
+          }
+        }
+      }
+    },
+    "Etude.Lock.Katakana" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Master katakana to unlock"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maîtrise les katakana pour débloquer"
+          }
+        }
+      }
+    },
+    "Etude.Lock.ListenAccuracy" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld%% on last %lld listens"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld%% sur %lld dernières écoutes"
+          }
+        }
+      }
+    },
+    "Etude.Lock.ListenRecall" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld%% recall over %lld days"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld%% de rappel sur %lld jours"
+          }
+        }
+      }
+    },
+    "Etude.Lock.Vocab" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld / %lld vocab to unlock"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld / %lld mots pour débloquer"
+          }
+        }
+      }
+    },
+    "Etude.Title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Practice library"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bibliothèque de pratique"
+          }
+        }
+      }
+    },
+    "Etude.Type.FillInBlank" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fill in blank"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remplir le vide"
+          }
+        }
+      }
+    },
+    "Etude.Type.Grammar" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grammar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grammaire"
+          }
+        }
+      }
+    },
+    "Etude.Type.Kana" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kana"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kana"
+          }
+        }
+      }
+    },
+    "Etude.Type.Kanji" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kanji"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kanji"
+          }
+        }
+      }
+    },
+    "Etude.Type.ListeningSub" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Subtitled listening"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Écoute sous-titrée"
+          }
+        }
+      }
+    },
+    "Etude.Type.ListeningUnsub" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Listening"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Écoute"
+          }
+        }
+      }
+    },
+    "Etude.Type.Reading" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reading"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lecture"
+          }
+        }
+      }
+    },
+    "Etude.Type.Sakura" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sakura"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sakura"
+          }
+        }
+      }
+    },
+    "Etude.Type.Sentence" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sentence build"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Construction de phrase"
+          }
+        }
+      }
+    },
+    "Etude.Type.Speaking" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Speaking"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parole"
+          }
+        }
+      }
+    },
+    "Etude.Type.Vocabulary" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vocabulary"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vocabulaire"
+          }
+        }
+      }
+    },
+    "Etude.Type.Writing" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Writing"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Écriture"
+          }
+        }
+      }
+    },
+    "Example Sentences" : {
+
+    },
+    "Exercises Complete!" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exercises Complete!"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exercices terminés !"
+          }
+        }
+      }
+    },
+    "Experience" : {
+      "comment" : "Bilingual chrome label for the XP progress section on the Home hero",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Experience"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Expérience"
+          }
+        }
+      }
+    },
+    "EXPERIENCE" : {
+
+    },
+    "Export data" : {
+      "comment" : "Settings row exporting the user's data archive",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Export data"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exporter les données"
+          }
+        }
+      }
+    },
+    "Export your data before deleting if you want to keep a backup." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Export your data before deleting if you want to keep a backup."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exporte tes données avant de supprimer si tu veux en garder une sauvegarde."
+          }
+        }
+      }
+    },
+    "Export your data first if you want to keep a copy." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Export your data first if you want to keep a copy."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exporte tes données d'abord si tu veux en garder une copie."
+          }
+        }
+      }
+    },
+    "Failed to generate mnemonic. Tap regenerate to try again." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Failed to generate mnemonic. Tap regenerate to try again."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Échec de la génération. Touche régénérer pour réessayer."
+          }
+        }
+      }
+    },
+    "Failed to load content" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Failed to load content"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Échec du chargement du contenu"
+          }
+        }
+      }
+    },
+    "First step" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "First step"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Premier pas"
+          }
+        }
+      }
+    },
+    "FSRS parameters" : {
+      "comment" : "Settings row label (FSRS algorithm parameters)",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "FSRS parameters"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paramètres FSRS"
+          }
+        }
+      }
+    },
+    "Furigana" : {
+      "comment" : "Settings row label toggling furigana/romaji pronunciation guides",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Furigana"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Furigana"
+          }
+        }
+      }
+    },
+    "Generating mnemonic..." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Generating mnemonic..."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Génération du moyen mnémotechnique…"
+          }
+        }
+      }
+    },
+    "Get a free key from Google AI Studio" : {
+
+    },
+    "Get free key" : {
+
+    },
+    "Good" : {
+      "comment" : "FSRS grade button label",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Good"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bien"
+          }
+        }
+      }
+    },
+    "Grammar" : {
+      "comment" : "Bilingual chrome label paired with 文法 on SRS grammar cards",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grammar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grammaire"
+          }
+        }
+      }
+    },
+    "Great work! Come back later for more reviews." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Great work! Come back later for more reviews."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bon travail ! Reviens plus tard pour d'autres révisions."
+          }
+        }
+      }
+    },
+    "Hard" : {
+      "comment" : "FSRS grade button label",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hard"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Difficile"
+          }
+        }
+      }
+    },
+    "Hint" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hint"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Indice"
+          }
+        }
+      }
+    },
+    "Hiragana" : {
+      "comment" : "Bilingual chrome label paired with 平仮名 on SRS hiragana cards",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hiragana"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hiragana"
+          }
+        }
+      }
+    },
+    "Hiragana & katakana, by groups" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hiragana & katakana, by groups"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hiragana et katakana, par groupes"
+          }
+        }
+      }
+    },
+    "Home.RestDay.Body" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You're balanced and reviews are clear. Honor the rest."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu es équilibré et tes révisions sont à jour. Honore le repos."
+          }
+        }
+      }
+    },
+    "Home.RestDay.Title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "REST DAY"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "JOUR DE REPOS"
+          }
+        }
+      }
+    },
+    "Hours" : {
+      "comment" : "Generic stat label — count of hours",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hours"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heures"
+          }
+        }
+      }
+    },
+    "iCloud sync" : {
+      "comment" : "Settings row label (iCloud backup status)",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud sync"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sync iCloud"
+          }
+        }
+      }
+    },
+    "Ikeru is made possible by these open-source resources." : {
+
+    },
+    "In your Dictionary" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In your Dictionary"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dans ton dictionnaire"
+          }
+        }
+      }
+    },
+    "Inventory" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inventory"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inventaire"
+          }
+        }
+      }
+    },
+    "Items" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Items"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Objets"
+          }
+        }
+      }
+    },
+    "JLPT estimate" : {
+      "comment" : "Bilingual chrome label paired with 推定 on the Study tab JLPT hero",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "JLPT estimate"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estimation JLPT"
+          }
+        }
+      }
+    },
+    "Kana" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kana"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kana"
+          }
+        }
+      }
+    },
+    "Kana Training" : {
+
+    },
+    "kanji" : {
+      "comment" : "Tiny suffix after the LEARNED count",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "kanji"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "kanji"
+          }
+        }
+      }
+    },
+    "Kanji" : {
+      "comment" : "Bilingual chrome label paired with 漢字 on SRS kanji cards",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kanji"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kanji"
+          }
+        }
+      }
+    },
+    "Katakana" : {
+      "comment" : "Bilingual chrome label paired with 片仮名 on SRS katakana cards",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Katakana"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Katakana"
+          }
+        }
+      }
+    },
+    "Keep Going" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keep Going"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continuer"
+          }
+        }
+      }
+    },
+    "Key saved" : {
+
+    },
+    "Language" : {
+      "comment" : "Settings row label",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Language"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Langue"
+          }
+        }
+      }
+    },
+    "LEARNED" : {
+      "comment" : "Stat card label",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LEARNED"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "APPRIS"
+          }
+        }
+      }
+    },
+    "LEARNING" : {
+
+    },
+    "Leave this session?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leave this session?"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quitter cette séance ?"
+          }
+        }
+      }
+    },
+    "Level %@" : {
+
+    },
+    "LEVEL %@" : {
+
+    },
+    "LEVEL UP!" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LEVEL UP!"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "NIVEAU SUIVANT !"
+          }
+        }
+      }
+    },
+    "Level: %@" : {
+
+    },
+    "Listen" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Listen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Écouter"
+          }
+        }
+      }
+    },
+    "Listening" : {
+      "comment" : "Skill name in the BALANCE card",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Listening"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Écoute"
+          }
+        }
+      }
+    },
+    "Listening Passage" : {
+
+    },
+    "Loading cards..." : {
+
+    },
+    "Loading content..." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loading content..."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chargement du contenu…"
+          }
+        }
+      }
+    },
+    "Loading passage..." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loading passage..."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chargement du passage…"
+          }
+        }
+      }
+    },
+    "Loading profile data…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loading profile data…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chargement des données du profil…"
+          }
+        }
+      }
+    },
+    "Local Rig" : {
+
+    },
+    "Loot.NewExerciseUnlocked" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New practice unlocked"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nouvelle pratique débloquée"
+          }
+        }
+      }
+    },
+    "Lootbox Challenge!" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lootbox Challenge!"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Défi du coffre !"
+          }
+        }
+      }
+    },
+    "Mark" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mark"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marquer"
+          }
+        }
+      }
+    },
+    "Master kana, kanji, grammar, and conversation — one step at a time, at your own pace." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Master kana, kanji, grammar, and conversation — one step at a time, at your own pace."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maîtrise les kana, kanji, la grammaire et la conversation — un pas à la fois, à ton rythme."
+          }
+        }
+      }
+    },
+    "Mastery" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mastery"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maîtrise"
+          }
+        }
+      }
+    },
+    "MASTERY" : {
+
+    },
+    "Mastery: %@" : {
+
+    },
+    "Maximum interval" : {
+      "comment" : "Settings row label (FSRS maximum interval cap)",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maximum interval"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Intervalle maximum"
+          }
+        }
+      }
+    },
+    "Meet Sakura" : {
+
+    },
+    "Memory algorithm" : {
+      "comment" : "Settings section header for FSRS settings",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Memory algorithm"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Algorithme de mémoire"
+          }
+        }
+      }
+    },
+    "Microphone Access Required" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Microphone Access Required"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Accès au microphone requis"
+          }
+        }
+      }
+    },
+    "Mnemonic" : {
+
+    },
+    "MODE" : {
+
+    },
+    "MY DICTIONARY" : {
+
+    },
+    "New" : {
+      "comment" : "Session preview: number of brand-new cards",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nouveaux"
+          }
+        }
+      }
+    },
+    "NEW LEARNED" : {
+      "comment" : "Summary split-cell label",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "NEW LEARNED"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "NOUVEAUX"
+          }
+        }
+      }
+    },
+    "Next rank" : {
+      "comment" : "RPG section header — preview of the next dan",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Next rank"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prochain grade"
+          }
+        }
+      }
+    },
+    "No cards available for this mode." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No cards available for this mode."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune carte disponible dans ce mode."
+          }
+        }
+      }
+    },
+    "No characters recognized" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No characters recognized"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun caractère reconnu"
+          }
+        }
+      }
+    },
+    "No encounters logged yet." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No encounters logged yet."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune rencontre enregistrée pour l'instant."
+          }
+        }
+      }
+    },
+    "No exercises available" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No exercises available"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun exercice disponible"
+          }
+        }
+      }
+    },
+    "No jobs tracked yet. Generate audio or images to populate this list." : {
+
+    },
+    "No mnemonic available yet." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No mnemonic available yet."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun moyen mnémotechnique pour l'instant."
+          }
+        }
+      }
+    },
+    "No radicals found" : {
+
+    },
+    "No stroke data available" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No stroke data available"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune donnée de trait disponible"
+          }
+        }
+      }
+    },
+    "No vocabulary found" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No vocabulary found"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun vocabulaire trouvé"
+          }
+        }
+      }
+    },
+    "No words yet" : {
+
+    },
+    "No worries — try again!" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No worries — try again!"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pas de souci — réessaie !"
+          }
+        }
+      }
+    },
+    "Off" : {
+      "comment" : "Settings row value indicating an option is disabled",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Off"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Désactivé"
+          }
+        }
+      }
+    },
+    "On" : {
+      "comment" : "Settings row value indicating an option is enabled",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "On"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activé"
+          }
+        }
+      }
+    },
+    "On-device AI ready" : {
+
+    },
+    "ONLINE" : {
+      "comment" : "Tutor status",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ONLINE"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "EN LIGNE"
+          }
+        }
+      }
+    },
+    "Overall: %@" : {
+
+    },
+    "PARAMS" : {
+
+    },
+    "Patient. Specialty: keigo" : {
+      "comment" : "Sakura tutor description",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Patient. Specialty: keigo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Patiente. Spécialité : keigo"
+          }
+        }
+      }
+    },
+    "Pattern Accuracy" : {
+
+    },
+    "PAUSED" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PAUSED"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "EN PAUSE"
+          }
+        }
+      }
+    },
+    "PC bridge for VOICEVOX TTS and future heavy models" : {
+
+    },
+    "Personal vocabulary collection" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Personal vocabulary collection"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Collection personnelle de vocabulaire"
+          }
+        }
+      }
+    },
+    "Practice" : {
+      "comment" : "Settings section header (also used by Home/tab bar)",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Practice"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pratique"
+          }
+        }
+      }
+    },
+    "Practice complete" : {
+      "comment" : "Session summary headline",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Practice complete"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Séance terminée"
+          }
+        }
+      }
+    },
+    "Pre-warm audio" : {
+      "comment" : "Settings row toggling automatic background pre-warming of upcoming review audio",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pre-warm audio"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Préchauffage audio"
+          }
+        }
+      }
+    },
+    "Pre-warm notifications" : {
+      "comment" : "Settings row toggling notifications when a pre-warm batch finishes",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pre-warm notifications"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notifications de préchauffage"
+          }
+        }
+      }
+    },
+    "Pre-warm now" : {
+      "comment" : "Settings row triggering a manual pre-warm pass",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pre-warm now"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Préchauffer maintenant"
+          }
+        }
+      }
+    },
+    "Preferences" : {
+      "comment" : "Settings heading",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preferences"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Préférences"
+          }
+        }
+      }
+    },
+    "Press and hold to confirm" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Press and hold to confirm"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maintiens appuyé pour confirmer"
+          }
+        }
+      }
+    },
+    "Profile" : {
+      "comment" : "Settings row label (user display profile)",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profile"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profil"
+          }
+        }
+      }
+    },
+    "Progress" : {
+      "comment" : "Bilingual chrome label paired with 進歩 on the Study tab",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Progress"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Progrès"
+          }
+        }
+      }
+    },
+    "Quick Quiz" : {
+
+    },
+    "RE-LEARN" : {
+      "comment" : "Summary split-cell label",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "RE-LEARN"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "À REVOIR"
+          }
+        }
+      }
+    },
+    "Reading" : {
+      "comment" : "Skill name in the BALANCE card",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reading"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lecture"
+          }
+        }
+      }
+    },
+    "Reading Guide" : {
+
+    },
+    "ready" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ready"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "prêt"
+          }
+        }
+      }
+    },
+    "READY FOR %@" : {
+      "comment" : "JLPT readiness label",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "READY FOR %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PRÊT POUR %@"
+          }
+        }
+      }
+    },
+    "RECALL" : {
+      "comment" : "Summary stat label",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "RECALL"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "RAPPEL"
+          }
+        }
+      }
+    },
+    "Recent conversations" : {
+      "comment" : "Companion recent-conversations section header",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recent conversations"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Conversations récentes"
+          }
+        }
+      }
+    },
+    "Recognized in %@" : {
+
+    },
+    "Recognizing..." : {
+
+    },
+    "REMINDER" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "REMINDER"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "RAPPEL"
+          }
+        }
+      }
+    },
+    "Reminder.Hour" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hour"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heure"
+          }
+        }
+      }
+    },
+    "Reminder.Weekday" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Day"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jour"
+          }
+        }
+      }
+    },
+    "Reminders" : {
+      "comment" : "Settings row label",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reminders"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rappels"
+          }
+        }
+      }
+    },
+    "Remove" : {
+
+    },
+    "Remove from Dictionary" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remove from Dictionary"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retirer du dictionnaire"
+          }
+        }
+      }
+    },
+    "Removes every cached audio file and image. Assets will be regenerated on next use." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Removes every cached audio file and image. Assets will be regenerated on next use."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprime tous les fichiers audio et images en cache. Les ressources seront régénérées à la prochaine utilisation."
+          }
+        }
+      }
+    },
+    "Restart" : {
+
+    },
+    "Restore from iCloud" : {
+      "comment" : "Settings row triggering the iCloud restore confirmation",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restore from iCloud"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restaurer depuis iCloud"
+          }
+        }
+      }
+    },
+    "Review" : {
+      "comment" : "Session preview: number of review cards",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Review"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Révision"
+          }
+        }
+      }
+    },
+    "REVIEW MISTAKES" : {
+      "comment" : "Summary secondary CTA",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "REVIEW MISTAKES"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "REVOIR LES ERREURS"
+          }
+        }
+      }
+    },
+    "Reviews" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reviews"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Révisions"
+          }
+        }
+      }
+    },
+    "Rig jobs" : {
+      "comment" : "Settings row opening the local rig jobs viewer",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rig jobs"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tâches du rig"
+          }
+        }
+      }
+    },
+    "RPG Profile" : {
+      "comment" : "Rang tab title — wabi-sabi voice swaps the gaming term for 'Your path' / 'Ton parcours'. Catalog key kept for backwards compatibility; only the displayed values change.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your path"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ton parcours"
+          }
+        }
+      }
+    },
+    "Runs on-device. No key, no network, no quota." : {
+
+    },
+    "Sakura" : {
+
+    },
+    "Sakura needs an AI provider to chat with you." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sakura needs an AI provider to chat with you."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sakura a besoin d'un fournisseur d'IA pour discuter avec toi."
+          }
+        }
+      }
+    },
+    "Sakura、 your sensei。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sakura、 your sensei。"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sakura、 ta senseï。"
+          }
+        }
+      }
+    },
+    "Sakura.NoAI.BannerBody" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configure an AI provider in Settings → AI to chat with Sakura."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configure un fournisseur IA dans Réglages → IA pour discuter avec Sakura."
+          }
+        }
+      }
+    },
+    "Sakura.NoAI.BannerTitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Conversations are disabled"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les conversations sont désactivées"
+          }
+        }
+      }
+    },
+    "Sakura.NoAI.Body" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No AI provider is configured yet. To chat with Sakura, set up a provider (cloud or on-device) in Settings → AI."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun fournisseur IA n'est encore configuré. Pour discuter avec Sakura, configure un fournisseur (cloud ou local) dans Réglages → IA."
+          }
+        }
+      }
+    },
+    "Sakura.NoAI.Setup" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Set up AI"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configurer l'IA"
+          }
+        }
+      }
+    },
+    "Sakura.NoAI.Title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sakura is offline"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sakura est hors ligne"
+          }
+        }
+      }
+    },
+    "Save" : {
+
+    },
+    "Score %@ in %@s" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Score %1$@ in %2$@s"
+          }
+        }
+      }
+    },
+    "Score %@ to open" : {
+
+    },
+    "Score: %@/%@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Score: %1$@/%2$@"
+          }
+        }
+      }
+    },
+    "Select groups to study" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Select groups to study"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisis les groupes à étudier"
+          }
+        }
+      }
+    },
+    "Sentence %@" : {
+
+    },
+    "Session complete" : {
+
+    },
+    "Session Paused" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Session Paused"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Séance en pause"
+          }
+        }
+      }
+    },
+    "Session Preview" : {
+
+    },
+    "Session.AbandonProgress" : {
+      "comment" : "Progress label inside the abandon-confirmation overlay. %1 = cards completed, %2 = total exercises.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You've completed %1$lld of %2$lld exercises"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu as terminé %1$lld de %2$lld exercices"
+          }
+        }
+      }
+    },
+    "Session.OneMinuteRemaining" : {
+      "comment" : "Toast shown 60s before time budget ends the session.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 minute remaining"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une minute restante"
+          }
+        }
+      }
+    },
+    "Set up a free Gemini key for AI features" : {
+
+    },
+    "Settings" : {
+      "comment" : "Settings screen kicker label and tab title",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Settings"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réglages"
+          }
+        }
+      }
+    },
+    "Settings.InterfaceTatami.HelpOff" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Designed for learners comfortable with Japanese."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Conçu pour les apprenants à l'aise avec le japonais."
+          }
+        }
+      }
+    },
+    "Settings.InterfaceTatami.HelpOn" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "To return to beginner-friendly mode, turn this off."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pour revenir au mode beginner-friendly, désactive ici."
+          }
+        }
+      }
+    },
+    "Settings.InterfaceTatami.Subtitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kanji throughout, translations hidden"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kanji partout, traductions masquées"
+          }
+        }
+      }
+    },
+    "Settings.InterfaceTatami.Title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tatami interface"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Interface Tatami"
+          }
+        }
+      }
+    },
+    "Settings.SessionDuration" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Default session length"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Durée par défaut"
+          }
+        }
+      }
+    },
+    "Shadowing exercises need microphone and speech recognition access to work. Please enable them in Settings." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shadowing exercises need microphone and speech recognition access to work. Please enable them in Settings."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les exercices de répétition nécessitent l'accès au microphone et à la reconnaissance vocale. Active-les dans les Réglages."
+          }
+        }
+      }
+    },
+    "Show answer" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show answer"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher la réponse"
+          }
+        }
+      }
+    },
+    "Show more (%@ remaining)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show more (%@ remaining)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher plus (%@ restants)"
+          }
+        }
+      }
+    },
+    "Skill balance" : {
+      "comment" : "Bilingual chrome label paired with 技能 on the Study tab",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skill balance"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Équilibre des compétences"
+          }
+        }
+      }
+    },
+    "Skill profile" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skill profile"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profil de compétences"
+          }
+        }
+      }
+    },
+    "Sound" : {
+      "comment" : "Settings row label (sound effects)",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sound"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Son"
+          }
+        }
+      }
+    },
+    "Speaking" : {
+      "comment" : "Skill name in the BALANCE card",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Speaking"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parole"
+          }
+        }
+      }
+    },
+    "Start Learning" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start Learning"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Commencer à apprendre"
+          }
+        }
+      }
+    },
+    "Start Session" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start Session"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Démarrer la séance"
+          }
+        }
+      }
+    },
+    "Storage" : {
+      "comment" : "Settings section header for storage and cache",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Storage"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stockage"
+          }
+        }
+      }
+    },
+    "Streak" : {
+      "comment" : "Generic stat label — consecutive days",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Streak"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Série"
+          }
+        }
+      }
+    },
+    "STREAK" : {
+      "comment" : "Stat card label",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "STREAK"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SÉRIE"
+          }
+        }
+      }
+    },
+    "Study" : {
+      "comment" : "Tab bar label for the Study (dictionary) tab",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Study"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Étude"
+          }
+        }
+      }
+    },
+    "Study Companion" : {
+
+    },
+    "Suggested topics" : {
+      "comment" : "Companion suggested-topics section header",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suggested topics"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sujets suggérés"
+          }
+        }
+      }
+    },
+    "Summary.Listening" : {
+      "comment" : "Four-winds skill label on session summary — listening.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LISTENING"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ÉCOUTE"
+          }
+        }
+      }
+    },
+    "Summary.Reading" : {
+      "comment" : "Four-winds skill label on session summary — reading.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "READING"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LECTURE"
+          }
+        }
+      }
+    },
+    "Summary.Speaking" : {
+      "comment" : "Four-winds skill label on session summary — speaking.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SPEAKING"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PAROLE"
+          }
+        }
+      }
+    },
+    "Summary.Writing" : {
+      "comment" : "Four-winds skill label on session summary — writing.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "WRITING"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ÉCRITURE"
+          }
+        }
+      }
+    },
+    "Support" : {
+      "comment" : "Settings row label (contact support)",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Support"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Support"
+          }
+        }
+      }
+    },
+    "Switch" : {
+      "comment" : "Switch profile action",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Switch"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Changer"
+          }
+        }
+      }
+    },
+    "Syncing" : {
+      "comment" : "Settings row value while iCloud backup/restore is in progress",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Syncing"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En cours"
+          }
+        }
+      }
+    },
+    "Tab.Chat" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chat"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chat"
+          }
+        }
+      }
+    },
+    "Tab.Home" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Home"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Accueil"
+          }
+        }
+      }
+    },
+    "Tab.Rank" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rank"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rang"
+          }
+        }
+      }
+    },
+    "Tab.Settings" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Settings"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réglages"
+          }
+        }
+      }
+    },
+    "Tab.Study" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Study"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Étude"
+          }
+        }
+      }
+    },
+    "Talk" : {
+      "comment" : "Companion tab kicker",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Talk"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parler"
+          }
+        }
+      }
+    },
+    "Tap & hold in study mode for full details" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap & hold in study mode for full details"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reste appuyé en mode étude pour tous les détails"
+          }
+        }
+      }
+    },
+    "Tap card to reveal" : {
+      "comment" : "Hint shown below the SRS card before reveal — replaces the old 'Show answer' button"
+    },
+    "Tap the correct answer!" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap the correct answer!"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Touche la bonne réponse !"
+          }
+        }
+      }
+    },
+    "Tap to %@" : {
+
+    },
+    "Tap to dismiss" : {
+
+    },
+    "Tap to listen" : {
+
+    },
+    "Tap to reveal" : {
+
+    },
+    "Tap vocabulary chips in Sakura chat to add words to your dictionary." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap vocabulary chips in Sakura chat to add words to your dictionary."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Touche les puces de vocabulaire dans le chat de Sakura pour ajouter des mots au dictionnaire."
+          }
+        }
+      }
+    },
+    "Target retention" : {
+      "comment" : "Settings row label (FSRS target retention rate)",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Target retention"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Taux de rétention cible"
+          }
+        }
+      }
+    },
+    "Terms" : {
+      "comment" : "Settings row label (terms and conditions)",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terms"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Conditions"
+          }
+        }
+      }
+    },
+    "Test connection" : {
+
+    },
+    "The answer is: %@" : {
+
+    },
+    "The character for %@ is %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The character for %1$@ is %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le caractère pour %@ est %@"
+          }
+        }
+      }
+    },
+    "This cannot be undone" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This cannot be undone"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette action est irréversible"
+          }
+        }
+      }
+    },
+    "This will delete all messages in this conversation." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This will delete all messages in this conversation."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cela supprimera tous les messages de cette conversation."
+          }
+        }
+      }
+    },
+    "This will remove the word and all its encounter history." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This will remove the word and all its encounter history."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cela supprimera le mot et tout son historique de rencontres."
+          }
+        }
+      }
+    },
+    "This will replace all current data with the backup. This cannot be undone." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This will replace all current data with the backup. This cannot be undone."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cela remplacera toutes les données actuelles par la sauvegarde. Action irréversible."
+          }
+        }
+      }
+    },
+    "TIME" : {
+      "comment" : "Summary stat label",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TIME"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TEMPS"
+          }
+        }
+      }
+    },
+    "Time's Up!" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Time's Up!"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Temps écoulé !"
+          }
+        }
+      }
+    },
+    "To chat with Sakura, set up an AI provider in Settings." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "To chat with Sakura, set up an AI provider in Settings."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pour discuter avec Sakura, configure un fournisseur d'IA dans les Réglages."
+          }
+        }
+      }
+    },
+    "Today" : {
+      "comment" : "Bilingual chrome label paired with 本日 on the Home hero",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Today"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aujourd’hui"
+          }
+        }
+      }
+    },
+    "TRAINING MODE" : {
+
+    },
+    "Transcript" : {
+
+    },
+    "Treasures" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Treasures"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trésors"
+          }
+        }
+      }
+    },
+    "Try again" : {
+
+    },
+    "typing..." : {
+
+    },
+    "Unlocks at Lv. %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unlocks at Lv. %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se débloque au niv. %@"
+          }
+        }
+      }
+    },
+    "Version" : {
+      "comment" : "Settings row label (app version)",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Version"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Version"
+          }
+        }
+      }
+    },
+    "Vocabulary" : {
+      "comment" : "Bilingual chrome label paired with 語彙 on SRS vocabulary cards",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vocabulary"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vocabulaire"
+          }
+        }
+      }
+    },
+    "VOCABULARY" : {
+
+    },
+    "Vocabulary Drill" : {
+
+    },
+    "Vocabulary drill finished" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vocabulary drill finished"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exercice de vocabulaire terminé"
+          }
+        }
+      }
+    },
+    "Weekly check-in" : {
+      "comment" : "Settings row label for the weekly progress reminder",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weekly check-in"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bilan hebdo."
+          }
+        }
+      }
+    },
+    "Welcome" : {
+      "comment" : "Fallback greeting on Home when no display name is set",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Welcome"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bienvenue"
+          }
+        }
+      }
+    },
+    "Well done" : {
+
+    },
+    "What should\nwe call you?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What should\nwe call you?"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comment\nveux-tu être appelé(e) ?"
+          }
+        }
+      }
+    },
+    "Working" : {
+      "comment" : "Generic in-progress indicator (e.g. pre-warming)",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Working"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En cours"
+          }
+        }
+      }
+    },
+    "Write the character freehand" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Write the character freehand"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Écris le caractère à main levée"
+          }
+        }
+      }
+    },
+    "Writing" : {
+      "comment" : "Skill name in the BALANCE card",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Writing"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Écriture"
+          }
+        }
+      }
+    },
+    "XP EARNED" : {
+      "comment" : "Summary XP label",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "XP EARNED"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "XP GAGNÉS"
+          }
+        }
+      }
+    },
+    "You'll start with hiragana — the first writing system. Let's begin your Japanese adventure." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You'll start with hiragana — the first writing system. Let's begin your Japanese adventure."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu commenceras par les hiragana — le premier système d'écriture. Lance ton aventure japonaise."
+          }
+        }
+      }
+    },
+    "Your AI companion adapts to you, celebrates your wins, and helps when things get tough." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your AI companion adapts to you, celebrates your wins, and helps when things get tough."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ton compagnon IA s'adapte à toi, célèbre tes victoires et t'aide dans les moments difficiles."
+          }
+        }
+      }
+    },
+    "Your answer" : {
+
+    },
+    "Your first lesson awaits" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your first lesson awaits"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ta première leçon t'attend"
+          }
+        }
+      }
+    },
+    "Your four winds" : {
+      "comment" : "Poetic subtitle for the skill balance card",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your four winds"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tes quatre vents"
+          }
+        }
+      }
+    },
+    "Your Japanese conversation partner" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your Japanese conversation partner"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ta partenaire de conversation japonaise"
+          }
+        }
+      }
+    },
+    "YOUR JOURNEY" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "YOUR JOURNEY"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TON CHEMIN"
+          }
+        }
+      }
+    },
+    "YOUR JOURNEY BEGINS" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "YOUR JOURNEY BEGINS"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TON CHEMIN COMMENCE"
+          }
+        }
+      }
+    },
+    "Your name" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your name"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ton prénom"
+          }
+        }
+      }
+    },
+    "Your pronunciation" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your pronunciation"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ta prononciation"
+          }
+        }
+      }
+    },
+    "Your study" : {
+      "comment" : "Study tab heading",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your study"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tes études"
+          }
+        }
+      }
+    },
+    "さ" : {
+
+    },
+    "だい・%@・だん" : {
+
+    },
+    "七転び八起き · Fall seven, rise eight" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "七転び八起き · Fall seven, rise eight"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "七転び八起き · Tombe sept fois, relève-toi huit"
+          }
+        }
+      }
+    },
+    "中" : {
+
+    },
+    "今日は休" : {
+
+    },
+    "会話を始める · " : {
+
+    },
+    "札" : {
+
+    },
+    "桃" : {
+
+    },
+    "桜" : {
+
+    },
+    "稽古を始める · " : {
+
+    },
+    "稽古終わり" : {
+
+    },
+    "第%@段" : {
+
+    },
+    "第%@段 · %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "第%1$@段 · %2$@"
+          }
+        }
+      }
+    },
+    "続ける" : {
+
+    },
+    "続ける · " : {
+
+    },
+    "編成" : {
+
+    },
+    "編成・" : {
+
+    },
+    "言語" : {
+
+    },
+    "道" : {
+
+    }
+  },
+  "version" : "1.0"
+}

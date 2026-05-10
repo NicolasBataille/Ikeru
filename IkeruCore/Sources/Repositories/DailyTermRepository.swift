@@ -115,9 +115,13 @@ public final class DailyTermRepository: Sendable {
 @ModelActor
 actor DailyTermModelActor {
 
+    /// Caller is responsible for day-normalising `day`. `DailyTermService`
+    /// always pre-normalises with its injected calendar before reaching
+    /// the actor, so the actor trusts the incoming date instead of
+    /// silently re-normalising with `Calendar.current` (which would break
+    /// any test or server caller that pinned a non-default calendar).
     func term(on day: Date) -> DailyTermDTO? {
-        let normalised = Calendar.current.startOfDay(for: day)
-        let predicate = #Predicate<DailyTerm> { $0.date == normalised }
+        let predicate = #Predicate<DailyTerm> { $0.date == day }
         let descriptor = FetchDescriptor(predicate: predicate)
         return (try? modelContext.fetch(descriptor))?.first?.toDTO()
     }
@@ -131,8 +135,7 @@ actor DailyTermModelActor {
         caption: String,
         jlptLevel: JLPTLevel?
     ) -> DailyTermDTO {
-        let normalised = Calendar.current.startOfDay(for: day)
-        let predicate = #Predicate<DailyTerm> { $0.date == normalised }
+        let predicate = #Predicate<DailyTerm> { $0.date == day }
         let descriptor = FetchDescriptor(predicate: predicate)
 
         if let existing = (try? modelContext.fetch(descriptor))?.first {
@@ -140,7 +143,7 @@ actor DailyTermModelActor {
         }
 
         let term = DailyTerm(
-            date: normalised,
+            date: day,
             word: word,
             reading: reading,
             pronunciation: pronunciation,
@@ -150,7 +153,7 @@ actor DailyTermModelActor {
         )
         modelContext.insert(term)
         try? modelContext.save()
-        Logger.dailyTerm.info("Daily term scheduled for \(normalised, privacy: .public): \(word, privacy: .public)")
+        Logger.dailyTerm.info("Daily term scheduled for \(day, privacy: .public): \(word, privacy: .public)")
         return term.toDTO()
     }
 
@@ -174,8 +177,7 @@ actor DailyTermModelActor {
     }
 
     func termsBefore(_ day: Date, limit: Int) -> [DailyTermDTO] {
-        let normalised = Calendar.current.startOfDay(for: day)
-        let predicate = #Predicate<DailyTerm> { $0.date < normalised }
+        let predicate = #Predicate<DailyTerm> { $0.date < day }
         var descriptor = FetchDescriptor(
             predicate: predicate,
             sortBy: [SortDescriptor(\DailyTerm.date, order: .reverse)]

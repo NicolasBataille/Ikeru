@@ -49,28 +49,20 @@ else
     echo "  NotoSerifJP-Medium.otf already exists."
 fi
 
-# Step 4: Create Secrets.xcconfig if needed
-if [ ! -f "$PROJECT_ROOT/Secrets.xcconfig" ]; then
-    echo ""
-    echo "Creating Secrets.xcconfig from template..."
-    cp "$PROJECT_ROOT/Secrets.xcconfig.example" "$PROJECT_ROOT/Secrets.xcconfig"
-    echo "  Created Secrets.xcconfig — fill in your values."
-fi
-
-# Step 5: Generate Xcode project
+# Step 4: Generate Xcode project
 echo ""
 echo "Generating Xcode project with XcodeGen..."
 xcodegen generate --spec project.yml
 echo "  Xcode project generated."
 
-# Step 6: Build IkeruCore package
+# Step 5: Build IkeruCore package
 echo ""
 echo "Building IkeruCore package..."
 cd "$PROJECT_ROOT/IkeruCore"
 swift build
 echo "  IkeruCore built successfully."
 
-# Step 7: Run IkeruCore tests
+# Step 6: Run IkeruCore tests
 echo ""
 echo "Running IkeruCore tests..."
 swift test

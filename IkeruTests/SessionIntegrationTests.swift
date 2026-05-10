@@ -13,7 +13,54 @@ struct SessionIntegrationTests {
     private func makeContainer() throws -> ModelContainer {
         let schema = Schema([UserProfile.self, Card.self, ReviewLog.self, RPGState.self])
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
-        return try ModelContainer(for: schema, configurations: [config])
+        // Reset cross-test active-profile leakage from UserDefaults.
+        ActiveProfileResolver.setActiveProfileID(nil)
+        let container = try ModelContainer(for: schema, configurations: [config])
+        // Seed an active profile so the repository's per-profile queries
+        // (and ContentSeedService) see this test's inserted cards.
+        let profile = UserProfile(displayName: "Test")
+        container.mainContext.insert(profile)
+        try container.mainContext.save()
+        ActiveProfileResolver.setActiveProfileID(profile.id)
+        return container
+    }
+
+    /// Returns the active profile of `container` (always non-nil because
+    /// `makeContainer` seeds one).
+    private func activeProfile(_ container: ModelContainer) -> UserProfile? {
+        ActiveProfileResolver.fetchActiveProfile(in: container.mainContext)
+    }
+
+    /// Builds a `MockSessionPlanner` that returns a plan composed of exactly
+    /// the SRS reviews for the cards already present in `container`. Tests
+    /// use this so the queue shape is independent of `DefaultSessionPlanner`'s
+    /// 40/30/20/10 budget composition (which adds variety / new-content
+    /// tiles whose count integration tests don't control).
+    private func plannerWithSeededCards(
+        repo: CardRepository
+    ) async -> MockSessionPlanner {
+        let cards = await repo.allCards()
+        let exercises = cards.map { ExerciseItem.srsReview($0) }
+        let planner = MockSessionPlanner()
+        planner.plan = SessionPlan(
+            exercises: exercises,
+            estimatedDurationMinutes: max(1, exercises.count / 3),
+            exerciseBreakdown: [.reading: exercises.count]
+        )
+        return planner
+    }
+
+    /// Marks the active profile's RPGState as "already had a session today"
+    /// so `SessionBonusService.evaluate` returns `bonusXP == 0` when the
+    /// session reaches `finalizeSession`. Use in tests that grade every
+    /// card and assert on raw per-card XP totals.
+    private func suppressFirstSessionBonus(container: ModelContainer) throws {
+        let context = container.mainContext
+        guard let state = ActiveProfileResolver.fetchActiveRPGState(in: context) else {
+            return
+        }
+        state.lastSessionDate = Date()
+        try context.save()
     }
 
     // MARK: - Full Flow Tests
@@ -23,7 +70,6 @@ struct SessionIntegrationTests {
         let container = try makeContainer()
         let repo = CardRepository(modelContainer: container)
         let planner = PlannerService(cardRepository: repo)
-        let vm = SessionViewModel(plannerService: planner, cardRepository: repo, modelContainer: container)
 
         // Step 1: Seed content
         let allCards = await repo.allCards()
@@ -32,6 +78,18 @@ struct SessionIntegrationTests {
             existingCardCount: allCards.count
         )
         #expect(seeded.count == 5)
+
+        // Inject a planner that returns exactly the seeded cards, so the
+        // queue size is deterministic and not coupled to the 40/30/20/10
+        // budget composition in `DefaultSessionPlanner`.
+        let mockPlanner = await plannerWithSeededCards(repo: repo)
+        try suppressFirstSessionBonus(container: container)
+        let vm = SessionViewModel(
+            plannerService: planner,
+            cardRepository: repo,
+            modelContainer: container,
+            sessionPlanner: mockPlanner
+        )
 
         // Step 2: Compose and start session
         await vm.startSession()
@@ -47,7 +105,7 @@ struct SessionIntegrationTests {
         // Step 4: Verify session completion
         #expect(vm.isSessionComplete == true)
         #expect(vm.reviewedCount == 5)
-        #expect(vm.xpEarned == 50) // 5 cards * 10 XP each
+        #expect(vm.xpEarned == 5 * RPGConstants.xpForGrade(.good))
         #expect(vm.newItemsLearned == 5) // All were new (reps == 0)
         #expect(vm.currentCard == nil)
 
@@ -131,7 +189,13 @@ struct SessionIntegrationTests {
         )
 
         let planner = PlannerService(cardRepository: repo)
-        let vm = SessionViewModel(plannerService: planner, cardRepository: repo, modelContainer: container)
+        let mockPlanner = await plannerWithSeededCards(repo: repo)
+        let vm = SessionViewModel(
+            plannerService: planner,
+            cardRepository: repo,
+            modelContainer: container,
+            sessionPlanner: mockPlanner
+        )
 
         await vm.startSession()
 
@@ -146,7 +210,7 @@ struct SessionIntegrationTests {
 
         #expect(vm.isSessionComplete == true)
         #expect(vm.reviewedCount == 2)
-        #expect(vm.xpEarned == 15) // 10 (good) + 5 (hard) -- unchanged
+        #expect(vm.xpEarned == RPGConstants.xpForGrade(.good) + RPGConstants.xpForGrade(.hard))
 
         // Verify review logs exist for reviewed cards
         if let id1 = firstCardId {
@@ -164,7 +228,8 @@ struct SessionIntegrationTests {
         let container = try makeContainer()
         let context = container.mainContext
 
-        // Create 4 due cards
+        // Create 4 due cards attached to the active profile.
+        let profile = activeProfile(container)
         for i in 0..<4 {
             let card = Card(
                 front: "Card \(i)",
@@ -172,22 +237,34 @@ struct SessionIntegrationTests {
                 type: .kanji,
                 dueDate: Date().addingTimeInterval(-3600)
             )
+            card.profile = profile
             context.insert(card)
         }
         try context.save()
 
         let repo = CardRepository(modelContainer: container)
         let planner = PlannerService(cardRepository: repo)
-        let vm = SessionViewModel(plannerService: planner, cardRepository: repo, modelContainer: container)
+        let mockPlanner = await plannerWithSeededCards(repo: repo)
+        try suppressFirstSessionBonus(container: container)
+        let vm = SessionViewModel(
+            plannerService: planner,
+            cardRepository: repo,
+            modelContainer: container,
+            sessionPlanner: mockPlanner
+        )
 
         await vm.startSession()
 
-        await vm.gradeAndAdvance(grade: .easy)  // 10 XP
-        await vm.gradeAndAdvance(grade: .good)   // 10 XP
-        await vm.gradeAndAdvance(grade: .hard)   // 5 XP
-        await vm.gradeAndAdvance(grade: .again)  // 2 XP
+        await vm.gradeAndAdvance(grade: .easy)
+        await vm.gradeAndAdvance(grade: .good)
+        await vm.gradeAndAdvance(grade: .hard)
+        await vm.gradeAndAdvance(grade: .again)
 
-        #expect(vm.xpEarned == 27)
+        let expected = RPGConstants.xpForGrade(.easy)
+            + RPGConstants.xpForGrade(.good)
+            + RPGConstants.xpForGrade(.hard)
+            + RPGConstants.xpForGrade(.again)
+        #expect(vm.xpEarned == expected)
         #expect(vm.reviewedCount == 4)
     }
 

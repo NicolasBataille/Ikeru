@@ -53,7 +53,16 @@ rig/assets/
 
 # Test screenshots
 sottaku-*.png
+tatami-*.png
 
 # Local tool configs
 .playwright-mcp/
 .cursor/
+.claude/
+
+# QA screenshots (working artifacts, not source)
+docs/design-specs/qa-shots/
+.superpowers/
+
+# Personal Obsidian wiki vault (local notes, not source)
+wiki-vault/

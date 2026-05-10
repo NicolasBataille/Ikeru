@@ -1,15 +1,17 @@
 import SwiftUI
 import SwiftData
+import Combine
 import IkeruCore
 
 // MARK: - Tab Definition
 
 enum AppTab: Int, CaseIterable, Identifiable {
-    case home
-    case study
-    case companion
-    case rpg
-    case settings
+    // -startTab=N maps to: 0=companion, 1=study, 2=home (default), 3=rpg, 4=settings
+    case companion   // tap-only, position 0
+    case study       // swipe pager left
+    case home        // swipe pager center (default)
+    case rpg         // swipe pager right
+    case settings    // tap-only, position 4
 
     var id: Int { rawValue }
 
@@ -28,7 +30,7 @@ enum AppTab: Int, CaseIterable, Identifiable {
         case .home: return "house"
         case .study: return "book.closed"
         case .companion: return "bubble.left"
-        case .rpg: return "shield"
+        case .rpg: return "mountain.2"            // path / summit metaphor
         case .settings: return "gearshape"
         }
     }
@@ -50,6 +52,10 @@ struct MainTabView: View {
     @State private var showCompanionChat = false
     @State private var companionViewModel: CompanionChatViewModel?
     @State private var presentAISettings = CommandLine.arguments.contains("-presentAISettings")
+    @State private var appLocale = AppLocale()
+    @State private var displayMode: DisplayMode = .beginner
+    @State private var displayModeRepo: (any DisplayModePreferenceRepository)?
+    @State private var displayModeCancellable: AnyCancellable?
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -62,9 +68,16 @@ struct MainTabView: View {
             // Custom floating Liquid Glass tab bar
             IkeruTabBar(selection: $selectedTab, tabs: AppTab.allCases)
                 .ignoresSafeArea(.keyboard)
+
+            // Persistent companion avatar — Sakura is part of the surface,
+            // not just a tab. Hidden when the Companion tab is active so
+            // the floating glyph doesn't sit over the chat itself.
+            companionAvatarOverlay
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onAppear {
             initializeCompanionViewModel()
+            initializeDisplayModeRepo()
         }
         .onReceive(NotificationCenter.default.publisher(for: .startQuizFromShortcut)) { _ in
             selectedTab = .home
@@ -80,6 +93,10 @@ struct MainTabView: View {
                     .presentationBackground(.ultraThinMaterial)
             }
         }
+        .environment(\.locale, appLocale.currentLocale)
+        .environment(appLocale)
+        .environment(\.displayMode, displayMode)
+        .environment(\.displayModeRepository, displayModeRepo)
         .fullScreenCover(isPresented: $presentAISettings) {
             NavigationStack {
                 AISettingsView()
@@ -94,22 +111,107 @@ struct MainTabView: View {
 
     // MARK: - Tab content
 
+    @State private var liveOffsetFraction: CGFloat = 1 // home is index 1 within the pager
+
+    private var learningPagerIndex: Binding<Int> {
+        Binding(
+            get: {
+                switch selectedTab {
+                case .study: return 0
+                case .home:  return 1
+                case .rpg:   return 2
+                default:     return 1
+                }
+            },
+            set: { new in
+                switch new {
+                case 0: selectedTab = .study
+                case 2: selectedTab = .rpg
+                default: selectedTab = .home
+                }
+            }
+        )
+    }
+
     @ViewBuilder
     private var tabContent: some View {
         ZStack {
-            ForEach(AppTab.allCases) { tab in
-                if selectedTab == tab {
-                    TabContentView(tab: tab)
-                        .transition(
-                            .asymmetric(
-                                insertion: .opacity.combined(with: .scale(scale: 0.98)),
-                                removal: .opacity
-                            )
-                        )
-                }
+            switch selectedTab {
+            case .study, .home, .rpg:
+                PagedLearningStack(
+                    pageCount: 3,
+                    activeIndex: learningPagerIndex,
+                    liveOffsetFraction: $liveOffsetFraction,
+                    content: { index in
+                        switch index {
+                        case 0: TabContentView(tab: .study)
+                        case 1: TabContentView(tab: .home)
+                        case 2: TabContentView(tab: .rpg)
+                        default: Color.clear
+                        }
+                    }
+                )
+                .transition(.opacity)
+            case .companion:
+                TabContentView(tab: .companion)
+                    .transition(.opacity)
+            case .settings:
+                TabContentView(tab: .settings)
+                    .transition(.opacity)
             }
         }
         .animation(.spring(response: 0.42, dampingFraction: 0.86), value: selectedTab)
+    }
+
+    // MARK: - Companion Overlay
+    //
+    // Floats above the tab bar in the bottom-right gutter. Tap opens the
+    // companion chat sheet without changing tabs — quick access from any
+    // surface, in keeping with the original spec ("persistent companion
+    // overlay").
+
+    @ViewBuilder
+    private var companionAvatarOverlay: some View {
+        if selectedTab != .companion {
+            VStack {
+                Spacer()
+                HStack {
+                    Spacer()
+                    CompanionAvatarView(
+                        hasAttention: false,
+                        showBadge: false,
+                        onTap: { showCompanionChat = true }
+                    )
+                    .padding(.trailing, 20)
+                    .padding(.bottom, 100) // clears the floating tab bar
+                }
+            }
+            .ignoresSafeArea(.keyboard)
+            .transition(.opacity)
+        }
+    }
+
+    // MARK: - Display Mode Initialization
+
+    private func initializeDisplayModeRepo() {
+        guard displayModeRepo == nil else { return }
+        let container = modelContext.container
+        let repo = UserDefaultsDisplayModePreferenceRepository(
+            defaults: .standard,
+            activeProfileID: { ActiveProfileResolver.activeProfileID() },
+            profileCreatedAt: { id in
+                let context = container.mainContext
+                let descriptor = FetchDescriptor<UserProfile>(
+                    predicate: #Predicate { $0.id == id }
+                )
+                return (try? context.fetch(descriptor))?.first?.createdAt
+            }
+        )
+        self.displayModeRepo = repo
+        self.displayMode = repo.current()
+        self.displayModeCancellable = repo.publisher
+            .receive(on: DispatchQueue.main)
+            .sink { mode in self.displayMode = mode }
     }
 
     // MARK: - Companion Initialization
@@ -154,7 +256,7 @@ private struct TabContentView: View {
         case .home:
             HomeView()
         case .study:
-            ProgressDashboardView()
+            EtudeView()
         case .companion:
             CompanionTabView()
         case .rpg:

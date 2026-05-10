@@ -4,7 +4,12 @@ import SwiftData
 /// A user profile that owns all learning data.
 /// Each profile maintains its own set of cards and associated review history.
 @Model
-public final class UserProfile {
+public final class UserProfile: Identifiable {
+
+    /// UserDefaults key holding the currently-active profile id (UUID string).
+    /// Referenced by both the app layer's `ActiveProfileResolver` and the core
+    /// layer's `CardModelActor` for per-profile scoping without plumbing.
+    public static let activeProfileIDDefaultsKey = "ikeru.activeProfileID"
 
     /// Unique identifier for the profile
     public var id: UUID

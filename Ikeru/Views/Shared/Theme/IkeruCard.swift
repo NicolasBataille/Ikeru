@@ -47,6 +47,14 @@ public struct IkeruCardModifier: ViewModifier {
     @ViewBuilder
     private var cardBackground: some View {
         ZStack {
+            // Opaque base (interactive only) — prevents the deck peeks from
+            // bleeding through the translucent material when the card is
+            // being dragged across the stack.
+            if variant == .interactive {
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .fill(Color.ikeruSurface)
+            }
+
             // Base glass material
             RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                 .fill(.ultraThinMaterial)

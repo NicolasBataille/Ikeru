@@ -233,6 +233,19 @@ public final class CompanionChatViewModel {
         }
     }
 
+    /// Whether the active app locale is French. Reads the same UserDefaults
+    /// key the global `AppLocale` uses, so the stub follows the in-app
+    /// language picker (independent of the system locale).
+    private var isFrench: Bool {
+        let raw = UserDefaults.standard.string(forKey: "ikeru.uiLanguage") ?? "system"
+        switch raw {
+        case "fr": return true
+        case "en": return false
+        default:
+            return Locale.preferredLanguages.contains { $0.lowercased().hasPrefix("fr") }
+        }
+    }
+
     /// Builds a contextual companion response.
     /// In a future story, this will use AIRouterService for richer responses.
     private func buildResponse(for userText: String) -> String {
@@ -243,18 +256,30 @@ public final class CompanionChatViewModel {
         }
 
         if lowered.contains("quiz") || lowered.contains("test") {
-            return "Sure! Let's try this: [QUIZ:食|to eat|to drink|to read] What does this kanji mean?"
+            return isFrench
+                ? "Avec plaisir ! Essaie celui-ci : [QUIZ:食|manger|boire|lire] Que signifie ce kanji ?"
+                : "Sure! Let's try this: [QUIZ:食|to eat|to drink|to read] What does this kanji mean?"
         }
 
-        if lowered.contains("mnemonic") || lowered.contains("remember") {
-            return "Here's a helpful trick: [MNEMONIC:食|A person sitting at a table with food - the top radical is a roof, and below is a plate of good food] Try to visualize it!"
+        if lowered.contains("mnemonic") || lowered.contains("remember")
+            || lowered.contains("mnémonique") || lowered.contains("souvenir")
+        {
+            return isFrench
+                ? "Voici un moyen mnémotechnique : [MNEMONIC:食|Une personne assise à table avec de la nourriture — le radical du haut est un toit, et en dessous une assiette pleine] Essaie de le visualiser !"
+                : "Here's a helpful trick: [MNEMONIC:食|A person sitting at a table with food - the top radical is a roof, and below is a plate of good food] Try to visualize it!"
         }
 
-        if lowered.contains("hello") || lowered.contains("hi") || lowered.contains("hey") {
-            return "Hello! Ready to learn some Japanese? Try asking me about a kanji, or say 'quiz me' for a quick challenge!"
+        if lowered.contains("hello") || lowered.contains("hi") || lowered.contains("hey")
+            || lowered.contains("bonjour") || lowered.contains("salut")
+        {
+            return isFrench
+                ? "Bonjour ! Prêt à apprendre du japonais ? Pose-moi une question sur un kanji, ou dis « quiz » pour un petit défi !"
+                : "Hello! Ready to learn some Japanese? Try asking me about a kanji, or say 'quiz me' for a quick challenge!"
         }
 
-        return "That's interesting! Let me share something helpful: [KANJI:学] This is 学 (まなぶ) meaning 'to learn'. Keep studying and you'll master it! Ask me for a quiz or mnemonic anytime."
+        return isFrench
+            ? "Intéressant ! Laisse-moi te partager quelque chose d'utile : [KANJI:学] Voici 学 (まなぶ) qui signifie « apprendre ». Continue, tu vas le maîtriser ! Demande-moi un quiz ou un moyen mnémotechnique quand tu veux."
+            : "That's interesting! Let me share something helpful: [KANJI:学] This is 学 (まなぶ) meaning 'to learn'. Keep studying and you'll master it! Ask me for a quiz or mnemonic anytime."
     }
 
     private func buildKanjiResponse(for text: String) -> String {
@@ -264,10 +289,14 @@ public final class CompanionChatViewModel {
 
         if let kanji = kanjiInText {
             let char = String(kanji)
-            return "Great question about [KANJI:\(char)]! This kanji is fascinating. Here's a memory aid: [MNEMONIC:\(char)|Break it down into its radicals to remember it better] Want me to quiz you on it?"
+            return isFrench
+                ? "Excellente question sur [KANJI:\(char)] ! Ce kanji est fascinant. Voici un aide-mémoire : [MNEMONIC:\(char)|Décompose-le en radicaux pour mieux t'en souvenir] Veux-tu que je te questionne dessus ?"
+                : "Great question about [KANJI:\(char)]! This kanji is fascinating. Here's a memory aid: [MNEMONIC:\(char)|Break it down into its radicals to remember it better] Want me to quiz you on it?"
         }
 
-        return "Let me show you an interesting kanji: [KANJI:日] This is 日 (にち/ひ) meaning 'day' or 'sun'. It looks like a window with sunlight streaming through! [MNEMONIC:日|A window frame with the sun shining through it]"
+        return isFrench
+            ? "Je te montre un kanji intéressant : [KANJI:日] Voici 日 (にち/ひ) qui signifie « jour » ou « soleil ». On dirait une fenêtre laissant passer la lumière du soleil ! [MNEMONIC:日|Un cadre de fenêtre avec le soleil qui brille à travers]"
+            : "Let me show you an interesting kanji: [KANJI:日] This is 日 (にち/ひ) meaning 'day' or 'sun'. It looks like a window with sunlight streaming through! [MNEMONIC:日|A window frame with the sun shining through it]"
     }
 
     private func containsJapanese(_ text: String) -> Bool {

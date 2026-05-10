@@ -14,7 +14,7 @@ import os
 /// so deep-link payloads (e.g. the daily-term reminder) can wake the
 /// matching surface in the app.
 @MainActor
-final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
+final class NotificationManager: NSObject, @preconcurrency UNUserNotificationCenterDelegate {
 
     static let shared = NotificationManager()
 
@@ -50,7 +50,7 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
         do {
             let granted = try await UNUserNotificationCenter.current()
                 .requestAuthorization(options: [.alert, .sound, .badge])
-            Logger.ui.info("Notification authorization: \(granted)")
+            Logger.ui.info("Notification authorization: \(granted, privacy: .public)")
             return granted
         } catch {
             Logger.ui.error("Notification auth failed: \(error.localizedDescription)")
@@ -118,7 +118,7 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
 
         do {
             try await center.add(request)
-            Logger.ui.info("Review reminder scheduled at \(hour):00")
+            Logger.ui.info("Review reminder scheduled at \(hour, privacy: .public):00")
         } catch {
             Logger.ui.error("Failed to schedule review reminder: \(error.localizedDescription)")
         }
@@ -158,7 +158,7 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
 
         do {
             try await center.add(request)
-            Logger.ui.info("Weekly check-in scheduled: weekday=\(weekday), hour=\(hour)")
+            Logger.ui.info("Weekly check-in scheduled: weekday=\(weekday, privacy: .public), hour=\(hour, privacy: .public)")
         } catch {
             Logger.ui.error("Failed to schedule check-in: \(error.localizedDescription)")
         }
@@ -200,7 +200,7 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
 
         do {
             try await center.add(request)
-            Logger.ui.info("Daily term reminder scheduled at \(dateComponents.hour ?? 0):\(String(format: "%02d", dateComponents.minute ?? 0))")
+            Logger.ui.info("Daily term reminder scheduled at \(dateComponents.hour ?? 0, privacy: .public):\(String(format: "%02d", dateComponents.minute ?? 0), privacy: .public)")
         } catch {
             Logger.ui.error("Failed to schedule daily term reminder: \(error.localizedDescription)")
         }
@@ -248,12 +248,6 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
     }
 
     // MARK: - Cancel
-
-    /// Removes all scheduled notifications.
-    func cancelAll() {
-        UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
-        Logger.ui.info("All notifications cancelled")
-    }
 
     /// Removes review reminders only.
     func cancelReviewReminders() {

@@ -27,24 +27,31 @@ private enum DailyTermSheet: Identifiable {
 }
 
 // MARK: - HomeView
+//
+// Wabi-sabi refined home. The hero card is proverb-centric (七転八起 promoted
+// to the focal element), rank sits as chrome (EnsoRank brush glyph + 第N段),
+// progression reads as carved segments not a gradient smear, and the stats
+// row weights "Due Now" as the action card over the two quieter metrics.
 
-/// Premium "Your World" home screen.
-/// Layout philosophy: generous breathing space, glass surfaces, calm typography.
 struct HomeView: View {
 
     @Environment(\.modelContext) private var modelContext
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.displayMode) private var displayMode
+    @Environment(\.displayModeRepository) private var displayModeRepo
     @State private var viewModel: HomeViewModel?
     @State private var sessionViewModel: SessionViewModel?
     @State private var dailyTermViewModel: DailyTermViewModel?
+    @State private var suggestionController: DisplayModeSuggestionCardController?
     @State private var showSession = false
     @State private var heroAppeared = false
     @State private var dailyTermSheet: DailyTermSheet?
     @AppStorage(DailyTermSettings.enabledKey) private var dailyTermEnabled: Bool = false
+    @AppStorage("ikeru.equippedTitleName") private var equippedTitleName: String = ""
 
     var body: some View {
         ZStack {
-            IkeruScreenBackground()
+            IkeruScreenBackground(variant: .home)
 
             if let vm = viewModel {
                 homeContent(vm)
@@ -68,12 +75,17 @@ struct HomeView: View {
             initializeViewModels()
             await viewModel?.loadData()
             await dailyTermViewModel?.load()
+            await viewModel?.refreshRestDay()
+            await refreshSuggestionController()
             withAnimation(.spring(response: 0.55, dampingFraction: 0.86).delay(0.05)) {
                 heroAppeared = true
             }
             if CommandLine.arguments.contains("-autoStartSession") {
                 startSession()
             }
+        }
+        .onChange(of: displayMode) { _, new in
+            suggestionController?.setMode(new)
         }
         .onAppear {
             if viewModel != nil {
@@ -105,6 +117,12 @@ struct HomeView: View {
                 }
             }
         }
+        .onReceive(NotificationCenter.default.publisher(for: .ikeruActiveProfileDidChange)) { _ in
+            Task {
+                await viewModel?.loadData()
+                await refreshSuggestionController()
+            }
+        }
         #if canImport(UIKit)
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.significantTimeChangeNotification)) { _ in
             Task { await dailyTermViewModel?.reloadIfDayChanged() }
@@ -133,8 +151,6 @@ struct HomeView: View {
                 DailyTermHistoryView(
                     terms: dvm.recent,
                     onSelect: { term in
-                        // SwiftUI re-keys the sheet by the new `id`, no manual
-                        // dismiss-then-present dance needed.
                         dailyTermSheet = .reveal(term)
                     },
                     onDismiss: { dailyTermSheet = nil }
@@ -145,17 +161,47 @@ struct HomeView: View {
         }
     }
 
+    // MARK: - Suggestion Card Controller
+
+    private func refreshSuggestionController() async {
+        guard let profileID = ActiveProfileResolver.activeProfileID(),
+              let vm = viewModel
+        else { return }
+
+        let controller = suggestionController ?? DisplayModeSuggestionCardController(
+            profileID: profileID,
+            currentMode: displayMode
+        )
+        controller.setMode(displayMode)
+        let signals = await vm.advancedThresholdSignals()
+        controller.onSignalsChanged(
+            streak: signals.streak,
+            reviews: signals.reviews,
+            mastery: signals.mastery
+        )
+        suggestionController = controller
+    }
+
     // MARK: - Home Content
 
     @ViewBuilder
     private func homeContent(_ vm: HomeViewModel) -> some View {
         ScrollView(showsIndicators: false) {
-            VStack(spacing: IkeruTheme.Spacing.xl) {
+            VStack(spacing: IkeruTheme.Spacing.lg) {
+                if let controller = suggestionController, controller.shouldShow {
+                    DisplayModeSuggestionCard(
+                        onAccept: {
+                            displayModeRepo?.set(.tatami)
+                            controller.dismiss()
+                        },
+                        onDismiss: { controller.dismiss() }
+                    )
+                }
                 topBar(vm)
-                heroSection(vm)
+                proverbHero(vm)
                 dailyTermSection
                 statsRow(vm)
-                primaryAction(vm)
+                sessionBreakdown(vm)
                 if vm.hasLoaded && vm.dueCardCount == 0 {
                     quietState
                 }
@@ -193,41 +239,55 @@ struct HomeView: View {
 
     @ViewBuilder
     private func topBar(_ vm: HomeViewModel) -> some View {
-        HStack(alignment: .center) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(timeOfDayGreeting().uppercased())
-                    .font(.ikeruMicro)
-                    .ikeruTracking(.micro)
-                    .foregroundStyle(Color.ikeruTextTertiary)
-
-                Text(vm.displayName.isEmpty ? "Welcome" : vm.displayName)
-                    .font(.ikeruDisplaySmall)
-                    .ikeruTracking(.display)
-                    .foregroundStyle(Color.ikeruTextPrimary)
+        VStack(alignment: .leading, spacing: 6) {
+            // Serif kanji date row — sits where the SF status time bar lives
+            HStack {
+                Spacer()
+                Text(serifJapaneseDate())
+                    .font(.system(size: 11, weight: .regular, design: .serif))
+                    .foregroundStyle(TatamiTokens.paperGhost)
+                    .tracking(1)
             }
-            Spacer()
-            // Streak / status pill
-            IkeruStatPill(
-                icon: "flame.fill",
-                value: "\(max(1, vm.level))",
-                label: "lvl",
-                tint: .ikeruPrimaryAccent
-            )
+
+            HStack(alignment: .bottom) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(timeOfDayGreetingJP())
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(Color.ikeruPrimaryAccent)
+                        .tracking(2.4)
+                        .textCase(.uppercase)
+
+                    HStack(spacing: 0) {
+                        Text(vm.displayName.isEmpty
+                             ? String(localized: "Welcome")
+                             : vm.displayName)
+                            .font(.system(size: 22, weight: .semibold))
+                            .foregroundStyle(Color.ikeruTextPrimary)
+                        Text("。")
+                            .font(.system(size: 22, weight: .semibold, design: .serif))
+                            .foregroundStyle(TatamiTokens.paperGhost)
+                    }
+
+                    if !equippedTitleName.isEmpty {
+                        Text(equippedTitleName.uppercased())
+                            .font(.ikeruMicro)
+                            .ikeruTracking(.micro)
+                            .foregroundStyle(Color.ikeruPrimaryAccent)
+                    }
+                }
+                Spacer()
+                levelPill(level: vm.level)
+            }
         }
         .padding(.top, IkeruTheme.Spacing.xs)
     }
 
-    // MARK: - Hero
-
-    @ViewBuilder
-    private func heroSection(_ vm: HomeViewModel) -> some View {
-        MeshHeroView(
-            level: vm.level,
-            totalXP: vm.xp,
-            displayName: vm.displayName,
-            recentAchievement: vm.recentAchievement
-        )
-        .frame(height: 260)
+    /// Returns "四月二十九日 · 火" (Japanese serif kanji date).
+    private func serifJapaneseDate() -> String {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "ja_JP")
+        f.dateFormat = "M月d日 · E"
+        return f.string(from: Date())
     }
 
     // MARK: - Daily Term
@@ -253,97 +313,337 @@ struct HomeView: View {
         }
     }
 
-    // MARK: - Stats Row
+    /// Returns "こんばんは" / "おはよう" / "こんにちは" depending on the hour.
+    private func timeOfDayGreetingJP() -> String {
+        let h = Calendar.current.component(.hour, from: Date())
+        switch h {
+        case 5..<11: return "おはよう"
+        case 11..<17: return "こんにちは"
+        default: return "こんばんは"
+        }
+    }
+
+    // Level pill (top-right) per the design brief — replaces the earlier streak
+    // pill, which contradicted the product brief's anti-gamification stance
+    // ("no streaks, no gems, no daily login pressure").
+    @ViewBuilder
+    private func levelPill(level: Int) -> some View {
+        HStack(spacing: 7) {
+            EnsoRankView(level: level, size: 16)
+            Text("\u{7B2C}\(level)\u{6BB5}") // 第N段
+                .font(.system(size: 12, weight: .medium, design: .serif))
+                .foregroundStyle(Color.ikeruTextPrimary)
+                .tracking(1.4)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 7)
+        .background {
+            Capsule()
+                .fill(Color.white.opacity(0.05))
+                .overlay(Capsule().strokeBorder(Color.white.opacity(0.10), lineWidth: 0.6))
+        }
+    }
+
+    // MARK: - Rest Day Block
+
+    private var restDayBlock: some View {
+        VStack(spacing: 6) {
+            Text("\u{4ECA}\u{65E5}\u{306F}\u{4F11}") // 今日は休
+                .font(.system(size: 26, design: .serif))
+                .foregroundStyle(Color.ikeruPrimaryAccent)
+            Text("Home.RestDay.Title", comment: "Rest day chrome label")
+                .font(.system(size: 11, weight: .semibold))
+                .tracking(1.6)
+                .foregroundStyle(Color.ikeruTextSecondary)
+            Text("Home.RestDay.Body", comment: "Rest day body copy")
+                .font(.system(size: 11))
+                .italic()
+                .foregroundStyle(TatamiTokens.paperGhost)
+                .multilineTextAlignment(.center)
+                .padding(.top, 4)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 20)
+        .padding(.horizontal, 12)
+    }
+
+    // MARK: - Proverb Hero
 
     @ViewBuilder
-    private func statsRow(_ vm: HomeViewModel) -> some View {
-        HStack(spacing: IkeruTheme.Spacing.sm) {
-            statCard(
-                icon: "tray.full",
-                value: "\(vm.dueCardCount)",
-                label: "Due",
-                tint: .ikeruPrimaryAccent
-            )
-            statCard(
-                icon: "character.book.closed",
-                value: "\(vm.kanjiLearnedCount)",
-                label: "Learned",
-                tint: .ikeruTertiaryAccent
-            )
-            statCard(
-                icon: "shippingbox",
-                value: "\(vm.unopenedLootBoxCount)",
-                label: "Lootboxes",
-                tint: .ikeruSecondaryAccent
-            )
+    private func proverbHero(_ vm: HomeViewModel) -> some View {
+        let proverb = HomeProverb.dailyProverb(level: vm.level)
+        let progress = Double(vm.xpInCurrentLevel) / Double(max(1, vm.xpRequiredForLevel))
+
+        VStack(alignment: .leading, spacing: 14) {
+            // Top row — bilingual "本日 · TODAY" + Hanko stamp when work is due
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 8) {
+                    BilingualLabel(japanese: "本日", chrome: "Today", mon: nil)
+                    Text(proverb.kanji)
+                        .font(.system(size: 19, weight: .regular, design: .serif))
+                        .foregroundStyle(Color.ikeruTextPrimary)
+                        .lineLimit(1)
+                        .tracking(2)
+                    Text(proverb.translation)
+                        .font(.system(size: 11))
+                        .italic()
+                        .foregroundStyle(TatamiTokens.paperGhost)
+                }
+                Spacer()
+                if vm.dueCardCount > 0 {
+                    HankoStamp(kanji: "急", size: 36)
+                }
+            }
+
+            // Due count — large serif numeral
+            HStack(alignment: .firstTextBaseline, spacing: 10) {
+                SerifNumeral(vm.dueCardCount, size: 56, color: .ikeruTextPrimary)
+                Text("CARDS DUE", comment: "Hero stat label on Home")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(Color.ikeruTextSecondary)
+                    .tracking(1.4)
+                    .textCase(.uppercase)
+            }
+
+            // Practice CTA — sharp gold, bilingual, sumi corners.
+            // Replaced by the rest-day surface when conditions hold.
+            if vm.restDayActive {
+                restDayBlock
+            } else {
+                Button {
+                    startSession()
+                } label: {
+                    HStack {
+                        Spacer()
+                        Text("稽古を始める · ")
+                            .font(.system(size: 13, weight: .regular, design: .serif))
+                        Text("BEGIN PRACTICE", comment: "Hero CTA on Home")
+                            .font(.system(size: 13, weight: .bold))
+                            .tracking(1.6)
+                        Spacer()
+                    }
+                    .foregroundStyle(Color.ikeruBackground)
+                    .padding(.vertical, 14)
+                    .background(Color.ikeruPrimaryAccent)
+                    .sumiCorners(color: Color.ikeruBackground.opacity(0.6), size: 6, weight: 1.2, inset: -1)
+                }
+                .buttonStyle(.plain)
+            }
+
+            // XP progress — fusuma rail with serif numerals
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(alignment: .firstTextBaseline) {
+                    BilingualLabel(japanese: "経験", chrome: "Experience", mon: nil)
+                    Spacer()
+                    HStack(spacing: 0) {
+                        SerifNumeral(vm.xpInCurrentLevel, size: 12,
+                                     weight: .regular, color: .ikeruPrimaryAccent)
+                        Text(" / ")
+                            .font(.system(size: 12, design: .serif))
+                            .foregroundStyle(TatamiTokens.paperGhost)
+                        SerifNumeral(vm.xpRequiredForLevel, size: 12,
+                                     weight: .regular, color: TatamiTokens.paperGhost)
+                    }
+                }
+
+                // Hairline fusuma progress
+                ZStack(alignment: .leading) {
+                    Rectangle()
+                        .fill(TatamiTokens.goldDim.opacity(0.3))
+                        .frame(height: 1)
+                    GeometryReader { geo in
+                        Rectangle()
+                            .fill(Color.ikeruPrimaryAccent)
+                            .frame(width: geo.size.width * progress, height: 1)
+                            .shadow(color: .ikeruPrimaryAccent.opacity(0.6), radius: 3)
+                    }
+                    .frame(height: 1)
+                }
+
+                Text("\(vm.xpToNextLevel) XP to next rank",
+                     comment: "Subtle XP-remaining label on the Home hero")
+                    .font(.system(size: 11))
+                    .foregroundStyle(TatamiTokens.paperGhost)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+            }
+        }
+        .tatamiRoom(.glass, padding: 20)
+    }
+
+    // MARK: - Session breakdown
+    //
+    // Quiet preview of what the next session contains: split between brand-new
+    // exposures and reviews. Sits under the CTA so the user knows what they're
+    // walking into without having to start the session first.
+
+    @ViewBuilder
+    private func sessionBreakdown(_ vm: HomeViewModel) -> some View {
+        if vm.sessionPreviewCardCount > 0 {
+            HStack(spacing: 0) {
+                breakdownCell(
+                    icon: "sparkles",
+                    label: Text("New", comment: "Session preview: number of brand-new cards"),
+                    count: vm.sessionPreviewNewCount,
+                    tint: .ikeruSecondaryAccent
+                )
+                Divider()
+                    .frame(width: 0.6, height: 28)
+                    .overlay(Color.white.opacity(0.10))
+                breakdownCell(
+                    icon: "arrow.triangle.2.circlepath",
+                    label: Text("Review", comment: "Session preview: number of review cards"),
+                    count: vm.sessionPreviewReviewCount,
+                    tint: .ikeruPrimaryAccent
+                )
+                Divider()
+                    .frame(width: 0.6, height: 28)
+                    .overlay(Color.white.opacity(0.10))
+                breakdownCell(
+                    icon: "timer",
+                    label: Text("Approx", comment: "Session preview: approximate duration"),
+                    valueText: "\(max(1, vm.sessionPreviewMinutes))m",
+                    tint: .ikeruTertiaryAccent
+                )
+            }
+            .tatamiRoom(.standard, padding: 14)
         }
     }
 
     @ViewBuilder
-    private func statCard(icon: String, value: String, label: String, tint: Color) -> some View {
-        VStack(alignment: .leading, spacing: 14) {
-            // Icon in a small tinted circle
-            ZStack {
-                Circle()
-                    .fill(tint.opacity(0.14))
-                    .frame(width: 32, height: 32)
-                Image(systemName: icon)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(tint)
-            }
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(value)
-                    .font(.system(size: 32, weight: .light, design: .default))
-                    .ikeruTracking(.heading)
-                    .foregroundStyle(Color.ikeruTextPrimary)
-                    .contentTransition(.numericText())
-                    .animation(.spring(response: 0.4, dampingFraction: 0.8), value: value)
-
-                Text(label.uppercased())
-                    .font(.ikeruMicro)
-                    .ikeruTracking(.micro)
+    private func breakdownCell(
+        icon: String,
+        label: Text,
+        count: Int? = nil,
+        valueText: String? = nil,
+        tint: Color
+    ) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: icon)
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(tint)
+            VStack(alignment: .leading, spacing: 1) {
+                label
+                    .font(.system(size: 9, weight: .heavy))
+                    .tracking(1.6)
                     .foregroundStyle(Color.ikeruTextTertiary)
+                    .textCase(.uppercase)
+                Text(valueText ?? "\(count ?? 0)")
+                    .font(.system(size: 14, weight: .medium, design: .monospaced))
+                    .foregroundStyle(Color.ikeruTextPrimary)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.vertical, IkeruTheme.Spacing.md)
-        .padding(.horizontal, IkeruTheme.Spacing.md)
-        .background {
-            IkeruGlassSurface(
-                cornerRadius: IkeruTheme.Radius.lg,
-                tint: tint,
-                tintOpacity: 0.04,
-                highlight: 0.14,
-                strokeOpacity: 0.16
-            )
+        .padding(.horizontal, 10)
+    }
+
+    // MARK: - Stats Row
+    //
+    // Two Tatami rooms — Learned (kanji) and Streak (days) — each with a mon
+    // crest and a serif numeral. Due Now lives in the proverb hero now.
+    //
+    // Note: HomeViewModel does not currently expose a streak property; the
+    // anti-gamification stance keeps the home shell streak-free. The card is
+    // rendered with 0 days as a structural placeholder so layout matches the
+    // spec without functional change to the VM.
+
+    @ViewBuilder
+    private func statsRow(_ vm: HomeViewModel) -> some View {
+        // Equal-width split: each tile gets exactly half of the row. Earlier
+        // versions used `.layoutPriority(1.4)` on the Learned tile to favor it,
+        // but that caused the Streak tile to collapse to a ~6pt sliver because
+        // the priority delta let Learned consume nearly all available width.
+        HStack(alignment: .top, spacing: 12) {
+            // Learned
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(spacing: 6) {
+                    MonCrest(kind: .asanoha, size: 11, color: .ikeruPrimaryAccent)
+                    Text("LEARNED", comment: "Stat card label")
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundStyle(TatamiTokens.paperGhost)
+                        .tracking(1.4)
+                        .lineLimit(1)
+                }
+                HStack(alignment: .firstTextBaseline, spacing: 4) {
+                    SerifNumeral(vm.kanjiLearnedCount, size: 32)
+                    Text("kanji", comment: "Tiny suffix after the LEARNED count")
+                        .font(.system(size: 11, design: .serif))
+                        .foregroundStyle(TatamiTokens.paperGhost)
+                        .lineLimit(1)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .tatamiRoom(.standard, padding: 14)
+
+            // Streak — placeholder 0 (no streak surfaced on Home shell yet)
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(spacing: 6) {
+                    MonCrest(kind: .genji, size: 11, color: .ikeruPrimaryAccent)
+                    Text("STREAK", comment: "Stat card label")
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundStyle(TatamiTokens.paperGhost)
+                        .tracking(1.4)
+                        .lineLimit(1)
+                }
+                HStack(alignment: .firstTextBaseline, spacing: 4) {
+                    SerifNumeral(0, size: 32)
+                    Text("days", comment: "Tiny suffix after the STREAK count")
+                        .font(.system(size: 11, design: .serif))
+                        .foregroundStyle(TatamiTokens.paperGhost)
+                        .lineLimit(1)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .tatamiRoom(.standard, padding: 14)
         }
-        .clipShape(RoundedRectangle(cornerRadius: IkeruTheme.Radius.lg, style: .continuous))
-        .shadow(color: Color.black.opacity(0.4), radius: 18, y: 8)
     }
 
     // MARK: - Primary action
 
     @ViewBuilder
     private func primaryAction(_ vm: HomeViewModel) -> some View {
-        VStack(spacing: IkeruTheme.Spacing.sm) {
-            Button {
-                startSession()
-            } label: {
-                HStack(spacing: IkeruTheme.Spacing.sm) {
+        Button {
+            startSession()
+        } label: {
+            HStack(alignment: .center) {
+                HStack(spacing: 10) {
                     Image(systemName: "play.fill")
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(.system(size: 13, weight: .semibold))
                     Text("Begin Session")
+                        .font(.system(size: 17, weight: .semibold))
                 }
-                .frame(maxWidth: .infinity)
+                Spacer()
+                Text(sessionDurationEstimate(vm))
+                    .font(.system(size: 12, weight: .medium, design: .monospaced))
+                    .foregroundStyle(Color(red: 0.16, green: 0.11, blue: 0.05).opacity(0.7))
             }
-            .ikeruButtonStyle(.primary)
-
-            Text(vm.sessionPreviewText)
-                .font(.ikeruCaption)
-                .foregroundStyle(Color.ikeruTextTertiary)
+            .frame(maxWidth: .infinity)
         }
+        .ikeruButtonStyle(.primary)
         .padding(.top, IkeruTheme.Spacing.xs)
+    }
+
+    private func sessionDurationEstimate(_ vm: HomeViewModel) -> String {
+        if vm.sessionPreviewCardCount > 0 {
+            return "~\(max(1, vm.sessionPreviewMinutes)) min"
+        }
+        return "ready"
+    }
+
+    // MARK: - Rank labels
+
+    private func rankLabel(level: Int) -> String {
+        "第\(level)段"
+    }
+
+    private func rankTitle(level: Int) -> String {
+        switch level {
+        case ..<3:  return "Novice"
+        case 3..<7: return "Apprentice"
+        case 7..<15: return "Student"
+        case 15..<25: return "Adept"
+        case 25..<40: return "Master"
+        default: return "Sage"
+        }
     }
 
     // MARK: - Helpers
@@ -390,6 +690,60 @@ struct HomeView: View {
             await svm.startSession()
             showSession = true
         }
+    }
+}
+
+// MARK: - Proverb pool
+//
+// Curated 四字熟語 (yojijukugo) only — four-kanji idioms. Restricting the pool
+// to four-character entries keeps the hero typography stable: longer
+// proverbs (千里の道も一歩から, 塵も積もれば山となる) wrap and break the layout
+// because the kanji line is sized for four glyphs at 40pt with tracking 4.
+
+struct HomeProverb {
+    let kanji: String
+    let romaji: String
+    let translation: String
+
+    static let pool: [HomeProverb] = [
+        HomeProverb(
+            kanji: "七転八起",
+            romaji: "nana korobi ya oki",
+            translation: "Fall seven times, rise eight."
+        ),
+        HomeProverb(
+            kanji: "一期一会",
+            romaji: "ichi go ichi e",
+            translation: "One time, one meeting — treasure every encounter."
+        ),
+        HomeProverb(
+            kanji: "\u{6E29}\u{6545}\u{77E5}\u{65B0}", // 温故知新
+            romaji: "onko chishin",
+            translation: "Learn the new by warming the old."
+        ),
+        HomeProverb(
+            kanji: "\u{4E00}\u{5FC3}\u{4E0D}\u{4E71}", // 一心不乱
+            romaji: "isshin furan",
+            translation: "One mind, no scattering — wholehearted focus."
+        ),
+        HomeProverb(
+            kanji: "\u{521D}\u{5FD7}\u{8CAB}\u{5FB9}", // 初志貫徹
+            romaji: "shoshi kantetsu",
+            translation: "Carry your first intention through to the end."
+        ),
+        HomeProverb(
+            kanji: "\u{6709}\u{8A00}\u{5B9F}\u{884C}", // 有言実行
+            romaji: "yūgen jikkō",
+            translation: "Words become deeds."
+        )
+    ]
+
+    static func dailyProverb(level: Int) -> HomeProverb {
+        // Seed by day + level so it changes daily but stays stable across
+        // re-renders of the same screen.
+        let day = Calendar.current.ordinality(of: .day, in: .year, for: Date()) ?? 0
+        let idx = abs(day + level) % pool.count
+        return pool[idx]
     }
 }
 

@@ -1,7 +1,5 @@
 # Ikeru — AI Provider Setup Guide
 
-> Personal use only. Ikeru is not distributed on the App Store.
-
 Ikeru routes AI requests across several free cloud providers + on-device Apple
 FoundationModels. Each provider stores its API key in iOS Keychain and the
 router falls back automatically when one is unavailable, rate-limited, or

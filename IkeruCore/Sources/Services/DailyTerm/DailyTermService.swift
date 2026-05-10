@@ -72,18 +72,21 @@ public struct DailyTermService: Sendable {
     /// Term scheduled for the day immediately preceding `day`, if one exists.
     /// Used for the "discreet reminder of yesterday's term".
     public func previousDayTerm(before day: Date = Date()) async -> DailyTermDTO? {
-        let recent = await repository.termsBefore(day, limit: 1)
+        let normalised = calendar.startOfDay(for: day)
+        let recent = await repository.termsBefore(normalised, limit: 1)
         return recent.first
     }
 
     /// Past terms (most-recent first), capped at `limit`.
     public func recentTerms(before day: Date = Date(), limit: Int = 30) async -> [DailyTermDTO] {
-        await repository.termsBefore(day, limit: limit)
+        let normalised = calendar.startOfDay(for: day)
+        return await repository.termsBefore(normalised, limit: limit)
     }
 
     /// Past terms the user never opened — surfaced in the "missed terms" list.
     public func missedTerms(before day: Date = Date(), limit: Int = 30) async -> [DailyTermDTO] {
-        let recent = await repository.termsBefore(day, limit: limit)
+        let normalised = calendar.startOfDay(for: day)
+        let recent = await repository.termsBefore(normalised, limit: limit)
         return recent.filter { $0.revealedAt == nil }
     }
 

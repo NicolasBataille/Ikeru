@@ -38,14 +38,25 @@ public final class ProfileViewModel {
 
     // MARK: - Profile Loading
 
-    /// Fetches all profiles and sets the first as current if none is set.
+    /// Fetches all profiles and selects the active one from persisted id.
+    /// Falls back to the oldest profile on cold launch and persists that choice.
     public func loadProfile() {
-        let descriptor = FetchDescriptor<UserProfile>()
+        let descriptor = FetchDescriptor<UserProfile>(
+            sortBy: [SortDescriptor(\.createdAt, order: .forward)]
+        )
         let profiles = (try? modelContext.fetch(descriptor)) ?? []
         allProfiles = profiles
-        if currentProfile == nil {
-            currentProfile = profiles.first
+
+        if let activeID = ActiveProfileResolver.activeProfileID(),
+           let active = profiles.first(where: { $0.id == activeID }) {
+            currentProfile = active
+        } else if let first = profiles.first {
+            currentProfile = first
+            ActiveProfileResolver.setActiveProfileID(first.id)
+        } else {
+            currentProfile = nil
         }
+
         Logger.ui.debug("Profiles loaded: \(profiles.count), current: \(self.currentProfile?.displayName ?? "none")")
     }
 
@@ -66,6 +77,8 @@ public final class ProfileViewModel {
         do {
             try modelContext.save()
             currentProfile = profile
+            allProfiles.append(profile)
+            ActiveProfileResolver.setActiveProfileID(profile.id)
             Logger.ui.info("Created user profile: \(trimmedName)")
         } catch {
             Logger.ui.error("Failed to save user profile: \(error)")
@@ -74,14 +87,17 @@ public final class ProfileViewModel {
 
     // MARK: - Profile Switching
 
-    /// Switches to a different profile.
+    /// Switches to a different profile and persists the new active id.
     /// - Parameter profile: The profile to switch to.
     public func switchProfile(to profile: UserProfile) {
         currentProfile = profile
+        ActiveProfileResolver.setActiveProfileID(profile.id)
+        NotificationCenter.default.post(name: .ikeruActiveProfileDidChange, object: profile.id)
         Logger.ui.info("Switched to profile: \(profile.displayName)")
     }
 
     /// Deletes a profile (only if it's not the last remaining one).
+    /// Cascades to RPGState + cards via the SwiftData relationship rule.
     /// - Parameter profile: The profile to delete.
     public func deleteProfile(_ profile: UserProfile) {
         guard allProfiles.count > 1 else {
@@ -89,12 +105,15 @@ public final class ProfileViewModel {
             return
         }
 
+        let wasActive = currentProfile?.id == profile.id
         modelContext.delete(profile)
         do {
             try modelContext.save()
             allProfiles.removeAll { $0.id == profile.id }
-            if currentProfile?.id == profile.id {
-                currentProfile = allProfiles.first
+            if wasActive, let next = allProfiles.first {
+                currentProfile = next
+                ActiveProfileResolver.setActiveProfileID(next.id)
+                NotificationCenter.default.post(name: .ikeruActiveProfileDidChange, object: next.id)
             }
             Logger.ui.info("Deleted profile: \(profile.displayName)")
         } catch {
@@ -127,6 +146,14 @@ public final class ProfileViewModel {
             Logger.ui.error("Failed to save display name update: \(error)")
         }
     }
+}
+
+// MARK: - Notifications
+
+extension Notification.Name {
+    /// Posted when the active profile id changes. Observers should reload
+    /// per-profile state (RPG, cards, home). Object is the new UUID.
+    public static let ikeruActiveProfileDidChange = Notification.Name("ikeru.activeProfileDidChange")
 }
 
 // MARK: - Environment Key

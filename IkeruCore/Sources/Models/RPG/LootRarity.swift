@@ -4,6 +4,7 @@ import Foundation
 /// Determines visual color, glow intensity, and drop probability.
 public enum LootRarity: String, Codable, Sendable, CaseIterable, Comparable {
     case common
+    case uncommon
     case rare
     case epic
     case legendary
@@ -17,9 +18,10 @@ public enum LootRarity: String, Codable, Sendable, CaseIterable, Comparable {
     private var sortOrder: Int {
         switch self {
         case .common: 0
-        case .rare: 1
-        case .epic: 2
-        case .legendary: 3
+        case .uncommon: 1
+        case .rare: 2
+        case .epic: 3
+        case .legendary: 4
         }
     }
 

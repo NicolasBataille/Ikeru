@@ -58,6 +58,7 @@ public final class PlannerService: @unchecked Sendable {
     /// This is a pure function — takes inputs, returns a SessionPlan, no side effects.
     /// - Parameter config: Session configuration including time, mode, and balance data.
     /// - Returns: A SessionPlan with ordered exercises, timing estimates, and skill breakdown.
+    @available(*, deprecated, message: "Use DefaultSessionPlanner.compose(inputs:) instead.")
     public func composeAdaptiveSession(config: SessionConfig) async -> SessionPlan {
         let startTime = CFAbsoluteTimeGetCurrent()
 

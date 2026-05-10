@@ -61,7 +61,8 @@ struct IkeruApp: App {
             ])
             let config = ModelConfiguration(
                 "Ikeru",
-                schema: schema
+                schema: schema,
+                cloudKitDatabase: .none  // Manual backup via CloudBackupManager, not auto-sync
             )
             modelContainer = try ModelContainer(
                 for: schema,
@@ -178,6 +179,115 @@ struct IkeruApp: App {
         }
 
         hasCheckedProfile = true
+
+        // One-shot: attach pre-existing (profile-less) cards to the active profile.
+        Task { @MainActor in
+            let repo = CardRepository(modelContainer: modelContainer)
+            await repo.attachOrphanCards()
+        }
+
+        // One-shot migration: existing profiles predate the unlock-tracking
+        // model and have an empty `acknowledgedUnlocks`. Without backfill,
+        // every threshold they already cross would fire as "new practice
+        // unlocked" the first time the unlock service re-evaluates them.
+        // Run once, when `acknowledgedUnlocks` is empty.
+        Task { @MainActor in
+            let context = modelContainer.mainContext
+            guard let state = ActiveProfileResolver.fetchActiveRPGState(in: context),
+                  state.acknowledgedUnlocks.isEmpty else { return }
+            let fetchedCards: [Card] = (try? context.fetch(FetchDescriptor<Card>())) ?? []
+            let cards: [CardDTO] = fetchedCards.map { card in
+                CardDTO(
+                    id: card.id,
+                    front: card.front,
+                    back: card.back,
+                    type: card.type,
+                    fsrsState: card.fsrsState,
+                    easeFactor: card.easeFactor,
+                    interval: card.interval,
+                    dueDate: card.dueDate,
+                    lapseCount: card.lapseCount,
+                    leechFlag: card.leechFlag
+                )
+            }
+            let snapshot = LearnerSnapshotBuilder.build(
+                cards: cards,
+                jlptLevel: .n5,
+                grammarPointsFamiliarPlus: 0,
+                listeningAccuracyLast30: 0,
+                listeningRecallLast30Days: 0,
+                skillBalances: [:],
+                hasNewContentQueued: false,
+                lastSessionAt: state.lastSessionDate,
+                now: Date()
+            )
+            state.acknowledgedUnlocks = UnlockBackfillService.backfill(
+                previous: state.acknowledgedUnlocks,
+                profile: snapshot,
+                unlockService: DefaultExerciseUnlockService()
+            )
+            try? context.save()
+            Logger.rpg.info(
+                "unlock.backfill applied — acknowledged=\(state.acknowledgedUnlocks.count, privacy: .public)"
+            )
+        }
+
+        // One-shot JLPT backfill: tags pre-existing N5 seed cards with their
+        // JLPT level so the readiness formula can produce a non-zero N5 score
+        // for migrating users. Gated by `RPGState.jlptBackfillVersion`, which
+        // defaults to 0 for existing rows. Mirrors the UnlockBackfill pattern
+        // above. Idempotent — JLPTBackfillService preserves already-tagged
+        // cards.
+        Task { @MainActor in
+            let context = modelContainer.mainContext
+            guard let state = ActiveProfileResolver.fetchActiveRPGState(in: context),
+                  state.jlptBackfillVersion == 0 else { return }
+
+            let fetchedCards: [Card] = (try? context.fetch(FetchDescriptor<Card>())) ?? []
+            let dtos: [CardDTO] = fetchedCards.map { card in
+                CardDTO(
+                    id: card.id,
+                    front: card.front,
+                    back: card.back,
+                    type: card.type,
+                    fsrsState: card.fsrsState,
+                    easeFactor: card.easeFactor,
+                    interval: card.interval,
+                    dueDate: card.dueDate,
+                    lapseCount: card.lapseCount,
+                    leechFlag: card.leechFlag,
+                    jlptLevel: card.jlptLevel
+                )
+            }
+
+            let tagged = JLPTBackfillService.tag(cards: dtos)
+            // Index cards by id for O(1) lookup when applying tags.
+            let cardsByID = Dictionary(uniqueKeysWithValues: fetchedCards.map { ($0.id, $0) })
+
+            var taggedCount = 0
+            for dto in tagged {
+                guard let level = dto.jlptLevel,
+                      let card = cardsByID[dto.id],
+                      card.jlptLevel == nil
+                else { continue }
+                card.jlptLevel = level
+                taggedCount += 1
+                Logger.rpg.info(
+                    "card.tagged.backfill cardId=\(card.id, privacy: .public) level=\(level.rawValue, privacy: .public)"
+                )
+            }
+
+            state.jlptBackfillVersion = 1
+            do {
+                try context.save()
+                Logger.rpg.info("jlpt.backfill complete count=\(taggedCount, privacy: .public)")
+            } catch {
+                // Roll back the in-memory version flag so the next launch
+                // retries the backfill instead of silently skipping it.
+                state.jlptBackfillVersion = 0
+                Logger.rpg.error("jlpt.backfill save.failed error=\(error.localizedDescription, privacy: .public)")
+            }
+        }
     }
 
     // MARK: - Notification Scheduling

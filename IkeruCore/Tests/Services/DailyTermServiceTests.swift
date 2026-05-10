@@ -182,7 +182,9 @@ struct DailyTermServiceTests {
         let second = await service.termForDay(day)
         #expect(first.id == second.id)
 
-        let stored = await repo.term(on: day)
+        // Service normalises to startOfDay before persisting; direct repo
+        // lookups must match the same key.
+        let stored = await repo.term(on: Calendar.current.startOfDay(for: day))
         #expect(stored?.word == first.word)
     }
 
@@ -255,7 +257,7 @@ struct DailyTermServiceTests {
         let term = await service.termForDay(day)
         #expect(term.addedToDictionary == false)
         await service.markAddedToDictionary(termId: term.id)
-        let after = await repo.term(on: day)
+        let after = await repo.term(on: Calendar.current.startOfDay(for: day))
         #expect(after?.addedToDictionary == true)
     }
 
