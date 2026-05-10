@@ -231,6 +231,21 @@ public final class SessionViewModel {
     /// and time-budget-exhaustion exits.
     private var endPolicy: SessionEndPolicy?
 
+    /// JLPT level used to scale per-exercise XP awards via
+    /// `ExerciseXP.multiplier(for:)`. Captured from the learner snapshot
+    /// at session-start so every grade in the session uses a consistent
+    /// difficulty multiplier. Defaults to N5.
+    private var sessionJLPTLevel: JLPTLevel = .n5
+
+    /// Accumulates per-skill XP for the active session. Read-side via
+    /// `skillContribution`; the actor itself is fresh per session.
+    private var ledger = SkillXPLedger()
+
+    /// Per-skill XP earned in the active session. Drives the four-winds
+    /// row on `SessionSummaryView`. Reset to `.zero` on session start;
+    /// updated after every grade.
+    public private(set) var skillContribution: SessionSkillContribution = .zero
+
     /// User-tunable target session duration (minutes). Read from `@AppStorage`
     /// so changes in Settings reflect immediately without rebuilding the VM.
     @ObservationIgnored
@@ -283,6 +298,8 @@ public final class SessionViewModel {
         elapsedTime = 0
         endPolicy = nil
         oneMinuteRemainingFired = false
+        ledger = SkillXPLedger()
+        skillContribution = .zero
     }
 
     /// Composes a session queue via the new `SessionPlanner` pipeline and
@@ -321,6 +338,7 @@ public final class SessionViewModel {
             durationBudgetMinutes: defaultDurationMinutes,
             queueLength: plan.exercises.count
         )
+        sessionJLPTLevel = snapshot.jlptLevel
 
         // Start timer
         startTimer()
@@ -371,6 +389,11 @@ public final class SessionViewModel {
             durationBudgetMinutes: duration,
             queueLength: plan.exercises.count
         )
+        // Custom sessions: use the highest selected JLPT level so the XP
+        // multiplier matches the user's chosen difficulty rather than
+        // their estimated level. Falls back to snapshot estimate if no
+        // levels were selected (defensive — UI requires a selection).
+        sessionJLPTLevel = levels.max() ?? snapshot.jlptLevel
 
         startTimer()
         await loadRPGState()
@@ -402,6 +425,9 @@ public final class SessionViewModel {
             durationBudgetMinutes: defaultDurationMinutes,
             queueLength: mistakes.count
         )
+        // Review-mistakes carries forward whatever level the prior session
+        // ran at — the cards themselves haven't changed.
+        // sessionJLPTLevel intentionally not reset here.
 
         startTimer()
         await loadRPGState()
@@ -525,9 +551,18 @@ public final class SessionViewModel {
             responseTimeMs: responseTimeMs
         )
 
-        // Award XP via RPGService (pure function)
+        // Award XP via ExerciseXP (per-type × JLPT-level multiplier),
+        // delegating to RPGService for level-up bookkeeping. Flashcard
+        // types still match `xpForGrade` totals (delegation in the rule
+        // table), so kana-only N5 sessions award the same XP as before.
+        let exerciseType = exerciseTypeForCurrentReview(card: card)
+        let xpAmount = ExerciseXP.award(
+            type: exerciseType,
+            level: sessionJLPTLevel,
+            grade: grade
+        )
         let result = RPGService.awardXP(
-            grade: grade,
+            amount: xpAmount,
             currentXP: totalXP,
             currentLevel: currentLevel,
             totalReviews: reviewedCount
@@ -537,6 +572,16 @@ public final class SessionViewModel {
         currentLevel = result.newLevel
         xpEarned += result.xpAwarded
         lastXPGained = result.xpAwarded
+
+        // Record per-skill attribution into the session ledger; surfaces
+        // on SessionSummaryView's four-winds row.
+        let recordedType = exerciseType
+        let recordedAmount = xpAmount
+        Task { [ledger] in
+            await ledger.record(xp: recordedAmount, exerciseType: recordedType)
+            let snap = await ledger.snapshot()
+            await MainActor.run { self.skillContribution = snap }
+        }
 
         // Persist RPG state
         await persistRPGState()
@@ -867,6 +912,21 @@ public final class SessionViewModel {
                 self.elapsedTime += 1
                 self.checkOneMinuteRemaining()
             }
+        }
+    }
+
+    /// Maps the SRS card currently being graded to the matching
+    /// `ExerciseType` Spec A enumerated. The session queue is built from
+    /// FSRS cards, so we route by `CardType`. Kana cards live in a
+    /// separate drill surface, so they are never observed here — the
+    /// fallback returns `.kanaStudy` defensively to keep XP attribution
+    /// reading-aligned in any unexpected case.
+    private func exerciseTypeForCurrentReview(card: CardDTO) -> ExerciseType {
+        switch card.type {
+        case .kanji:      return .kanjiStudy
+        case .vocabulary: return .vocabularyStudy
+        case .grammar:    return .fillInBlank
+        case .listening:  return .listeningSubtitled
         }
     }
 

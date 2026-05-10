@@ -25,13 +25,29 @@ public enum RPGService {
         currentLevel: Int,
         totalReviews: Int
     ) -> XPAwardResult {
-        let xpAmount = RPGConstants.xpForGrade(grade)
-        let newXP = currentXP + xpAmount
+        awardXP(
+            amount: RPGConstants.xpForGrade(grade),
+            currentXP: currentXP,
+            currentLevel: currentLevel,
+            totalReviews: totalReviews
+        )
+    }
+
+    /// Awards a precomputed XP amount and returns the updated state values.
+    /// Used by callers that source XP from `ExerciseXP.award(type:level:grade:)`
+    /// — the grade-based overload above delegates here.
+    public static func awardXP(
+        amount: Int,
+        currentXP: Int,
+        currentLevel: Int,
+        totalReviews: Int
+    ) -> XPAwardResult {
+        let newXP = currentXP + amount
         let newLevel = RPGConstants.levelForXP(newXP)
         let didLevelUp = newLevel > currentLevel
 
         Logger.rpg.debug(
-            "XP awarded: +\(xpAmount) (grade=\(grade.rawValue)), total=\(newXP), level=\(newLevel)"
+            "XP awarded: +\(amount), total=\(newXP), level=\(newLevel)"
         )
 
         if didLevelUp {
@@ -43,7 +59,7 @@ public enum RPGService {
             newLevel: newLevel,
             newTotalReviews: totalReviews + 1,
             didLevelUp: didLevelUp,
-            xpAwarded: xpAmount
+            xpAwarded: amount
         )
     }
 
