@@ -54,6 +54,19 @@ public enum LearnerSnapshotBuilder {
         var katakanaFamiliarFronts: Set<String> = []
         var due = 0
 
+        // Per-level cumulative buckets. Tagged-and-familiar+ cards land in
+        // every bucket >= their tag (a `.n3` card counts toward N3, N2, N1
+        // because it is "at or below" each of those harder levels — JLPTLevel
+        // is Comparable with N5 < N4 < N3 < N2 < N1). Untagged cards
+        // (jlptLevel == nil) never contribute — they are pre-N5 (kana) or
+        // user-authored without a level claim.
+        var vocabAtOrBelow: [JLPTLevel: Int] = JLPTLevel.allCases
+            .reduce(into: [:]) { $0[$1] = 0 }
+        var kanjiAtOrBelow: [JLPTLevel: Int] = JLPTLevel.allCases
+            .reduce(into: [:]) { $0[$1] = 0 }
+        var grammarAtOrBelow: [JLPTLevel: Int] = JLPTLevel.allCases
+            .reduce(into: [:]) { $0[$1] = 0 }
+
         for card in cards {
             let mastery = MasteryLevel.from(fsrsState: card.fsrsState, now: now)
             let familiarPlus = mastery.rawValue >= MasteryLevel.familiar.rawValue
@@ -82,6 +95,21 @@ public enum LearnerSnapshotBuilder {
             case .grammar, .listening:
                 break
             }
+
+            // Per-level dicts: only count familiar+ cards with a JLPT tag.
+            guard familiarPlus, let cardLevel = card.jlptLevel else { continue }
+            for level in JLPTLevel.allCases where cardLevel <= level {
+                switch card.type {
+                case .vocabulary:
+                    vocabAtOrBelow[level, default: 0] += 1
+                case .kanji:
+                    kanjiAtOrBelow[level, default: 0] += 1
+                case .grammar:
+                    grammarAtOrBelow[level, default: 0] += 1
+                case .listening:
+                    break
+                }
+            }
         }
 
         return LearnerSnapshot(
@@ -96,7 +124,10 @@ public enum LearnerSnapshotBuilder {
             skillBalances: skillBalances,
             dueCardCount: due,
             hasNewContentQueued: hasNewContentQueued,
-            lastSessionAt: lastSessionAt
+            lastSessionAt: lastSessionAt,
+            vocabularyMasteredAtOrBelow: vocabAtOrBelow,
+            kanjiMasteredAtOrBelow: kanjiAtOrBelow,
+            grammarPointsMasteredAtOrBelow: grammarAtOrBelow
         )
     }
 }
