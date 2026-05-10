@@ -42,6 +42,22 @@ public final class Card {
     /// Whether this card is flagged as a leech (frequently forgotten)
     public var leechFlag: Bool
 
+    /// Raw value storage for the optional JLPT level (used for SwiftData
+    /// migration-safe encoding). `nil` for legacy/untagged cards.
+    public var jlptLevelRawValue: String?
+
+    /// Optional JLPT level tag — `.n5` through `.n1`, or `nil` if not
+    /// tagged. Computed from `jlptLevelRawValue` so SwiftData can persist
+    /// the value as a plain optional String, mirroring the `typeRawValue`
+    /// pattern used elsewhere in this model.
+    public var jlptLevel: JLPTLevel? {
+        get {
+            guard let raw = jlptLevelRawValue else { return nil }
+            return JLPTLevel(rawValue: raw)
+        }
+        set { jlptLevelRawValue = newValue?.rawValue }
+    }
+
     /// The user profile that owns this card
     public var profile: UserProfile?
 
@@ -58,7 +74,8 @@ public final class Card {
         interval: Int = 0,
         dueDate: Date = Date(),
         lapseCount: Int = 0,
-        leechFlag: Bool = false
+        leechFlag: Bool = false,
+        jlptLevel: JLPTLevel? = nil
     ) {
         self.id = UUID()
         self.front = front
@@ -70,6 +87,7 @@ public final class Card {
         self.dueDate = dueDate
         self.lapseCount = lapseCount
         self.leechFlag = leechFlag
+        self.jlptLevelRawValue = jlptLevel?.rawValue
         self.reviewLogs = []
     }
 }

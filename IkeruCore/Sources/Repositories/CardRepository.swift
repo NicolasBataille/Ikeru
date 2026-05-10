@@ -60,6 +60,12 @@ public final class CardRepository: Sendable {
         await backgroundActor.deleteCard(by: id)
     }
 
+    /// Set (or clear) the JLPT level for a card. Used by `JLPTBackfillService`
+    /// to tag existing seed cards on first launch.
+    public func setJLPTLevel(_ level: JLPTLevel?, for cardId: UUID) async {
+        await backgroundActor.setJLPTLevel(level, for: cardId)
+    }
+
     // MARK: - Query Operations
 
     /// Fetch cards that are due for review before the given date.
@@ -265,6 +271,18 @@ actor CardModelActor {
         Logger.srs.debug("Deleted card: \(card.front)")
     }
 
+    func setJLPTLevel(_ level: JLPTLevel?, for cardId: UUID) {
+        let predicate = #Predicate<Card> { $0.id == cardId }
+        let descriptor = FetchDescriptor(predicate: predicate)
+        guard let cards = try? modelContext.fetch(descriptor),
+              let card = cards.first else {
+            Logger.srs.error("Card not found for JLPT tagging: \(cardId)")
+            return
+        }
+        card.jlptLevel = level
+        try? modelContext.save()
+    }
+
     func dueCards(before date: Date) -> [CardDTO] {
         activeProfileCards()
             .filter { $0.dueDate < date }
@@ -366,7 +384,8 @@ extension Card {
             interval: interval,
             dueDate: dueDate,
             lapseCount: lapseCount,
-            leechFlag: leechFlag
+            leechFlag: leechFlag,
+            jlptLevel: jlptLevel
         )
     }
 }
