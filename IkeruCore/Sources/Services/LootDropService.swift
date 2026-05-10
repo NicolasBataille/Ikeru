@@ -143,6 +143,13 @@ public enum LootDropService {
                 LootTemplate(category: .badge, name: "Practice Token", iconName: "circle.fill"),
                 LootTemplate(category: .theme, name: "Ink Wash", iconName: "paintbrush.fill"),
             ]
+        case .uncommon:
+            templates = [
+                LootTemplate(category: .badge, name: "Bamboo Sprig", iconName: "leaf.fill"),
+                LootTemplate(category: .scroll, name: "Practice Sutra", iconName: "scroll.fill"),
+                LootTemplate(category: .badge, name: "Tea Cup", iconName: "cup.and.saucer.fill"),
+                LootTemplate(category: .theme, name: "Misty Morning", iconName: "cloud.fill"),
+            ]
         case .rare:
             templates = [
                 LootTemplate(category: .badge, name: "Kanji Crystal", iconName: "diamond.fill"),
