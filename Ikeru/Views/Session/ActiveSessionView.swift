@@ -18,6 +18,7 @@ struct ActiveSessionView: View {
     @State private var levelUpLevel: Int?
     @State private var lootDrop: LootItem?
     @State private var dragOffset: CGFloat = 0
+    @State private var showOneMinuteToast = false
 
     var body: some View {
         ZStack {
@@ -35,6 +36,12 @@ struct ActiveSessionView: View {
             if showPauseOverlay {
                 pauseOverlay
             }
+
+            // Abandon confirmation — custom app-styled sheet (replaces
+            // generic iOS confirmationDialog).
+            if viewModel.showAbandonConfirmation {
+                abandonConfirmationOverlay
+            }
         }
         .toolbar(.hidden, for: .tabBar)
         .statusBarHidden(true)
@@ -44,6 +51,10 @@ struct ActiveSessionView: View {
         .lootDropOverlay(item: $lootDrop)
         .sensoryFeedback(.success, trigger: hapticTriggerCorrect)
         .sensoryFeedback(.warning, trigger: hapticTriggerIncorrect)
+        .animation(
+            .spring(response: 0.38, dampingFraction: 0.82),
+            value: viewModel.showAbandonConfirmation
+        )
         .onChange(of: viewModel.lastXPGained) { _, newValue in
             if let xp = newValue {
                 xpGained = xp
@@ -62,20 +73,98 @@ struct ActiveSessionView: View {
                 viewModel.clearLootDrop()
             }
         }
-        .confirmationDialog(
-            "End Session?",
-            isPresented: $viewModel.showAbandonConfirmation,
-            titleVisibility: .visible
-        ) {
-            Button("End Session", role: .destructive) {
-                viewModel.endSession()
-                showPauseOverlay = false
+        .overlay(alignment: .top) {
+            if showOneMinuteToast {
+                Text(
+                    "Session.OneMinuteRemaining",
+                    comment: "Toast shown 60s before time budget ends the session"
+                )
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(Color.ikeruTextPrimary)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                .tatamiRoom(.glass, padding: 0)
+                .padding(.top, 12)
+                .transition(.opacity.combined(with: .move(edge: .top)))
             }
-            Button("Cancel", role: .cancel) {
-                viewModel.cancelAbandon()
+        }
+        .onChange(of: viewModel.oneMinuteRemainingFired) { _, fired in
+            guard fired else { return }
+            withAnimation(.easeInOut(duration: 0.25)) {
+                showOneMinuteToast = true
             }
-        } message: {
-            Text(viewModel.abandonProgressDescription)
+            Task {
+                try? await Task.sleep(for: .seconds(3))
+                withAnimation(.easeInOut(duration: 0.25)) {
+                    showOneMinuteToast = false
+                }
+            }
+        }
+    }
+
+    // MARK: - Abandon Confirmation Overlay
+
+    private var abandonConfirmationOverlay: some View {
+        ZStack {
+            // Scrim — tapping dismisses.
+            Rectangle()
+                .fill(Color.black.opacity(0.55))
+                .ignoresSafeArea()
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    viewModel.cancelAbandon()
+                }
+                .transition(.opacity)
+
+            VStack(spacing: IkeruTheme.Spacing.lg) {
+                VStack(spacing: IkeruTheme.Spacing.sm) {
+                    Image(systemName: "arrow.uturn.left.circle")
+                        .font(.system(size: 44, weight: .light))
+                        .foregroundStyle(LinearGradient.ikeruGold)
+
+                    Text("END SESSION")
+                        .font(.ikeruMicro)
+                        .ikeruTracking(.micro)
+                        .foregroundStyle(Color.ikeruTextTertiary)
+
+                    Text("Leave this session?")
+                        .font(.system(size: 22, weight: .regular, design: .serif))
+                        .foregroundStyle(Color.ikeruTextPrimary)
+                        .multilineTextAlignment(.center)
+
+                    Text(viewModel.abandonProgressDescription)
+                        .font(.ikeruBody)
+                        .foregroundStyle(Color.ikeruTextSecondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, IkeruTheme.Spacing.sm)
+                }
+                .padding(.top, IkeruTheme.Spacing.md)
+
+                VStack(spacing: IkeruTheme.Spacing.sm) {
+                    Button {
+                        viewModel.endSession()
+                        showPauseOverlay = false
+                    } label: {
+                        Text("End Session")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .ikeruButtonStyle(.danger)
+
+                    Button {
+                        viewModel.cancelAbandon()
+                    } label: {
+                        Text("Keep Going")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .ikeruButtonStyle(.ghost)
+                }
+            }
+            .frame(maxWidth: 360)
+            .tatamiRoom(.glass, padding: IkeruTheme.Spacing.xl)
+            .padding(.horizontal, IkeruTheme.Spacing.lg)
+            .transition(
+                .scale(scale: 0.92).combined(with: .opacity)
+            )
         }
     }
 
@@ -141,13 +230,13 @@ struct ActiveSessionView: View {
                     }
                 },
                 currentCard: viewModel.currentCard,
-                nextCard: viewModel.nextCard,
+                upcomingCards: viewModel.upcomingCards,
                 feedbackState: viewModel.feedbackState
             )
             .frame(maxHeight: .infinity)
         }
         .ignoresSafeArea(.container, edges: .bottom)
-        .gesture(pauseSwipeGesture)
+        .simultaneousGesture(pauseSwipeGesture)
     }
 
     // MARK: - Drag Indicator Pill

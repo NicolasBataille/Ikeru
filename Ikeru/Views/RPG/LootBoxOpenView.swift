@@ -49,8 +49,7 @@ struct LootBoxOpenView: View {
 
     private func persistOpening() {
         let context = modelContext
-        let descriptor = FetchDescriptor<RPGState>()
-        guard let state = try? context.fetch(descriptor).first else { return }
+        guard let state = ActiveProfileResolver.fetchActiveRPGState(in: context) else { return }
         state.openLootBox(id: lootBox.id)
         try? context.save()
     }

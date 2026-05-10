@@ -44,17 +44,26 @@ public final class CardRepository: Sendable {
         await backgroundActor.card(by: id)
     }
 
-    /// Fetch all cards across all profiles.
-    /// NOTE: Currently unscoped to a specific profile. This is acceptable while
-    /// the app uses a single active profile context. Profile-scoped queries would
-    /// require changing the Card model relationship which is too risky to change now.
+    /// Fetch all cards belonging to the currently active profile.
     public func allCards() async -> [CardDTO] {
         await backgroundActor.allCards()
+    }
+
+    /// Attaches any orphan cards (profile == nil) to the active profile.
+    /// One-shot migration for users created before per-profile card scoping.
+    public func attachOrphanCards() async {
+        await backgroundActor.attachOrphanCards()
     }
 
     /// Delete a card by its ID.
     public func deleteCard(by id: UUID) async {
         await backgroundActor.deleteCard(by: id)
+    }
+
+    /// Set (or clear) the JLPT level for a card. Used by `JLPTBackfillService`
+    /// to tag existing seed cards on first launch.
+    public func setJLPTLevel(_ level: JLPTLevel?, for cardId: UUID) async {
+        await backgroundActor.setJLPTLevel(level, for: cardId)
     }
 
     // MARK: - Query Operations
@@ -98,18 +107,6 @@ public final class CardRepository: Sendable {
         await backgroundActor.reviewLogs(for: cardId)
     }
 
-    // MARK: - Leech Operations
-
-    /// Mark a card as a leech.
-    public func markAsLeech(cardId: UUID) async {
-        await backgroundActor.markAsLeech(cardId: cardId)
-    }
-
-    /// Tighten intervals for a leech card to accelerate re-review.
-    public func tightenIntervals(cardId: UUID) async {
-        await backgroundActor.tightenIntervals(cardId: cardId)
-    }
-
     /// Fetch all review logs within a date range across all cards.
     public func allReviewLogs(from startDate: Date, to endDate: Date) async -> [ReviewLogDTO] {
         await backgroundActor.allReviewLogs(from: startDate, to: endDate)
@@ -130,6 +127,10 @@ public struct CardDTO: Sendable, Identifiable {
     public let dueDate: Date
     public let lapseCount: Int
     public let leechFlag: Bool
+    /// Optional JLPT level tag. `nil` for legacy/untagged cards (e.g. kana,
+    /// user-authored). Populated by `JLPTBackfillService` for known seed
+    /// vocabulary and kanji.
+    public let jlptLevel: JLPTLevel?
 
     public init(
         id: UUID,
@@ -141,7 +142,8 @@ public struct CardDTO: Sendable, Identifiable {
         interval: Int,
         dueDate: Date,
         lapseCount: Int,
-        leechFlag: Bool
+        leechFlag: Bool,
+        jlptLevel: JLPTLevel? = nil
     ) {
         self.id = id
         self.front = front
@@ -153,6 +155,7 @@ public struct CardDTO: Sendable, Identifiable {
         self.dueDate = dueDate
         self.lapseCount = lapseCount
         self.leechFlag = leechFlag
+        self.jlptLevel = jlptLevel
     }
 }
 
@@ -173,6 +176,44 @@ public struct ReviewLogDTO: Sendable, Identifiable {
 @ModelActor
 actor CardModelActor {
 
+    // MARK: - Active Profile Scoping
+
+    /// Reads the UserDefaults-backed active profile id. Returns nil if unset.
+    private func activeProfileID() -> UUID? {
+        guard
+            let raw = UserDefaults.standard.string(forKey: UserProfile.activeProfileIDDefaultsKey),
+            !raw.isEmpty,
+            let id = UUID(uuidString: raw)
+        else { return nil }
+        return id
+    }
+
+    /// Fetches the currently-active UserProfile, or the oldest as a fallback.
+    private func fetchActiveProfile() -> UserProfile? {
+        if let id = activeProfileID() {
+            let predicate = #Predicate<UserProfile> { $0.id == id }
+            var descriptor = FetchDescriptor<UserProfile>(predicate: predicate)
+            descriptor.fetchLimit = 1
+            if let profile = (try? modelContext.fetch(descriptor))?.first {
+                return profile
+            }
+        }
+        var descriptor = FetchDescriptor<UserProfile>(
+            sortBy: [SortDescriptor(\.createdAt, order: .forward)]
+        )
+        descriptor.fetchLimit = 1
+        return (try? modelContext.fetch(descriptor))?.first
+    }
+
+    /// Returns cards belonging to the active profile (including legacy
+    /// orphans with `profile == nil`, once migrated). See `attachOrphanCards`.
+    private func activeProfileCards() -> [Card] {
+        guard let profile = fetchActiveProfile() else { return [] }
+        return profile.cards ?? []
+    }
+
+    // MARK: - CRUD (scoped to active profile)
+
     func createCard(
         front: String,
         back: String,
@@ -187,6 +228,7 @@ actor CardModelActor {
             dueDate: dueDate,
             leechFlag: leechFlag
         )
+        card.profile = fetchActiveProfile()
         modelContext.insert(card)
         try? modelContext.save()
         Logger.srs.debug("Created card: \(card.front)")
@@ -200,11 +242,21 @@ actor CardModelActor {
         return results.first?.toDTO()
     }
 
-    // NOTE: Returns all cards across all profiles — see CardRepository.allCards() comment.
+    /// All cards belonging to the active profile.
     func allCards() -> [CardDTO] {
-        let descriptor = FetchDescriptor<Card>()
-        let results = (try? modelContext.fetch(descriptor)) ?? []
-        return results.map { $0.toDTO() }
+        activeProfileCards().map { $0.toDTO() }
+    }
+
+    /// Attach any orphan cards (profile == nil) to the oldest profile.
+    /// Safe to call on every launch — no-op once all cards have a profile.
+    func attachOrphanCards() {
+        guard let fallback = fetchActiveProfile() else { return }
+        let predicate = #Predicate<Card> { $0.profile == nil }
+        let descriptor = FetchDescriptor(predicate: predicate)
+        guard let orphans = try? modelContext.fetch(descriptor), !orphans.isEmpty else { return }
+        for card in orphans { card.profile = fallback }
+        try? modelContext.save()
+        Logger.srs.info("Attached \(orphans.count) orphan cards to profile: \(fallback.displayName)")
     }
 
     func deleteCard(by id: UUID) {
@@ -219,26 +271,35 @@ actor CardModelActor {
         Logger.srs.debug("Deleted card: \(card.front)")
     }
 
-    func dueCards(before date: Date) -> [CardDTO] {
-        let predicate = #Predicate<Card> { $0.dueDate < date }
+    func setJLPTLevel(_ level: JLPTLevel?, for cardId: UUID) {
+        let predicate = #Predicate<Card> { $0.id == cardId }
         let descriptor = FetchDescriptor(predicate: predicate)
-        let results = (try? modelContext.fetch(descriptor)) ?? []
-        return results.map { $0.toDTO() }
+        guard let cards = try? modelContext.fetch(descriptor),
+              let card = cards.first else {
+            Logger.srs.error("Card not found for JLPT tagging: \(cardId)")
+            return
+        }
+        card.jlptLevel = level
+        try? modelContext.save()
+    }
+
+    func dueCards(before date: Date) -> [CardDTO] {
+        activeProfileCards()
+            .filter { $0.dueDate < date }
+            .map { $0.toDTO() }
     }
 
     func leechCards() -> [CardDTO] {
-        let predicate = #Predicate<Card> { $0.leechFlag == true }
-        let descriptor = FetchDescriptor(predicate: predicate)
-        let results = (try? modelContext.fetch(descriptor)) ?? []
-        return results.map { $0.toDTO() }
+        activeProfileCards()
+            .filter { $0.leechFlag }
+            .map { $0.toDTO() }
     }
 
     func cards(byType type: CardType) -> [CardDTO] {
-        let typeRawValue = type.rawValue
-        let predicate = #Predicate<Card> { $0.typeRawValue == typeRawValue }
-        let descriptor = FetchDescriptor(predicate: predicate)
-        let results = (try? modelContext.fetch(descriptor)) ?? []
-        return results.map { $0.toDTO() }
+        let raw = type.rawValue
+        return activeProfileCards()
+            .filter { $0.typeRawValue == raw }
+            .map { $0.toDTO() }
     }
 
     func gradeCard(
@@ -299,42 +360,6 @@ actor CardModelActor {
         return logs.map { $0.toDTO() }
     }
 
-    func markAsLeech(cardId: UUID) {
-        let predicate = #Predicate<Card> { $0.id == cardId }
-        let descriptor = FetchDescriptor(predicate: predicate)
-        guard let cards = try? modelContext.fetch(descriptor),
-              let card = cards.first else {
-            Logger.srs.error("Card not found for leech marking: \(cardId)")
-            return
-        }
-
-        card.leechFlag = true
-        try? modelContext.save()
-        Logger.srs.info("Marked card as leech: \(card.front)")
-    }
-
-    func tightenIntervals(cardId: UUID) {
-        let predicate = #Predicate<Card> { $0.id == cardId }
-        let descriptor = FetchDescriptor(predicate: predicate)
-        guard let cards = try? modelContext.fetch(descriptor),
-              let card = cards.first else {
-            Logger.srs.error("Card not found for interval tightening: \(cardId)")
-            return
-        }
-
-        let tightenedInterval = max(1, card.interval / 2)
-        card.interval = tightenedInterval
-
-        let now = Date()
-        let newDueDate = now.addingTimeInterval(Double(tightenedInterval) * 86400)
-        card.dueDate = newDueDate
-
-        try? modelContext.save()
-        Logger.srs.info(
-            "Tightened intervals for \(card.front): interval=\(tightenedInterval)d"
-        )
-    }
-
     func allReviewLogs(from startDate: Date, to endDate: Date) -> [ReviewLogDTO] {
         let predicate = #Predicate<ReviewLog> {
             $0.timestamp >= startDate && $0.timestamp <= endDate
@@ -359,7 +384,8 @@ extension Card {
             interval: interval,
             dueDate: dueDate,
             lapseCount: lapseCount,
-            leechFlag: leechFlag
+            leechFlag: leechFlag,
+            jlptLevel: jlptLevel
         )
     }
 }

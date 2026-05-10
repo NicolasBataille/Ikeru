@@ -44,6 +44,10 @@ struct XPBarView: View {
 
     @State private var isPulsing = false
 
+    /// Name of the equipped theme cosmetic, if any. Read from UserDefaults so
+    /// every XP bar in the app reflects the current cosmetic without plumbing.
+    @AppStorage("ikeru.equippedThemeName") private var equippedThemeName: String = ""
+
     var body: some View {
         switch variant {
         case .full:
@@ -54,14 +58,19 @@ struct XPBarView: View {
     }
 
     // MARK: - Full Variant
+    //
+    // Rank chrome was removed here because the calling screens (RPGProfile,
+    // Home) now lead with `EnsoRankView` + 第N段 — the brushed glyph carries
+    // rank identity. Repeating "Lv. N" with a shield icon doubled the visual
+    // weight and contradicted the wabi-sabi refinement direction.
 
     private var fullVariant: some View {
-        VStack(spacing: IkeruTheme.Spacing.xs) {
-            // Level and XP text
+        VStack(alignment: .trailing, spacing: IkeruTheme.Spacing.xs) {
             HStack {
-                Label("Lv. \(level)", systemImage: "shield.fill")
-                    .font(.ikeruHeading3)
-                    .foregroundStyle(Color(hex: IkeruTheme.Colors.Rarity.legendary))
+                Text("EXPERIENCE")
+                    .font(.ikeruMicro)
+                    .ikeruTracking(.micro)
+                    .foregroundStyle(Color.ikeruTextTertiary)
 
                 Spacer()
 
@@ -130,10 +139,13 @@ struct XPBarView: View {
     // MARK: - Gradient
 
     private var xpGradient: LinearGradient {
-        LinearGradient(
+        let palette = ThemePaletteService.palette(
+            forThemeName: equippedThemeName.isEmpty ? nil : equippedThemeName
+        )
+        return LinearGradient(
             colors: [
-                Color(hex: IkeruTheme.Colors.primaryAccent),   // amber
-                Color(hex: IkeruTheme.Colors.Rarity.legendary) // gold
+                Color(hex: palette.startHex),
+                Color(hex: palette.endHex)
             ],
             startPoint: .leading,
             endPoint: .trailing

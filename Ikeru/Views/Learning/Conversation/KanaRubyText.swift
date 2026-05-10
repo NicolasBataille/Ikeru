@@ -58,7 +58,7 @@ struct KanaRubyText: View {
     var body: some View {
         if showFurigana {
             let tokens = Self.tokenize(content)
-            KanaRubyFlowLayout(
+            IkeruFlowLayout(
                 spacing: 0,
                 maxWidth: maxWidth ?? (UIScreen.main.bounds.width - 120)
             ) {
@@ -257,73 +257,6 @@ extension Character {
     var isKatakana: Bool {
         guard let scalar = unicodeScalars.first else { return false }
         return (0x30A0...0x30FF).contains(scalar.value)
-    }
-}
-
-// MARK: - KanaRubyFlowLayout
-
-private struct KanaRubyFlowLayout: Layout {
-
-    let spacing: CGFloat
-    let maxWidth: CGFloat
-
-    func sizeThatFits(
-        proposal: ProposedViewSize,
-        subviews: Subviews,
-        cache: inout ()
-    ) -> CGSize {
-        layout(subviews: subviews).size
-    }
-
-    func placeSubviews(
-        in bounds: CGRect,
-        proposal: ProposedViewSize,
-        subviews: Subviews,
-        cache: inout ()
-    ) {
-        let result = layout(subviews: subviews)
-        for (index, subview) in subviews.enumerated() {
-            guard index < result.positions.count else { break }
-            let position = result.positions[index]
-            subview.place(
-                at: CGPoint(x: bounds.minX + position.x, y: bounds.minY + position.y),
-                proposal: .unspecified
-            )
-        }
-    }
-
-    private struct LayoutResult {
-        let positions: [CGPoint]
-        let size: CGSize
-    }
-
-    private func layout(
-        subviews: Subviews
-    ) -> LayoutResult {
-        let maxWidth = self.maxWidth
-        var positions: [CGPoint] = []
-        var currentX: CGFloat = 0
-        var currentY: CGFloat = 0
-        var lineHeight: CGFloat = 0
-        var totalWidth: CGFloat = 0
-
-        for subview in subviews {
-            let size = subview.sizeThatFits(.unspecified)
-            if currentX + size.width > maxWidth, currentX > 0 {
-                currentX = 0
-                currentY += lineHeight + spacing
-                lineHeight = 0
-            }
-            positions.append(CGPoint(x: currentX, y: currentY))
-            currentX += size.width + spacing
-            lineHeight = max(lineHeight, size.height)
-            totalWidth = max(totalWidth, currentX)
-        }
-
-        return LayoutResult(
-            positions: positions,
-            size: CGSize(width: totalWidth, height: currentY + lineHeight)
-        )
     }
 }
 

@@ -80,7 +80,7 @@ public final class VocabularyDrillViewModel {
     public func reveal() {
         guard let entry = currentEntry, !isRevealed else { return }
         isRevealed = true
-        predictedIntervals = computePredictedIntervals(for: entry)
+        predictedIntervals = computePredictedIntervals(fsrsState: entry.fsrsState, now: now())
     }
 
     public func grade(_ grade: Grade) async {
@@ -112,7 +112,7 @@ public final class VocabularyDrillViewModel {
         isAnswered = true
         let elapsedMs = Int(now().timeIntervalSince(entryStartedAt) * 1000)
         let isCorrect = selected == correctOption
-        let grade = mapQuizResult(correct: isCorrect, responseTimeMs: elapsedMs)
+        let grade = mapQuizResultToGrade(correct: isCorrect, responseTimeMs: elapsedMs)
 
         await vocabularyRepository.gradeEntry(
             entryId: entry.id,
@@ -175,13 +175,6 @@ public final class VocabularyDrillViewModel {
 
     // MARK: - Helpers
 
-    func mapQuizResult(correct: Bool, responseTimeMs: Int) -> Grade {
-        if !correct { return .again }
-        if responseTimeMs < 2_000 { return .easy }
-        if responseTimeMs < 5_000 { return .good }
-        return .hard
-    }
-
     /// Build 4 quiz options: correct meaning + 3 distractors from other dictionary entries.
     private func buildQuiz(for entry: VocabularyEntryDTO) {
         let correctMeaning = entry.meaning
@@ -204,27 +197,4 @@ public final class VocabularyDrillViewModel {
         quizOptions = options.shuffled()
     }
 
-    private func computePredictedIntervals(for entry: VocabularyEntryDTO) -> [Grade: String] {
-        var result: [Grade: String] = [:]
-        let nowValue = now()
-        for grade in Grade.allCases {
-            let newState = FSRSService.schedule(state: entry.fsrsState, grade: grade, now: nowValue)
-            let due = FSRSService.dueDate(for: newState, now: nowValue)
-            result[grade] = formatInterval(from: nowValue, to: due)
-        }
-        return result
-    }
-
-    private func formatInterval(from start: Date, to end: Date) -> String {
-        let seconds = max(0, end.timeIntervalSince(start))
-        if seconds < 60 { return "1 min" }
-        let minutes = Int(ceil(seconds / 60))
-        if minutes < 60 { return "\(minutes) min" }
-        let hours = Int(ceil(seconds / 3_600))
-        if hours < 24 { return "\(hours) h" }
-        let days = Int(ceil(seconds / 86_400))
-        if days < 30 { return "\(days) j" }
-        let months = Int(ceil(seconds / (86_400 * 30)))
-        return "\(months) mois"
-    }
 }

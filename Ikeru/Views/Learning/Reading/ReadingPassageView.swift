@@ -205,7 +205,7 @@ private struct WrappingHStack: View {
     let viewModel: ReadingPassageViewModel
 
     var body: some View {
-        FlowLayout(spacing: 2) {
+        IkeruFlowLayout(spacing: 2) {
             ForEach(sentence.words) { word in
                 FuriganaWordView(
                     word: word,
@@ -269,81 +269,6 @@ private struct FuriganaWordView: View {
     }
 }
 
-// MARK: - FlowLayout
-
-/// A simple horizontal flow layout that wraps content to the next line.
-private struct FlowLayout: Layout {
-
-    let spacing: CGFloat
-
-    func sizeThatFits(
-        proposal: ProposedViewSize,
-        subviews: Subviews,
-        cache: inout ()
-    ) -> CGSize {
-        let result = computeLayout(proposal: proposal, subviews: subviews)
-        return result.size
-    }
-
-    func placeSubviews(
-        in bounds: CGRect,
-        proposal: ProposedViewSize,
-        subviews: Subviews,
-        cache: inout ()
-    ) {
-        let result = computeLayout(proposal: proposal, subviews: subviews)
-
-        for (index, position) in result.positions.enumerated() {
-            guard index < subviews.count else { break }
-            subviews[index].place(
-                at: CGPoint(
-                    x: bounds.minX + position.x,
-                    y: bounds.minY + position.y
-                ),
-                proposal: .unspecified
-            )
-        }
-    }
-
-    private struct LayoutResult {
-        let size: CGSize
-        let positions: [CGPoint]
-    }
-
-    private func computeLayout(
-        proposal: ProposedViewSize,
-        subviews: Subviews
-    ) -> LayoutResult {
-        let maxWidth = proposal.width ?? .infinity
-        var positions: [CGPoint] = []
-        var currentX: CGFloat = 0
-        var currentY: CGFloat = 0
-        var lineHeight: CGFloat = 0
-        var maxX: CGFloat = 0
-
-        for subview in subviews {
-            let size = subview.sizeThatFits(.unspecified)
-
-            if currentX + size.width > maxWidth, currentX > 0 {
-                currentX = 0
-                currentY += lineHeight + spacing
-                lineHeight = 0
-            }
-
-            positions.append(CGPoint(x: currentX, y: currentY))
-            currentX += size.width + spacing
-            lineHeight = max(lineHeight, size.height)
-            maxX = max(maxX, currentX)
-        }
-
-        let totalHeight = currentY + lineHeight
-        return LayoutResult(
-            size: CGSize(width: maxX, height: totalHeight),
-            positions: positions
-        )
-    }
-}
-
 // MARK: - Preview
 
 #Preview("ReadingPassageView") {
@@ -360,7 +285,7 @@ private struct FlowLayout: Layout {
                 .foregroundStyle(.white)
 
             ForEach(passage.sentences) { sentence in
-                FlowLayout(spacing: 2) {
+                IkeruFlowLayout(spacing: 2) {
                     ForEach(sentence.words) { word in
                         FuriganaWordView(
                             word: word,

@@ -41,8 +41,37 @@ public final class HomeViewModel {
     /// Number of unopened lootboxes.
     public private(set) var unopenedLootBoxCount: Int = 0
 
+    /// Skill balance snapshot for the home radar card.
+    public private(set) var skillBalance: SkillBalanceSnapshot = SkillBalanceSnapshot()
+
+    /// Estimated number of new cards in the next session.
+    public private(set) var sessionPreviewNewCount: Int = 0
+
+    /// Estimated number of review cards in the next session.
+    public private(set) var sessionPreviewReviewCount: Int = 0
+
+    /// XP earned so far within the current level (0 ≤ value < xpForLevel(level)).
+    public var xpInCurrentLevel: Int {
+        RPGConstants.progressInLevel(totalXP: xp).current
+    }
+
+    /// XP required to complete the current level.
+    public var xpRequiredForLevel: Int {
+        RPGConstants.progressInLevel(totalXP: xp).required
+    }
+
+    /// XP remaining to reach the next rank.
+    public var xpToNextLevel: Int {
+        max(0, xpRequiredForLevel - xpInCurrentLevel)
+    }
+
     /// Whether data has been loaded at least once.
     public private(set) var hasLoaded: Bool = false
+
+    /// Whether Home should show 「今日は休 / Rest day」 instead of the
+    /// session CTA. Driven by `RestDayDetector.shouldShowRestDay(...)`.
+    /// Refreshed by `refreshRestDay()` whenever the Home view appears.
+    public private(set) var restDayActive: Bool = false
 
     // MARK: - Computed
 
@@ -90,6 +119,7 @@ public final class HomeViewModel {
     private let modelContainer: ModelContainer
     private let cardRepository: CardRepository
     private let plannerService: PlannerService
+    private let progressService: ProgressService
 
     // MARK: - Init
 
@@ -98,6 +128,7 @@ public final class HomeViewModel {
         let repo = CardRepository(modelContainer: modelContainer)
         self.cardRepository = repo
         self.plannerService = PlannerService(cardRepository: repo)
+        self.progressService = ProgressService(cardRepository: repo)
     }
 
     /// Initializer for testing with injected dependencies.
@@ -109,9 +140,74 @@ public final class HomeViewModel {
         self.modelContainer = modelContainer
         self.cardRepository = cardRepository
         self.plannerService = plannerService
+        self.progressService = ProgressService(cardRepository: cardRepository)
+    }
+
+    // MARK: - Rest Day
+
+    /// Re-evaluates whether Home should show the 「今日は休 / Rest day」
+    /// state. Composes a `LearnerSnapshot` from current cards + active
+    /// `RPGState.lastSessionDate`, and runs it through `RestDayDetector`.
+    /// Call from `HomeView`'s `.task` modifier.
+    public func refreshRestDay() async {
+        let cards = await cardRepository.allCards()
+        let context = modelContainer.mainContext
+        let lastSession = ActiveProfileResolver
+            .fetchActiveRPGState(in: context)?.lastSessionDate
+        let balances: [SkillType: Double] = [
+            .reading:   skillBalance.reading,
+            .listening: skillBalance.listening,
+            .writing:   skillBalance.writing,
+            .speaking:  skillBalance.speaking,
+        ]
+        let snapshot = LearnerSnapshot(
+            jlptLevel: .n5,
+            vocabularyMasteredFamiliarPlus: 0,
+            kanjiMasteredFamiliarPlus: 0,
+            hiraganaMastered: false,
+            katakanaMastered: false,
+            grammarPointsFamiliarPlus: 0,
+            listeningAccuracyLast30: 0,
+            listeningRecallLast30Days: 0,
+            skillBalances: balances,
+            dueCardCount: cards.filter { $0.dueDate <= Date() }.count,
+            hasNewContentQueued: cards.contains(where: { $0.fsrsState.reps == 0 }),
+            lastSessionAt: lastSession
+        )
+        restDayActive = RestDayDetector.shouldShowRestDay(profile: snapshot, now: Date())
+        Logger.rpg.info("restDay.\(self.restDayActive ? "shown" : "hidden", privacy: .public)")
     }
 
     // MARK: - Data Loading
+
+    /// Snapshot of the three signals used by the
+    /// `DisplayModeAdvancedThresholdMonitor` to decide whether the
+    /// "you're ready for Tatami" suggestion card should appear.
+    public struct AdvancedThresholdSignals: Sendable {
+        public let streak: Int
+        public let reviews: Int
+        public let mastery: Int
+    }
+
+    /// Returns the current threshold signals for the active profile.
+    /// Reads `RPGState` for streak / total reviews and the card repository
+    /// for the mastered-card count. Safe to call on the main actor.
+    public func advancedThresholdSignals() async -> AdvancedThresholdSignals {
+        let context = modelContainer.mainContext
+        let rpg = ActiveProfileResolver.fetchActiveRPGState(in: context)
+        let streak = rpg?.currentDailyStreak ?? 0
+        let reviews = rpg?.totalReviewsCompleted ?? 0
+        let allCards = await cardRepository.allCards()
+        let masteryCount = allCards.filter { card in
+            MasteryLevel.from(fsrsState: card.fsrsState).rawValue
+                >= MasteryLevel.familiar.rawValue
+        }.count
+        return AdvancedThresholdSignals(
+            streak: streak,
+            reviews: reviews,
+            mastery: masteryCount
+        )
+    }
 
     /// Loads all home screen data from local SwiftData.
     /// Called on .onAppear to refresh after session completion.
@@ -123,6 +219,7 @@ public final class HomeViewModel {
         await loadDueCardCount()
         await loadKanjiLearnedCount()
         await composeSessionPreview()
+        await loadSkillBalance()
 
         hasLoaded = true
 
@@ -134,20 +231,17 @@ public final class HomeViewModel {
 
     private func loadProfile() async {
         let context = modelContainer.mainContext
-        let descriptor = FetchDescriptor<UserProfile>()
-        let profiles = (try? context.fetch(descriptor)) ?? []
-        displayName = profiles.first?.displayName ?? ""
+        displayName = ActiveProfileResolver.fetchActiveProfile(in: context)?.displayName ?? ""
     }
 
     private func loadRPGState() async {
         let context = modelContainer.mainContext
-        let descriptor = FetchDescriptor<RPGState>()
-        let results = (try? context.fetch(descriptor)) ?? []
 
-        if let state = results.first {
+        if let state = ActiveProfileResolver.fetchActiveRPGState(in: context) {
             xp = state.xp
             level = state.level
             unopenedLootBoxCount = state.unopenedLootBoxes.count
+            EquippedCosmeticsBridge.sync(state: state)
 
             // Compute recent achievement from last inventory item
             let inventory = state.lootInventory
@@ -189,6 +283,26 @@ public final class HomeViewModel {
         sessionPreviewCardCount = queue.count
         // Roughly 1 minute per card, minimum 1
         sessionPreviewMinutes = max(1, queue.count)
+
+        // Approximate split between brand-new cards and reviews. A card is
+        // "new" when it has never been answered (reps == 0); everything else
+        // is a recurring review.
+        var newCount = 0
+        var reviewCount = 0
+        for card in queue {
+            if card.fsrsState.reps == 0 {
+                newCount += 1
+            } else {
+                reviewCount += 1
+            }
+        }
+        sessionPreviewNewCount = newCount
+        sessionPreviewReviewCount = reviewCount
         Logger.ui.debug("Session preview: \(queue.count) cards, ~\(self.sessionPreviewMinutes) min")
+    }
+
+    private func loadSkillBalance() async {
+        let data = await progressService.loadDashboardData()
+        skillBalance = data.skillBalance
     }
 }

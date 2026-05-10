@@ -167,6 +167,7 @@ struct LootRevealView: View {
     private var currentRarityColor: Color {
         switch currentItem.rarity {
         case .common: Color(hex: IkeruTheme.Colors.Rarity.common)
+        case .uncommon: Color(hex: IkeruTheme.Colors.Rarity.uncommon)
         case .rare: Color(hex: IkeruTheme.Colors.Rarity.rare)
         case .epic: Color(hex: IkeruTheme.Colors.Rarity.epic)
         case .legendary: Color(hex: IkeruTheme.Colors.Rarity.legendary)

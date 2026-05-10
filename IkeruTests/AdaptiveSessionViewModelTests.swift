@@ -98,29 +98,6 @@ struct AdaptiveSessionViewModelTests {
         #expect(vm.sessionPreview.cardCount <= 10)
     }
 
-    // MARK: - Review Forecast Tests
-
-    @Test("loadReviewForecast populates forecast")
-    func loadReviewForecastPopulates() async throws {
-        let container = try makeContainer()
-        _ = try seedDueCards(container: container, count: 3)
-        let vm = makeViewModel(container: container)
-
-        await vm.loadReviewForecast()
-
-        #expect(vm.reviewForecast.count == 7) // Default 7 days
-    }
-
-    @Test("loadReviewForecast custom days")
-    func loadReviewForecastCustomDays() async throws {
-        let container = try makeContainer()
-        let vm = makeViewModel(container: container)
-
-        await vm.loadReviewForecast(days: 14)
-
-        #expect(vm.reviewForecast.count == 14)
-    }
-
     // MARK: - Adaptive Session Start Tests
 
     @Test("startAdaptiveSession sets active with SRS cards")

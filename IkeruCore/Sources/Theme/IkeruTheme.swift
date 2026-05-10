@@ -61,6 +61,7 @@ public enum IkeruTheme {
         // MARK: Loot Rarity
         public enum Rarity {
             public static let common: UInt32 = 0x8A8780
+            public static let uncommon: UInt32 = 0x84A07C   // soft moss — between common stone and rare dusk
             public static let rare: UInt32 = 0x6B92B5
             public static let epic: UInt32 = 0x9580B5
             public static let legendary: UInt32 = 0xD4A574

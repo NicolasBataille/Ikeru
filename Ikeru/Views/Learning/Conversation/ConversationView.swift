@@ -20,14 +20,25 @@ struct ConversationView: View {
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
-                if viewModel.showWelcome {
+                if !viewModel.isAIAvailable {
+                    aiUnavailableSection
+                } else if viewModel.showWelcome {
                     welcomeSection
                 } else {
                     messageList
+                        // Tap (not drag) anywhere on the message list dismisses
+                        // the keyboard so the user can scroll/read without it.
+                        .onTapGesture {
+                            UIApplication.shared.sendAction(
+                                #selector(UIResponder.resignFirstResponder),
+                                to: nil, from: nil, for: nil
+                            )
+                        }
                 }
 
-                inputBar
-                    .padding(.bottom, 88) // Floating tab bar clearance
+                if viewModel.isAIAvailable {
+                    inputBar
+                }
             }
         }
         .navigationTitle("Conversation")
@@ -41,6 +52,53 @@ struct ConversationView: View {
         .task {
             await viewModel.onAppear()
         }
+    }
+
+    // MARK: - AI Unavailable Section
+
+    private var aiUnavailableSection: some View {
+        VStack(spacing: IkeruTheme.Spacing.lg) {
+            Spacer()
+
+            Text("\u{6843}") // 桜
+                .font(.system(size: 64, weight: .light, design: .serif))
+                .foregroundStyle(Color.ikeruPrimaryAccent.opacity(0.45))
+
+            VStack(spacing: IkeruTheme.Spacing.sm) {
+                Text("Sakura.NoAI.Title")
+                    .font(.system(size: 22, weight: .light, design: .serif))
+                    .foregroundStyle(Color.ikeruTextPrimary)
+                    .multilineTextAlignment(.center)
+
+                Text("Sakura.NoAI.Body")
+                    .font(.system(size: 14))
+                    .foregroundStyle(Color.ikeruTextSecondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, IkeruTheme.Spacing.lg)
+            }
+
+            NavigationLink {
+                AISettingsView()
+            } label: {
+                HStack(spacing: 10) {
+                    Image(systemName: "gearshape.fill")
+                        .font(.system(size: 13, weight: .semibold))
+                    Text("Sakura.NoAI.Setup")
+                        .font(.system(size: 13, weight: .bold))
+                        .tracking(1.4)
+                }
+                .foregroundStyle(Color.ikeruBackground)
+                .padding(.horizontal, 18)
+                .padding(.vertical, 12)
+                .background(Color.ikeruPrimaryAccent)
+                .sumiCorners(color: Color.ikeruBackground.opacity(0.6),
+                             size: 6, weight: 1.2, inset: -1)
+            }
+            .buttonStyle(.plain)
+
+            Spacer()
+        }
+        .padding(.horizontal, IkeruTheme.Spacing.lg)
     }
 
     // MARK: - Welcome Section

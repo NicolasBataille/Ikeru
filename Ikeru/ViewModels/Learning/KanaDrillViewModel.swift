@@ -90,7 +90,7 @@ public final class KanaDrillViewModel {
     public func reveal() {
         guard let card = currentCard, !isRevealed else { return }
         isRevealed = true
-        predictedIntervals = computePredictedIntervals(for: card)
+        predictedIntervals = computePredictedIntervals(fsrsState: card.fsrsState, now: now())
     }
 
     public func grade(_ grade: Grade) async {
@@ -123,7 +123,7 @@ public final class KanaDrillViewModel {
         isAnswered = true
         let elapsedMs = Int(now().timeIntervalSince(cardStartedAt) * 1000)
         let isCorrect = selected == correctOption
-        let grade = mapQuizResult(correct: isCorrect, responseTimeMs: elapsedMs)
+        let grade = mapQuizResultToGrade(correct: isCorrect, responseTimeMs: elapsedMs)
 
         // Track which kana corresponds to the selected (potentially wrong) romaji
         // for the pedagogical "Le caractère pour {romaji} est {kana}" feedback.
@@ -206,14 +206,6 @@ public final class KanaDrillViewModel {
 
     // MARK: - Helpers
 
-    /// Map (correct, time) -> Grade for the quiz speed bonus.
-    func mapQuizResult(correct: Bool, responseTimeMs: Int) -> Grade {
-        if !correct { return .again }
-        if responseTimeMs < 2_000 { return .easy }
-        if responseTimeMs < 5_000 { return .good }
-        return .hard
-    }
-
     /// Build the 4 quiz options for a given card. The correct romaji plus 3
     /// distractors picked from the same KanaGroup when possible, falling back
     /// to other groups in the same script + section. Final order is shuffled.
@@ -268,36 +260,4 @@ public final class KanaDrillViewModel {
         return siblings.first(where: { $0.romaji == romaji })?.character
     }
 
-    /// Run FSRS once per grade to estimate intervals shown on the reveal buttons.
-    private func computePredictedIntervals(for card: CardDTO) -> [Grade: String] {
-        var result: [Grade: String] = [:]
-        let nowValue = now()
-        for grade in Grade.allCases {
-            let newState = FSRSService.schedule(state: card.fsrsState, grade: grade, now: nowValue)
-            let due = FSRSService.dueDate(for: newState, now: nowValue)
-            result[grade] = formatInterval(from: nowValue, to: due)
-        }
-        return result
-    }
-
-    private func formatInterval(from start: Date, to end: Date) -> String {
-        let seconds = max(0, end.timeIntervalSince(start))
-        if seconds < 60 {
-            return "1 min"
-        }
-        let minutes = Int(ceil(seconds / 60))
-        if minutes < 60 {
-            return "\(minutes) min"
-        }
-        let hours = Int(ceil(seconds / 3_600))
-        if hours < 24 {
-            return "\(hours) h"
-        }
-        let days = Int(ceil(seconds / 86_400))
-        if days < 30 {
-            return "\(days) j"
-        }
-        let months = Int(ceil(seconds / (86_400 * 30)))
-        return "\(months) mois"
-    }
 }

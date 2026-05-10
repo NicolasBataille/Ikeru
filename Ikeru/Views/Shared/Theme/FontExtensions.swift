@@ -12,11 +12,6 @@ extension Font {
         .system(size: IkeruTheme.Typography.Size.displayLarge, weight: .ultraLight, design: .default)
     }
 
-    /// Large display (44pt, light)
-    static var ikeruDisplayMedium: Font {
-        .system(size: IkeruTheme.Typography.Size.displayMedium, weight: .light, design: .default)
-    }
-
     /// Compact display (36pt, regular)
     static var ikeruDisplaySmall: Font {
         .system(size: IkeruTheme.Typography.Size.displaySmall, weight: .regular, design: .default)
@@ -83,11 +78,6 @@ extension Font {
     /// Body text (15pt regular)
     static var ikeruBody: Font {
         .system(size: IkeruTheme.Typography.Size.body, weight: .regular)
-    }
-
-    /// Small body text (13pt regular)
-    static var ikeruBodySmall: Font {
-        .system(size: IkeruTheme.Typography.Size.bodySmall, weight: .regular)
     }
 
     // MARK: - Caption / Micro

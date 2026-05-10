@@ -8,7 +8,7 @@ import os
 /// AI responses for corrections and vocabulary hints.
 public final class ConversationService: @unchecked Sendable {
 
-    private let aiRouter: AIRouterService
+    public let aiRouter: AIRouterService
     private let timeoutSeconds: TimeInterval
 
     public init(

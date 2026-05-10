@@ -38,14 +38,29 @@ public enum RPGConstants {
     // MARK: - XP Awards
 
     /// XP awarded for each grade.
+    /// Flattened: XP rewards showing up, not grade accuracy — this keeps the
+    /// FSRS signal clean (no incentive to over-rate cards as "easy") while
+    /// still crediting the learner for the time/effort of reviewing.
+    /// Real consistency rewards live in `SessionBonusService` (daily + streak).
     public static func xpForGrade(_ grade: Grade) -> Int {
         switch grade {
-        case .easy: 10
-        case .good: 10
-        case .hard: 5
-        case .again: 2
+        case .easy: 6
+        case .good: 6
+        case .hard: 6
+        case .again: 3
         }
     }
+
+    // MARK: - Session Bonus Tiers
+
+    /// XP awarded for completing the first session of a new day.
+    public static let firstSessionOfDayBonus: Int = 30
+
+    /// XP awarded on reaching a 5-day consecutive streak.
+    public static let fiveDayStreakBonus: Int = 100
+
+    /// XP awarded on reaching a 30-day consecutive streak.
+    public static let thirtyDayStreakBonus: Int = 500
 
     // MARK: - Level Helpers
 

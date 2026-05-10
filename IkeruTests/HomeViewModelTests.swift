@@ -13,6 +13,9 @@ struct HomeViewModelTests {
     private func makeContainer() throws -> ModelContainer {
         let schema = Schema([UserProfile.self, Card.self, ReviewLog.self, RPGState.self])
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
+        // Clear any active-profile id leaked from a prior test run; the
+        // resolver persists it in UserDefaults which crosses test boundaries.
+        ActiveProfileResolver.setActiveProfileID(nil)
         return try ModelContainer(for: schema, configurations: [config])
     }
 
@@ -20,22 +23,50 @@ struct HomeViewModelTests {
         HomeViewModel(modelContainer: container)
     }
 
-    private func seedProfile(container: ModelContainer, name: String) throws {
+    @discardableResult
+    private func seedProfile(container: ModelContainer, name: String) throws -> UserProfile {
         let context = container.mainContext
         let profile = UserProfile(displayName: name)
         context.insert(profile)
         try context.save()
+        // Mark this profile active so the resolver finds it deterministically.
+        ActiveProfileResolver.setActiveProfileID(profile.id)
+        return profile
     }
 
+    /// Seeds an RPGState attached to the active profile (creating one if
+    /// the test forgot to seed a profile first). The resolver's
+    /// `fetchActiveRPGState` requires a profile→state attachment, so a
+    /// standalone insert is invisible to the view model.
     private func seedRPGState(container: ModelContainer, xp: Int, level: Int) throws {
         let context = container.mainContext
+        let profile: UserProfile = try {
+            if let existing = ActiveProfileResolver.fetchActiveProfile(in: context) {
+                return existing
+            }
+            return try seedProfile(container: container, name: "Test")
+        }()
         let state = RPGState(xp: xp, level: level, totalReviewsCompleted: 10)
+        state.profile = profile
+        profile.rpgState = state
         context.insert(state)
         try context.save()
     }
 
+    /// Resolves the currently-active profile for tests, creating one if
+    /// missing. Cards must attach to an active profile because
+    /// `CardRepository` queries are scoped to `profile.cards`.
+    private func ensureProfile(container: ModelContainer) throws -> UserProfile {
+        let context = container.mainContext
+        if let existing = ActiveProfileResolver.fetchActiveProfile(in: context) {
+            return existing
+        }
+        return try seedProfile(container: container, name: "Test")
+    }
+
     private func seedDueCards(container: ModelContainer, count: Int) throws -> [UUID] {
         let context = container.mainContext
+        let profile = try ensureProfile(container: container)
         var ids: [UUID] = []
         for i in 0..<count {
             let card = Card(
@@ -44,6 +75,7 @@ struct HomeViewModelTests {
                 type: .kanji,
                 dueDate: Date().addingTimeInterval(-3600) // Due 1 hour ago
             )
+            card.profile = profile
             context.insert(card)
             ids.append(card.id)
         }
@@ -53,6 +85,7 @@ struct HomeViewModelTests {
 
     private func seedReviewedCards(container: ModelContainer, count: Int) throws {
         let context = container.mainContext
+        let profile = try ensureProfile(container: container)
         for i in 0..<count {
             let card = Card(
                 front: "Reviewed \(i)",
@@ -68,6 +101,7 @@ struct HomeViewModelTests {
                 lapses: 0,
                 lastReview: Date()
             )
+            card.profile = profile
             context.insert(card)
         }
         try context.save()

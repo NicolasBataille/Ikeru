@@ -10,13 +10,6 @@ import Foundation
 /// in `TestFixtures`).
 public enum AppEnvironment {
 
-    /// True when `-e2eMode` is present in launch arguments.
-    /// Consumers may use this to disable animation drift, freeze RNG,
-    /// or stub external services for deterministic screenshots.
-    public static var isE2EMode: Bool {
-        CommandLine.arguments.contains("-e2eMode")
-    }
-
     /// Time-of-day greeting period override parsed from `-mockGreeting=...`.
     /// Returns `nil` when no override is present.
     public static var greetingOverride: GreetingPeriod? {

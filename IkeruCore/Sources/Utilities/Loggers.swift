@@ -32,4 +32,7 @@ extension Logger {
 
     /// Vocabulary dictionary and encounter tracking
     public static let vocabulary = Logger(subsystem: subsystem, category: "vocabulary")
+
+    /// Learning-loop session composition (DefaultSessionPlanner, etc.)
+    public static let learningLoop = Logger(subsystem: subsystem, category: "learning-loop")
 }

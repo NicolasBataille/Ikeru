@@ -8,15 +8,21 @@ public enum MasteryLevel: Int, Sendable, CaseIterable, Codable {
     case mastered = 3
     case anchored = 4
 
-    public var emoji: String {
+    /// Tatami-direction glyph for the level. Single-character kanji
+    /// (and a stillness mark for `.anchored`) replace the prior emoji
+    /// set so cells stay coherent with the wabi visual vocabulary.
+    public var glyph: String {
         switch self {
-        case .new: return "🌱"
-        case .learning: return "🌾"
-        case .familiar: return "🌿"
-        case .mastered: return "🌳"
-        case .anchored: return "⭐"
+        case .new:       return "\u{521D}"  // 初  — beginning
+        case .learning:  return "\u{5B66}"  // 学  — study
+        case .familiar:  return "\u{6163}"  // 慣  — familiar
+        case .mastered:  return "\u{6975}"  // 極  — mastery
+        case .anchored:  return "\u{5FC3}"  // 心  — heart / grounded
         }
     }
+
+    @available(*, deprecated, renamed: "glyph", message: "Tatami direction replaces plant emojis with kanji glyphs.")
+    public var emoji: String { glyph }
 
     public var label: String {
         switch self {

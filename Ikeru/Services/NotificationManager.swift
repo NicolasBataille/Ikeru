@@ -153,12 +153,6 @@ final class NotificationManager {
 
     // MARK: - Cancel
 
-    /// Removes all scheduled notifications.
-    func cancelAll() {
-        UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
-        Logger.ui.info("All notifications cancelled")
-    }
-
     /// Removes review reminders only.
     func cancelReviewReminders() {
         UNUserNotificationCenter.current()

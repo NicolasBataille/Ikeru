@@ -101,6 +101,7 @@ struct LootDropView: View {
     private var rarityColor: Color {
         switch item.rarity {
         case .common: Color(hex: IkeruTheme.Colors.Rarity.common)
+        case .uncommon: Color(hex: IkeruTheme.Colors.Rarity.uncommon)
         case .rare: Color(hex: IkeruTheme.Colors.Rarity.rare)
         case .epic: Color(hex: IkeruTheme.Colors.Rarity.epic)
         case .legendary: Color(hex: IkeruTheme.Colors.Rarity.legendary)

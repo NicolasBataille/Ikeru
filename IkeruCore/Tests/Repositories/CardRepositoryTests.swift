@@ -191,4 +191,41 @@ struct CardRepositoryTests {
         let updated = await repository.card(by: cardId)
         #expect(updated?.leechFlag == true)
     }
+
+    // MARK: - JLPT Level Round-Trip
+
+    @Test("New card defaults to nil JLPT level")
+    func jlptLevelDefaultsNil() async throws {
+        let container = try makeTestContainer()
+        let repository = CardRepository(modelContainer: container)
+
+        let card = await repository.createCard(front: "本", back: "book", type: .vocabulary)
+        let fetched = await repository.card(by: card.id)
+        #expect(fetched?.jlptLevel == nil)
+    }
+
+    @Test("setJLPTLevel persists tag and round-trips through DTO")
+    func jlptLevelPersistsAndRoundTrips() async throws {
+        let container = try makeTestContainer()
+        let repository = CardRepository(modelContainer: container)
+
+        let card = await repository.createCard(front: "本", back: "book", type: .vocabulary)
+        await repository.setJLPTLevel(.n5, for: card.id)
+
+        let fetched = await repository.card(by: card.id)
+        #expect(fetched?.jlptLevel == .n5)
+    }
+
+    @Test("setJLPTLevel can clear tag back to nil")
+    func jlptLevelClearable() async throws {
+        let container = try makeTestContainer()
+        let repository = CardRepository(modelContainer: container)
+
+        let card = await repository.createCard(front: "本", back: "book", type: .vocabulary)
+        await repository.setJLPTLevel(.n4, for: card.id)
+        await repository.setJLPTLevel(nil, for: card.id)
+
+        let fetched = await repository.card(by: card.id)
+        #expect(fetched?.jlptLevel == nil)
+    }
 }

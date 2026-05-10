@@ -297,6 +297,126 @@ struct MeshHeroView: View {
     }
 }
 
+// MARK: - MeshHeroBackground
+//
+// The mesh-gradient substrate from MeshHeroView, decoupled from its content
+// so the wabi-sabi Home hero can use it as an animated background while
+// keeping its own EnsoRank + proverb + segmented-XP overlay.
+
+struct MeshHeroBackground: View {
+    let level: Int
+    var cornerRadius: CGFloat = IkeruTheme.Radius.lg
+
+    @State private var animationPhase: CGFloat = 0
+
+    var body: some View {
+        ZStack {
+            meshGradient
+                .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+
+            // Soft inner darkening so foreground text stays legible on the
+            // brighter parts of the mesh — wabi-sabi prefers quieter contrast.
+            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            Color.black.opacity(0.20),
+                            Color.black.opacity(0.42)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+        }
+        .onAppear {
+            withAnimation(
+                .linear(duration: IkeruTheme.Animation.meshShiftDuration)
+                    .repeatForever(autoreverses: true)
+            ) {
+                animationPhase = 1
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var meshGradient: some View {
+        if #available(iOS 18.0, *) {
+            meshGradientIOS18
+        } else {
+            linearFallback
+        }
+    }
+
+    @available(iOS 18.0, *)
+    private var meshGradientIOS18: some View {
+        let palette = colorPalette
+        let p = Float(animationPhase)
+        return MeshGradient(
+            width: 3,
+            height: 3,
+            points: [
+                SIMD2<Float>(0.0, 0.0),
+                SIMD2<Float>(0.5 + 0.08 * sin(p * .pi), 0.0),
+                SIMD2<Float>(1.0, 0.0),
+                SIMD2<Float>(0.0, 0.5 + 0.05 * cos(p * .pi)),
+                SIMD2<Float>(0.5 + 0.12 * cos(p * .pi * 2), 0.5 + 0.08 * sin(p * .pi)),
+                SIMD2<Float>(1.0, 0.5 - 0.05 * sin(p * .pi)),
+                SIMD2<Float>(0.0, 1.0),
+                SIMD2<Float>(0.5 - 0.08 * cos(p * .pi), 1.0),
+                SIMD2<Float>(1.0, 1.0),
+            ],
+            colors: [
+                palette.0, palette.1, palette.2,
+                palette.1, palette.3, palette.0,
+                palette.2, palette.0, palette.1,
+            ],
+            smoothsColors: true
+        )
+    }
+
+    private var linearFallback: some View {
+        let palette = colorPalette
+        return LinearGradient(
+            colors: [palette.0, palette.1, palette.2],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+    }
+
+    private var colorPalette: (Color, Color, Color, Color) {
+        switch level {
+        case 1...9:
+            return (
+                Color(hex: 0x1A1F35),
+                Color(hex: 0x2A3550),
+                Color(hex: 0x1F2942),
+                Color(hex: 0x344165)
+            )
+        case 10...19:
+            return (
+                Color(hex: 0x1A2A28),
+                Color(hex: 0x2C3F38),
+                Color(hex: 0x223530),
+                Color(hex: 0x3A4F46)
+            )
+        case 20...29:
+            return (
+                Color(hex: 0x2A2018),
+                Color(hex: 0x3C2D1F),
+                Color(hex: 0x352618),
+                Color(hex: 0x4D3925)
+            )
+        default:
+            return (
+                Color(hex: 0x382818),
+                Color(hex: 0x55392A),
+                Color(hex: 0x453020),
+                Color(hex: 0x6B4830)
+            )
+        }
+    }
+}
+
 // MARK: - Preview
 
 #Preview("MeshHeroView — Low Level") {
