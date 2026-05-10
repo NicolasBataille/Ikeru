@@ -615,7 +615,7 @@ public final class SessionViewModel {
         lastLootDrop = nil
         let masteryEvents = MasteryEventDetector.detect(preGradeCard: card, grade: grade)
         if let event = masteryEvents.first {
-            let drop = LootDropService.generateMasteryDrop(for: event)
+            let drop = LootDropService.generateMasteryDrop(for: event, learnerLevel: sessionJLPTLevel)
             let alreadyOwned = await inventoryContains(name: drop.name)
             if !alreadyOwned {
                 lastLootDrop = drop

@@ -97,19 +97,42 @@ public enum LootDropService {
 
     // MARK: - Mastery Drops
 
-    /// Generates a loot item awarded for a specific mastery event.
-    /// Unlike RNG drops, these are guaranteed and carry semantic names tied
-    /// to what the learner just achieved.
-    /// - Parameter event: The mastery milestone that triggered this drop.
-    /// - Returns: A LootItem at the event's rarity tier with a themed name.
-    public static func generateMasteryDrop(for event: MasteryEvent) -> LootItem {
+    /// Generates a loot item awarded for a specific mastery event, with
+    /// rarity scaled to the learner's current JLPT level via
+    /// `BadgeRamping`. A "Burned" event for an N5 beginner is rare; the
+    /// same event for an N1 veteran is legendary. The semantic name and
+    /// iconography (e.g. "Burned In" / `flame.fill`) stay constant across
+    /// levels — only the rarity tier ramps.
+    /// - Parameters:
+    ///   - event: The mastery milestone that triggered this drop.
+    ///   - learnerLevel: The learner's current JLPT level (driven by the
+    ///     active session's snapshot, not the per-card level).
+    /// - Returns: A LootItem at the ramped rarity with a themed name.
+    public static func generateMasteryDrop(
+        for event: MasteryEvent,
+        learnerLevel: JLPTLevel
+    ) -> LootItem {
         let template = masteryTemplate(for: event)
         return LootItem(
             category: template.category,
-            rarity: event.rarity,
+            rarity: BadgeRamping.rarity(for: event, learnerLevel: learnerLevel),
             name: template.name,
             iconName: template.iconName
         )
+    }
+
+    /// Legacy overload retained as a thin shim so any in-flight callers
+    /// compile while migrating. Delegates with `learnerLevel: .n5`, which
+    /// matches the floor of `BadgeRamping`'s table — equivalent to the
+    /// pre-ramping behavior for an N5 learner. New callers MUST use the
+    /// `learnerLevel:` overload so rarity scales with the player.
+    @available(
+        *,
+        deprecated,
+        message: "Use generateMasteryDrop(for:learnerLevel:) so rarity ramps with the learner's level."
+    )
+    public static func generateMasteryDrop(for event: MasteryEvent) -> LootItem {
+        generateMasteryDrop(for: event, learnerLevel: .n5)
     }
 
     private static func masteryTemplate(for event: MasteryEvent) -> LootTemplate {
