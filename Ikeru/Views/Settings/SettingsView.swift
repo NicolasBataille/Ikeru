@@ -35,6 +35,12 @@ struct SettingsView: View {
     @AppStorage("ikeru.weeklyCheckIn.day") private var weeklyCheckInDay = 1
     @AppStorage("ikeru.weeklyCheckIn.hour") private var weeklyCheckInHour = 10
 
+    // MARK: Daily term
+
+    @AppStorage(DailyTermSettings.enabledKey) private var dailyTermEnabled: Bool = false
+    @AppStorage(DailyTermSettings.hourKey) private var dailyTermHour: Int = DailyTermSettings.defaultHour
+    @AppStorage(DailyTermSettings.minuteKey) private var dailyTermMinute: Int = DailyTermSettings.defaultMinute
+
     // MARK: Session
 
     /// Default session length in minutes — Home CTA + Étude → Compose initial value.
@@ -287,6 +293,29 @@ struct SettingsView: View {
                                     }
                                 )
                             }
+                        )
+                    } else {
+                        AnyView(
+                            Text("Off")
+                                .font(.system(size: 13, design: .serif))
+                                .foregroundStyle(TatamiTokens.paperGhost)
+                        )
+                    }
+                }
+            )
+            reminderToggleRow(
+                jp: "今日の言葉",
+                label: "Term of the day",
+                isOn: $dailyTermEnabled,
+                onToggleChange: { enabled in
+                    updateDailyTermReminder(enabled: enabled)
+                },
+                trailing: {
+                    if dailyTermEnabled {
+                        AnyView(
+                            Text(formattedTime(dailyTermHour, dailyTermMinute))
+                                .font(.system(size: 13, design: .serif))
+                                .foregroundStyle(Color.ikeruPrimaryAccent)
                         )
                     } else {
                         AnyView(
@@ -847,6 +876,28 @@ struct SettingsView: View {
         } else {
             NotificationManager.shared.cancelReviewReminders()
         }
+    }
+
+    private func updateDailyTermReminder(enabled: Bool) {
+        if enabled {
+            Task {
+                let authorized = await NotificationManager.shared.requestAuthorization()
+                if authorized {
+                    await NotificationManager.shared.scheduleDailyTermReminder(
+                        hour: dailyTermHour,
+                        minute: dailyTermMinute
+                    )
+                } else {
+                    dailyTermEnabled = false
+                }
+            }
+        } else {
+            NotificationManager.shared.cancelDailyTermReminder()
+        }
+    }
+
+    private func formattedTime(_ hour: Int, _ minute: Int) -> String {
+        String(format: "%02d:%02d", hour, minute)
     }
 
     private func updateWeeklyCheckIn(enabled: Bool) {

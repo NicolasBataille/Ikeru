@@ -3,6 +3,29 @@ import SwiftData
 import IkeruCore
 import os
 
+#if canImport(UIKit)
+import UIKit
+#endif
+
+// MARK: - DailyTermSheet
+
+/// Single source of truth for which daily-term sheet is showing.
+/// Driving all sheets via one Identifiable enum lets SwiftUI handle the
+/// cross-fade between e.g. "history" and "reveal a history row" — stacked
+/// `.sheet` modifiers can only present one at a time and silently swallow
+/// transitions on iOS.
+private enum DailyTermSheet: Identifiable {
+    case reveal(DailyTermDTO)
+    case history
+
+    var id: String {
+        switch self {
+        case .reveal(let term): return "reveal-\(term.id)"
+        case .history: return "history"
+        }
+    }
+}
+
 // MARK: - HomeView
 //
 // Wabi-sabi refined home. The hero card is proverb-centric (七転八起 promoted
@@ -13,13 +36,17 @@ import os
 struct HomeView: View {
 
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.scenePhase) private var scenePhase
     @Environment(\.displayMode) private var displayMode
     @Environment(\.displayModeRepository) private var displayModeRepo
     @State private var viewModel: HomeViewModel?
     @State private var sessionViewModel: SessionViewModel?
+    @State private var dailyTermViewModel: DailyTermViewModel?
     @State private var suggestionController: DisplayModeSuggestionCardController?
     @State private var showSession = false
     @State private var heroAppeared = false
+    @State private var dailyTermSheet: DailyTermSheet?
+    @AppStorage(DailyTermSettings.enabledKey) private var dailyTermEnabled: Bool = false
     @AppStorage("ikeru.equippedTitleName") private var equippedTitleName: String = ""
 
     var body: some View {
@@ -41,9 +68,13 @@ struct HomeView: View {
                     }
             }
         }
+        .sheet(item: $dailyTermSheet) { sheet in
+            dailyTermSheetContent(sheet)
+        }
         .task {
             initializeViewModels()
             await viewModel?.loadData()
+            await dailyTermViewModel?.load()
             await viewModel?.refreshRestDay()
             await refreshSuggestionController()
             withAnimation(.spring(response: 0.55, dampingFraction: 0.86).delay(0.05)) {
@@ -59,7 +90,16 @@ struct HomeView: View {
         .onAppear {
             if viewModel != nil {
                 Task { await viewModel?.loadData() }
+                Task { await dailyTermViewModel?.reloadIfDayChanged() }
             }
+        }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active {
+                Task { await dailyTermViewModel?.reloadIfDayChanged() }
+            }
+        }
+        .onChange(of: dailyTermEnabled) { _, _ in
+            Task { await dailyTermViewModel?.load() }
         }
         .onReceive(NotificationCenter.default.publisher(for: .startQuizFromShortcut)) { _ in
             initializeViewModels()
@@ -69,10 +109,54 @@ struct HomeView: View {
             initializeViewModels()
             startSession()
         }
+        .onReceive(NotificationCenter.default.publisher(for: .openDailyTerm)) { _ in
+            Task {
+                await dailyTermViewModel?.reloadIfDayChanged()
+                if let term = dailyTermViewModel?.today {
+                    dailyTermSheet = .reveal(term)
+                }
+            }
+        }
         .onReceive(NotificationCenter.default.publisher(for: .ikeruActiveProfileDidChange)) { _ in
             Task {
                 await viewModel?.loadData()
                 await refreshSuggestionController()
+            }
+        }
+        #if canImport(UIKit)
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.significantTimeChangeNotification)) { _ in
+            Task { await dailyTermViewModel?.reloadIfDayChanged() }
+        }
+        #endif
+    }
+
+    // MARK: - Daily-term sheet content
+
+    @ViewBuilder
+    private func dailyTermSheetContent(_ sheet: DailyTermSheet) -> some View {
+        switch sheet {
+        case .reveal(let snapshot):
+            if let dvm = dailyTermViewModel {
+                DailyTermRevealHostView(
+                    initialTerm: snapshot,
+                    viewModel: dvm,
+                    onDismiss: { dailyTermSheet = nil },
+                    onShowHistory: { dailyTermSheet = .history }
+                )
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
+            }
+        case .history:
+            if let dvm = dailyTermViewModel {
+                DailyTermHistoryView(
+                    terms: dvm.recent,
+                    onSelect: { term in
+                        dailyTermSheet = .reveal(term)
+                    },
+                    onDismiss: { dailyTermSheet = nil }
+                )
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
             }
         }
     }
@@ -115,6 +199,7 @@ struct HomeView: View {
                 }
                 topBar(vm)
                 proverbHero(vm)
+                dailyTermSection
                 statsRow(vm)
                 sessionBreakdown(vm)
                 if vm.hasLoaded && vm.dueCardCount == 0 {
@@ -205,6 +290,29 @@ struct HomeView: View {
         return f.string(from: Date())
     }
 
+    // MARK: - Daily Term
+
+    @ViewBuilder
+    private var dailyTermSection: some View {
+        if dailyTermEnabled, let dvm = dailyTermViewModel, let term = dvm.today {
+            if dvm.todayNeedsReveal {
+                DailyTermBanner(
+                    term: term,
+                    yesterday: dvm.yesterday,
+                    onTap: { dailyTermSheet = .reveal(term) }
+                )
+                .transition(.move(edge: .top).combined(with: .opacity))
+            } else {
+                DailyTermRevealedPill(
+                    term: term,
+                    yesterday: dvm.yesterday,
+                    onTap: { dailyTermSheet = .reveal(term) }
+                )
+                .transition(.opacity)
+            }
+        }
+    }
+
     /// Returns "こんばんは" / "おはよう" / "こんにちは" depending on the hour.
     private func timeOfDayGreetingJP() -> String {
         let h = Calendar.current.component(.hour, from: Date())
@@ -238,10 +346,6 @@ struct HomeView: View {
 
     // MARK: - Rest Day Block
 
-    /// Wabi-minimal rest-day surface. Replaces the gold CTA when
-    /// `vm.restDayActive` is true (no due cards, balanced skills, no
-    /// new content queued, last session within 24h). 24h after the last
-    /// session the CTA returns regardless.
     private var restDayBlock: some View {
         VStack(spacing: 6) {
             Text("\u{4ECA}\u{65E5}\u{306F}\u{4F11}") // 今日は休
@@ -562,6 +666,7 @@ struct HomeView: View {
         let container = modelContext.container
 
         viewModel = HomeViewModel(modelContainer: container)
+        dailyTermViewModel = DailyTermViewModel(modelContainer: container)
 
         let repo = CardRepository(modelContainer: container)
         let planner = PlannerService(cardRepository: repo)

@@ -6,14 +6,27 @@ import os
 
 // MARK: - NotificationManager
 
-/// Manages local push notifications for SRS review reminders and weekly check-ins.
-/// Positive framing only — "X cards ready", never "X days missed".
+/// Manages local push notifications for SRS review reminders, weekly
+/// check-ins, and the daily term reveal. Positive framing only — "X cards
+/// ready", never "X days missed".
+///
+/// Also routes notification taps via `UNUserNotificationCenterDelegate`
+/// so deep-link payloads (e.g. the daily-term reminder) can wake the
+/// matching surface in the app.
 @MainActor
-final class NotificationManager {
+final class NotificationManager: NSObject, @preconcurrency UNUserNotificationCenterDelegate {
 
     static let shared = NotificationManager()
 
-    private init() {}
+    /// Hooks the manager up as the user-notification centre delegate so it
+    /// can react to taps and foreground deliveries. Idempotent.
+    func registerAsDelegate() {
+        UNUserNotificationCenter.current().delegate = self
+    }
+
+    private override init() {
+        super.init()
+    }
 
     // MARK: - Authorization
 
@@ -37,7 +50,7 @@ final class NotificationManager {
         do {
             let granted = try await UNUserNotificationCenter.current()
                 .requestAuthorization(options: [.alert, .sound, .badge])
-            Logger.ui.info("Notification authorization: \(granted)")
+            Logger.ui.info("Notification authorization: \(granted, privacy: .public)")
             return granted
         } catch {
             Logger.ui.error("Notification auth failed: \(error.localizedDescription)")
@@ -105,7 +118,7 @@ final class NotificationManager {
 
         do {
             try await center.add(request)
-            Logger.ui.info("Review reminder scheduled at \(hour):00")
+            Logger.ui.info("Review reminder scheduled at \(hour, privacy: .public):00")
         } catch {
             Logger.ui.error("Failed to schedule review reminder: \(error.localizedDescription)")
         }
@@ -145,9 +158,92 @@ final class NotificationManager {
 
         do {
             try await center.add(request)
-            Logger.ui.info("Weekly check-in scheduled: weekday=\(weekday), hour=\(hour)")
+            Logger.ui.info("Weekly check-in scheduled: weekday=\(weekday, privacy: .public), hour=\(hour, privacy: .public)")
         } catch {
             Logger.ui.error("Failed to schedule check-in: \(error.localizedDescription)")
+        }
+    }
+
+    // MARK: - Daily Term
+
+    /// Schedules a recurring local notification for the daily term reveal.
+    /// - Parameters:
+    ///   - hour: Hour of day (0-23).
+    ///   - minute: Minute (0-59).
+    func scheduleDailyTermReminder(hour: Int, minute: Int) async {
+        let center = UNUserNotificationCenter.current()
+        center.removePendingNotificationRequests(withIdentifiers: [Self.dailyTermIdentifier])
+
+        let content = UNMutableNotificationContent()
+        content.title = "A new word is waiting"
+        content.body = "Today's term is ready to discover — tap to reveal it."
+        content.sound = .default
+        content.categoryIdentifier = Self.dailyTermCategory
+        // Carry a routing hint so the delegate can deep-link without
+        // having to inspect the request identifier.
+        content.userInfo = ["ikeru.deeplink": "dailyTerm"]
+
+        var dateComponents = DateComponents()
+        dateComponents.hour = max(0, min(23, hour))
+        dateComponents.minute = max(0, min(59, minute))
+
+        let trigger = UNCalendarNotificationTrigger(
+            dateMatching: dateComponents,
+            repeats: true
+        )
+
+        let request = UNNotificationRequest(
+            identifier: Self.dailyTermIdentifier,
+            content: content,
+            trigger: trigger
+        )
+
+        do {
+            try await center.add(request)
+            Logger.ui.info("Daily term reminder scheduled at \(dateComponents.hour ?? 0, privacy: .public):\(String(format: "%02d", dateComponents.minute ?? 0), privacy: .public)")
+        } catch {
+            Logger.ui.error("Failed to schedule daily term reminder: \(error.localizedDescription)")
+        }
+    }
+
+    /// Removes the daily term reminder.
+    func cancelDailyTermReminder() {
+        UNUserNotificationCenter.current()
+            .removePendingNotificationRequests(withIdentifiers: [Self.dailyTermIdentifier])
+    }
+
+    static let dailyTermIdentifier = "ikeru.dailyterm.daily"
+    static let dailyTermCategory = "DAILY_TERM"
+
+    // MARK: - UNUserNotificationCenterDelegate
+
+    /// Foreground delivery — show the banner so the user notices, but
+    /// don't auto-route to the reveal sheet (they may be mid-task).
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        willPresent notification: UNNotification,
+        withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+    ) {
+        completionHandler([.banner, .sound, .list])
+    }
+
+    /// Tap response — if the daily-term reminder, post a notification so
+    /// the home view can present the reveal sheet.
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        didReceive response: UNNotificationResponse,
+        withCompletionHandler completionHandler: @escaping () -> Void
+    ) {
+        defer { completionHandler() }
+        guard response.actionIdentifier == UNNotificationDefaultActionIdentifier else { return }
+
+        let content = response.notification.request.content
+        let isDailyTerm = response.notification.request.identifier == Self.dailyTermIdentifier
+            || (content.userInfo["ikeru.deeplink"] as? String) == "dailyTerm"
+
+        if isDailyTerm {
+            Logger.ui.info("Daily term notification tapped — routing to reveal")
+            NotificationCenter.default.post(name: .openDailyTerm, object: nil)
         }
     }
 
