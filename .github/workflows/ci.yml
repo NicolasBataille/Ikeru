@@ -138,14 +138,10 @@ jobs:
           p12-file-base64: ${{ secrets.IOS_DIST_CERT_P12_BASE64 }}
           p12-password: ${{ secrets.IOS_DIST_CERT_P12_PASSWORD }}
 
-      - name: Download App Store Provisioning Profile
-        uses: apple-actions/download-provisioning-profiles@v3
-        with:
-          bundle-id: com.ikeru.app
-          profile-type: IOS_APP_STORE
-          issuer-id: ${{ secrets.ASC_ISSUER_ID }}
-          api-key-id: ${{ secrets.ASC_API_KEY_ID }}
-          api-private-key: ${{ secrets.ASC_API_KEY_BASE64 }}
+      # No provisioning-profile download step: xcodebuild's
+      # -allowProvisioningUpdates + -authenticationKey* flags (below)
+      # auto-create the App Store profile via the ASC API key. Saves
+      # us from pre-registering a profile in the dev portal.
 
       - name: Bump build number
         id: bump
