@@ -210,12 +210,22 @@ jobs:
         # Decode ASC API Key step above). altool with --apiKey looks the
         # key up in ~/.appstoreconnect/private_keys/AuthKey_<id>.p8, which
         # the Decode step has already populated.
+        #
+        # altool has a quirk where validation failures (invalid bundle,
+        # missing orientations, etc.) print "UPLOAD FAILED" but still
+        # exit 0, so we grep its output for failure markers and force a
+        # non-zero exit ourselves.
         run: |
+          set -o pipefail
           xcrun altool --upload-app \
             --file build/ipa/Ikeru.ipa \
             --type ios \
             --apiKey "${{ secrets.ASC_API_KEY_ID }}" \
-            --apiIssuer "${{ secrets.ASC_ISSUER_ID }}"
+            --apiIssuer "${{ secrets.ASC_ISSUER_ID }}" 2>&1 | tee altool.log
+          if grep -qE "UPLOAD FAILED|Failed to upload|ERROR ITMS-" altool.log; then
+            echo "::error::altool reported upload failure — check logs above"
+            exit 1
+          fi
 
       - name: Upload archive as build artifact
         if: always()
