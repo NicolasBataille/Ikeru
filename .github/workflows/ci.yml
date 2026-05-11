@@ -204,12 +204,18 @@ jobs:
             -authenticationKeyPath ~/.appstoreconnect/private_keys/AuthKey_${{ secrets.ASC_API_KEY_ID }}.p8
 
       - name: Upload to TestFlight
-        uses: apple-actions/upload-testflight-build@v3
-        with:
-          app-path: build/ipa/Ikeru.ipa
-          issuer-id: ${{ secrets.ASC_ISSUER_ID }}
-          api-key-id: ${{ secrets.ASC_API_KEY_ID }}
-          api-private-key: ${{ secrets.ASC_API_KEY_BASE64 }}
+        # Using `xcrun altool` directly instead of
+        # apple-actions/upload-testflight-build@v3 — that action expects
+        # the ASC API key as raw PEM, but we store it as base64 (for the
+        # Decode ASC API Key step above). altool with --apiKey looks the
+        # key up in ~/.appstoreconnect/private_keys/AuthKey_<id>.p8, which
+        # the Decode step has already populated.
+        run: |
+          xcrun altool --upload-app \
+            --file build/ipa/Ikeru.ipa \
+            --type ios \
+            --apiKey "${{ secrets.ASC_API_KEY_ID }}" \
+            --apiIssuer "${{ secrets.ASC_ISSUER_ID }}"
 
       - name: Upload archive as build artifact
         if: always()
