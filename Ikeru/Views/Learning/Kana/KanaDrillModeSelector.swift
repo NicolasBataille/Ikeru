@@ -14,6 +14,11 @@ struct KanaDrillModeSelector: View {
 
     @State private var goFlashcard = false
     @State private var goQuiz = false
+    /// Refreshed on each drill launch so SwiftUI rebuilds the destination
+    /// view with a brand-new `@State`. Without this, re-entering the drill
+    /// reuses the previously-shuffled queue — which is what made the user
+    /// see the same hiragana order every time.
+    @State private var runId: UUID = UUID()
 
     private var cardRepository: CardRepository {
         CardRepository(modelContainer: modelContext.container)
@@ -34,14 +39,20 @@ struct KanaDrillModeSelector: View {
                     subtitle: "Classic SRS review",
                     description: "Tap to reveal the answer, then grade your recall. Ideal for long-term retention.",
                     icon: "rectangle.on.rectangle.angled",
-                    action: { goFlashcard = true }
+                    action: {
+                        runId = UUID()
+                        goFlashcard = true
+                    }
                 )
                 modeCard(
                     title: "Quiz",
                     subtitle: "4 quick choices",
                     description: "Recognise the romaji among 4 options. Bonus for quick correct answers.",
                     icon: "checkmark.circle.badge.questionmark",
-                    action: { goQuiz = true }
+                    action: {
+                        runId = UUID()
+                        goQuiz = true
+                    }
                 )
                 Spacer()
             }
@@ -57,6 +68,7 @@ struct KanaDrillModeSelector: View {
                 cardRepository: cardRepository,
                 vocabularyRepository: vocabularyRepository
             ))
+            .id(runId)
         }
         .navigationDestination(isPresented: $goQuiz) {
             KanaQuizView(viewModel: KanaDrillViewModel(
@@ -65,6 +77,7 @@ struct KanaDrillModeSelector: View {
                 cardRepository: cardRepository,
                 vocabularyRepository: vocabularyRepository
             ))
+            .id(runId)
         }
     }
 
