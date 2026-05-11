@@ -37,6 +37,11 @@ public enum PlaybackRate: Double, CaseIterable, Sendable, Identifiable {
 // MARK: - AudioService
 
 /// Manages audio playback for TTS and cached audio files.
+// AVAudioUnitTimePitch is unavailable on watchOS, and the watch target
+// doesn't ship any audio drills — gate the whole service so the package
+// builds clean for watchOS while staying available on iOS / macOS.
+#if !os(watchOS)
+
 /// Observable service that drives UI state for playback controls.
 @Observable
 @MainActor
@@ -333,9 +338,11 @@ private final class SpeechDelegate: NSObject, AVSpeechSynthesizerDelegate, @unch
     }
 }
 
+#endif // !os(watchOS) — closes the AudioService gate
+
 // MARK: - Environment Key
 
-#if canImport(SwiftUI)
+#if canImport(SwiftUI) && !os(watchOS)
 import SwiftUI
 
 private struct AudioServiceKey: EnvironmentKey {

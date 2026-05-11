@@ -1,5 +1,6 @@
 import Testing
 import Foundation
+#if !os(watchOS)
 import AVFoundation
 @testable import IkeruCore
 
@@ -84,3 +85,6 @@ struct AudioServiceTests {
         #expect(result is Bool)
     }
 }
+
+#endif
+
