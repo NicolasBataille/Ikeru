@@ -64,6 +64,15 @@ final class WatchSessionManager: NSObject, ObservableObject {
         }
         pendingResults.removeAll()
     }
+
+    /// Apply state synced from the iPhone. Called only on the main actor —
+    /// the delegate callback hops here via `Task { @MainActor }`.
+    @MainActor
+    func applySyncedState(xp: Int, level: Int, due: Int) {
+        self.syncedXP = xp
+        self.syncedLevel = level
+        self.syncedDueCards = due
+    }
 }
 
 // MARK: - WCSessionDelegate
@@ -93,12 +102,15 @@ extension WatchSessionManager: WCSessionDelegate {
             return
         }
 
-        // Swift 6: hop onto MainActor explicitly via Task so the
-        // @Published assignments are isolated correctly.
-        Task { @MainActor [weak self] in
-            self?.syncedXP = payload.xp
-            self?.syncedLevel = payload.level
-            self?.syncedDueCards = payload.dueCardCount
+        // Swift 6: capture Sendable scalars before the actor hop so
+        // `self` doesn't have to cross isolation boundaries. The
+        // delegate method is nonisolated (called from WatchConnectivity's
+        // private queue); MainActor work happens via this closure.
+        let xp = payload.xp
+        let level = payload.level
+        let due = payload.dueCardCount
+        Task { @MainActor in
+            WatchSessionManager.shared.applySyncedState(xp: xp, level: level, due: due)
         }
 
         Logger.sync.info("Watch received state: level=\(payload.level), xp=\(payload.xp)")
