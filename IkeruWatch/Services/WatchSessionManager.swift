@@ -93,7 +93,9 @@ extension WatchSessionManager: WCSessionDelegate {
             return
         }
 
-        DispatchQueue.main.async { [weak self] in
+        // Swift 6: hop onto MainActor explicitly via Task so the
+        // @Published assignments are isolated correctly.
+        Task { @MainActor [weak self] in
             self?.syncedXP = payload.xp
             self?.syncedLevel = payload.level
             self?.syncedDueCards = payload.dueCardCount
