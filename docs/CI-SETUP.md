@@ -94,16 +94,25 @@ The deploy job uses an environment called `testflight` for added safety
 
 ## Step 5 — Anthropic API key (optional, for PR code review)
 
-If you want the Claude code-review gate on PRs:
+The Code Review job is **opt-in** — it stays silent until you flip a
+repository variable, so it doesn't block PRs while you're getting set up.
+
+To enable:
 
 1. Go to <https://console.anthropic.com/settings/keys>
-2. Create a new key → copy → add as `ANTHROPIC_API_KEY` secret
-3. **Cost**: each PR review burns Claude tokens (~$0.10–0.50 per review
-   depending on diff size). The workflow has `[skip-review]` PR-title
-   escape hatch to skip the gate on hotfixes.
+2. Create a new key → copy → add as `ANTHROPIC_API_KEY` **secret** at
+   https://github.com/NicolasBataille/Ikeru/settings/secrets/actions
+3. Then go to https://github.com/NicolasBataille/Ikeru/settings/variables/actions
+   → New repository **variable** → name `ENABLE_CODE_REVIEW`, value `true`
 
-To disable the gate entirely, delete `.github/workflows/code-review.yml`
-or remove the `ANTHROPIC_API_KEY` secret (the action will fail-soft).
+The job will now run on every PR.
+
+**Cost**: each PR review burns Claude tokens (~$0.10–0.50 per review
+depending on diff size). To skip the gate on an individual emergency
+hotfix, add `[skip-review]` to the PR title.
+
+**To disable entirely**: set `ENABLE_CODE_REVIEW=false` (or delete the
+variable). The workflow stays in the repo but skips on every PR.
 
 ## Step 6 — First deploy
 

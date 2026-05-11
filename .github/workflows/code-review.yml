@@ -19,7 +19,12 @@ jobs:
   review:
     name: Code Review
     runs-on: ubuntu-latest
-    if: "!contains(github.event.pull_request.title, '[skip-review]')"
+    # Opt-in via a repository variable so the gate is silent (skipped, not
+    # failed) until the user has both (1) set `ENABLE_CODE_REVIEW=true` in
+    # https://github.com/NicolasBataille/Ikeru/settings/variables/actions
+    # AND (2) added the `ANTHROPIC_API_KEY` secret. `[skip-review]` in the
+    # PR title also disables it for individual emergency hotfixes.
+    if: vars.ENABLE_CODE_REVIEW == 'true' && !contains(github.event.pull_request.title, '[skip-review]')
     permissions:
       contents: read
       pull-requests: write
