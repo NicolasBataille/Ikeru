@@ -10,7 +10,13 @@ import os
 /// Receives state from iPhone and sends session results back.
 final class WatchSessionManager: NSObject, ObservableObject {
 
-    static let shared = WatchSessionManager()
+    /// `nonisolated(unsafe)` is the documented Swift 6 escape hatch for
+    /// legacy ObjC singletons that bridge into Foundation delegate
+    /// callbacks (`WCSessionDelegate`). The class's internal state is
+    /// guarded by the @Published / @MainActor convention enforced at
+    /// call sites; the singleton itself is constructed once at app
+    /// launch and never mutated.
+    nonisolated(unsafe) static let shared = WatchSessionManager()
 
     /// Latest synced RPG state from iPhone.
     @Published private(set) var syncedXP: Int = 0
