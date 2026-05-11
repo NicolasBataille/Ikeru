@@ -35,11 +35,22 @@ and add the following:
 
 ## Step 1 — Generate App Store Connect API Key
 
-1. Go to <https://appstoreconnect.apple.com/access/api>
-2. Click the **"+"** under *Keys* → name it `Ikeru CI` → role **App Manager**
-3. Click **Generate**
-4. **Download the `.p8` file immediately** (Apple only lets you download it once)
-5. Note the **Key ID** and **Issuer ID** displayed on the page
+> Apple reorganised this page in 2024 — the old `/access/api` URL now
+> 404s. The keys live under **Users and Access → Integrations**.
+
+1. Sign in to <https://appstoreconnect.apple.com>
+2. Click **Users and Access** on the dashboard
+3. Open the **Integrations** tab (top of the page, next to "Users",
+   "Sandbox Testers", etc.). Direct link:
+   <https://appstoreconnect.apple.com/access/integrations/api>
+4. In the **App Store Connect API** section → **Team Keys** → click
+   **"Generate API Key"** (or the **"+"** if you've created one before)
+5. Name it `Ikeru CI`, role **App Manager** (or **Admin** if you want it
+   to manage TestFlight users), **Generate**
+6. **Download the `.p8` immediately** — Apple only lets you do this once.
+   Lose it and you have to revoke the key and regenerate.
+7. Note the **Key ID** (10 chars) on the key's row, and the **Issuer ID**
+   (UUID) at the top of the Integrations page
 
 Encode the `.p8` for GitHub:
 
