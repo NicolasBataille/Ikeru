@@ -1,4 +1,5 @@
 import Foundation
+#if canImport(Vision)
 import Vision
 import CoreGraphics
 import os
@@ -353,3 +354,6 @@ public struct HandwritingRecognitionService: Sendable {
         return result
     }
 }
+
+#endif
+

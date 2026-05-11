@@ -10,7 +10,13 @@ import os
 /// Receives state from iPhone and sends session results back.
 final class WatchSessionManager: NSObject, ObservableObject {
 
-    static let shared = WatchSessionManager()
+    /// `nonisolated(unsafe)` is the documented Swift 6 escape hatch for
+    /// legacy ObjC singletons that bridge into Foundation delegate
+    /// callbacks (`WCSessionDelegate`). The class's internal state is
+    /// guarded by the @Published / @MainActor convention enforced at
+    /// call sites; the singleton itself is constructed once at app
+    /// launch and never mutated.
+    nonisolated(unsafe) static let shared = WatchSessionManager()
 
     /// Latest synced RPG state from iPhone.
     @Published private(set) var syncedXP: Int = 0
@@ -58,6 +64,15 @@ final class WatchSessionManager: NSObject, ObservableObject {
         }
         pendingResults.removeAll()
     }
+
+    /// Apply state synced from the iPhone. Called only on the main actor —
+    /// the delegate callback hops here via `Task { @MainActor }`.
+    @MainActor
+    func applySyncedState(xp: Int, level: Int, due: Int) {
+        self.syncedXP = xp
+        self.syncedLevel = level
+        self.syncedDueCards = due
+    }
 }
 
 // MARK: - WCSessionDelegate
@@ -87,10 +102,15 @@ extension WatchSessionManager: WCSessionDelegate {
             return
         }
 
-        DispatchQueue.main.async { [weak self] in
-            self?.syncedXP = payload.xp
-            self?.syncedLevel = payload.level
-            self?.syncedDueCards = payload.dueCardCount
+        // Swift 6: capture Sendable scalars before the actor hop so
+        // `self` doesn't have to cross isolation boundaries. The
+        // delegate method is nonisolated (called from WatchConnectivity's
+        // private queue); MainActor work happens via this closure.
+        let xp = payload.xp
+        let level = payload.level
+        let due = payload.dueCardCount
+        Task { @MainActor in
+            WatchSessionManager.shared.applySyncedState(xp: xp, level: level, due: due)
         }
 
         Logger.sync.info("Watch received state: level=\(payload.level), xp=\(payload.xp)")

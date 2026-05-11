@@ -1,0 +1,63 @@
+name: Claude Code Review
+
+# QA gate that runs the Claude code-reviewer on every PR targeting master.
+# Posts findings as PR comments. Configure the action to FAIL on CRITICAL
+# findings if you want it to block merges; see the action's docs.
+#
+# Requires the `ANTHROPIC_API_KEY` secret. Generated at
+# https://console.anthropic.com/settings/keys.
+#
+# To temporarily skip the review (e.g. emergency hotfix): add `[skip-review]`
+# to the PR title.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [master]
+
+jobs:
+  review:
+    name: Code Review
+    runs-on: ubuntu-latest
+    # Opt-in via a repository variable so the gate is silent (skipped, not
+    # failed) until the user has both (1) set `ENABLE_CODE_REVIEW=true` in
+    # https://github.com/NicolasBataille/Ikeru/settings/variables/actions
+    # AND (2) added the `ANTHROPIC_API_KEY` secret. `[skip-review]` in the
+    # PR title also disables it for individual emergency hotfixes.
+    if: vars.ENABLE_CODE_REVIEW == 'true' && !contains(github.event.pull_request.title, '[skip-review]')
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Claude Code Review
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          # Focus the review on real issues, not stylistic nits — SwiftLint
+          # already handles those in the main CI workflow.
+          direct_prompt: |
+            Review this PR diff for the Ikeru iOS app (Swift 6, SwiftUI,
+            SwiftData, public-portfolio repo).
+
+            Focus on:
+            1. Memory safety / concurrency (Sendable, @MainActor, actor isolation)
+            2. SwiftData persistence (migrations, schema changes, FetchDescriptor correctness)
+            3. Security & privacy (no PII or secrets in logs; `privacy: .public`
+               on operational metrics; UserDefaults/Keychain usage)
+            4. Behavioural correctness (especially around dates, calendars,
+               locales, FSRS scheduling, JLPT readiness)
+            5. SwiftUI lifecycle gotchas (@State persistence across re-presentations,
+               .id() usage, environment injection)
+
+            Skip:
+            - Style nits (SwiftLint handles those)
+            - Suggestions to refactor pre-existing code outside the diff
+
+            Report by severity (CRITICAL / HIGH / MEDIUM / LOW). Be concise.
+            End with a one-line verdict: APPROVE / APPROVE_WITH_NITS /
+            REQUEST_CHANGES / BLOCK.

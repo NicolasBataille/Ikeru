@@ -1,5 +1,6 @@
 import Testing
 import Foundation
+#if canImport(Vision)
 import CoreGraphics
 @testable import IkeruCore
 
@@ -307,3 +308,6 @@ struct ShapeMatchingProviderTests {
         #expect(candidates[0].confidence <= 0.5)
     }
 }
+
+#endif
+
