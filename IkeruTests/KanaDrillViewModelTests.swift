@@ -178,4 +178,62 @@ struct KanaDrillViewModelTests {
         #expect(vm.sessionEnded == false)
         #expect(vm.currentCard != nil)
     }
+
+    // MARK: - Shuffle
+
+    /// Regression guard: repeated VM construction with the same input
+    /// must produce more than one distinct queue order. With 40 base
+    /// kana characters the probability of seeing two identical orders
+    /// across 10 trials is astronomically small, so this fails iff
+    /// `.shuffled()` is silently a no-op or stuck on a seed.
+    @Test("Repeated VM init produces distinct shuffled orders")
+    func shuffleProducesDistinctOrders() async throws {
+        let container = try makeContainer()
+        let repo = CardRepository(modelContainer: container)
+        var cards: [CardDTO] = []
+        for kana in KanaGroup.allBaseCharacters.prefix(40) {
+            let card = await repo.createCard(
+                front: kana.character,
+                back: kana.romaji,
+                type: .vocabulary
+            )
+            cards.append(card)
+        }
+
+        var observed: Set<[UUID]> = []
+        for _ in 0..<10 {
+            let vm = KanaDrillViewModel(
+                mode: .freePractice,
+                queue: cards,
+                cardRepository: repo
+            )
+            observed.insert(vm.queue.map(\.id))
+        }
+        #expect(observed.count > 1, "Shuffle produced the same order in all 10 trials — RNG broken")
+    }
+
+    /// Regression guard for the user-visible bug: `restart()` must
+    /// re-shuffle the queue. Without this the user sees the same
+    /// order every time they replay a drill.
+    @Test("restart() reshuffles the queue")
+    func restartReshuffles() async throws {
+        let container = try makeContainer()
+        let repo = CardRepository(modelContainer: container)
+        var cards: [CardDTO] = []
+        for kana in KanaGroup.allBaseCharacters.prefix(40) {
+            let card = await repo.createCard(
+                front: kana.character,
+                back: kana.romaji,
+                type: .vocabulary
+            )
+            cards.append(card)
+        }
+        let vm = KanaDrillViewModel(mode: .freePractice, queue: cards, cardRepository: repo)
+        var observed: Set<[UUID]> = [vm.queue.map(\.id)]
+        for _ in 0..<9 {
+            vm.restart()
+            observed.insert(vm.queue.map(\.id))
+        }
+        #expect(observed.count > 1, "restart() never changed the queue order across 10 calls")
+    }
 }
