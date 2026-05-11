@@ -269,6 +269,9 @@
         }
       }
     },
+    "+%@" : {
+
+    },
     "+%@ XP" : {
 
     },
@@ -473,6 +476,159 @@
     },
     "Add to Dictionary" : {
 
+    },
+    "All" : {
+      "comment" : "Daily-term history filter — all terms",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tous"
+          }
+        }
+      }
+    },
+    "Missed" : {
+      "comment" : "Daily-term history filter — never opened",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Missed"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Manqués"
+          }
+        }
+      }
+    },
+    "Seen" : {
+      "comment" : "Daily-term history filter — already opened",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vus"
+          }
+        }
+      }
+    },
+    "No past terms yet" : {
+      "comment" : "Daily-term history empty state — primary line",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No past terms yet"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pas encore de termes passés"
+          }
+        }
+      }
+    },
+    "Nothing here for this filter" : {
+      "comment" : "Daily-term history empty state — when filter excludes everything",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nothing here for this filter"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rien à afficher pour ce filtre"
+          }
+        }
+      }
+    },
+    "Each day's term will appear here once a new one arrives." : {
+      "comment" : "Daily-term history empty state — explanatory body (all filter)",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Each day's term will appear here once a new one arrives."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le terme de chaque jour apparaîtra ici dès qu'un nouveau arrive."
+          }
+        }
+      }
+    },
+    "Switch filter to see your other terms." : {
+      "comment" : "Daily-term history empty state — body (non-all filter)",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Switch filter to see your other terms."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Change de filtre pour voir tes autres termes."
+          }
+        }
+      }
+    },
+    "Add to dictionary" : {
+      "comment" : "Daily-term reveal — primary action when not yet added",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add to dictionary"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter au dictionnaire"
+          }
+        }
+      }
+    },
+    "Added to dictionary" : {
+      "comment" : "Daily-term reveal — action label once the term is in the user's vocab",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Added to dictionary"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouté au dictionnaire"
+          }
+        }
+      }
     },
     "Advanced" : {
 
@@ -2733,6 +2889,23 @@
         }
       }
     },
+    "NEW TERM ARRIVED" : {
+      "comment" : "Daily-term banner eyebrow on Home",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "NEW TERM ARRIVED"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "NOUVEAU TERME DU JOUR"
+          }
+        }
+      }
+    },
     "Next rank" : {
       "comment" : "RPG section header — preview of the next dan",
       "extractionState" : "stale",
@@ -2947,6 +3120,40 @@
     },
     "PARAMS" : {
 
+    },
+    "Past terms" : {
+      "comment" : "Daily-term reveal — link to history sheet",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Past terms"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Termes passés"
+          }
+        }
+      }
+    },
+    "PAST TERMS" : {
+      "comment" : "Daily-term history view — header eyebrow",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PAST TERMS"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TERMES PASSÉS"
+          }
+        }
+      }
     },
     "Patient. Specialty: keigo" : {
       "comment" : "Sakura tutor description",
@@ -4331,6 +4538,23 @@
     "Tap to %@" : {
 
     },
+    "Tap to discover today's word" : {
+      "comment" : "Daily-term banner CTA on Home",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap to discover today's word"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Touche pour découvrir le mot du jour"
+          }
+        }
+      }
+    },
     "Tap to dismiss" : {
 
     },
@@ -4370,6 +4594,74 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Taux de rétention cible"
+          }
+        }
+      }
+    },
+    "TERM OF THE DAY" : {
+      "comment" : "Daily-term reveal view header eyebrow",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TERM OF THE DAY"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TERME DU JOUR"
+          }
+        }
+      }
+    },
+    "Opens today's new vocabulary term" : {
+      "comment" : "Daily-term banner accessibility hint",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opens today's new vocabulary term"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvre le nouveau terme de vocabulaire du jour"
+          }
+        }
+      }
+    },
+    "Re-open today's term" : {
+      "comment" : "Daily-term revealed pill accessibility hint",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Re-open today's term"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rouvre le terme du jour"
+          }
+        }
+      }
+    },
+    "Term of the day" : {
+      "comment" : "Settings — daily-term reminder toggle label",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Term of the day"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terme du jour"
           }
         }
       }
@@ -4530,7 +4822,6 @@
     },
     "Today" : {
       "comment" : "Bilingual chrome label paired with 本日 on the Home hero",
-      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -4773,6 +5064,23 @@
         }
       }
     },
+    "Yesterday" : {
+      "comment" : "Daily-term banner — yesterday reminder pill",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yesterday"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hier"
+          }
+        }
+      }
+    },
     "You'll start with hiragana — the first writing system. Let's begin your Japanese adventure." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -4809,6 +5117,23 @@
     },
     "Your answer" : {
 
+    },
+    "Your discovery trail" : {
+      "comment" : "Daily-term history view — subtitle",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your discovery trail"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ton fil de découvertes"
+          }
+        }
+      }
     },
     "Your first lesson awaits" : {
       "extractionState" : "stale",

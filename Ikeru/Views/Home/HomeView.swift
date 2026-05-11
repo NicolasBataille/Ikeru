@@ -39,6 +39,7 @@ struct HomeView: View {
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.displayMode) private var displayMode
     @Environment(\.displayModeRepository) private var displayModeRepo
+    @Environment(AppLocale.self) private var appLocale
     @State private var viewModel: HomeViewModel?
     @State private var sessionViewModel: SessionViewModel?
     @State private var dailyTermViewModel: DailyTermViewModel?
@@ -666,7 +667,10 @@ struct HomeView: View {
         let container = modelContext.container
 
         viewModel = HomeViewModel(modelContainer: container)
-        dailyTermViewModel = DailyTermViewModel(modelContainer: container)
+        dailyTermViewModel = DailyTermViewModel(
+            modelContainer: container,
+            locale: appLocale.currentLocale
+        )
 
         let repo = CardRepository(modelContainer: container)
         let planner = PlannerService(cardRepository: repo)

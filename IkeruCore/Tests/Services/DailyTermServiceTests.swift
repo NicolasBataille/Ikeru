@@ -335,8 +335,13 @@ struct DailyTermServiceTests {
             tags: []
         )
         let (service, _) = try makeService(catalog: [candidate])
-        // 2026-05-11 is Monday in spring.
-        let caption = service.composeCaption(for: candidate, on: date(year: 2026, month: 5, day: 11))
+        // 2026-05-11 is Monday in spring. Force EN to assert against
+        // the English phrase set regardless of the host locale.
+        let caption = service.composeCaption(
+            for: candidate,
+            on: date(year: 2026, month: 5, day: 11),
+            locale: Locale(identifier: "en")
+        )
         #expect(caption.contains("Monday") || caption.contains("spring"))
     }
 
