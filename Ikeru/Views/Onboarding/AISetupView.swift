@@ -70,12 +70,12 @@ struct AISetupView: View {
                     )
                 )
 
-            Text("Configuration de l'IA")
+            Text("AI Setup")
                 .font(.ikeruDisplaySmall)
                 .ikeruTracking(.display)
                 .foregroundStyle(Color.ikeruTextPrimary)
 
-            Text("Sakura a besoin d'un fournisseur d'IA pour discuter avec toi.")
+            Text("Sakura needs an AI provider to chat with you.")
                 .font(.ikeruBody)
                 .foregroundStyle(Color.ikeruTextSecondary)
                 .multilineTextAlignment(.center)
@@ -91,12 +91,12 @@ struct AISetupView: View {
                     .font(.system(size: 24))
                     .foregroundStyle(Color.ikeruSuccess)
 
-                Text("IA sur l'appareil prête")
+                Text("On-device AI ready")
                     .font(.ikeruBody)
                     .foregroundStyle(.white)
             }
 
-            Text("Apple FoundationModels est disponible sur ton appareil. Aucune configuration requise.")
+            Text("Apple FoundationModels is available on your device. No setup required.")
                 .font(.ikeruCaption)
                 .foregroundStyle(.ikeruTextSecondary)
                 .multilineTextAlignment(.center)
@@ -113,21 +113,21 @@ struct AISetupView: View {
 
     private var geminiSetupSection: some View {
         VStack(spacing: IkeruTheme.Spacing.md) {
-            Text("Configure une clé Gemini gratuite pour les fonctionnalités IA")
+            Text("Set up a free Gemini key for AI features")
                 .font(.ikeruBody)
                 .foregroundStyle(.white)
                 .multilineTextAlignment(.center)
 
             Link(destination: URL(string: "https://aistudio.google.com/apikey")!) {
                 HStack(spacing: 4) {
-                    Text("Obtiens une clé gratuite sur Google AI Studio")
+                    Text("Get a free key from Google AI Studio")
                     Image(systemName: "arrow.up.right")
                 }
                 .font(.ikeruCaption)
                 .foregroundStyle(.ikeruPrimaryAccent)
             }
 
-            SecureField("Colle ta clé API Gemini", text: $geminiKey)
+            SecureField("Paste Gemini API key", text: $geminiKey)
                 .font(.ikeruBody)
                 .foregroundStyle(.white)
                 .padding(IkeruTheme.Spacing.sm)
@@ -146,7 +146,7 @@ struct AISetupView: View {
                 HStack(spacing: IkeruTheme.Spacing.xs) {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundStyle(Color.ikeruSuccess)
-                    Text("Clé enregistrée")
+                    Text("Key saved")
                         .font(.ikeruCaption)
                         .foregroundStyle(Color.ikeruSuccess)
                 }
@@ -171,7 +171,7 @@ struct AISetupView: View {
                     saveGeminiKey()
                 } label: {
                     HStack(spacing: 10) {
-                        Text("Enregistrer")
+                        Text("Save")
                         Image(systemName: "arrow.right")
                             .font(.system(size: 14, weight: .semibold))
                     }
@@ -185,7 +185,7 @@ struct AISetupView: View {
                 dismiss()
             } label: {
                 HStack(spacing: 10) {
-                    Text(foundationModelsAvailable || saved ? "Continuer" : "Passer pour l'instant")
+                    Text(foundationModelsAvailable || saved ? "Continue" : "Skip for now")
                     Image(systemName: "arrow.right")
                         .font(.system(size: 14, weight: .semibold))
                 }
@@ -215,7 +215,7 @@ struct AISetupView: View {
             saved = true
             Logger.ai.info("Gemini API key saved during onboarding")
         } catch {
-            saveError = "Échec de l'enregistrement. Réessaie."
+            saveError = "Failed to save key. Try again."
             Logger.ai.error("Onboarding Gemini key save failed: \(error.localizedDescription)")
         }
 

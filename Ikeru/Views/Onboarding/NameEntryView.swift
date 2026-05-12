@@ -81,12 +81,12 @@ struct NameEntryView: View {
                 .shadow(color: Color(hex: 0xD4A574, opacity: 0.4), radius: 32)
 
             VStack(spacing: 8) {
-                Text("TON CHEMIN COMMENCE")
+                Text("YOUR JOURNEY BEGINS")
                     .font(.ikeruMicro)
                     .ikeruTracking(.micro)
                     .foregroundStyle(Color.ikeruTextTertiary)
 
-                Text("Comment\nveux-tu être appelé(e) ?")
+                Text("What should\nwe call you?")
                     .font(.system(size: 36, weight: .light))
                     .ikeruTracking(.display)
                     .foregroundStyle(Color.ikeruTextPrimary)
@@ -103,7 +103,7 @@ struct NameEntryView: View {
         TextField(
             "",
             text: $name,
-            prompt: Text("Ton prénom").foregroundStyle(TatamiTokens.paperGhost)
+            prompt: Text("Your name").foregroundStyle(TatamiTokens.paperGhost)
         )
         .font(.system(size: 22, weight: .regular, design: .serif))
         .foregroundStyle(Color.ikeruTextPrimary)
@@ -137,7 +137,7 @@ struct NameEntryView: View {
                 Text("·")
                     .font(.system(size: 15, weight: .light))
                     .foregroundStyle(Color(red: 0.16, green: 0.11, blue: 0.05).opacity(0.55))
-                Text("Continuer")
+                Text("Continue")
                     .font(.system(size: 14, weight: .semibold))
                     .tracking(1.0)
                     .textCase(.uppercase)
