@@ -2,46 +2,228 @@
   "sourceLanguage" : "en",
   "strings" : {
     "" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ""
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ""
+          }
+        }
+      }
     },
     " " : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " "
+          }
+        }
+      }
     },
     " / " : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " / "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " / "
+          }
+        }
+      }
     },
     " XP" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " XP"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " XP"
+          }
+        }
+      }
     },
     "-" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "-"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "-"
+          }
+        }
+      }
     },
     "--" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "--"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "--"
+          }
+        }
+      }
     },
     "︙" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "︙"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "︙"
+          }
+        }
+      }
     },
     "。" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "。"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "。"
+          }
+        }
+      }
     },
     "·" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "·"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "·"
+          }
+        }
+      }
     },
     "‹" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "‹"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "‹"
+          }
+        }
+      }
     },
     "›" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "›"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "›"
+          }
+        }
+      }
     },
     "(%@)" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "(%@)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "(%@)"
+          }
+        }
+      }
     },
     "%" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%"
+          }
+        }
+      }
     },
     "%@" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@"
+          }
+        }
+      }
     },
     "%@ / %@" : {
       "localizations" : {
@@ -49,6 +231,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "%1$@ / %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ / %@"
           }
         }
       }
@@ -60,6 +248,12 @@
             "state" : "new",
             "value" : "%1$@ / %2$@ correct"
           }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ / %@ corrects"
+          }
         }
       }
     },
@@ -69,6 +263,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "%1$@ / %2$@ XP"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ / %@ XP"
           }
         }
       }
@@ -80,14 +280,46 @@
             "state" : "new",
             "value" : "%1$@ %2$@%%"
           }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ %@%%"
+          }
         }
       }
     },
     "%@ cards" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ cartes"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ cards"
+          }
+        }
+      }
     },
     "%@ cards ready" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ cartes prêtes"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ cards ready"
+          }
+        }
+      }
     },
     "%@ cards remaining" : {
       "localizations" : {
@@ -138,10 +370,36 @@
       }
     },
     "%@ exercises" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ exercices"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ exercises"
+          }
+        }
+      }
     },
     "%@ words" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ mots"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ words"
+          }
+        }
+      }
     },
     "%@ words due for review" : {
       "localizations" : {
@@ -176,10 +434,37 @@
       }
     },
     "%@ XP" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ XP"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ XP"
+          }
+        }
+      }
     },
     "%@ XP to advance" : {
-      "comment" : "RPG next rank caption — format string `%lld XP to advance`"
+      "comment" : "RPG next rank caption — format string `%lld XP to advance`",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ XP pour avancer"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ XP to advance"
+          }
+        }
+      }
     },
     "%@ XP to next rank" : {
       "comment" : "Subtle XP-remaining label on the Home hero",
@@ -199,7 +484,20 @@
       }
     },
     "%@." : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@."
+          }
+        }
+      }
     },
     "%@/%@" : {
       "localizations" : {
@@ -207,6 +505,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "%1$@/%2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@/%@"
           }
         }
       }
@@ -218,20 +522,78 @@
             "state" : "new",
             "value" : "%1$@/%2$@ correct"
           }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@/%@ corrects"
+          }
         }
       }
     },
     "%@%%" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@%%"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@%%"
+          }
+        }
+      }
     },
     "%@m" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@m"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@m"
+          }
+        }
+      }
     },
     "%@s" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@s"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@s"
+          }
+        }
+      }
     },
     "%@分" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@分"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@分"
+          }
+        }
+      }
     },
     "%lld XP to advance" : {
       "comment" : "RPG next rank caption — XP remaining to the next dan",
@@ -270,19 +632,84 @@
       }
     },
     "+%@" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "+%@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "+%@"
+          }
+        }
+      }
     },
     "+%@ XP" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "+%@ XP"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "+%@ XP"
+          }
+        }
+      }
     },
     "+%@ XP earned" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "+%@ XP gagnés"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "+%@ XP earned"
+          }
+        }
+      }
     },
     "~%@ min" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "~%@ min"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "~%@ min"
+          }
+        }
+      }
     },
     "▾" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "▾"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "▾"
+          }
+        }
+      }
     },
     "7-day arc" : {
       "extractionState" : "stale",
@@ -475,7 +902,20 @@
       }
     },
     "Add to Dictionary" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter au dictionnaire"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add to Dictionary"
+          }
+        }
+      }
     },
     "All" : {
       "comment" : "Daily-term history filter — all terms",
@@ -631,7 +1071,20 @@
       }
     },
     "Advanced" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avancé"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Advanced"
+          }
+        }
+      }
     },
     "Again" : {
       "comment" : "FSRS grade button label",
@@ -670,7 +1123,20 @@
       }
     },
     "AI Setup" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configuration de l'IA"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI Setup"
+          }
+        }
+      }
     },
     "All caught up — enjoy the calm" : {
       "localizations" : {
@@ -689,7 +1155,20 @@
       }
     },
     "All caught up!" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tout est à jour !"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All caught up!"
+          }
+        }
+      }
     },
     "ALL CLEAR" : {
       "localizations" : {
@@ -724,10 +1203,36 @@
       }
     },
     "Apple FoundationModels" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple FoundationModels"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple FoundationModels"
+          }
+        }
+      }
     },
     "Apple FoundationModels is available on your device. No setup required." : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple FoundationModels est disponible sur ton appareil. Aucune configuration requise."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple FoundationModels is available on your device. No setup required."
+          }
+        }
+      }
     },
     "Approx" : {
       "comment" : "Session preview: approximate duration",
@@ -868,7 +1373,20 @@
       }
     },
     "Available words" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mots disponibles"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Available words"
+          }
+        }
+      }
     },
     "BALANCE" : {
       "comment" : "Skill balance section header on Home",
@@ -974,7 +1492,20 @@
       }
     },
     "Candidates" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suggestions"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Candidates"
+          }
+        }
+      }
     },
     "Card.Hint.Example" : {
       "extractionState" : "manual",
@@ -1130,7 +1661,20 @@
       }
     },
     "Clear" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Effacer"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clear"
+          }
+        }
+      }
     },
     "Come back later when you have cards to review." : {
       "localizations" : {
@@ -1204,6 +1748,12 @@
             "state" : "new",
             "value" : "Connected · voicevox=%1$@ · gpu=%2$@ · v%3$@"
           }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connecté · voicevox=%@ · gpu=%@ · v%@"
+          }
         }
       }
     },
@@ -1224,7 +1774,20 @@
       }
     },
     "Continue" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continuer"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continue"
+          }
+        }
+      }
     },
     "CONTINUE" : {
       "comment" : "Summary primary CTA",
@@ -1244,13 +1807,52 @@
       }
     },
     "Correct answer:" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bonne réponse :"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Correct answer:"
+          }
+        }
+      }
     },
     "Correct: %@" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Correct : %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Correct: %@"
+          }
+        }
+      }
     },
     "Correct!" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Correct !"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Correct!"
+          }
+        }
+      }
     },
     "Daily goal" : {
       "comment" : "Settings row label",
@@ -1338,10 +1940,36 @@
       }
     },
     "Detail: %@" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Détail : %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detail: %@"
+          }
+        }
+      }
     },
     "Detected: %@型" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Détecté : %@型"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detected: %@型"
+          }
+        }
+      }
     },
     "Dictionary" : {
       "extractionState" : "stale",
@@ -1429,7 +2057,20 @@
       }
     },
     "Drill Due Words" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réviser les mots dus"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Drill Due Words"
+          }
+        }
+      }
     },
     "Duration" : {
       "localizations" : {
@@ -1466,7 +2107,20 @@
       }
     },
     "ENCOUNTER HISTORY" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HISTORIQUE DES RENCONTRES"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ENCOUNTER HISTORY"
+          }
+        }
+      }
     },
     "End Session" : {
       "localizations" : {
@@ -1501,7 +2155,20 @@
       }
     },
     "ERROR" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ERROR"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ERROR"
+          }
+        }
+      }
     },
     "Etude.Compose.Action" : {
       "extractionState" : "manual",
@@ -1980,7 +2647,20 @@
       }
     },
     "Example Sentences" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Phrases d'exemple"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Example Sentences"
+          }
+        }
+      }
     },
     "Exercises Complete!" : {
       "localizations" : {
@@ -2016,7 +2696,20 @@
       }
     },
     "EXPERIENCE" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "EXPÉRIENCE"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "EXPERIENCE"
+          }
+        }
+      }
     },
     "Export data" : {
       "comment" : "Settings row exporting the user's data archive",
@@ -2171,10 +2864,36 @@
       }
     },
     "Get a free key from Google AI Studio" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Obtiens une clé gratuite sur Google AI Studio"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Get a free key from Google AI Studio"
+          }
+        }
+      }
     },
     "Get free key" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Obtenir une clé gratuite"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Get free key"
+          }
+        }
+      }
     },
     "Good" : {
       "comment" : "FSRS grade button label",
@@ -2369,7 +3088,20 @@
       }
     },
     "Ikeru is made possible by these open-source resources." : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ikeru est rendu possible grâce à ces ressources open source."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ikeru is made possible by these open-source resources."
+          }
+        }
+      }
     },
     "In your Dictionary" : {
       "localizations" : {
@@ -2457,7 +3189,20 @@
       }
     },
     "Kana Training" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entraînement aux kana"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kana Training"
+          }
+        }
+      }
     },
     "kanji" : {
       "comment" : "Tiny suffix after the LEARNED count",
@@ -2529,7 +3274,20 @@
       }
     },
     "Key saved" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clé enregistrée"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Key saved"
+          }
+        }
+      }
     },
     "Language" : {
       "comment" : "Settings row label",
@@ -2566,7 +3324,20 @@
       }
     },
     "LEARNING" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "APPRENTISSAGE"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LEARNING"
+          }
+        }
+      }
     },
     "Leave this session?" : {
       "localizations" : {
@@ -2585,10 +3356,36 @@
       }
     },
     "Level %@" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Niveau %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Level %@"
+          }
+        }
+      }
     },
     "LEVEL %@" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "NIVEAU %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LEVEL %@"
+          }
+        }
+      }
     },
     "LEVEL UP!" : {
       "localizations" : {
@@ -2607,7 +3404,20 @@
       }
     },
     "Level: %@" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Niveau : %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Level: %@"
+          }
+        }
+      }
     },
     "Listen" : {
       "localizations" : {
@@ -2644,10 +3454,36 @@
       }
     },
     "Listening Passage" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passage d'écoute"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Listening Passage"
+          }
+        }
+      }
     },
     "Loading cards..." : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chargement des cartes..."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loading cards..."
+          }
+        }
+      }
     },
     "Loading content..." : {
       "localizations" : {
@@ -2698,7 +3534,20 @@
       }
     },
     "Local Rig" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rig local"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Local Rig"
+          }
+        }
+      }
     },
     "Loot.NewExerciseUnlocked" : {
       "extractionState" : "manual",
@@ -2785,10 +3634,36 @@
       }
     },
     "MASTERY" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MAÎTRISE"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MASTERY"
+          }
+        }
+      }
     },
     "Mastery: %@" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maîtrise : %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mastery: %@"
+          }
+        }
+      }
     },
     "Maximum interval" : {
       "comment" : "Settings row label (FSRS maximum interval cap)",
@@ -2809,7 +3684,20 @@
       }
     },
     "Meet Sakura" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rencontre Sakura"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meet Sakura"
+          }
+        }
+      }
     },
     "Memory algorithm" : {
       "comment" : "Settings section header for FSRS settings",
@@ -2846,13 +3734,52 @@
       }
     },
     "Mnemonic" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Moyen mnémotechnique"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mnemonic"
+          }
+        }
+      }
     },
     "MODE" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MODE"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MODE"
+          }
+        }
+      }
     },
     "MY DICTIONARY" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MON DICTIONNAIRE"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MY DICTIONARY"
+          }
+        }
+      }
     },
     "New" : {
       "comment" : "Session preview: number of brand-new cards",
@@ -2989,7 +3916,20 @@
       }
     },
     "No jobs tracked yet. Generate audio or images to populate this list." : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune tâche suivie pour le moment. Génère de l'audio ou des images pour remplir cette liste."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No jobs tracked yet. Generate audio or images to populate this list."
+          }
+        }
+      }
     },
     "No mnemonic available yet." : {
       "localizations" : {
@@ -3008,7 +3948,20 @@
       }
     },
     "No radicals found" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun radical trouvé"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No radicals found"
+          }
+        }
+      }
     },
     "No stroke data available" : {
       "localizations" : {
@@ -3043,7 +3996,20 @@
       }
     },
     "No words yet" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun mot pour le moment"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No words yet"
+          }
+        }
+      }
     },
     "No worries — try again!" : {
       "localizations" : {
@@ -3096,7 +4062,20 @@
       }
     },
     "On-device AI ready" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "IA sur l'appareil prête"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "On-device AI ready"
+          }
+        }
+      }
     },
     "ONLINE" : {
       "comment" : "Tutor status",
@@ -3116,10 +4095,36 @@
       }
     },
     "Overall: %@" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Total : %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Overall: %@"
+          }
+        }
+      }
     },
     "PARAMS" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PARAMS"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PARAMS"
+          }
+        }
+      }
     },
     "Past terms" : {
       "comment" : "Daily-term reveal — link to history sheet",
@@ -3173,7 +4178,20 @@
       }
     },
     "Pattern Accuracy" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Précision du motif"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pattern Accuracy"
+          }
+        }
+      }
     },
     "PAUSED" : {
       "localizations" : {
@@ -3192,7 +4210,20 @@
       }
     },
     "PC bridge for VOICEVOX TTS and future heavy models" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pont PC pour VOICEVOX TTS et futurs modèles lourds"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PC bridge for VOICEVOX TTS and future heavy models"
+          }
+        }
+      }
     },
     "Personal vocabulary collection" : {
       "extractionState" : "stale",
@@ -3370,7 +4401,20 @@
       }
     },
     "Quick Quiz" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quiz rapide"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quick Quiz"
+          }
+        }
+      }
     },
     "RE-LEARN" : {
       "comment" : "Summary split-cell label",
@@ -3409,7 +4453,20 @@
       }
     },
     "Reading Guide" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guide de lecture"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reading Guide"
+          }
+        }
+      }
     },
     "ready" : {
       "extractionState" : "stale",
@@ -3482,10 +4539,36 @@
       }
     },
     "Recognized in %@" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reconnu en %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recognized in %@"
+          }
+        }
+      }
     },
     "Recognizing..." : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reconnaissance…"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recognizing..."
+          }
+        }
+      }
     },
     "REMINDER" : {
       "localizations" : {
@@ -3556,7 +4639,20 @@
       }
     },
     "Remove" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remove"
+          }
+        }
+      }
     },
     "Remove from Dictionary" : {
       "localizations" : {
@@ -3591,7 +4687,20 @@
       }
     },
     "Restart" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recommencer"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restart"
+          }
+        }
+      }
     },
     "Restore from iCloud" : {
       "comment" : "Settings row triggering the iCloud restore confirmation",
@@ -3698,10 +4807,36 @@
       }
     },
     "Runs on-device. No key, no network, no quota." : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tourne sur l'appareil. Pas de clé, pas de réseau, pas de quota."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Runs on-device. No key, no network, no quota."
+          }
+        }
+      }
     },
     "Sakura" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sakura"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sakura"
+          }
+        }
+      }
     },
     "Sakura needs an AI provider to chat with you." : {
       "localizations" : {
@@ -3821,7 +4956,20 @@
       }
     },
     "Save" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enregistrer"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save"
+          }
+        }
+      }
     },
     "Score %@ in %@s" : {
       "localizations" : {
@@ -3830,11 +4978,30 @@
             "state" : "new",
             "value" : "Score %1$@ in %2$@s"
           }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Score %@ en %@s"
+          }
         }
       }
     },
     "Score %@ to open" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Score %@ pour débloquer"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Score %@ to open"
+          }
+        }
+      }
     },
     "Score: %@/%@" : {
       "localizations" : {
@@ -3842,6 +5009,12 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Score: %1$@/%2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Score : %@/%@"
           }
         }
       }
@@ -3863,10 +5036,36 @@
       }
     },
     "Sentence %@" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Phrase %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sentence %@"
+          }
+        }
+      }
     },
     "Session complete" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Session terminée"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Session complete"
+          }
+        }
+      }
     },
     "Session Paused" : {
       "localizations" : {
@@ -3885,7 +5084,20 @@
       }
     },
     "Session Preview" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aperçu de la session"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Session Preview"
+          }
+        }
+      }
     },
     "Session.AbandonProgress" : {
       "comment" : "Progress label inside the abandon-confirmation overlay. %1 = cards completed, %2 = total exercises.",
@@ -3924,7 +5136,20 @@
       }
     },
     "Set up a free Gemini key for AI features" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configure une clé Gemini gratuite pour les fonctionnalités IA"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Set up a free Gemini key for AI features"
+          }
+        }
+      }
     },
     "Settings" : {
       "comment" : "Settings screen kicker label and tab title",
@@ -4252,7 +5477,20 @@
       }
     },
     "Study Companion" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compagnon d'étude"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Study Companion"
+          }
+        }
+      }
     },
     "Suggested topics" : {
       "comment" : "Companion suggested-topics section header",
@@ -4517,7 +5755,21 @@
       }
     },
     "Tap card to reveal" : {
-      "comment" : "Hint shown below the SRS card before reveal — replaces the old 'Show answer' button"
+      "comment" : "Hint shown below the SRS card before reveal — replaces the old 'Show answer' button",
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Touche la carte pour révéler"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap card to reveal"
+          }
+        }
+      }
     },
     "Tap the correct answer!" : {
       "localizations" : {
@@ -4536,7 +5788,20 @@
       }
     },
     "Tap to %@" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Touche pour %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap to %@"
+          }
+        }
+      }
     },
     "Tap to discover today's word" : {
       "comment" : "Daily-term banner CTA on Home",
@@ -4556,13 +5821,52 @@
       }
     },
     "Tap to dismiss" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Touche pour fermer"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap to dismiss"
+          }
+        }
+      }
     },
     "Tap to listen" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Touche pour écouter"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap to listen"
+          }
+        }
+      }
     },
     "Tap to reveal" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Touche pour révéler"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap to reveal"
+          }
+        }
+      }
     },
     "Tap vocabulary chips in Sakura chat to add words to your dictionary." : {
       "localizations" : {
@@ -4685,10 +5989,36 @@
       }
     },
     "Test connection" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tester la connexion"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Test connection"
+          }
+        }
+      }
     },
     "The answer is: %@" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La réponse est : %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The answer is: %@"
+          }
+        }
+      }
     },
     "The character for %@ is %@" : {
       "localizations" : {
@@ -4838,10 +6168,36 @@
       }
     },
     "TRAINING MODE" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MODE ENTRAÎNEMENT"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TRAINING MODE"
+          }
+        }
+      }
     },
     "Transcript" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transcription"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transcript"
+          }
+        }
+      }
     },
     "Treasures" : {
       "extractionState" : "stale",
@@ -4861,10 +6217,36 @@
       }
     },
     "Try again" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réessayer"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Try again"
+          }
+        }
+      }
     },
     "typing..." : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "écriture…"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "typing..."
+          }
+        }
+      }
     },
     "Unlocks at Lv. %@" : {
       "localizations" : {
@@ -4919,10 +6301,36 @@
       }
     },
     "VOCABULARY" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VOCABULAIRE"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VOCABULARY"
+          }
+        }
+      }
     },
     "Vocabulary Drill" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exercice de vocabulaire"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vocabulary Drill"
+          }
+        }
+      }
     },
     "Vocabulary drill finished" : {
       "localizations" : {
@@ -4977,7 +6385,20 @@
       }
     },
     "Well done" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bien joué"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Well done"
+          }
+        }
+      }
     },
     "What should\nwe call you?" : {
       "localizations" : {
@@ -5116,7 +6537,20 @@
       }
     },
     "Your answer" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ta réponse"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your answer"
+          }
+        }
+      }
     },
     "Your discovery trail" : {
       "comment" : "Daily-term history view — subtitle",
@@ -5270,10 +6704,36 @@
       }
     },
     "さ" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "さ"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "さ"
+          }
+        }
+      }
     },
     "だい・%@・だん" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "だい・%@・だん"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "だい・%@・だん"
+          }
+        }
+      }
     },
     "七転び八起き · Fall seven, rise eight" : {
       "localizations" : {
@@ -5292,31 +6752,148 @@
       }
     },
     "中" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "中"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "中"
+          }
+        }
+      }
     },
     "今日は休" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今日は休"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今日は休"
+          }
+        }
+      }
     },
     "会話を始める · " : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "会話を始める · "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "会話を始める · "
+          }
+        }
+      }
     },
     "札" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "札"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "札"
+          }
+        }
+      }
     },
     "桃" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "桃"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "桃"
+          }
+        }
+      }
     },
     "桜" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "桜"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "桜"
+          }
+        }
+      }
     },
     "稽古を始める · " : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "稽古を始める · "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "稽古を始める · "
+          }
+        }
+      }
     },
     "稽古終わり" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "稽古終わり"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "稽古終わり"
+          }
+        }
+      }
     },
     "第%@段" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "第%@段"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "第%@段"
+          }
+        }
+      }
     },
     "第%@段 · %@" : {
       "localizations" : {
@@ -5325,26 +6902,190 @@
             "state" : "new",
             "value" : "第%1$@段 · %2$@"
           }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "第%@段 · %@"
+          }
         }
       }
     },
     "続ける" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "続ける"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "続ける"
+          }
+        }
+      }
     },
     "続ける · " : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "続ける · "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "続ける · "
+          }
+        }
+      }
     },
     "編成" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "編成"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "編成"
+          }
+        }
+      }
     },
     "編成・" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "編成・"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "編成・"
+          }
+        }
+      }
     },
     "言語" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "言語"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "言語"
+          }
+        }
+      }
     },
     "道" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "道"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "道"
+          }
+        }
+      }
+    },
+    "Your Journey" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your Journey"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ton voyage"
+          }
+        }
+      }
+    },
+    "Your Companion" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your Companion"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ton compagnon"
+          }
+        }
+      }
+    },
+    "Skip for now" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skip for now"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passer pour l'instant"
+          }
+        }
+      }
+    },
+    "Paste Gemini API key" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paste Gemini API key"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Colle ta clé API Gemini"
+          }
+        }
+      }
+    },
+    "Failed to save key. Try again." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Failed to save key. Try again."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Échec de l'enregistrement. Réessaie."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
