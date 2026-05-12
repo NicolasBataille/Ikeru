@@ -26,25 +26,25 @@ struct OnboardingTourView: View {
             id: 0,
             kanji: "\u{9053}",
             romaji: "michi",
-            title: "Your Journey",
-            subtitle: "A path from curious to fluent",
-            description: "Master kana, kanji, grammar, and conversation — one step at a time, at your own pace."
+            title: "Ton voyage",
+            subtitle: "Un chemin, de curieux à fluide",
+            description: "Maîtrise les kana, les kanji, la grammaire et la conversation — un pas à la fois, à ton rythme."
         ),
         OnboardingPage(
             id: 1,
             kanji: "\u{53CB}",
             romaji: "tomo",
-            title: "Your Companion",
-            subtitle: "A guide by your side",
-            description: "Your AI companion adapts to you, celebrates your wins, and helps when things get tough."
+            title: "Ton compagnon",
+            subtitle: "Un guide à tes côtés",
+            description: "Ton compagnon IA s'adapte à toi, célèbre tes victoires et t'aide dans les moments difficiles."
         ),
         OnboardingPage(
             id: 2,
             kanji: "\u{59CB}",
             romaji: "hajime",
-            title: "Begin",
-            subtitle: "Your first lesson awaits",
-            description: "You'll start with hiragana — the first writing system. Let's begin your Japanese adventure."
+            title: "Commencer",
+            subtitle: "Ta première leçon t'attend",
+            description: "Tu commenceras par les hiragana — le premier système d'écriture. Lance ton aventure japonaise."
         ),
     ]
 
@@ -197,7 +197,7 @@ private struct OnboardingPageView: View {
             onStartLearning()
         } label: {
             HStack(spacing: 10) {
-                Text("Start Learning")
+                Text("Commencer à apprendre")
                 Image(systemName: "arrow.right")
                     .font(.system(size: 14, weight: .semibold))
             }
