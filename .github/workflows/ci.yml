@@ -2,9 +2,14 @@ name: CI
 
 on:
   push:
-    branches: [master]
+    # `dev` runs the same lint/build/test/device-build matrix as master,
+    # but the deploy-testflight job is gated on `master` so dev pushes
+    # never upload to TestFlight. Two-stage flow:
+    #   feature → PR → dev (CI validates, no deploy)
+    #   dev → master (CI + TestFlight deploy)
+    branches: [master, dev]
   pull_request:
-    branches: [master]
+    branches: [master, dev]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

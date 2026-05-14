@@ -18,6 +18,22 @@ PR / push → SwiftLint
 A red gate blocks the deploy. The artifact `Ikeru-<build>.xcarchive`
 is uploaded to the workflow run for 14 days regardless of success.
 
+### Two-stage branching
+
+The CI runs on **both** `master` and `dev`, but only **master push**
+deploys to TestFlight. Recommended flow:
+
+```
+feature/*  →  PR  →  dev      (CI validates, NO TestFlight upload)
+                                ↓
+                              (accumulate features, integration test)
+                                ↓
+                              dev  →  PR  →  master   (CI + TestFlight deploy)
+```
+
+`dev` is intended to be long-lived. Reset it from `master` only if it
+diverges in confusing ways; otherwise keep promoting `dev → master`.
+
 ## Required GitHub secrets
 
 Open <https://github.com/NicolasBataille/Ikeru/settings/secrets/actions>
