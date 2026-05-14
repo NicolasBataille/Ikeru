@@ -215,7 +215,7 @@ struct AISetupView: View {
             saved = true
             Logger.ai.info("Gemini API key saved during onboarding")
         } catch {
-            saveError = "Failed to save key. Try again."
+            saveError = String(localized: "Failed to save key. Try again.")
             Logger.ai.error("Onboarding Gemini key save failed: \(error.localizedDescription)")
         }
 

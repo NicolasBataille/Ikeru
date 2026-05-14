@@ -8,9 +8,9 @@ private struct OnboardingPage: Identifiable {
     let id: Int
     let kanji: String
     let romaji: String
-    let title: String
-    let subtitle: String
-    let description: String
+    let title: LocalizedStringKey
+    let subtitle: LocalizedStringKey
+    let description: LocalizedStringKey
 }
 
 // MARK: - OnboardingTourView
