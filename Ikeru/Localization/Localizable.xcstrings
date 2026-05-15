@@ -883,6 +883,22 @@
         }
       }
     },
+    "Anonymous usage data" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anonymous usage data"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Statistiques anonymes"
+          }
+        }
+      }
+    },
     "Add profile" : {
       "comment" : "Settings row that opens the new-profile dialog",
       "extractionState" : "stale",
@@ -4360,6 +4376,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Maintiens appuyé pour confirmer"
+          }
+        }
+      }
+    },
+    "Privacy" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Privacy"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Confidentialité"
           }
         }
       }

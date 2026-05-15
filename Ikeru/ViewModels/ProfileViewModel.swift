@@ -93,6 +93,8 @@ public final class ProfileViewModel {
         currentProfile = profile
         ActiveProfileResolver.setActiveProfileID(profile.id)
         NotificationCenter.default.post(name: .ikeruActiveProfileDidChange, object: profile.id)
+        Analytics.shared.reset()
+        Analytics.shared.identify(distinctId: profile.id.uuidString)
         Logger.ui.info("Switched to profile: \(profile.displayName)")
     }
 

@@ -28,6 +28,8 @@ struct IkeruApp: App {
     static let preWarmNotifyKey = "ikeru.prewarm.notify"
     /// Re-schedule cadence for the background refresh task.
     static let preWarmRescheduleInterval: TimeInterval = 4 * 60 * 60
+    /// UserDefaults key for the analytics opt-out toggle (default: enabled).
+    static let analyticsEnabledKey = "ikeru.analytics.enabled"
 
     /// Cold-start guard — ensures the launch animation plays exactly once
     /// per process lifetime, not on scene-phase changes or re-inits.
@@ -46,6 +48,17 @@ struct IkeruApp: App {
     let modelContainer: ModelContainer
 
     init() {
+        // Register UserDefaults defaults BEFORE anything reads them — keeps
+        // "key never set" indistinguishable from "explicitly true" for the
+        // analytics + pre-warm toggles. @AppStorage observers in views will
+        // see the registered value on first access.
+        UserDefaults.standard.register(defaults: [
+            Self.analyticsEnabledKey: true,
+            Self.preWarmEnabledKey: true,
+        ])
+
+        Self.bootstrapAnalytics()
+
         do {
             let schema = Schema([
                 UserProfile.self,
@@ -86,6 +99,23 @@ struct IkeruApp: App {
         _assetCache = State(initialValue: cache)
 
         registerPreWarmBackgroundTask()
+    }
+
+    // MARK: - Analytics bootstrap
+
+    /// Installs the PostHog backend when `PostHogAPIKey` is present in
+    /// `Info.plist`. When the key is missing the global `Analytics.shared`
+    /// remains the `NoopAnalyticsService` injected by `IkeruCore`, so call
+    /// sites stay valid in tests, previews and on contributor machines.
+    @MainActor
+    private static func bootstrapAnalytics() {
+        let optedOut = !UserDefaults.standard.bool(forKey: Self.analyticsEnabledKey)
+        if let service = PostHogAnalyticsService.bootstrap(optedOut: optedOut) {
+            Analytics.register(service)
+        }
+        Analytics.shared.track(AnalyticsEvent.appOpened, properties: [
+            AnalyticsProperty.locale: .string(Locale.current.identifier),
+        ])
     }
 
     var body: some Scene {
@@ -173,6 +203,9 @@ struct IkeruApp: App {
         if viewModel.hasProfile {
             Logger.ui.info("Existing profile found — skipping onboarding")
             showOnboarding = false
+            if let profile = viewModel.currentProfile {
+                Analytics.shared.identify(distinctId: profile.id.uuidString)
+            }
         } else {
             Logger.ui.info("No profile found — showing onboarding")
             showOnboarding = true

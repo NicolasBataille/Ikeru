@@ -194,6 +194,7 @@ jobs:
             -skipPackagePluginValidation \
             CURRENT_PROJECT_VERSION=${{ steps.bump.outputs.build_number }} \
             DEVELOPMENT_TEAM=${{ secrets.APPLE_TEAM_ID }} \
+            POSTHOG_API_KEY=${{ secrets.POSTHOG_API_KEY }} \
             -allowProvisioningUpdates \
             -authenticationKeyID ${{ secrets.ASC_API_KEY_ID }} \
             -authenticationKeyIssuerID ${{ secrets.ASC_ISSUER_ID }} \

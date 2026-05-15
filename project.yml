@@ -19,6 +19,9 @@ settings:
 packages:
   IkeruCore:
     path: IkeruCore
+  PostHog:
+    url: https://github.com/PostHog/posthog-ios
+    from: "3.16.0"
 
 targets:
   Ikeru:
@@ -30,6 +33,8 @@ targets:
           - "**/.DS_Store"
     dependencies:
       - package: IkeruCore
+      - package: PostHog
+        product: PostHog
       - target: IkeruWidget
         embed: true
     settings:
@@ -39,6 +44,17 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.ikeru.app
         MARKETING_VERSION: "1.0.0"
         CURRENT_PROJECT_VERSION: "1"
+        # PostHog product analytics. The API key is empty by default so debug
+        # builds and contributors without a key produce no traffic — the app
+        # gracefully falls back to the noop AnalyticsService. To wire it up:
+        #   * Local dev: set a Xcode user-defined build setting POSTHOG_API_KEY,
+        #     or invoke xcodebuild with POSTHOG_API_KEY=phc_xxxxx.
+        #   * CI: pass POSTHOG_API_KEY=$POSTHOG_API_KEY on the xcodebuild line,
+        #     reading from a repo secret.
+        # The host defaults to the EU cloud — keeps data inside the EU and
+        # avoids adding a non-EU sub-processor to the privacy policy.
+        POSTHOG_API_KEY: ""
+        POSTHOG_HOST: "https://eu.i.posthog.com"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         GENERATE_INFOPLIST_FILE: true
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: true

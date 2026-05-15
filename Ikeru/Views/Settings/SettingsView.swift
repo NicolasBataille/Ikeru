@@ -72,6 +72,10 @@ struct SettingsView: View {
     @AppStorage("ikeru.furigana.enabled") private var furiganaEnabled = true
     @AppStorage("ikeru.furigana.userTouched") private var furiganaUserTouched = false
 
+    // MARK: Privacy
+
+    @AppStorage(IkeruApp.analyticsEnabledKey) private var analyticsEnabled: Bool = true
+
     // MARK: Language picker
 
     @State private var showingLanguagePicker = false
@@ -134,6 +138,7 @@ struct SettingsView: View {
                     accountSection
                     aiSection
                     storageSection
+                    privacySection
                     aboutSection
                 }
                 .padding(.horizontal, 22)
@@ -641,6 +646,24 @@ struct SettingsView: View {
         guard let stats = cacheStats else { return "" }
         let usedMB = Double(stats.totalBytes) / 1_048_576.0
         return String(format: "%.0f / %.0f MB", usedMB, cacheQuotaMB)
+    }
+
+    // MARK: - Section: 秘匿 / Privacy
+
+    private var privacySection: some View {
+        section(label: ("秘匿", "Privacy"), mon: .maru) {
+            reminderToggleRow(
+                jp: "利用状況",
+                label: "Anonymous usage data",
+                isOn: $analyticsEnabled,
+                onToggleChange: { enabled in
+                    Analytics.shared.setOptOut(!enabled)
+                },
+                trailing: {
+                    EmptyView()
+                }
+            )
+        }
     }
 
     // MARK: - Section: 関連 / About

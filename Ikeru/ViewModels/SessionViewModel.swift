@@ -352,6 +352,11 @@ public final class SessionViewModel {
         Logger.ui.info(
             "Session started via SessionPlanner: \(plan.exercises.count) exercises (\(srsCards.count) SRS), ~\(plan.estimatedDurationMinutes)min"
         )
+
+        Analytics.shared.track(AnalyticsEvent.sessionStarted, properties: [
+            AnalyticsProperty.sessionSource: .string("home_recommendation"),
+            AnalyticsProperty.jlptLevel: .string(snapshot.jlptLevel.rawValue),
+        ])
     }
 
     /// Composes a custom session from the Étude → Compose sheet. Same
@@ -769,6 +774,11 @@ public final class SessionViewModel {
         }
 
         lastSessionBonus = bonus
+
+        Analytics.shared.track(AnalyticsEvent.sessionCompleted, properties: [
+            AnalyticsProperty.cardsReviewed: .int(reviewedCount),
+            AnalyticsProperty.durationSeconds: .int(Int(elapsedTime)),
+        ])
     }
 
     /// Grade from a swipe direction.

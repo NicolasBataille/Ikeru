@@ -38,4 +38,7 @@ extension Logger {
 
     /// Learning-loop session composition (DefaultSessionPlanner, etc.)
     public static let learningLoop = Logger(subsystem: subsystem, category: "learning-loop")
+
+    /// Product analytics (PostHog) — track lifecycle and feature usage.
+    public static let analytics = Logger(subsystem: subsystem, category: "analytics")
 }

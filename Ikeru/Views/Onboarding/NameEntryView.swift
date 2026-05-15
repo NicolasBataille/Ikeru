@@ -159,6 +159,10 @@ struct NameEntryView: View {
         guard isNameValid else { return }
         Logger.ui.info("Name submitted for profile creation")
         profileViewModel?.createProfile(name: name)
+        if let id = profileViewModel?.currentProfile?.id {
+            Analytics.shared.identify(distinctId: id.uuidString)
+        }
+        Analytics.shared.track(AnalyticsEvent.onboardingCompleted)
         showTour = true
     }
 }

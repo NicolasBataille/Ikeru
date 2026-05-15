@@ -21,5 +21,9 @@
 	<array>
 		<string>fetch</string>
 	</array>
+	<key>PostHogAPIKey</key>
+	<string>$(POSTHOG_API_KEY)</string>
+	<key>PostHogHost</key>
+	<string>$(POSTHOG_HOST)</string>
 </dict>
 </plist>
