@@ -93,7 +93,6 @@ struct MainTabView: View {
             }
             .ignoresSafeArea()
         }
-        .environment(tourController)
         .onAppear {
             initializeCompanionViewModel()
             initializeDisplayModeRepo()
@@ -106,6 +105,11 @@ struct MainTabView: View {
         .onReceive(NotificationCenter.default.publisher(for: .requestFeatureTour)) { _ in
             if let id = ActiveProfileResolver.activeProfileID() {
                 tourController.startIfNeeded(profileID: id)
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .replayFeatureTour)) { _ in
+            if let id = ActiveProfileResolver.activeProfileID() {
+                tourController.restart(profileID: id)
             }
         }
         .onChange(of: tourController.index) { _, _ in syncTabToTourStep() }
@@ -281,6 +285,8 @@ struct MainTabView: View {
 extension Notification.Name {
     /// Posted when sign-up onboarding finishes so the in-app feature tour can begin.
     static let requestFeatureTour = Notification.Name("ikeru.requestFeatureTour")
+    /// Posted from Settings to replay the feature tour on demand.
+    static let replayFeatureTour = Notification.Name("ikeru.replayFeatureTour")
 }
 
 // MARK: - Tab Content View (with NavigationStack per tab)

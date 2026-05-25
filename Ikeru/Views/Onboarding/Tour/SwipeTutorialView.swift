@@ -13,6 +13,10 @@ struct SwipeTutorialView: View {
 
     let onDismiss: () -> Void
 
+    init(onDismiss: @escaping () -> Void) {
+        self.onDismiss = onDismiss
+    }
+
     /// Demo timeline: a nudge toward each direction, separated by a rest beat
     /// (nil). Right (Good) first — the most common answer. Driven by `timer`.
     private let phaseSequence: [SwipeDirection?] = [

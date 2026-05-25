@@ -20,7 +20,6 @@ struct SettingsView: View {
     @Environment(\.assetCache) private var assetCache
     @Environment(\.toastManager) private var toastManager
     @Environment(AppLocale.self) private var appLocale
-    @Environment(FeatureTourController.self) private var tourController: FeatureTourController?
 
     // MARK: Editing state
 
@@ -649,9 +648,7 @@ struct SettingsView: View {
     private var aboutSection: some View {
         section(label: ("関連", "About"), mon: .maru) {
             settingRow(jp: "案内", label: "Tour.Settings.Replay", value: "") {
-                if let id = ActiveProfileResolver.activeProfileID() {
-                    tourController?.restart(profileID: id)
-                }
+                NotificationCenter.default.post(name: .replayFeatureTour, object: nil)
             }
             settingRow(jp: "バージョン", label: "Version", value: appVersionValue)
             settingRow(jp: "利用規約",   label: "Terms",   value: "")
