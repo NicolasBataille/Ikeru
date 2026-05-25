@@ -3,7 +3,7 @@ import IkeruCore
 
 // MARK: - Swipe Direction
 
-enum SwipeDirection: Sendable {
+enum SwipeDirection: Sendable, Equatable {
     case left
     case right
     case up

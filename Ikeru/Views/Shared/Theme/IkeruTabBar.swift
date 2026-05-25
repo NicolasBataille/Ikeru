@@ -39,6 +39,7 @@ struct IkeruTabBar: View {
                         )
                     }
                 }
+                .tourAnchor(tourTarget(for: tab))
             }
         }
         .padding(.horizontal, 22)
@@ -53,6 +54,16 @@ struct IkeruTabBar: View {
 
     private func tap(_ tab: AppTab) {
         withAnimation(Self.tapSpring) { selection = tab }
+    }
+
+    private func tourTarget(for tab: AppTab) -> TourTarget {
+        switch tab {
+        case .companion: return .companionTab
+        case .study:     return .studyTab
+        case .home:      return .homeTab
+        case .rpg:       return .rpgTab
+        case .settings:  return .settingsTab
+        }
     }
 }
 

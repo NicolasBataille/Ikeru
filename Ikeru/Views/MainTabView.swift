@@ -40,7 +40,13 @@ enum AppTab: Int, CaseIterable, Identifiable {
 
 struct MainTabView: View {
 
+    /// True when the sign-up onboarding cover is showing over us (brand-new
+    /// user). In that case we defer the feature tour until onboarding finishes
+    /// (started via `.requestFeatureTour`) rather than auto-starting on appear.
+    var isNewUserOnboarding: Bool = false
+
     @Environment(\.modelContext) private var modelContext
+    @State private var tourController = FeatureTourController()
     @State private var selectedTab: AppTab = {
         if let arg = CommandLine.arguments.first(where: { $0.hasPrefix("-startTab=") }),
            let raw = Int(arg.dropFirst("-startTab=".count)),
@@ -75,9 +81,36 @@ struct MainTabView: View {
             companionAvatarOverlay
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .overlayPreferenceValue(TourAnchorKey.self) { anchors in
+            GeometryReader { proxy in
+                if tourController.isActive {
+                    FeatureTourOverlay(
+                        controller: tourController,
+                        anchors: anchors,
+                        proxy: proxy
+                    )
+                }
+            }
+            .ignoresSafeArea()
+        }
+        .environment(tourController)
         .onAppear {
             initializeCompanionViewModel()
             initializeDisplayModeRepo()
+            // Existing users (no sign-up cover): start the tour on first launch
+            // after this feature ships, if they've never seen it.
+            if !isNewUserOnboarding, let id = ActiveProfileResolver.activeProfileID() {
+                tourController.startIfNeeded(profileID: id)
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .requestFeatureTour)) { _ in
+            if let id = ActiveProfileResolver.activeProfileID() {
+                tourController.startIfNeeded(profileID: id)
+            }
+        }
+        .onChange(of: tourController.index) { _, _ in syncTabToTourStep() }
+        .onChange(of: tourController.isActive) { _, active in
+            if active { syncTabToTourStep() }
         }
         .onReceive(NotificationCenter.default.publisher(for: .startQuizFromShortcut)) { _ in
             selectedTab = .home
@@ -182,12 +215,23 @@ struct MainTabView: View {
                         showBadge: false,
                         onTap: { showCompanionChat = true }
                     )
+                    .tourAnchor(.companionAvatar)
                     .padding(.trailing, 20)
                     .padding(.bottom, 100) // clears the floating tab bar
                 }
             }
             .ignoresSafeArea(.keyboard)
             .transition(.opacity)
+        }
+    }
+
+    // MARK: - Feature Tour
+
+    /// Switches to the tab a tour step wants in view behind the spotlight.
+    private func syncTabToTourStep() {
+        guard let step = tourController.currentStep, let tab = step.tab else { return }
+        withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) {
+            selectedTab = tab
         }
     }
 
@@ -230,6 +274,13 @@ struct MainTabView: View {
             profileId: profileId
         )
     }
+}
+
+// MARK: - Notifications
+
+extension Notification.Name {
+    /// Posted when sign-up onboarding finishes so the in-app feature tour can begin.
+    static let requestFeatureTour = Notification.Name("ikeru.requestFeatureTour")
 }
 
 // MARK: - Tab Content View (with NavigationStack per tab)
