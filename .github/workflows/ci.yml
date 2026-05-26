@@ -37,6 +37,9 @@ jobs:
     name: Build (${{ matrix.scheme }})
     runs-on: macos-15
     needs: lint
+    permissions:
+      contents: read
+      pull-requests: write
     strategy:
       fail-fast: false
       matrix:
@@ -63,12 +66,39 @@ jobs:
 
       - name: Build ${{ matrix.scheme }}
         run: |
+          set -o pipefail
           xcodebuild build \
             -project Ikeru.xcodeproj \
             -scheme ${{ matrix.scheme }} \
             -destination "${{ matrix.destination }}" \
             -skipPackagePluginValidation \
-            CODE_SIGNING_ALLOWED=NO
+            CODE_SIGNING_ALLOWED=NO 2>&1 | tee "build-${{ matrix.scheme }}.log"
+
+      - name: Surface compiler errors on failure
+        if: failure() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let log = '';
+            try { log = fs.readFileSync(`build-${{ matrix.scheme }}.log`, 'utf8'); } catch (e) { return; }
+            const errs = [...new Set(
+              log.split('\n').filter(l => /(error:|fatal error:|: error)/.test(l))
+            )].slice(0, 40);
+            if (errs.length === 0) return;
+            const body = [
+              `**Build (${{ matrix.scheme }}) failed — compiler errors:**`,
+              '',
+              '```',
+              errs.join('\n'),
+              '```'
+            ].join('\n');
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body
+            });
 
   test:
     name: Test

@@ -1,6 +1,567 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "SwipeTutorial.Again.Body" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You didn't know it — we'll bring it back very soon."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu ne savais pas — on la revoit très vite."
+          }
+        }
+      }
+    },
+    "SwipeTutorial.Again.Title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Again"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "À revoir"
+          }
+        }
+      }
+    },
+    "SwipeTutorial.Buttons" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prefer not to swipe? The same four buttons sit at the bottom of the screen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pas envie de glisser ? Les quatre mêmes boutons sont aussi en bas de l'écran."
+          }
+        }
+      }
+    },
+    "SwipeTutorial.Easy.Body" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Too easy — we'll wait much longer before asking again."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trop facile — on attendra bien plus longtemps avant de la redemander."
+          }
+        }
+      }
+    },
+    "SwipeTutorial.Easy.Title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Easy"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Facile"
+          }
+        }
+      }
+    },
+    "SwipeTutorial.GotIt" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Got it"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "J'ai compris"
+          }
+        }
+      }
+    },
+    "SwipeTutorial.Good.Body" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Correct, without much hesitation."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bonne réponse, sans trop hésiter."
+          }
+        }
+      }
+    },
+    "SwipeTutorial.Good.Title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Good"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bien"
+          }
+        }
+      }
+    },
+    "SwipeTutorial.Hard.Body" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Right, but it was a real struggle."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Juste, mais tu as bien galéré."
+          }
+        }
+      }
+    },
+    "SwipeTutorial.Hard.Title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hard"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Difficile"
+          }
+        }
+      }
+    },
+    "SwipeTutorial.Idle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Watch — each direction means something different."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regarde — chaque direction veut dire quelque chose de différent."
+          }
+        }
+      }
+    },
+    "SwipeTutorial.Intro" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "To answer a card, swipe it in a direction. Each way tells me how easy it was for you — that's how I plan your reviews."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pour répondre à une carte, fais-la glisser dans une direction. Chaque sens m'indique à quel point c'était facile — c'est comme ça que je planifie tes révisions."
+          }
+        }
+      }
+    },
+    "Tour.Button.Back" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Back"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retour"
+          }
+        }
+      }
+    },
+    "Tour.Button.Next" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Next"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suivant"
+          }
+        }
+      }
+    },
+    "Tour.Button.Skip" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skip"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passer"
+          }
+        }
+      }
+    },
+    "Tour.Button.Start" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Let's go"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "C'est parti"
+          }
+        }
+      }
+    },
+    "Tour.Companion.Body" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "That little gold circle is me! Tap it from any screen to ask a question — I'll answer in plain English whenever you're stuck."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce petit rond doré, c'est moi ! Touche-le depuis n'importe quel écran pour poser une question — je réponds en français dès que tu bloques."
+          }
+        }
+      }
+    },
+    "Tour.Companion.Title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Me, your tutor"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Moi, ta tutrice"
+          }
+        }
+      }
+    },
+    "Tour.Finish.Body" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "That's the essentials! Start your first session whenever you're ready — I'm never far. 頑張って (ganbatte) means \"good luck\"."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voilà l'essentiel ! Lance ta première session quand tu te sens prêt — je ne suis jamais loin. 頑張って (ganbatte) veut dire « bon courage »."
+          }
+        }
+      }
+    },
+    "Tour.Finish.Title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your turn!"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "À toi de jouer !"
+          }
+        }
+      }
+    },
+    "Tour.Home.Body" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your dashboard. At a glance: today's session (your short daily review) and how far you've come."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ton tableau de bord. D'un coup d'œil : ta session du jour (ta petite révision quotidienne) et ta progression."
+          }
+        }
+      }
+    },
+    "Tour.Home.Title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Home"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L'accueil"
+          }
+        }
+      }
+    },
+    "Tour.RPG.Body" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your game profile: earn experience, level up (段 \"dan\" — ranks, like in martial arts) and unlock rewards as you learn."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ton profil de jeu : gagne de l'expérience, monte de niveau (段 « dan » — des rangs, comme aux arts martiaux) et débloque des récompenses en apprenant."
+          }
+        }
+      }
+    },
+    "Tour.RPG.Title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your progress"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ta progression"
+          }
+        }
+      }
+    },
+    "Tour.Session.Body" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This button starts your practice. You'll ease in with hiragana — the first Japanese alphabet, about 46 basic sounds."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce bouton démarre ta pratique. Tu commences en douceur par les hiragana — le premier alphabet japonais, environ 46 sons de base."
+          }
+        }
+      }
+    },
+    "Tour.Session.Title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start a session"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lancer une session"
+          }
+        }
+      }
+    },
+    "Tour.Settings.Body" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Language, reminders, and the AI that powers me. Tip: you can replay this tour from here anytime."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Langue, rappels, et l'IA qui me fait parler. Astuce : tu peux relancer cette visite d'ici quand tu veux."
+          }
+        }
+      }
+    },
+    "Tour.Settings.Replay" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Replay the tour"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Revoir la visite guidée"
+          }
+        }
+      }
+    },
+    "Tour.Settings.Title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Settings"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les réglages"
+          }
+        }
+      }
+    },
+    "Tour.Study.Body" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All your exercises live here: writing, vocabulary, listening, kanji (the characters borrowed from Chinese)… They unlock gradually, at your pace."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ici, tous tes exercices : écriture, vocabulaire, écoute, kanji (les caractères venus du chinois)… Ils se débloquent petit à petit, à ton rythme."
+          }
+        }
+      }
+    },
+    "Tour.Study.Title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Study"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Étudier"
+          }
+        }
+      }
+    },
+    "Tour.Welcome.Body" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "I'll be your guide while you learn Japanese — no prior knowledge needed. Let me show you around in about 30 seconds. Ready?"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Je vais t'accompagner dans ton apprentissage du japonais — aucune connaissance requise. Laisse-moi te faire visiter en 30 secondes. Prêt ?"
+          }
+        }
+      }
+    },
+    "Tour.Welcome.Title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hi, I'm Sakura!"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enchantée, je suis Sakura !"
+          }
+        }
+      }
+    },
     "" : {
       "localizations" : {
         "fr" : {
