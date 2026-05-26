@@ -19,6 +19,7 @@ struct ActiveSessionView: View {
     @State private var lootDrop: LootItem?
     @State private var dragOffset: CGFloat = 0
     @State private var showOneMinuteToast = false
+    @State private var showSwipeTutorial = false
 
     var body: some View {
         ZStack {
@@ -41,6 +42,13 @@ struct ActiveSessionView: View {
             // generic iOS confirmationDialog).
             if viewModel.showAbandonConfirmation {
                 abandonConfirmationOverlay
+            }
+
+            // First-run coach-mark teaching the four card swipe directions.
+            if showSwipeTutorial {
+                SwipeTutorialView(onDismiss: dismissSwipeTutorial)
+                    .transition(.opacity)
+                    .zIndex(20)
             }
         }
         .toolbar(.hidden, for: .tabBar)
@@ -73,6 +81,9 @@ struct ActiveSessionView: View {
                 viewModel.clearLootDrop()
             }
         }
+        .onAppear { maybeShowSwipeTutorial() }
+        .onChange(of: viewModel.currentCard?.id) { _, _ in maybeShowSwipeTutorial() }
+        .animation(.easeInOut(duration: 0.3), value: showSwipeTutorial)
         .overlay(alignment: .top) {
             if showOneMinuteToast {
                 Text(
@@ -237,6 +248,29 @@ struct ActiveSessionView: View {
         }
         .ignoresSafeArea(.container, edges: .bottom)
         .simultaneousGesture(pauseSwipeGesture)
+    }
+
+    // MARK: - Swipe Tutorial
+
+    /// True when an SRS flashcard (the swipeable kind) is the current exercise.
+    private var isSRSCardVisible: Bool {
+        if case .srsReview? = viewModel.currentExercise { return true }
+        return false
+    }
+
+    /// Shows the swipe coach-mark the first time this profile reaches a card.
+    private func maybeShowSwipeTutorial() {
+        guard !showSwipeTutorial, isSRSCardVisible else { return }
+        guard let id = ActiveProfileResolver.activeProfileID() else { return }
+        guard !OnboardingFlags.hasSeenSwipeTutorial(profileID: id) else { return }
+        showSwipeTutorial = true
+    }
+
+    private func dismissSwipeTutorial() {
+        if let id = ActiveProfileResolver.activeProfileID() {
+            OnboardingFlags.markSwipeTutorialSeen(profileID: id)
+        }
+        showSwipeTutorial = false
     }
 
     // MARK: - Drag Indicator Pill

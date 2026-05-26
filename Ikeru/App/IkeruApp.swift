@@ -132,7 +132,7 @@ struct IkeruApp: App {
     @ViewBuilder
     private var mainContent: some View {
         if hasCheckedProfile {
-            MainTabView()
+            MainTabView(isNewUserOnboarding: showOnboarding)
                 .fullScreenCover(isPresented: $showOnboarding) {
                     NameEntryView()
                         .environment(\.profileViewModel, profileViewModel)
@@ -140,6 +140,13 @@ struct IkeruApp: App {
                             // Reload profile after onboarding dismisses
                             profileViewModel?.loadProfile()
                         }
+                }
+                .onChange(of: showOnboarding) { wasShowing, isShowing in
+                    // Sign-up onboarding just finished — kick off the in-app
+                    // feature tour for this brand-new profile.
+                    if wasShowing && !isShowing {
+                        NotificationCenter.default.post(name: .requestFeatureTour, object: nil)
+                    }
                 }
         } else {
             // Brief loading state while checking profile
