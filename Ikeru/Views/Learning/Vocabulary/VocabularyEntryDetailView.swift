@@ -140,7 +140,7 @@ struct VocabularyEntryDetailView: View {
                 .font(.ikeruStatsLarge)
                 .foregroundStyle(Color.ikeruPrimaryAccent)
             Text(label.uppercased())
-                .font(.system(size: 9))
+                .font(.system(size: 10))
                 .foregroundStyle(Color.ikeruTextTertiary)
         }
         .frame(maxWidth: .infinity)

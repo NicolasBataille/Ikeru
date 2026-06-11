@@ -109,7 +109,7 @@ struct CompanionTabView: View {
                          comment: "Sakura tutor description")
                         .font(.system(size: 11))
                         .italic()
-                        .foregroundStyle(TatamiTokens.paperGhost)
+                        .foregroundStyle(Color.ikeruTextSecondary)
                 }
                 Spacer()
                 HStack(spacing: 6) {
@@ -179,7 +179,7 @@ struct CompanionTabView: View {
                         .foregroundStyle(Color.ikeruTextPrimary)
                     Text(topic.english)
                         .font(.system(size: 11))
-                        .foregroundStyle(TatamiTokens.paperGhost)
+                        .foregroundStyle(Color.ikeruTextSecondary)
                 }
                 Spacer()
                 Text(topic.jlptLevel)

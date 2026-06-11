@@ -35,7 +35,7 @@ struct DisplayModeToggleRow: View {
                  ? "Settings.InterfaceTatami.HelpOn"
                  : "Settings.InterfaceTatami.HelpOff")
                 .font(.ikeruCaption)
-                .foregroundStyle(TatamiTokens.paperGhost)
+                .foregroundStyle(Color.ikeruTextSecondary)
                 .padding(.horizontal, 16)
                 .padding(.top, 8)
                 .padding(.bottom, 12)

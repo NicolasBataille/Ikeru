@@ -83,9 +83,11 @@ struct SessionSummaryView: View {
                 .font(.system(size: 22, weight: .light, design: .serif))
                 .foregroundStyle(isActive ? Color.ikeruPrimaryAccent : TatamiTokens.paperGhost)
             Text(label)
-                .font(.system(size: 9, weight: .semibold))
-                .tracking(1.4)
+                .font(.system(size: 10, weight: .semibold))
+                .tracking(1.2)
                 .foregroundStyle(Color.ikeruTextSecondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
         }
         .frame(maxWidth: .infinity)
         .tatamiRoom(.standard, padding: 12)
@@ -106,7 +108,7 @@ struct SessionSummaryView: View {
             Text("七転び八起き · Fall seven, rise eight")
                 .font(.system(size: 12))
                 .italic()
-                .foregroundStyle(TatamiTokens.paperGhost)
+                .foregroundStyle(Color.ikeruTextSecondary)
                 .padding(.top, 4)
         }
         .frame(maxWidth: .infinity)
@@ -185,11 +187,11 @@ struct SessionSummaryView: View {
                     // Total earned-so-far rail.
                     Rectangle()
                         .fill(Color.ikeruPrimaryAccent)
-                        .frame(width: geo.size.width * xpProgress, height: 1)
+                        .frame(width: geo.size.width * xpProgress, height: 2)
                     // Bright "new gain" segment, glowing.
                     Rectangle()
                         .fill(Color.ikeruPrimaryAccent)
-                        .frame(width: geo.size.width * xpGainProgress, height: 1)
+                        .frame(width: geo.size.width * xpGainProgress, height: 2)
                         .offset(x: geo.size.width * max(0, xpProgress - xpGainProgress))
                         .shadow(color: .ikeruPrimaryAccent.opacity(0.8), radius: 6)
                 }
@@ -223,9 +225,11 @@ struct SessionSummaryView: View {
             HStack(spacing: 6) {
                 MonCrest(kind: mon, size: 11, color: color)
                 Text(label)
-                    .font(.system(size: 9, weight: .semibold))
+                    .font(.system(size: 10, weight: .semibold))
                     .foregroundStyle(TatamiTokens.paperGhost)
-                    .tracking(1.4)
+                    .tracking(1.2)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
             }
             HStack(alignment: .firstTextBaseline, spacing: 4) {
                 SerifNumeral(count, size: 28, color: color)
