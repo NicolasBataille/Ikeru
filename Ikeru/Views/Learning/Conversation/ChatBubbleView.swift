@@ -40,7 +40,7 @@ struct ChatBubbleView: View {
             .padding(.horizontal, IkeruTheme.Spacing.md)
             .padding(.vertical, IkeruTheme.Spacing.sm + 2)
             .background { bubbleBackground }
-            .clipShape(RoundedRectangle(cornerRadius: IkeruTheme.Radius.lg))
+            .sumiCorners(color: cornerColor, size: 7, weight: 1.1)
 
             if variant == .companion { Spacer(minLength: 48) }
         }
@@ -58,11 +58,22 @@ struct ChatBubbleView: View {
     private var bubbleBackground: some View {
         switch variant {
         case .companion:
-            RoundedRectangle(cornerRadius: IkeruTheme.Radius.lg)
-                .fill(Color(hex: IkeruTheme.Colors.primaryAccent, opacity: 0.15))
+            // Quiet ink fill (matches TatamiRoom .standard).
+            Rectangle()
+                .fill(Color(red: 0.102, green: 0.102, blue: 0.133).opacity(0.78))
         case .user:
-            RoundedRectangle(cornerRadius: IkeruTheme.Radius.lg)
-                .fill(.ultraThinMaterial)
+            // Warmer gold-tinted ink so the sender reads at a glance.
+            Rectangle()
+                .fill(Color(red: 0.122, green: 0.102, blue: 0.071).opacity(0.82))
+        }
+    }
+
+    // MARK: - Corner Color
+
+    private var cornerColor: Color {
+        switch variant {
+        case .companion: return TatamiTokens.goldDim
+        case .user: return .ikeruPrimaryAccent
         }
     }
 

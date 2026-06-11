@@ -36,9 +36,10 @@ struct InlineMnemonicView: View {
         .padding(IkeruTheme.Spacing.sm)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background {
-            RoundedRectangle(cornerRadius: IkeruTheme.Radius.sm)
+            Rectangle()
                 .fill(Color(hex: IkeruTheme.Colors.surface, opacity: 0.6))
         }
+        .sumiCorners(color: TatamiTokens.goldDim, size: 6, weight: 1.0)
         .padding(.vertical, IkeruTheme.Spacing.xs)
     }
 }

@@ -37,7 +37,7 @@ struct CompanionAvatarView: View {
     var body: some View {
         Button(action: onTap) {
             ZStack(alignment: .topTrailing) {
-                avatarCircle
+                avatarCell
                 if showBadge {
                     badgeIndicator
                 }
@@ -54,29 +54,33 @@ struct CompanionAvatarView: View {
         .accessibilityHint("Opens companion chat")
     }
 
-    // MARK: - Avatar Circle
+    // MARK: - Avatar Cell
 
+    /// Canonical Sakura cell: square sumi-bordered ink tile with the kanji 桜
+    /// in serif gold (matches `CompanionTabView`'s tutor portrait).
     @ViewBuilder
-    private var avatarCircle: some View {
+    private var avatarCell: some View {
         PhaseAnimator(BreathingPhase.allCases) { phase in
             ZStack {
-                Circle()
+                Rectangle()
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color(hex: IkeruTheme.Colors.primaryAccent),
-                                Color(hex: IkeruTheme.Colors.primaryAccent, opacity: 0.8)
+                                Color(red: 0.165, green: 0.133, blue: 0.102),
+                                Color(red: 0.078, green: 0.067, blue: 0.051)
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
                     )
+                    .overlay(Rectangle().strokeBorder(TatamiTokens.goldDim, lineWidth: 1))
                     .frame(width: avatarSize, height: avatarSize)
+                    .sumiCorners(color: .ikeruPrimaryAccent, size: 7, weight: 1.1, inset: -1)
                     .scaleEffect(phase == .inhale ? 1.05 : 0.95)
 
-                Text("\u{3055}") // さ (sa) — first character of さくら
-                    .font(.system(size: 22, weight: .bold))
-                    .foregroundStyle(Color(hex: IkeruTheme.Colors.background))
+                Text("\u{685C}") // 桜 — canonical Sakura crest
+                    .font(.system(size: 24, weight: .light, design: .serif))
+                    .foregroundStyle(Color.ikeruPrimaryAccent)
             }
             .shadow(
                 color: Color(hex: IkeruTheme.Colors.primaryAccent, opacity: 0.4),
