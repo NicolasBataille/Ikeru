@@ -137,8 +137,8 @@ struct RPGProfileView: View {
                 // rank kanji so non-native readers know how to say it.
                 VStack(alignment: .leading, spacing: 1) {
                     Text("だい・\(rankReading(vm.level))・だん")
-                        .font(.system(size: 9, weight: .regular, design: .serif))
-                        .tracking(2)
+                        .font(.system(size: 10, weight: .regular, design: .serif))
+                        .tracking(1.2)
                         .foregroundStyle(TatamiTokens.paperGhost)
                     Text("第\(rankKanji(vm.level))段")
                         .font(.system(size: 22, weight: .light, design: .serif))
@@ -160,13 +160,13 @@ struct RPGProfileView: View {
                 }
                 .padding(.top, 6)
                 ZStack(alignment: .leading) {
-                    Rectangle().fill(TatamiTokens.goldDim.opacity(0.2)).frame(height: 1)
+                    Rectangle().fill(TatamiTokens.goldDim.opacity(0.2)).frame(height: 2)
                     GeometryReader { geo in
                         Rectangle()
                             .fill(Color.ikeruPrimaryAccent)
-                            .frame(width: geo.size.width * vm.progressFraction, height: 1)
+                            .frame(width: geo.size.width * vm.progressFraction, height: 2)
                     }
-                    .frame(height: 1)
+                    .frame(height: 2)
                 }
                 .padding(.top, 4)
             }
@@ -232,7 +232,7 @@ struct RPGProfileView: View {
                     .opacity(0.55)
             }
             Text(ach.label)
-                .font(.system(size: 9, weight: .semibold))
+                .font(.system(size: 10, weight: .semibold))
                 .foregroundStyle(TatamiTokens.paperGhost)
                 .tracking(1)
                 .frame(maxWidth: 56)
@@ -277,7 +277,7 @@ struct RPGProfileView: View {
                     .opacity(0.5)
                 VStack(alignment: .leading, spacing: 2) {
                     Text("だい・\(rankReading(vm.level + 1))・だん")
-                        .font(.system(size: 8, weight: .regular, design: .serif))
+                        .font(.system(size: 10, weight: .regular, design: .serif))
                         .tracking(1)
                         .foregroundStyle(TatamiTokens.paperGhost.opacity(0.7))
                     Text("第\(rankKanji(vm.level + 1))段 · \(rankTitle(level: vm.level + 1))")
@@ -286,7 +286,7 @@ struct RPGProfileView: View {
                     Text("\(xpToNext) XP to advance",
                          comment: "RPG next rank caption — format string `%lld XP to advance`")
                         .font(.system(size: 11))
-                        .foregroundStyle(TatamiTokens.paperGhost)
+                        .foregroundStyle(Color.ikeruTextSecondary)
                 }
                 Spacer(minLength: 0)
                 SerifNumeral("\(xpToNext) XP →", size: 11, color: .ikeruPrimaryAccent)

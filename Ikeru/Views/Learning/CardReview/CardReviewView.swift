@@ -145,7 +145,7 @@ struct CardReviewView: View {
                         .fill(Color.ikeruPrimaryAccent)
                         .frame(
                             width: geo.size.width * CGFloat(viewModel.sessionProgress),
-                            height: 1
+                            height: 2
                         )
                         .shadow(color: Color.ikeruPrimaryAccent.opacity(0.6), radius: 6)
                 }

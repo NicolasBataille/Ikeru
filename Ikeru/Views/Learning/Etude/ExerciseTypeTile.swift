@@ -22,7 +22,7 @@ struct ExerciseTypeTile: View {
                     Text(lockHint(reason))
                         .font(.system(size: 10))
                         .italic()
-                        .foregroundStyle(TatamiTokens.paperGhost)
+                        .foregroundStyle(Color.ikeruTextSecondary)
                         .lineLimit(2)
                 }
             }

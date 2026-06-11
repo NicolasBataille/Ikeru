@@ -358,7 +358,7 @@ struct HomeView: View {
             Text("Home.RestDay.Body", comment: "Rest day body copy")
                 .font(.system(size: 11))
                 .italic()
-                .foregroundStyle(TatamiTokens.paperGhost)
+                .foregroundStyle(Color.ikeruTextSecondary)
                 .multilineTextAlignment(.center)
                 .padding(.top, 4)
         }
@@ -387,7 +387,7 @@ struct HomeView: View {
                     Text(proverb.translation)
                         .font(.system(size: 11))
                         .italic()
-                        .foregroundStyle(TatamiTokens.paperGhost)
+                        .foregroundStyle(Color.ikeruTextSecondary)
                 }
                 Spacer()
                 if vm.dueCardCount > 0 {
@@ -451,20 +451,20 @@ struct HomeView: View {
                 ZStack(alignment: .leading) {
                     Rectangle()
                         .fill(TatamiTokens.goldDim.opacity(0.3))
-                        .frame(height: 1)
+                        .frame(height: 2)
                     GeometryReader { geo in
                         Rectangle()
                             .fill(Color.ikeruPrimaryAccent)
-                            .frame(width: geo.size.width * progress, height: 1)
+                            .frame(width: geo.size.width * progress, height: 2)
                             .shadow(color: .ikeruPrimaryAccent.opacity(0.6), radius: 3)
                     }
-                    .frame(height: 1)
+                    .frame(height: 2)
                 }
 
                 Text("\(vm.xpToNextLevel) XP to next rank",
                      comment: "Subtle XP-remaining label on the Home hero")
                     .font(.system(size: 11))
-                    .foregroundStyle(TatamiTokens.paperGhost)
+                    .foregroundStyle(Color.ikeruTextSecondary)
                     .frame(maxWidth: .infinity, alignment: .trailing)
             }
         }
@@ -524,8 +524,8 @@ struct HomeView: View {
                 .foregroundStyle(tint)
             VStack(alignment: .leading, spacing: 1) {
                 label
-                    .font(.system(size: 9, weight: .heavy))
-                    .tracking(1.6)
+                    .font(.system(size: 10, weight: .heavy))
+                    .tracking(1.2)
                     .foregroundStyle(Color.ikeruTextTertiary)
                     .textCase(.uppercase)
                 Text(valueText ?? "\(count ?? 0)")
