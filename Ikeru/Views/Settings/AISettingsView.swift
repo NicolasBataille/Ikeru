@@ -162,7 +162,7 @@ struct AISettingsView: View {
                 statusDot(available: foundationModelsAvailable)
             }
         }
-        .ikeruCard(.standard)
+        .tatamiRoom(.standard)
     }
 
     // MARK: - Generic Cloud Provider Section
@@ -238,7 +238,7 @@ struct AISettingsView: View {
                 }
             }
         }
-        .ikeruCard(.standard)
+        .tatamiRoom(.standard)
     }
 
     // MARK: - Local Rig Section
@@ -339,7 +339,7 @@ struct AISettingsView: View {
                         .foregroundStyle(.ikeruSecondaryAccent)
                 }
             }
-            .ikeruCard(.standard)
+            .tatamiRoom(.standard)
         }
     }
 
@@ -379,8 +379,9 @@ struct AISettingsView: View {
                 .font(.ikeruCaption)
                 .foregroundStyle(.white)
                 .padding(IkeruTheme.Spacing.md)
-                .background(Color.ikeruSurface)
-                .clipShape(RoundedRectangle(cornerRadius: IkeruTheme.Radius.sm))
+                .background(Rectangle().fill(Color.ikeruSurface))
+                .sumiCorners(color: TatamiTokens.goldDim, size: 6, weight: 1.2)
+                .shadow(color: Color.black.opacity(0.35), radius: 12)
                 .padding(.bottom, IkeruTheme.Spacing.xl)
         }
         .transition(.move(edge: .bottom).combined(with: .opacity))

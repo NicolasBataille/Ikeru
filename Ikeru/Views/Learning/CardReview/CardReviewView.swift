@@ -180,8 +180,9 @@ struct CardReviewView: View {
     @ViewBuilder
     private var feedbackOverlay: some View {
         if let feedback = viewModel.feedbackState {
-            RoundedRectangle(cornerRadius: IkeruTheme.Radius.md)
-                .strokeBorder(feedback.color, lineWidth: 3)
+            Rectangle()
+                .stroke(feedback.color, lineWidth: 3)
+                .sumiCorners(color: feedback.color, size: 8, weight: 1.2)
                 .padding(.horizontal, IkeruTheme.Spacing.lg)
                 .transition(.opacity)
                 .animation(.easeOut(duration: 0.3), value: viewModel.feedbackState)

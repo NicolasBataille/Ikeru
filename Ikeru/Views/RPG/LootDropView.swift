@@ -47,14 +47,11 @@ struct LootDropView: View {
         }
         .padding(IkeruTheme.Spacing.md)
         .background(
-            RoundedRectangle(cornerRadius: IkeruTheme.Radius.md)
+            Rectangle()
                 .fill(Color.ikeruSurface)
-                .overlay(
-                    RoundedRectangle(cornerRadius: IkeruTheme.Radius.md)
-                        .stroke(rarityColor.opacity(0.4), lineWidth: 1)
-                )
         )
-        .shadow(color: rarityColor.opacity(0.3), radius: 16)
+        .sumiCorners(color: rarityColor, size: 8, weight: 1.2)
+        .shadow(color: Color.black.opacity(0.35), radius: 16)
         .scaleEffect(scale)
         .offset(y: offset)
         .opacity(opacity)
