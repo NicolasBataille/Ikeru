@@ -53,24 +53,26 @@ struct CompanionChatSheet: View {
     @ViewBuilder
     private var headerBar: some View {
         HStack(spacing: IkeruTheme.Spacing.sm) {
-            // Companion avatar (small, no animation in header)
+            // Companion avatar — canonical square sumi-bordered Sakura cell.
             ZStack {
-                Circle()
+                Rectangle()
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color(hex: IkeruTheme.Colors.primaryAccent),
-                                Color(hex: IkeruTheme.Colors.primaryAccent, opacity: 0.8)
+                                Color(red: 0.165, green: 0.133, blue: 0.102),
+                                Color(red: 0.078, green: 0.067, blue: 0.051)
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
                     )
+                    .overlay(Rectangle().strokeBorder(TatamiTokens.goldDim, lineWidth: 1))
                     .frame(width: 32, height: 32)
+                    .sumiCorners(color: .ikeruPrimaryAccent, size: 6, weight: 1.0, inset: -1)
 
-                Text("\u{3055}") // さ
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundStyle(Color(hex: IkeruTheme.Colors.background))
+                Text("\u{685C}") // 桜
+                    .font(.system(size: 18, weight: .light, design: .serif))
+                    .foregroundStyle(Color.ikeruPrimaryAccent)
             }
 
             VStack(alignment: .leading, spacing: 2) {

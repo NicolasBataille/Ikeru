@@ -36,12 +36,7 @@ struct ConversationBubbleView: View {
             }
             .padding(IkeruTheme.Spacing.md)
             .background(bubbleBackground)
-            .clipShape(RoundedRectangle(cornerRadius: IkeruTheme.Radius.lg))
-            .shadow(
-                color: .black.opacity(0.2),
-                radius: 4,
-                y: 2
-            )
+            .sumiCorners(color: cornerColor, size: 7, weight: 1.1)
             .sheet(item: $selectedHint) { hint in
                 VocabularyDetailSheet(
                     hint: hint,
@@ -119,21 +114,23 @@ struct ConversationBubbleView: View {
     private var bubbleBackground: some View {
         switch message.role {
         case .user:
-            Rectangle().fill(.ultraThinMaterial)
+            // Warmer gold-tinted ink so the sender reads at a glance.
+            Rectangle()
+                .fill(Color(red: 0.122, green: 0.102, blue: 0.071).opacity(0.82))
         case .assistant:
-            Color(hex: IkeruTheme.Colors.surface)
-                .overlay(
-                    LinearGradient(
-                        colors: [
-                            Color(hex: IkeruTheme.Colors.primaryAccent).opacity(0.08),
-                            Color(hex: IkeruTheme.Colors.success).opacity(0.05)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
+            // Quiet ink fill (matches TatamiRoom .standard).
+            Rectangle()
+                .fill(Color(red: 0.102, green: 0.102, blue: 0.133).opacity(0.78))
         case .system:
             Color.clear
+        }
+    }
+
+    private var cornerColor: Color {
+        switch message.role {
+        case .user: return .ikeruPrimaryAccent
+        case .assistant: return TatamiTokens.goldDim
+        case .system: return .clear
         }
     }
 

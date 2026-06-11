@@ -249,11 +249,13 @@ struct CompanionTabView: View {
         }
         .padding(14)
         .background(Color.ikeruWarning.opacity(0.08))
-        .overlay(
-            RoundedRectangle(cornerRadius: 8)
-                .stroke(Color.ikeruWarning.opacity(0.4), lineWidth: 1)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .overlay(alignment: .top) {
+            Rectangle().fill(Color.ikeruWarning.opacity(0.4)).frame(height: 1)
+        }
+        .overlay(alignment: .bottom) {
+            Rectangle().fill(Color.ikeruWarning.opacity(0.4)).frame(height: 1)
+        }
+        .sumiCorners(color: Color.ikeruWarning.opacity(0.7), size: 7, weight: 1.1)
     }
 
     // MARK: - Actions
