@@ -201,7 +201,6 @@ struct HomeView: View {
                 topBar(vm)
                 proverbHero(vm)
                 dailyTermSection
-                statsRow(vm)
                 sessionBreakdown(vm)
                 if vm.hasLoaded && vm.dueCardCount == 0 {
                     quietState
@@ -538,130 +537,7 @@ struct HomeView: View {
         .padding(.horizontal, 10)
     }
 
-    // MARK: - Stats Row
-    //
-    // Two Tatami rooms — Learned (kanji) and Streak (days) — each with a mon
-    // crest and a serif numeral. Due Now lives in the proverb hero now.
-    //
-    // Note: HomeViewModel does not currently expose a streak property; the
-    // anti-gamification stance keeps the home shell streak-free. The card is
-    // rendered with 0 days as a structural placeholder so layout matches the
-    // spec without functional change to the VM.
-
-    @ViewBuilder
-    private func statsRow(_ vm: HomeViewModel) -> some View {
-        // Equal-width split: each tile gets exactly half of the row. Earlier
-        // versions used `.layoutPriority(1.4)` on the Learned tile to favor it,
-        // but that caused the Streak tile to collapse to a ~6pt sliver because
-        // the priority delta let Learned consume nearly all available width.
-        HStack(alignment: .top, spacing: 12) {
-            // Learned
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(spacing: 6) {
-                    MonCrest(kind: .asanoha, size: 11, color: .ikeruPrimaryAccent)
-                    Text("LEARNED", comment: "Stat card label")
-                        .font(.system(size: 9, weight: .bold))
-                        .foregroundStyle(TatamiTokens.paperGhost)
-                        .tracking(1.4)
-                        .lineLimit(1)
-                }
-                HStack(alignment: .firstTextBaseline, spacing: 4) {
-                    SerifNumeral(vm.kanjiLearnedCount, size: 32)
-                    Text("kanji", comment: "Tiny suffix after the LEARNED count")
-                        .font(.system(size: 11, design: .serif))
-                        .foregroundStyle(TatamiTokens.paperGhost)
-                        .lineLimit(1)
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .tatamiRoom(.standard, padding: 14)
-
-            // Streak — placeholder 0 (no streak surfaced on Home shell yet)
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(spacing: 6) {
-                    MonCrest(kind: .genji, size: 11, color: .ikeruPrimaryAccent)
-                    Text("STREAK", comment: "Stat card label")
-                        .font(.system(size: 9, weight: .bold))
-                        .foregroundStyle(TatamiTokens.paperGhost)
-                        .tracking(1.4)
-                        .lineLimit(1)
-                }
-                HStack(alignment: .firstTextBaseline, spacing: 4) {
-                    SerifNumeral(0, size: 32)
-                    Text("days", comment: "Tiny suffix after the STREAK count")
-                        .font(.system(size: 11, design: .serif))
-                        .foregroundStyle(TatamiTokens.paperGhost)
-                        .lineLimit(1)
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .tatamiRoom(.standard, padding: 14)
-        }
-    }
-
-    // MARK: - Primary action
-
-    @ViewBuilder
-    private func primaryAction(_ vm: HomeViewModel) -> some View {
-        Button {
-            startSession()
-        } label: {
-            HStack(alignment: .center) {
-                HStack(spacing: 10) {
-                    Image(systemName: "play.fill")
-                        .font(.system(size: 13, weight: .semibold))
-                    Text("Begin Session")
-                        .font(.system(size: 17, weight: .semibold))
-                }
-                Spacer()
-                Text(sessionDurationEstimate(vm))
-                    .font(.system(size: 12, weight: .medium, design: .monospaced))
-                    .foregroundStyle(Color(red: 0.16, green: 0.11, blue: 0.05).opacity(0.7))
-            }
-            .frame(maxWidth: .infinity)
-        }
-        .ikeruButtonStyle(.primary)
-        .padding(.top, IkeruTheme.Spacing.xs)
-    }
-
-    private func sessionDurationEstimate(_ vm: HomeViewModel) -> String {
-        if vm.sessionPreviewCardCount > 0 {
-            return "~\(max(1, vm.sessionPreviewMinutes)) min"
-        }
-        return "ready"
-    }
-
-    // MARK: - Rank labels
-
-    private func rankLabel(level: Int) -> String {
-        "第\(level)段"
-    }
-
-    private func rankTitle(level: Int) -> String {
-        switch level {
-        case ..<3:  return "Novice"
-        case 3..<7: return "Apprentice"
-        case 7..<15: return "Student"
-        case 15..<25: return "Adept"
-        case 25..<40: return "Master"
-        default: return "Sage"
-        }
-    }
-
     // MARK: - Helpers
-
-    private func timeOfDayGreeting() -> String {
-        if let override = AppEnvironment.greetingOverride {
-            return override.phrase
-        }
-        let hour = Calendar.current.component(.hour, from: Date())
-        switch hour {
-        case 5..<12:  return "Good morning"
-        case 12..<17: return "Good afternoon"
-        case 17..<22: return "Good evening"
-        default:      return "Good night"
-        }
-    }
 
     private func initializeViewModels() {
         guard viewModel == nil else { return }
