@@ -193,11 +193,11 @@ struct RPGProfileView: View {
 
     // MARK: - Achievements Section
     //
-    // The view-model does not surface achievements yet, so this renders a
-    // static demo row with the 5 kanji from the Tatami plan
-    // (初, 七, 百, 千, 極). When `RPGProfileViewModel` gains an
-    // `achievements: [Achievement]` collection (.id, .kanji, .label, .earned),
-    // wire it up here. Mirrors the streak placeholder pattern from T4.
+    // Five milestone hanko derived from VM signals that are already available:
+    // level and totalReviews. Thresholds are intentionally modest so early
+    // learners see honest progress rather than an all-grey row.
+    // When the VM gains a real achievements collection, replace
+    // `demoAchievements(for:)` and `DemoAchievement` with that model type.
 
     @ViewBuilder
     private func achievementsSection(_ vm: RPGProfileViewModel) -> some View {
@@ -240,9 +240,8 @@ struct RPGProfileView: View {
         }
     }
 
-    /// Lightweight value type used by the static demo row above. Once the
-    /// view-model exposes real achievements, replace this with the model
-    /// type and delete `demoAchievements(for:)`.
+    /// Lightweight value type for milestone hanko. Once the VM exposes a real
+    /// achievements collection, replace this with the model type.
     private struct DemoAchievement: Identifiable {
         let id: String
         let kanji: String
@@ -251,15 +250,16 @@ struct RPGProfileView: View {
     }
 
     private func demoAchievements(for vm: RPGProfileViewModel) -> [DemoAchievement] {
-        // Earn thresholds are quietly tied to the few signals the view-model
-        // does surface (level, total reviews) so the row at least responds
-        // to actual progress while we wait for real wiring.
+        // Thresholds derived from the two signals the VM already exposes:
+        // `totalReviews` and `level`. No session-count is available so 七
+        // (seven, 七転八起) uses reviews ≥ 7 as the closest honest proxy.
+        // 極 (mastery) requires level ≥ 25, matching the "Master" rank tier.
         [
-            DemoAchievement(id: "first",   kanji: "初", label: "First step",  earned: vm.totalReviews > 0),
-            DemoAchievement(id: "seven",   kanji: "七", label: "7-day arc",   earned: vm.level >= 2),
-            DemoAchievement(id: "hundred", kanji: "百", label: "100 cards",   earned: vm.totalReviews >= 100),
-            DemoAchievement(id: "thousand",kanji: "千", label: "1000 cards",  earned: vm.totalReviews >= 1000),
-            DemoAchievement(id: "kiwami",  kanji: "極", label: "Mastery",     earned: vm.level >= 10)
+            DemoAchievement(id: "first",    kanji: "初", label: "First step",  earned: vm.totalReviews >= 1),
+            DemoAchievement(id: "seven",    kanji: "七", label: "7 reviews",   earned: vm.totalReviews >= 7),
+            DemoAchievement(id: "hundred",  kanji: "百", label: "100 cards",   earned: vm.totalReviews >= 100),
+            DemoAchievement(id: "thousand", kanji: "千", label: "1000 cards",  earned: vm.totalReviews >= 1000),
+            DemoAchievement(id: "kiwami",   kanji: "極", label: "Mastery",     earned: vm.level >= 25)
         ]
     }
 

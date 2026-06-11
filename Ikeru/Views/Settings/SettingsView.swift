@@ -383,8 +383,6 @@ struct SettingsView: View {
         section(label: ("表示", "Display"), mon: .kikkou) {
             if let repo = displayModeRepo {
                 DisplayModeToggleRow(repository: repo)
-                    .padding(.horizontal, IkeruTheme.Spacing.md)
-                    .padding(.vertical, IkeruTheme.Spacing.sm)
             }
         }
     }
