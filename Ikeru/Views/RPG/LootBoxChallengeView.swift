@@ -85,7 +85,7 @@ struct LootBoxChallengeView: View {
                     .font(.ikeruStats)
                     .foregroundStyle(Color.ikeruPrimaryAccent)
             }
-            .ikeruCard(.standard)
+            .tatamiRoom(.standard)
 
             Spacer()
 
@@ -126,10 +126,10 @@ struct LootBoxChallengeView: View {
             // Progress bar
             GeometryReader { geometry in
                 ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 4)
+                    Rectangle()
                         .fill(Color.ikeruSurface)
 
-                    RoundedRectangle(cornerRadius: 4)
+                    Rectangle()
                         .fill(Color.ikeruPrimaryAccent)
                         .frame(width: geometry.size.width * progressFraction)
                         .animation(.spring(duration: 0.3), value: score)

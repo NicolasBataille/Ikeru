@@ -316,7 +316,7 @@ struct ActiveSessionView: View {
                     }
                 }
                 .padding(IkeruTheme.Spacing.xl)
-                .ikeruCard(.elevated)
+                .tatamiRoom(.glass, padding: 0)
                 .padding(.horizontal, IkeruTheme.Spacing.lg)
 
                 Spacer()
@@ -372,7 +372,7 @@ struct ActiveSessionView: View {
             .padding(.top, IkeruTheme.Spacing.md)
         }
         .padding(IkeruTheme.Spacing.xl)
-        .ikeruCard(.elevated)
+        .tatamiRoom(.glass, padding: 0)
         .padding(.horizontal, IkeruTheme.Spacing.lg)
     }
 
