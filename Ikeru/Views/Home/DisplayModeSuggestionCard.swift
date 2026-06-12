@@ -79,7 +79,7 @@ struct DisplayModeSuggestionCard: View {
                                 .padding(.vertical, 8)
                                 .background(Color.ikeruPrimaryAccent)
                                 .foregroundStyle(Color.black)
-                                .cornerRadius(6)
+                                .sumiCorners(color: Color.black.opacity(0.3), size: 5, weight: 1.0)
                         }
                         Button(action: onDismiss) {
                             Text("DisplayMode.Suggestion.Later")
@@ -87,8 +87,8 @@ struct DisplayModeSuggestionCard: View {
                                 .padding(.horizontal, 16)
                                 .padding(.vertical, 8)
                                 .overlay(
-                                    RoundedRectangle(cornerRadius: 6)
-                                        .stroke(TatamiTokens.paperGhost, lineWidth: 1)
+                                    Rectangle()
+                                        .strokeBorder(TatamiTokens.paperGhost, lineWidth: 1)
                                 )
                                 .foregroundStyle(Color.ikeruTextSecondary)
                         }
@@ -96,22 +96,7 @@ struct DisplayModeSuggestionCard: View {
                     .padding(.top, 4)
                 }
             }
-            .padding(18)
-            .background(
-                LinearGradient(
-                    colors: [
-                        Color.ikeruPrimaryAccent.opacity(0.06),
-                        Color.ikeruPrimaryAccent.opacity(0.02)
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 14)
-                    .stroke(Color.ikeruPrimaryAccent.opacity(0.4), lineWidth: 1)
-            )
-            .clipShape(RoundedRectangle(cornerRadius: 14))
+            .tatamiRoom(.standard, padding: 18)
 
             Button(action: onDismiss) {
                 Image(systemName: "xmark")

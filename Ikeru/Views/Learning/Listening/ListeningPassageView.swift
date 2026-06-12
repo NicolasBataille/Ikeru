@@ -45,8 +45,8 @@ struct ListeningPassageView: View {
                     .padding(.horizontal, IkeruTheme.Spacing.sm)
                     .padding(.vertical, IkeruTheme.Spacing.xs)
                     .background {
-                        Capsule()
-                            .fill(Color.ikeruSurface)
+                        Rectangle()
+                            .strokeBorder(TatamiTokens.goldDim, lineWidth: 1)
                     }
             }
         }
@@ -82,7 +82,7 @@ struct ListeningPassageView: View {
                 .padding(IkeruTheme.Spacing.md)
             }
             .buttonStyle(.plain)
-            .ikeruCard(.standard)
+            .tatamiRoom(.standard)
 
             // Playback rate selector
             PlaybackRateSelector(
@@ -123,7 +123,7 @@ struct ListeningPassageView: View {
                     .ikeruButtonStyle(.secondary)
                 }
             }
-            .ikeruCard(.interactive)
+            .tatamiRoom(.standard)
         }
     }
 
@@ -149,7 +149,7 @@ struct ListeningPassageView: View {
                             .foregroundStyle(.white)
                             .lineSpacing(8)
                     }
-                    .ikeruCard(.elevated)
+                    .tatamiRoom(.standard)
                     .transition(.opacity.combined(with: .move(edge: .bottom)))
                 } else {
                     Button {
@@ -187,38 +187,35 @@ struct ListeningPassageView: View {
             HStack {
                 Text(choice)
                     .font(.ikeruBody)
-                    .foregroundStyle(.white)
+                    .foregroundStyle(passageAnswerForeground(isSelected: isSelected, isAnswered: isAnswered, isCorrectChoice: isCorrectChoice))
 
                 Spacer()
 
                 if isAnswered && isCorrectChoice {
                     Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(Color.ikeruSuccess)
+                        .foregroundStyle(Color(red: 0.102, green: 0.078, blue: 0.055))
                 } else if isAnswered && isSelected && !isCorrectChoice {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundStyle(Color.ikeruSecondaryAccent)
+                        .foregroundStyle(Color.ikeruError)
                 }
             }
             .padding(IkeruTheme.Spacing.md)
             .background {
-                RoundedRectangle(cornerRadius: IkeruTheme.Radius.sm)
-                    .fill(passageAnswerBackground(
-                        isSelected: isSelected,
-                        isAnswered: isAnswered,
-                        isCorrectChoice: isCorrectChoice
-                    ))
+                passageAnswerBackgroundView(
+                    isSelected: isSelected,
+                    isAnswered: isAnswered,
+                    isCorrectChoice: isCorrectChoice
+                )
             }
-            .overlay {
-                RoundedRectangle(cornerRadius: IkeruTheme.Radius.sm)
-                    .strokeBorder(
-                        passageAnswerBorder(
-                            isSelected: isSelected,
-                            isAnswered: isAnswered,
-                            isCorrectChoice: isCorrectChoice
-                        ),
-                        lineWidth: isSelected ? 2 : 1
-                    )
-            }
+            .sumiCorners(
+                color: passageAnswerCornerColor(
+                    isSelected: isSelected,
+                    isAnswered: isAnswered,
+                    isCorrectChoice: isCorrectChoice
+                ),
+                size: 8,
+                weight: 1.2
+            )
         }
         .buttonStyle(.plain)
         .disabled(isAnswered)
@@ -226,38 +223,47 @@ struct ListeningPassageView: View {
 
     // MARK: - Colors
 
-    private func passageAnswerBackground(
-        isSelected: Bool,
-        isAnswered: Bool,
-        isCorrectChoice: Bool
-    ) -> Color {
-        guard isAnswered else {
-            return Color.ikeruSurface.opacity(0.5)
-        }
-        if isCorrectChoice {
-            return Color.ikeruSuccess.opacity(0.15)
-        }
-        if isSelected {
-            return Color.ikeruSecondaryAccent.opacity(0.15)
-        }
-        return Color.ikeruSurface.opacity(0.3)
+    private func passageAnswerForeground(isSelected: Bool, isAnswered: Bool, isCorrectChoice: Bool) -> Color {
+        guard isAnswered else { return .white }
+        if isCorrectChoice { return Color(red: 0.102, green: 0.078, blue: 0.055) }
+        if isSelected { return .white }
+        return Color.white.opacity(0.35)
     }
 
-    private func passageAnswerBorder(
+    @ViewBuilder
+    private func passageAnswerBackgroundView(
+        isSelected: Bool,
+        isAnswered: Bool,
+        isCorrectChoice: Bool
+    ) -> some View {
+        if isAnswered {
+            if isCorrectChoice {
+                LinearGradient.ikeruGold
+            } else if isSelected {
+                ZStack {
+                    Rectangle().fill(.ultraThinMaterial)
+                    Rectangle().fill(Color.ikeruError.opacity(0.22))
+                }
+            } else {
+                Color(red: 0.102, green: 0.102, blue: 0.133).opacity(0.45)
+            }
+        } else {
+            ZStack {
+                Rectangle().fill(.ultraThinMaterial)
+                Rectangle().fill(Color(red: 0.102, green: 0.102, blue: 0.133).opacity(0.6))
+            }
+        }
+    }
+
+    private func passageAnswerCornerColor(
         isSelected: Bool,
         isAnswered: Bool,
         isCorrectChoice: Bool
     ) -> Color {
-        guard isAnswered else {
-            return Color.white.opacity(0.1)
-        }
-        if isCorrectChoice {
-            return Color.ikeruSuccess
-        }
-        if isSelected {
-            return Color.ikeruSecondaryAccent
-        }
-        return Color.white.opacity(0.05)
+        guard isAnswered else { return TatamiTokens.goldDim }
+        if isCorrectChoice { return .ikeruPrimaryAccent }
+        if isSelected { return Color.ikeruError.opacity(0.7) }
+        return TatamiTokens.goldDim.opacity(0.3)
     }
 }
 

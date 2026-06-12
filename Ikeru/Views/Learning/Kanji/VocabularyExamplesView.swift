@@ -77,8 +77,7 @@ struct VocabularyExamplesView: View {
                 }
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .ikeruCard(.standard)
+        .tatamiRoom(.standard)
     }
 
     private var showMoreButton: some View {

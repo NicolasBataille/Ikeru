@@ -27,8 +27,8 @@ struct DiffHighlightView: View {
             .padding(.horizontal, IkeruTheme.Spacing.md)
             .padding(.vertical, IkeruTheme.Spacing.xs)
             .background {
-                Capsule()
-                    .fill(accuracyColor.opacity(0.15))
+                Rectangle()
+                    .strokeBorder(accuracyColor.opacity(0.5), lineWidth: 1)
             }
     }
 

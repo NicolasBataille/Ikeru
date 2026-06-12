@@ -101,6 +101,10 @@ struct KanjiStudyView: View {
         VStack(spacing: 0) {
             sectionHeader(section)
 
+            Rectangle()
+                .fill(TatamiTokens.goldDim.opacity(0.18))
+                .frame(height: 1)
+
             if expandedSections.contains(section) {
                 content()
                     .padding(.top, IkeruTheme.Spacing.sm)
@@ -174,7 +178,7 @@ struct KanjiStudyView: View {
         VStack(spacing: IkeruTheme.Spacing.sm) {
             Image(systemName: "exclamationmark.triangle")
                 .font(.system(size: IkeruTheme.Typography.Size.heading1))
-                .foregroundStyle(Color(hex: IkeruTheme.Colors.secondaryAccent))
+                .foregroundStyle(Color.ikeruDanger)
 
             Text("Failed to load content")
                 .font(.system(size: IkeruTheme.Typography.Size.body, weight: .medium))

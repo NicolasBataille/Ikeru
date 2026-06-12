@@ -23,7 +23,7 @@ struct KanjiDisplayView: View {
         }
         .frame(height: 160)
         .frame(maxWidth: .infinity)
-        .ikeruCard(.elevated)
+        .tatamiRoom(.glass)
         .contentShape(Rectangle())
         .onTapGesture {
             handleTap()

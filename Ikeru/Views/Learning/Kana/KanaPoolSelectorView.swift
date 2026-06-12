@@ -101,14 +101,9 @@ struct KanaPoolSelectorView: View {
                             .foregroundStyle(Color.ikeruTextPrimary)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 8)
-                            .background {
-                                Capsule()
-                                    .fill(.ultraThinMaterial)
-                            }
-                            .overlay {
-                                Capsule()
-                                    .strokeBorder(Color.white.opacity(0.14), lineWidth: 0.6)
-                            }
+                            .background(.ultraThinMaterial)
+                            .overlay(Rectangle().strokeBorder(TatamiTokens.goldDim.opacity(0.5), lineWidth: 1))
+                            .sumiCorners(color: TatamiTokens.goldDim, size: 6, weight: 1.1)
                     }
                     .buttonStyle(.plain)
                 }
@@ -123,9 +118,9 @@ struct KanaPoolSelectorView: View {
                         .foregroundStyle(Color.ikeruTextSecondary)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 8)
-                        .background {
-                            Capsule().fill(Color.white.opacity(0.03))
-                        }
+                        .background(Color.ikeruSurface.opacity(0.3))
+                        .overlay(Rectangle().strokeBorder(TatamiTokens.goldDim.opacity(0.25), lineWidth: 0.8))
+                        .sumiCorners(color: TatamiTokens.goldDim.opacity(0.5), size: 5, weight: 0.9)
                 }
                 .buttonStyle(.plain)
             }
@@ -294,7 +289,7 @@ struct KanaDrillPlaceholderView: View {
                         Text("No cards available for this mode.")
                             .font(.ikeruCaption)
                             .foregroundStyle(Color.ikeruTextTertiary)
-                            .ikeruCard(.standard)
+                            .tatamiRoom(.standard)
                     } else {
                         LazyVGrid(
                             columns: [
@@ -307,10 +302,9 @@ struct KanaDrillPlaceholderView: View {
                                     .font(.system(size: 28, weight: .regular, design: .serif))
                                     .foregroundStyle(Color.ikeruTextPrimary)
                                     .frame(width: 56, height: 56)
-                                    .background {
-                                        RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                            .fill(.ultraThinMaterial)
-                                    }
+                                    .background(.ultraThinMaterial)
+                                    .overlay(Rectangle().strokeBorder(TatamiTokens.goldDim.opacity(0.4), lineWidth: 0.8))
+                                    .sumiCorners(color: TatamiTokens.goldDim, size: 5, weight: 1.0)
                             }
                         }
                     }

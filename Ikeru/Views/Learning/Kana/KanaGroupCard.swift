@@ -18,25 +18,13 @@ struct KanaGroupCard: View {
                 characterRow
                 footer
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(IkeruTheme.Spacing.md)
-            .background {
-                IkeruGlassSurface(
-                    cornerRadius: IkeruTheme.Radius.lg,
-                    tint: isSelected ? Color.ikeruPrimaryAccent : .clear,
-                    tintOpacity: isSelected ? 0.10 : 0.04,
-                    highlight: 0.14,
-                    strokeOpacity: isSelected ? 0.45 : 0.16
-                )
-            }
-            .clipShape(RoundedRectangle(cornerRadius: IkeruTheme.Radius.lg, style: .continuous))
+            .tatamiRoom(isSelected ? .accent : .standard, padding: CGFloat(IkeruTheme.Spacing.md))
             .overlay {
                 if isSelected {
-                    RoundedRectangle(cornerRadius: IkeruTheme.Radius.lg, style: .continuous)
+                    Rectangle()
                         .strokeBorder(Color.ikeruPrimaryAccent.opacity(0.55), lineWidth: 1)
                 }
             }
-            .shadow(color: Color.black.opacity(0.35), radius: 14, y: 6)
             .animation(.spring(response: 0.3, dampingFraction: 0.85), value: isSelected)
         }
         .buttonStyle(.plain)
@@ -57,16 +45,15 @@ struct KanaGroupCard: View {
 
     private var checkbox: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 5, style: .continuous)
-                .strokeBorder(
-                    isSelected ? Color.ikeruPrimaryAccent : Color.white.opacity(0.35),
-                    lineWidth: 1.2
-                )
-                .background {
-                    RoundedRectangle(cornerRadius: 5, style: .continuous)
-                        .fill(isSelected ? Color.ikeruPrimaryAccent.opacity(0.85) : Color.clear)
-                }
+            Rectangle()
+                .fill(isSelected ? Color.ikeruPrimaryAccent.opacity(0.85) : Color.clear)
                 .frame(width: 18, height: 18)
+                .overlay(
+                    Rectangle().strokeBorder(
+                        isSelected ? Color.ikeruPrimaryAccent : TatamiTokens.goldDim.opacity(0.6),
+                        lineWidth: 1.2
+                    )
+                )
 
             if isSelected {
                 Image(systemName: "checkmark")

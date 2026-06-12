@@ -182,11 +182,11 @@ struct DailyTermRevealView: View {
         ZStack {
             // The veil — a translucent panel that sits over the word
             // until the reveal phase begins.
-            RoundedRectangle(cornerRadius: IkeruTheme.Radius.xl, style: .continuous)
+            Rectangle()
                 .fill(.ultraThinMaterial)
                 .overlay {
-                    RoundedRectangle(cornerRadius: IkeruTheme.Radius.xl, style: .continuous)
-                        .strokeBorder(Color.white.opacity(0.12), lineWidth: 0.6)
+                    Rectangle()
+                        .strokeBorder(TatamiTokens.goldDim.opacity(0.3), lineWidth: 0.6)
                 }
                 .opacity(phase == .veiled && !reduceMotion ? 1.0 : 0.0)
 
@@ -241,12 +241,13 @@ struct DailyTermRevealView: View {
                 Text(level.displayLabel)
                     .font(.ikeruMicro)
                     .ikeruTracking(.micro)
-                    .foregroundStyle(Color.ikeruTertiaryAccent)
+                    .foregroundStyle(Color.ikeruPrimaryAccent)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
-                    .background {
-                        Capsule().fill(Color.ikeruTertiaryAccent.opacity(0.14))
-                    }
+                    .overlay(
+                        Rectangle()
+                            .strokeBorder(TatamiTokens.goldDim, lineWidth: 1)
+                    )
             }
             Text(term.caption)
                 .font(.ikeruBody)
@@ -308,11 +309,10 @@ struct DailyTermRevealView: View {
                         .foregroundStyle(Color.ikeruTextSecondary)
                         .padding(10)
                         .background {
-                            Circle().fill(.ultraThinMaterial)
+                            Rectangle().fill(.ultraThinMaterial)
+                                .overlay(Rectangle().strokeBorder(TatamiTokens.goldDim.opacity(0.4), lineWidth: 0.6))
                         }
-                        .overlay(
-                            Circle().strokeBorder(Color.white.opacity(0.10), lineWidth: 0.6)
-                        )
+                        .sumiCorners(color: TatamiTokens.goldDim, size: 5, weight: 0.9)
                 }
                 .buttonStyle(.plain)
             }

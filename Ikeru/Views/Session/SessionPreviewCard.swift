@@ -44,7 +44,7 @@ struct SessionPreviewCard: View {
                 exerciseBreakdownList
             }
         }
-        .ikeruCard(.elevated)
+        .tatamiRoom(.standard)
     }
 
     // MARK: - Exercise Breakdown

@@ -35,12 +35,13 @@ struct VocabularyStudyView: View {
         Text(vocabulary.jlptLevel.displayName)
             .font(.ikeruCaption)
             .fontWeight(.semibold)
-            .foregroundStyle(.white)
+            .tracking(1.2)
+            .foregroundStyle(Color.ikeruPrimaryAccent)
             .padding(.horizontal, IkeruTheme.Spacing.sm)
             .padding(.vertical, IkeruTheme.Spacing.xs)
-            .background(
-                Capsule()
-                    .fill(Color.ikeruPrimaryAccent.opacity(0.8))
+            .overlay(
+                Rectangle()
+                    .strokeBorder(TatamiTokens.goldDim, lineWidth: 1)
             )
     }
 
@@ -57,8 +58,7 @@ struct VocabularyStudyView: View {
                 .foregroundStyle(.ikeruTextSecondary)
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, IkeruTheme.Spacing.xl)
-        .ikeruCard(.elevated)
+        .tatamiRoom(.glass, padding: IkeruTheme.Spacing.xl)
     }
 
     // MARK: - Meaning Section
@@ -111,7 +111,7 @@ struct VocabularyStudyView: View {
                 .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
-        .ikeruCard(.standard)
+        .tatamiRoom(.standard)
     }
 }
 
@@ -142,9 +142,11 @@ private struct ExampleSentenceRow: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(IkeruTheme.Spacing.sm)
-        .background(
-            RoundedRectangle(cornerRadius: IkeruTheme.Radius.sm)
-                .fill(Color.ikeruSurface.opacity(0.5))
+        .background(Rectangle().fill(Color.ikeruSurface.opacity(0.35)))
+        .overlay(
+            Rectangle()
+                .strokeBorder(TatamiTokens.goldDim.opacity(0.3), lineWidth: 1)
         )
+        .sumiCorners(color: TatamiTokens.goldDim, size: 5, weight: 0.9)
     }
 }

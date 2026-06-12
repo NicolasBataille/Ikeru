@@ -71,11 +71,10 @@ struct DailyTermHistoryView: View {
                             .foregroundStyle(Color.ikeruTextSecondary)
                             .padding(10)
                             .background {
-                                Circle().fill(.ultraThinMaterial)
+                                Rectangle().fill(.ultraThinMaterial)
+                                    .overlay(Rectangle().strokeBorder(TatamiTokens.goldDim.opacity(0.4), lineWidth: 0.6))
                             }
-                            .overlay(
-                                Circle().strokeBorder(Color.white.opacity(0.10), lineWidth: 0.6)
-                            )
+                            .sumiCorners(color: TatamiTokens.goldDim, size: 5, weight: 0.9)
                     }
                     .buttonStyle(.plain)
                 }
@@ -128,17 +127,18 @@ struct DailyTermHistoryView: View {
                     .padding(.vertical, 7)
                     .foregroundStyle(filter == option ? Color.ikeruTextPrimary : Color.ikeruTextSecondary)
                     .background {
-                        Capsule()
+                        Rectangle()
                             .fill(filter == option
                                   ? Color.ikeruPrimaryAccent.opacity(0.16)
                                   : Color.white.opacity(0.04))
+                            .overlay(
+                                Rectangle().strokeBorder(
+                                    filter == option ? TatamiTokens.goldDim : TatamiTokens.goldDim.opacity(0.35),
+                                    lineWidth: 0.6
+                                )
+                            )
                     }
-                    .overlay(
-                        Capsule().strokeBorder(
-                            filter == option ? Color.ikeruPrimaryAccent.opacity(0.4) : Color.white.opacity(0.08),
-                            lineWidth: 0.6
-                        )
-                    )
+                    .sumiCorners(color: TatamiTokens.goldDim, size: 5, weight: 0.9)
                 }
                 .buttonStyle(.plain)
             }
@@ -201,18 +201,12 @@ struct DailyTermHistoryView: View {
                     }
                 }
             }
-            .padding(IkeruTheme.Spacing.md)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background {
-                IkeruGlassSurface(
-                    cornerRadius: IkeruTheme.Radius.lg,
-                    tint: term.revealedAt == nil ? Color.ikeruWarning : Color.ikeruPrimaryAccent,
-                    tintOpacity: term.revealedAt == nil ? 0.08 : 0.04,
-                    highlight: 0.12,
-                    strokeOpacity: 0.14
-                )
-            }
-            .clipShape(RoundedRectangle(cornerRadius: IkeruTheme.Radius.lg, style: .continuous))
+            .tatamiRoom(.standard, padding: EdgeInsets(
+                top: IkeruTheme.Spacing.md,
+                leading: IkeruTheme.Spacing.md,
+                bottom: IkeruTheme.Spacing.md,
+                trailing: IkeruTheme.Spacing.md
+            ))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -222,12 +216,13 @@ struct DailyTermHistoryView: View {
     private func statusIndicator(_ term: DailyTermDTO) -> some View {
         let isMissed = term.revealedAt == nil
         ZStack {
-            Circle()
-                .fill((isMissed ? Color.ikeruWarning : Color.ikeruSuccess).opacity(0.18))
+            Rectangle()
+                .fill((isMissed ? Color.ikeruDanger : Color.ikeruPrimaryAccent).opacity(0.18))
                 .frame(width: 32, height: 32)
+                .sumiCorners(color: isMissed ? Color.ikeruDanger : TatamiTokens.goldDim, size: 5, weight: 0.9)
             Image(systemName: isMissed ? "envelope.fill" : "checkmark")
                 .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(isMissed ? Color.ikeruWarning : Color.ikeruSuccess)
+                .foregroundStyle(isMissed ? Color.ikeruDanger : Color.ikeruPrimaryAccent)
         }
     }
 

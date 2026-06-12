@@ -85,8 +85,12 @@ struct VocabularyEntryDetailView: View {
                     .foregroundStyle(Color.ikeruPrimaryAccent)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 4)
-                    .background(Color.ikeruPrimaryAccent.opacity(0.12))
-                    .clipShape(Capsule())
+                    .background {
+                        Rectangle()
+                            .fill(Color.ikeruPrimaryAccent.opacity(0.12))
+                            .overlay { Rectangle().strokeBorder(TatamiTokens.goldDim.opacity(0.4), lineWidth: 0.5) }
+                    }
+                    .sumiCorners(color: TatamiTokens.goldDim, size: 5, weight: 1.0)
             }
         }
         .frame(maxWidth: .infinity)
@@ -131,7 +135,7 @@ struct VocabularyEntryDetailView: View {
                 }
             }
         }
-        .ikeruCard(.standard)
+        .tatamiRoom(.standard)
     }
 
     private func statTile(value: String, label: String) -> some View {
@@ -169,8 +173,12 @@ struct VocabularyEntryDetailView: View {
                             .font(.system(size: 12))
                             .foregroundStyle(Color.ikeruPrimaryAccent)
                             .frame(width: 24, height: 24)
-                            .background(Color.ikeruPrimaryAccent.opacity(0.10))
-                            .clipShape(Circle())
+                            .background {
+                                Rectangle()
+                                    .fill(Color.ikeruPrimaryAccent.opacity(0.10))
+                                    .overlay { Rectangle().strokeBorder(TatamiTokens.goldDim.opacity(0.3), lineWidth: 0.5) }
+                            }
+                            .sumiCorners(color: TatamiTokens.goldDim, size: 4, weight: 0.9)
 
                         VStack(alignment: .leading, spacing: 2) {
                             HStack {
@@ -191,14 +199,14 @@ struct VocabularyEntryDetailView: View {
 
                     if encounter.id != encounters.last?.id {
                         Rectangle()
-                            .fill(Color.white.opacity(0.06))
+                            .fill(TatamiTokens.goldDim.opacity(0.18))
                             .frame(width: 1, height: 12)
                             .padding(.leading, 12)
                     }
                 }
             }
         }
-        .ikeruCard(.standard)
+        .tatamiRoom(.standard)
     }
 
     // MARK: - Delete

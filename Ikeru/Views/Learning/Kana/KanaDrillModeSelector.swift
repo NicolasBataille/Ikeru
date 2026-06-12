@@ -129,7 +129,7 @@ struct KanaDrillModeSelector: View {
             }
         }
         .buttonStyle(.plain)
-        .ikeruCard(.interactive)
+        .tatamiRoom(.standard)
         .disabled(cards.isEmpty)
         .opacity(cards.isEmpty ? 0.5 : 1.0)
     }

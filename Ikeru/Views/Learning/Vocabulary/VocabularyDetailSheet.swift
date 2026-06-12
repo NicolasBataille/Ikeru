@@ -104,7 +104,7 @@ struct VocabularyDetailSheet: View {
                 .foregroundStyle(Color.ikeruTextPrimary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .ikeruCard(.standard)
+        .tatamiRoom(.standard)
     }
 
     // MARK: - Context (expandable)
@@ -130,7 +130,7 @@ struct VocabularyDetailSheet: View {
                     .multilineTextAlignment(.leading)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .ikeruCard(.standard)
+            .tatamiRoom(.standard)
         }
         .buttonStyle(.plain)
     }
@@ -157,7 +157,7 @@ struct VocabularyDetailSheet: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .ikeruCard(.standard)
+        .tatamiRoom(.standard)
     }
 
     private func statTile(value: String, label: String) -> some View {
@@ -205,7 +205,7 @@ struct VocabularyDetailSheet: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .ikeruCard(.standard)
+        .tatamiRoom(.standard)
     }
 
     // MARK: - Action (sticky bottom)

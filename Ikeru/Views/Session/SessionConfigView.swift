@@ -92,14 +92,19 @@ struct SessionConfigView: View {
             .foregroundStyle(isSelected ? .white : Color.ikeruTextSecondary)
             .background {
                 if isSelected {
-                    RoundedRectangle(cornerRadius: IkeruTheme.Radius.sm)
-                        .fill(Color.ikeruPrimaryAccent)
+                    Rectangle().fill(Color.ikeruPrimaryAccent)
                 } else {
-                    RoundedRectangle(cornerRadius: IkeruTheme.Radius.sm)
-                        .fill(Color.ikeruSurface)
+                    Rectangle().fill(Color.ikeruSurface)
                 }
             }
-            .clipShape(RoundedRectangle(cornerRadius: IkeruTheme.Radius.sm))
+            .overlay {
+                Rectangle()
+                    .strokeBorder(
+                        isSelected ? Color.ikeruPrimaryAccent : TatamiTokens.goldDim.opacity(0.5),
+                        lineWidth: 1
+                    )
+            }
+            .sumiCorners(color: isSelected ? .ikeruPrimaryAccent : TatamiTokens.goldDim, size: 6, weight: 1.1)
         }
         .animation(.easeInOut(duration: IkeruTheme.Animation.quickDuration), value: isSelected)
     }
@@ -121,7 +126,6 @@ struct SessionConfigView: View {
             .padding(.vertical, IkeruTheme.Spacing.sm)
             .padding(.horizontal, IkeruTheme.Spacing.md)
             .background(Color.ikeruSecondaryAccent.opacity(0.8))
-            .clipShape(RoundedRectangle(cornerRadius: IkeruTheme.Radius.sm))
             .transition(.opacity.combined(with: .move(edge: .top)))
             .animation(
                 .easeInOut(duration: IkeruTheme.Animation.standardDuration),

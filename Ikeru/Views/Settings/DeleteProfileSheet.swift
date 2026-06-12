@@ -88,14 +88,9 @@ struct DeleteProfileSheet: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(IkeruTheme.Spacing.md)
-        .background {
-            RoundedRectangle(cornerRadius: IkeruTheme.Radius.lg, style: .continuous)
-                .fill(Color.ikeruDanger.opacity(0.10))
-        }
-        .overlay {
-            RoundedRectangle(cornerRadius: IkeruTheme.Radius.lg, style: .continuous)
-                .strokeBorder(Color.ikeruDanger.opacity(0.35), lineWidth: 0.8)
-        }
+        .background(Color.ikeruDanger.opacity(0.10))
+        .overlay(Rectangle().strokeBorder(Color.ikeruDanger.opacity(0.45), lineWidth: 0.8))
+        .sumiCorners(color: Color.ikeruDanger.opacity(0.6), size: 6, weight: 1.0)
     }
 
     private var loadingCard: some View {
@@ -108,7 +103,7 @@ struct DeleteProfileSheet: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, IkeruTheme.Spacing.lg)
-        .ikeruCard(.standard)
+        .tatamiRoom(.standard)
     }
 
     private func summaryCard(_ s: Summary) -> some View {
@@ -145,16 +140,18 @@ struct DeleteProfileSheet: View {
                 )
             }
         }
-        .ikeruCard(.standard)
+        .tatamiRoom(.standard)
     }
 
     private func summaryRow(icon: String, tint: Color, label: String, value: String) -> some View {
         HStack(spacing: IkeruTheme.Spacing.md) {
             ZStack {
-                Circle().fill(tint.opacity(0.14))
-                    .frame(width: 30, height: 30)
+                Rectangle().fill(tint.opacity(0.12))
+                    .frame(width: 28, height: 28)
+                    .overlay(Rectangle().strokeBorder(tint.opacity(0.35), lineWidth: 0.8))
+                    .sumiCorners(color: TatamiTokens.goldDim, size: 4, weight: 0.9)
                 Image(systemName: icon)
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(tint)
             }
 

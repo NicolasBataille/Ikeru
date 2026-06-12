@@ -53,10 +53,9 @@ struct AttributionView: View {
                     .foregroundStyle(Color.ikeruPrimaryAccent)
                     .padding(.horizontal, IkeruTheme.Spacing.sm)
                     .padding(.vertical, 2)
-                    .background(
-                        Capsule()
-                            .fill(Color.ikeruPrimaryAccent.opacity(0.15))
-                    )
+                    .background(Color.ikeruPrimaryAccent.opacity(0.10))
+                    .overlay(Rectangle().strokeBorder(TatamiTokens.goldDim, lineWidth: 0.8))
+                    .sumiCorners(color: TatamiTokens.goldDim, size: 4, weight: 0.9)
             }
 
             Text(item.author)
@@ -67,7 +66,7 @@ struct AttributionView: View {
                 .font(.ikeruCaption)
                 .foregroundStyle(.ikeruTextSecondary)
         }
-        .ikeruCard(.standard)
+        .tatamiRoom(.standard)
     }
 }
 

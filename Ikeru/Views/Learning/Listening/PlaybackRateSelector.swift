@@ -25,9 +25,16 @@ struct PlaybackRateSelector: View {
         .padding(.horizontal, isCompact ? IkeruTheme.Spacing.sm : IkeruTheme.Spacing.md)
         .padding(.vertical, isCompact ? IkeruTheme.Spacing.xs : IkeruTheme.Spacing.sm)
         .background {
-            Capsule()
-                .fill(.ultraThinMaterial)
+            ZStack {
+                Rectangle().fill(.ultraThinMaterial)
+                Rectangle().fill(Color(red: 0.102, green: 0.102, blue: 0.133).opacity(0.6))
+            }
         }
+        .overlay {
+            Rectangle()
+                .strokeBorder(TatamiTokens.goldDim.opacity(0.5), lineWidth: 1)
+        }
+        .sumiCorners(color: TatamiTokens.goldDim, size: 8, weight: 1.0)
         .sensoryFeedback(.selection, trigger: selectionTrigger)
     }
 
@@ -44,16 +51,15 @@ struct PlaybackRateSelector: View {
             Text(rate.displayLabel)
                 .font(isCompact ? .ikeruCaption : .ikeruBody)
                 .fontWeight(isSelected ? .bold : .regular)
-                .foregroundStyle(isSelected ? .white : .ikeruTextSecondary)
+                .foregroundStyle(isSelected ? Color(red: 0.102, green: 0.078, blue: 0.055) : .ikeruTextSecondary)
                 .padding(.horizontal, isCompact ? IkeruTheme.Spacing.sm : IkeruTheme.Spacing.md)
                 .padding(.vertical, isCompact ? IkeruTheme.Spacing.xs : IkeruTheme.Spacing.sm)
                 .background {
                     if isSelected {
-                        Capsule()
-                            .fill(Color(hex: IkeruTheme.Colors.primaryAccent))
+                        LinearGradient.ikeruGold
                     }
                 }
-                .contentShape(Capsule())
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .animation(.spring(duration: IkeruTheme.Animation.quickDuration), value: isSelected)

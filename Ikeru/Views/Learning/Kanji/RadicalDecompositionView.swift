@@ -47,7 +47,13 @@ struct RadicalDecompositionView: View {
                 .lineLimit(1)
         }
         .frame(minWidth: 64)
-        .ikeruCard(.standard)
+        .padding(.vertical, IkeruTheme.Spacing.sm)
+        .padding(.horizontal, IkeruTheme.Spacing.md)
+        .background {
+            Rectangle()
+                .strokeBorder(TatamiTokens.goldDim.opacity(0.5), lineWidth: 1)
+        }
+        .sumiCorners(color: TatamiTokens.goldDim, size: 6, weight: 1.1)
     }
 
     private var emptyState: some View {

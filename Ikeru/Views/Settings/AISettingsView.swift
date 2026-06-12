@@ -189,14 +189,9 @@ struct AISettingsView: View {
                 .font(.ikeruBody)
                 .foregroundStyle(.white)
                 .padding(IkeruTheme.Spacing.sm)
-                .background(
-                    RoundedRectangle(cornerRadius: IkeruTheme.Radius.sm)
-                        .fill(Color.ikeruSurface)
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: IkeruTheme.Radius.sm)
-                        .strokeBorder(Color.ikeruPrimaryAccent.opacity(0.3), lineWidth: 1)
-                )
+                .background(Rectangle().fill(Color.ikeruSurface))
+                .overlay(Rectangle().strokeBorder(TatamiTokens.goldDim.opacity(0.5), lineWidth: 1))
+                .sumiCorners(color: TatamiTokens.goldDim, size: 5, weight: 0.9)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
 
@@ -210,7 +205,7 @@ struct AISettingsView: View {
                         .padding(.horizontal, IkeruTheme.Spacing.md)
                         .padding(.vertical, IkeruTheme.Spacing.sm)
                         .background(Color.ikeruPrimaryAccent)
-                        .clipShape(RoundedRectangle(cornerRadius: IkeruTheme.Radius.sm))
+                        .sumiCorners(color: TatamiTokens.goldDim, size: 4, weight: 1.0)
                 }
                 .disabled(currentInput(entry.id).trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
 
@@ -270,14 +265,9 @@ struct AISettingsView: View {
                     .font(.ikeruBody)
                     .foregroundStyle(.white)
                     .padding(IkeruTheme.Spacing.sm)
-                    .background(
-                        RoundedRectangle(cornerRadius: IkeruTheme.Radius.sm)
-                            .fill(Color.ikeruSurface)
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: IkeruTheme.Radius.sm)
-                            .strokeBorder(Color.ikeruPrimaryAccent.opacity(0.3), lineWidth: 1)
-                    )
+                    .background(Rectangle().fill(Color.ikeruSurface))
+                    .overlay(Rectangle().strokeBorder(TatamiTokens.goldDim.opacity(0.5), lineWidth: 1))
+                    .sumiCorners(color: TatamiTokens.goldDim, size: 5, weight: 0.9)
                     .textInputAutocapitalization(.never)
                     .keyboardType(.URL)
                     .autocorrectionDisabled()
@@ -286,14 +276,9 @@ struct AISettingsView: View {
                     .font(.ikeruBody)
                     .foregroundStyle(.white)
                     .padding(IkeruTheme.Spacing.sm)
-                    .background(
-                        RoundedRectangle(cornerRadius: IkeruTheme.Radius.sm)
-                            .fill(Color.ikeruSurface)
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: IkeruTheme.Radius.sm)
-                            .strokeBorder(Color.ikeruPrimaryAccent.opacity(0.3), lineWidth: 1)
-                    )
+                    .background(Rectangle().fill(Color.ikeruSurface))
+                    .overlay(Rectangle().strokeBorder(TatamiTokens.goldDim.opacity(0.5), lineWidth: 1))
+                    .sumiCorners(color: TatamiTokens.goldDim, size: 5, weight: 0.9)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
 
@@ -312,7 +297,7 @@ struct AISettingsView: View {
                             .padding(.horizontal, IkeruTheme.Spacing.md)
                             .padding(.vertical, IkeruTheme.Spacing.sm)
                             .background(Color.ikeruPrimaryAccent)
-                            .clipShape(RoundedRectangle(cornerRadius: IkeruTheme.Radius.sm))
+                            .sumiCorners(color: TatamiTokens.goldDim, size: 4, weight: 1.0)
                     }
 
                     Button {
@@ -367,9 +352,10 @@ struct AISettingsView: View {
     }
 
     private func statusDot(available: Bool) -> some View {
-        Circle()
-            .fill(available ? Color.ikeruSuccess : Color.gray.opacity(0.5))
-            .frame(width: 10, height: 10)
+        Rectangle()
+            .fill(available ? Color.ikeruSuccess : TatamiTokens.goldDim.opacity(0.35))
+            .frame(width: 8, height: 8)
+            .sumiCorners(color: TatamiTokens.goldDim, size: 3, weight: 0.8)
     }
 
     private var saveConfirmationToast: some View {

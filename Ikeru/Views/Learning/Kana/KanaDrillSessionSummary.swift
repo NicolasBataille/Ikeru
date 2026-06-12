@@ -87,14 +87,9 @@ struct KanaDrillSessionSummary: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 14)
-        .background {
-            RoundedRectangle(cornerRadius: IkeruTheme.Radius.md, style: .continuous)
-                .fill(.ultraThinMaterial)
-        }
-        .overlay {
-            RoundedRectangle(cornerRadius: IkeruTheme.Radius.md, style: .continuous)
-                .strokeBorder(Color.white.opacity(0.12), lineWidth: 0.6)
-        }
+        .background(Rectangle().fill(.ultraThinMaterial))
+        .overlay(Rectangle().strokeBorder(TatamiTokens.goldDim.opacity(0.3), lineWidth: 0.6))
+        .sumiCorners(color: TatamiTokens.goldDim, size: 6, weight: 1.0)
     }
 
     private func formatDuration(_ seconds: TimeInterval) -> String {

@@ -228,11 +228,10 @@ struct HomeView: View {
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
         .background {
-            Capsule().fill(.ultraThinMaterial)
+            Rectangle().fill(.ultraThinMaterial)
+                .overlay(Rectangle().strokeBorder(TatamiTokens.goldDim.opacity(0.5), lineWidth: 0.6))
         }
-        .overlay(
-            Capsule().strokeBorder(Color.white.opacity(0.10), lineWidth: 0.6)
-        )
+        .sumiCorners(color: TatamiTokens.goldDim, size: 5, weight: 0.9)
     }
 
     // MARK: - Top Bar
@@ -338,10 +337,11 @@ struct HomeView: View {
         .padding(.horizontal, 12)
         .padding(.vertical, 7)
         .background {
-            Capsule()
+            Rectangle()
                 .fill(Color.white.opacity(0.05))
-                .overlay(Capsule().strokeBorder(Color.white.opacity(0.10), lineWidth: 0.6))
+                .overlay(Rectangle().strokeBorder(TatamiTokens.goldDim.opacity(0.5), lineWidth: 0.6))
         }
+        .sumiCorners(color: TatamiTokens.goldDim, size: 5, weight: 0.9)
     }
 
     // MARK: - Rest Day Block

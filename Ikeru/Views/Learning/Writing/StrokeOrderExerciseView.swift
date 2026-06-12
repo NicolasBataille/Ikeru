@@ -24,7 +24,7 @@ struct StrokeOrderExerciseView: View {
 
             // Exercise canvas
             exerciseCanvas
-                .ikeruCard(.interactive)
+                .tatamiRoom(.standard, padding: 0)
 
             // Controls
             controlBar
@@ -171,8 +171,8 @@ struct StrokeOrderExerciseView: View {
                     ForEach(Array(result.strokeResults.enumerated()), id: \.offset) { _, strokeResult in
                         Image(systemName: strokeResult.isPassing ? "checkmark.circle.fill" : "xmark.circle.fill")
                             .foregroundStyle(strokeResult.isPassing
-                                ? Color(hex: IkeruTheme.Colors.success)
-                                : Color(hex: IkeruTheme.Colors.secondaryAccent)
+                                ? Color.ikeruPrimaryAccent
+                                : Color.ikeruDanger
                             )
                             .font(.system(size: IkeruTheme.Typography.Size.heading3))
                     }
@@ -182,12 +182,11 @@ struct StrokeOrderExerciseView: View {
                 Text(feedbackText(for: result))
                     .font(.system(size: IkeruTheme.Typography.Size.body, weight: .medium))
                     .foregroundStyle(result.passed
-                        ? Color(hex: IkeruTheme.Colors.success)
-                        : Color(hex: IkeruTheme.Colors.secondaryAccent)
+                        ? Color.ikeruPrimaryAccent
+                        : Color.ikeruDanger
                     )
             }
-            .padding(IkeruTheme.Spacing.md)
-            .ikeruCard(.standard)
+            .tatamiRoom(.standard)
         }
     }
 

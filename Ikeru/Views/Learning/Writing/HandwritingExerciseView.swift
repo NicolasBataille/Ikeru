@@ -22,7 +22,7 @@ struct HandwritingExerciseView: View {
                     viewModel.addStroke(points: points)
                 }
             )
-            .ikeruCard(.interactive)
+            .tatamiRoom(.standard, padding: 0)
 
             // Control toolbar
             controlBar
@@ -138,11 +138,10 @@ struct HandwritingExerciseView: View {
                             .font(.system(size: IkeruTheme.Typography.Size.body))
                     }
                     .buttonStyle(.borderedProminent)
-                    .tint(Color(hex: IkeruTheme.Colors.primaryAccent))
+                    .tint(Color.ikeruPrimaryAccent)
                 }
             }
-            .padding(IkeruTheme.Spacing.md)
-            .ikeruCard(.standard)
+            .tatamiRoom(.standard)
         }
     }
 
@@ -187,11 +186,11 @@ struct HandwritingExerciseView: View {
     private var feedbackColor: Color {
         switch viewModel.feedbackState {
         case .correct:
-            Color(hex: IkeruTheme.Colors.success)
+            Color.ikeruPrimaryAccent
         case .partial:
-            Color(hex: IkeruTheme.Colors.primaryAccent)
+            Color.ikeruPrimaryAccent
         case .incorrect:
-            Color(hex: IkeruTheme.Colors.secondaryAccent)
+            Color.ikeruDanger
         case .idle:
             .ikeruTextSecondary
         }
@@ -233,7 +232,7 @@ struct HandwritingExerciseView: View {
                 ))
                 .foregroundStyle(
                     isTarget
-                        ? Color(hex: IkeruTheme.Colors.success)
+                        ? Color.ikeruPrimaryAccent
                         : Color(hex: IkeruTheme.Colors.kanjiText)
                 )
 
@@ -243,17 +242,16 @@ struct HandwritingExerciseView: View {
                 .font(.system(size: IkeruTheme.Typography.Size.caption, design: .monospaced))
                 .foregroundStyle(
                     isTarget
-                        ? Color(hex: IkeruTheme.Colors.success)
+                        ? Color.ikeruPrimaryAccent
                         : .ikeruTextSecondary
                 )
         }
         .padding(.vertical, IkeruTheme.Spacing.xs)
         .background(
             isTarget
-                ? Color(hex: IkeruTheme.Colors.success, opacity: 0.1)
+                ? Color.ikeruPrimaryAccent.opacity(0.1)
                 : Color.clear
         )
-        .clipShape(RoundedRectangle(cornerRadius: IkeruTheme.Radius.sm))
     }
 }
 

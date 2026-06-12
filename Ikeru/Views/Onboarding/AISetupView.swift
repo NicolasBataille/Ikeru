@@ -102,11 +102,9 @@ struct AISetupView: View {
                 .multilineTextAlignment(.center)
         }
         .padding(IkeruTheme.Spacing.lg)
-        .background(
-            RoundedRectangle(cornerRadius: IkeruTheme.Radius.md)
-                .fill(Color.ikeruSuccess.opacity(0.08))
-                .strokeBorder(Color.ikeruSuccess.opacity(0.3), lineWidth: 1)
-        )
+        .background(Color.ikeruSuccess.opacity(0.08))
+        .overlay(Rectangle().strokeBorder(Color.ikeruSuccess.opacity(0.35), lineWidth: 1))
+        .sumiCorners(color: TatamiTokens.goldDim, size: 6, weight: 1.0)
     }
 
     // MARK: - Gemini Setup
@@ -131,14 +129,9 @@ struct AISetupView: View {
                 .font(.ikeruBody)
                 .foregroundStyle(.white)
                 .padding(IkeruTheme.Spacing.sm)
-                .background(
-                    RoundedRectangle(cornerRadius: IkeruTheme.Radius.sm)
-                        .fill(Color.ikeruSurface)
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: IkeruTheme.Radius.sm)
-                        .strokeBorder(Color.ikeruPrimaryAccent.opacity(0.3), lineWidth: 1)
-                )
+                .background(Rectangle().fill(Color.ikeruSurface))
+                .overlay(Rectangle().strokeBorder(TatamiTokens.goldDim.opacity(0.5), lineWidth: 1))
+                .sumiCorners(color: TatamiTokens.goldDim, size: 5, weight: 0.9)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
 
@@ -158,8 +151,7 @@ struct AISetupView: View {
                     .foregroundStyle(.ikeruSecondaryAccent)
             }
         }
-        .padding(IkeruTheme.Spacing.lg)
-        .ikeruCard(.standard)
+        .tatamiRoom(.standard)
     }
 
     // MARK: - Bottom Buttons

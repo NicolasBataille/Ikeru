@@ -132,8 +132,12 @@ struct VocabularyDictionaryView: View {
             .foregroundStyle(Color.ikeruPrimaryAccent)
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
-            .background(Color.ikeruPrimaryAccent.opacity(0.10))
-            .clipShape(Capsule())
+            .background {
+                Rectangle()
+                    .fill(Color.ikeruPrimaryAccent.opacity(0.10))
+                    .overlay { Rectangle().strokeBorder(TatamiTokens.goldDim.opacity(0.4), lineWidth: 0.5) }
+            }
+            .sumiCorners(color: TatamiTokens.goldDim, size: 6, weight: 1.1)
         }
     }
 
@@ -161,8 +165,12 @@ struct VocabularyDictionaryView: View {
             }
         }
         .padding(IkeruTheme.Spacing.sm)
-        .background(Color.white.opacity(0.06))
-        .clipShape(RoundedRectangle(cornerRadius: IkeruTheme.Radius.md))
+        .background {
+            Rectangle()
+                .fill(Color.white.opacity(0.06))
+                .overlay { Rectangle().strokeBorder(TatamiTokens.goldDim.opacity(0.3), lineWidth: 0.5) }
+        }
+        .sumiCorners(color: TatamiTokens.goldDim, size: 6, weight: 1.0)
     }
 
     // MARK: - Filter Chips
@@ -187,8 +195,17 @@ struct VocabularyDictionaryView: View {
                 .foregroundStyle(isSelected ? Color.ikeruBackground : Color.ikeruTextPrimary)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
-                .background(isSelected ? Color.ikeruPrimaryAccent : Color.white.opacity(0.08))
-                .clipShape(Capsule())
+                .background {
+                    Rectangle()
+                        .fill(isSelected ? Color.ikeruPrimaryAccent : Color.white.opacity(0.08))
+                        .overlay {
+                            Rectangle().strokeBorder(
+                                isSelected ? Color.ikeruPrimaryAccent : TatamiTokens.goldDim.opacity(0.4),
+                                lineWidth: 0.5
+                            )
+                        }
+                }
+                .sumiCorners(color: isSelected ? Color.ikeruPrimaryAccent : TatamiTokens.goldDim, size: 6, weight: 1.1)
         }
         .buttonStyle(.plain)
     }
@@ -200,14 +217,16 @@ struct VocabularyDictionaryView: View {
             VocabularyDrillModeSelector(modelContainer: modelContext.container)
         } label: {
             HStack(spacing: IkeruTheme.Spacing.md) {
-                ZStack {
-                    Circle()
-                        .fill(Color.ikeruSecondaryAccent.opacity(0.14))
-                        .frame(width: 38, height: 38)
-                    Image(systemName: "bolt.fill")
-                        .font(.system(size: 16))
-                        .foregroundStyle(Color.ikeruSecondaryAccent)
-                }
+                Image(systemName: "bolt.fill")
+                    .font(.system(size: 16, weight: .light))
+                    .foregroundStyle(Color.ikeruPrimaryAccent)
+                    .frame(width: 38, height: 38)
+                    .background {
+                        Rectangle()
+                            .fill(Color.ikeruPrimaryAccent.opacity(0.12))
+                            .overlay { Rectangle().strokeBorder(TatamiTokens.goldDim.opacity(0.4), lineWidth: 0.5) }
+                    }
+                    .sumiCorners(color: TatamiTokens.goldDim, size: 6, weight: 1.0)
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Drill Due Words")
                         .font(.ikeruHeading3)
@@ -221,7 +240,7 @@ struct VocabularyDictionaryView: View {
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(Color.ikeruTextTertiary)
             }
-            .ikeruCard(.interactive)
+            .tatamiRoom(.standard)
         }
         .buttonStyle(.plain)
     }
@@ -273,8 +292,12 @@ struct VocabularyDictionaryView: View {
                             .foregroundStyle(Color.ikeruPrimaryAccent)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
-                            .background(Color.ikeruPrimaryAccent.opacity(0.12))
-                            .clipShape(Capsule())
+                            .background {
+                                Rectangle()
+                                    .fill(Color.ikeruPrimaryAccent.opacity(0.12))
+                                    .overlay { Rectangle().strokeBorder(TatamiTokens.goldDim.opacity(0.4), lineWidth: 0.5) }
+                            }
+                            .sumiCorners(color: TatamiTokens.goldDim, size: 4, weight: 0.9)
                     }
 
                     HStack(spacing: 4) {
@@ -287,8 +310,12 @@ struct VocabularyDictionaryView: View {
                 }
             }
             .padding(IkeruTheme.Spacing.md)
-            .background(Color.white.opacity(0.04))
-            .clipShape(RoundedRectangle(cornerRadius: IkeruTheme.Radius.md))
+            .background {
+                Rectangle()
+                    .fill(Color.white.opacity(0.04))
+                    .overlay { Rectangle().strokeBorder(TatamiTokens.goldDim.opacity(0.18), lineWidth: 0.5) }
+            }
+            .sumiCorners(color: TatamiTokens.goldDim, size: 6, weight: 1.0)
         }
         .buttonStyle(.plain)
     }

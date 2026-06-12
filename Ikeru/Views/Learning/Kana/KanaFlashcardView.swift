@@ -76,9 +76,9 @@ struct KanaFlashcardView: View {
                 .foregroundStyle(Color.ikeruTextSecondary)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
-                .background {
-                    Capsule().fill(.ultraThinMaterial)
-                }
+                .background(Color.ikeruSurface.opacity(0.6))
+                .overlay(Rectangle().strokeBorder(TatamiTokens.goldDim.opacity(0.5), lineWidth: 1))
+                .sumiCorners(color: TatamiTokens.goldDim, size: 5, weight: 1.0)
             Spacer()
             Text(viewModel.mode.displayName.uppercased())
                 .font(.ikeruMicro)
@@ -86,9 +86,9 @@ struct KanaFlashcardView: View {
                 .foregroundStyle(Color.ikeruPrimaryAccent)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
-                .background {
-                    Capsule().fill(Color.ikeruPrimaryAccent.opacity(0.10))
-                }
+                .background(Color.ikeruPrimaryAccent.opacity(0.10))
+                .overlay(Rectangle().strokeBorder(TatamiTokens.goldDim.opacity(0.5), lineWidth: 1))
+                .sumiCorners(color: TatamiTokens.goldDim, size: 5, weight: 1.0)
         }
         .padding(.top, IkeruTheme.Spacing.sm)
     }
@@ -155,16 +155,16 @@ struct KanaFlashcardView: View {
 
     private var gradeButtons: some View {
         HStack(spacing: 8) {
-            gradeButton(.again, label: "Again", color: Color(red: 0.85, green: 0.30, blue: 0.30))
-            gradeButton(.hard, label: "Hard", color: Color(red: 0.90, green: 0.55, blue: 0.20))
-            gradeButton(.good, label: "Good", color: Color(red: 0.30, green: 0.55, blue: 0.85))
-            gradeButton(.easy, label: "Easy", color: Color(red: 0.30, green: 0.70, blue: 0.45))
+            gradeButton(.again, label: "Again", accent: Color.ikeruError)
+            gradeButton(.hard, label: "Hard", accent: TatamiTokens.goldDim)
+            gradeButton(.good, label: "Good", accent: TatamiTokens.goldDim)
+            gradeButton(.easy, label: "Easy", accent: Color.ikeruPrimaryAccent)
         }
         .padding(.top, IkeruTheme.Spacing.md)
     }
 
     @ViewBuilder
-    private func gradeButton(_ grade: Grade, label: String, color: Color) -> some View {
+    private func gradeButton(_ grade: Grade, label: String, accent: Color) -> some View {
         Button {
             Task {
                 if grade == .again {
@@ -185,13 +185,13 @@ struct KanaFlashcardView: View {
             }
             .frame(maxWidth: .infinity, minHeight: 64)
             .background {
-                RoundedRectangle(cornerRadius: IkeruTheme.Radius.md, style: .continuous)
-                    .fill(color.opacity(0.18))
+                ZStack {
+                    Rectangle().fill(.ultraThinMaterial)
+                    Rectangle().fill(accent.opacity(0.12))
+                }
             }
-            .overlay {
-                RoundedRectangle(cornerRadius: IkeruTheme.Radius.md, style: .continuous)
-                    .strokeBorder(color.opacity(0.55), lineWidth: 0.8)
-            }
+            .overlay(Rectangle().strokeBorder(accent.opacity(0.45), lineWidth: 0.8))
+            .sumiCorners(color: accent.opacity(0.7), size: 7, weight: 1.1)
         }
         .buttonStyle(.plain)
     }

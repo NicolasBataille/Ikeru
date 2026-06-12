@@ -16,7 +16,7 @@ struct MnemonicView: View {
             header
             content
         }
-        .ikeruCard(.elevated)
+        .tatamiRoom(.standard)
     }
 
     // MARK: - Header
@@ -111,7 +111,7 @@ struct MnemonicView: View {
         HStack(spacing: IkeruTheme.Spacing.sm) {
             Image(systemName: "exclamationmark.triangle")
                 .font(.system(size: IkeruTheme.Typography.Size.caption))
-                .foregroundStyle(Color(hex: IkeruTheme.Colors.secondaryAccent))
+                .foregroundStyle(Color.ikeruDanger)
 
             Text("Failed to generate mnemonic. Tap regenerate to try again.")
                 .font(.system(size: IkeruTheme.Typography.Size.caption))
