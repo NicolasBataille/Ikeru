@@ -24,9 +24,10 @@ struct InlineKanjiView: View {
                 .padding(.horizontal, IkeruTheme.Spacing.xs)
                 .padding(.vertical, 2)
                 .background {
-                    RoundedRectangle(cornerRadius: IkeruTheme.Radius.sm)
+                    Rectangle()
                         .fill(Color(hex: IkeruTheme.Colors.primaryAccent, opacity: 0.1))
                 }
+                .sumiCorners(color: TatamiTokens.goldDim, size: 5, weight: 0.9, inset: 0)
         }
         .buttonStyle(.plain)
         .popover(isPresented: $showDefinition) {

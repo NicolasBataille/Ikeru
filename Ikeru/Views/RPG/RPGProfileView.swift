@@ -245,7 +245,7 @@ struct RPGProfileView: View {
     private struct DemoAchievement: Identifiable {
         let id: String
         let kanji: String
-        let label: String
+        let label: LocalizedStringKey
         let earned: Bool
     }
 
@@ -257,8 +257,8 @@ struct RPGProfileView: View {
         [
             DemoAchievement(id: "first",    kanji: "初", label: "First step",  earned: vm.totalReviews >= 1),
             DemoAchievement(id: "seven",    kanji: "七", label: "7 reviews",   earned: vm.totalReviews >= 7),
-            DemoAchievement(id: "hundred",  kanji: "百", label: "100 cards",   earned: vm.totalReviews >= 100),
-            DemoAchievement(id: "thousand", kanji: "千", label: "1000 cards",  earned: vm.totalReviews >= 1000),
+            DemoAchievement(id: "hundred",  kanji: "百", label: "100 reviews",  earned: vm.totalReviews >= 100),
+            DemoAchievement(id: "thousand", kanji: "千", label: "1000 reviews", earned: vm.totalReviews >= 1000),
             DemoAchievement(id: "kiwami",   kanji: "極", label: "Mastery",     earned: vm.level >= 25)
         ]
     }
@@ -321,8 +321,8 @@ struct RPGProfileView: View {
     @ViewBuilder
     private func lootBoxSection(_ vm: RPGProfileViewModel) -> some View {
         if !vm.unopenedLootBoxes.isEmpty {
-            VStack(alignment: .leading, spacing: IkeruTheme.Spacing.md) {
-                IkeruSectionHeader(title: "Lootboxes", eyebrow: "Awaiting")
+            VStack(alignment: .leading, spacing: 10) {
+                BilingualLabel(japanese: "宝箱", chrome: "Lootboxes", mon: .maru)
 
                 VStack(spacing: 0) {
                     ForEach(Array(vm.unopenedLootBoxes.enumerated()), id: \.element.id) { index, box in
@@ -332,9 +332,10 @@ struct RPGProfileView: View {
                             }
                         } label: {
                             HStack(spacing: IkeruTheme.Spacing.md) {
-                                Image(systemName: "shippingbox.fill")
-                                    .font(.system(size: 26))
-                                    .foregroundStyle(Color(hex: IkeruTheme.Colors.Rarity.epic))
+                                // 宝 kanji glyph — palette or/encre, aucune couleur externe
+                                Text("宝")
+                                    .font(.system(size: 24, weight: .light, design: .serif))
+                                    .foregroundStyle(Color.ikeruPrimaryAccent)
                                     .frame(width: 36)
 
                                 VStack(alignment: .leading, spacing: 2) {
@@ -342,7 +343,7 @@ struct RPGProfileView: View {
                                         .font(.ikeruBody)
                                         .foregroundStyle(Color.ikeruTextPrimary)
 
-                                    Text("Score \(box.requiredScore) to open")
+                                    Text(String(format: String(localized: "Score %lld to open"), box.requiredScore))
                                         .font(.ikeruCaption)
                                         .foregroundStyle(Color.ikeruTextSecondary)
                                 }
@@ -351,7 +352,7 @@ struct RPGProfileView: View {
 
                                 Image(systemName: "chevron.right")
                                     .font(.system(size: 13, weight: .semibold))
-                                    .foregroundStyle(Color.ikeruTextTertiary)
+                                    .foregroundStyle(TatamiTokens.goldDim)
                             }
                             .padding(.vertical, IkeruTheme.Spacing.sm)
                             .contentShape(Rectangle())
@@ -359,12 +360,14 @@ struct RPGProfileView: View {
                         .buttonStyle(.plain)
 
                         if index < vm.unopenedLootBoxes.count - 1 {
-                            IkeruDivider()
+                            Rectangle()
+                                .fill(TatamiTokens.goldDim.opacity(0.18))
+                                .frame(height: 1)
                         }
                     }
                 }
             }
-            .ikeruCard(.elevated)
+            .tatamiRoom(.standard, padding: 16)
         }
     }
 
@@ -415,7 +418,7 @@ struct RPGProfileView: View {
                     .foregroundStyle(isLocked ? Color.ikeruTextTertiary : Color.ikeruTextPrimary)
 
                 if isLocked {
-                    Text("Unlocks at Lv. \(attr.unlockLevel)")
+                    Text(String(format: String(localized: "Unlocks at grade %lld"), attr.unlockLevel))
                         .font(.ikeruCaption)
                         .foregroundStyle(Color.ikeruTextTertiary)
                 } else {
@@ -617,14 +620,16 @@ struct RPGProfileView: View {
     // MARK: - Attribute kanji mapping
     //
     // Traditional Japanese single-character labels for each skill attribute —
-    // Reading → 読, Writing → 書, Listening → 聞, Speaking → 話. A brushable
+    // Reading → 読, Writing → 書, Listening → 聴, Speaking → 話. A brushable
     // kanji glyph is far more on-brand than an SF Symbol.
+    // Note: 聴 (attentive listening) aligns with SessionSummaryView; do not
+    // revert to 聞 (general hearing).
 
     private static func attributeKanji(_ id: String) -> String {
         switch id {
         case "reading":    return "読"
         case "writing":    return "書"
-        case "listening":  return "聞"
+        case "listening":  return "聴"
         case "speaking":   return "話"
         case "grammar":    return "文"
         case "vocabulary": return "語"

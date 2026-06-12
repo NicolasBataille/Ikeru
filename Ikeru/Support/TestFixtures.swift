@@ -127,11 +127,13 @@ public enum TestFixtures {
         return state
     }
 
-    /// XP curve mirrors the production formula closely enough for visual smoke tests.
-    /// 102, 230, 384, ... — quadratic-ish growth.
+    /// Total XP required to reach `level`, using the *exact* production formula
+    /// from RPGConstants so the seeded profile is internally consistent.
+    /// Previously this used a hand-rolled quadratic that diverged from the real
+    /// curve at level ≥ 4, causing Home / Rang to display a stale seeded rank
+    /// while the session summary showed the real rank derived from the XP.
     private static func xpRequired(forLevel level: Int) -> Int {
-        guard level > 1 else { return 0 }
-        return (1...(level - 1)).reduce(0) { acc, lv in acc + 100 + lv * 2 }
+        RPGConstants.totalXPForLevel(level)
     }
 
     // MARK: - In-app helpers (Outils développeur menu)
@@ -264,12 +266,23 @@ public enum TestFixtures {
         let kanjiPool = ["人", "日", "月", "火", "水", "木", "金", "土", "山", "川",
                          "口", "目", "耳", "手", "足", "心", "本", "車", "雨", "電"]
 
+        // Due cards: reps=2 (been seen before, now overdue) so they are
+        // classified as "review" items, not "new". Previously reps defaulted
+        // to 0, making every due card look like a brand-new card in the
+        // Home breakdown and inflating the NEW counter.
         for index in 0..<due {
             let glyph = kanjiPool[index % kanjiPool.count]
             let card = Card(
                 front: glyph,
                 back: "reading-\(index)",
                 type: .kanji,
+                fsrsState: FSRSState(
+                    difficulty: 5,
+                    stability: 1,
+                    reps: 2,
+                    lapses: 0,
+                    lastReview: now.addingTimeInterval(-60 * 60 * 24 * 2)
+                ),
                 interval: 1,
                 dueDate: now.addingTimeInterval(-Double(index) * 60)
             )
@@ -277,12 +290,20 @@ public enum TestFixtures {
             context.insert(card)
         }
 
+        // Mastered cards: reps=10 and due far in the future.
         for index in 0..<mastered {
             let glyph = kanjiPool[index % kanjiPool.count]
             let card = Card(
                 front: "\(glyph)\(index)",
                 back: "mastered-\(index)",
                 type: .kanji,
+                fsrsState: FSRSState(
+                    difficulty: 4,
+                    stability: 30,
+                    reps: 10,
+                    lapses: 0,
+                    lastReview: now.addingTimeInterval(-60 * 60 * 24 * 5)
+                ),
                 interval: 365,
                 dueDate: now.addingTimeInterval(60 * 60 * 24 * 30)
             )

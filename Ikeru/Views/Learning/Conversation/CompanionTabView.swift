@@ -13,6 +13,10 @@ import IkeruCore
 struct CompanionTabView: View {
 
     @Environment(\.modelContext) private var modelContext
+    /// The shared router injected at the app level (IkeruApp). Using the same
+    /// instance as AISettingsView ensures that a refreshTierStatuses() call from
+    /// Settings is visible here, and vice-versa — both surfaces stay in sync.
+    @Environment(\.aiRouterService) private var aiRouterService
     @State private var viewModel: ConversationViewModel?
     @State private var showConversation = false
     @State private var hasCheckedAI = false
@@ -285,10 +289,15 @@ struct CompanionTabView: View {
     private func initializeViewModel() {
         guard viewModel == nil else { return }
 
-        let jlptLevel = loadJLPTLevel()
-        let aiRouter = AIRouterService()
-        let conversationService = ConversationService(aiRouter: aiRouter)
+        // Use the shared AIRouterService from the environment so Settings and the
+        // conversation screen operate on the same provider-status state. Creating a
+        // local AIRouterService() here previously caused the two surfaces to diverge:
+        // Settings could show a green dot while the conversation's private instance
+        // had already marked every provider as unavailable (or vice-versa).
+        let router = aiRouterService ?? AIRouterService()
+        let conversationService = ConversationService(aiRouter: router)
 
+        let jlptLevel = loadJLPTLevel()
         let vocabRepo = VocabularyRepository(modelContainer: modelContext.container)
         viewModel = ConversationViewModel(
             conversationService: conversationService,

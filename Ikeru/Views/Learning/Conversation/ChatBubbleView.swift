@@ -40,10 +40,16 @@ struct ChatBubbleView: View {
             .padding(.horizontal, IkeruTheme.Spacing.md)
             .padding(.vertical, IkeruTheme.Spacing.sm + 2)
             .background { bubbleBackground }
-            .sumiCorners(color: cornerColor, size: 7, weight: 1.1)
+            // inset: 0 keeps sumi marks flush with the bubble edge so they
+            // never overflow into the scroll view's leading margin and get
+            // clipped — fixes the leading-character clip in CompanionChatSheet.
+            .sumiCorners(color: cornerColor, size: 7, weight: 1.1, inset: 0)
 
             if variant == .companion { Spacer(minLength: 48) }
         }
+        // Ensure the HStack fills the available container width so the
+        // companion bubble always anchors to the leading edge.
+        .frame(maxWidth: .infinity)
     }
 
     // MARK: - Alignment

@@ -120,6 +120,9 @@ public final class HomeViewModel {
     private let cardRepository: CardRepository
     private let plannerService: PlannerService
     private let progressService: ProgressService
+    /// Canonical planner — same instance type as `SessionViewModel` uses,
+    /// so the preview counts always match what `startSession()` will serve.
+    private let sessionPlanner: DefaultSessionPlanner
 
     // MARK: - Init
 
@@ -129,6 +132,7 @@ public final class HomeViewModel {
         self.cardRepository = repo
         self.plannerService = PlannerService(cardRepository: repo)
         self.progressService = ProgressService(cardRepository: repo)
+        self.sessionPlanner = DefaultSessionPlanner()
     }
 
     /// Initializer for testing with injected dependencies.
@@ -141,6 +145,7 @@ public final class HomeViewModel {
         self.cardRepository = cardRepository
         self.plannerService = plannerService
         self.progressService = ProgressService(cardRepository: cardRepository)
+        self.sessionPlanner = DefaultSessionPlanner()
     }
 
     // MARK: - Rest Day
@@ -209,6 +214,17 @@ public final class HomeViewModel {
         )
     }
 
+    // MARK: - Post-Session Refresh
+
+    /// Must be called by the presentation layer when the session sheet is
+    /// dismissed (e.g. SessionSummaryView's "Done" button or the sheet's
+    /// `onDismiss` closure). Forces a full data reload so the XP rail and
+    /// due-card hero count reflect the just-persisted session results
+    /// without waiting for the user to navigate away from and back to Home.
+    public func refreshAfterSession() async {
+        await loadData()
+    }
+
     /// Loads all home screen data from local SwiftData.
     /// Called on .onAppear to refresh after session completion.
     public func loadData() async {
@@ -239,7 +255,21 @@ public final class HomeViewModel {
 
         if let state = ActiveProfileResolver.fetchActiveRPGState(in: context) {
             xp = state.xp
-            level = state.level
+            // Always derive level from the canonical XP value so that a profile
+            // seeded (or otherwise written) with a stale RPGState.level field
+            // still displays the correct rank everywhere. If the computed level
+            // differs from the stored one we repair it in-place so future reads
+            // are consistent without needing another derivation pass.
+            let derivedLevel = RPGConstants.levelForXP(state.xp)
+            if derivedLevel != state.level {
+                let staleLevel = state.level
+                state.level = derivedLevel
+                try? context.save()
+                Logger.ui.info(
+                    "Home: repaired stale RPGState.level \(staleLevel) → \(derivedLevel) for xp=\(state.xp)"
+                )
+            }
+            level = derivedLevel
             unopenedLootBoxCount = state.unopenedLootBoxes.count
             EquippedCosmeticsBridge.sync(state: state)
 
@@ -277,28 +307,76 @@ public final class HomeViewModel {
         kanjiLearnedCount = allCards.filter { $0.fsrsState.reps > 0 }.count
     }
 
-    /// Composes a session preview: estimated card count and time.
+    /// Composes a session preview using the same `DefaultSessionPlanner`
+    /// pipeline as `SessionViewModel.startSession()`.
+    ///
+    /// This guarantees that the hero count (SRS reviews) and the NEW/REVIEW
+    /// breakdown displayed on Home are always consistent with what the user
+    /// will actually see when they tap "Start". Previously the preview used
+    /// the legacy `PlannerService.composeSession()` path (due cards + ≤5 new)
+    /// while the real session used the 40/30/20/10 skeleton planner, which
+    /// caused three different numbers to be displayed simultaneously.
     private func composeSessionPreview() async {
-        let queue = await plannerService.composeSession()
-        sessionPreviewCardCount = queue.count
-        // Roughly 1 minute per card, minimum 1
-        sessionPreviewMinutes = max(1, queue.count)
+        let cards = await cardRepository.allCards()
+        let durationMinutes = UserDefaults.standard.integer(forKey: "ikeru.session.defaultDurationMinutes")
+        let effectiveDuration = durationMinutes > 0 ? durationMinutes : 15
 
-        // Approximate split between brand-new cards and reviews. A card is
-        // "new" when it has never been answered (reps == 0); everything else
-        // is a recurring review.
+        // Build a minimal snapshot so the planner can size the segments.
+        // Skill-balance fields default to empty (equal split) — sufficient
+        // for computing how many SRS reviews fit in the review-wave budget.
+        let unlockedTypes = Set(ExerciseType.allCases)
+        let inputs = SessionPlannerInputs(
+            source: .homeRecommendation,
+            durationMinutes: effectiveDuration,
+            profile: LearnerSnapshot(
+                jlptLevel: .n5,
+                vocabularyMasteredFamiliarPlus: 0,
+                kanjiMasteredFamiliarPlus: 0,
+                hiraganaMastered: false,
+                katakanaMastered: false,
+                grammarPointsFamiliarPlus: 0,
+                listeningAccuracyLast30: 0,
+                listeningRecallLast30Days: 0,
+                skillBalances: [:],
+                dueCardCount: cards.filter { $0.dueDate <= Date() }.count,
+                hasNewContentQueued: cards.contains(where: { $0.fsrsState.reps == 0 }),
+                lastSessionAt: nil
+            ),
+            unlockedTypes: unlockedTypes,
+            availableCards: cards
+        )
+        let plan = await sessionPlanner.compose(inputs: inputs)
+
+        // sessionPreviewCardCount = SRS review items only (cards shown as
+        // flashcards). Non-SRS exercises (kanji study tiles, variety tiles,
+        // etc.) are not shown in the due-count hero so we don't inflate it.
+        let srsItems = plan.exercises.filter {
+            if case .srsReview = $0 { return true }
+            return false
+        }
+        sessionPreviewCardCount = srsItems.count
+        sessionPreviewMinutes = plan.estimatedDurationMinutes > 0 ? plan.estimatedDurationMinutes : 1
+
+        // NEW vs REVIEW split within the SRS items only.
+        // A card is "new" when reps == 0 (never answered); everything else
+        // is a recurring review. This matches the breakdown in the session
+        // summary and the SessionViewModel's `newItemsLearned` counter.
         var newCount = 0
         var reviewCount = 0
-        for card in queue {
-            if card.fsrsState.reps == 0 {
-                newCount += 1
-            } else {
-                reviewCount += 1
+        for item in srsItems {
+            if case .srsReview(let card) = item {
+                if card.fsrsState.reps == 0 {
+                    newCount += 1
+                } else {
+                    reviewCount += 1
+                }
             }
         }
         sessionPreviewNewCount = newCount
         sessionPreviewReviewCount = reviewCount
-        Logger.ui.debug("Session preview: \(queue.count) cards, ~\(self.sessionPreviewMinutes) min")
+        Logger.ui.debug(
+            "Session preview (planner): \(srsItems.count) SRS (\(newCount) new / \(reviewCount) review), ~\(self.sessionPreviewMinutes) min"
+        )
     }
 
     private func loadSkillBalance() async {

@@ -16,7 +16,7 @@ struct ConversationView: View {
 
     var body: some View {
         ZStack {
-            Color.ikeruBackground
+            IkeruScreenBackground(variant: .auxiliary)
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
@@ -104,47 +104,72 @@ struct ConversationView: View {
     // MARK: - Welcome Section
 
     private var welcomeSection: some View {
-        VStack(spacing: IkeruTheme.Spacing.lg) {
-            Spacer()
+        ScrollView {
+            VStack(spacing: IkeruTheme.Spacing.xl) {
+                Spacer(minLength: IkeruTheme.Spacing.xl)
 
-            Image(systemName: "bubble.left.and.bubble.right.fill")
-                .font(.system(size: 56))
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [
-                            Color(hex: IkeruTheme.Colors.primaryAccent),
-                            Color(hex: IkeruTheme.Colors.success)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
+                // Canonical Sakura avatar — square sumi frame with 桜 serif
+                ZStack {
+                    Rectangle()
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    Color(red: 0.165, green: 0.133, blue: 0.102),
+                                    Color(red: 0.078, green: 0.067, blue: 0.051)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .overlay(
+                            Rectangle()
+                                .strokeBorder(TatamiTokens.goldDim, lineWidth: 1)
+                        )
+                        .frame(width: 80, height: 80)
+                        .sumiCorners(color: .ikeruPrimaryAccent, size: 10, weight: 1.4, inset: -1)
 
-            VStack(spacing: IkeruTheme.Spacing.sm) {
-                Text("Meet Sakura")
-                    .font(.ikeruHeading1)
-                    .foregroundStyle(.white)
+                    Text("\u{685C}") // 桜
+                        .font(.system(size: 44, weight: .light, design: .serif))
+                        .foregroundStyle(Color.ikeruPrimaryAccent)
+                }
 
-                Text("Your Japanese conversation partner")
-                    .font(.ikeruBody)
-                    .foregroundStyle(.ikeruTextSecondary)
+                // Title + descriptor
+                VStack(spacing: IkeruTheme.Spacing.xs) {
+                    Text("Meet Sakura")
+                        .font(.system(size: 26, weight: .light, design: .serif))
+                        .foregroundStyle(Color.ikeruTextPrimary)
 
-                Text("Level: \(viewModel.jlptLevel.rawValue)")
-                    .font(.ikeruCaption)
-                    .foregroundStyle(Color(hex: IkeruTheme.Colors.primaryAccent))
-                    .padding(.top, IkeruTheme.Spacing.xs)
+                    Text("Your Japanese conversation partner")
+                        .font(.system(size: 14, weight: .regular))
+                        .foregroundStyle(Color.ikeruTextSecondary)
+
+                    // JLPT level badge — encre rectangle, no capsule
+                    Text(viewModel.jlptLevel.rawValue)
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(Color.ikeruPrimaryAccent)
+                        .tracking(1.4)
+                        .padding(.horizontal, IkeruTheme.Spacing.sm)
+                        .padding(.vertical, IkeruTheme.Spacing.xs)
+                        .overlay(
+                            Rectangle()
+                                .strokeBorder(TatamiTokens.goldDim, lineWidth: 1)
+                        )
+                        .padding(.top, IkeruTheme.Spacing.xs)
+                }
+                .multilineTextAlignment(.center)
+
+                // Suggestion chips — rectangle + sumi corners, not Capsule
+                VStack(spacing: IkeruTheme.Spacing.sm) {
+                    suggestionButton("こんにちは！")
+                    suggestionButton("今日は何をしましたか？")
+                    suggestionButton("Hello! I'm learning Japanese.")
+                }
+
+                Spacer(minLength: IkeruTheme.Spacing.xl)
             }
-
-            VStack(spacing: IkeruTheme.Spacing.sm) {
-                suggestionButton("こんにちは！")
-                suggestionButton("今日は何をしましたか？")
-                suggestionButton("Hello! I'm learning Japanese.")
-            }
-            .padding(.top, IkeruTheme.Spacing.md)
-
-            Spacer()
+            .padding(.horizontal, IkeruTheme.Spacing.lg)
+            .frame(maxWidth: .infinity)
         }
-        .padding(.horizontal, IkeruTheme.Spacing.lg)
     }
 
     // MARK: - Suggestion Button
@@ -155,21 +180,20 @@ struct ConversationView: View {
         } label: {
             Text(text)
                 .font(.ikeruBody)
-                .foregroundStyle(Color(hex: IkeruTheme.Colors.primaryAccent))
+                .foregroundStyle(Color.ikeruPrimaryAccent)
+                .frame(maxWidth: .infinity)
                 .padding(.horizontal, IkeruTheme.Spacing.md)
                 .padding(.vertical, IkeruTheme.Spacing.sm)
                 .background(
-                    Color(hex: IkeruTheme.Colors.primaryAccent).opacity(0.1)
+                    Color(hex: IkeruTheme.Colors.primaryAccent).opacity(0.07)
                 )
-                .clipShape(Capsule())
                 .overlay(
-                    Capsule()
-                        .strokeBorder(
-                            Color(hex: IkeruTheme.Colors.primaryAccent).opacity(0.3),
-                            lineWidth: 1
-                        )
+                    Rectangle()
+                        .strokeBorder(TatamiTokens.goldDim.opacity(0.5), lineWidth: 1)
                 )
+                .sumiCorners(color: TatamiTokens.goldDim, size: 6, weight: 1.1)
         }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Message List
@@ -196,6 +220,7 @@ struct ConversationView: View {
                 .padding(.top, IkeruTheme.Spacing.md)
                 .padding(.bottom, IkeruTheme.Spacing.lg)
             }
+            .scrollClipDisabled()
             .onChange(of: viewModel.messages.count) { _, _ in
                 scrollToBottom(proxy: proxy)
             }
@@ -218,8 +243,11 @@ struct ConversationView: View {
             }
             .padding(.horizontal, IkeruTheme.Spacing.md)
             .padding(.vertical, IkeruTheme.Spacing.sm)
-            .background(Color(hex: IkeruTheme.Colors.surface))
-            .clipShape(RoundedRectangle(cornerRadius: IkeruTheme.Radius.lg))
+            .background(
+                Rectangle()
+                    .fill(Color(red: 0.102, green: 0.102, blue: 0.133).opacity(0.78))
+            )
+            .sumiCorners(color: TatamiTokens.goldDim, size: 6, weight: 1.0)
 
             Spacer()
         }
@@ -229,8 +257,10 @@ struct ConversationView: View {
 
     private func errorBanner(_ message: String) -> some View {
         HStack(spacing: IkeruTheme.Spacing.sm) {
-            Image(systemName: "exclamationmark.triangle.fill")
-                .foregroundStyle(Color(hex: IkeruTheme.Colors.secondaryAccent))
+            // Encre warning mark — no pink/rose icon
+            Text("—")
+                .font(.system(size: 14, weight: .semibold, design: .serif))
+                .foregroundStyle(Color.ikeruPrimaryAccent)
 
             Text(message)
                 .font(.ikeruCaption)
@@ -243,19 +273,27 @@ struct ConversationView: View {
             }
             .font(.ikeruCaption)
             .fontWeight(.semibold)
-            .foregroundStyle(Color(hex: IkeruTheme.Colors.primaryAccent))
+            .foregroundStyle(Color.ikeruPrimaryAccent)
         }
         .padding(IkeruTheme.Spacing.sm)
-        .background(Color(hex: IkeruTheme.Colors.secondaryAccent).opacity(0.1))
-        .clipShape(RoundedRectangle(cornerRadius: IkeruTheme.Radius.sm))
+        .background(
+            Rectangle()
+                .fill(Color(red: 0.102, green: 0.086, blue: 0.071).opacity(0.82))
+        )
+        .overlay(alignment: .top) {
+            Rectangle().fill(TatamiTokens.goldDim.opacity(0.5)).frame(height: 1)
+        }
+        .overlay(alignment: .bottom) {
+            Rectangle().fill(TatamiTokens.goldDim.opacity(0.3)).frame(height: 1)
+        }
+        .sumiCorners(color: TatamiTokens.goldDim, size: 6, weight: 1.0)
     }
 
     // MARK: - Input Bar
 
     private var inputBar: some View {
         VStack(spacing: 0) {
-            Divider()
-                .overlay(Color.white.opacity(0.1))
+            FusumaRail(gold: TatamiTokens.goldDim, opacity: 0.6)
 
             HStack(spacing: IkeruTheme.Spacing.sm) {
                 voiceButton
@@ -267,8 +305,11 @@ struct ConversationView: View {
                     .textFieldStyle(.plain)
                     .padding(.horizontal, IkeruTheme.Spacing.sm)
                     .padding(.vertical, IkeruTheme.Spacing.sm)
-                    .background(Color(hex: IkeruTheme.Colors.surface))
-                    .clipShape(RoundedRectangle(cornerRadius: IkeruTheme.Radius.lg))
+                    .background(
+                        Rectangle()
+                            .fill(Color(red: 0.102, green: 0.102, blue: 0.133).opacity(0.82))
+                    )
+                    .sumiCorners(color: TatamiTokens.goldDim, size: 5, weight: 0.9)
                     .onSubmit {
                         Task { await viewModel.sendMessage() }
                     }
@@ -277,7 +318,7 @@ struct ConversationView: View {
             }
             .padding(.horizontal, IkeruTheme.Spacing.md)
             .padding(.vertical, IkeruTheme.Spacing.sm)
-            .background(Color.ikeruBackground)
+            .background(Color.ikeruBackground.opacity(0.95))
         }
     }
 
@@ -291,16 +332,15 @@ struct ConversationView: View {
                 .font(.system(size: 20))
                 .foregroundStyle(
                     viewModel.isVoiceActive
-                        ? Color(hex: IkeruTheme.Colors.secondaryAccent)
+                        ? Color.ikeruPrimaryAccent
                         : .ikeruTextSecondary
                 )
                 .frame(width: 36, height: 36)
                 .background(
                     viewModel.isVoiceActive
-                        ? Color(hex: IkeruTheme.Colors.secondaryAccent).opacity(0.15)
+                        ? Color.ikeruPrimaryAccent.opacity(0.15)
                         : Color.clear
                 )
-                .clipShape(Circle())
                 .animation(.easeInOut(duration: 0.2), value: viewModel.isVoiceActive)
         }
     }
@@ -329,13 +369,13 @@ struct ConversationView: View {
         Text(viewModel.jlptLevel.rawValue)
             .font(.ikeruCaption)
             .fontWeight(.semibold)
-            .foregroundStyle(Color(hex: IkeruTheme.Colors.primaryAccent))
+            .foregroundStyle(Color.ikeruPrimaryAccent)
             .padding(.horizontal, IkeruTheme.Spacing.sm)
             .padding(.vertical, IkeruTheme.Spacing.xs)
-            .background(
-                Color(hex: IkeruTheme.Colors.primaryAccent).opacity(0.15)
+            .overlay(
+                Rectangle()
+                    .strokeBorder(TatamiTokens.goldDim, lineWidth: 1)
             )
-            .clipShape(Capsule())
     }
 
     // MARK: - Scroll Helpers

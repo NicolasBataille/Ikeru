@@ -359,7 +359,7 @@ struct AISettingsView: View {
 
     // MARK: - Shared Components
 
-    private func sectionHeader(_ title: String) -> some View {
+    private func sectionHeader(_ title: LocalizedStringKey) -> some View {
         Text(title)
             .font(.ikeruHeading3)
             .foregroundStyle(.ikeruTextSecondary)

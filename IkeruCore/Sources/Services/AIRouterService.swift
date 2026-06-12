@@ -48,10 +48,14 @@ public final class AIRouterService {
     ) {
         self.providers = providers
         self.networkChecker = networkChecker
+        // All tiers start as .unavailable; refreshTierStatuses() performs the real
+        // async availability check and updates each entry. The previous code
+        // hard-coded .onDevice = .available here, which caused the Settings
+        // FoundationModels dot to appear green even on devices where the on-device
+        // model is not actually functional (e.g. simulator without model assets).
         self.tierStatuses = Dictionary(uniqueKeysWithValues: AITier.allCases.map {
-            ($0, providers[$0] != nil ? ProviderStatus.unavailable : ProviderStatus.unavailable)
+            ($0, ProviderStatus.unavailable)
         })
-        self.tierStatuses[.onDevice] = .available
     }
 
     /// Convenience initializer that wires up all default providers (FoundationModels +

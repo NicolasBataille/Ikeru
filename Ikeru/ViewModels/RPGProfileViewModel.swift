@@ -102,8 +102,21 @@ final class RPGProfileViewModel {
         let context = modelContainer.mainContext
 
         if let state = ActiveProfileResolver.fetchActiveRPGState(in: context) {
-            level = state.level
             xp = state.xp
+            // Derive level from XP — same single-source-of-truth rule as
+            // HomeViewModel. Repairs any stale RPGState.level persisted by
+            // the old TestFixtures formula or a race where the level field
+            // wasn't updated after an XP write.
+            let derivedLevel = RPGConstants.levelForXP(state.xp)
+            if derivedLevel != state.level {
+                let staleLevel = state.level
+                state.level = derivedLevel
+                try? context.save()
+                Logger.rpg.info(
+                    "Rang: repaired stale RPGState.level \(staleLevel) → \(derivedLevel) for xp=\(state.xp)"
+                )
+            }
+            level = derivedLevel
             totalReviews = state.totalReviewsCompleted
             attributes = state.attributes
             inventory = state.lootInventory

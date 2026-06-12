@@ -226,6 +226,15 @@ public final class SessionViewModel {
     private var cardStartTime: Date = Date()
     private var timerTask: Task<Void, Never>?
 
+    /// Accumulated active time from completed intervals (before the current
+    /// timer run). Updated whenever the timer is paused mid-session so that
+    /// background time is excluded from the session duration.
+    private var baseElapsedTime: TimeInterval = 0
+
+    /// Wall-clock anchor for the current timer run. Set whenever `startTimer()`
+    /// begins a new interval so elapsed = base + (now − resume).
+    private var timerResumeTime: Date = Date()
+
     /// Policy that decides when an active session ends. Built when the
     /// session starts; nil between sessions. Drives both queue-exhaustion
     /// and time-budget-exhaustion exits.
@@ -296,6 +305,8 @@ public final class SessionViewModel {
         currentExerciseIndex = 0
         showAbandonConfirmation = false
         elapsedTime = 0
+        baseElapsedTime = 0
+        timerResumeTime = Date()
         endPolicy = nil
         oneMinuteRemainingFired = false
         ledger = SkillXPLedger()
@@ -799,6 +810,12 @@ public final class SessionViewModel {
     /// Pauses the current session.
     public func pauseSession() {
         isPaused = true
+        // Fold the current active interval before stopping so background
+        // time is not counted if the user leaves the app while paused.
+        if isTimerRunning {
+            baseElapsedTime += Date().timeIntervalSince(timerResumeTime)
+            elapsedTime = baseElapsedTime
+        }
         stopTimer()
         Logger.ui.debug("Session paused at card \(self.currentIndex + 1)/\(self.sessionQueue.count)")
     }
@@ -812,10 +829,21 @@ public final class SessionViewModel {
     }
 
     /// Ends the session early, preserving partial progress.
+    ///
+    /// If no cards were reviewed (the user abandoned immediately), the summary
+    /// screen has nothing meaningful to display — skip it and return directly
+    /// to the home screen via `dismissSession()`.
     public func endSession() {
         Logger.ui.info(
             "Session ended early: \(self.reviewedCount)/\(self.sessionQueue.count) reviewed, \(self.xpEarned) XP"
         )
+
+        // If the user quits without reviewing a single card, skip the
+        // summary entirely and go straight back to the home screen.
+        if reviewedCount == 0 {
+            dismissSession()
+            return
+        }
 
         // End Live Activity
         Task {
@@ -917,23 +945,45 @@ public final class SessionViewModel {
 
     // MARK: - Timer
 
-    /// Drives `elapsedTime` from wall-clock difference vs `sessionStartTime`.
-    /// Using `Date().timeIntervalSince(...)` (rather than incrementing a
-    /// counter on each tick) means a backgrounded app catches up on the
-    /// real elapsed time the moment it resumes — required for the
-    /// session-end budget cut-off to fire correctly after suspension.
+    /// Drives `elapsedTime` counting only active foreground time.
+    ///
+    /// Each timer run accumulates seconds from `timerResumeTime` (set when
+    /// the interval starts) on top of `baseElapsedTime` (the sum of all
+    /// previous completed intervals). When `suspendTimer()` is called (scene
+    /// goes background or is paused), the delta is folded into `baseElapsedTime`
+    /// and the task is cancelled. When `startTimer()` is called again,
+    /// `timerResumeTime` is reset so only the new foreground interval counts.
     private func startTimer() {
         guard !isTimerRunning else { return }
         isTimerRunning = true
+        timerResumeTime = Date()
         timerTask = Task { @MainActor in
             let clock = ContinuousClock()
             while !Task.isCancelled {
                 try? await clock.sleep(for: .seconds(1))
                 guard !Task.isCancelled else { break }
-                self.elapsedTime = Date().timeIntervalSince(self.sessionStartTime)
+                self.elapsedTime = self.baseElapsedTime
+                    + Date().timeIntervalSince(self.timerResumeTime)
                 self.checkOneMinuteRemaining()
             }
         }
+    }
+
+    /// Pauses the timer and folds the current interval into `baseElapsedTime`
+    /// so background time is never counted. Called from scenePhase onChange
+    /// in the session view when the scene becomes inactive or background.
+    public func suspendTimer() {
+        guard isTimerRunning else { return }
+        baseElapsedTime += Date().timeIntervalSince(timerResumeTime)
+        elapsedTime = baseElapsedTime
+        stopTimer()
+    }
+
+    /// Resumes the timer from where it was suspended. Called from scenePhase
+    /// onChange when the scene becomes active again.
+    public func resumeTimer() {
+        guard !isTimerRunning, isActive, !isPaused else { return }
+        startTimer()
     }
 
     /// Maps the SRS card currently being graded to the matching

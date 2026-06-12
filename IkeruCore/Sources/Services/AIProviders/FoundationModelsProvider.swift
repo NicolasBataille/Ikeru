@@ -91,7 +91,7 @@ private struct OnDeviceModelSession {
 
     func respond(to message: String) async throws -> String {
         let response = try await session.respond(to: message)
-        return String(describing: response)
+        return response.content
     }
 }
 #endif

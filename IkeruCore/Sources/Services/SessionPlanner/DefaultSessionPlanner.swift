@@ -131,10 +131,13 @@ public struct DefaultSessionPlanner: SessionPlanner {
     // MARK: - Helpers
 
     /// Fills a budget by appending SRS reviews until the next would overflow.
-    private func pickReviews(from cards: [CardDTO], secondsBudget: Int) -> [ExerciseItem] {
+    /// Only cards whose `dueDate <= now` enter the review wave; non-due cards
+    /// must never appear here — that was the root cause of a card graded
+    /// "Good" (interval ~3 days) being re-served in the very next session.
+    private func pickReviews(from cards: [CardDTO], secondsBudget: Int, now: Date = Date()) -> [ExerciseItem] {
         var items: [ExerciseItem] = []
         var spent = 0
-        for card in cards {
+        for card in cards where card.dueDate <= now {
             let exercise = ExerciseItem.srsReview(card)
             if spent + exercise.estimatedDurationSeconds > secondsBudget { break }
             items.append(exercise)

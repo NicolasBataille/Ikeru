@@ -187,6 +187,7 @@ public final class ConversationViewModel {
             switch aiError {
             case .providerUnavailable:
                 errorMessage = "AI is currently unavailable. Please try again later."
+                syncAIAvailability()
             case .rateLimited:
                 errorMessage = "Too many requests. Please wait a moment."
             case .timeout:
@@ -198,11 +199,22 @@ public final class ConversationViewModel {
             case .keyNotFound:
                 errorMessage = "AI configuration missing. Check Settings."
             case .allProvidersExhausted:
+                // All tiers failed during generate(); the router already updated
+                // tierStatuses to .degraded/.unavailable. Sync isAIAvailable so
+                // the conversation surface and Settings both reflect the same truth.
                 errorMessage = "No AI providers available. Try again later."
+                syncAIAvailability()
             }
         } else {
             errorMessage = "Something went wrong. Please try again."
         }
+    }
+
+    /// Re-reads the current tierStatuses from the router (no network round-trip)
+    /// and updates isAIAvailable to stay consistent with the Settings pastille.
+    private func syncAIAvailability() {
+        let statuses = conversationService.aiRouter.tierStatuses
+        isAIAvailable = statuses.values.contains { $0 == .available }
     }
 }
 

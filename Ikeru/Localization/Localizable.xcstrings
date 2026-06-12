@@ -7647,6 +7647,363 @@
           }
         }
       }
+    },
+    "Begin Challenge" : {
+      "comment" : "LootBox challenge ready-state CTA button",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Begin Challenge"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Commencer le défi"
+          }
+        }
+      }
+    },
+    "Tap the correct reading!" : {
+      "comment" : "LootBox challenge — instruction above the question prompt",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap the correct reading!"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Touche la bonne lecture !"
+          }
+        }
+      }
+    },
+    "Score %lld to open" : {
+      "comment" : "LootBox — required score caption (e.g. 'Score 5 to open')",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Score %lld to open"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Score de %lld pour ouvrir"
+          }
+        }
+      }
+    },
+    "Try Again" : {
+      "comment" : "LootBox challenge failed-state retry button",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Try Again"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réessayer"
+          }
+        }
+      }
+    },
+    "Later" : {
+      "comment" : "Generic dismiss/defer button label",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Later"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plus tard"
+          }
+        }
+      }
+    },
+    "Lootboxes" : {
+      "comment" : "RPG profile section header — unopened loot boxes",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lootboxes"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coffres"
+          }
+        }
+      }
+    },
+    "7 reviews" : {
+      "comment" : "RPG achievement milestone label",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "7 reviews"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "7 révisions"
+          }
+        }
+      }
+    },
+    "100 reviews" : {
+      "comment" : "RPG achievement milestone label",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "100 reviews"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "100 révisions"
+          }
+        }
+      }
+    },
+    "1000 reviews" : {
+      "comment" : "RPG achievement milestone label",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1000 reviews"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1000 révisions"
+          }
+        }
+      }
+    },
+    "Unlocks at grade %lld" : {
+      "comment" : "RPG attribute row — locked attribute unlock level caption",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unlocks at grade %lld"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Disponible au grade %lld"
+          }
+        }
+      }
+    },
+    "Practice ground" : {
+      "comment" : "Étude tab — bilingual chrome label for the exercise grid section",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Practice ground"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terrain d'entraînement"
+          }
+        }
+      }
+    },
+    "12 cards" : {
+      "comment" : "Settings — daily goal default value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "12 cards"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "12 cartes"
+          }
+        }
+      }
+    },
+    "Optimized" : {
+      "comment" : "Settings — FSRS parameters row value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Optimized"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Optimisé"
+          }
+        }
+      }
+    },
+    "AI Providers" : {
+      "comment" : "AI Settings screen navigation title",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI Providers"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fournisseurs IA"
+          }
+        }
+      }
+    },
+    "Recommended" : {
+      "comment" : "AI Settings section header — recommended provider tier",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recommended"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recommandé"
+          }
+        }
+      }
+    },
+    "On-Device AI" : {
+      "comment" : "AI Settings section header — Apple FoundationModels on-device tier",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "On-Device AI"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "IA sur l'appareil"
+          }
+        }
+      }
+    },
+    "Paste API key" : {
+      "comment" : "AI Settings — secure field placeholder for cloud provider API key",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paste API key"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Colle ta clé API"
+          }
+        }
+      }
+    },
+    "Shared token" : {
+      "comment" : "AI Settings — secure field placeholder for local rig authentication token",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shared token"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jeton partagé"
+          }
+        }
+      }
+    },
+    "Type in Japanese..." : {
+      "comment" : "Conversation input bar text field placeholder",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Type in Japanese..."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Écris en japonais..."
+          }
+        }
+      }
+    },
+    "Ask your companion..." : {
+      "comment" : "Companion chat sheet input field placeholder",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ask your companion..."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pose ta question..."
+          }
+        }
+      }
+    },
+    "Conversation" : {
+      "comment" : "ConversationView navigation title",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Conversation"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Conversation"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

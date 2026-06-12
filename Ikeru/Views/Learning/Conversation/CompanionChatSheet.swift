@@ -16,7 +16,7 @@ struct CompanionChatSheet: View {
         VStack(spacing: 0) {
             dragIndicator
             headerBar
-            Divider().foregroundStyle(Color(hex: IkeruTheme.Colors.surface))
+            FusumaRail(gold: TatamiTokens.goldDim, opacity: 0.6)
             messageList
             inputBar
         }
@@ -43,7 +43,7 @@ struct CompanionChatSheet: View {
     @ViewBuilder
     private var dragIndicator: some View {
         RoundedRectangle(cornerRadius: 2)
-            .fill(Color.white.opacity(0.3))
+            .fill(TatamiTokens.goldDim.opacity(0.45))
             .frame(width: 36, height: 4)
             .padding(.top, IkeruTheme.Spacing.sm)
     }
@@ -136,9 +136,14 @@ struct CompanionChatSheet: View {
                         typingIndicator
                     }
                 }
-                .padding(.horizontal, IkeruTheme.Spacing.md)
+                // Extra leading margin absorbs the sumiCorner -2 inset so the
+                // leading corner tick is never clipped by the scrollview boundary.
+                .padding(.leading, IkeruTheme.Spacing.md + 4)
+                .padding(.trailing, IkeruTheme.Spacing.md)
                 .padding(.vertical, IkeruTheme.Spacing.sm)
             }
+            // Allow sumiCorner marks to render outside the scrollview clip zone.
+            .scrollClipDisabled()
             .onChange(of: viewModel.messages.count) { _, _ in
                 scrollToBottom(proxy: proxy)
             }
@@ -164,9 +169,10 @@ struct CompanionChatSheet: View {
             .padding(.horizontal, IkeruTheme.Spacing.md)
             .padding(.vertical, IkeruTheme.Spacing.sm + 4)
             .background {
-                RoundedRectangle(cornerRadius: IkeruTheme.Radius.lg)
-                    .fill(Color(hex: IkeruTheme.Colors.primaryAccent, opacity: 0.15))
+                Rectangle()
+                    .fill(Color(red: 0.102, green: 0.102, blue: 0.133).opacity(0.78))
             }
+            .sumiCorners(color: TatamiTokens.goldDim, size: 6, weight: 1.0)
 
             Spacer()
         }
@@ -185,37 +191,42 @@ struct CompanionChatSheet: View {
 
     @ViewBuilder
     private var inputBar: some View {
-        HStack(spacing: IkeruTheme.Spacing.sm) {
-            TextField("Ask your companion...", text: $viewModel.inputText, axis: .vertical)
-                .font(.ikeruBody)
-                .foregroundStyle(.white)
-                .lineLimit(1...4)
-                .padding(.horizontal, IkeruTheme.Spacing.md)
-                .padding(.vertical, IkeruTheme.Spacing.sm)
-                .background {
-                    RoundedRectangle(cornerRadius: IkeruTheme.Radius.xl)
-                        .fill(.ultraThinMaterial)
-                }
-                .onSubmit {
-                    viewModel.sendMessage()
-                }
+        VStack(spacing: 0) {
+            FusumaRail(gold: TatamiTokens.goldDim, opacity: 0.5, inverted: true)
 
-            Button {
-                viewModel.sendMessage()
-            } label: {
-                Image(systemName: "arrow.up.circle.fill")
-                    .font(.title2)
-                    .foregroundStyle(
-                        viewModel.inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                            ? Color.ikeruTextSecondary
-                            : Color(hex: IkeruTheme.Colors.primaryAccent)
-                    )
+            HStack(spacing: IkeruTheme.Spacing.sm) {
+                TextField("Ask your companion...", text: $viewModel.inputText, axis: .vertical)
+                    .font(.ikeruBody)
+                    .foregroundStyle(.white)
+                    .lineLimit(1...4)
+                    .padding(.horizontal, IkeruTheme.Spacing.sm)
+                    .padding(.vertical, IkeruTheme.Spacing.sm)
+                    .background {
+                        Rectangle()
+                            .fill(Color(red: 0.102, green: 0.102, blue: 0.133).opacity(0.82))
+                    }
+                    .sumiCorners(color: TatamiTokens.goldDim, size: 5, weight: 0.9)
+                    .onSubmit {
+                        viewModel.sendMessage()
+                    }
+
+                Button {
+                    viewModel.sendMessage()
+                } label: {
+                    Image(systemName: "arrow.up.circle.fill")
+                        .font(.title2)
+                        .foregroundStyle(
+                            viewModel.inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                                ? Color.ikeruTextSecondary
+                                : Color(hex: IkeruTheme.Colors.primaryAccent)
+                        )
+                }
+                .disabled(viewModel.inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
-            .disabled(viewModel.inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            .padding(.horizontal, IkeruTheme.Spacing.md)
+            .padding(.vertical, IkeruTheme.Spacing.sm)
+            .background(Color(hex: IkeruTheme.Colors.background))
         }
-        .padding(.horizontal, IkeruTheme.Spacing.md)
-        .padding(.vertical, IkeruTheme.Spacing.sm)
-        .background(Color(hex: IkeruTheme.Colors.surface))
     }
 
     // MARK: - Helpers

@@ -48,9 +48,27 @@ struct SessionProgressBar: View {
 
             Spacer()
 
-            Text("-" + formatTime(max(0, estimatedTotalTime - elapsedTime)))
-                .font(.ikeruStats)
-                .foregroundStyle(Color.ikeruTextTertiary)
+            // Show estimated time remaining only when the estimate is
+            // meaningful — i.e. the session has exercises and there is still
+            // time left. Hiding the label when elapsed ≥ total avoids the
+            // confusing "-0:12" display that users read as an error.
+            // Format: "~Xm" for ≥60s remaining, "~Xs" for under a minute.
+            if estimatedTotalTime > 0 {
+                let remaining = estimatedTotalTime - elapsedTime
+                if remaining > 0 {
+                    let remainingLabel: String = {
+                        let secs = Int(remaining)
+                        if secs >= 60 {
+                            return "~\(secs / 60)m"
+                        } else {
+                            return "~\(secs)s"
+                        }
+                    }()
+                    Text(remainingLabel)
+                        .font(.ikeruStats)
+                        .foregroundStyle(Color.ikeruTextTertiary)
+                }
+            }
         }
     }
 

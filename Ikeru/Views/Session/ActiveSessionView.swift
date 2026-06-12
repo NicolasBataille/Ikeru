@@ -11,6 +11,7 @@ import os
 struct ActiveSessionView: View {
 
     @Bindable var viewModel: SessionViewModel
+    @Environment(\.scenePhase) private var scenePhase
     @State private var showPauseOverlay = false
     @State private var hapticTriggerCorrect = false
     @State private var hapticTriggerIncorrect = false
@@ -84,6 +85,18 @@ struct ActiveSessionView: View {
         .onAppear { maybeShowSwipeTutorial() }
         .onChange(of: viewModel.currentCard?.id) { _, _ in maybeShowSwipeTutorial() }
         .animation(.easeInOut(duration: 0.3), value: showSwipeTutorial)
+        // Pause the session timer when the app moves to background or becomes
+        // inactive so background time is not counted toward session duration.
+        .onChange(of: scenePhase) { _, newPhase in
+            switch newPhase {
+            case .background, .inactive:
+                viewModel.suspendTimer()
+            case .active:
+                viewModel.resumeTimer()
+            @unknown default:
+                break
+            }
+        }
         .overlay(alignment: .top) {
             if showOneMinuteToast {
                 Text(

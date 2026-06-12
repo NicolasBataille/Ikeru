@@ -258,7 +258,7 @@ struct SettingsView: View {
             settingRow(
                 jp: "一日の目標",
                 label: "Daily goal",
-                value: "12 cards"
+                value: String(localized: "12 cards")
             )
             reminderToggleRow(
                 jp: "通知",
@@ -391,7 +391,7 @@ struct SettingsView: View {
 
     private var memorySection: some View {
         section(label: ("記憶", "Memory algorithm"), mon: .kikkou) {
-            settingRow(jp: "FSRSパラメータ", label: "FSRS parameters", value: "Optimized")
+            settingRow(jp: "FSRSパラメータ", label: "FSRS parameters", value: String(localized: "Optimized"))
             settingRow(jp: "保持率",         label: "Target retention", value: "90%")
             settingRow(jp: "最大間隔",       label: "Maximum interval", value: "36500d")
         }
