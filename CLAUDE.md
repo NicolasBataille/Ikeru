@@ -58,6 +58,26 @@ Le repo est **public pour le portfolio**. Ne jamais committer :
 
 Tous les secrets sensibles sont gérés via GitHub Actions secrets.
 
+## Outils développeur en TestFlight (`IKERU_DEV_TOOLS`)
+
+La section « Outils dev » dans Réglages (sliders fixture profile + boutons Wipe / Lootbox / Level-up / Clear cache / Build info) ainsi que le code TestFixtures sont gatés par le flag de compilation `IKERU_DEV_TOOLS`.
+
+Ce flag est activé dans **Debug ET Release** (cf. `SWIFT_ACTIVE_COMPILATION_CONDITIONS` dans `Ikeru.xcodeproj/project.pbxproj` lignes ~1687 et Release config Project Ikeru) — donc visible dans les builds TestFlight le temps des tests.
+
+### Removing `IKERU_DEV_TOOLS` avant App Store
+
+Avant la première submission App Store, retirer le flag du Release config du projet :
+
+1. Ouvrir `Ikeru.xcodeproj/project.pbxproj` dans un éditeur texte
+2. Localiser la config Release du PBXProject « Ikeru » (id `7D6595C8356D9F7F7E05434C`)
+3. Supprimer la ligne `SWIFT_ACTIVE_COMPILATION_CONDITIONS = IKERU_DEV_TOOLS;`
+4. Optionnel : aussi dans la config Debug PBXProject (id `A45A6F037871A5F44542F639`) ramener `SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;` (au lieu de `"DEBUG IKERU_DEV_TOOLS"`)
+5. Rebuild : la section disparaît, le code `TestFixtures` est exclu du binaire
+
+Vérifier ensuite avec `grep -rn "IKERU_DEV_TOOLS" Ikeru.xcodeproj/project.pbxproj` qui doit retourner zero match avant submit App Store.
+
+Le code Swift gardant les `#if IKERU_DEV_TOOLS` reste en place — il est juste exclu à la compilation. Pratique pour réintroduire le menu plus tard si besoin (juste re-add le flag).
+
 ## App targets
 
 - iPhone uniquement (`TARGETED_DEVICE_FAMILY = "1"`) — pas d'iPad pour l'instant. Si support iPad un jour, prévoir les 4 orientations dans `INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad`.
