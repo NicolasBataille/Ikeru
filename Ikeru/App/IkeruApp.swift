@@ -164,9 +164,11 @@ struct IkeruApp: App {
             viewModel.loadProfile()
         }
 
-        #if DEBUG
+        #if IKERU_DEV_TOOLS
         // Dev helper: launch with -mockProfile (and friends) to seed a rich fixture profile.
-        // No-op when a profile already exists.
+        // No-op when a profile already exists. Same behaviour ships in TestFlight
+        // (so QA can launch a seed via the Outils dev menu) and is stripped before
+        // App Store submit — see CLAUDE.md "Removing IKERU_DEV_TOOLS".
         TestFixtures.seedIfRequested(context: modelContainer.mainContext, profileVM: viewModel)
         #endif
 

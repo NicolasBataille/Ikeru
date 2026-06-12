@@ -76,6 +76,22 @@ struct SettingsView: View {
 
     @State private var showingLanguagePicker = false
 
+    // MARK: Dev tools (Outils développeur)
+    //
+    // Gated by IKERU_DEV_TOOLS (Debug + Release until App Store). Remove
+    // the flag from project Release config in pbxproj before submit — see
+    // CLAUDE.md "Removing IKERU_DEV_TOOLS" for the procedure.
+
+    #if IKERU_DEV_TOOLS
+    @State private var devSeedLevel: Double = 15
+    @State private var devSeedDue: Double = 20
+    @State private var devSeedMastered: Double = 120
+    @State private var devSeedLootboxes: Double = 3
+    @State private var devSeedInventory: Double = 8
+    @State private var devShowResetConfirm = false
+    @State private var devLastAction: String = ""
+    #endif
+
     // MARK: Computed
 
     private var isNameValid: Bool {
@@ -135,6 +151,9 @@ struct SettingsView: View {
                     aiSection
                     storageSection
                     aboutSection
+                    #if IKERU_DEV_TOOLS
+                    devToolsSection
+                    #endif
                 }
                 .padding(.horizontal, 22)
                 .padding(.top, 14)
@@ -200,6 +219,18 @@ struct SettingsView: View {
         } message: {
             Text("Removes every cached audio file and image. Assets will be regenerated on next use.")
         }
+        #if IKERU_DEV_TOOLS
+        .alert("Reset profile?", isPresented: $devShowResetConfirm) {
+            Button("Cancel", role: .cancel) {}
+            Button("Wipe", role: .destructive) {
+                guard let vm = profileViewModel else { return }
+                TestFixtures.wipeAll(context: modelContext, profileVM: vm)
+                devLastAction = "✓ Profile wiped — relaunch to see onboarding"
+            }
+        } message: {
+            Text("Deletes every profile, RPG state, card, vocab encounter. Onboarding triggers on next cold launch.")
+        }
+        #endif
         .task {
             await backupManager.checkLastBackup()
             cacheStats = assetCache?.stats()
@@ -663,6 +694,138 @@ struct SettingsView: View {
             .buttonStyle(.plain)
         }
     }
+
+    // MARK: - Section: 開発 / Dev tools
+    //
+    // Visible only when IKERU_DEV_TOOLS is set. Lets a TestFlight tester
+    // seed a fixture profile, wipe state, force-grant lootboxes / level-ups,
+    // and clear the asset cache without rebuilding. Stripped before App
+    // Store submit — see CLAUDE.md "Removing IKERU_DEV_TOOLS".
+
+    #if IKERU_DEV_TOOLS
+    private var devToolsSection: some View {
+        section(label: ("開発", "Dev tools"), mon: .maru) {
+            devSeedRow
+            Rectangle().fill(TatamiTokens.goldDim.opacity(0.2)).frame(height: 1)
+            settingRow(
+                jp: "削除",
+                label: "Wipe profile",
+                value: "destructive"
+            ) {
+                devShowResetConfirm = true
+            }
+            settingRow(
+                jp: "宝箱",
+                label: "Grant lootbox",
+                value: "add"
+            ) {
+                TestFixtures.addLootbox(context: modelContext)
+                devLastAction = "✓ Lootbox granted — open Rang to see it"
+            }
+            settingRow(
+                jp: "昇段",
+                label: "Force level-up",
+                value: "next"
+            ) {
+                TestFixtures.grantLevelUp(context: modelContext)
+                devLastAction = "✓ XP bumped past next grade"
+            }
+            settingRow(
+                jp: "資産",
+                label: "Clear asset cache",
+                value: "purge"
+            ) {
+                assetCache?.clearAll()
+                cacheStats = assetCache?.stats()
+                devLastAction = "✓ Asset cache cleared"
+            }
+            settingRow(
+                jp: "情報",
+                label: "Build info",
+                value: devBuildInfo
+            )
+
+            if !devLastAction.isEmpty {
+                Text(devLastAction)
+                    .font(.system(size: 11, weight: .regular, design: .monospaced))
+                    .foregroundStyle(Color.ikeruSuccess)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+            }
+        }
+    }
+
+    private var devSeedRow: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text("Seed fixture profile")
+                    .font(.system(size: 13))
+                    .foregroundStyle(Color.ikeruTextPrimary)
+                Spacer()
+                Button {
+                    guard let vm = profileViewModel else { return }
+                    TestFixtures.wipeAndSeed(
+                        context: modelContext,
+                        profileVM: vm,
+                        level: Int(devSeedLevel),
+                        dueCount: Int(devSeedDue),
+                        masteredCount: Int(devSeedMastered),
+                        lootboxCount: Int(devSeedLootboxes),
+                        inventoryCount: Int(devSeedInventory)
+                    )
+                    devLastAction = "✓ Seeded: lvl \(Int(devSeedLevel)), \(Int(devSeedDue)) due, \(Int(devSeedMastered)) mastered"
+                } label: {
+                    Text("Seed")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(Color.ikeruPrimaryAccent)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(
+                            RoundedRectangle(cornerRadius: 6)
+                                .fill(Color.ikeruPrimaryAccent.opacity(0.12))
+                        )
+                }
+                .buttonStyle(.plain)
+            }
+
+            devSlider(label: "Level",     value: $devSeedLevel,     range: 1...30,   step: 1)
+            devSlider(label: "Due",       value: $devSeedDue,       range: 0...50,   step: 5)
+            devSlider(label: "Mastered",  value: $devSeedMastered,  range: 0...200,  step: 10)
+            devSlider(label: "Lootboxes", value: $devSeedLootboxes, range: 0...5,    step: 1)
+            devSlider(label: "Inventory", value: $devSeedInventory, range: 0...20,   step: 1)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+    }
+
+    private func devSlider(
+        label: LocalizedStringKey,
+        value: Binding<Double>,
+        range: ClosedRange<Double>,
+        step: Double
+    ) -> some View {
+        HStack(spacing: 12) {
+            Text(label)
+                .font(.system(size: 11, design: .monospaced))
+                .foregroundStyle(TatamiTokens.paperGhost)
+                .frame(width: 70, alignment: .leading)
+            Slider(value: value, in: range, step: step)
+                .tint(Color.ikeruPrimaryAccent)
+            Text("\(Int(value.wrappedValue))")
+                .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                .foregroundStyle(Color.ikeruTextPrimary)
+                .frame(width: 30, alignment: .trailing)
+        }
+    }
+
+    private var devBuildInfo: String {
+        let bundle = Bundle.main
+        let version = bundle.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
+        let build = bundle.infoDictionary?["CFBundleVersion"] as? String ?? "?"
+        let bid = bundle.bundleIdentifier ?? "?"
+        return "\(version) (\(build)) · \(bid)"
+    }
+    #endif
 
     // MARK: - Row primitives
 
