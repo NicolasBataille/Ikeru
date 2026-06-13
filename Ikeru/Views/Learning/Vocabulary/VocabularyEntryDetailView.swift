@@ -72,7 +72,7 @@ struct VocabularyEntryDetailView: View {
                 .foregroundStyle(Color.ikeruTextPrimary)
 
             Text(entry.reading)
-                .font(.system(size: 24, weight: .medium, design: .rounded))
+                .ikeruScaledFont(24, weight: .medium, design: .rounded, relativeTo: .title2)
                 .foregroundStyle(Color.ikeruPrimaryAccent)
 
             Text(entry.meaning)
@@ -144,7 +144,7 @@ struct VocabularyEntryDetailView: View {
                 .font(.ikeruStatsLarge)
                 .foregroundStyle(Color.ikeruPrimaryAccent)
             Text(label.uppercased())
-                .font(.system(size: 10))
+                .ikeruScaledFont(10, relativeTo: .caption2)
                 .foregroundStyle(Color.ikeruTextTertiary)
         }
         .frame(maxWidth: .infinity)
@@ -187,11 +187,11 @@ struct VocabularyEntryDetailView: View {
                                     .foregroundStyle(Color.ikeruTextPrimary)
                                 Spacer()
                                 Text(encounter.timestamp, style: .relative)
-                                    .font(.system(size: 10))
+                                    .ikeruScaledFont(10, relativeTo: .caption2)
                                     .foregroundStyle(Color.ikeruTextTertiary)
                             }
                             Text(encounter.contextSnippet)
-                                .font(.system(size: 11))
+                                .ikeruScaledFont(11, relativeTo: .caption2)
                                 .foregroundStyle(Color.ikeruTextTertiary)
                                 .lineLimit(2)
                         }

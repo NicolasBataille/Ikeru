@@ -57,7 +57,7 @@ struct VocabularyQuizView: View {
                         .contentTransition(.numericText())
 
                     Text(entry.reading)
-                        .font(.system(size: 20, weight: .medium, design: .rounded))
+                        .ikeruScaledFont(20, weight: .medium, design: .rounded, relativeTo: .title3)
                         .foregroundStyle(Color.ikeruPrimaryAccent)
                 }
             }
@@ -130,7 +130,7 @@ struct VocabularyQuizView: View {
             viewModel.selectOption(option)
         } label: {
             Text(option)
-                .font(.system(size: 16, weight: .medium))
+                .ikeruScaledFont(16, weight: .medium, relativeTo: .body)
                 .foregroundStyle(isHighlightedCorrect ? Color(red: 0.102, green: 0.078, blue: 0.055) : Color.ikeruTextPrimary)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: .infinity, minHeight: 76)

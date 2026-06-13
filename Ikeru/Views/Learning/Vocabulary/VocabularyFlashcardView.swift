@@ -111,7 +111,7 @@ struct VocabularyFlashcardView: View {
                 if viewModel.isRevealed {
                     VStack(spacing: IkeruTheme.Spacing.sm) {
                         Text(entry.reading)
-                            .font(.system(size: 28, weight: .medium, design: .rounded))
+                            .ikeruScaledFont(28, weight: .medium, design: .rounded, relativeTo: .title2)
                             .foregroundStyle(Color.ikeruPrimaryAccent)
 
                         Text(entry.meaning)
@@ -175,10 +175,10 @@ struct VocabularyFlashcardView: View {
         } label: {
             VStack(spacing: 4) {
                 Text(label)
-                    .font(.system(size: 13, weight: .semibold))
+                    .ikeruScaledFont(13, weight: .semibold, relativeTo: .caption)
                     .foregroundStyle(Color.ikeruTextPrimary)
                 Text(viewModel.predictedIntervals[grade] ?? "—")
-                    .font(.system(size: 11, weight: .regular))
+                    .ikeruScaledFont(11, weight: .regular, relativeTo: .caption2)
                     .foregroundStyle(Color.ikeruTextSecondary)
             }
             .frame(maxWidth: .infinity, minHeight: 64)

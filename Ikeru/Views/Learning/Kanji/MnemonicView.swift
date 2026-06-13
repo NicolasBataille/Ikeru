@@ -28,7 +28,7 @@ struct MnemonicView: View {
                 .foregroundStyle(Color(hex: IkeruTheme.Colors.primaryAccent))
 
             Text("Mnemonic")
-                .font(.system(size: IkeruTheme.Typography.Size.heading3, weight: .semibold))
+                .ikeruScaledFont(IkeruTheme.Typography.Size.heading3, weight: .semibold, relativeTo: .title3)
                 .foregroundStyle(Color(hex: IkeruTheme.Colors.textPrimary))
 
             Spacer()
@@ -65,7 +65,7 @@ struct MnemonicView: View {
         case .loaded:
             if let text = mnemonicText, !text.isEmpty {
                 Text(text)
-                    .font(.system(size: IkeruTheme.Typography.Size.body))
+                    .ikeruScaledFont(IkeruTheme.Typography.Size.body, relativeTo: .body)
                     .foregroundStyle(Color(hex: IkeruTheme.Colors.textPrimary))
                     .lineSpacing(4)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -86,7 +86,7 @@ struct MnemonicView: View {
                 .tint(Color(hex: IkeruTheme.Colors.primaryAccent))
 
             Text("Generating mnemonic...")
-                .font(.system(size: IkeruTheme.Typography.Size.caption))
+                .ikeruScaledFont(IkeruTheme.Typography.Size.caption, relativeTo: .caption2)
                 .foregroundStyle(
                     Color(hex: IkeruTheme.Colors.textPrimary)
                         .opacity(IkeruTheme.Colors.textSecondaryOpacity)
@@ -98,7 +98,7 @@ struct MnemonicView: View {
 
     private var emptyState: some View {
         Text("No mnemonic available yet.")
-            .font(.system(size: IkeruTheme.Typography.Size.caption))
+            .ikeruScaledFont(IkeruTheme.Typography.Size.caption, relativeTo: .caption2)
             .foregroundStyle(
                 Color(hex: IkeruTheme.Colors.textPrimary)
                     .opacity(IkeruTheme.Colors.textSecondaryOpacity)
@@ -114,7 +114,7 @@ struct MnemonicView: View {
                 .foregroundStyle(Color.ikeruDanger)
 
             Text("Failed to generate mnemonic. Tap regenerate to try again.")
-                .font(.system(size: IkeruTheme.Typography.Size.caption))
+                .ikeruScaledFont(IkeruTheme.Typography.Size.caption, relativeTo: .caption2)
                 .foregroundStyle(
                     Color(hex: IkeruTheme.Colors.textPrimary)
                         .opacity(IkeruTheme.Colors.textSecondaryOpacity)

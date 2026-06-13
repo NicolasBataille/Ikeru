@@ -186,7 +186,7 @@ struct ExerciseTransitionContainer: View {
                     // tap gesture. A quiet caption hints at the affordance
                     // without the visual weight of a primary button.
                     Text("Tap card to reveal", comment: "Hint shown below the SRS card before reveal — replaces the old 'Show answer' button")
-                        .font(.system(size: 11, weight: .semibold))
+                        .ikeruScaledFont(11, weight: .semibold, relativeTo: .caption2)
                         .tracking(2)
                         .textCase(.uppercase)
                         .foregroundStyle(TatamiTokens.paperGhost)

@@ -79,7 +79,7 @@ struct KanaRubyText: View {
         case .kana(let character, let romaji):
             VStack(spacing: 0) {
                 Text(romaji)
-                    .font(rubyFont)
+                    .ikeruScaledFont(9, weight: .medium, design: .rounded, relativeTo: .caption2)
                     .foregroundStyle(rubyColor)
                     .lineLimit(1)
                     .fixedSize()
@@ -92,7 +92,7 @@ struct KanaRubyText: View {
         case .kanji(let base, let reading):
             VStack(spacing: 0) {
                 Text(reading)
-                    .font(rubyFont)
+                    .ikeruScaledFont(9, weight: .medium, design: .rounded, relativeTo: .caption2)
                     .foregroundStyle(Color.ikeruPrimaryAccent.opacity(0.7))
                     .lineLimit(1)
                     .fixedSize()
@@ -105,7 +105,7 @@ struct KanaRubyText: View {
         case .other(let run):
             VStack(spacing: 0) {
                 Text(" ")
-                    .font(rubyFont)
+                    .ikeruScaledFont(9, weight: .medium, design: .rounded, relativeTo: .caption2)
                     .lineLimit(1)
                     .hidden()
                 Text(run)

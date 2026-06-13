@@ -87,7 +87,7 @@ struct NameEntryView: View {
                     .foregroundStyle(Color.ikeruTextTertiary)
 
                 Text("What should\nwe call you?")
-                    .font(.system(size: 36, weight: .light))
+                    .ikeruScaledFont(36, weight: .light, relativeTo: .title)
                     .ikeruTracking(.display)
                     .foregroundStyle(Color.ikeruTextPrimary)
                     .multilineTextAlignment(.center)
@@ -105,7 +105,7 @@ struct NameEntryView: View {
             text: $name,
             prompt: Text("Your name").foregroundStyle(TatamiTokens.paperGhost)
         )
-        .font(.system(size: 22, weight: .regular, design: .serif))
+        .ikeruScaledFont(22, design: .serif, relativeTo: .title2)
         .foregroundStyle(Color.ikeruTextPrimary)
         .multilineTextAlignment(.center)
         .padding(.vertical, IkeruTheme.Spacing.md)
@@ -133,12 +133,12 @@ struct NameEntryView: View {
         } label: {
             HStack(spacing: 10) {
                 Text("\u{7D9A}\u{3051}\u{308B}")  // 続ける
-                    .font(.system(size: 15, design: .serif))
+                    .ikeruScaledFont(15, design: .serif, relativeTo: .body)
                 Text("·")
-                    .font(.system(size: 15, weight: .light))
+                    .ikeruScaledFont(15, weight: .light, relativeTo: .body)
                     .foregroundStyle(Color(red: 0.16, green: 0.11, blue: 0.05).opacity(0.55))
                 Text("Continue")
-                    .font(.system(size: 14, weight: .semibold))
+                    .ikeruScaledFont(14, weight: .semibold, relativeTo: .body)
                     .tracking(1.0)
                     .textCase(.uppercase)
                 Image(systemName: "arrow.right")

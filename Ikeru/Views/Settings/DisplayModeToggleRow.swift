@@ -17,10 +17,10 @@ struct DisplayModeToggleRow: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 16) {
                 Text("畳")
-                    .font(.system(size: 13, design: .serif))
+                    .ikeruScaledFont(13, design: .serif, relativeTo: .caption)
                     .foregroundStyle(TatamiTokens.paperGhost)
                 Text("Settings.InterfaceTatami.Title")
-                    .font(.system(size: 13))
+                    .ikeruScaledFont(13, relativeTo: .caption)
                     .foregroundStyle(Color.ikeruTextPrimary)
                 Spacer()
                 TatamiToggle(isOn: $isTatamiOn) { _ in }

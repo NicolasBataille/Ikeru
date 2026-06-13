@@ -55,7 +55,7 @@ struct StrokeOrderExerciseView: View {
                 .foregroundStyle(Color(hex: IkeruTheme.Colors.kanjiText))
 
             Text(viewModel.mode == .watch ? "Watch the stroke order" : "Trace the character")
-                .font(.system(size: IkeruTheme.Typography.Size.body))
+                .ikeruScaledFont(IkeruTheme.Typography.Size.body, relativeTo: .body)
                 .foregroundStyle(.ikeruTextSecondary)
         }
     }
@@ -123,7 +123,7 @@ struct StrokeOrderExerciseView: View {
                     viewModel.replayAnimation()
                 } label: {
                     Label("Replay", systemImage: "arrow.counterclockwise")
-                        .font(.system(size: IkeruTheme.Typography.Size.body))
+                        .ikeruScaledFont(IkeruTheme.Typography.Size.body, relativeTo: .body)
                 }
                 .buttonStyle(.bordered)
 
@@ -132,7 +132,7 @@ struct StrokeOrderExerciseView: View {
                     viewModel.beginTracing()
                 } label: {
                     Label("Practice", systemImage: "pencil.tip")
-                        .font(.system(size: IkeruTheme.Typography.Size.body))
+                        .ikeruScaledFont(IkeruTheme.Typography.Size.body, relativeTo: .body)
                 }
                 .buttonStyle(.borderedProminent)
 
@@ -142,7 +142,7 @@ struct StrokeOrderExerciseView: View {
                     viewModel.replayAnimation()
                 } label: {
                     Label("Show Again", systemImage: "play.circle")
-                        .font(.system(size: IkeruTheme.Typography.Size.body))
+                        .ikeruScaledFont(IkeruTheme.Typography.Size.body, relativeTo: .body)
                 }
                 .buttonStyle(.bordered)
 
@@ -153,7 +153,7 @@ struct StrokeOrderExerciseView: View {
                     viewModel.retry()
                 } label: {
                     Label("Retry", systemImage: "arrow.counterclockwise")
-                        .font(.system(size: IkeruTheme.Typography.Size.body))
+                        .ikeruScaledFont(IkeruTheme.Typography.Size.body, relativeTo: .body)
                 }
                 .buttonStyle(.bordered)
             }
@@ -180,7 +180,7 @@ struct StrokeOrderExerciseView: View {
 
                 // Overall feedback text
                 Text(feedbackText(for: result))
-                    .font(.system(size: IkeruTheme.Typography.Size.body, weight: .medium))
+                    .ikeruScaledFont(IkeruTheme.Typography.Size.body, weight: .medium, relativeTo: .body)
                     .foregroundStyle(result.passed
                         ? Color.ikeruPrimaryAccent
                         : Color.ikeruDanger

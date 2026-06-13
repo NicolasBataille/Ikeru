@@ -123,7 +123,7 @@ struct EtudeView: View {
         VStack(alignment: .leading, spacing: 4) {
             BilingualLabel(japanese: "\u{5B66}\u{7FD2}", chrome: "Study")
             Text("Etude.Title")
-                .font(.system(size: 28, weight: .light, design: .serif))
+                .ikeruScaledFont(28, weight: .light, design: .serif, relativeTo: .title)
                 .foregroundStyle(Color.ikeruTextPrimary)
         }
     }
@@ -150,10 +150,10 @@ struct EtudeView: View {
         Button { showCompose = true } label: {
             HStack {
                 Text("\u{7DE8}\u{6210}") // 編成
-                    .font(.system(size: 14, design: .serif))
+                    .ikeruScaledFont(14, design: .serif, relativeTo: .caption)
                     .foregroundStyle(TatamiTokens.paperGhost)
                 Text("Etude.Compose.Row")
-                    .font(.system(size: 14))
+                    .ikeruScaledFont(14, relativeTo: .caption)
                     .foregroundStyle(Color.ikeruTextPrimary)
                 Spacer()
                 Text("\u{203A}").foregroundStyle(TatamiTokens.goldDim)

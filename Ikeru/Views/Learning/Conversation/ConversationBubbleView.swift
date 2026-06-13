@@ -240,7 +240,7 @@ private struct VocabularyChipView: View {
             VStack(spacing: 1) {
                 if !hint.reading.isEmpty {
                     Text(hint.reading)
-                        .font(.system(size: 10))
+                        .ikeruScaledFont(10, relativeTo: .caption2)
                         .foregroundStyle(.ikeruTextSecondary)
                 }
 

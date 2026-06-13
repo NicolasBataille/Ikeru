@@ -39,7 +39,7 @@ struct RadicalDecompositionView: View {
                 .foregroundStyle(Color(hex: IkeruTheme.Colors.kanjiText))
 
             Text(radical.meaning)
-                .font(.system(size: IkeruTheme.Typography.Size.caption))
+                .ikeruScaledFont(IkeruTheme.Typography.Size.caption, relativeTo: .caption2)
                 .foregroundStyle(
                     Color(hex: IkeruTheme.Colors.textPrimary)
                         .opacity(IkeruTheme.Colors.textSecondaryOpacity)
@@ -58,7 +58,7 @@ struct RadicalDecompositionView: View {
 
     private var emptyState: some View {
         Text("No radicals found")
-            .font(.system(size: IkeruTheme.Typography.Size.body))
+            .ikeruScaledFont(IkeruTheme.Typography.Size.body, relativeTo: .body)
             .foregroundStyle(
                 Color(hex: IkeruTheme.Colors.textPrimary)
                     .opacity(IkeruTheme.Colors.textSecondaryOpacity)

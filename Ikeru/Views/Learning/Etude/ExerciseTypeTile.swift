@@ -16,11 +16,11 @@ struct ExerciseTypeTile: View {
                     .font(.system(size: 32, weight: .light, design: .serif))
                     .foregroundStyle(isUnlocked ? Color.ikeruPrimaryAccent : TatamiTokens.paperGhost)
                 Text(ExerciseTileTokens.label(for: type))
-                    .font(.system(size: 12, weight: .medium))
+                    .ikeruScaledFont(12, weight: .medium, relativeTo: .caption2)
                     .foregroundStyle(isUnlocked ? Color.ikeruTextPrimary : Color.ikeruTextSecondary)
                 if !isUnlocked, case .locked(let reason) = state {
                     Text(lockHint(reason))
-                        .font(.system(size: 10))
+                        .ikeruScaledFont(10, relativeTo: .caption2)
                         .italic()
                         .foregroundStyle(Color.ikeruTextSecondary)
                         .lineLimit(2)

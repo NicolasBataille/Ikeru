@@ -110,7 +110,7 @@ struct KanaFlashcardView: View {
 
                 if viewModel.isRevealed {
                     Text(romaji(for: card))
-                        .font(.system(size: 40, weight: .semibold, design: .rounded))
+                        .ikeruScaledFont(40, weight: .semibold, design: .rounded, relativeTo: .title2)
                         .foregroundStyle(Color.ikeruPrimaryAccent)
                         .transition(.opacity.combined(with: .scale))
                 }
@@ -177,10 +177,10 @@ struct KanaFlashcardView: View {
         } label: {
             VStack(spacing: 4) {
                 Text(label)
-                    .font(.system(size: 13, weight: .semibold))
+                    .ikeruScaledFont(13, weight: .semibold, relativeTo: .caption)
                     .foregroundStyle(Color.ikeruTextPrimary)
                 Text(viewModel.predictedIntervals[grade] ?? "—")
-                    .font(.system(size: 11, weight: .regular))
+                    .ikeruScaledFont(11, weight: .regular, relativeTo: .caption2)
                     .foregroundStyle(Color.ikeruTextSecondary)
             }
             .frame(maxWidth: .infinity, minHeight: 64)

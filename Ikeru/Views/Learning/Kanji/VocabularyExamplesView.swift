@@ -50,11 +50,11 @@ struct VocabularyExamplesView: View {
         VStack(alignment: .leading, spacing: IkeruTheme.Spacing.xs) {
             HStack(spacing: IkeruTheme.Spacing.sm) {
                 Text(vocab.word)
-                    .font(.system(size: IkeruTheme.Typography.Size.body, weight: .bold))
+                    .ikeruScaledFont(IkeruTheme.Typography.Size.body, weight: .bold, relativeTo: .body)
                     .foregroundStyle(Color(hex: IkeruTheme.Colors.textPrimary))
 
                 Text("(\(vocab.reading))")
-                    .font(.system(size: IkeruTheme.Typography.Size.body))
+                    .ikeruScaledFont(IkeruTheme.Typography.Size.body, relativeTo: .body)
                     .foregroundStyle(
                         Color(hex: IkeruTheme.Colors.textPrimary)
                             .opacity(IkeruTheme.Colors.textSecondaryOpacity)
@@ -62,13 +62,13 @@ struct VocabularyExamplesView: View {
             }
 
             Text(vocab.meaning)
-                .font(.system(size: IkeruTheme.Typography.Size.caption))
+                .ikeruScaledFont(IkeruTheme.Typography.Size.caption, relativeTo: .caption2)
                 .foregroundStyle(Color(hex: IkeruTheme.Colors.primaryAccent))
 
             if !vocab.exampleSentences.isEmpty {
                 ForEach(vocab.exampleSentences, id: \.self) { sentence in
                     Text(sentence)
-                        .font(.system(size: IkeruTheme.Typography.Size.caption))
+                        .ikeruScaledFont(IkeruTheme.Typography.Size.caption, relativeTo: .caption2)
                         .foregroundStyle(
                             Color(hex: IkeruTheme.Colors.textPrimary)
                                 .opacity(IkeruTheme.Colors.textSecondaryOpacity)
@@ -87,7 +87,7 @@ struct VocabularyExamplesView: View {
             }
         } label: {
             Text("Show more (\(vocabulary.count - Self.initialDisplayLimit) remaining)")
-                .font(.system(size: IkeruTheme.Typography.Size.caption, weight: .medium))
+                .ikeruScaledFont(IkeruTheme.Typography.Size.caption, weight: .medium, relativeTo: .caption2)
                 .foregroundStyle(Color(hex: IkeruTheme.Colors.primaryAccent))
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, IkeruTheme.Spacing.sm)
@@ -96,7 +96,7 @@ struct VocabularyExamplesView: View {
 
     private var emptyState: some View {
         Text("No vocabulary found")
-            .font(.system(size: IkeruTheme.Typography.Size.body))
+            .ikeruScaledFont(IkeruTheme.Typography.Size.body, relativeTo: .body)
             .foregroundStyle(
                 Color(hex: IkeruTheme.Colors.textPrimary)
                     .opacity(IkeruTheme.Colors.textSecondaryOpacity)

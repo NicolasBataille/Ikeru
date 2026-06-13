@@ -21,7 +21,7 @@ struct HintChip: View {
                 Image(systemName: icon)
                     .font(.system(size: 10, weight: .medium))
                 Text(label)
-                    .font(.system(size: 11, weight: .medium))
+                    .ikeruScaledFont(11, weight: .medium, relativeTo: .caption2)
             }
             .foregroundStyle(Color.ikeruTextSecondary)
             .padding(.horizontal, 10)

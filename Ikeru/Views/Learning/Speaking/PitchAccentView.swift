@@ -281,16 +281,16 @@ struct PitchAccentView: View {
 
         return VStack(spacing: 2) {
             Text(type.rawValue)
-                .font(.system(size: 11, weight: .medium))
+                .ikeruScaledFont(11, weight: .medium, relativeTo: .caption2)
                 .foregroundStyle(.white)
 
             if attempts > 0 {
                 Text(String(format: "%.0f%%", accuracy * 100))
-                    .font(.system(size: 11))
+                    .ikeruScaledFont(11, relativeTo: .caption2)
                     .foregroundStyle(accuracy >= 0.7 ? Color.ikeruSuccess : Color.ikeruSecondaryAccent)
             } else {
                 Text("--")
-                    .font(.system(size: 11))
+                    .ikeruScaledFont(11, relativeTo: .caption2)
                     .foregroundStyle(.ikeruTextSecondary)
             }
         }

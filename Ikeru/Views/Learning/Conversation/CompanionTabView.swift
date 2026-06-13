@@ -79,7 +79,7 @@ struct CompanionTabView: View {
             BilingualLabel(japanese: "対話", chrome: "Talk")
             // Sakura name is the same in EN and FR — literal string.
             Text("Sakura、 your sensei。")
-                .font(.system(size: 28, weight: .light, design: .serif))
+                .ikeruScaledFont(28, weight: .light, design: .serif, relativeTo: .title2)
                 .foregroundStyle(Color.ikeruTextPrimary)
         }
     }
@@ -107,11 +107,11 @@ struct CompanionTabView: View {
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Sakura")
-                        .font(.system(size: 16, weight: .semibold))
+                        .ikeruScaledFont(16, weight: .semibold, relativeTo: .body)
                         .foregroundStyle(Color.ikeruTextPrimary)
                     Text("Patient. Specialty: keigo",
                          comment: "Sakura tutor description")
-                        .font(.system(size: 11))
+                        .ikeruScaledFont(11, relativeTo: .caption)
                         .italic()
                         .foregroundStyle(Color.ikeruTextSecondary)
                 }
@@ -120,7 +120,7 @@ struct CompanionTabView: View {
                     MonCrest(kind: .maru, size: 10,
                              color: Color(red: 0.616, green: 0.729, blue: 0.486))
                     Text("ONLINE", comment: "Tutor status")
-                        .font(.system(size: 10, weight: .semibold))
+                        .ikeruScaledFont(10, weight: .semibold, relativeTo: .caption2)
                         .foregroundStyle(Color.ikeruTextSecondary)
                         .tracking(1.2)
                 }
@@ -130,9 +130,9 @@ struct CompanionTabView: View {
                 HStack {
                     Spacer()
                     Text("会話を始める · ")
-                        .font(.system(size: 13, weight: .regular, design: .serif))
+                        .ikeruScaledFont(13, weight: .regular, design: .serif, relativeTo: .caption)
                     Text("BEGIN CONVERSATION", comment: "Companion CTA")
-                        .font(.system(size: 13, weight: .bold))
+                        .ikeruScaledFont(13, weight: .bold, relativeTo: .caption)
                         .tracking(1.6)
                     Spacer()
                 }
@@ -179,15 +179,15 @@ struct CompanionTabView: View {
                 MonCrest(kind: row.mon, size: 14, color: .ikeruPrimaryAccent)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(row.topic.japanese)
-                        .font(.system(size: 15, design: .serif))
+                        .ikeruScaledFont(15, design: .serif, relativeTo: .body)
                         .foregroundStyle(Color.ikeruTextPrimary)
                     Text(row.topic.english)
-                        .font(.system(size: 11))
+                        .ikeruScaledFont(11, relativeTo: .caption)
                         .foregroundStyle(Color.ikeruTextSecondary)
                 }
                 Spacer()
                 Text(row.topic.jlptLevel)
-                    .font(.system(size: 11, design: .serif))
+                    .ikeruScaledFont(11, design: .serif, relativeTo: .caption)
                     .foregroundStyle(Color.ikeruPrimaryAccent)
                     .padding(.horizontal, 8).padding(.vertical, 2)
                     .overlay(Rectangle().strokeBorder(TatamiTokens.goldDim, lineWidth: 1))
@@ -215,15 +215,15 @@ struct CompanionTabView: View {
             ForEach(Self.demoRecent, id: \.id) { conv in
                 HStack {
                     Text(conv.dateJP)
-                        .font(.system(size: 12, design: .serif))
+                        .ikeruScaledFont(12, design: .serif, relativeTo: .caption)
                         .foregroundStyle(TatamiTokens.paperGhost)
                         .frame(minWidth: 40, alignment: .leading)
                     Text(conv.topic)
-                        .font(.system(size: 13))
+                        .ikeruScaledFont(13, relativeTo: .caption)
                         .foregroundStyle(Color.ikeruTextPrimary)
                     Spacer()
                     Text("\(conv.minutes)分")
-                        .font(.system(size: 11, design: .serif))
+                        .ikeruScaledFont(11, design: .serif, relativeTo: .caption)
                         .foregroundStyle(TatamiTokens.paperGhost)
                 }
                 .padding(.vertical, 12).padding(.horizontal, 4)
@@ -243,10 +243,10 @@ struct CompanionTabView: View {
                 .foregroundStyle(Color.ikeruWarning)
             VStack(alignment: .leading, spacing: 4) {
                 Text("Sakura.NoAI.BannerTitle")
-                    .font(.system(size: 14, weight: .semibold))
+                    .ikeruScaledFont(14, weight: .semibold, relativeTo: .body)
                     .foregroundStyle(Color.ikeruTextPrimary)
                 Text("Sakura.NoAI.BannerBody")
-                    .font(.system(size: 12))
+                    .ikeruScaledFont(12, relativeTo: .caption)
                     .foregroundStyle(Color.ikeruTextSecondary)
             }
             Spacer(minLength: 0)

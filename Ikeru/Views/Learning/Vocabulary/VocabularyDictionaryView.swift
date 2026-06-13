@@ -288,7 +288,7 @@ struct VocabularyDictionaryView: View {
                 VStack(alignment: .trailing, spacing: 2) {
                     if let level = entry.jlptLevel {
                         Text(level.displayLabel)
-                            .font(.system(size: 10, weight: .semibold))
+                            .ikeruScaledFont(10, weight: .semibold, relativeTo: .caption2)
                             .foregroundStyle(Color.ikeruPrimaryAccent)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)

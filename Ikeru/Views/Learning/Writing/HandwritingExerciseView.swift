@@ -56,7 +56,7 @@ struct HandwritingExerciseView: View {
                 .foregroundStyle(Color(hex: IkeruTheme.Colors.kanjiText))
 
             Text("Write the character freehand")
-                .font(.system(size: IkeruTheme.Typography.Size.body))
+                .ikeruScaledFont(IkeruTheme.Typography.Size.body, relativeTo: .body)
                 .foregroundStyle(.ikeruTextSecondary)
         }
     }
@@ -70,7 +70,7 @@ struct HandwritingExerciseView: View {
                 viewModel.undoLastStroke()
             } label: {
                 Label("Undo", systemImage: "arrow.uturn.backward")
-                    .font(.system(size: IkeruTheme.Typography.Size.body))
+                    .ikeruScaledFont(IkeruTheme.Typography.Size.body, relativeTo: .body)
             }
             .buttonStyle(.bordered)
             .disabled(viewModel.strokes.isEmpty)
@@ -80,7 +80,7 @@ struct HandwritingExerciseView: View {
                 viewModel.clearCanvas()
             } label: {
                 Label("Clear", systemImage: "trash")
-                    .font(.system(size: IkeruTheme.Typography.Size.body))
+                    .ikeruScaledFont(IkeruTheme.Typography.Size.body, relativeTo: .body)
             }
             .buttonStyle(.bordered)
             .disabled(viewModel.strokes.isEmpty)
@@ -94,7 +94,7 @@ struct HandwritingExerciseView: View {
                 }
             } label: {
                 Label("Check", systemImage: "checkmark.circle")
-                    .font(.system(size: IkeruTheme.Typography.Size.body))
+                    .ikeruScaledFont(IkeruTheme.Typography.Size.body, relativeTo: .body)
             }
             .buttonStyle(.borderedProminent)
             .disabled(viewModel.strokes.isEmpty || viewModel.recognitionState.isLoading)
@@ -107,7 +107,7 @@ struct HandwritingExerciseView: View {
         HStack(spacing: IkeruTheme.Spacing.sm) {
             ProgressView()
             Text("Recognizing...")
-                .font(.system(size: IkeruTheme.Typography.Size.caption))
+                .ikeruScaledFont(IkeruTheme.Typography.Size.caption, relativeTo: .caption)
                 .foregroundStyle(.ikeruTextSecondary)
         }
     }
@@ -126,7 +126,7 @@ struct HandwritingExerciseView: View {
 
                 // Recognition duration
                 Text("Recognized in \(result.formattedDuration)")
-                    .font(.system(size: IkeruTheme.Typography.Size.caption))
+                    .ikeruScaledFont(IkeruTheme.Typography.Size.caption, relativeTo: .caption)
                     .foregroundStyle(.ikeruTextSecondary)
 
                 // Retry button
@@ -135,7 +135,7 @@ struct HandwritingExerciseView: View {
                         viewModel.retry()
                     } label: {
                         Label("Try Again", systemImage: "arrow.counterclockwise")
-                            .font(.system(size: IkeruTheme.Typography.Size.body))
+                            .ikeruScaledFont(IkeruTheme.Typography.Size.body, relativeTo: .body)
                     }
                     .buttonStyle(.borderedProminent)
                     .tint(Color.ikeruPrimaryAccent)
@@ -152,7 +152,7 @@ struct HandwritingExerciseView: View {
             Image(systemName: feedbackIcon)
                 .font(.system(size: IkeruTheme.Typography.Size.heading2))
             Text(feedbackText)
-                .font(.system(size: IkeruTheme.Typography.Size.body, weight: .medium))
+                .ikeruScaledFont(IkeruTheme.Typography.Size.body, weight: .medium, relativeTo: .body)
         }
         .foregroundStyle(feedbackColor)
     }
@@ -201,7 +201,7 @@ struct HandwritingExerciseView: View {
     private func candidateList(result: RecognitionResult) -> some View {
         VStack(alignment: .leading, spacing: IkeruTheme.Spacing.xs) {
             Text("Candidates")
-                .font(.system(size: IkeruTheme.Typography.Size.caption, weight: .semibold))
+                .ikeruScaledFont(IkeruTheme.Typography.Size.caption, weight: .semibold, relativeTo: .caption)
                 .foregroundStyle(.ikeruTextSecondary)
 
             ForEach(Array(result.candidates.enumerated()), id: \.offset) { index, candidate in
@@ -210,7 +210,7 @@ struct HandwritingExerciseView: View {
 
             if result.candidates.isEmpty {
                 Text("No characters recognized")
-                    .font(.system(size: IkeruTheme.Typography.Size.caption))
+                    .ikeruScaledFont(IkeruTheme.Typography.Size.caption, relativeTo: .caption)
                     .foregroundStyle(.ikeruTextSecondary)
             }
         }
@@ -221,7 +221,7 @@ struct HandwritingExerciseView: View {
 
         return HStack(spacing: IkeruTheme.Spacing.sm) {
             Text("\(rank).")
-                .font(.system(size: IkeruTheme.Typography.Size.caption, design: .monospaced))
+                .ikeruScaledFont(IkeruTheme.Typography.Size.caption, design: .monospaced, relativeTo: .caption)
                 .foregroundStyle(.ikeruTextSecondary)
                 .frame(width: 24, alignment: .trailing)
 
@@ -239,7 +239,7 @@ struct HandwritingExerciseView: View {
             Spacer()
 
             Text("\(Int(candidate.confidence * 100))%")
-                .font(.system(size: IkeruTheme.Typography.Size.caption, design: .monospaced))
+                .ikeruScaledFont(IkeruTheme.Typography.Size.caption, design: .monospaced, relativeTo: .caption)
                 .foregroundStyle(
                     isTarget
                         ? Color.ikeruPrimaryAccent

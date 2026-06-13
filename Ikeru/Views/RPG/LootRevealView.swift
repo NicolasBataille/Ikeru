@@ -94,7 +94,7 @@ struct LootRevealView: View {
 
             // Item name
             Text(currentItem.name)
-                .font(.system(size: IkeruTheme.Typography.Size.heading1, weight: .semibold, design: .serif))
+                .ikeruScaledFont(IkeruTheme.Typography.Size.heading1, weight: .semibold, design: .serif, relativeTo: .title)
                 .foregroundStyle(Color.ikeruTextPrimary)
 
             // Rarity badge — Rectangle + sumiCorners (no Capsule)

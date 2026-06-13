@@ -168,7 +168,7 @@ struct ReadingPassageView: View {
                 .fill(color)
                 .frame(width: 8, height: 8)
             Text(label)
-                .font(.system(size: 11))
+                .ikeruScaledFont(11, relativeTo: .caption2)
                 .foregroundStyle(.ikeruTextSecondary)
         }
     }
@@ -238,26 +238,28 @@ private struct FuriganaWordView: View {
             // Furigana reading above
             if showFurigana, let reading = word.reading {
                 Text(reading)
-                    .font(.system(size: 9))
+                    .ikeruScaledFont(9, relativeTo: .caption2)
                     .foregroundStyle(Color.ikeruPrimaryAccent.opacity(0.8))
             } else {
                 // Reserve space for alignment consistency
                 Text(" ")
-                    .font(.system(size: 9))
+                    .ikeruScaledFont(9, relativeTo: .caption2)
                     .hidden()
             }
 
             // Main word text
-            Text(word.text)
-                .font(
-                    word.containsKanji
-                        ? .custom(
-                            IkeruTheme.Typography.FontFamily.kanjiSerifMedium,
-                            size: IkeruTheme.Typography.Size.heading3
-                        )
-                        : .system(size: IkeruTheme.Typography.Size.heading3)
-                )
-                .foregroundStyle(wordColor)
+            if word.containsKanji {
+                Text(word.text)
+                    .font(.custom(
+                        IkeruTheme.Typography.FontFamily.kanjiSerifMedium,
+                        size: IkeruTheme.Typography.Size.heading3
+                    ))
+                    .foregroundStyle(wordColor)
+            } else {
+                Text(word.text)
+                    .ikeruScaledFont(IkeruTheme.Typography.Size.heading3, relativeTo: .title3)
+                    .foregroundStyle(wordColor)
+            }
         }
     }
 

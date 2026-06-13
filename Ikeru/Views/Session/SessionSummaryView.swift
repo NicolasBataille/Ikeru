@@ -76,14 +76,14 @@ struct SessionSummaryView: View {
                 MonCrest(kind: mon, size: 11,
                          color: isActive ? Color.ikeruPrimaryAccent : TatamiTokens.paperGhost)
                 Text(japanese)
-                    .font(.system(size: 11, design: .serif))
+                    .ikeruScaledFont(11, design: .serif, relativeTo: .caption2)
                     .foregroundStyle(isActive ? Color.ikeruTextPrimary : TatamiTokens.paperGhost)
             }
             Text("+\(value)")
-                .font(.system(size: 22, weight: .light, design: .serif))
+                .ikeruScaledFont(22, weight: .light, design: .serif, relativeTo: .title2)
                 .foregroundStyle(isActive ? Color.ikeruPrimaryAccent : TatamiTokens.paperGhost)
             Text(label)
-                .font(.system(size: 10, weight: .semibold))
+                .ikeruScaledFont(10, weight: .semibold, relativeTo: .caption2)
                 .tracking(1.2)
                 .foregroundStyle(Color.ikeruTextSecondary)
                 .lineLimit(1)
@@ -98,15 +98,15 @@ struct SessionSummaryView: View {
     private var triumphHeader: some View {
         VStack(spacing: 6) {
             Text("稽古終わり")
-                .font(.system(size: 11, weight: .bold))
+                .ikeruScaledFont(11, weight: .bold, relativeTo: .caption2)
                 .foregroundStyle(Color.ikeruPrimaryAccent)
                 .tracking(3)
                 .textCase(.uppercase)
             Text("Practice complete", comment: "Session summary headline")
-                .font(.system(size: 32, weight: .light, design: .serif))
+                .ikeruScaledFont(32, weight: .light, design: .serif, relativeTo: .title)
                 .foregroundStyle(Color.ikeruTextPrimary)
             Text("七転び八起き · Fall seven, rise eight")
-                .font(.system(size: 12))
+                .ikeruScaledFont(12, relativeTo: .caption2)
                 .italic()
                 .foregroundStyle(Color.ikeruTextSecondary)
                 .padding(.top, 4)
@@ -121,7 +121,7 @@ struct SessionSummaryView: View {
             VStack(spacing: 6) {
                 SerifNumeral(cardsCount, size: 56, color: .ikeruPrimaryAccent)
                 Text("CARDS", comment: "Summary stat label")
-                    .font(.system(size: 10, weight: .semibold))
+                    .ikeruScaledFont(10, weight: .semibold, relativeTo: .caption2)
                     .foregroundStyle(Color.ikeruTextSecondary)
                     .tracking(1.6)
             }
@@ -139,7 +139,7 @@ struct SessionSummaryView: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.5)
                 Text("RECALL", comment: "Summary stat label")
-                    .font(.system(size: 10, weight: .semibold))
+                    .ikeruScaledFont(10, weight: .semibold, relativeTo: .caption2)
                     .foregroundStyle(Color.ikeruTextSecondary)
                     .tracking(1.6)
             }
@@ -150,7 +150,7 @@ struct SessionSummaryView: View {
             VStack(spacing: 6) {
                 SerifNumeral(timeString, size: 40, color: .ikeruPrimaryAccent)
                 Text("TIME", comment: "Summary stat label")
-                    .font(.system(size: 10, weight: .semibold))
+                    .ikeruScaledFont(10, weight: .semibold, relativeTo: .caption2)
                     .foregroundStyle(Color.ikeruTextSecondary)
                     .tracking(1.6)
             }
@@ -172,7 +172,7 @@ struct SessionSummaryView: View {
             HStack {
                 MonCrest(kind: .asanoha, size: 14, color: .ikeruPrimaryAccent)
                 Text("XP EARNED", comment: "Summary XP label")
-                    .font(.system(size: 11, weight: .semibold))
+                    .ikeruScaledFont(11, weight: .semibold, relativeTo: .caption2)
                     .foregroundStyle(Color.ikeruTextSecondary)
                     .tracking(1.4)
                 Spacer()
@@ -225,7 +225,7 @@ struct SessionSummaryView: View {
             HStack(spacing: 6) {
                 MonCrest(kind: mon, size: 11, color: color)
                 Text(label)
-                    .font(.system(size: 10, weight: .semibold))
+                    .ikeruScaledFont(10, weight: .semibold, relativeTo: .caption2)
                     .foregroundStyle(TatamiTokens.paperGhost)
                     .tracking(1.2)
                     .lineLimit(1)
@@ -250,9 +250,9 @@ struct SessionSummaryView: View {
                 HStack {
                     Spacer()
                     Text("続ける · ")
-                        .font(.system(size: 13, weight: .regular, design: .serif))
+                        .ikeruScaledFont(13, weight: .regular, design: .serif, relativeTo: .caption)
                     Text("CONTINUE", comment: "Summary primary CTA")
-                        .font(.system(size: 13, weight: .bold))
+                        .ikeruScaledFont(13, weight: .bold, relativeTo: .caption)
                         .tracking(1.6)
                     Spacer()
                 }
@@ -268,7 +268,7 @@ struct SessionSummaryView: View {
             if !viewModel.missedCardIDs.isEmpty {
                 Button { onReviewMistakes() } label: {
                     Text("REVIEW MISTAKES", comment: "Summary secondary CTA")
-                        .font(.system(size: 11, weight: .semibold))
+                        .ikeruScaledFont(11, weight: .semibold, relativeTo: .caption2)
                         .foregroundStyle(Color.ikeruTextSecondary)
                         .tracking(1.4)
                         .padding(.vertical, 12)

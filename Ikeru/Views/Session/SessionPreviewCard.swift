@@ -15,7 +15,7 @@ struct SessionPreviewCard: View {
             HStack {
                 Label {
                     Text("~\(preview.estimatedMinutes) min")
-                        .font(.system(size: IkeruTheme.Typography.Size.heading3, weight: .semibold))
+                        .ikeruScaledFont(IkeruTheme.Typography.Size.heading3, weight: .semibold, relativeTo: .title3)
                         .foregroundStyle(.white)
                 } icon: {
                     Image(systemName: "clock")
@@ -26,7 +26,7 @@ struct SessionPreviewCard: View {
 
                 Label {
                     Text("\(preview.cardCount) exercises")
-                        .font(.system(size: IkeruTheme.Typography.Size.body))
+                        .ikeruScaledFont(IkeruTheme.Typography.Size.body, relativeTo: .body)
                         .foregroundStyle(Color.ikeruTextSecondary)
                 } icon: {
                     Image(systemName: "list.bullet")
@@ -60,13 +60,13 @@ struct SessionPreviewCard: View {
                         .frame(width: 16)
 
                     Text(entry.label)
-                        .font(.system(size: IkeruTheme.Typography.Size.stats))
+                        .ikeruScaledFont(IkeruTheme.Typography.Size.stats, relativeTo: .caption)
                         .foregroundStyle(Color.ikeruTextSecondary)
 
                     Spacer()
 
                     Text("\(entry.count)")
-                        .font(.system(size: IkeruTheme.Typography.Size.stats, weight: .medium))
+                        .ikeruScaledFont(IkeruTheme.Typography.Size.stats, weight: .medium, relativeTo: .caption)
                         .foregroundStyle(.white)
                 }
             }

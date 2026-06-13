@@ -69,7 +69,7 @@ struct RPGProfileView: View {
                 .font(.system(size: 13, weight: .regular, design: .serif))
                 .foregroundStyle(TatamiTokens.paperGhost)
             Text("RPG Profile")
-                .font(.system(size: 36, weight: .light, design: .serif))
+                .ikeruScaledFont(36, weight: .light, design: .serif, relativeTo: .title)
                 .italic()
                 .foregroundStyle(Color.ikeruTextPrimary)
         }
@@ -137,7 +137,7 @@ struct RPGProfileView: View {
                 // rank kanji so non-native readers know how to say it.
                 VStack(alignment: .leading, spacing: 1) {
                     Text("だい・\(rankReading(vm.level))・だん")
-                        .font(.system(size: 10, weight: .regular, design: .serif))
+                        .ikeruScaledFont(10, weight: .regular, design: .serif, relativeTo: .caption2)
                         .tracking(1.2)
                         .foregroundStyle(TatamiTokens.paperGhost)
                     Text("第\(rankKanji(vm.level))段")
@@ -146,7 +146,7 @@ struct RPGProfileView: View {
                 }
                 Text(LocalizedStringKey(rankTitle(level: vm.level)))
                     .textCase(.uppercase)
-                    .font(.system(size: 11, weight: .bold))
+                    .ikeruScaledFont(11, weight: .bold, relativeTo: .caption2)
                     .foregroundStyle(Color.ikeruPrimaryAccent)
                     .tracking(2)
                 HStack(spacing: 0) {
@@ -233,7 +233,7 @@ struct RPGProfileView: View {
                     .opacity(0.55)
             }
             Text(ach.label)
-                .font(.system(size: 10, weight: .semibold))
+                .ikeruScaledFont(10, weight: .semibold, relativeTo: .caption2)
                 .foregroundStyle(TatamiTokens.paperGhost)
                 .tracking(1)
                 .frame(maxWidth: 56)
@@ -278,7 +278,7 @@ struct RPGProfileView: View {
                     .opacity(0.5)
                 VStack(alignment: .leading, spacing: 2) {
                     Text("だい・\(rankReading(vm.level + 1))・だん")
-                        .font(.system(size: 10, weight: .regular, design: .serif))
+                        .ikeruScaledFont(10, weight: .regular, design: .serif, relativeTo: .caption2)
                         .tracking(1)
                         .foregroundStyle(TatamiTokens.paperGhost.opacity(0.7))
                     (Text("第\(rankKanji(vm.level + 1))段 · ") + Text(LocalizedStringKey(rankTitle(level: vm.level + 1))))
@@ -286,7 +286,7 @@ struct RPGProfileView: View {
                         .foregroundStyle(Color.ikeruTextPrimary)
                     Text("\(xpToNext) XP to advance",
                          comment: "RPG next rank caption — format string `%lld XP to advance`")
-                        .font(.system(size: 11))
+                        .ikeruScaledFont(11, relativeTo: .caption2)
                         .foregroundStyle(Color.ikeruTextSecondary)
                 }
                 Spacer(minLength: 0)
@@ -487,7 +487,7 @@ struct RPGProfileView: View {
     private func skillRow(_ label: LocalizedStringKey, value: Double) -> some View {
         HStack(spacing: 8) {
             Text(label)
-                .font(.system(size: 12))
+                .ikeruScaledFont(12, relativeTo: .caption2)
                 .foregroundStyle(Color.ikeruTextSecondary)
             Spacer(minLength: 0)
             Text("\(Int(min(1, max(0, value)) * 100))")

@@ -115,7 +115,7 @@ struct HoldToConfirmButton: View {
                             .font(.system(size: 17, weight: .semibold))
                     }
                     Text(labelText)
-                        .font(.system(size: 17, weight: .semibold))
+                        .ikeruScaledFont(17, weight: .semibold, relativeTo: .body)
                         .ikeruTracking(.body)
                         .lineLimit(1)
                         .minimumScaleFactor(0.85)

@@ -75,7 +75,7 @@ struct VocabularyDrillSummary: View {
     private func statCell(value: String, label: String) -> some View {
         VStack(spacing: 4) {
             Text(value)
-                .font(.system(size: 18, weight: .semibold, design: .rounded))
+                .ikeruScaledFont(18, weight: .semibold, design: .rounded, relativeTo: .title3)
                 .foregroundStyle(Color.ikeruTextPrimary)
             Text(label)
                 .font(.ikeruMicro)

@@ -73,11 +73,11 @@ struct SwipeTutorialView: View {
             SakuraMark(size: 40)
             VStack(alignment: .leading, spacing: 4) {
                 Text(verbatim: "Sakura")
-                    .font(.system(size: 12, weight: .bold))
+                    .ikeruScaledFont(12, weight: .bold, relativeTo: .caption2)
                     .tracking(1.5)
                     .foregroundStyle(Color.ikeruPrimaryAccent)
                 Text("SwipeTutorial.Intro")
-                    .font(.system(size: 15))
+                    .ikeruScaledFont(15, relativeTo: .body)
                     .foregroundStyle(Color.ikeruTextPrimary)
                     .lineSpacing(3)
                     .fixedSize(horizontal: false, vertical: true)
@@ -144,7 +144,7 @@ struct SwipeTutorialView: View {
             Image(systemName: arrow)
                 .font(.system(size: 14, weight: .bold))
             Text(title)
-                .font(.system(size: 13, weight: .semibold))
+                .ikeruScaledFont(13, weight: .semibold, relativeTo: .caption)
         }
         .foregroundStyle(direction.color)
         .padding(.horizontal, 14)
@@ -170,7 +170,7 @@ struct SwipeTutorialView: View {
                 Text("SwipeTutorial.Idle")
             }
         }
-        .font(.system(size: 14))
+        .ikeruScaledFont(14, relativeTo: .body)
         .foregroundStyle(Color.ikeruTextSecondary)
         .multilineTextAlignment(.center)
         .frame(maxWidth: .infinity)
@@ -178,7 +178,7 @@ struct SwipeTutorialView: View {
         .animation(.easeInOut(duration: 0.2), value: activeDirection)
 
         Text("SwipeTutorial.Buttons")
-            .font(.system(size: 12))
+            .ikeruScaledFont(12, relativeTo: .caption2)
             .foregroundStyle(Color.ikeruTextTertiary)
             .multilineTextAlignment(.center)
             .padding(.top, 2)

@@ -77,7 +77,7 @@ struct SkillBalanceBar: View {
                 .frame(width: 6, height: 6)
 
             Text("\(skill.rawValue.capitalized) \(Int(ratio * 100))%")
-                .font(.system(size: IkeruTheme.Typography.Size.caption))
+                .ikeruScaledFont(IkeruTheme.Typography.Size.caption, relativeTo: .caption)
                 .foregroundStyle(Color.ikeruTextSecondary)
         }
     }

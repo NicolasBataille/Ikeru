@@ -87,7 +87,7 @@ struct VocabularyDetailSheet: View {
                 .foregroundStyle(Color.ikeruTextPrimary)
 
             Text(hint.reading)
-                .font(.system(size: 24, weight: .medium, design: .rounded))
+                .ikeruScaledFont(24, weight: .medium, design: .rounded, relativeTo: .title2)
                 .foregroundStyle(Color.ikeruPrimaryAccent)
         }
         .frame(maxWidth: .infinity)
@@ -191,7 +191,7 @@ struct VocabularyDetailSheet: View {
                             .font(.ikeruCaption)
                             .foregroundStyle(Color.ikeruTextPrimary)
                         Text(encounter.contextSnippet)
-                            .font(.system(size: 11))
+                            .ikeruScaledFont(11, relativeTo: .caption2)
                             .foregroundStyle(Color.ikeruTextTertiary)
                             .lineLimit(1)
                     }
@@ -199,7 +199,7 @@ struct VocabularyDetailSheet: View {
                     Spacer()
 
                     Text(encounter.timestamp, style: .relative)
-                        .font(.system(size: 10))
+                        .ikeruScaledFont(10, relativeTo: .caption2)
                         .foregroundStyle(Color.ikeruTextTertiary)
                 }
             }

@@ -66,12 +66,12 @@ struct ConversationView: View {
 
             VStack(spacing: IkeruTheme.Spacing.sm) {
                 Text("Sakura.NoAI.Title")
-                    .font(.system(size: 22, weight: .light, design: .serif))
+                    .ikeruScaledFont(22, weight: .light, design: .serif, relativeTo: .title3)
                     .foregroundStyle(Color.ikeruTextPrimary)
                     .multilineTextAlignment(.center)
 
                 Text("Sakura.NoAI.Body")
-                    .font(.system(size: 14))
+                    .ikeruScaledFont(14, relativeTo: .body)
                     .foregroundStyle(Color.ikeruTextSecondary)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, IkeruTheme.Spacing.lg)
@@ -84,7 +84,7 @@ struct ConversationView: View {
                     Image(systemName: "gearshape.fill")
                         .font(.system(size: 13, weight: .semibold))
                     Text("Sakura.NoAI.Setup")
-                        .font(.system(size: 13, weight: .bold))
+                        .ikeruScaledFont(13, weight: .bold, relativeTo: .caption)
                         .tracking(1.4)
                 }
                 .foregroundStyle(Color.ikeruBackground)
@@ -136,16 +136,16 @@ struct ConversationView: View {
                 // Title + descriptor
                 VStack(spacing: IkeruTheme.Spacing.xs) {
                     Text("Meet Sakura")
-                        .font(.system(size: 26, weight: .light, design: .serif))
+                        .ikeruScaledFont(26, weight: .light, design: .serif, relativeTo: .title2)
                         .foregroundStyle(Color.ikeruTextPrimary)
 
                     Text("Your Japanese conversation partner")
-                        .font(.system(size: 14, weight: .regular))
+                        .ikeruScaledFont(14, weight: .regular, relativeTo: .body)
                         .foregroundStyle(Color.ikeruTextSecondary)
 
                     // JLPT level badge — encre rectangle, no capsule
                     Text(viewModel.jlptLevel.rawValue)
-                        .font(.system(size: 11, weight: .semibold))
+                        .ikeruScaledFont(11, weight: .semibold, relativeTo: .caption)
                         .foregroundStyle(Color.ikeruPrimaryAccent)
                         .tracking(1.4)
                         .padding(.horizontal, IkeruTheme.Spacing.sm)
@@ -259,7 +259,7 @@ struct ConversationView: View {
         HStack(spacing: IkeruTheme.Spacing.sm) {
             // Encre warning mark — no pink/rose icon
             Text("—")
-                .font(.system(size: 14, weight: .semibold, design: .serif))
+                .ikeruScaledFont(14, weight: .semibold, design: .serif, relativeTo: .body)
                 .foregroundStyle(Color.ikeruPrimaryAccent)
 
             Text(message)

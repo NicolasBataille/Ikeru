@@ -31,7 +31,7 @@ struct DensityAwareStatChip: View {
             }
             SerifNumeral(value, size: 16, color: Color.ikeruTextPrimary)
             Text(label)
-                .font(.system(size: 10, weight: .bold))
+                .ikeruScaledFont(10, weight: .bold, relativeTo: .caption2)
                 .tracking(1.2)
                 .textCase(.uppercase)
                 .foregroundStyle(TatamiTokens.paperGhost)

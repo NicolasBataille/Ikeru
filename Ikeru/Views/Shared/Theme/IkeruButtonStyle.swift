@@ -34,7 +34,7 @@ private struct IkeruButtonContent: View {
 
     var body: some View {
         configuration.label
-            .font(font)
+            .ikeruScaledFont(fontSize, weight: fontWeight, relativeTo: .body)
             .ikeruTracking(.body)
             .foregroundStyle(foregroundColor)
             .frame(minHeight: minHeight)
@@ -82,12 +82,21 @@ private struct IkeruButtonContent: View {
         }
     }
 
-    private var font: Font {
+    private var fontSize: CGFloat {
         switch variant {
         case .glassPill, .ghost:
-            return .system(size: IkeruTheme.Typography.Size.body, weight: .medium)
+            return IkeruTheme.Typography.Size.body
         default:
-            return .system(size: IkeruTheme.Typography.Size.bodyLarge, weight: .semibold)
+            return IkeruTheme.Typography.Size.bodyLarge
+        }
+    }
+
+    private var fontWeight: Font.Weight {
+        switch variant {
+        case .glassPill, .ghost:
+            return .medium
+        default:
+            return .semibold
         }
     }
 

@@ -42,11 +42,11 @@ struct SessionConfigView: View {
     private var headerSection: some View {
         VStack(spacing: IkeruTheme.Spacing.sm) {
             Text("Configure Session")
-                .font(.system(size: IkeruTheme.Typography.Size.heading1, weight: .bold))
+                .ikeruScaledFont(IkeruTheme.Typography.Size.heading1, weight: .bold, relativeTo: .title)
                 .foregroundStyle(.white)
 
             Text("Choose how much time you have")
-                .font(.system(size: IkeruTheme.Typography.Size.body))
+                .ikeruScaledFont(IkeruTheme.Typography.Size.body, relativeTo: .body)
                 .foregroundStyle(Color.ikeruTextSecondary)
         }
         .frame(maxWidth: .infinity)
@@ -58,7 +58,7 @@ struct SessionConfigView: View {
     private var timePickerSection: some View {
         VStack(alignment: .leading, spacing: IkeruTheme.Spacing.sm) {
             Text("Duration")
-                .font(.system(size: IkeruTheme.Typography.Size.heading3, weight: .semibold))
+                .ikeruScaledFont(IkeruTheme.Typography.Size.heading3, weight: .semibold, relativeTo: .title3)
                 .foregroundStyle(.white)
 
             ScrollView(.horizontal, showsIndicators: false) {
@@ -83,10 +83,10 @@ struct SessionConfigView: View {
         } label: {
             VStack(spacing: IkeruTheme.Spacing.xs) {
                 Text(label)
-                    .font(.system(size: IkeruTheme.Typography.Size.stats, weight: .medium))
+                    .ikeruScaledFont(IkeruTheme.Typography.Size.stats, weight: .medium, relativeTo: .caption)
 
                 Text("\(minutes)m")
-                    .font(.system(size: IkeruTheme.Typography.Size.caption))
+                    .ikeruScaledFont(IkeruTheme.Typography.Size.caption, relativeTo: .caption)
             }
             .frame(minWidth: 64, minHeight: 56)
             .foregroundStyle(isSelected ? .white : Color.ikeruTextSecondary)
@@ -119,7 +119,7 @@ struct SessionConfigView: View {
                     .font(.system(size: IkeruTheme.Typography.Size.body))
 
                 Text("Audio exercises excluded")
-                    .font(.system(size: IkeruTheme.Typography.Size.stats))
+                    .ikeruScaledFont(IkeruTheme.Typography.Size.stats, relativeTo: .caption)
             }
             .foregroundStyle(.white)
             .frame(maxWidth: .infinity)
@@ -140,7 +140,7 @@ struct SessionConfigView: View {
     private var previewSection: some View {
         VStack(alignment: .leading, spacing: IkeruTheme.Spacing.sm) {
             Text("Session Preview")
-                .font(.system(size: IkeruTheme.Typography.Size.heading3, weight: .semibold))
+                .ikeruScaledFont(IkeruTheme.Typography.Size.heading3, weight: .semibold, relativeTo: .title3)
                 .foregroundStyle(.white)
 
             if configViewModel.previewLoading {
@@ -166,7 +166,7 @@ struct SessionConfigView: View {
         }
 
         Text(hint)
-            .font(.system(size: IkeruTheme.Typography.Size.caption))
+            .ikeruScaledFont(IkeruTheme.Typography.Size.caption, relativeTo: .caption)
             .foregroundStyle(Color.ikeruTextSecondary)
             .frame(maxWidth: .infinity, alignment: .leading)
     }

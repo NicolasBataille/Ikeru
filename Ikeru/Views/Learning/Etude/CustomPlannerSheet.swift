@@ -76,10 +76,10 @@ struct CustomPlannerSheet: View {
 
             VStack(spacing: 4) {
                 Text("\u{7DE8}\u{6210}")             // 編成
-                    .font(.system(size: 13, weight: .regular, design: .serif))
+                    .ikeruScaledFont(13, weight: .regular, design: .serif, relativeTo: .caption)
                     .foregroundStyle(TatamiTokens.paperGhost)
                 Text("Etude.Compose.Title")
-                    .font(.system(size: 30, weight: .light, design: .serif))
+                    .ikeruScaledFont(30, weight: .light, design: .serif, relativeTo: .title)
                     .italic()
                     .foregroundStyle(Color.ikeruTextPrimary)
                     .multilineTextAlignment(.center)
@@ -143,10 +143,10 @@ struct CustomPlannerSheet: View {
     private func sectionLabel(japanese: String, chrome: LocalizedStringKey) -> some View {
         HStack(spacing: 8) {
             Text(japanese)
-                .font(.system(size: 13, design: .serif))
+                .ikeruScaledFont(13, design: .serif, relativeTo: .caption)
                 .foregroundStyle(TatamiTokens.paperGhost)
             Text(chrome)
-                .font(.system(size: 11, weight: .semibold))
+                .ikeruScaledFont(11, weight: .semibold, relativeTo: .caption2)
                 .tracking(1.6)
                 .textCase(.uppercase)
                 .foregroundStyle(Color.ikeruTextSecondary)
@@ -163,9 +163,9 @@ struct CustomPlannerSheet: View {
             HStack {
                 Spacer()
                 Text("\u{7DE8}\u{6210}\u{30FB}")
-                    .font(.system(size: 13, weight: .regular, design: .serif))
+                    .ikeruScaledFont(13, weight: .regular, design: .serif, relativeTo: .caption)
                 Text("Etude.Compose.Action")
-                    .font(.system(size: 13, weight: .bold))
+                    .ikeruScaledFont(13, weight: .bold, relativeTo: .caption)
                     .tracking(1.6)
                 Spacer()
             }
@@ -251,7 +251,7 @@ private struct ChipButton: View {
     var body: some View {
         Button(action: onTap) {
             label
-                .font(.system(size: 12, weight: .medium))
+                .ikeruScaledFont(12, weight: .medium, relativeTo: .caption2)
                 .padding(.horizontal, 12).padding(.vertical, 6)
                 .foregroundStyle(isSelected ? Color.ikeruBackground : Color.ikeruTextPrimary)
                 .background(isSelected ? Color.ikeruPrimaryAccent : Color.white.opacity(0.04))

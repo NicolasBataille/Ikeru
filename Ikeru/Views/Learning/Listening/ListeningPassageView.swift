@@ -145,7 +145,7 @@ struct ListeningPassageView: View {
                         }
 
                         Text(transcript)
-                            .font(.system(size: IkeruTheme.Typography.Size.body))
+                            .ikeruScaledFont(IkeruTheme.Typography.Size.body, relativeTo: .body)
                             .foregroundStyle(.white)
                             .lineSpacing(8)
                     }

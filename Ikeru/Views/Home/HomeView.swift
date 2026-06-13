@@ -243,7 +243,7 @@ struct HomeView: View {
             HStack {
                 Spacer()
                 Text(serifJapaneseDate())
-                    .font(.system(size: 11, weight: .regular, design: .serif))
+                    .ikeruScaledFont(11, weight: .regular, design: .serif, relativeTo: .caption2)
                     .foregroundStyle(TatamiTokens.paperGhost)
                     .tracking(1)
             }
@@ -251,7 +251,7 @@ struct HomeView: View {
             HStack(alignment: .bottom) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(timeOfDayGreetingJP())
-                        .font(.system(size: 11, weight: .semibold))
+                        .ikeruScaledFont(11, weight: .semibold, relativeTo: .caption2)
                         .foregroundStyle(Color.ikeruPrimaryAccent)
                         .tracking(2.4)
                         .textCase(.uppercase)
@@ -260,10 +260,10 @@ struct HomeView: View {
                         Text(vm.displayName.isEmpty
                              ? String(localized: "Welcome")
                              : vm.displayName)
-                            .font(.system(size: 22, weight: .semibold))
+                            .ikeruScaledFont(22, weight: .semibold, relativeTo: .title2)
                             .foregroundStyle(Color.ikeruTextPrimary)
                         Text("。")
-                            .font(.system(size: 22, weight: .semibold, design: .serif))
+                            .ikeruScaledFont(22, weight: .semibold, design: .serif, relativeTo: .title2)
                             .foregroundStyle(TatamiTokens.paperGhost)
                     }
 
@@ -352,11 +352,11 @@ struct HomeView: View {
                 .font(.system(size: 26, design: .serif))
                 .foregroundStyle(Color.ikeruPrimaryAccent)
             Text("Home.RestDay.Title", comment: "Rest day chrome label")
-                .font(.system(size: 11, weight: .semibold))
+                .ikeruScaledFont(11, weight: .semibold, relativeTo: .caption2)
                 .tracking(1.6)
                 .foregroundStyle(Color.ikeruTextSecondary)
             Text("Home.RestDay.Body", comment: "Rest day body copy")
-                .font(.system(size: 11))
+                .ikeruScaledFont(11, relativeTo: .caption2)
                 .italic()
                 .foregroundStyle(Color.ikeruTextSecondary)
                 .multilineTextAlignment(.center)
@@ -380,12 +380,12 @@ struct HomeView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     BilingualLabel(japanese: "本日", chrome: "Today", mon: nil)
                     Text(proverb.kanji)
-                        .font(.system(size: 19, weight: .regular, design: .serif))
+                        .ikeruScaledFont(19, weight: .regular, design: .serif, relativeTo: .title3)
                         .foregroundStyle(Color.ikeruTextPrimary)
                         .lineLimit(1)
                         .tracking(2)
                     Text(proverb.translation)
-                        .font(.system(size: 11))
+                        .ikeruScaledFont(11, relativeTo: .caption2)
                         .italic()
                         .foregroundStyle(Color.ikeruTextSecondary)
                 }
@@ -399,7 +399,7 @@ struct HomeView: View {
             HStack(alignment: .firstTextBaseline, spacing: 10) {
                 SerifNumeral(vm.dueCardCount, size: 56, color: .ikeruTextPrimary)
                 Text("CARDS DUE", comment: "Hero stat label on Home")
-                    .font(.system(size: 12, weight: .semibold))
+                    .ikeruScaledFont(12, weight: .semibold, relativeTo: .caption2)
                     .foregroundStyle(Color.ikeruTextSecondary)
                     .tracking(1.4)
                     .textCase(.uppercase)
@@ -416,9 +416,9 @@ struct HomeView: View {
                     HStack {
                         Spacer()
                         Text("稽古を始める · ")
-                            .font(.system(size: 13, weight: .regular, design: .serif))
+                            .ikeruScaledFont(13, weight: .regular, design: .serif, relativeTo: .body)
                         Text("BEGIN PRACTICE", comment: "Hero CTA on Home")
-                            .font(.system(size: 13, weight: .bold))
+                            .ikeruScaledFont(13, weight: .bold, relativeTo: .body)
                             .tracking(1.6)
                         Spacer()
                     }
@@ -463,7 +463,7 @@ struct HomeView: View {
 
                 Text("\(vm.xpToNextLevel) XP to next rank",
                      comment: "Subtle XP-remaining label on the Home hero")
-                    .font(.system(size: 11))
+                    .ikeruScaledFont(11, relativeTo: .caption2)
                     .foregroundStyle(Color.ikeruTextSecondary)
                     .frame(maxWidth: .infinity, alignment: .trailing)
             }
@@ -524,7 +524,7 @@ struct HomeView: View {
                 .foregroundStyle(tint)
             VStack(alignment: .leading, spacing: 1) {
                 label
-                    .font(.system(size: 10, weight: .heavy))
+                    .ikeruScaledFont(10, weight: .heavy, relativeTo: .caption2)
                     .tracking(1.2)
                     .foregroundStyle(Color.ikeruTextTertiary)
                     .textCase(.uppercase)

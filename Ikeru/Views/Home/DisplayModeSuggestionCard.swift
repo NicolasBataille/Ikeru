@@ -65,15 +65,15 @@ struct DisplayModeSuggestionCard: View {
 
                 VStack(alignment: .leading, spacing: 6) {
                     Text("DisplayMode.Suggestion.Title")
-                        .font(.system(size: 15, weight: .semibold))
+                        .ikeruScaledFont(15, weight: .semibold, relativeTo: .body)
                         .foregroundStyle(Color.ikeruTextPrimary)
                     Text("DisplayMode.Suggestion.Body")
-                        .font(.system(size: 13))
+                        .ikeruScaledFont(13, relativeTo: .body)
                         .foregroundStyle(Color.ikeruTextSecondary)
                     HStack(spacing: 10) {
                         Button(action: onAccept) {
                             Text("DisplayMode.Suggestion.Accept")
-                                .font(.system(size: 12, weight: .semibold))
+                                .ikeruScaledFont(12, weight: .semibold, relativeTo: .caption2)
                                 .padding(.horizontal, 16)
                                 .padding(.vertical, 8)
                                 .background(Color.ikeruPrimaryAccent)
@@ -82,7 +82,7 @@ struct DisplayModeSuggestionCard: View {
                         }
                         Button(action: onDismiss) {
                             Text("DisplayMode.Suggestion.Later")
-                                .font(.system(size: 12))
+                                .ikeruScaledFont(12, relativeTo: .caption2)
                                 .padding(.horizontal, 16)
                                 .padding(.vertical, 8)
                                 .overlay(

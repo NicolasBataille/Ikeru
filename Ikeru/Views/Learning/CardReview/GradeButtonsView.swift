@@ -64,7 +64,7 @@ struct GradeButtonsView: View {
                             .foregroundStyle(spec.color)
                             .padding(.bottom, 2)
                         Text(spec.label)
-                            .font(.system(size: 11, weight: .bold))
+                            .ikeruScaledFont(11, weight: .bold, relativeTo: .caption2)
                             .tracking(1)
                             .foregroundStyle(Color.ikeruTextPrimary)
                             .textCase(.uppercase)

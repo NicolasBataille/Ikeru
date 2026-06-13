@@ -123,7 +123,7 @@ struct KanaQuizView: View {
             viewModel.selectOption(option)
         } label: {
             Text(option)
-                .font(.system(size: 28, weight: .semibold, design: .rounded))
+                .ikeruScaledFont(28, weight: .semibold, design: .rounded, relativeTo: .title2)
                 .foregroundStyle(Color.ikeruTextPrimary)
                 .frame(maxWidth: .infinity, minHeight: 76)
                 .background {
