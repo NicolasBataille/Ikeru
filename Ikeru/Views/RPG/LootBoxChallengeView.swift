@@ -41,50 +41,115 @@ private struct SeededRNG {
 
 // MARK: - Question Bank
 
+// kanjiSpeedBank: ~20 N5 kanji with unambiguous single target readings.
+// Each kanji is chosen so its correctReading is the ONE dominant reading in N5
+// context, and no distractor is a valid reading of that kanji.
 private let kanjiSpeedBank: [KanjiQuestion] = [
-    KanjiQuestion(prompt: "日", correctReading: "にち", distractors: ["つき", "ほし", "ひ"]),
-    KanjiQuestion(prompt: "月", correctReading: "つき", distractors: ["にち", "ひ", "とし"]),
+    // 山 kun: やま only (さん is N5 on-reading but not listed as distractor)
     KanjiQuestion(prompt: "山", correctReading: "やま", distractors: ["かわ", "うみ", "もり"]),
+    // 川 kun: かわ only
     KanjiQuestion(prompt: "川", correctReading: "かわ", distractors: ["やま", "みち", "はな"]),
-    KanjiQuestion(prompt: "火", correctReading: "ひ",   distractors: ["みず", "つち", "かぜ"]),
-    KanjiQuestion(prompt: "水", correctReading: "みず", distractors: ["ひ", "つち", "き"]),
-    KanjiQuestion(prompt: "木", correctReading: "き",   distractors: ["みず", "ひ", "くに"]),
-    KanjiQuestion(prompt: "土", correctReading: "つち", distractors: ["き", "ひ", "かわ"]),
-    KanjiQuestion(prompt: "金", correctReading: "かね", distractors: ["いし", "ぎん", "どう"]),
-    KanjiQuestion(prompt: "人", correctReading: "ひと", distractors: ["こ", "おとこ", "て"]),
-    KanjiQuestion(prompt: "口", correctReading: "くち", distractors: ["め", "て", "みみ"]),
-    KanjiQuestion(prompt: "目", correctReading: "め",   distractors: ["くち", "みみ", "はな"]),
-    KanjiQuestion(prompt: "手", correctReading: "て",   distractors: ["あし", "かお", "くち"]),
-    KanjiQuestion(prompt: "大", correctReading: "おお", distractors: ["ちい", "なが", "たか"]),
-    KanjiQuestion(prompt: "小", correctReading: "ちい", distractors: ["おお", "なが", "ふと"]),
-    KanjiQuestion(prompt: "上", correctReading: "うえ", distractors: ["した", "なか", "よこ"]),
-    KanjiQuestion(prompt: "下", correctReading: "した", distractors: ["うえ", "なか", "まえ"]),
-    KanjiQuestion(prompt: "中", correctReading: "なか", distractors: ["うえ", "した", "そと"]),
-    KanjiQuestion(prompt: "国", correctReading: "くに", distractors: ["まち", "むら", "しろ"]),
-    KanjiQuestion(prompt: "学", correctReading: "がく", distractors: ["きょう", "しゃ", "もん"]),
+    // 月 kun: つき (moon); がつ/げつ are on-readings not given as options
+    KanjiQuestion(prompt: "月", correctReading: "つき", distractors: ["ほし", "そら", "くも"]),
+    // 雨 kun: あめ only (N5)
+    KanjiQuestion(prompt: "雨", correctReading: "あめ", distractors: ["かぜ", "ゆき", "くも"]),
+    // 車 kun: くるま only (N5)
+    KanjiQuestion(prompt: "車", correctReading: "くるま", distractors: ["ふね", "とり", "むし"]),
+    // 電 on: でん — standalone prompt forces on; kun irrelevant standalone
+    KanjiQuestion(prompt: "電", correctReading: "でん", distractors: ["かぜ", "みず", "ひ"]),
+    // 駅 on: えき only
+    KanjiQuestion(prompt: "駅", correctReading: "えき", distractors: ["まち", "みち", "しろ"]),
+    // 円 on: えん only (N5 currency)
+    KanjiQuestion(prompt: "円", correctReading: "えん", distractors: ["いし", "かね", "ぎん"]),
+    // 年 on: ねん — unambiguous in N5
+    KanjiQuestion(prompt: "年", correctReading: "ねん", distractors: ["つき", "にち", "しゅう"]),
+    // 時 on: じ — unambiguous in N5
+    KanjiQuestion(prompt: "時", correctReading: "じ",   distractors: ["ふん", "びょう", "ねん"]),
+    // 分 on: ふん (minutes, N5 primary reading)
+    KanjiQuestion(prompt: "分", correctReading: "ふん", distractors: ["じ", "びょう", "ねん"]),
+    // 母 kun: はは only (N5)
+    KanjiQuestion(prompt: "母", correctReading: "はは", distractors: ["ちち", "あね", "いもうと"]),
+    // 父 kun: ちち only (N5)
+    KanjiQuestion(prompt: "父", correctReading: "ちち", distractors: ["はは", "あに", "おとうと"]),
+    // 友 kun: とも only (N5)
+    KanjiQuestion(prompt: "友", correctReading: "とも", distractors: ["ひと", "こ", "かた"]),
+    // 先 kun: さき — N5 primary standalone
+    KanjiQuestion(prompt: "先", correctReading: "さき", distractors: ["あと", "なか", "よこ"]),
+    // 校 on: こう only (N5, 学校)
+    KanjiQuestion(prompt: "校", correctReading: "こう", distractors: ["がく", "もん", "じゅく"]),
+    // 語 on: ご only (N5, 日本語)
+    KanjiQuestion(prompt: "語", correctReading: "ご",   distractors: ["じ", "もじ", "かん"]),
+    // 本 kun: ほん (book/origin, N5 primary)
+    KanjiQuestion(prompt: "本", correctReading: "ほん", distractors: ["もん", "しろ", "いわ"]),
+    // 口 kun: くち only (N5)
+    KanjiQuestion(prompt: "口", correctReading: "くち", distractors: ["め", "みみ", "はな"]),
+    // 手 kun: て only (N5)
+    KanjiQuestion(prompt: "手", correctReading: "て",   distractors: ["あし", "かお", "かた"]),
 ]
 
+// kanaBlitzBank: all romanizations in standard Hepburn (shi/chi/tsu/fu/n).
 private let kanaBlitzBank: [KanjiQuestion] = [
-    KanjiQuestion(prompt: "あ", correctReading: "a",  distractors: ["i", "u", "e"]),
-    KanjiQuestion(prompt: "い", correctReading: "i",  distractors: ["a", "u", "o"]),
-    KanjiQuestion(prompt: "う", correctReading: "u",  distractors: ["a", "i", "e"]),
-    KanjiQuestion(prompt: "え", correctReading: "e",  distractors: ["a", "o", "u"]),
-    KanjiQuestion(prompt: "お", correctReading: "o",  distractors: ["a", "i", "e"]),
-    KanjiQuestion(prompt: "か", correctReading: "ka", distractors: ["ki", "ku", "ke"]),
-    KanjiQuestion(prompt: "き", correctReading: "ki", distractors: ["ka", "ku", "ko"]),
-    KanjiQuestion(prompt: "く", correctReading: "ku", distractors: ["ka", "ki", "ke"]),
-    KanjiQuestion(prompt: "け", correctReading: "ke", distractors: ["ka", "ki", "ko"]),
-    KanjiQuestion(prompt: "こ", correctReading: "ko", distractors: ["ka", "ki", "ku"]),
-    KanjiQuestion(prompt: "さ", correctReading: "sa", distractors: ["si", "su", "se"]),
-    KanjiQuestion(prompt: "た", correctReading: "ta", distractors: ["ti", "tu", "te"]),
-    KanjiQuestion(prompt: "な", correctReading: "na", distractors: ["ni", "nu", "ne"]),
-    KanjiQuestion(prompt: "は", correctReading: "ha", distractors: ["hi", "hu", "he"]),
-    KanjiQuestion(prompt: "ま", correctReading: "ma", distractors: ["mi", "mu", "me"]),
-    KanjiQuestion(prompt: "や", correctReading: "ya", distractors: ["yu", "yo", "wa"]),
-    KanjiQuestion(prompt: "ら", correctReading: "ra", distractors: ["ri", "ru", "re"]),
-    KanjiQuestion(prompt: "わ", correctReading: "wa", distractors: ["wi", "wo", "ya"]),
-    KanjiQuestion(prompt: "ん", correctReading: "n",  distractors: ["m", "ng", "nu"]),
-    KanjiQuestion(prompt: "ア", correctReading: "a",  distractors: ["i", "u", "e"]),
+    KanjiQuestion(prompt: "あ", correctReading: "a",   distractors: ["i", "u", "e"]),
+    KanjiQuestion(prompt: "い", correctReading: "i",   distractors: ["a", "u", "o"]),
+    KanjiQuestion(prompt: "う", correctReading: "u",   distractors: ["a", "i", "e"]),
+    KanjiQuestion(prompt: "え", correctReading: "e",   distractors: ["a", "o", "u"]),
+    KanjiQuestion(prompt: "お", correctReading: "o",   distractors: ["a", "i", "e"]),
+    KanjiQuestion(prompt: "か", correctReading: "ka",  distractors: ["ki", "ku", "ke"]),
+    KanjiQuestion(prompt: "き", correctReading: "ki",  distractors: ["ka", "ku", "ko"]),
+    KanjiQuestion(prompt: "く", correctReading: "ku",  distractors: ["ka", "ki", "ke"]),
+    KanjiQuestion(prompt: "け", correctReading: "ke",  distractors: ["ka", "ki", "ko"]),
+    KanjiQuestion(prompt: "こ", correctReading: "ko",  distractors: ["ka", "ki", "ku"]),
+    KanjiQuestion(prompt: "さ", correctReading: "sa",  distractors: ["shi", "su", "se"]),
+    KanjiQuestion(prompt: "し", correctReading: "shi", distractors: ["sa", "su", "so"]),
+    KanjiQuestion(prompt: "た", correctReading: "ta",  distractors: ["chi", "tsu", "te"]),
+    KanjiQuestion(prompt: "ち", correctReading: "chi", distractors: ["ta", "tsu", "te"]),
+    KanjiQuestion(prompt: "つ", correctReading: "tsu", distractors: ["ta", "chi", "to"]),
+    KanjiQuestion(prompt: "な", correctReading: "na",  distractors: ["ni", "nu", "ne"]),
+    KanjiQuestion(prompt: "は", correctReading: "ha",  distractors: ["hi", "fu", "he"]),
+    KanjiQuestion(prompt: "ふ", correctReading: "fu",  distractors: ["ha", "hi", "ho"]),
+    KanjiQuestion(prompt: "ん", correctReading: "n",   distractors: ["mu", "no", "nu"]),
+    KanjiQuestion(prompt: "ア", correctReading: "a",   distractors: ["i", "u", "e"]),
+]
+
+// vocabMatchBank: prompt = kanji/kana word, options = short English meanings.
+private let vocabMatchBank: [KanjiQuestion] = [
+    KanjiQuestion(prompt: "水",   correctReading: "water",    distractors: ["fire", "tree", "mountain"]),
+    KanjiQuestion(prompt: "火",   correctReading: "fire",     distractors: ["water", "wind", "earth"]),
+    KanjiQuestion(prompt: "木",   correctReading: "tree",     distractors: ["flower", "grass", "stone"]),
+    KanjiQuestion(prompt: "山",   correctReading: "mountain", distractors: ["river", "sea", "sky"]),
+    KanjiQuestion(prompt: "川",   correctReading: "river",    distractors: ["lake", "sea", "rain"]),
+    KanjiQuestion(prompt: "雨",   correctReading: "rain",     distractors: ["snow", "wind", "cloud"]),
+    KanjiQuestion(prompt: "車",   correctReading: "car",      distractors: ["train", "ship", "plane"]),
+    KanjiQuestion(prompt: "本",   correctReading: "book",     distractors: ["pen", "paper", "desk"]),
+    KanjiQuestion(prompt: "母",   correctReading: "mother",   distractors: ["father", "sister", "friend"]),
+    KanjiQuestion(prompt: "父",   correctReading: "father",   distractors: ["mother", "brother", "teacher"]),
+    KanjiQuestion(prompt: "犬",   correctReading: "dog",      distractors: ["cat", "bird", "fish"]),
+    KanjiQuestion(prompt: "ねこ", correctReading: "cat",      distractors: ["dog", "rabbit", "horse"]),
+]
+
+// grammarRushBank: choose the correct particle or verb form to fill the gap.
+// Prompt uses __ as a blank; options are short grammatical choices.
+private let grammarRushBank: [KanjiQuestion] = [
+    // Location に with います
+    KanjiQuestion(prompt: "猫がそこ__ います", correctReading: "に",   distractors: ["を", "が", "で"]),
+    // Destination に with 行きます
+    KanjiQuestion(prompt: "学校__ 行きます", correctReading: "に",    distractors: ["を", "が", "で"]),
+    // Object marker を
+    KanjiQuestion(prompt: "りんご__ 食べます", correctReading: "を",   distractors: ["に", "が", "は"]),
+    // Topic marker は (introducing a topic in a statement)
+    KanjiQuestion(prompt: "わたし__ 学生です", correctReading: "は",   distractors: ["を", "に", "で"]),
+    // Subject marker が with あります (standard N5 existential)
+    KanjiQuestion(prompt: "つくえの上に本__ あります", correctReading: "が", distractors: ["を", "に", "で"]),
+    // Instrument/means で
+    KanjiQuestion(prompt: "バス__ 来ます", correctReading: "で",       distractors: ["に", "が", "を"]),
+    // Te-form て with ください
+    KanjiQuestion(prompt: "食べ__ ください", correctReading: "て",     distractors: ["た", "る", "ない"]),
+    // Past tense た
+    KanjiQuestion(prompt: "昨日、映画を見__", correctReading: "た",    distractors: ["て", "る", "ない"]),
+    // Negative ない with でください
+    KanjiQuestion(prompt: "ここで話さ__ でください", correctReading: "ない", distractors: ["て", "た", "ます"]),
+    // Reason から
+    KanjiQuestion(prompt: "雨__ 傘を持ちます", correctReading: "から", distractors: ["ので", "でも", "が"]),
 ]
 
 // MARK: - LootBoxChallengeView
@@ -159,11 +224,11 @@ struct LootBoxChallengeView: View {
 
             // Challenge name + description
             VStack(spacing: IkeruTheme.Spacing.sm) {
-                Text(lootBox.challengeType.displayName)
+                Text(LocalizedStringKey(lootBox.challengeType.displayName))
                     .font(.ikeruHeading2)
                     .foregroundStyle(.white)
 
-                Text(lootBox.challengeType.description)
+                Text(LocalizedStringKey(lootBox.challengeType.description))
                     .font(.ikeruBody)
                     .foregroundStyle(.ikeruTextSecondary)
                     .multilineTextAlignment(.center)
@@ -384,8 +449,10 @@ struct LootBoxChallengeView: View {
 
     private var questionBank: [KanjiQuestion] {
         switch lootBox.challengeType {
-        case .kanaBlitz: return kanaBlitzBank
-        default:         return kanjiSpeedBank
+        case .kanjiSpeed:  return kanjiSpeedBank
+        case .kanaBlitz:   return kanaBlitzBank
+        case .vocabMatch:  return vocabMatchBank
+        case .grammarRush: return grammarRushBank
         }
     }
 

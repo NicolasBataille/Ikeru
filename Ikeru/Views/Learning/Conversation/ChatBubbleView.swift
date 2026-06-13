@@ -2,16 +2,21 @@ import SwiftUI
 import IkeruCore
 
 // MARK: - ChatBubbleVariant
+//
+// Typealias kept for source compatibility. `MessageBubbleVariant` (defined in
+// ConversationBubbleView.swift) is the canonical enum; ChatBubbleVariant
+// mirrors its cases so existing callers compile without changes.
 
-enum ChatBubbleVariant {
-    case companion
-    case user
-}
+typealias ChatBubbleVariant = MessageBubbleVariant
 
 // MARK: - ChatBubbleView
+//
+// Chat bubble for CompanionChatSheet. Renders companion/user messages with
+// full ChatContentParser block support (kanji cards, mnemonics, quizzes).
+// Chrome delegates to MessageBubbleChrome for the shared Tatami appearance.
 
-/// Chat bubble that renders companion messages (warm tint, left-aligned)
-/// and user messages (glass, right-aligned) with inline content embeds.
+/// Chat bubble with rich content support (kanji/mnemonic/quiz embeds).
+/// Uses MessageBubbleChrome for the canonical Tatami bubble chrome.
 struct ChatBubbleView: View {
 
     let content: String
@@ -28,59 +33,39 @@ struct ChatBubbleView: View {
         ).effective
     }
 
+    private var alignment: HorizontalAlignment {
+        variant == .companion ? .leading : .trailing
+    }
+
     // MARK: - Body
 
     var body: some View {
         HStack {
             if variant == .user { Spacer(minLength: 48) }
 
-            VStack(alignment: alignment, spacing: IkeruTheme.Spacing.xs) {
-                richContentView
-            }
-            .padding(.horizontal, IkeruTheme.Spacing.md)
-            .padding(.vertical, IkeruTheme.Spacing.sm + 2)
-            .background { bubbleBackground }
             // inset: 0 keeps sumi marks flush with the bubble edge so they
             // never overflow into the scroll view's leading margin and get
             // clipped — fixes the leading-character clip in CompanionChatSheet.
-            .sumiCorners(color: cornerColor, size: 7, weight: 1.1, inset: 0)
+            MessageBubbleChrome(
+                variant: variant,
+                padding: .init(
+                    top: IkeruTheme.Spacing.sm + 2,
+                    leading: IkeruTheme.Spacing.md,
+                    bottom: IkeruTheme.Spacing.sm + 2,
+                    trailing: IkeruTheme.Spacing.md
+                ),
+                sumiInset: 0
+            ) {
+                VStack(alignment: alignment, spacing: IkeruTheme.Spacing.xs) {
+                    richContentView
+                }
+            }
 
             if variant == .companion { Spacer(minLength: 48) }
         }
         // Ensure the HStack fills the available container width so the
         // companion bubble always anchors to the leading edge.
         .frame(maxWidth: .infinity)
-    }
-
-    // MARK: - Alignment
-
-    private var alignment: HorizontalAlignment {
-        variant == .companion ? .leading : .trailing
-    }
-
-    // MARK: - Background
-
-    @ViewBuilder
-    private var bubbleBackground: some View {
-        switch variant {
-        case .companion:
-            // Quiet ink fill (matches TatamiRoom .standard).
-            Rectangle()
-                .fill(Color(red: 0.102, green: 0.102, blue: 0.133).opacity(0.78))
-        case .user:
-            // Warmer gold-tinted ink so the sender reads at a glance.
-            Rectangle()
-                .fill(Color(red: 0.122, green: 0.102, blue: 0.071).opacity(0.82))
-        }
-    }
-
-    // MARK: - Corner Color
-
-    private var cornerColor: Color {
-        switch variant {
-        case .companion: return TatamiTokens.goldDim
-        case .user: return .ikeruPrimaryAccent
-        }
     }
 
     // MARK: - Rich Content

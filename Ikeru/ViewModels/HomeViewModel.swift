@@ -185,22 +185,22 @@ public final class HomeViewModel {
 
     // MARK: - Data Loading
 
-    /// Snapshot of the three signals used by the
+    /// Snapshot of the competence signals used by the
     /// `DisplayModeAdvancedThresholdMonitor` to decide whether the
     /// "you're ready for Tatami" suggestion card should appear.
+    /// Streak is no longer included: eligibility is based on cumulative
+    /// competence only (reviews volume + mastery depth), not daily-login pressure.
     public struct AdvancedThresholdSignals: Sendable {
-        public let streak: Int
         public let reviews: Int
         public let mastery: Int
     }
 
     /// Returns the current threshold signals for the active profile.
-    /// Reads `RPGState` for streak / total reviews and the card repository
+    /// Reads `RPGState` for total reviews and the card repository
     /// for the mastered-card count. Safe to call on the main actor.
     public func advancedThresholdSignals() async -> AdvancedThresholdSignals {
         let context = modelContainer.mainContext
         let rpg = ActiveProfileResolver.fetchActiveRPGState(in: context)
-        let streak = rpg?.currentDailyStreak ?? 0
         let reviews = rpg?.totalReviewsCompleted ?? 0
         let allCards = await cardRepository.allCards()
         let masteryCount = allCards.filter { card in
@@ -208,7 +208,6 @@ public final class HomeViewModel {
                 >= MasteryLevel.familiar.rawValue
         }.count
         return AdvancedThresholdSignals(
-            streak: streak,
             reviews: reviews,
             mastery: masteryCount
         )

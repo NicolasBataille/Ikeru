@@ -145,8 +145,10 @@ final class EtudeViewModel {
         )
     }
 
-    /// Tap-through from a single Étude tile. Logs intent; the full
-    /// drill-launch wiring is added in a later task.
+    /// Tap-through from a single Étude tile. Logs the intent so planner
+    /// telemetry captures which type was selected. Session launch is
+    /// handled by `EtudeView.launchSingleSurface(type:)` which calls
+    /// `launchCustomSession` with `[type]` and default levels/duration.
     public func startSingleSurface(type: ExerciseType) {
         Logger.planner.info("Etude → drill type=\(type.rawValue, privacy: .public)")
     }

@@ -6,6 +6,24 @@ import os
 import Speech
 #endif
 
+// MARK: - Conversation Topic
+
+/// A suggested conversation topic that can seed the chat with an opening message.
+public struct ConversationTopic: Hashable, Sendable {
+    /// Japanese title shown in the topic list (e.g. "自己紹介").
+    public let japanese: String
+    /// English label shown below the Japanese title.
+    public let english: String
+    /// JLPT difficulty tag shown in the topic row badge.
+    public let jlptLevel: String
+
+    public init(japanese: String, english: String, jlptLevel: String) {
+        self.japanese = japanese
+        self.english = english
+        self.jlptLevel = jlptLevel
+    }
+}
+
 // MARK: - Conversation ViewModel
 
 @MainActor
@@ -35,6 +53,10 @@ public final class ConversationViewModel {
     /// The learner's JLPT level for this conversation.
     public let jlptLevel: JLPTLevel
 
+    /// A topic to seed when the conversation starts. Set before presenting
+    /// ConversationView; consumed (and cleared) on first appear.
+    public var seedTopic: ConversationTopic?
+
     // MARK: - Computed
 
     /// Whether the send button should be enabled.
@@ -42,9 +64,9 @@ public final class ConversationViewModel {
         !inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !isLoading
     }
 
-    /// Whether to show the welcome state (no messages yet).
+    /// Whether to show the welcome state (no messages yet and no pending seed).
     public var showWelcome: Bool {
-        messages.isEmpty && !isLoading
+        messages.isEmpty && !isLoading && seedTopic == nil
     }
 
     // MARK: - Dependencies
@@ -69,11 +91,31 @@ public final class ConversationViewModel {
 
     // MARK: - Lifecycle
 
-    /// Check AI availability on appear.
+    /// Check AI availability on appear. If a seedTopic is pending, starts the
+    /// conversation on that topic once availability is confirmed.
     public func onAppear() async {
         await conversationService.aiRouter.refreshTierStatuses()
         let statuses = conversationService.aiRouter.tierStatuses
         isAIAvailable = statuses.values.contains { $0 == .available }
+
+        if let topic = seedTopic, isAIAvailable, messages.isEmpty {
+            seedTopic = nil
+            await startWithTopic(topic)
+        }
+    }
+
+    // MARK: - Topic Seeding
+
+    /// Start a conversation seeded on a suggested topic. Posts an opening
+    /// user message in the topic language and immediately requests Sakura's reply.
+    /// Call this only when isAIAvailable is true; if AI is offline the method
+    /// is a no-op so the existing "Sakura offline" banner remains visible.
+    public func startWithTopic(_ topic: ConversationTopic) async {
+        guard isAIAvailable, messages.isEmpty else { return }
+        // Opening line: use the Japanese topic title as a natural conversation
+        // starter so Sakura's first reply is contextual.
+        let opening = topic.japanese
+        await sendMessage(opening)
     }
 
     // MARK: - Send Message

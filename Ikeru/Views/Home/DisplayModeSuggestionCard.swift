@@ -32,9 +32,8 @@ final class DisplayModeSuggestionCardController {
         defaults.bool(forKey: Self.keyPrefix + profileID.uuidString)
     }
 
-    func onSignalsChanged(streak: Int, reviews: Int, mastery: Int) {
+    func onSignalsChanged(reviews: Int, mastery: Int) {
         let result = DisplayModeAdvancedThresholdMonitor.evaluate(
-            currentDailyStreak: streak,
             totalReviewsCompleted: reviews,
             cardsAtFamiliarOrAbove: mastery
         )

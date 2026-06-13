@@ -93,15 +93,15 @@ struct LootDropView: View {
         }
     }
 
-    // MARK: - Rarity Color
+    // MARK: - Rarity Color (gold intensity scale — no blue/purple/green)
 
     private var rarityColor: Color {
         switch item.rarity {
-        case .common: Color(hex: IkeruTheme.Colors.Rarity.common)
-        case .uncommon: Color(hex: IkeruTheme.Colors.Rarity.uncommon)
-        case .rare: Color(hex: IkeruTheme.Colors.Rarity.rare)
-        case .epic: Color(hex: IkeruTheme.Colors.Rarity.epic)
-        case .legendary: Color(hex: IkeruTheme.Colors.Rarity.legendary)
+        case .common:    TatamiTokens.goldDim              // #8A6D4A  dim gold
+        case .uncommon:  Color(hex: 0xAD8A58)             // mid-dim gold
+        case .rare:      Color(hex: 0xC09060)             // medium gold
+        case .epic:      Color(hex: 0xD4A574)             // warm gold (primaryAccent)
+        case .legendary: Color(hex: 0xE5BC8A)             // bright gold
         }
     }
 }

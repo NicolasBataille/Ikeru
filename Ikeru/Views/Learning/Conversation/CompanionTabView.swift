@@ -154,18 +154,18 @@ struct CompanionTabView: View {
         VStack(alignment: .leading, spacing: 0) {
             BilingualLabel(japanese: "話題", chrome: "Suggested topics", mon: .genji)
                 .padding(.bottom, 10)
-            ForEach(Array(Self.demoTopics.enumerated()), id: \.offset) { index, topic in
-                topicRow(topic, isFirst: index == 0)
+            ForEach(Array(Self.demoTopics.enumerated()), id: \.offset) { index, row in
+                topicRow(row, isFirst: index == 0)
             }
         }
     }
 
     @ViewBuilder
-    private func topicRow(_ topic: DemoConversationTopic, isFirst: Bool) -> some View {
+    private func topicRow(_ row: DemoConversationTopicRow, isFirst: Bool) -> some View {
         Button {
-            onTopicTap(topic)
+            onTopicTap(row.topic)
         } label: {
-            topicRowLabel(topic, isFirst: isFirst)
+            topicRowLabel(row, isFirst: isFirst)
         }
         .buttonStyle(.plain)
         .disabled(!aiAvailable)
@@ -173,20 +173,20 @@ struct CompanionTabView: View {
     }
 
     @ViewBuilder
-    private func topicRowLabel(_ topic: DemoConversationTopic, isFirst: Bool) -> some View {
+    private func topicRowLabel(_ row: DemoConversationTopicRow, isFirst: Bool) -> some View {
         Group {
             HStack(spacing: 12) {
-                MonCrest(kind: topic.mon, size: 14, color: .ikeruPrimaryAccent)
+                MonCrest(kind: row.mon, size: 14, color: .ikeruPrimaryAccent)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(topic.japanese)
+                    Text(row.topic.japanese)
                         .font(.system(size: 15, design: .serif))
                         .foregroundStyle(Color.ikeruTextPrimary)
-                    Text(topic.english)
+                    Text(row.topic.english)
                         .font(.system(size: 11))
                         .foregroundStyle(Color.ikeruTextSecondary)
                 }
                 Spacer()
-                Text(topic.jlptLevel)
+                Text(row.topic.jlptLevel)
                     .font(.system(size: 11, design: .serif))
                     .foregroundStyle(Color.ikeruPrimaryAccent)
                     .padding(.horizontal, 8).padding(.vertical, 2)
@@ -269,11 +269,11 @@ struct CompanionTabView: View {
         showConversation = true
     }
 
-    private func onTopicTap(_ topic: DemoConversationTopic) {
-        // Topics currently route into the same Sakura conversation.
-        // When a topic-routing API lands on `ConversationViewModel`,
-        // this is where it would hand off the seeded prompt.
-        guard viewModel != nil else { return }
+    private func onTopicTap(_ topic: ConversationTopic) {
+        guard let vm = viewModel else { return }
+        // Seed the conversation with the selected topic so the chat opens
+        // directly on that subject rather than showing the welcome screen.
+        vm.seedTopic = topic
         showConversation = true
     }
 
@@ -328,10 +328,10 @@ struct CompanionTabView: View {
 // (T4), Achievements (T7), and Decks (T8). Replace with real VM data
 // when the conversation routing / history APIs land.
 
-private struct DemoConversationTopic: Hashable {
-    let japanese: String
-    let english: String
-    let jlptLevel: String
+// ConversationTopic is defined in ConversationViewModel.swift.
+// DemoConversationTopicRow wraps it with the UI-only mon crest kind.
+private struct DemoConversationTopicRow: Hashable {
+    let topic: ConversationTopic
     let mon: MonKind
 }
 
@@ -343,15 +343,15 @@ private struct DemoRecentConversation: Hashable {
 }
 
 extension CompanionTabView {
-    fileprivate static let demoTopics: [DemoConversationTopic] = [
-        .init(japanese: "自己紹介", english: "Self-introduction",
-              jlptLevel: "N5", mon: .maru),
-        .init(japanese: "道を尋ねる", english: "Asking for directions",
-              jlptLevel: "N4", mon: .asanoha),
-        .init(japanese: "敬語の練習", english: "Keigo practice",
-              jlptLevel: "N3", mon: .genji),
-        .init(japanese: "仕事の話", english: "Work conversation",
-              jlptLevel: "N3", mon: .kikkou)
+    fileprivate static let demoTopics: [DemoConversationTopicRow] = [
+        .init(topic: .init(japanese: "自己紹介", english: "Self-introduction", jlptLevel: "N5"),
+              mon: .maru),
+        .init(topic: .init(japanese: "道を尋ねる", english: "Asking for directions", jlptLevel: "N4"),
+              mon: .asanoha),
+        .init(topic: .init(japanese: "敬語の練習", english: "Keigo practice", jlptLevel: "N3"),
+              mon: .genji),
+        .init(topic: .init(japanese: "仕事の話", english: "Work conversation", jlptLevel: "N3"),
+              mon: .kikkou)
     ]
 
     fileprivate static let demoRecent: [DemoRecentConversation] = [

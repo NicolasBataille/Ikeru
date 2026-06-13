@@ -3,9 +3,9 @@ import IkeruCore
 
 // MARK: - LootRevealView
 
-/// Full-screen lootbox opening celebration with dramatic reveal animation.
-/// Features: particle burst effect, rarity glow escalation (gray → blue → purple → gold),
-/// haptic crescendo, and sequential item reveal.
+/// Full-screen lootbox opening celebration with kintsugi-inspired reveal animation.
+/// Tatami DA: gold-intensity rarity (dim → warm → bright), animated kintsugi seam trace,
+/// Rectangle rarity badge with sumiCorners, haptic crescendo, sequential item reveal.
 struct LootRevealView: View {
 
     /// The items to reveal.
@@ -16,12 +16,11 @@ struct LootRevealView: View {
 
     @State private var revealPhase: RevealPhase = .buildup
     @State private var currentItemIndex: Int = 0
-    @State private var glowScale: CGFloat = 0.3
-    @State private var glowOpacity: Double = 0
-    @State private var itemScale: CGFloat = 0.1
-    @State private var itemOpacity: Double = 0
-    @State private var particleActive = false
     @State private var backgroundOpacity: Double = 0
+    @State private var itemScale: CGFloat = 0.88
+    @State private var itemOpacity: Double = 0
+    @State private var seamProgress: CGFloat = 0     // kintsugi seam [0..1]
+    @State private var veinsOpacity: Double = 0      // radial gold vein bloom
 
     // Haptic triggers
     @State private var haptic1 = false
@@ -31,36 +30,39 @@ struct LootRevealView: View {
 
     var body: some View {
         ZStack {
-            // Dimmed background
-            Color.black.opacity(0.85)
+            // Ink background
+            Color.black.opacity(0.88)
                 .ignoresSafeArea()
                 .opacity(backgroundOpacity)
 
-            // Rarity glow circle
-            Circle()
-                .fill(
-                    RadialGradient(
-                        colors: [currentRarityColor.opacity(0.8), currentRarityColor.opacity(0)],
-                        center: .center,
-                        startRadius: 20,
-                        endRadius: 200
-                    )
-                )
-                .frame(width: 400, height: 400)
-                .scaleEffect(glowScale)
-                .opacity(glowOpacity)
+            // Radial gold bloom — replaces colored glow; intensity scales with rarity
+            RadialGradient(
+                colors: [
+                    rarityGold.opacity(rarityBloomOpacity * veinsOpacity),
+                    rarityGold.opacity(0)
+                ],
+                center: .center,
+                startRadius: 10,
+                endRadius: 220
+            )
+            .ignoresSafeArea()
+            .allowsHitTesting(false)
 
-            // Particle burst
-            if particleActive {
-                particleBurst
-            }
+            // Kintsugi seam — radiates from centre after reveal
+            KintsugiRevealSeams(
+                progress: seamProgress,
+                color: rarityGold
+            )
+            .allowsHitTesting(false)
 
-            // Current item reveal
+            // Current item card
             if revealPhase == .reveal || revealPhase == .complete {
-                currentItemView
+                currentItemCard
+                    .scaleEffect(itemScale)
+                    .opacity(itemOpacity)
             }
 
-            // "Tap to continue" at bottom
+            // "Tap to continue" hint
             if revealPhase == .reveal {
                 VStack {
                     Spacer()
@@ -76,140 +78,143 @@ struct LootRevealView: View {
         .sensoryFeedback(.impact(weight: .heavy), trigger: haptic3)
         .sensoryFeedback(.success, trigger: hapticFinal)
         .contentShape(Rectangle())
-        .onTapGesture {
-            handleTap()
-        }
-        .onAppear {
-            startRevealSequence()
-        }
+        .onTapGesture { handleTap() }
+        .onAppear { startRevealSequence() }
     }
 
-    // MARK: - Current Item View
+    // MARK: - Current Item Card
 
-    private var currentItemView: some View {
+    private var currentItemCard: some View {
         VStack(spacing: IkeruTheme.Spacing.lg) {
-            // Item icon with glow
+            // Item icon — gold-tinted, no colored shadow
             Image(systemName: currentItem.iconName)
-                .font(.system(size: 64))
-                .foregroundStyle(currentRarityColor)
-                .shadow(color: currentRarityColor.opacity(0.6), radius: 24)
-                .scaleEffect(itemScale)
+                .font(.system(size: 60))
+                .foregroundStyle(rarityGold)
+                .shadow(color: rarityGold.opacity(0.45), radius: 16)
 
             // Item name
             Text(currentItem.name)
-                .font(.system(size: IkeruTheme.Typography.Size.heading1, weight: .bold))
-                .foregroundStyle(.white)
-                .opacity(itemOpacity)
+                .font(.system(size: IkeruTheme.Typography.Size.heading1, weight: .semibold, design: .serif))
+                .foregroundStyle(Color.ikeruTextPrimary)
 
-            // Rarity badge
+            // Rarity badge — Rectangle + sumiCorners (no Capsule)
             Text(currentItem.rarity.displayName)
                 .font(.ikeruStats)
-                .foregroundStyle(currentRarityColor)
+                .foregroundStyle(rarityGold)
                 .textCase(.uppercase)
+                .tracking(IkeruTheme.Typography.Tracking.micro)
                 .padding(.horizontal, IkeruTheme.Spacing.md)
                 .padding(.vertical, IkeruTheme.Spacing.xs)
                 .background(
-                    Capsule()
-                        .fill(currentRarityColor.opacity(0.2))
+                    Rectangle()
+                        .fill(rarityGold.opacity(0.08))
                 )
-                .opacity(itemOpacity)
+                .overlay(
+                    Rectangle()
+                        .strokeBorder(rarityGold.opacity(0.55), lineWidth: 0.8)
+                )
+                .sumiCorners(color: rarityGold, size: 6, weight: 1.0)
 
-            // Category
+            // Category — secondary text, decorative context
             Text(currentItem.category.displayName)
                 .font(.ikeruCaption)
                 .foregroundStyle(.ikeruTextSecondary)
-                .opacity(itemOpacity)
         }
-    }
-
-    // MARK: - Particle Burst
-
-    private var particleBurst: some View {
-        ZStack {
-            ForEach(0..<12, id: \.self) { index in
-                Circle()
-                    .fill(currentRarityColor)
-                    .frame(width: 6, height: 6)
-                    .offset(particleOffset(index: index))
-                    .opacity(particleActive ? 0 : 1)
-                    .animation(
-                        .easeOut(duration: 0.8)
-                            .delay(Double(index) * 0.03),
-                        value: particleActive
+        .padding(IkeruTheme.Spacing.xl)
+        .background(
+            Rectangle()
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            Color(red: 0.122, green: 0.102, blue: 0.071, opacity: 0.92),
+                            Color(red: 0.08, green: 0.07, blue: 0.05, opacity: 0.95)
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
                     )
-            }
-        }
-    }
-
-    private func particleOffset(index: Int) -> CGSize {
-        let angle = (Double(index) / 12.0) * .pi * 2
-        let distance: CGFloat = particleActive ? 150 : 0
-        return CGSize(
-            width: cos(angle) * distance,
-            height: sin(angle) * distance
+                )
         )
+        .overlay(alignment: .top) { FusumaRail(gold: rarityGold, opacity: 1.0) }
+        .overlay(alignment: .bottom) { FusumaRail(gold: rarityGold, opacity: 1.0, inverted: true) }
+        .sumiCorners(color: rarityGold, size: 10, weight: 1.5)
+        .padding(.horizontal, IkeruTheme.Spacing.xl)
     }
 
-    // MARK: - State
+    // MARK: - State helpers
 
     private var currentItem: LootItem {
         guard !items.isEmpty else {
-            return LootItem(category: .badge, rarity: .common, name: "Empty", iconName: "questionmark.circle.fill")
+            return LootItem(
+                category: .badge,
+                rarity: .common,
+                name: "Empty",
+                iconName: "questionmark.circle.fill"
+            )
         }
-        guard currentItemIndex < items.count else { return items[items.count - 1] }
-        return items[currentItemIndex]
+        let idx = min(currentItemIndex, items.count - 1)
+        return items[idx]
     }
 
     private var hasMoreItems: Bool {
         currentItemIndex < items.count - 1
     }
 
-    private var currentRarityColor: Color {
+    /// Gold intensity mapped from rarity. Forbidden colors (blue/purple/gray/green) replaced.
+    private var rarityGold: Color {
         switch currentItem.rarity {
-        case .common: Color(hex: IkeruTheme.Colors.Rarity.common)
-        case .uncommon: Color(hex: IkeruTheme.Colors.Rarity.uncommon)
-        case .rare: Color(hex: IkeruTheme.Colors.Rarity.rare)
-        case .epic: Color(hex: IkeruTheme.Colors.Rarity.epic)
-        case .legendary: Color(hex: IkeruTheme.Colors.Rarity.legendary)
+        case .common:    return TatamiTokens.goldDim                      // #8A6D4A dim gold
+        case .uncommon:  return Color(hex: 0xAD8A58)                     // mid-dim gold
+        case .rare:      return Color(hex: 0xC09060)                     // medium gold
+        case .epic:      return Color(hex: 0xD4A574)                     // warm gold (primaryAccent)
+        case .legendary: return Color(hex: 0xE5BC8A)                     // bright gold
+        }
+    }
+
+    /// Radial bloom opacity by rarity — common is very subtle, legendary is rich.
+    private var rarityBloomOpacity: Double {
+        switch currentItem.rarity {
+        case .common:    return 0.08
+        case .uncommon:  return 0.12
+        case .rare:      return 0.18
+        case .epic:      return 0.25
+        case .legendary: return 0.35
         }
     }
 
     // MARK: - Animation Sequence
 
     private func startRevealSequence() {
-        // Phase 1: Background fade in
+        // Background fade in
         withAnimation(.easeIn(duration: 0.3)) {
             backgroundOpacity = 1
         }
 
-        // Phase 2: Haptic crescendo (3 hits escalating)
+        // Haptic crescendo
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { haptic1.toggle() }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { haptic2.toggle() }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { haptic3.toggle() }
 
-        // Phase 3: Glow expansion
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            withAnimation(.spring(duration: 0.6, bounce: 0.3)) {
-                glowScale = 1.5
-                glowOpacity = 0.8
+        // Gold bloom expands (gentle, not explosive)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+            withAnimation(.easeOut(duration: 0.8)) {
+                veinsOpacity = 1.0
             }
         }
 
-        // Phase 4: Particle burst + item reveal
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) {
-            particleActive = true
+        // Card settles in + haptic peak
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.65) {
             hapticFinal.toggle()
-
-            withAnimation(.spring(duration: IkeruTheme.Animation.dramaticDuration, bounce: IkeruTheme.Animation.dramaticBounce)) {
+            withAnimation(.spring(duration: 0.45, bounce: 0.10)) {
                 itemScale = 1.0
                 itemOpacity = 1.0
                 revealPhase = .reveal
             }
+        }
 
-            // Settle glow
-            withAnimation(.easeOut(duration: 1.0)) {
-                glowScale = 1.0
-                glowOpacity = 0.4
+        // Kintsugi seam traces after card arrives
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.95) {
+            withAnimation(.easeInOut(duration: 0.6)) {
+                seamProgress = 1.0
             }
         }
     }
@@ -218,30 +223,33 @@ struct LootRevealView: View {
         guard revealPhase == .reveal else { return }
 
         if hasMoreItems {
-            // Reveal next item
+            // Fade out current item
             withAnimation(.easeOut(duration: 0.2)) {
-                itemScale = 0.1
                 itemOpacity = 0
+                itemScale = 0.92
+                seamProgress = 0
+                veinsOpacity = 0
             }
 
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
                 currentItemIndex += 1
-                particleActive = false
+                hapticFinal.toggle()
 
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                    particleActive = true
-                    hapticFinal.toggle()
+                // Settle next item in
+                withAnimation(.spring(duration: 0.45, bounce: 0.10)) {
+                    itemScale = 1.0
+                    itemOpacity = 1.0
+                }
 
-                    withAnimation(.spring(duration: 0.5, bounce: 0.3)) {
-                        itemScale = 1.0
-                        itemOpacity = 1.0
-                        glowScale = 1.5
-                        glowOpacity = 0.8
-                    }
+                // Bloom for next rarity
+                withAnimation(.easeOut(duration: 0.6)) {
+                    veinsOpacity = 1.0
+                }
 
-                    withAnimation(.easeOut(duration: 0.8)) {
-                        glowScale = 1.0
-                        glowOpacity = 0.4
+                // Seam traces again
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    withAnimation(.easeInOut(duration: 0.55)) {
+                        seamProgress = 1.0
                     }
                 }
             }
@@ -250,7 +258,7 @@ struct LootRevealView: View {
             withAnimation(.easeOut(duration: 0.3)) {
                 backgroundOpacity = 0
                 itemOpacity = 0
-                glowOpacity = 0
+                veinsOpacity = 0
             }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
                 onDismiss?()
@@ -265,23 +273,118 @@ struct LootRevealView: View {
     }
 }
 
+// MARK: - KintsugiRevealSeams
+
+/// Two kintsugi seam paths that draw out from the card centre, evoking a repair
+/// spreading outward after a break is healed. Much more contained and meditative
+/// than a particle burst.
+private struct KintsugiRevealSeams: View {
+    let progress: CGFloat   // [0..1]
+    let color: Color
+
+    var body: some View {
+        Canvas { context, size in
+            let cx = size.width * 0.5
+            let cy = size.height * 0.5
+
+            // Two diagonal seam arms emanating from centre
+            // Arm 1: upper-left → lower-right diagonal
+            // Arm 2: upper-right → lower-left diagonal
+            let armLength: CGFloat = min(size.width, size.height) * 0.42
+
+            var path = Path()
+
+            // Arm 1 — upper-left direction
+            let arm1Progress = min(progress * 2, 1.0)
+            if arm1Progress > 0 {
+                let endX = cx - armLength * arm1Progress * 0.7
+                let endY = cy - armLength * arm1Progress * 0.9
+                path.move(to: CGPoint(x: cx, y: cy))
+                path.addQuadCurve(
+                    to: CGPoint(x: endX, y: endY),
+                    control: CGPoint(x: cx - armLength * arm1Progress * 0.3, y: cy - armLength * arm1Progress * 0.2)
+                )
+            }
+
+            // Arm 2 — lower-right direction
+            let arm2Progress = min(progress * 2, 1.0)
+            if arm2Progress > 0 {
+                let endX = cx + armLength * arm2Progress * 0.65
+                let endY = cy + armLength * arm2Progress * 0.85
+                path.move(to: CGPoint(x: cx, y: cy))
+                path.addQuadCurve(
+                    to: CGPoint(x: endX, y: endY),
+                    control: CGPoint(x: cx + armLength * arm2Progress * 0.25, y: cy + armLength * arm2Progress * 0.25)
+                )
+            }
+
+            // Short branch — upper-right accent (delayed to second half)
+            let branchProgress = max((progress - 0.5) * 2, 0.0)
+            if branchProgress > 0 {
+                let startX = cx + armLength * 0.18
+                let startY = cy - armLength * 0.12
+                let endX = cx + armLength * branchProgress * 0.55
+                let endY = cy - armLength * branchProgress * 0.72
+                path.move(to: CGPoint(x: startX, y: startY))
+                path.addLine(to: CGPoint(x: endX, y: endY))
+            }
+
+            // Glow pass
+            var glowCtx = context
+            glowCtx.addFilter(.blur(radius: 5))
+            glowCtx.opacity = 0.4
+            glowCtx.stroke(
+                path,
+                with: .color(color),
+                style: StrokeStyle(lineWidth: 5, lineCap: .round)
+            )
+
+            // Core seam
+            context.stroke(
+                path,
+                with: .color(color.opacity(0.85)),
+                style: StrokeStyle(lineWidth: 1.2, lineCap: .round)
+            )
+        }
+    }
+}
+
 // MARK: - Preview
 
-#Preview("LootRevealView — Single Epic") {
+#Preview("LootRevealView — Legendary") {
     LootRevealView(
         items: [
-            LootItem(category: .badge, rarity: .epic, name: "Dragon Scale", iconName: "shield.lefthalf.filled"),
+            LootItem(
+                category: .badge,
+                rarity: .legendary,
+                name: "Phoenix Feather",
+                iconName: "flame.fill"
+            )
         ]
     )
     .preferredColorScheme(.dark)
 }
 
-#Preview("LootRevealView — Multiple Items") {
+#Preview("LootRevealView — Common") {
+    LootRevealView(
+        items: [
+            LootItem(
+                category: .badge,
+                rarity: .common,
+                name: "Kana Shard",
+                iconName: "hexagon.fill"
+            )
+        ]
+    )
+    .preferredColorScheme(.dark)
+}
+
+#Preview("LootRevealView — Multiple items") {
     LootRevealView(
         items: [
             LootItem(category: .badge, rarity: .common, name: "Kana Shard", iconName: "hexagon.fill"),
             LootItem(category: .scroll, rarity: .rare, name: "Proverb Scroll", iconName: "scroll.fill"),
-            LootItem(category: .badge, rarity: .legendary, name: "Phoenix Feather", iconName: "flame.fill"),
+            LootItem(category: .badge, rarity: .legendary, name: "Phoenix Feather", iconName: "flame.fill")
         ]
     )
     .preferredColorScheme(.dark)

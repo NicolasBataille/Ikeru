@@ -65,6 +65,7 @@ struct HomeView: View {
                     .onChange(of: svm.isActive) { _, isActive in
                         if !isActive {
                             showSession = false
+                            Task { await viewModel?.refreshAfterSession() }
                         }
                     }
             }
@@ -176,7 +177,6 @@ struct HomeView: View {
         controller.setMode(displayMode)
         let signals = await vm.advancedThresholdSignals()
         controller.onSignalsChanged(
-            streak: signals.streak,
             reviews: signals.reviews,
             mastery: signals.mastery
         )

@@ -144,7 +144,8 @@ struct RPGProfileView: View {
                         .font(.system(size: 22, weight: .light, design: .serif))
                         .foregroundStyle(Color.ikeruTextPrimary)
                 }
-                Text(rankTitle(level: vm.level).uppercased())
+                Text(LocalizedStringKey(rankTitle(level: vm.level)))
+                    .textCase(.uppercase)
                     .font(.system(size: 11, weight: .bold))
                     .foregroundStyle(Color.ikeruPrimaryAccent)
                     .tracking(2)
@@ -280,7 +281,7 @@ struct RPGProfileView: View {
                         .font(.system(size: 10, weight: .regular, design: .serif))
                         .tracking(1)
                         .foregroundStyle(TatamiTokens.paperGhost.opacity(0.7))
-                    Text("第\(rankKanji(vm.level + 1))段 · \(rankTitle(level: vm.level + 1))")
+                    (Text("第\(rankKanji(vm.level + 1))段 · ") + Text(LocalizedStringKey(rankTitle(level: vm.level + 1))))
                         .font(.system(size: 16, design: .serif))
                         .foregroundStyle(Color.ikeruTextPrimary)
                     Text("\(xpToNext) XP to advance",
@@ -339,7 +340,7 @@ struct RPGProfileView: View {
                                     .frame(width: 36)
 
                                 VStack(alignment: .leading, spacing: 2) {
-                                    Text(box.challengeType.displayName)
+                                    Text(LocalizedStringKey(box.challengeType.displayName))
                                         .font(.ikeruBody)
                                         .foregroundStyle(Color.ikeruTextPrimary)
 
@@ -413,16 +414,22 @@ struct RPGProfileView: View {
             .frame(width: 32, height: 32)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(isLocked ? "???" : attr.name)
-                    .font(.ikeruBody)
-                    .foregroundStyle(isLocked ? Color.ikeruTextTertiary : Color.ikeruTextPrimary)
+                Group {
+                    if isLocked {
+                        Text(verbatim: "???")
+                    } else {
+                        Text(LocalizedStringKey(attr.name))
+                    }
+                }
+                .font(.ikeruBody)
+                .foregroundStyle(isLocked ? Color.ikeruTextTertiary : Color.ikeruTextPrimary)
 
                 if isLocked {
                     Text(String(format: String(localized: "Unlocks at grade %lld"), attr.unlockLevel))
                         .font(.ikeruCaption)
                         .foregroundStyle(Color.ikeruTextTertiary)
                 } else {
-                    Text(attr.description)
+                    Text(LocalizedStringKey(attr.description))
                         .font(.ikeruCaption)
                         .foregroundStyle(Color.ikeruTextSecondary)
                 }

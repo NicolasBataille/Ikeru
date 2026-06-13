@@ -35,7 +35,7 @@ struct EtudeView: View {
                     EtudeBrowseGrid(
                         snapshot: snapshot,
                         unlockService: unlockService,
-                        onTap: { type in viewModel?.startSingleSurface(type: type) }
+                        onTap: { type in launchSingleSurface(type: type) }
                     )
                     composeRow
                 }
@@ -70,6 +70,23 @@ struct EtudeView: View {
         guard let params = pendingCompose else { return }
         pendingCompose = nil
         launchCustomSession(types: params.0, levels: params.1, duration: params.2)
+    }
+
+    /// Tap-through from a single Étude tile. Logs the intent, then starts a
+    /// restricted study session for that exercise type alone. Uses all JLPT
+    /// levels up to and including the learner's current estimate as the
+    /// default scope, and the user's saved default duration (fallback 15 min).
+    ///
+    /// Mirrors the guard pattern from `drainPendingCompose` + `launchCustomSession`:
+    /// the tile is already `.disabled` when locked (see `ExerciseTypeTile`),
+    /// but the early-exit below is a defensive belt-and-suspenders check.
+    private func launchSingleSurface(type: ExerciseType) {
+        viewModel?.startSingleSurface(type: type)
+        let estimatedLevel = snapshot.jlptLevel
+        let levels = Set(JLPTLevel.allCases.filter { $0 <= estimatedLevel })
+        let stored = UserDefaults.standard.integer(forKey: "ikeru.session.defaultDurationMinutes")
+        let duration = stored > 0 ? stored : 15
+        launchCustomSession(types: [type], levels: levels.isEmpty ? [.n5] : levels, duration: duration)
     }
 
     /// Composes a session via `SessionViewModel` from the Compose sheet's

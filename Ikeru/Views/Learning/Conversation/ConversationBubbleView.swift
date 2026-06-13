@@ -1,11 +1,80 @@
 import SwiftUI
 import IkeruCore
 
+// MARK: - Message Bubble Chrome
+//
+// Shared bubble variant used by both ConversationBubbleView (full
+// ConversationMessage with corrections/hints/timestamp) and ChatBubbleView
+// (plain content string with rich ChatContentParser blocks).
+//
+// Tatami DA: Rectangle + .sumiCorners; no RoundedRectangle/Capsule.
+// companion = encre fill + goldDim corners; user = warm gold fill + primaryAccent corners.
+
+enum MessageBubbleVariant {
+    case companion  // left-aligned, encre fill, goldDim sumi marks
+    case user       // right-aligned, warm gold fill, primaryAccent sumi marks
+}
+
+/// Provides the shared background fill and sumi-corner chrome for chat bubbles.
+/// Wrap your content in this view to get the canonical Tatami bubble appearance.
+struct MessageBubbleChrome<Content: View>: View {
+
+    let variant: MessageBubbleVariant
+    let padding: EdgeInsets
+    let sumiInset: CGFloat
+    @ViewBuilder let content: () -> Content
+
+    init(
+        variant: MessageBubbleVariant,
+        padding: EdgeInsets = .init(
+            top: IkeruTheme.Spacing.md,
+            leading: IkeruTheme.Spacing.md,
+            bottom: IkeruTheme.Spacing.md,
+            trailing: IkeruTheme.Spacing.md
+        ),
+        sumiInset: CGFloat = 0,
+        @ViewBuilder content: @escaping () -> Content
+    ) {
+        self.variant = variant
+        self.padding = padding
+        self.sumiInset = sumiInset
+        self.content = content
+    }
+
+    var body: some View {
+        content()
+            .padding(padding)
+            .background { backgroundFill }
+            .sumiCorners(color: cornerColor, size: 7, weight: 1.1, inset: sumiInset)
+    }
+
+    @ViewBuilder
+    private var backgroundFill: some View {
+        switch variant {
+        case .companion:
+            // Quiet ink fill — matches TatamiRoom .standard
+            Rectangle()
+                .fill(Color(red: 0.102, green: 0.102, blue: 0.133).opacity(0.78))
+        case .user:
+            // Warmer gold-tinted ink so the sender reads at a glance
+            Rectangle()
+                .fill(Color(red: 0.122, green: 0.102, blue: 0.071).opacity(0.82))
+        }
+    }
+
+    private var cornerColor: Color {
+        switch variant {
+        case .companion: TatamiTokens.goldDim
+        case .user: .ikeruPrimaryAccent
+        }
+    }
+}
+
 // MARK: - Conversation Bubble View
 
-/// A reusable chat bubble component for conversation messages.
-/// User messages are right-aligned with glass material; assistant messages
-/// are left-aligned with a warm amber/jade tint.
+/// Full-featured chat bubble for ConversationView: renders corrections,
+/// vocabulary hints, timestamp, and furigana-aware text.
+/// User messages are right-aligned; assistant messages are left-aligned.
 struct ConversationBubbleView: View {
 
     let message: ConversationMessage
@@ -22,21 +91,24 @@ struct ConversationBubbleView: View {
         ).effective
     }
 
+    private var variant: MessageBubbleVariant {
+        message.role == .user ? .user : .companion
+    }
+
     var body: some View {
         HStack {
             if message.role == .user {
                 Spacer(minLength: 60)
             }
 
-            VStack(alignment: bubbleAlignment, spacing: IkeruTheme.Spacing.sm) {
-                messageContent
-                correctionsSection
-                vocabularySection
-                timestampLabel
+            MessageBubbleChrome(variant: variant) {
+                VStack(alignment: bubbleAlignment, spacing: IkeruTheme.Spacing.sm) {
+                    messageContent
+                    correctionsSection
+                    vocabularySection
+                    timestampLabel
+                }
             }
-            .padding(IkeruTheme.Spacing.md)
-            .background(bubbleBackground)
-            .sumiCorners(color: cornerColor, size: 7, weight: 1.1)
             .sheet(item: $selectedHint) { hint in
                 VocabularyDetailSheet(
                     hint: hint,
@@ -108,30 +180,6 @@ struct ConversationBubbleView: View {
 
     private var bubbleAlignment: HorizontalAlignment {
         message.role == .user ? .trailing : .leading
-    }
-
-    @ViewBuilder
-    private var bubbleBackground: some View {
-        switch message.role {
-        case .user:
-            // Warmer gold-tinted ink so the sender reads at a glance.
-            Rectangle()
-                .fill(Color(red: 0.122, green: 0.102, blue: 0.071).opacity(0.82))
-        case .assistant:
-            // Quiet ink fill (matches TatamiRoom .standard).
-            Rectangle()
-                .fill(Color(red: 0.102, green: 0.102, blue: 0.133).opacity(0.78))
-        case .system:
-            Color.clear
-        }
-    }
-
-    private var cornerColor: Color {
-        switch message.role {
-        case .user: return .ikeruPrimaryAccent
-        case .assistant: return TatamiTokens.goldDim
-        case .system: return .clear
-        }
     }
 
     private var textColor: Color {

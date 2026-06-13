@@ -332,12 +332,4 @@ extension FillInBlankType {
         case .vocabulary: "Vocabulary"
         }
     }
-
-    var badgeColor: Color {
-        switch self {
-        case .particle: Color(hex: IkeruTheme.Colors.Skills.reading)
-        case .conjugation: Color(hex: IkeruTheme.Colors.Skills.writing)
-        case .vocabulary: Color(hex: IkeruTheme.Colors.Skills.listening)
-        }
-    }
 }
