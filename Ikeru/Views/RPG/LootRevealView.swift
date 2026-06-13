@@ -278,9 +278,16 @@ struct LootRevealView: View {
 /// Two kintsugi seam paths that draw out from the card centre, evoking a repair
 /// spreading outward after a break is healed. Much more contained and meditative
 /// than a particle burst.
-private struct KintsugiRevealSeams: View {
-    let progress: CGFloat   // [0..1]
+private struct KintsugiRevealSeams: View, @preconcurrency Animatable {
+    var progress: CGFloat   // [0..1]
     let color: Color
+
+    // Map animatableData to `progress` so the Canvas redraws each frame
+    // while the seam animates in (a plain Canvas would snap to the end).
+    var animatableData: CGFloat {
+        get { progress }
+        set { progress = newValue }
+    }
 
     var body: some View {
         Canvas { context, size in

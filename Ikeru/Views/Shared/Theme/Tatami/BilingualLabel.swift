@@ -41,6 +41,8 @@ struct BilingualLabel: View {
             }
             Text(chrome)
                 .ikeruScaledFont(13, weight: .semibold, relativeTo: .caption)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
                 .foregroundStyle(Color.ikeruTextPrimary)
             if let romaji {
                 Text(romaji)
@@ -63,9 +65,11 @@ struct BilingualLabel: View {
                 .foregroundStyle(TatamiTokens.paperGhost)
             Text(chrome)
                 .ikeruScaledFont(10, weight: .semibold, relativeTo: .caption2)
-                .foregroundStyle(TatamiTokens.paperGhost)
                 .tracking(2.4)
                 .textCase(.uppercase)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+                .foregroundStyle(TatamiTokens.paperGhost)
         }
     }
 }

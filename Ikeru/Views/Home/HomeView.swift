@@ -252,9 +252,11 @@ struct HomeView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(timeOfDayGreetingJP())
                         .ikeruScaledFont(11, weight: .semibold, relativeTo: .caption2)
-                        .foregroundStyle(Color.ikeruPrimaryAccent)
                         .tracking(2.4)
                         .textCase(.uppercase)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                        .foregroundStyle(Color.ikeruPrimaryAccent)
 
                     HStack(spacing: 0) {
                         Text(vm.displayName.isEmpty
@@ -271,6 +273,8 @@ struct HomeView: View {
                         Text(equippedTitleName.uppercased())
                             .font(.ikeruMicro)
                             .ikeruTracking(.micro)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
                             .foregroundStyle(Color.ikeruPrimaryAccent)
                     }
                 }
@@ -400,9 +404,11 @@ struct HomeView: View {
                 SerifNumeral(vm.dueCardCount, size: 56, color: .ikeruTextPrimary)
                 Text("CARDS DUE", comment: "Hero stat label on Home")
                     .ikeruScaledFont(12, weight: .semibold, relativeTo: .caption2)
-                    .foregroundStyle(Color.ikeruTextSecondary)
                     .tracking(1.4)
                     .textCase(.uppercase)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                    .foregroundStyle(Color.ikeruTextSecondary)
             }
 
             // Practice CTA — sharp gold, bilingual, sumi corners.
@@ -420,6 +426,8 @@ struct HomeView: View {
                         Text("BEGIN PRACTICE", comment: "Hero CTA on Home")
                             .ikeruScaledFont(13, weight: .bold, relativeTo: .body)
                             .tracking(1.6)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
                         Spacer()
                     }
                     .foregroundStyle(Color.ikeruBackground)
@@ -464,6 +472,7 @@ struct HomeView: View {
                 Text("\(vm.xpToNextLevel) XP to next rank",
                      comment: "Subtle XP-remaining label on the Home hero")
                     .ikeruScaledFont(11, relativeTo: .caption2)
+                    .lineLimit(2)
                     .foregroundStyle(Color.ikeruTextSecondary)
                     .frame(maxWidth: .infinity, alignment: .trailing)
             }
@@ -526,10 +535,13 @@ struct HomeView: View {
                 label
                     .ikeruScaledFont(10, weight: .heavy, relativeTo: .caption2)
                     .tracking(1.2)
-                    .foregroundStyle(Color.ikeruTextTertiary)
                     .textCase(.uppercase)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                    .foregroundStyle(Color.ikeruTextTertiary)
                 Text(valueText ?? "\(count ?? 0)")
                     .font(.system(size: 14, weight: .medium, design: .monospaced))
+                    .minimumScaleFactor(0.6)
                     .foregroundStyle(Color.ikeruTextPrimary)
             }
         }

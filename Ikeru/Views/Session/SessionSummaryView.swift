@@ -122,8 +122,10 @@ struct SessionSummaryView: View {
                 SerifNumeral(cardsCount, size: 56, color: .ikeruPrimaryAccent)
                 Text("CARDS", comment: "Summary stat label")
                     .ikeruScaledFont(10, weight: .semibold, relativeTo: .caption2)
-                    .foregroundStyle(Color.ikeruTextSecondary)
                     .tracking(1.6)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                    .foregroundStyle(Color.ikeruTextSecondary)
             }
             .frame(maxWidth: .infinity)
 
@@ -140,8 +142,10 @@ struct SessionSummaryView: View {
                     .minimumScaleFactor(0.5)
                 Text("RECALL", comment: "Summary stat label")
                     .ikeruScaledFont(10, weight: .semibold, relativeTo: .caption2)
-                    .foregroundStyle(Color.ikeruTextSecondary)
                     .tracking(1.6)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                    .foregroundStyle(Color.ikeruTextSecondary)
             }
             .frame(maxWidth: .infinity)
 
@@ -151,8 +155,10 @@ struct SessionSummaryView: View {
                 SerifNumeral(timeString, size: 40, color: .ikeruPrimaryAccent)
                 Text("TIME", comment: "Summary stat label")
                     .ikeruScaledFont(10, weight: .semibold, relativeTo: .caption2)
-                    .foregroundStyle(Color.ikeruTextSecondary)
                     .tracking(1.6)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                    .foregroundStyle(Color.ikeruTextSecondary)
             }
             .frame(maxWidth: .infinity)
         }
@@ -173,8 +179,10 @@ struct SessionSummaryView: View {
                 MonCrest(kind: .asanoha, size: 14, color: .ikeruPrimaryAccent)
                 Text("XP EARNED", comment: "Summary XP label")
                     .ikeruScaledFont(11, weight: .semibold, relativeTo: .caption2)
-                    .foregroundStyle(Color.ikeruTextSecondary)
                     .tracking(1.4)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                    .foregroundStyle(Color.ikeruTextSecondary)
                 Spacer()
                 SerifNumeral("+\(viewModel.xpEarned)", size: 18,
                              weight: .regular, color: .ikeruPrimaryAccent)
@@ -254,6 +262,8 @@ struct SessionSummaryView: View {
                     Text("CONTINUE", comment: "Summary primary CTA")
                         .ikeruScaledFont(13, weight: .bold, relativeTo: .caption)
                         .tracking(1.6)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
                     Spacer()
                 }
                 .foregroundStyle(Color.ikeruBackground)
@@ -269,8 +279,10 @@ struct SessionSummaryView: View {
                 Button { onReviewMistakes() } label: {
                     Text("REVIEW MISTAKES", comment: "Summary secondary CTA")
                         .ikeruScaledFont(11, weight: .semibold, relativeTo: .caption2)
-                        .foregroundStyle(Color.ikeruTextSecondary)
                         .tracking(1.4)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                        .foregroundStyle(Color.ikeruTextSecondary)
                         .padding(.vertical, 12)
                         .frame(maxWidth: .infinity)
                 }

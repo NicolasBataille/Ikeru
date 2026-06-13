@@ -73,6 +73,8 @@ struct VocabularyEntryDetailView: View {
 
             Text(entry.reading)
                 .ikeruScaledFont(24, weight: .medium, design: .rounded, relativeTo: .title2)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
                 .foregroundStyle(Color.ikeruPrimaryAccent)
 
             Text(entry.meaning)
@@ -104,6 +106,8 @@ struct VocabularyEntryDetailView: View {
             Text("MASTERY")
                 .font(.ikeruMicro)
                 .ikeruTracking(.micro)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
                 .foregroundStyle(Color.ikeruTextTertiary)
 
             HStack(spacing: 0) {
@@ -142,9 +146,13 @@ struct VocabularyEntryDetailView: View {
         VStack(spacing: 4) {
             Text(value)
                 .font(.ikeruStatsLarge)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
                 .foregroundStyle(Color.ikeruPrimaryAccent)
             Text(label.uppercased())
                 .ikeruScaledFont(10, relativeTo: .caption2)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
                 .foregroundStyle(Color.ikeruTextTertiary)
         }
         .frame(maxWidth: .infinity)
@@ -158,6 +166,8 @@ struct VocabularyEntryDetailView: View {
             Text("ENCOUNTER HISTORY")
                 .font(.ikeruMicro)
                 .ikeruTracking(.micro)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
                 .foregroundStyle(Color.ikeruTextTertiary)
 
             if encounters.isEmpty {
@@ -188,6 +198,8 @@ struct VocabularyEntryDetailView: View {
                                 Spacer()
                                 Text(encounter.timestamp, style: .relative)
                                     .ikeruScaledFont(10, relativeTo: .caption2)
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.7)
                                     .foregroundStyle(Color.ikeruTextTertiary)
                             }
                             Text(encounter.contextSnippet)

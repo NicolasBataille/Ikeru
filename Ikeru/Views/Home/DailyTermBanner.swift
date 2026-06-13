@@ -22,6 +22,8 @@ struct DailyTermBanner: View {
                         Text("NEW TERM ARRIVED")
                             .font(.ikeruMicro)
                             .ikeruTracking(.micro)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
                             .foregroundStyle(Color.ikeruPrimaryAccent)
                         Text("Tap to discover today's word")
                             .font(.ikeruBody)
@@ -75,6 +77,8 @@ struct DailyTermBanner: View {
             Text("Yesterday")
                 .font(.ikeruMicro)
                 .ikeruTracking(.micro)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
                 .foregroundStyle(Color.ikeruTextTertiary)
             Text(term.word)
                 .font(.ikeruCaption)
@@ -84,8 +88,9 @@ struct DailyTermBanner: View {
                 .foregroundStyle(Color.ikeruTextTertiary)
             Text(term.meaning)
                 .font(.ikeruCaption)
-                .foregroundStyle(Color.ikeruTextSecondary)
                 .lineLimit(1)
+                .minimumScaleFactor(0.7)
+                .foregroundStyle(Color.ikeruTextSecondary)
         }
     }
 }
@@ -109,6 +114,8 @@ struct DailyTermRevealedPill: View {
                 Text("Today")
                     .font(.ikeruMicro)
                     .ikeruTracking(.micro)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
                     .foregroundStyle(Color.ikeruTextTertiary)
                 Text(term.word)
                     .font(.ikeruCaption)
@@ -118,8 +125,9 @@ struct DailyTermRevealedPill: View {
                     .foregroundStyle(Color.ikeruTextTertiary)
                 Text(term.meaning)
                     .font(.ikeruCaption)
-                    .foregroundStyle(Color.ikeruTextSecondary)
                     .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                    .foregroundStyle(Color.ikeruTextSecondary)
                 Spacer(minLength: 0)
                 if yesterday != nil {
                     Image(systemName: "clock.arrow.circlepath")

@@ -147,8 +147,10 @@ struct RPGProfileView: View {
                 Text(LocalizedStringKey(rankTitle(level: vm.level)))
                     .textCase(.uppercase)
                     .ikeruScaledFont(11, weight: .bold, relativeTo: .caption2)
-                    .foregroundStyle(Color.ikeruPrimaryAccent)
                     .tracking(2)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
+                    .foregroundStyle(Color.ikeruPrimaryAccent)
                 HStack(spacing: 0) {
                     SerifNumeral(progress.current, size: 12, color: TatamiTokens.paperGhost)
                     Text(" / ")
@@ -183,6 +185,8 @@ struct RPGProfileView: View {
                 Text(title.name.uppercased())
                     .font(.ikeruMicro)
                     .ikeruTracking(.micro)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
                     .foregroundStyle(rarityColor(title.rarity))
             }
             if !vm.equippedBadges.isEmpty {
@@ -234,8 +238,10 @@ struct RPGProfileView: View {
             }
             Text(ach.label)
                 .ikeruScaledFont(10, weight: .semibold, relativeTo: .caption2)
-                .foregroundStyle(TatamiTokens.paperGhost)
                 .tracking(1)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+                .foregroundStyle(TatamiTokens.paperGhost)
                 .frame(maxWidth: 56)
                 .multilineTextAlignment(.center)
         }
@@ -422,6 +428,8 @@ struct RPGProfileView: View {
                     }
                 }
                 .font(.ikeruBody)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
                 .foregroundStyle(isLocked ? Color.ikeruTextTertiary : Color.ikeruTextPrimary)
 
                 if isLocked {
@@ -458,6 +466,8 @@ struct RPGProfileView: View {
 
             Text("\(value)")
                 .font(.ikeruStats)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
                 .foregroundStyle(Color.ikeruTextSecondary)
                 .frame(width: 28, alignment: .trailing)
         }
@@ -488,6 +498,8 @@ struct RPGProfileView: View {
         HStack(spacing: 8) {
             Text(label)
                 .ikeruScaledFont(12, relativeTo: .caption2)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
                 .foregroundStyle(Color.ikeruTextSecondary)
             Spacer(minLength: 0)
             Text("\(Int(min(1, max(0, value)) * 100))")
@@ -525,6 +537,8 @@ struct RPGProfileView: View {
             Text(rarity.displayName.uppercased())
                 .font(.ikeruMicro)
                 .ikeruTracking(.micro)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
                 .foregroundStyle(rarityColor(rarity))
 
             LazyVGrid(

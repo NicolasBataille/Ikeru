@@ -148,6 +148,8 @@ struct CustomPlannerSheet: View {
             Text(chrome)
                 .ikeruScaledFont(11, weight: .semibold, relativeTo: .caption2)
                 .tracking(1.6)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
                 .textCase(.uppercase)
                 .foregroundStyle(Color.ikeruTextSecondary)
         }
@@ -167,6 +169,8 @@ struct CustomPlannerSheet: View {
                 Text("Etude.Compose.Action")
                     .ikeruScaledFont(13, weight: .bold, relativeTo: .caption)
                     .tracking(1.6)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
                 Spacer()
             }
             .foregroundStyle(Color.ikeruBackground)

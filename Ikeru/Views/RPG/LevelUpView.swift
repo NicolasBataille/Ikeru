@@ -157,8 +157,16 @@ struct LevelUpView: View {
 
 /// Animated gold seam that draws in from centre outward, evoking kintsugi repair.
 /// `progress` drives the stroke trim from 0 (hidden) to 1 (fully revealed).
-private struct KintsugiSeamView: View {
-    let progress: CGFloat   // [0..1]
+private struct KintsugiSeamView: View, @preconcurrency Animatable {
+    var progress: CGFloat   // [0..1]
+
+    // Drive a frame-by-frame Canvas redraw while `progress` animates.
+    // A plain Canvas snaps to the final value; mapping animatableData to
+    // `progress` makes SwiftUI interpolate it and re-render the seam draw.
+    var animatableData: CGFloat {
+        get { progress }
+        set { progress = newValue }
+    }
 
     var body: some View {
         Canvas { context, size in

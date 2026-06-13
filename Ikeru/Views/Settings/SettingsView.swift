@@ -497,10 +497,14 @@ struct SettingsView: View {
                 if isCurrent {
                     Text("Active", comment: "Active profile indicator")
                         .ikeruScaledFont(13, design: .serif, relativeTo: .caption)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
                         .foregroundStyle(Color.ikeruPrimaryAccent)
                 } else {
                     Text("Switch", comment: "Switch profile action")
                         .ikeruScaledFont(13, design: .serif, relativeTo: .caption)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
                         .foregroundStyle(Color.ikeruPrimaryAccent)
                     Text("›")
                         .font(.system(size: 14))
@@ -537,6 +541,8 @@ struct SettingsView: View {
                 Spacer()
                 Text(currentLanguageLabel)
                     .ikeruScaledFont(13, design: .serif, relativeTo: .caption)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
                     .foregroundStyle(Color.ikeruPrimaryAccent)
                 Text("›")
                     .font(.system(size: 14))
@@ -826,6 +832,8 @@ struct SettingsView: View {
             if !value.isEmpty {
                 Text(value)
                     .ikeruScaledFont(13, design: .serif, relativeTo: .caption)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
                     .foregroundStyle(Color.ikeruPrimaryAccent)
             }
             Text("›")
@@ -1011,6 +1019,8 @@ private struct MemoryAlgorithmSettingsView: View {
             Spacer()
             Text(value)
                 .ikeruScaledFont(13, design: .serif, relativeTo: .caption)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
                 .foregroundStyle(Color.ikeruPrimaryAccent)
         }
         .padding(.horizontal, 16).padding(.vertical, 14)
@@ -1165,6 +1175,8 @@ private struct DataStorageSettingsView: View {
             if !value.isEmpty {
                 Text(value)
                     .ikeruScaledFont(13, design: .serif, relativeTo: .caption)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
                     .foregroundStyle(Color.ikeruPrimaryAccent)
             }
             Text("›")
@@ -1279,6 +1291,8 @@ private struct DevToolsSettingsView: View {
                 if !value.isEmpty {
                     Text(value)
                         .ikeruScaledFont(13, design: .serif, relativeTo: .caption)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
                         .foregroundStyle(Color.ikeruPrimaryAccent)
                 }
                 Text("›")

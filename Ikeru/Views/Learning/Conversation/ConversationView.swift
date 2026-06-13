@@ -146,6 +146,8 @@ struct ConversationView: View {
                     // JLPT level badge — encre rectangle, no capsule
                     Text(viewModel.jlptLevel.rawValue)
                         .ikeruScaledFont(11, weight: .semibold, relativeTo: .caption)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
                         .foregroundStyle(Color.ikeruPrimaryAccent)
                         .tracking(1.4)
                         .padding(.horizontal, IkeruTheme.Spacing.sm)
@@ -369,6 +371,8 @@ struct ConversationView: View {
         Text(viewModel.jlptLevel.rawValue)
             .font(.ikeruCaption)
             .fontWeight(.semibold)
+            .lineLimit(1)
+            .minimumScaleFactor(0.7)
             .foregroundStyle(Color.ikeruPrimaryAccent)
             .padding(.horizontal, IkeruTheme.Spacing.sm)
             .padding(.vertical, IkeruTheme.Spacing.xs)

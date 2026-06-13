@@ -79,10 +79,14 @@ struct KanaDrillSessionSummary: View {
         VStack(spacing: 4) {
             Text(value)
                 .ikeruScaledFont(18, weight: .semibold, design: .rounded, relativeTo: .title3)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
                 .foregroundStyle(Color.ikeruTextPrimary)
             Text(label)
                 .font(.ikeruMicro)
                 .ikeruTracking(.micro)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
                 .foregroundStyle(Color.ikeruTextTertiary)
         }
         .frame(maxWidth: .infinity)

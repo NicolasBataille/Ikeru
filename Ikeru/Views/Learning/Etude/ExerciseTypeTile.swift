@@ -17,6 +17,8 @@ struct ExerciseTypeTile: View {
                     .foregroundStyle(isUnlocked ? Color.ikeruPrimaryAccent : TatamiTokens.paperGhost)
                 Text(ExerciseTileTokens.label(for: type))
                     .ikeruScaledFont(12, weight: .medium, relativeTo: .caption2)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
                     .foregroundStyle(isUnlocked ? Color.ikeruTextPrimary : Color.ikeruTextSecondary)
                 if !isUnlocked, case .locked(let reason) = state {
                     Text(lockHint(reason))

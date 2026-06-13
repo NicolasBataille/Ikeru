@@ -61,12 +61,16 @@ struct SessionPreviewCard: View {
 
                     Text(entry.label)
                         .ikeruScaledFont(IkeruTheme.Typography.Size.stats, relativeTo: .caption)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
                         .foregroundStyle(Color.ikeruTextSecondary)
 
                     Spacer()
 
                     Text("\(entry.count)")
                         .ikeruScaledFont(IkeruTheme.Typography.Size.stats, weight: .medium, relativeTo: .caption)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
                         .foregroundStyle(.white)
                 }
             }

@@ -96,6 +96,8 @@ struct VocabularyDictionaryView: View {
                 Text("MY DICTIONARY")
                     .font(.ikeruMicro)
                     .ikeruTracking(.micro)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
                     .foregroundStyle(Color.ikeruTextTertiary)
                 Text("\(vm.totalCount) words")
                     .font(.ikeruHeading2)
@@ -289,6 +291,8 @@ struct VocabularyDictionaryView: View {
                     if let level = entry.jlptLevel {
                         Text(level.displayLabel)
                             .ikeruScaledFont(10, weight: .semibold, relativeTo: .caption2)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
                             .foregroundStyle(Color.ikeruPrimaryAccent)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
@@ -305,6 +309,8 @@ struct VocabularyDictionaryView: View {
                             .font(.system(size: 9))
                         Text("\(entry.encounterCount)")
                             .font(.system(size: 11, design: .monospaced))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
                     }
                     .foregroundStyle(Color.ikeruTextTertiary)
                 }
