@@ -200,7 +200,6 @@
 		E27F5570AE1B045B6470C43D /* OnboardingTourView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0B25FD2BC64C88BF9B170AC /* OnboardingTourView.swift */; };
 		E31340113FF54CDF9EA9D6ED /* ShadowingViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A4D6DBF214AA1BE4ADDF3B8 /* ShadowingViewModelTests.swift */; };
 		E5D377E0EE04F7256C198370 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00C65E3B1046C3448638D50 /* NotificationManager.swift */; };
-		E67443C57282C375B28E1ADB /* MeshHeroView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25F5EC3E127B20A52562853D /* MeshHeroView.swift */; };
 		E6D5C29E18595B7C6DEF7878 /* ProfileViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FF30B9862993AD81B2EA938 /* ProfileViewModel.swift */; };
 		E7B9345F359AC06220E9D59D /* TestFixtures.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5620682521309021B6102C49 /* TestFixtures.swift */; };
 		E893C6AD00A594F2326530A8 /* RigJobsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37FFFD4E2CCB71F726EE7A52 /* RigJobsView.swift */; };
@@ -284,7 +283,6 @@
 		24AB1AB1DDE2D5EE0D52DA0C /* IkeruCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IkeruCard.swift; sourceTree = "<group>"; };
 		25A2EBFE2B6872980172B207 /* WatchHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchHomeView.swift; sourceTree = "<group>"; };
 		25B2C6EAEDBB0C07B73E2710 /* HankoStamp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HankoStamp.swift; sourceTree = "<group>"; };
-		25F5EC3E127B20A52562853D /* MeshHeroView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeshHeroView.swift; sourceTree = "<group>"; };
 		2CA34FB1B1DB4560EB47114B /* IkeruTabBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IkeruTabBar.swift; sourceTree = "<group>"; };
 		2DDE2DBC0AC80C3C72CCE6E1 /* AttributionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttributionView.swift; sourceTree = "<group>"; };
 		2DFC0A4678F7D8B667D36783 /* ShortcutsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutsManager.swift; sourceTree = "<group>"; };
@@ -644,7 +642,6 @@
 				D11E7E1000000000A004A001 /* DailyTermHistoryView.swift */,
 				D11E7E1000000000A003A001 /* DailyTermRevealView.swift */,
 				156EFFF0B204464405BC709E /* HomeView.swift */,
-				25F5EC3E127B20A52562853D /* MeshHeroView.swift */,
 				41D44ABC57C7E863A27392FD /* DisplayModeSuggestionCard.swift */,
 			);
 			path = Home;
@@ -1380,7 +1377,6 @@
 				A4FD9CA72477C29768928B5E /* LootRevealView.swift in Sources */,
 				39A095270B40F6C416C13453 /* MainTabView.swift in Sources */,
 				C98990815A7397FAEECC5E9F /* MasteryBadge.swift in Sources */,
-				E67443C57282C375B28E1ADB /* MeshHeroView.swift in Sources */,
 				8079EBD85DD413FB6BA17D40 /* MnemonicView.swift in Sources */,
 				F692C438F2EC4A4E6BF13432 /* MountainGlyph.swift in Sources */,
 				8220FF72EE512779FDF93501 /* NameEntryView.swift in Sources */,
