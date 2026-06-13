@@ -9,6 +9,7 @@ import IkeruCore
 struct RPGProfileView: View {
 
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var viewModel: RPGProfileViewModel?
     @State private var selectedLootBox: LootBox?
 
@@ -236,14 +237,19 @@ struct RPGProfileView: View {
                     )
                     .opacity(0.55)
             }
-            Text(ach.label)
-                .ikeruScaledFont(10, weight: .semibold, relativeTo: .caption2)
-                .tracking(1)
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
-                .foregroundStyle(TatamiTokens.paperGhost)
-                .frame(maxWidth: 56)
-                .multilineTextAlignment(.center)
+            // Five labelled columns cannot share a row at accessibility text
+            // sizes, so drop the caption (the hanko glyph carries the meaning)
+            // rather than truncate "Maîtrise" → "Maî".
+            if !dynamicTypeSize.isAccessibilitySize {
+                Text(ach.label)
+                    .ikeruScaledFont(10, weight: .semibold, relativeTo: .caption2)
+                    .tracking(1)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.6)
+                    .foregroundStyle(TatamiTokens.paperGhost)
+                    .frame(maxWidth: 56)
+                    .multilineTextAlignment(.center)
+            }
         }
     }
 

@@ -70,12 +70,16 @@ struct XPBarView: View {
                 Text("EXPERIENCE")
                     .font(.ikeruMicro)
                     .ikeruTracking(.micro)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
                     .foregroundStyle(Color.ikeruTextTertiary)
 
-                Spacer()
+                Spacer(minLength: IkeruTheme.Spacing.sm)
 
                 Text("\(progressInLevel.current) / \(progressInLevel.required) XP")
                     .font(.ikeruStats)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
                     .foregroundStyle(.ikeruTextSecondary)
             }
 
