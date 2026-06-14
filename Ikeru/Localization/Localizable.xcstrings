@@ -8490,6 +8490,182 @@
           }
         }
       }
+    },
+    "Your saved words" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your saved words"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tes mots enregistrés"
+          }
+        }
+      }
+    },
+    "ONE QUESTION" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ONE QUESTION"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "UNE QUESTION"
+          }
+        }
+      }
+    },
+    "Have you studied\nJapanese before?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Have you studied\nJapanese before?"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "As-tu déjà étudié\nle japonais ?"
+          }
+        }
+      }
+    },
+    "I'm just starting" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "I'm just starting"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Je débute"
+          }
+        }
+      }
+    },
+    "Kana, romaji, and reading aids on. The gentle path." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kana, romaji, and reading aids on. The gentle path."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kana, romaji et aides à la lecture activés. La voie douce."
+          }
+        }
+      }
+    },
+    "I know some already" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "I know some already"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "J'en connais déjà"
+          }
+        }
+      }
+    },
+    "Kanji-first, translations hidden. Change anytime in Settings." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kanji-first, translations hidden. Change anytime in Settings."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kanji d'abord, traductions masquées. Modifiable dans les Réglages."
+          }
+        }
+      }
+    },
+    "Hiragana & katakana" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hiragana & katakana"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hiragana et katakana"
+          }
+        }
+      }
+    },
+    "Choose what to practice" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose what to practice"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisis quoi pratiquer"
+          }
+        }
+      }
+    },
+    "Talk with Sakura" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Talk with Sakura"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parler avec Sakura"
+          }
+        }
+      }
+    },
+    "AI conversation partner" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI conversation partner"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Partenaire de conversation IA"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
