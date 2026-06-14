@@ -17,10 +17,6 @@ struct SessionSummaryView: View {
 
     let viewModel: SessionViewModel
 
-    /// Guards `summary.contribution.viewed` telemetry so swipe-back
-    /// re-entries don't double-count the event for funnel analysis.
-    @State private var hasLoggedContribution: Bool = false
-
     var body: some View {
         ZStack {
             IkeruScreenBackground(variant: .summary)
@@ -29,8 +25,6 @@ struct SessionSummaryView: View {
                 VStack(spacing: 18) {
                     triumphHeader
                     heroStatRow
-                    fourWindsRow
-                    xpGainRail
                     splitCells
                     actions
                 }
@@ -39,58 +33,6 @@ struct SessionSummaryView: View {
                 .padding(.bottom, 40)
             }
         }
-        .onAppear {
-            guard !hasLoggedContribution else { return }
-            hasLoggedContribution = true
-            let c = viewModel.skillContribution
-            Logger.ui.info(
-                "summary.contribution.viewed reading=\(c.reading, privacy: .public) writing=\(c.writing, privacy: .public) listening=\(c.listening, privacy: .public) speaking=\(c.speaking, privacy: .public)"
-            )
-        }
-    }
-
-    // MARK: - Four Winds Contribution Row
-
-    /// Per-skill XP earned this session, presented as four equal cells
-    /// crested with `MonKind`. Skills with zero contribution dim to
-    /// paper-ghost so the user reads the session's *shape* at a glance.
-    private var fourWindsRow: some View {
-        HStack(spacing: 10) {
-            windCell(label: "Summary.Reading", japanese: "読",
-                     mon: .asanoha, value: viewModel.skillContribution.reading)
-            windCell(label: "Summary.Writing", japanese: "書",
-                     mon: .genji, value: viewModel.skillContribution.writing)
-            windCell(label: "Summary.Listening", japanese: "聴",
-                     mon: .kikkou, value: viewModel.skillContribution.listening)
-            windCell(label: "Summary.Speaking", japanese: "話",
-                     mon: .maru, value: viewModel.skillContribution.speaking)
-        }
-    }
-
-    @ViewBuilder
-    private func windCell(label: LocalizedStringKey, japanese: String,
-                           mon: MonKind, value: Int) -> some View {
-        let isActive = value > 0
-        VStack(spacing: 6) {
-            HStack(spacing: 4) {
-                MonCrest(kind: mon, size: 11,
-                         color: isActive ? Color.ikeruPrimaryAccent : TatamiTokens.paperGhost)
-                Text(japanese)
-                    .ikeruScaledFont(11, design: .serif, relativeTo: .caption2)
-                    .foregroundStyle(isActive ? Color.ikeruTextPrimary : TatamiTokens.paperGhost)
-            }
-            Text("+\(value)")
-                .ikeruScaledFont(22, weight: .light, design: .serif, relativeTo: .title2)
-                .foregroundStyle(isActive ? Color.ikeruPrimaryAccent : TatamiTokens.paperGhost)
-            Text(label)
-                .ikeruScaledFont(10, weight: .semibold, relativeTo: .caption2)
-                .tracking(1.2)
-                .foregroundStyle(Color.ikeruTextSecondary)
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
-        }
-        .frame(maxWidth: .infinity)
-        .tatamiRoom(.standard, padding: 12)
     }
 
     // MARK: - Triumph Header
@@ -169,49 +111,6 @@ struct SessionSummaryView: View {
         Rectangle()
             .fill(TatamiTokens.goldDim.opacity(0.4))
             .frame(width: 1, height: 56)
-    }
-
-    // MARK: - XP Gain Rail
-
-    private var xpGainRail: some View {
-        VStack(spacing: 8) {
-            HStack {
-                MonCrest(kind: .asanoha, size: 14, color: .ikeruPrimaryAccent)
-                Text("XP EARNED", comment: "Summary XP label")
-                    .ikeruScaledFont(11, weight: .semibold, relativeTo: .caption2)
-                    .tracking(1.4)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.7)
-                    .foregroundStyle(Color.ikeruTextSecondary)
-                Spacer()
-                SerifNumeral("+\(viewModel.xpEarned)", size: 18,
-                             weight: .regular, color: .ikeruPrimaryAccent)
-            }
-            ZStack(alignment: .leading) {
-                Rectangle()
-                    .fill(TatamiTokens.goldDim.opacity(0.3))
-                    .frame(height: 3)
-                GeometryReader { geo in
-                    // Total earned-so-far rail.
-                    Rectangle()
-                        .fill(Color.ikeruPrimaryAccent)
-                        .frame(width: geo.size.width * xpProgress, height: 2)
-                    // Bright "new gain" segment, glowing.
-                    Rectangle()
-                        .fill(Color.ikeruPrimaryAccent)
-                        .frame(width: geo.size.width * xpGainProgress, height: 2)
-                        .offset(x: geo.size.width * max(0, xpProgress - xpGainProgress))
-                        .shadow(color: .ikeruPrimaryAccent.opacity(0.8), radius: 6)
-                }
-                .frame(height: 3)
-            }
-            HStack {
-                SerifNumeral(rankLabelStart, size: 10, color: TatamiTokens.paperGhost)
-                Spacer()
-                SerifNumeral(rankLabelEnd, size: 10, color: TatamiTokens.paperGhost)
-            }
-        }
-        .tatamiRoom(.standard, padding: 18)
     }
 
     // MARK: - Split Cells (NEW LEARNED / RE-LEARN)
@@ -321,25 +220,6 @@ struct SessionSummaryView: View {
     }
 
     private var timeString: String { viewModel.elapsedTimeFormatted }
-
-    /// Within-level XP progression after this session's gain.
-    private var xpProgress: Double {
-        let progress = RPGConstants.progressInLevel(totalXP: viewModel.totalXP)
-        let required = max(1, progress.required)
-        return min(1, max(0, Double(progress.current) / Double(required)))
-    }
-
-    /// Width of the bright "new gain" segment, expressed as a fraction of
-    /// the level's required XP. Capped so it never exceeds the full bar.
-    private var xpGainProgress: Double {
-        let progress = RPGConstants.progressInLevel(totalXP: viewModel.totalXP)
-        let required = max(1, progress.required)
-        let gainFraction = Double(viewModel.xpEarned) / Double(required)
-        return min(xpProgress, max(0, gainFraction))
-    }
-
-    private var rankLabelStart: String { "第\(viewModel.currentLevel)段" }
-    private var rankLabelEnd: String { "第\(viewModel.currentLevel + 1)段" }
 
     private var newCount: Int { viewModel.newItemsLearned }
     private var relearnCount: Int {

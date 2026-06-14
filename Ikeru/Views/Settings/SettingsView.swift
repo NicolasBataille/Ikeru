@@ -651,12 +651,7 @@ struct SettingsView: View {
 
     private var aboutSection: some View {
         section(label: ("関連", "About"), mon: .maru) {
-            settingRow(jp: "案内", label: "Tour.Settings.Replay", value: "") {
-                NotificationCenter.default.post(name: .replayFeatureTour, object: nil)
-            }
             settingRow(jp: "バージョン", label: "Version", value: appVersionValue)
-            settingRow(jp: "利用規約",   label: "Terms",   value: "")
-            settingRow(jp: "お問い合わせ", label: "Support", value: "")
 
             NavigationLink {
                 AttributionView()

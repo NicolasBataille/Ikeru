@@ -15,12 +15,8 @@ struct ActiveSessionView: View {
     @State private var showPauseOverlay = false
     @State private var hapticTriggerCorrect = false
     @State private var hapticTriggerIncorrect = false
-    @State private var xpGained: Int?
-    @State private var levelUpLevel: Int?
-    @State private var lootDrop: LootItem?
     @State private var dragOffset: CGFloat = 0
     @State private var showOneMinuteToast = false
-    @State private var showSwipeTutorial = false
 
     var body: some View {
         ZStack {
@@ -45,46 +41,16 @@ struct ActiveSessionView: View {
                 abandonConfirmationOverlay
             }
 
-            // First-run coach-mark teaching the four card swipe directions.
-            if showSwipeTutorial {
-                SwipeTutorialView(onDismiss: dismissSwipeTutorial)
-                    .transition(.opacity)
-                    .zIndex(20)
-            }
         }
         .toolbar(.hidden, for: .tabBar)
         .statusBarHidden(true)
         .persistentSystemOverlays(.hidden)
-        .xpGainOverlay(xpGained: $xpGained)
-        .levelUpOverlay(level: $levelUpLevel)
-        .lootDropOverlay(item: $lootDrop)
         .sensoryFeedback(.success, trigger: hapticTriggerCorrect)
         .sensoryFeedback(.warning, trigger: hapticTriggerIncorrect)
         .animation(
             .spring(response: 0.38, dampingFraction: 0.82),
             value: viewModel.showAbandonConfirmation
         )
-        .onChange(of: viewModel.lastXPGained) { _, newValue in
-            if let xp = newValue {
-                xpGained = xp
-                viewModel.clearXPGain()
-            }
-        }
-        .onChange(of: viewModel.levelUpLevel) { _, newValue in
-            if let level = newValue {
-                levelUpLevel = level
-                viewModel.clearLevelUp()
-            }
-        }
-        .onChange(of: viewModel.lastLootDrop?.id) { _, newValue in
-            if newValue != nil, let drop = viewModel.lastLootDrop {
-                lootDrop = drop
-                viewModel.clearLootDrop()
-            }
-        }
-        .onAppear { maybeShowSwipeTutorial() }
-        .onChange(of: viewModel.currentCard?.id) { _, _ in maybeShowSwipeTutorial() }
-        .animation(.easeInOut(duration: 0.3), value: showSwipeTutorial)
         // Pause the session timer when the app moves to background or becomes
         // inactive so background time is not counted toward session duration.
         .onChange(of: scenePhase) { _, newPhase in
@@ -229,15 +195,6 @@ struct ActiveSessionView: View {
             )
             .padding(.top, IkeruTheme.Spacing.xs)
 
-            // Compact XP bar below progress
-            XPBarView(
-                totalXP: viewModel.totalXP,
-                level: viewModel.currentLevel,
-                variant: .compact
-            )
-            .padding(.horizontal, IkeruTheme.Spacing.md)
-            .padding(.top, IkeruTheme.Spacing.xs)
-
             // Exercise transition container
             ExerciseTransitionContainer(
                 exercise: viewModel.currentExercise,
@@ -261,29 +218,6 @@ struct ActiveSessionView: View {
         }
         .ignoresSafeArea(.container, edges: .bottom)
         .simultaneousGesture(pauseSwipeGesture)
-    }
-
-    // MARK: - Swipe Tutorial
-
-    /// True when an SRS flashcard (the swipeable kind) is the current exercise.
-    private var isSRSCardVisible: Bool {
-        if case .srsReview? = viewModel.currentExercise { return true }
-        return false
-    }
-
-    /// Shows the swipe coach-mark the first time this profile reaches a card.
-    private func maybeShowSwipeTutorial() {
-        guard !showSwipeTutorial, isSRSCardVisible else { return }
-        guard let id = ActiveProfileResolver.activeProfileID() else { return }
-        guard !OnboardingFlags.hasSeenSwipeTutorial(profileID: id) else { return }
-        showSwipeTutorial = true
-    }
-
-    private func dismissSwipeTutorial() {
-        if let id = ActiveProfileResolver.activeProfileID() {
-            OnboardingFlags.markSwipeTutorialSeen(profileID: id)
-        }
-        showSwipeTutorial = false
     }
 
     // MARK: - Drag Indicator Pill

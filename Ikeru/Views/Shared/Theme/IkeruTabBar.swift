@@ -21,25 +21,22 @@ struct IkeruTabBar: View {
     var body: some View {
         HStack(spacing: 0) {
             ForEach(tabs) { tab in
-                Group {
-                    switch displayMode {
-                    case .beginner:
-                        BeginnerTabCell(
-                            tab: tab,
-                            isActive: selection == tab,
-                            railNamespace: railNamespace,
-                            onTap: { tap(tab) }
-                        )
-                    case .tatami:
-                        TatamiTabCell(
-                            tab: tab,
-                            isActive: selection == tab,
-                            railNamespace: railNamespace,
-                            onTap: { tap(tab) }
-                        )
-                    }
+                switch displayMode {
+                case .beginner:
+                    BeginnerTabCell(
+                        tab: tab,
+                        isActive: selection == tab,
+                        railNamespace: railNamespace,
+                        onTap: { tap(tab) }
+                    )
+                case .tatami:
+                    TatamiTabCell(
+                        tab: tab,
+                        isActive: selection == tab,
+                        railNamespace: railNamespace,
+                        onTap: { tap(tab) }
+                    )
                 }
-                .tourAnchor(tourTarget(for: tab))
             }
         }
         .padding(.horizontal, 22)
@@ -54,16 +51,6 @@ struct IkeruTabBar: View {
 
     private func tap(_ tab: AppTab) {
         withAnimation(Self.tapSpring) { selection = tab }
-    }
-
-    private func tourTarget(for tab: AppTab) -> TourTarget {
-        switch tab {
-        case .companion: return .companionTab
-        case .study:     return .studyTab
-        case .home:      return .homeTab
-        case .rpg:       return .rpgTab
-        case .settings:  return .settingsTab
-        }
     }
 }
 
@@ -105,31 +92,25 @@ private struct TatamiTabCell: View {
 
     private var japaneseLabel: String {
         switch tab {
-        case .home:      return "稽古"
-        case .study:     return "辞書"
-        case .companion: return "対話"
-        case .rpg:       return "段位"
-        case .settings:  return "設定"
+        case .practice: return "稽古"
+        case .explore:  return "学習"
+        case .settings: return "設定"
         }
     }
 
     private var accessibilityLabel: LocalizedStringKey {
         switch tab {
-        case .home:      return "Practice"
-        case .study:     return "Study"
-        case .companion: return "Talk"
-        case .rpg:       return "Profile"
-        case .settings:  return "Settings"
+        case .practice: return "Practice"
+        case .explore:  return "Explore"
+        case .settings: return "Settings"
         }
     }
 
     private var monKind: MonKind {
         switch tab {
-        case .home:      return .asanoha
-        case .study:     return .kikkou
-        case .companion: return .genji
-        case .rpg:       return .maru
-        case .settings:  return .kikkou  // shares with Study but never both active simultaneously
+        case .practice: return .asanoha
+        case .explore:  return .kikkou
+        case .settings: return .maru
         }
     }
 }
@@ -138,7 +119,7 @@ private struct TatamiTabCell: View {
 
 #Preview("IkeruTabBar") {
     struct Wrapper: View {
-        @State var selection: AppTab = .home
+        @State var selection: AppTab = .practice
         var body: some View {
             ZStack(alignment: .bottom) {
                 IkeruScreenBackground()

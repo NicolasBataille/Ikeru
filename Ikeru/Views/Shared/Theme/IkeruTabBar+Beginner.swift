@@ -39,21 +39,17 @@ struct BeginnerTabCell: View {
 
     private var symbolName: String {
         switch tab {
-        case .companion: return "bubble.left.and.bubble.right.fill"
-        case .study:     return "book.fill"
-        case .home:      return "house.fill"
-        case .rpg:       return "rosette"
-        case .settings:  return "gearshape.fill"
+        case .explore:  return "book.fill"
+        case .practice: return "house.fill"
+        case .settings: return "gearshape.fill"
         }
     }
 
     private var label: LocalizedStringKey {
         switch tab {
-        case .companion: return "Tab.Chat"
-        case .study:     return "Tab.Study"
-        case .home:      return "Tab.Home"
-        case .rpg:       return "Tab.Rank"
-        case .settings:  return "Tab.Settings"
+        case .explore:  return "Tab.Study"
+        case .practice: return "Tab.Home"
+        case .settings: return "Tab.Settings"
         }
     }
 }

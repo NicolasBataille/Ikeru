@@ -43,12 +43,10 @@ struct HomeView: View {
     @State private var viewModel: HomeViewModel?
     @State private var sessionViewModel: SessionViewModel?
     @State private var dailyTermViewModel: DailyTermViewModel?
-    @State private var suggestionController: DisplayModeSuggestionCardController?
     @State private var showSession = false
     @State private var heroAppeared = false
     @State private var dailyTermSheet: DailyTermSheet?
     @AppStorage(DailyTermSettings.enabledKey) private var dailyTermEnabled: Bool = false
-    @AppStorage("ikeru.equippedTitleName") private var equippedTitleName: String = ""
 
     var body: some View {
         ZStack {
@@ -78,16 +76,12 @@ struct HomeView: View {
             await viewModel?.loadData()
             await dailyTermViewModel?.load()
             await viewModel?.refreshRestDay()
-            await refreshSuggestionController()
             withAnimation(.spring(response: 0.55, dampingFraction: 0.86).delay(0.05)) {
                 heroAppeared = true
             }
             if CommandLine.arguments.contains("-autoStartSession") {
                 startSession()
             }
-        }
-        .onChange(of: displayMode) { _, new in
-            suggestionController?.setMode(new)
         }
         .onAppear {
             if viewModel != nil {
@@ -122,7 +116,6 @@ struct HomeView: View {
         .onReceive(NotificationCenter.default.publisher(for: .ikeruActiveProfileDidChange)) { _ in
             Task {
                 await viewModel?.loadData()
-                await refreshSuggestionController()
             }
         }
         #if canImport(UIKit)
@@ -165,39 +158,12 @@ struct HomeView: View {
 
     // MARK: - Suggestion Card Controller
 
-    private func refreshSuggestionController() async {
-        guard let profileID = ActiveProfileResolver.activeProfileID(),
-              let vm = viewModel
-        else { return }
-
-        let controller = suggestionController ?? DisplayModeSuggestionCardController(
-            profileID: profileID,
-            currentMode: displayMode
-        )
-        controller.setMode(displayMode)
-        let signals = await vm.advancedThresholdSignals()
-        controller.onSignalsChanged(
-            reviews: signals.reviews,
-            mastery: signals.mastery
-        )
-        suggestionController = controller
-    }
-
     // MARK: - Home Content
 
     @ViewBuilder
     private func homeContent(_ vm: HomeViewModel) -> some View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: IkeruTheme.Spacing.lg) {
-                if let controller = suggestionController, controller.shouldShow {
-                    DisplayModeSuggestionCard(
-                        onAccept: {
-                            displayModeRepo?.set(.tatami)
-                            controller.dismiss()
-                        },
-                        onDismiss: { controller.dismiss() }
-                    )
-                }
                 topBar(vm)
                 proverbHero(vm)
                 dailyTermSection
@@ -268,18 +234,8 @@ struct HomeView: View {
                             .ikeruScaledFont(22, weight: .semibold, design: .serif, relativeTo: .title2)
                             .foregroundStyle(TatamiTokens.paperGhost)
                     }
-
-                    if !equippedTitleName.isEmpty {
-                        Text(equippedTitleName.uppercased())
-                            .font(.ikeruMicro)
-                            .ikeruTracking(.micro)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.7)
-                            .foregroundStyle(Color.ikeruPrimaryAccent)
-                    }
                 }
                 Spacer()
-                levelPill(level: vm.level)
             }
         }
         .padding(.top, IkeruTheme.Spacing.xs)
@@ -326,28 +282,6 @@ struct HomeView: View {
         }
     }
 
-    // Level pill (top-right) per the design brief — replaces the earlier streak
-    // pill, which contradicted the product brief's anti-gamification stance
-    // ("no streaks, no gems, no daily login pressure").
-    @ViewBuilder
-    private func levelPill(level: Int) -> some View {
-        HStack(spacing: 7) {
-            EnsoRankView(level: level, size: 16)
-            Text("\u{7B2C}\(level)\u{6BB5}") // 第N段
-                .font(.system(size: 12, weight: .medium, design: .serif))
-                .foregroundStyle(Color.ikeruTextPrimary)
-                .tracking(1.4)
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 7)
-        .background {
-            Rectangle()
-                .fill(Color.white.opacity(0.05))
-                .overlay(Rectangle().strokeBorder(TatamiTokens.goldDim.opacity(0.5), lineWidth: 0.6))
-        }
-        .sumiCorners(color: TatamiTokens.goldDim, size: 5, weight: 0.9)
-    }
-
     // MARK: - Rest Day Block
 
     private var restDayBlock: some View {
@@ -375,8 +309,9 @@ struct HomeView: View {
 
     @ViewBuilder
     private func proverbHero(_ vm: HomeViewModel) -> some View {
-        let proverb = HomeProverb.dailyProverb(level: vm.level)
-        let progress = Double(vm.xpInCurrentLevel) / Double(max(1, vm.xpRequiredForLevel))
+        // Rotate the proverb by day of year (was keyed to RPG level, now removed).
+        let dayIndex = Calendar.current.ordinality(of: .day, in: .year, for: Date()) ?? 1
+        let proverb = HomeProverb.dailyProverb(level: dayIndex)
 
         VStack(alignment: .leading, spacing: 14) {
             // Top row — bilingual "本日 · TODAY" + Hanko stamp when work is due
@@ -436,45 +371,6 @@ struct HomeView: View {
                     .sumiCorners(color: Color.ikeruBackground.opacity(0.6), size: 6, weight: 1.2, inset: -1)
                 }
                 .buttonStyle(.plain)
-                .tourAnchor(.sessionCTA)
-            }
-
-            // XP progress — fusuma rail with serif numerals
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(alignment: .firstTextBaseline) {
-                    BilingualLabel(japanese: "経験", chrome: "Experience", mon: nil)
-                    Spacer()
-                    HStack(spacing: 0) {
-                        SerifNumeral(vm.xpInCurrentLevel, size: 12,
-                                     weight: .regular, color: .ikeruPrimaryAccent)
-                        Text(" / ")
-                            .font(.system(size: 12, design: .serif))
-                            .foregroundStyle(TatamiTokens.paperGhost)
-                        SerifNumeral(vm.xpRequiredForLevel, size: 12,
-                                     weight: .regular, color: TatamiTokens.paperGhost)
-                    }
-                }
-
-                // Hairline fusuma progress
-                ZStack(alignment: .leading) {
-                    Rectangle()
-                        .fill(TatamiTokens.goldDim.opacity(0.3))
-                        .frame(height: 2)
-                    GeometryReader { geo in
-                        Rectangle()
-                            .fill(Color.ikeruPrimaryAccent)
-                            .frame(width: geo.size.width * progress, height: 2)
-                            .shadow(color: .ikeruPrimaryAccent.opacity(0.6), radius: 3)
-                    }
-                    .frame(height: 2)
-                }
-
-                Text("\(vm.xpToNextLevel) XP to next rank",
-                     comment: "Subtle XP-remaining label on the Home hero")
-                    .ikeruScaledFont(11, relativeTo: .caption2)
-                    .lineLimit(2)
-                    .foregroundStyle(Color.ikeruTextSecondary)
-                    .frame(maxWidth: .infinity, alignment: .trailing)
             }
         }
         .tatamiRoom(.glass, padding: 20)

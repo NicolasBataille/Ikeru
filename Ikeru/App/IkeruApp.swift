@@ -141,13 +141,6 @@ struct IkeruApp: App {
                             profileViewModel?.loadProfile()
                         }
                 }
-                .onChange(of: showOnboarding) { wasShowing, isShowing in
-                    // Sign-up onboarding just finished — kick off the in-app
-                    // feature tour for this brand-new profile.
-                    if wasShowing && !isShowing {
-                        NotificationCenter.default.post(name: .requestFeatureTour, object: nil)
-                    }
-                }
         } else {
             // Brief loading state while checking profile
             ZStack {
