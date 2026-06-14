@@ -73,6 +73,13 @@ struct MainTabView: View {
         .onReceive(NotificationCenter.default.publisher(for: .startReviewFromShortcut)) { _ in
             selectedTab = .practice
         }
+        .onReceive(NotificationCenter.default.publisher(for: .displayModeDidChange)) { _ in
+            // Onboarding placement (or any out-of-band writer) changed the mode;
+            // re-read so beginner aids vs. tatami density apply without relaunch.
+            if let repo = displayModeRepo {
+                displayMode = repo.current()
+            }
+        }
         .environment(\.locale, appLocale.currentLocale)
         .environment(appLocale)
         .environment(\.displayMode, displayMode)

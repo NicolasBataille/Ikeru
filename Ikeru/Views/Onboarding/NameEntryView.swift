@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 import IkeruCore
 import os
 
@@ -9,7 +10,7 @@ struct NameEntryView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.profileViewModel) private var profileViewModel
     @State private var name: String = ""
-    @State private var showTour = false
+    @State private var showPlacement = false
     @State private var contentAppeared = false
     @FocusState private var isNameFieldFocused: Bool
 
@@ -45,10 +46,10 @@ struct NameEntryView: View {
             }
             .padding(.horizontal, IkeruTheme.Spacing.xl)
         }
-        .fullScreenCover(isPresented: $showTour, onDismiss: {
+        .fullScreenCover(isPresented: $showPlacement, onDismiss: {
             dismiss()
         }) {
-            OnboardingTourView()
+            PlacementView()
         }
         .onAppear {
             withAnimation(.spring(response: 0.6, dampingFraction: 0.86).delay(0.1)) {
@@ -159,7 +160,152 @@ struct NameEntryView: View {
         guard isNameValid else { return }
         Logger.ui.info("Name submitted for profile creation")
         profileViewModel?.createProfile(name: name)
+        showPlacement = true
+    }
+}
+
+// MARK: - PlacementView
+//
+// One calm question after name entry: are you starting fresh, or do you
+// already know some Japanese? The answer sets the app's `DisplayMode` —
+// `.beginner` (reading aids on, the default) or `.tatami` (kanji-first,
+// translations hidden) — so experienced learners opt into density upfront
+// instead of having to discover the Settings toggle. Fully reversible there
+// ("Tatami interface"), so this is a gentle nudge, not a lock-in.
+
+private struct PlacementView: View {
+
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
+    @State private var showTour = false
+    @State private var contentAppeared = false
+
+    var body: some View {
+        ZStack {
+            IkeruScreenBackground()
+
+            VStack(spacing: 0) {
+                Spacer()
+
+                heroBlock
+                    .opacity(contentAppeared ? 1 : 0)
+                    .offset(y: contentAppeared ? 0 : 16)
+
+                Spacer().frame(height: IkeruTheme.Spacing.xxl)
+
+                VStack(spacing: IkeruTheme.Spacing.md) {
+                    choice(
+                        kanji: "\u{521D}",  // 初 — beginning
+                        title: "I'm just starting",
+                        subtitle: "Kana, romaji, and reading aids on. The gentle path.",
+                        mode: .beginner
+                    )
+                    choice(
+                        kanji: "\u{7573}",  // 畳 — tatami (mirrors the Settings toggle)
+                        title: "I know some already",
+                        subtitle: "Kanji-first, translations hidden. Change anytime in Settings.",
+                        mode: .tatami
+                    )
+                }
+                .opacity(contentAppeared ? 1 : 0)
+                .offset(y: contentAppeared ? 0 : 16)
+
+                Spacer()
+                Spacer()
+            }
+            .padding(.horizontal, IkeruTheme.Spacing.xl)
+        }
+        .fullScreenCover(isPresented: $showTour, onDismiss: {
+            dismiss()
+        }) {
+            OnboardingTourView()
+        }
+        .onAppear {
+            withAnimation(.spring(response: 0.6, dampingFraction: 0.86).delay(0.1)) {
+                contentAppeared = true
+            }
+        }
+    }
+
+    // MARK: - Hero
+
+    private var heroBlock: some View {
+        VStack(spacing: 8) {
+            Text("ONE QUESTION")
+                .font(.ikeruMicro)
+                .ikeruTracking(.micro)
+                .foregroundStyle(Color.ikeruTextTertiary)
+
+            Text("Have you studied\nJapanese before?")
+                .ikeruScaledFont(30, weight: .light, relativeTo: .title)
+                .ikeruTracking(.display)
+                .foregroundStyle(Color.ikeruTextPrimary)
+                .multilineTextAlignment(.center)
+                .lineSpacing(4)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    // MARK: - Choice card
+
+    private func choice(
+        kanji: String,
+        title: LocalizedStringKey,
+        subtitle: LocalizedStringKey,
+        mode: DisplayMode
+    ) -> some View {
+        Button {
+            select(mode)
+        } label: {
+            HStack(spacing: IkeruTheme.Spacing.md) {
+                Text(kanji)
+                    .font(.system(size: 30, weight: .light, design: .serif))
+                    .foregroundStyle(Color.ikeruPrimaryAccent)
+                    .frame(width: 48)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(title)
+                        .ikeruScaledFont(17, weight: .regular, relativeTo: .body)
+                        .foregroundStyle(Color.ikeruTextPrimary)
+                    Text(subtitle)
+                        .ikeruScaledFont(12, relativeTo: .caption2)
+                        .foregroundStyle(Color.ikeruTextSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(TatamiTokens.goldDim)
+            }
+            .contentShape(Rectangle())
+            .tatamiRoom(.standard, padding: 18)
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - Actions
+
+    private func select(_ mode: DisplayMode) {
+        makeDisplayModeRepo().set(mode)
+        NotificationCenter.default.post(name: .displayModeDidChange, object: nil)
+        Logger.ui.info("Placement chosen — displayMode=\(mode.rawValue, privacy: .public)")
         showTour = true
+    }
+
+    /// Builds a repository the same way `MainTabView` does. The profile created
+    /// at name entry is already the active profile, so `set` writes to the
+    /// correct profile-scoped key.
+    private func makeDisplayModeRepo() -> UserDefaultsDisplayModePreferenceRepository {
+        let container = modelContext.container
+        return UserDefaultsDisplayModePreferenceRepository(
+            defaults: .standard,
+            activeProfileID: { ActiveProfileResolver.activeProfileID() },
+            profileCreatedAt: { id in
+                let descriptor = FetchDescriptor<UserProfile>(
+                    predicate: #Predicate { $0.id == id }
+                )
+                return (try? container.mainContext.fetch(descriptor))?.first?.createdAt
+            }
+        )
     }
 }
 
