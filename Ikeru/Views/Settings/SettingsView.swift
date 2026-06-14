@@ -227,11 +227,6 @@ struct SettingsView: View {
 
     private var practiceSection: some View {
         section(label: ("稽古", "Practice"), mon: .asanoha) {
-            settingRow(
-                jp: "一日の目標",
-                label: "Daily goal",
-                value: String(localized: "12 cards")
-            )
             reminderToggleRow(
                 jp: "通知",
                 label: "Reminders",
@@ -328,11 +323,6 @@ struct SettingsView: View {
                         )
                     }
                 }
-            )
-            settingRow(
-                jp: "音声",
-                label: "Sound",
-                value: String(localized: "On")
             )
             settingRow(
                 jp: "振り仮名",
