@@ -148,7 +148,7 @@ private struct TabContentView: View {
         case .practice:
             HomeView()
         case .explore:
-            EtudeView()   // temporary — replaced by ExploreView in Phase 2
+            ExploreView()
         case .settings:
             SettingsView()
         }
