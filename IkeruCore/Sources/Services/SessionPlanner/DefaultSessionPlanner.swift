@@ -255,7 +255,14 @@ public struct DefaultSessionPlanner: SessionPlanner {
         Calendar(identifier: .gregorian).ordinality(of: .day, in: .year, for: now) ?? 0
     }
 
-    private func finalize(exercises: [ExerciseItem]) -> SessionPlan {
+    private func finalize(exercises rawExercises: [ExerciseItem]) -> SessionPlan {
+        // Only SRS flashcard review is a real, fully-implemented in-session
+        // exercise today. The other ExerciseItem kinds render a placeholder
+        // ("Complete" auto-grade), so we filter them out until real content
+        // exists — a session is honest SRS review, never a fake exercise.
+        let exercises = rawExercises.filter {
+            if case .srsReview = $0 { return true } else { return false }
+        }
         let secs = exercises.map(\.estimatedDurationSeconds).reduce(0, +)
         var breakdown: [SkillType: Int] = [:]
         for ex in exercises { breakdown[ex.skill, default: 0] += 1 }

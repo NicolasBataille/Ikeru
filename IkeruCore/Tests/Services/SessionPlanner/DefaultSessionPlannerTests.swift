@@ -7,8 +7,8 @@ struct DefaultSessionPlannerHomeTests {
 
     private let planner = DefaultSessionPlanner()
 
-    @Test("Home plan obeys ~40/30/20/10 segment split for 15 min")
-    func segmentSplit() async {
+    @Test("Home session contains only SRS review (placeholder exercises filtered)")
+    func srsOnlyHomeSession() async {
         let cards = (0..<30).map { _ in fixtureDueCard() }
         let inputs = SessionPlannerInputs(
             source: .homeRecommendation,
@@ -19,14 +19,14 @@ struct DefaultSessionPlannerHomeTests {
         )
         let plan = await planner.compose(inputs: inputs)
 
-        let totalSec = plan.exercises.map(\.estimatedDurationSeconds).reduce(0, +)
-        let reviewSec = plan.exercises
-            .filter { if case .srsReview = $0 { return true }; return false }
-            .map(\.estimatedDurationSeconds).reduce(0, +)
-
-        #expect(totalSec >= 700 && totalSec <= 1100, "totalSec=\(totalSec)")
-        let fraction = Double(reviewSec) / Double(totalSec)
-        #expect(fraction >= 0.25 && fraction <= 0.55, "reviewFraction=\(fraction)")
+        // Only SRS flashcard review is a real in-session exercise today; the
+        // planner filters out the placeholder exercise kinds. Every item must
+        // be an SRS review and there must be some (30 cards are due).
+        #expect(plan.exercises.count > 0)
+        let allSRS = plan.exercises.allSatisfy {
+            if case .srsReview = $0 { return true } else { return false }
+        }
+        #expect(allSRS, "expected only .srsReview, got \(plan.exercises)")
     }
 
     @Test("N5 learner never gets speakingPractice in Home, even if unlocked")
@@ -73,8 +73,12 @@ struct DefaultSessionPlannerStudyTests {
 
     private let planner = DefaultSessionPlanner()
 
-    @Test("Study custom respects user-selected types only")
-    func studyCustomRespectsTypes() async {
+    @Test("Study-custom of placeholder-only types yields an empty session")
+    func studyCustomPlaceholderOnlyIsEmpty() async {
+        // study-custom synthesises only the selected typed exercises; none of
+        // them are real yet, so after the SRS-only filter the plan is empty.
+        // (The Compose feature is deferred until real exercise content exists.)
+        let cards = (0..<10).map { _ in fixtureDueCard() }
         let inputs = SessionPlannerInputs(
             source: .studyCustom(
                 types: [.kanaStudy, .vocabularyStudy],
@@ -83,36 +87,45 @@ struct DefaultSessionPlannerStudyTests {
             durationMinutes: 15,
             profile: .empty,
             unlockedTypes: Set(ExerciseType.allCases),
-            availableCards: []
+            availableCards: cards
         )
         let plan = await planner.compose(inputs: inputs)
-        for ex in plan.exercises {
-            switch ex {
-            case .kanjiStudy, .vocabularyStudy: continue
-            default:
-                Issue.record("Unexpected exercise type: \(ex)")
-            }
-        }
-        #expect(plan.exercises.count > 0)
+        #expect(plan.exercises.isEmpty)
     }
 
-    @Test("Study custom drops types the user picked but isn't actually unlocked")
-    func studyCustomFiltersToUnlocked() async {
+    @Test("Placeholder (non-SRS) exercise types are never scheduled")
+    func placeholderTypesNeverScheduled() async {
+        let cards = (0..<10).map { _ in fixtureDueCard() }
         let inputs = SessionPlannerInputs(
             source: .studyCustom(
-                types: [.kanaStudy, .speakingPractice],
+                types: [.kanaStudy, .speakingPractice, .grammarExercise],
                 jlptLevels: [.n5]
             ),
             durationMinutes: 15,
             profile: .empty,
-            unlockedTypes: [.kanaStudy],
-            availableCards: []
+            unlockedTypes: Set(ExerciseType.allCases),
+            availableCards: cards
         )
         let plan = await planner.compose(inputs: inputs)
-        for ex in plan.exercises {
-            if case .speakingExercise = ex { Issue.record("speaking should be filtered out") }
+        let nonSRS = plan.exercises.filter {
+            if case .srsReview = $0 { return false } else { return true }
         }
-        #expect(plan.exercises.count > 0)
+        #expect(nonSRS.isEmpty, "non-SRS exercises should be filtered: \(nonSRS)")
+    }
+
+    private func fixtureDueCard() -> CardDTO {
+        CardDTO(
+            id: UUID(),
+            front: "x",
+            back: "y",
+            type: .vocabulary,
+            fsrsState: FSRSState(difficulty: 5, stability: 5, reps: 1, lapses: 0, lastReview: nil),
+            easeFactor: 2.5,
+            interval: 1,
+            dueDate: Date(timeIntervalSince1970: 1_700_000_000),
+            lapseCount: 0,
+            leechFlag: false
+        )
     }
 }
 
