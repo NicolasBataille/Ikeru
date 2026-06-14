@@ -3,6 +3,24 @@ import SwiftData
 import IkeruCore
 import os
 
+// MARK: - FeedbackState
+//
+// Shared correct/incorrect feedback state for exercise view models (vocabulary,
+// sentence construction, session, exercise transitions). Re-homed here from the
+// removed CardReviewViewModel, which previously housed this shared type.
+
+public enum FeedbackState: Sendable, Equatable {
+    case correct
+    case incorrect
+
+    public var color: Color {
+        switch self {
+        case .correct: Color(hex: IkeruTheme.Colors.success)        // jade green
+        case .incorrect: Color(hex: IkeruTheme.Colors.secondaryAccent) // vermillion
+        }
+    }
+}
+
 // MARK: - SessionViewModel
 
 @MainActor
