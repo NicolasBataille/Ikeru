@@ -53,3 +53,25 @@ Demote to a single Explore row presenting `ConversationView` (the complete surfa
 
 ### Key risks
 SessionViewModel RPG entanglement (stub before delete), Watch `xp` field (hardcode 0), Vocabulary dictionary empty for new users (show all N5 with a "Studied" filter), the documented kana black-screen bug (navigate straight to `KanaPoolSelectorView`, never via the session router), do **not** rename `DisplayMode` enum cases (only the Settings label).
+
+---
+
+## Progress — 2026-06-14 (session 2)
+
+Delivered (committed on `claude/ux-deep-rework`, build green, Core tests green):
+- **Explore mastery counts** — new pure, tested `KanaProgress` (Core) drives a quiet "X/92" on the Kana row and a saved-words count on Vocabulary. Replaces gamified XP chrome with two honest numbers (Motivation model, above).
+- **Honest Vocabulary row** — reframed to "Your saved words". *Finding:* there is **no seeded N5 vocab pack** — the dictionary is collected via Sakura chat, so the old "N5 dictionary & drills" subtitle over-promised. (Plan's "show all N5 with a Studied filter" is not possible until an N5 vocab content pack exists — a separate content task, gated by the zero-paid-API constraint.)
+- **Settings slimming** — removed the decorative FSRS "Memory algorithm" stub sub-page (read-only, no controls).
+- **Beginner-first onboarding placement** — after name entry, one question ("Have you studied Japanese before?") sets `DisplayMode` (`.beginner` default vs `.tatami` immersion). *Correction to plan:* `DisplayMode` **already is** the density layer (and already defaults `.beginner` for new profiles), and a dedicated **Furigana** toggle already exists — so the plan's "density becomes one honest Furigana toggle" was a mis-read. We did **not** rename the "Tatami interface" toggle (its copy is already clear); the placement question is the experienced-as-a-layer opt-in. A `.displayModeDidChange` notification makes the choice apply without relaunch.
+- **i18n** — FR added for all new Explore + placement strings (and prior-session Explore strings that were never localized).
+
+### Deferred (with reason): dormant RPG **deletion** — Phase 1 "delete RPG Core files"
+The inventory characterized `RPGState` as dormant. On inspection it is **load-bearing**, not purely dead:
+- `acknowledgedUnlocks` → 「新しい稽古」 unlock dedup (`ExerciseUnlockService`)
+- `jlptBackfillVersion` → one-shot boot JLPT backfill
+- `lastReadinessBestFit` → JLPT readiness telemetry
+- `lastSessionDate` / `totalSessionsCompleted` / `currentDailyStreak` → rest-day card + backup/export
+- It is a **`@Relationship(deleteRule: .cascade)`** child of `UserProfile`, registered in the app `Schema` → deleting it is a real SwiftData migration on live TestFlight data.
+- In `SessionViewModel.finalizeSession`, the dead XP/loot/bonus computation is **interwoven** with the live session-history writes (and the streak value comes from `SessionBonusService.evaluate`, itself slated for deletion). ~14 test files assert on `xpEarned`.
+
+Conclusion: this is **not** a safe invisible delete — it is a dedicated migration touching the core study loop, the JLPT/unlock systems, and the SwiftData schema, for **zero visible benefit**. The dormant XP/loot fields are harmless (computed, never displayed). **Recommendation:** do it as its own carefully-tested PR — (1) extract a lean `SessionRecord`/`ProgressState` `@Model` for `lastSessionDate`/`totalSessionsCompleted`/streaks/`acknowledgedUnlocks`/`jlptBackfillVersion`/`lastReadinessBestFit`; (2) lightweight-migrate; (3) rewire the ~10 call sites; (4) delete loot/attribute models + the 5 services + `EquippedCosmeticsBridge` + the dead `SessionViewModel` machinery; (5) update the ~14 tests — verifying against a pre-existing store. Not bundled here to avoid risking visible systems for invisible hygiene.
