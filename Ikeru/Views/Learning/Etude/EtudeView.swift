@@ -21,6 +21,11 @@ struct ExploreView: View {
     @State private var conversationViewModel: ConversationViewModel?
     @State private var showConversation = false
 
+    // Calm progress signals (replace the old gamified XP chrome): how much
+    // kana is learned, and how many words you've collected. Nil until loaded.
+    @State private var kanaProgress: KanaProgress?
+    @State private var vocabSavedCount: Int?
+
     var body: some View {
         ZStack {
             IkeruScreenBackground()
@@ -37,6 +42,7 @@ struct ExploreView: View {
             }
         }
         .toolbar(.hidden, for: .navigationBar)
+        .task { await loadProgress() }
         .fullScreenCover(isPresented: $showConversation) {
             if let cvm = conversationViewModel {
                 ConversationView(viewModel: cvm)
@@ -63,7 +69,8 @@ struct ExploreView: View {
             KanaPoolSelectorView()
         } label: {
             exploreRow(kanji: "\u{304B}\u{306A}", title: "Kana",
-                       subtitle: "Hiragana & katakana")
+                       subtitle: "Hiragana & katakana",
+                       stat: kanaProgress.map { "\($0.total)/\(KanaProgress.grandTotal)" })
         }
         .buttonStyle(.plain)
     }
@@ -73,7 +80,8 @@ struct ExploreView: View {
             VocabularyDictionaryView()
         } label: {
             exploreRow(kanji: "\u{8A9E}\u{5F59}", title: "Vocabulary",
-                       subtitle: "N5 dictionary & drills")
+                       subtitle: "Your saved words",
+                       stat: vocabSavedCount.flatMap { $0 > 0 ? "\($0)" : nil })
         }
         .buttonStyle(.plain)
     }
@@ -88,9 +96,11 @@ struct ExploreView: View {
         .buttonStyle(.plain)
     }
 
-    /// Shared row chrome: serif kanji eyebrow, bilingual title, subtitle, chevron.
+    /// Shared row chrome: serif kanji eyebrow, bilingual title, subtitle,
+    /// an optional progress stat (e.g. "46/92"), and a chevron.
     private func exploreRow(kanji: String, title: LocalizedStringKey,
-                            subtitle: LocalizedStringKey) -> some View {
+                            subtitle: LocalizedStringKey,
+                            stat: String? = nil) -> some View {
         HStack(spacing: IkeruTheme.Spacing.md) {
             Text(kanji)
                 .font(.system(size: 24, weight: .light, design: .serif))
@@ -105,6 +115,12 @@ struct ExploreView: View {
                     .foregroundStyle(Color.ikeruTextSecondary)
             }
             Spacer()
+            if let stat {
+                Text(stat)
+                    .ikeruScaledFont(13, design: .serif, relativeTo: .caption)
+                    .monospacedDigit()
+                    .foregroundStyle(Color.ikeruPrimaryAccent)
+            }
             Image(systemName: "chevron.right")
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(TatamiTokens.goldDim)
@@ -112,6 +128,19 @@ struct ExploreView: View {
         .padding(.vertical, IkeruTheme.Spacing.sm)
         .contentShape(Rectangle())
         .tatamiRoom(.standard, padding: 16)
+    }
+
+    // MARK: - Progress
+
+    /// Loads calm progress counts from the card + vocabulary stores. Kana
+    /// mastery powers "X/92"; the vocabulary collection size powers the saved-
+    /// words stat. Both stay nil (no stat shown) until the first load lands.
+    private func loadProgress() async {
+        let container = modelContext.container
+        let cards = await CardRepository(modelContainer: container).allCards()
+        let vocab = await VocabularyRepository(modelContainer: container).allEntries()
+        kanaProgress = KanaProgress.from(cards: cards)
+        vocabSavedCount = vocab.count
     }
 
     // MARK: - Conversation
