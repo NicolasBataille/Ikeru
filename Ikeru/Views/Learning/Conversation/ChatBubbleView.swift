@@ -25,6 +25,20 @@ struct ChatBubbleView: View {
     @AppStorage("ikeru.furigana.userTouched") private var furiganaUserTouched = false
     @Environment(\.displayMode) private var displayMode
 
+    // Measured width of the full message row. The bubble fills the row
+    // (maxWidth:.infinity), so this is the available width independent of the
+    // bubble's own content — used to cap the rich-text wrap width so the
+    // furigana flow never lays out wider than the bubble (which would centre
+    // an oversized flow and clip the leading character).
+    @State private var rowWidth: CGFloat = 0
+
+    private var textMaxWidth: CGFloat? {
+        guard rowWidth > 0 else { return nil }
+        // row − trailing spacer (48) − bubble's leading+trailing padding (2×md)
+        let available = rowWidth - 48 - IkeruTheme.Spacing.md * 2
+        return available > 40 ? available : nil
+    }
+
     private var effectiveFurigana: Bool {
         ReadingAidResolver(
             mode: displayMode,
@@ -63,9 +77,17 @@ struct ChatBubbleView: View {
 
             if variant == .companion { Spacer(minLength: 48) }
         }
-        // Ensure the HStack fills the available container width so the
-        // companion bubble always anchors to the leading edge.
-        .frame(maxWidth: .infinity)
+        // Anchor to leading/trailing explicitly. A plain maxWidth:.infinity
+        // defaults to centre alignment, so when the rich content reports an
+        // over-wide intrinsic size the whole HStack is centred and the
+        // companion bubble's first characters get pushed off-screen left.
+        .frame(maxWidth: .infinity, alignment: variant == .companion ? .leading : .trailing)
+        .background(
+            GeometryReader { geo in
+                Color.clear.preference(key: RowWidthKey.self, value: geo.size.width)
+            }
+        )
+        .onPreferenceChange(RowWidthKey.self) { rowWidth = $0 }
     }
 
     // MARK: - Rich Content
@@ -88,7 +110,8 @@ struct ChatBubbleView: View {
             KanaRubyText(
                 text,
                 textColor: textColor,
-                showFurigana: variant == .companion && effectiveFurigana
+                showFurigana: variant == .companion && effectiveFurigana,
+                maxWidth: textMaxWidth
             )
 
         case .kanji(let character):
@@ -115,6 +138,17 @@ struct ChatBubbleView: View {
         case .user:
             return .white
         }
+    }
+}
+
+// MARK: - Row Width Preference
+
+/// Carries the measured message-row width up so the bubble can cap its
+/// rich-text wrap width to the real available space.
+private struct RowWidthKey: PreferenceKey {
+    static let defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
     }
 }
 

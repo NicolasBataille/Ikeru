@@ -58,10 +58,12 @@ struct KanaRubyText: View {
     var body: some View {
         if showFurigana {
             let tokens = Self.tokenize(content)
-            IkeruFlowLayout(
-                spacing: 0,
-                maxWidth: maxWidth ?? (UIScreen.main.bounds.width - 120)
-            ) {
+            // Pass maxWidth straight through (nil unless the caller overrides):
+            // IkeruFlowLayout then wraps at the REAL proposed width from its
+            // container. The previous `UIScreen.main.bounds.width - 120` hardcode
+            // assumed a full-width bubble and overflowed the narrower bubble in
+            // CompanionChatSheet, clipping the leading character of each line.
+            IkeruFlowLayout(spacing: 0, maxWidth: maxWidth) {
                 ForEach(Array(tokens.enumerated()), id: \.offset) { _, token in
                     tokenView(token)
                 }
@@ -79,7 +81,7 @@ struct KanaRubyText: View {
         case .kana(let character, let romaji):
             VStack(spacing: 0) {
                 Text(romaji)
-                    .ikeruScaledFont(9, weight: .medium, design: .rounded, relativeTo: .caption2)
+                    .font(rubyFont)
                     .foregroundStyle(rubyColor)
                     .lineLimit(1)
                     .fixedSize()
@@ -92,7 +94,7 @@ struct KanaRubyText: View {
         case .kanji(let base, let reading):
             VStack(spacing: 0) {
                 Text(reading)
-                    .ikeruScaledFont(9, weight: .medium, design: .rounded, relativeTo: .caption2)
+                    .font(rubyFont)
                     .foregroundStyle(Color.ikeruPrimaryAccent.opacity(0.7))
                     .lineLimit(1)
                     .fixedSize()
@@ -105,7 +107,7 @@ struct KanaRubyText: View {
         case .other(let run):
             VStack(spacing: 0) {
                 Text(" ")
-                    .ikeruScaledFont(9, weight: .medium, design: .rounded, relativeTo: .caption2)
+                    .font(rubyFont)
                     .lineLimit(1)
                     .hidden()
                 Text(run)
@@ -136,7 +138,20 @@ struct KanaRubyText: View {
 
         func flushBuffer() {
             guard !buffer.isEmpty else { return }
-            tokens.append(.other(buffer))
+            // Break Latin/punctuation runs into word-sized tokens (each keeps its
+            // trailing space) so the flow can wrap BETWEEN words. A single long
+            // .other token is unbreakable, so it would exceed the flow width and
+            // force the whole flow oversized — which SwiftUI then centres, pushing
+            // the leading character off the bubble's edge (the chat-bubble clip).
+            var word = ""
+            for ch in buffer {
+                word.append(ch)
+                if ch == " " {
+                    tokens.append(.other(word))
+                    word = ""
+                }
+            }
+            if !word.isEmpty { tokens.append(.other(word)) }
             buffer = ""
         }
 
