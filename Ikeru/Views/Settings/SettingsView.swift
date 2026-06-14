@@ -132,7 +132,6 @@ struct SettingsView: View {
                     displaySection
                     accountSection
                     aiSection
-                    memoryAlgorithmLinkSection
                     dataStorageLinkSection
                     aboutSection
                     #if IKERU_DEV_TOOLS
@@ -564,23 +563,6 @@ struct SettingsView: View {
         }
     }
 
-    // MARK: - Section link: 記憶 / Memory algorithm (sub-page)
-
-    private var memoryAlgorithmLinkSection: some View {
-        section(label: ("記憶", "Memory algorithm"), mon: .kikkou) {
-            NavigationLink {
-                MemoryAlgorithmSettingsView()
-            } label: {
-                rowChrome(
-                    jp: "アルゴリズム",
-                    label: "FSRS & retention",
-                    value: ""
-                )
-            }
-            .buttonStyle(.plain)
-        }
-    }
-
     // MARK: - Section link: 倉庫 / Data & Storage (sub-page)
 
     private var dataStorageLinkSection: some View {
@@ -946,72 +928,6 @@ struct SettingsView: View {
                 Logger.cache.warning("Manual pre-warm failed: \(error.localizedDescription)")
                 toastManager.showError("Pre-warm failed: \(error.localizedDescription)")
             }
-        }
-    }
-}
-
-// MARK: - Sub-page: Memory Algorithm Settings
-
-private struct MemoryAlgorithmSettingsView: View {
-
-    var body: some View {
-        ZStack {
-            IkeruScreenBackground(variant: .auxiliary)
-                .ignoresSafeArea()
-
-            ScrollView(showsIndicators: false) {
-                VStack(alignment: .leading, spacing: 24) {
-                    VStack(alignment: .leading, spacing: 6) {
-                        BilingualLabel(japanese: "記憶", chrome: "Memory algorithm")
-                        Text("FSRS & Retention", comment: "Memory algorithm subpage heading")
-                            .ikeruScaledFont(28, weight: .light, design: .serif, relativeTo: .title)
-                            .foregroundStyle(Color.ikeruTextPrimary)
-                    }
-
-                    memorySection
-                }
-                .padding(.horizontal, 22)
-                .padding(.top, 14)
-                .padding(.bottom, 60)
-            }
-        }
-        .navigationTitle("Memory algorithm")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar(.hidden, for: .navigationBar)
-    }
-
-    private var memorySection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            BilingualLabel(japanese: "記憶", chrome: "Memory algorithm", mon: .kikkou)
-            VStack(spacing: 0) {
-                memoryRow(jp: "FSRSパラメータ", label: "FSRS parameters", value: String(localized: "Optimized"))
-                memoryRow(jp: "保持率",         label: "Target retention", value: "90%")
-                memoryRow(jp: "最大間隔",       label: "Maximum interval", value: "36500d")
-            }
-            .tatamiRoom(.standard, padding: 0)
-        }
-    }
-
-    @ViewBuilder
-    private func memoryRow(jp: String, label: LocalizedStringKey, value: String) -> some View {
-        HStack(spacing: 16) {
-            Text(jp)
-                .ikeruScaledFont(13, design: .serif, relativeTo: .caption)
-                .foregroundStyle(TatamiTokens.paperGhost)
-            Text(label)
-                .ikeruScaledFont(13, relativeTo: .caption)
-                .foregroundStyle(Color.ikeruTextPrimary)
-            Spacer()
-            Text(value)
-                .ikeruScaledFont(13, design: .serif, relativeTo: .caption)
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
-                .foregroundStyle(Color.ikeruPrimaryAccent)
-        }
-        .padding(.horizontal, 16).padding(.vertical, 14)
-        .overlay(alignment: .bottom) {
-            Rectangle().fill(TatamiTokens.goldDim.opacity(0.2))
-                .frame(height: 1).padding(.horizontal, 16)
         }
     }
 }
