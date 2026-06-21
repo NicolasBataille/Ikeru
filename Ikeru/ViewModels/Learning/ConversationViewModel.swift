@@ -28,7 +28,13 @@ public struct ConversationTopic: Hashable, Sendable {
 
 @MainActor
 @Observable
-public final class ConversationViewModel {
+public final class ConversationViewModel: Identifiable {
+
+    /// Stable identity so `ConversationView` can be presented via
+    /// `.fullScreenCover(item:)` — which guarantees a non-nil value in the
+    /// cover content (the `isPresented:` + optional `if let` pattern raced and
+    /// presented an empty/black screen).
+    public let id = UUID()
 
     // MARK: - Exposed State
 

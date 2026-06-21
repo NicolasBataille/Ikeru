@@ -18,8 +18,8 @@ struct ExploreView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.aiRouterService) private var aiRouterService
 
+    /// Presenting this (non-nil) drives the chat cover via `.fullScreenCover(item:)`.
     @State private var conversationViewModel: ConversationViewModel?
-    @State private var showConversation = false
 
     // Calm progress signals (replace the old gamified XP chrome): how much
     // kana is learned, and how many words you've collected. Nil until loaded.
@@ -43,26 +43,32 @@ struct ExploreView: View {
         }
         .toolbar(.hidden, for: .navigationBar)
         .task { await loadProgress() }
-        .fullScreenCover(isPresented: $showConversation) {
-            if let cvm = conversationViewModel {
-                // Wrap in a NavigationStack so ConversationView's title/toolbar
-                // and its "Configure AI" link actually work, and add an explicit
-                // close button — without this the chat is an inescapable screen.
+        .fullScreenCover(item: $conversationViewModel) { cvm in
+            ZStack(alignment: .topLeading) {
+                // `item:` guarantees `cvm` is non-nil here (the old isPresented +
+                // optional `if let` raced and presented an empty black screen).
+                // NavigationStack so the in-view "Configure AI" link works.
                 NavigationStack {
                     ConversationView(viewModel: cvm)
-                        .toolbar {
-                            ToolbarItem(placement: .topBarLeading) {
-                                Button {
-                                    showConversation = false
-                                } label: {
-                                    Image(systemName: "xmark")
-                                        .font(.system(size: 15, weight: .semibold))
-                                        .foregroundStyle(Color.ikeruTextSecondary)
-                                }
-                                .accessibilityLabel("Close")
-                            }
-                        }
                 }
+
+                // Explicit close button — an overlay that does NOT depend on the
+                // navigation bar rendering, so there is always a visible way out.
+                Button {
+                    conversationViewModel = nil
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundStyle(Color.ikeruTextPrimary)
+                        .frame(width: 38, height: 38)
+                        .background(.ultraThinMaterial, in: Circle())
+                        .overlay(
+                            Circle().strokeBorder(TatamiTokens.goldDim.opacity(0.5), lineWidth: 1)
+                        )
+                }
+                .accessibilityLabel("Close")
+                .padding(.leading, 16)
+                .padding(.top, 10)
             }
         }
     }
@@ -163,16 +169,16 @@ struct ExploreView: View {
     // MARK: - Conversation
 
     private func presentConversation() {
-        if conversationViewModel == nil {
-            let router = aiRouterService ?? AIRouterService()
-            let service = ConversationService(aiRouter: router)
-            let vocabRepo = VocabularyRepository(modelContainer: modelContext.container)
-            conversationViewModel = ConversationViewModel(
-                conversationService: service,
-                jlptLevel: .n5,
-                vocabularyRepository: vocabRepo
-            )
-        }
-        showConversation = true
+        // Build the view model and assign it — with `.fullScreenCover(item:)`
+        // that assignment IS what presents the cover, so the content can never
+        // be handed a nil model.
+        let router = aiRouterService ?? AIRouterService()
+        let service = ConversationService(aiRouter: router)
+        let vocabRepo = VocabularyRepository(modelContainer: modelContext.container)
+        conversationViewModel = ConversationViewModel(
+            conversationService: service,
+            jlptLevel: .n5,
+            vocabularyRepository: vocabRepo
+        )
     }
 }
