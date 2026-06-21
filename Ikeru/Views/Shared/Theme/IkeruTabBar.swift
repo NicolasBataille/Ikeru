@@ -21,22 +21,25 @@ struct IkeruTabBar: View {
     var body: some View {
         HStack(spacing: 0) {
             ForEach(tabs) { tab in
-                switch displayMode {
-                case .beginner:
-                    BeginnerTabCell(
-                        tab: tab,
-                        isActive: selection == tab,
-                        railNamespace: railNamespace,
-                        onTap: { tap(tab) }
-                    )
-                case .tatami:
-                    TatamiTabCell(
-                        tab: tab,
-                        isActive: selection == tab,
-                        railNamespace: railNamespace,
-                        onTap: { tap(tab) }
-                    )
+                Group {
+                    switch displayMode {
+                    case .beginner:
+                        BeginnerTabCell(
+                            tab: tab,
+                            isActive: selection == tab,
+                            railNamespace: railNamespace,
+                            onTap: { tap(tab) }
+                        )
+                    case .tatami:
+                        TatamiTabCell(
+                            tab: tab,
+                            isActive: selection == tab,
+                            railNamespace: railNamespace,
+                            onTap: { tap(tab) }
+                        )
+                    }
                 }
+                .tourAnchor(tourTarget(for: tab))
             }
         }
         .padding(.horizontal, 22)
@@ -51,6 +54,15 @@ struct IkeruTabBar: View {
 
     private func tap(_ tab: AppTab) {
         withAnimation(Self.tapSpring) { selection = tab }
+    }
+
+    /// Maps a tab to its feature-tour spotlight target (3-tab IA).
+    private func tourTarget(for tab: AppTab) -> TourTarget {
+        switch tab {
+        case .explore:  return .exploreTab
+        case .practice: return .practiceTab
+        case .settings: return .settingsTab
+        }
     }
 }
 

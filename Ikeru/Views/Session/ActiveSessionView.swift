@@ -17,6 +17,7 @@ struct ActiveSessionView: View {
     @State private var hapticTriggerIncorrect = false
     @State private var dragOffset: CGFloat = 0
     @State private var showOneMinuteToast = false
+    @State private var showSwipeTutorial = false
 
     var body: some View {
         ZStack {
@@ -41,10 +42,19 @@ struct ActiveSessionView: View {
                 abandonConfirmationOverlay
             }
 
+            // First-run coach-mark teaching the four card swipe directions.
+            if showSwipeTutorial {
+                SwipeTutorialView(onDismiss: dismissSwipeTutorial)
+                    .transition(.opacity)
+                    .zIndex(20)
+            }
         }
         .toolbar(.hidden, for: .tabBar)
         .statusBarHidden(true)
         .persistentSystemOverlays(.hidden)
+        .onAppear { maybeShowSwipeTutorial() }
+        .onChange(of: viewModel.currentCard?.id) { _, _ in maybeShowSwipeTutorial() }
+        .animation(.easeInOut(duration: 0.3), value: showSwipeTutorial)
         .sensoryFeedback(.success, trigger: hapticTriggerCorrect)
         .sensoryFeedback(.warning, trigger: hapticTriggerIncorrect)
         .animation(
@@ -367,6 +377,24 @@ struct ActiveSessionView: View {
         } else {
             hapticTriggerIncorrect.toggle()
         }
+    }
+
+    // MARK: - Swipe Tutorial
+
+    /// Shows the swipe coach-mark the first time this profile reaches a real
+    /// SRS card (sessions are SRS-only after the rework).
+    private func maybeShowSwipeTutorial() {
+        guard !showSwipeTutorial, viewModel.currentCard != nil else { return }
+        guard let id = ActiveProfileResolver.activeProfileID() else { return }
+        guard !OnboardingFlags.hasSeenSwipeTutorial(profileID: id) else { return }
+        showSwipeTutorial = true
+    }
+
+    private func dismissSwipeTutorial() {
+        if let id = ActiveProfileResolver.activeProfileID() {
+            OnboardingFlags.markSwipeTutorialSeen(profileID: id)
+        }
+        showSwipeTutorial = false
     }
 }
 

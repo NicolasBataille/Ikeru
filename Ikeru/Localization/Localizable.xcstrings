@@ -8666,6 +8666,70 @@
           }
         }
       }
+    },
+    "Tour.Practice.Title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Home"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L'accueil"
+          }
+        }
+      }
+    },
+    "Tour.Practice.Body" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your dashboard. At a glance: today's session (your short daily review) and how far you've come."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ton tableau de bord. D'un coup d'œil : ta session du jour (ta petite révision quotidienne) et ta progression."
+          }
+        }
+      }
+    },
+    "Tour.Explore.Title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Explore"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Explorer"
+          }
+        }
+      }
+    },
+    "Tour.Explore.Body" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kana, your saved vocabulary, and Sakura — your AI conversation partner. Practise at your own pace."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les kana, ton vocabulaire enregistré, et Sakura — ta partenaire de conversation IA. À ton rythme."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

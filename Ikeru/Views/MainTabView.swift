@@ -53,6 +53,10 @@ struct MainTabView: View {
     @State private var displayModeRepo: (any DisplayModePreferenceRepository)?
     @State private var displayModeCancellable: AnyCancellable?
 
+    /// In-app coach-mark tour over the three tabs. Per-profile "seen" flag, so
+    /// it runs once after onboarding (and on demand via Settings → replay).
+    @State private var tourController = FeatureTourController()
+
     var body: some View {
         ZStack(alignment: .bottom) {
             IkeruScreenBackground()
@@ -63,9 +67,26 @@ struct MainTabView: View {
             IkeruTabBar(selection: $selectedTab, tabs: AppTab.allCases)
                 .ignoresSafeArea(.keyboard)
         }
+        .overlayPreferenceValue(TourAnchorKey.self) { anchors in
+            GeometryReader { proxy in
+                if tourController.isActive {
+                    FeatureTourOverlay(
+                        controller: tourController,
+                        anchors: anchors,
+                        proxy: proxy
+                    )
+                }
+            }
+            .ignoresSafeArea()
+        }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onAppear {
             initializeDisplayModeRepo()
+            // Existing users (no sign-up cover) see the tour on first launch
+            // after this ships, once, if they've never completed it.
+            if !isNewUserOnboarding, let id = ActiveProfileResolver.activeProfileID() {
+                tourController.startIfNeeded(profileID: id)
+            }
         }
         .onReceive(NotificationCenter.default.publisher(for: .startQuizFromShortcut)) { _ in
             selectedTab = .practice
@@ -79,6 +100,20 @@ struct MainTabView: View {
             if let repo = displayModeRepo {
                 displayMode = repo.current()
             }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .requestFeatureTour)) { _ in
+            if let id = ActiveProfileResolver.activeProfileID() {
+                tourController.startIfNeeded(profileID: id)
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .replayFeatureTour)) { _ in
+            if let id = ActiveProfileResolver.activeProfileID() {
+                tourController.restart(profileID: id)
+            }
+        }
+        .onChange(of: tourController.index) { _, _ in syncTabToTourStep() }
+        .onChange(of: tourController.isActive) { _, active in
+            if active { syncTabToTourStep() }
         }
         .environment(\.locale, appLocale.currentLocale)
         .environment(appLocale)
@@ -135,6 +170,25 @@ struct MainTabView: View {
             .receive(on: DispatchQueue.main)
             .sink { mode in self.displayMode = mode }
     }
+
+    // MARK: - Feature Tour
+
+    /// Switches to the tab a tour step wants in view behind the spotlight.
+    private func syncTabToTourStep() {
+        guard let step = tourController.currentStep, let tab = step.tab else { return }
+        withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) {
+            selectedTab = tab
+        }
+    }
+}
+
+// MARK: - Notifications
+
+extension Notification.Name {
+    /// Posted when sign-up onboarding finishes so the in-app feature tour can begin.
+    static let requestFeatureTour = Notification.Name("ikeru.requestFeatureTour")
+    /// Posted from Settings to replay the feature tour on demand.
+    static let replayFeatureTour = Notification.Name("ikeru.replayFeatureTour")
 }
 
 // MARK: - Tab Content View (with NavigationStack per tab)

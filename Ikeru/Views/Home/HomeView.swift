@@ -371,6 +371,7 @@ struct HomeView: View {
                     .sumiCorners(color: Color.ikeruBackground.opacity(0.6), size: 6, weight: 1.2, inset: -1)
                 }
                 .buttonStyle(.plain)
+                .tourAnchor(.sessionCTA)
             }
         }
         .tatamiRoom(.glass, padding: 20)

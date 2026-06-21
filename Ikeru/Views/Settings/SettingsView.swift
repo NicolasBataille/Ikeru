@@ -625,6 +625,10 @@ struct SettingsView: View {
         section(label: ("関連", "About"), mon: .maru) {
             settingRow(jp: "バージョン", label: "Version", value: appVersionValue)
 
+            settingRow(jp: "案内", label: "Tour.Settings.Replay", value: "") {
+                NotificationCenter.default.post(name: .replayFeatureTour, object: nil)
+            }
+
             NavigationLink {
                 AttributionView()
             } label: {
