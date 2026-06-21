@@ -335,7 +335,8 @@ public final class SessionViewModel {
     /// starts the session. Builds a `LearnerSnapshot` from the live card
     /// pool, resolves unlocked exercise types, and asks the planner for a
     /// home-recommendation plan tuned to `defaultDurationMinutes`.
-    public func startSession() async {
+    @discardableResult
+    public func startSession() async -> Bool {
         let cards = await cardRepository.allCards()
         let snapshot = await buildSnapshot(cards: cards)
         let unlockedTypes = unlockService.unlockedTypes(profile: snapshot)
@@ -354,6 +355,15 @@ public final class SessionViewModel {
         let srsCards = plan.exercises.compactMap { exercise -> CardDTO? in
             if case .srsReview(let card) = exercise { return card }
             return nil
+        }
+
+        // Never start an empty session — it would drop the user straight into a
+        // hollow "0 cards / 0% recall" summary that reads as failure. Guard at
+        // the source so no timer / Live Activity spins up for nothing. The Home
+        // CTA is also gated when nothing is composable.
+        guard !srsCards.isEmpty else {
+            Logger.ui.info("startSession: composed plan is empty — not starting")
+            return false
         }
 
         sessionQueue = srsCards
@@ -381,6 +391,7 @@ public final class SessionViewModel {
         Logger.ui.info(
             "Session started via SessionPlanner: \(plan.exercises.count) exercises (\(srsCards.count) SRS), ~\(plan.estimatedDurationMinutes)min"
         )
+        return true
     }
 
     /// Composes a custom session from the Étude → Compose sheet. Same

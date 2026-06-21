@@ -9,6 +9,9 @@ import os
 struct ConversationView: View {
 
     @State private var viewModel: ConversationViewModel
+    /// True until the async provider-availability sweep finishes, so we show a
+    /// spinner instead of flashing the "no AI" section while it's still unknown.
+    @State private var isInitializing = true
 
     init(viewModel: ConversationViewModel) {
         _viewModel = State(initialValue: viewModel)
@@ -20,7 +23,9 @@ struct ConversationView: View {
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
-                if !viewModel.isAIAvailable {
+                if isInitializing {
+                    loadingSection
+                } else if !viewModel.isAIAvailable {
                     aiUnavailableSection
                 } else if viewModel.showWelcome {
                     welcomeSection
@@ -36,7 +41,7 @@ struct ConversationView: View {
                         }
                 }
 
-                if viewModel.isAIAvailable {
+                if !isInitializing && viewModel.isAIAvailable {
                     inputBar
                 }
             }
@@ -51,7 +56,20 @@ struct ConversationView: View {
         }
         .task {
             await viewModel.onAppear()
+            isInitializing = false
         }
+    }
+
+    // MARK: - Loading Section
+
+    private var loadingSection: some View {
+        VStack(spacing: IkeruTheme.Spacing.md) {
+            Spacer()
+            ProgressView()
+                .tint(Color.ikeruPrimaryAccent)
+            Spacer()
+        }
+        .frame(maxWidth: .infinity)
     }
 
     // MARK: - AI Unavailable Section

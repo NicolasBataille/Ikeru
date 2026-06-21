@@ -45,7 +45,24 @@ struct ExploreView: View {
         .task { await loadProgress() }
         .fullScreenCover(isPresented: $showConversation) {
             if let cvm = conversationViewModel {
-                ConversationView(viewModel: cvm)
+                // Wrap in a NavigationStack so ConversationView's title/toolbar
+                // and its "Configure AI" link actually work, and add an explicit
+                // close button — without this the chat is an inescapable screen.
+                NavigationStack {
+                    ConversationView(viewModel: cvm)
+                        .toolbar {
+                            ToolbarItem(placement: .topBarLeading) {
+                                Button {
+                                    showConversation = false
+                                } label: {
+                                    Image(systemName: "xmark")
+                                        .font(.system(size: 15, weight: .semibold))
+                                        .foregroundStyle(Color.ikeruTextSecondary)
+                                }
+                                .accessibilityLabel("Close")
+                            }
+                        }
+                }
             }
         }
     }

@@ -477,8 +477,10 @@ struct HomeView: View {
                 repository: repo,
                 existingCardCount: allCards.count
             )
-            await svm.startSession()
-            showSession = true
+            // Only present the session if one actually started — an empty plan
+            // must never show a hollow "0 cards / 0% recall" summary.
+            let started = await svm.startSession()
+            showSession = started
         }
     }
 }
