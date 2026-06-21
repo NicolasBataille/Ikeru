@@ -500,15 +500,10 @@ struct HomeView: View {
     private func startSession() {
         guard let svm = sessionViewModel else { return }
         Task {
-            let container = modelContext.container
-            let repo = CardRepository(modelContainer: container)
-            let allCards = await repo.allCards()
-            await ContentSeedService.seedBeginnerKanaIfNeeded(
-                repository: repo,
-                existingCardCount: allCards.count
-            )
-            // Only present the session if one actually started — an empty plan
-            // must never show a hollow "0 cards / 0% recall" summary.
+            // Beginner content is seeded in HomeViewModel.loadData() before the
+            // preview is composed, so cards already exist by the time this CTA
+            // is reachable. Only present the session if one actually started —
+            // an empty plan must never show a hollow "0 cards / 0% recall" summary.
             let started = await svm.startSession()
             showSession = started
         }

@@ -14,12 +14,21 @@ public final class FoundationModelsProvider: AIProvider, @unchecked Sendable {
 
     public var isAvailable: Bool {
         get async {
+            #if targetEnvironment(simulator)
+            // The Simulator surfaces the host Mac's model as "available", but
+            // on-device generation isn't actually reachable from the sim — so
+            // it would report "ready" in onboarding/Settings and then fail at
+            // chat time. Report unavailable so every surface stays honest and
+            // consistent (matching an unsupported real device).
+            return false
+            #else
             #if canImport(FoundationModels)
             if #available(iOS 26, macOS 26, *) {
                 return OnDeviceModelSession.isSupported
             }
             #endif
             return false
+            #endif
         }
     }
 

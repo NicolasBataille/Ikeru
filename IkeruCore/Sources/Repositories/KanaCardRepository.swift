@@ -106,7 +106,12 @@ public actor KanaCardRepository {
 
     public func mastery(for groups: Set<KanaGroup>) async -> [KanaGroup: GroupMastery] {
         let all = await cardsForGroups(groups)
-        let byFront: [String: CardDTO] = Dictionary(uniqueKeysWithValues: all.map { ($0.front, $0) })
+        // Tolerate duplicate fronts (a card seeded by two paths) rather than
+        // trapping the way `uniqueKeysWithValues:` would — keep the first.
+        let byFront: [String: CardDTO] = Dictionary(
+            all.map { ($0.front, $0) },
+            uniquingKeysWith: { first, _ in first }
+        )
 
         var result: [KanaGroup: GroupMastery] = [:]
         for group in groups {

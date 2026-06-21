@@ -92,6 +92,12 @@ public final class KanaPoolViewModel {
     // MARK: Loading
 
     public func loadMasteries() async {
+        // Guard against concurrent re-entry: `seedIfNeeded` reads the existing
+        // fronts and then inserts whatever is missing, so two overlapping runs
+        // would each see a partial store and both insert the full set —
+        // creating duplicate cards (which later trap `mastery(for:)`'s
+        // unique-keyed Dictionary).
+        if case .loading = loadingState { return }
         loadingState = .loading
         await repository.seedIfNeeded()
         let allGroups = Set(KanaGroup.allCases)

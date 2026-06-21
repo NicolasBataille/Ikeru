@@ -87,6 +87,12 @@ public final class HomeViewModel {
     /// Whether data has been loaded at least once.
     public private(set) var hasLoaded: Bool = false
 
+    /// Re-entry guard. `loadData` is invoked from both `.task` and `.onAppear`
+    /// on Home, which fire together on first appear — without this, two
+    /// concurrent runs race `ensureBeginnerContentSeeded` and each insert the
+    /// beginner vowels, creating duplicate cards.
+    private var isLoadingData = false
+
     /// Whether Home should show 「今日は休 / Rest day」 instead of the
     /// session CTA. Driven by `RestDayDetector.shouldShowRestDay(...)`.
     /// Refreshed by `refreshRestDay()` whenever the Home view appears.
@@ -246,9 +252,22 @@ public final class HomeViewModel {
     /// Loads all home screen data from local SwiftData.
     /// Called on .onAppear to refresh after session completion.
     public func loadData() async {
+        // Serialize overlapping loads (see `isLoadingData`): the first call runs
+        // the full load; a concurrent second one returns rather than racing the
+        // seed. Sequential calls (e.g. refresh-on-return) are unaffected.
+        if isLoadingData { return }
+        isLoadingData = true
+        defer { isLoadingData = false }
+
         let startTime = CFAbsoluteTimeGetCurrent()
 
         await loadProfile()
+        // Seed the five beginner hiragana BEFORE composing the preview, so a
+        // brand-new account already has cards and Home shows an inviting
+        // "to learn" CTA instead of the "all caught up" quiet state. (The seed
+        // previously ran only when the hidden CTA was tapped — a chicken-and-egg
+        // that stranded day-one users on an empty Home.)
+        await ensureBeginnerContentSeeded()
         await loadRPGState()
         await loadDueCardCount()
         await loadKanjiLearnedCount()
@@ -267,6 +286,17 @@ public final class HomeViewModel {
     private func loadProfile() async {
         let context = modelContainer.mainContext
         displayName = ActiveProfileResolver.fetchActiveProfile(in: context)?.displayName ?? ""
+    }
+
+    /// Ensures the five beginner hiragana exist before the first session
+    /// preview is composed. Idempotent (the seed service no-ops once any cards
+    /// exist), so this is safe to call on every Home appearance.
+    private func ensureBeginnerContentSeeded() async {
+        let existing = await cardRepository.allCards()
+        await ContentSeedService.seedBeginnerKanaIfNeeded(
+            repository: cardRepository,
+            existingCardCount: existing.count
+        )
     }
 
     private func loadRPGState() async {

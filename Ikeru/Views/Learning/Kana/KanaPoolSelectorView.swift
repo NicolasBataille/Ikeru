@@ -12,6 +12,7 @@ struct KanaPoolSelectorView: View {
     @State private var viewModel: KanaPoolViewModel?
     @State private var pendingMode: KanaDrillMode?
     @State private var pendingCards: [CardDTO] = []
+    @State private var pendingGroups: Set<KanaGroup> = []
     @State private var showDrill = false
 
     private let columns: [GridItem] = [
@@ -35,7 +36,7 @@ struct KanaPoolSelectorView: View {
         }
         .navigationDestination(isPresented: $showDrill) {
             if let mode = pendingMode {
-                KanaDrillModeSelector(mode: mode, cards: pendingCards)
+                KanaDrillModeSelector(mode: mode, groups: pendingGroups, cards: pendingCards)
             }
         }
     }
@@ -96,7 +97,7 @@ struct KanaPoolSelectorView: View {
                             vm.applyPreset(preset)
                         }
                     } label: {
-                        Text(preset.displayName)
+                        Text(LocalizedStringKey(preset.displayName))
                             .font(.ikeruCaption)
                             .foregroundStyle(Color.ikeruTextPrimary)
                             .padding(.horizontal, 14)
@@ -141,7 +142,9 @@ struct KanaPoolSelectorView: View {
     }
 
     private func scriptEyebrow(_ script: KanaScript) -> String {
-        script == .hiragana ? "Fluid syllabary" : "Angular syllabary"
+        script == .hiragana
+            ? String(localized: "Fluid syllabary")
+            : String(localized: "Angular syllabary")
     }
 
     @ViewBuilder
@@ -149,7 +152,7 @@ struct KanaPoolSelectorView: View {
         _ vm: KanaPoolViewModel,
         script: KanaScript,
         section: KanaSection,
-        title: String
+        title: LocalizedStringKey
     ) -> some View {
         let groups = KanaGroup.allCases.filter { $0.script == script && $0.section == section }
         if !groups.isEmpty {
@@ -165,7 +168,7 @@ struct KanaPoolSelectorView: View {
                         }
                     } label: {
                         Text(vm.isSectionFullySelected(section, script: script)
-                             ? "Deselect all" : "Select all")
+                             ? LocalizedStringKey("Deselect all") : LocalizedStringKey("Select all"))
                             .font(.ikeruMicro)
                             .ikeruTracking(.micro)
                             .foregroundStyle(Color.ikeruPrimaryAccent)
@@ -232,7 +235,7 @@ struct KanaPoolSelectorView: View {
     private func drillButton(
         _ vm: KanaPoolViewModel,
         mode: KanaDrillMode,
-        label: String,
+        label: LocalizedStringKey,
         primary: Bool
     ) -> some View {
         Button {
@@ -252,6 +255,7 @@ struct KanaPoolSelectorView: View {
             let cards = await vm.cards(for: mode)
             pendingMode = mode
             pendingCards = cards
+            pendingGroups = vm.selectedGroups
             showDrill = true
         }
     }

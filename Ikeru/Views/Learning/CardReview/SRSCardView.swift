@@ -238,27 +238,11 @@ struct SRSCardView: View {
             }
             .allowsHitTesting(false)
 
-            // Hint chips pinned to the bottom of the card.
-            VStack {
-                Spacer()
-                HStack(spacing: 8) {
-                    if revealed {
-                        HintChip(icon: "ear", label: "Card.Hint.Listen")
-                        // Stroke-order and example sentences only exist for kanji.
-                        // Kana has neither, so these chips were dead taps on kana
-                        // cards — hide them there.
-                        if !card.isKana {
-                            HintChip(icon: "pencil.line", label: "Card.Hint.Strokes")
-                            HintChip(icon: "text.bubble", label: "Card.Hint.Example")
-                        }
-                    } else {
-                        HintChip(icon: "ear", label: "Card.Hint.Listen")
-                        HintChip(icon: "eye", label: "Card.Hint.Hint")
-                        HintChip(icon: "star", label: "Card.Hint.Mark")
-                    }
-                }
-                .padding(.bottom, 6)
-            }
+            // (The bottom hint-chip row was removed: Listen / Hint / Mark and
+            // Strokes / Example were all unwired — every tap was a no-op, which
+            // reads as broken on a first session. Reintroduce a chip here only
+            // once it performs a real action, e.g. Listen → AudioService.playTTS
+            // (needs an injected `audioService`), Mark → bookmark toggle.)
         }
         .frame(maxWidth: .infinity)
         .frame(minHeight: 360)
@@ -277,6 +261,10 @@ struct SRSCardView: View {
         case .kanji:
             return kanjiOrKanaLabelPair(front: card.front)
         case .vocabulary:
+            // Kana cards are stored as single-character `.vocabulary` entries;
+            // detect them by scalar range so they read 平仮名 / 片仮名 rather
+            // than 語彙. Real (multi-character) vocabulary still reads 語彙.
+            if card.isKana { return kanjiOrKanaLabelPair(front: card.front) }
             return ("\u{8A9E}\u{5F59}", "Vocabulary")          // 語彙
         case .grammar:
             return ("\u{6587}\u{6CD5}", "Grammar")             // 文法

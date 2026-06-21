@@ -356,7 +356,8 @@ struct SettingsView: View {
             settingRow(
                 jp: "プロフィール",
                 label: "Profile",
-                value: profileNameValue
+                value: profileNameValue,
+                showChevron: false
             ) {
                 editingName = profileNameValue
                 withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) {

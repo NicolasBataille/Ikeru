@@ -35,7 +35,7 @@ struct KanaGroupCard: View {
     private var header: some View {
         HStack(alignment: .center, spacing: 8) {
             checkbox
-            Text(group.displayName)
+            Text(LocalizedStringKey(group.displayName))
                 .font(.ikeruCaption)
                 .foregroundStyle(Color.ikeruTextSecondary)
                 .lineLimit(1)
@@ -114,10 +114,10 @@ struct KanaGroupCard: View {
         let now = Date()
         let interval = due.timeIntervalSince(now)
         if interval <= 0 {
-            return "Today"
+            return String(localized: "Today")
         }
         let days = Int((interval / 86_400).rounded(.up))
-        if days <= 1 { return "Tomorrow" }
-        return "in \(days)d"
+        if days <= 1 { return String(localized: "Tomorrow") }
+        return String(localized: "in \(days)d")
     }
 }

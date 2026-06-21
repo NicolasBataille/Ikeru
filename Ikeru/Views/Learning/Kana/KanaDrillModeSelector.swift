@@ -10,7 +10,14 @@ struct KanaDrillModeSelector: View {
 
     @Environment(\.modelContext) private var modelContext
     let mode: KanaDrillMode
-    let cards: [CardDTO]
+    let groups: Set<KanaGroup>
+
+    /// Live queue for this mode. Seeded from the snapshot captured when the
+    /// drill was launched, then refreshed on every appear (including pop-back
+    /// from a finished drill) so the "N cards ready" count and the queue handed
+    /// to the drill reflect the current SRS state — not a frozen snapshot that
+    /// keeps re-offering cards the user already graded.
+    @State private var cards: [CardDTO]
 
     @State private var goFlashcard = false
     @State private var goQuiz = false
@@ -19,6 +26,12 @@ struct KanaDrillModeSelector: View {
     /// reuses the previously-shuffled queue — which is what made the user
     /// see the same hiragana order every time.
     @State private var runId: UUID = UUID()
+
+    init(mode: KanaDrillMode, groups: Set<KanaGroup>, cards: [CardDTO]) {
+        self.mode = mode
+        self.groups = groups
+        _cards = State(initialValue: cards)
+    }
 
     private var cardRepository: CardRepository {
         CardRepository(modelContainer: modelContext.container)
@@ -61,6 +74,12 @@ struct KanaDrillModeSelector: View {
         }
         .navigationBarTitleDisplayMode(.inline)
         .navigationTitle("Mode")
+        .onAppear {
+            // Runs on first appear and on every pop-back from a finished drill,
+            // so the count and queue reflect the live SRS state rather than the
+            // snapshot captured when the drill was launched.
+            Task { await refreshCards() }
+        }
         .navigationDestination(isPresented: $goFlashcard) {
             KanaFlashcardView(viewModel: KanaDrillViewModel(
                 mode: mode,
@@ -87,7 +106,7 @@ struct KanaDrillModeSelector: View {
                 .font(.ikeruMicro)
                 .ikeruTracking(.micro)
                 .foregroundStyle(Color.ikeruTextTertiary)
-            Text(mode.displayName)
+            Text(LocalizedStringKey(mode.displayName))
                 .font(.ikeruDisplaySmall)
                 .ikeruTracking(.display)
                 .foregroundStyle(Color.ikeruTextPrimary)
@@ -97,11 +116,23 @@ struct KanaDrillModeSelector: View {
         }
     }
 
+    private func refreshCards() async {
+        let kanaRepo = KanaCardRepository(cardRepository: cardRepository)
+        switch mode {
+        case .dueReview:
+            cards = await kanaRepo.dueCardsForGroups(groups, now: Date())
+        case .freePractice:
+            cards = await kanaRepo.cardsForGroups(groups)
+        case .weakReinforcement:
+            cards = await kanaRepo.weakCardsForGroups(groups)
+        }
+    }
+
     @ViewBuilder
     private func modeCard(
-        title: String,
-        subtitle: String,
-        description: String,
+        title: LocalizedStringKey,
+        subtitle: LocalizedStringKey,
+        description: LocalizedStringKey,
         icon: String,
         action: @escaping () -> Void
     ) -> some View {

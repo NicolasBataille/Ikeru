@@ -24,8 +24,8 @@ struct GradeButtonsView: View {
     private let dueHints: [Grade: String] = [
         .again: "<1m",
         .hard:  "~6m",
-        .good:  "1d",
-        .easy:  "4d"
+        .good:  String(localized: "1d"),
+        .easy:  String(localized: "4d")
     ]
 
     private struct GradeSpec {
