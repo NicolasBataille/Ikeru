@@ -244,8 +244,13 @@ struct SRSCardView: View {
                 HStack(spacing: 8) {
                     if revealed {
                         HintChip(icon: "ear", label: "Card.Hint.Listen")
-                        HintChip(icon: "pencil.line", label: "Card.Hint.Strokes")
-                        HintChip(icon: "text.bubble", label: "Card.Hint.Example")
+                        // Stroke-order and example sentences only exist for kanji.
+                        // Kana has neither, so these chips were dead taps on kana
+                        // cards — hide them there.
+                        if !card.isKana {
+                            HintChip(icon: "pencil.line", label: "Card.Hint.Strokes")
+                            HintChip(icon: "text.bubble", label: "Card.Hint.Example")
+                        }
                     } else {
                         HintChip(icon: "ear", label: "Card.Hint.Listen")
                         HintChip(icon: "eye", label: "Card.Hint.Hint")

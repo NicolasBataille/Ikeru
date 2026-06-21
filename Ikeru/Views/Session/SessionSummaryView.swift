@@ -71,25 +71,30 @@ struct SessionSummaryView: View {
             }
             .frame(maxWidth: .infinity)
 
-            verticalHairline
+            // Recall % is only meaningful when cards were actually reviewed —
+            // showing "0%" on an empty session reads as failure. Drop the whole
+            // column (and a hairline) to a clean CARDS | TIME layout instead.
+            if viewModel.reviewedCount > 0 {
+                verticalHairline
 
-            VStack(spacing: 6) {
-                // 100% used to wrap onto two lines because the column width
-                // couldn't host "100" at 56pt + a "%" beside it. Combine
-                // into a single Text so it scales as one unit.
-                Text("\(recallPercentage)%")
-                    .font(.system(size: 56, weight: .light, design: .serif))
-                    .foregroundStyle(Color.ikeruPrimaryAccent)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.5)
-                Text("RECALL", comment: "Summary stat label")
-                    .ikeruScaledFont(10, weight: .semibold, relativeTo: .caption2)
-                    .tracking(1.6)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.7)
-                    .foregroundStyle(Color.ikeruTextSecondary)
+                VStack(spacing: 6) {
+                    // 100% used to wrap onto two lines because the column width
+                    // couldn't host "100" at 56pt + a "%" beside it. Combine
+                    // into a single Text so it scales as one unit.
+                    Text("\(recallPercentage)%")
+                        .font(.system(size: 56, weight: .light, design: .serif))
+                        .foregroundStyle(Color.ikeruPrimaryAccent)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.5)
+                    Text("RECALL", comment: "Summary stat label")
+                        .ikeruScaledFont(10, weight: .semibold, relativeTo: .caption2)
+                        .tracking(1.6)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                        .foregroundStyle(Color.ikeruTextSecondary)
+                }
+                .frame(maxWidth: .infinity)
             }
-            .frame(maxWidth: .infinity)
 
             verticalHairline
 
