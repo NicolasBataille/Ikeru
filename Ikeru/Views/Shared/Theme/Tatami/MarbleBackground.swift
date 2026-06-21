@@ -58,7 +58,9 @@ public struct MarbleBackground: View {
             }
             .ignoresSafeArea()
             .allowsHitTesting(false)
-            .drawingGroup()
+            // NOTE: no .drawingGroup() here — it rasterises the Canvas into a
+            // cached layer that doesn't refresh per TimelineView tick, which
+            // froze the animation. Canvas is already GPU-backed.
         }
     }
 
@@ -87,14 +89,14 @@ public struct MarbleBackground: View {
         _ vein: KintsugiVein, context: GraphicsContext, size: CGSize,
         time: Double, phase: Double
     ) {
-        // Subtle fluid drift: nudge the Bézier handles along a slow sine so the
-        // belly of each vein undulates, while the endpoints stay anchored to the
-        // screen edges. Amplitudes are in normalised space (~1–1.5 % of the
-        // screen), so the motion reads as a faint living shimmer, not a wobble.
-        let sway: CGFloat = 0.016
-        let drift: CGFloat = 0.011
-        let a = CGFloat(sin(time * 0.33 + phase))
-        let b = CGFloat(cos(time * 0.24 + phase * 1.3))
+        // Fluid drift: nudge the Bézier handles along slow sines so the belly of
+        // each vein undulates, while the endpoints stay anchored to the screen
+        // edges. ~4–5 % of the screen over a slow (~12–16 s) cycle — perceptible
+        // as a gentle living flow, not a wobble.
+        let sway: CGFloat = 0.045
+        let drift: CGFloat = 0.030
+        let a = CGFloat(sin(time * 0.50 + phase))
+        let b = CGFloat(cos(time * 0.38 + phase * 1.3))
 
         // Scale normalised control points [0..1] to actual pixel coords
         let p0 = vein.p0.scaled(to: size)
