@@ -3,14 +3,65 @@ import SwiftData
 import IkeruCore
 import os
 
-// MARK: - NameEntryView
+// MARK: - NameEntryView (onboarding coordinator)
+//
+// A single full-screen onboarding flow. Previously each step presented the
+// next via a nested `fullScreenCover`, so finishing peeled them away one slow
+// dismissal at a time. Now all steps live inside ONE cover (the one presented
+// by `IkeruApp`) and are swapped with a calm cross-fade; finishing calls
+// `dismiss()` exactly once, so the app drops straight to Home in a single
+// transition. The feature tour then fires from `IkeruApp`'s `showOnboarding`
+// change, as before.
 
 struct NameEntryView: View {
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.profileViewModel) private var profileViewModel
+
+    @State private var step: Step = .name
+
+    private enum Step: Hashable { case name, placement, tour, aiSetup }
+
+    var body: some View {
+        ZStack {
+            content
+        }
+        .animation(.easeInOut(duration: 0.4), value: step)
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        switch step {
+        case .name:
+            NameEntryStep(onContinue: { name in
+                profileViewModel?.createProfile(name: name)
+                advance(to: .placement)
+            })
+            .transition(.opacity)
+        case .placement:
+            PlacementStep(onContinue: { advance(to: .tour) })
+                .transition(.opacity)
+        case .tour:
+            OnboardingTourView(onFinish: { advance(to: .aiSetup) })
+                .transition(.opacity)
+        case .aiSetup:
+            AISetupView(onFinish: { dismiss() })
+                .transition(.opacity)
+        }
+    }
+
+    private func advance(to next: Step) {
+        withAnimation(.easeInOut(duration: 0.4)) { step = next }
+    }
+}
+
+// MARK: - NameEntryStep
+
+private struct NameEntryStep: View {
+
+    let onContinue: (String) -> Void
+
     @State private var name: String = ""
-    @State private var showPlacement = false
     @State private var contentAppeared = false
     @FocusState private var isNameFieldFocused: Bool
 
@@ -45,11 +96,6 @@ struct NameEntryView: View {
                 Spacer()
             }
             .padding(.horizontal, IkeruTheme.Spacing.xl)
-        }
-        .fullScreenCover(isPresented: $showPlacement, onDismiss: {
-            dismiss()
-        }) {
-            PlacementView()
         }
         .onAppear {
             withAnimation(.spring(response: 0.6, dampingFraction: 0.86).delay(0.1)) {
@@ -121,7 +167,7 @@ struct NameEntryView: View {
         .animation(.spring(response: 0.32, dampingFraction: 0.86), value: isNameFieldFocused)
         .focused($isNameFieldFocused)
         .submitLabel(.continue)
-        .onSubmit { submitName() }
+        .onSubmit { submit() }
         .textInputAutocapitalization(.words)
         .autocorrectionDisabled()
     }
@@ -130,7 +176,7 @@ struct NameEntryView: View {
 
     private var continueButton: some View {
         Button {
-            submitName()
+            submit()
         } label: {
             HStack(spacing: 10) {
                 Text("\u{7D9A}\u{3051}\u{308B}")  // 続ける
@@ -156,15 +202,15 @@ struct NameEntryView: View {
 
     // MARK: - Actions
 
-    private func submitName() {
+    private func submit() {
         guard isNameValid else { return }
         Logger.ui.info("Name submitted for profile creation")
-        profileViewModel?.createProfile(name: name)
-        showPlacement = true
+        isNameFieldFocused = false
+        onContinue(name)
     }
 }
 
-// MARK: - PlacementView
+// MARK: - PlacementStep
 //
 // One calm question after name entry: are you starting fresh, or do you
 // already know some Japanese? The answer sets the app's `DisplayMode` —
@@ -173,11 +219,11 @@ struct NameEntryView: View {
 // instead of having to discover the Settings toggle. Fully reversible there
 // ("Tatami interface"), so this is a gentle nudge, not a lock-in.
 
-private struct PlacementView: View {
+private struct PlacementStep: View {
 
-    @Environment(\.dismiss) private var dismiss
+    let onContinue: () -> Void
+
     @Environment(\.modelContext) private var modelContext
-    @State private var showTour = false
     @State private var contentAppeared = false
 
     var body: some View {
@@ -214,11 +260,6 @@ private struct PlacementView: View {
                 Spacer()
             }
             .padding(.horizontal, IkeruTheme.Spacing.xl)
-        }
-        .fullScreenCover(isPresented: $showTour, onDismiss: {
-            dismiss()
-        }) {
-            OnboardingTourView()
         }
         .onAppear {
             withAnimation(.spring(response: 0.6, dampingFraction: 0.86).delay(0.1)) {
@@ -288,7 +329,7 @@ private struct PlacementView: View {
         makeDisplayModeRepo().set(mode)
         NotificationCenter.default.post(name: .displayModeDidChange, object: nil)
         Logger.ui.info("Placement chosen — displayMode=\(mode.rawValue, privacy: .public)")
-        showTour = true
+        onContinue()
     }
 
     /// Builds a repository the same way `MainTabView` does. The profile created

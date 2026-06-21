@@ -10,7 +10,10 @@ import os
 /// or skip for now.
 struct AISetupView: View {
 
-    @Environment(\.dismiss) private var dismiss
+    /// Called when the user finishes (Continue) or skips AI setup. The
+    /// onboarding coordinator dismisses the single cover → straight to Home.
+    let onFinish: () -> Void
+
     @State private var foundationModelsAvailable = false
     @State private var geminiKey: String = ""
     @State private var isSaving = false
@@ -19,7 +22,8 @@ struct AISetupView: View {
 
     private let keychainStore: any KeychainStore
 
-    init(keychainStore: any KeychainStore = KeychainHelper()) {
+    init(onFinish: @escaping () -> Void = {}, keychainStore: any KeychainStore = KeychainHelper()) {
+        self.onFinish = onFinish
         self.keychainStore = keychainStore
     }
 
@@ -174,7 +178,7 @@ struct AISetupView: View {
             }
 
             Button {
-                dismiss()
+                onFinish()
             } label: {
                 HStack(spacing: 10) {
                     Text(foundationModelsAvailable || saved ? "Continue" : "Skip for now")

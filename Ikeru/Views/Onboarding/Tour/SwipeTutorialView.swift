@@ -39,7 +39,7 @@ struct SwipeTutorialView: View {
                 .ignoresSafeArea()
                 .contentShape(Rectangle())
 
-            VStack(spacing: IkeruTheme.Spacing.lg) {
+            VStack(spacing: IkeruTheme.Spacing.md) {
                 header
 
                 Spacer(minLength: 0)
@@ -57,7 +57,7 @@ struct SwipeTutorialView: View {
                 .ikeruButtonStyle(.primary)
             }
             .padding(.horizontal, IkeruTheme.Spacing.xl)
-            .padding(.vertical, IkeruTheme.Spacing.xxl)
+            .padding(.vertical, IkeruTheme.Spacing.lg)
         }
         .onReceive(timer) { _ in
             withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
@@ -181,6 +181,7 @@ struct SwipeTutorialView: View {
             .ikeruScaledFont(12, relativeTo: .caption2)
             .foregroundStyle(Color.ikeruTextTertiary)
             .multilineTextAlignment(.center)
+            .fixedSize(horizontal: false, vertical: true)
             .padding(.top, 2)
     }
 
