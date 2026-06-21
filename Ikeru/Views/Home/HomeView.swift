@@ -168,9 +168,6 @@ struct HomeView: View {
                 proverbHero(vm)
                 dailyTermSection
                 sessionBreakdown(vm)
-                if vm.hasLoaded && vm.dueCardCount == 0 {
-                    quietState
-                }
             }
             .padding(.horizontal, IkeruTheme.Spacing.lg)
             .padding(.top, IkeruTheme.Spacing.md)
@@ -314,42 +311,41 @@ struct HomeView: View {
         let proverb = HomeProverb.dailyProverb(level: dayIndex)
 
         VStack(alignment: .leading, spacing: 14) {
-            // Top row — bilingual "本日 · TODAY" + Hanko stamp when work is due
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 8) {
-                    BilingualLabel(japanese: "本日", chrome: "Today", mon: nil)
-                    Text(proverb.kanji)
-                        .ikeruScaledFont(19, weight: .regular, design: .serif, relativeTo: .title3)
-                        .foregroundStyle(Color.ikeruTextPrimary)
-                        .lineLimit(1)
-                        .tracking(2)
-                    Text(proverb.translation)
-                        .ikeruScaledFont(11, relativeTo: .caption2)
-                        .italic()
-                        .foregroundStyle(Color.ikeruTextSecondary)
-                }
-                Spacer()
-                if vm.dueCardCount > 0 {
-                    HankoStamp(kanji: "急", size: 36)
-                }
-            }
-
-            // Due count — large serif numeral
-            HStack(alignment: .firstTextBaseline, spacing: 10) {
-                SerifNumeral(vm.dueCardCount, size: 56, color: .ikeruTextPrimary)
-                Text("CARDS DUE", comment: "Hero stat label on Home")
-                    .ikeruScaledFont(12, weight: .semibold, relativeTo: .caption2)
-                    .tracking(1.4)
-                    .textCase(.uppercase)
+            // Proverb header — calm by design, no urgency stamp.
+            VStack(alignment: .leading, spacing: 8) {
+                BilingualLabel(japanese: "本日", chrome: "Today", mon: nil)
+                Text(proverb.kanji)
+                    .ikeruScaledFont(19, weight: .regular, design: .serif, relativeTo: .title3)
+                    .foregroundStyle(Color.ikeruTextPrimary)
                     .lineLimit(1)
-                    .minimumScaleFactor(0.7)
+                    .tracking(2)
+                Text(proverb.translation)
+                    .ikeruScaledFont(11, relativeTo: .caption2)
+                    .italic()
                     .foregroundStyle(Color.ikeruTextSecondary)
             }
 
-            // Practice CTA — sharp gold, bilingual, sumi corners.
-            // Replaced by the rest-day surface when conditions hold.
+            // Today's count — the *composed-session* size with an honest label
+            // that always matches the new/review breakdown below it.
+            if vm.todayKind != .empty {
+                HStack(alignment: .firstTextBaseline, spacing: 10) {
+                    SerifNumeral(vm.todayCount, size: 56, color: .ikeruTextPrimary)
+                    Text(heroCountLabel(for: vm.todayKind))
+                        .ikeruScaledFont(12, weight: .semibold, relativeTo: .caption2)
+                        .tracking(1.4)
+                        .textCase(.uppercase)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                        .foregroundStyle(Color.ikeruTextSecondary)
+                }
+            }
+
+            // CTA / rest-day / all-caught-up — the CTA only exists when there is
+            // actually something composable, so it can never launch an empty session.
             if vm.restDayActive {
                 restDayBlock
+            } else if vm.todayKind == .empty {
+                quietState
             } else {
                 Button {
                     startSession()
@@ -373,8 +369,42 @@ struct HomeView: View {
                 .buttonStyle(.plain)
                 .tourAnchor(.sessionCTA)
             }
+
+            // Beginner's compass — kana mastery, always visible (the honest
+            // progress number that replaces XP/streak chrome).
+            kanaProgressLine(vm)
         }
         .tatamiRoom(.glass, padding: 20)
+    }
+
+    /// Honest hero label keyed to the composed session's mix.
+    private func heroCountLabel(for kind: HomeViewModel.TodayKind) -> LocalizedStringKey {
+        switch kind {
+        case .allNew:    return "Home.Hero.ToLearn"
+        case .allReview: return "Home.Hero.ToReview"
+        case .mixed:     return "Home.Hero.Today"
+        case .empty:     return ""
+        }
+    }
+
+    /// "かな X/92 learned" — the calm progress signal for beginners.
+    private func kanaProgressLine(_ vm: HomeViewModel) -> some View {
+        HStack(spacing: 8) {
+            Text("\u{304B}\u{306A}") // かな
+                .ikeruScaledFont(12, design: .serif, relativeTo: .caption)
+                .foregroundStyle(Color.ikeruPrimaryAccent)
+            Text("\(vm.kanaProgress.total)/\(KanaProgress.grandTotal)")
+                .ikeruScaledFont(12, design: .serif, relativeTo: .caption)
+                .monospacedDigit()
+                .foregroundStyle(Color.ikeruTextSecondary)
+            Text("Home.KanaLearned")
+                .ikeruScaledFont(10, relativeTo: .caption2)
+                .textCase(.uppercase)
+                .tracking(1.0)
+                .foregroundStyle(Color.ikeruTextTertiary)
+            Spacer()
+        }
+        .padding(.top, 2)
     }
 
     // MARK: - Session breakdown

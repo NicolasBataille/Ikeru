@@ -50,6 +50,25 @@ public final class HomeViewModel {
     /// Estimated number of review cards in the next session.
     public private(set) var sessionPreviewReviewCount: Int = 0
 
+    /// Kana mastery (familiar+), for the calm "X/92" progress line on Home.
+    public private(set) var kanaProgress: KanaProgress =
+        KanaProgress(hiraganaMastered: 0, katakanaMastered: 0)
+
+    /// The honest mix of today's composed session — drives the hero label so it
+    /// can't claim "À RÉVISER" while the breakdown is all-new (or vice versa).
+    public enum TodayKind: Sendable { case empty, allNew, allReview, mixed }
+
+    /// The number shown in the Home hero: the *actual* composed session size
+    /// (`sessionPreviewCardCount`), so the headline always equals new + review.
+    public var todayCount: Int { sessionPreviewCardCount }
+
+    public var todayKind: TodayKind {
+        if sessionPreviewCardCount == 0 { return .empty }
+        if sessionPreviewReviewCount == 0 { return .allNew }
+        if sessionPreviewNewCount == 0 { return .allReview }
+        return .mixed
+    }
+
     /// XP earned so far within the current level (0 ≤ value < xpForLevel(level)).
     public var xpInCurrentLevel: Int {
         RPGConstants.progressInLevel(totalXP: xp).current
@@ -233,6 +252,7 @@ public final class HomeViewModel {
         await loadRPGState()
         await loadDueCardCount()
         await loadKanjiLearnedCount()
+        await loadKanaProgress()
         await composeSessionPreview()
         await loadSkillBalance()
 
@@ -304,6 +324,11 @@ public final class HomeViewModel {
     private func loadKanjiLearnedCount() async {
         let allCards = await cardRepository.allCards()
         kanjiLearnedCount = allCards.filter { $0.fsrsState.reps > 0 }.count
+    }
+
+    private func loadKanaProgress() async {
+        let allCards = await cardRepository.allCards()
+        kanaProgress = KanaProgress.from(cards: allCards)
     }
 
     /// Composes a session preview using the same `DefaultSessionPlanner`
