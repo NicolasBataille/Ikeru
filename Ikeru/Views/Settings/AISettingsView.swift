@@ -39,7 +39,7 @@ struct AISettingsView: View {
         CloudProviderEntry(
             id: "gemini",
             title: "Gemini",
-            subtitle: "Google AI Studio · Free tier · Recommended first provider",
+            subtitle: "Google AI Studio · Free tier",
             keychainKey: KeychainKeys.geminiAPIKey,
             signupURL: URL(string: "https://aistudio.google.com/apikey")!
         ),

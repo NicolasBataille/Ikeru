@@ -326,7 +326,8 @@ struct SettingsView: View {
             settingRow(
                 jp: "振り仮名",
                 label: "Furigana",
-                value: localizedString(furiganaStatusValue)
+                value: localizedString(furiganaStatusValue),
+                showChevron: false
             ) {
                 withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) {
                     furiganaEnabled.toggle()
@@ -663,12 +664,13 @@ struct SettingsView: View {
         jp: String,
         label: LocalizedStringKey,
         value: String,
+        showChevron: Bool = true,
         action: (() -> Void)? = nil
     ) -> some View {
         Button {
             action?()
         } label: {
-            rowChrome(jp: jp, label: label, value: value)
+            rowChrome(jp: jp, label: label, value: value, showChevron: showChevron)
         }
         .buttonStyle(.plain)
         .disabled(action == nil)
@@ -790,7 +792,8 @@ struct SettingsView: View {
     private func rowChrome(
         jp: String,
         label: LocalizedStringKey,
-        value: String
+        value: String,
+        showChevron: Bool = true
     ) -> some View {
         HStack(spacing: 16) {
             Text(jp)
@@ -807,9 +810,13 @@ struct SettingsView: View {
                     .minimumScaleFactor(0.7)
                     .foregroundStyle(Color.ikeruPrimaryAccent)
             }
-            Text("›")
-                .font(.system(size: 14))
-                .foregroundStyle(TatamiTokens.goldDim)
+            // Toggle-style rows (e.g. Furigana) show their On/Off value, not a
+            // chevron — a chevron there falsely signals navigation.
+            if showChevron {
+                Text("›")
+                    .font(.system(size: 14))
+                    .foregroundStyle(TatamiTokens.goldDim)
+            }
         }
         .padding(.horizontal, 16).padding(.vertical, 14)
         .overlay(alignment: .bottom) {

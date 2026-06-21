@@ -25,7 +25,7 @@ struct VocabularyDictionaryView: View {
             }
         }
         .navigationBarTitleDisplayMode(.inline)
-        .navigationTitle("Dictionary")
+        .navigationTitle("Vocabulary")
         .task {
             initializeViewModel()
             await viewModel?.loadData()

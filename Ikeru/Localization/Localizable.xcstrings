@@ -5759,7 +5759,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pour revenir au mode beginner-friendly, désactive ici."
+            "value" : "Pour revenir au mode débutant, désactive ici."
           }
         }
       }
@@ -8791,6 +8791,198 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "appris"
+          }
+        }
+      }
+    },
+    "Data & Storage" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Data & Storage"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Données & stockage"
+          }
+        }
+      }
+    },
+    "Cache & pre-warm" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cache & pre-warm"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cache & préchauffage"
+          }
+        }
+      }
+    },
+    "Cache & Pre-warm" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cache & Pre-warm"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cache & préchauffage"
+          }
+        }
+      }
+    },
+    "Dev tools" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dev tools"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Outils dev"
+          }
+        }
+      }
+    },
+    "Developer tools" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Developer tools"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Outils développeur"
+          }
+        }
+      }
+    },
+    "Tab.Practice" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Practice"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pratique"
+          }
+        }
+      }
+    },
+    "Fall seven times, rise eight." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fall seven times, rise eight."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tombe sept fois, relève-toi huit."
+          }
+        }
+      }
+    },
+    "One time, one meeting — treasure every encounter." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "One time, one meeting — treasure every encounter."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une fois, une rencontre — chéris chaque instant."
+          }
+        }
+      }
+    },
+    "Learn the new by warming the old." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Learn the new by warming the old."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apprends le neuf en réchauffant l'ancien."
+          }
+        }
+      }
+    },
+    "One mind, no scattering — wholehearted focus." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "One mind, no scattering — wholehearted focus."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un seul esprit, sans dispersion — pleine concentration."
+          }
+        }
+      }
+    },
+    "Carry your first intention through to the end." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Carry your first intention through to the end."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Porte ton intention initiale jusqu'au bout."
+          }
+        }
+      }
+    },
+    "Words become deeds." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Words become deeds."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les mots deviennent des actes."
           }
         }
       }

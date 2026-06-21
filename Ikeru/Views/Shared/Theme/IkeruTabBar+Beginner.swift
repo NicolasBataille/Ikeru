@@ -48,7 +48,7 @@ struct BeginnerTabCell: View {
     private var label: LocalizedStringKey {
         switch tab {
         case .explore:  return "Tab.Study"
-        case .practice: return "Tab.Home"
+        case .practice: return "Tab.Practice"
         case .settings: return "Tab.Settings"
         }
     }

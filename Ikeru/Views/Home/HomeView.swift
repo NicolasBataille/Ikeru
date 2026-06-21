@@ -525,9 +525,13 @@ struct HomeView: View {
 struct HomeProverb {
     let kanji: String
     let romaji: String
-    let translation: String
+    /// Localizable: each English meaning is also a catalogue key, so the line
+    /// renders in FR via `Localizable.xcstrings` (the proverb itself stays JP).
+    let translation: LocalizedStringKey
 
-    static let pool: [HomeProverb] = [
+    // Computed (not a stored static) so it isn't a non-Sendable shared global —
+    // LocalizedStringKey isn't Sendable, which a `static let` array would flag.
+    static var pool: [HomeProverb] { [
         HomeProverb(
             kanji: "七転八起",
             romaji: "nana korobi ya oki",
@@ -558,7 +562,7 @@ struct HomeProverb {
             romaji: "yūgen jikkō",
             translation: "Words become deeds."
         )
-    ]
+    ] }
 
     static func dailyProverb(level: Int) -> HomeProverb {
         // Seed by day + level so it changes daily but stays stable across

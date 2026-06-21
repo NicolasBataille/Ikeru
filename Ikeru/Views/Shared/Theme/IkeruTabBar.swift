@@ -104,9 +104,9 @@ private struct TatamiTabCell: View {
 
     private var japaneseLabel: String {
         switch tab {
-        case .practice: return "稽古"
-        case .explore:  return "学習"
-        case .settings: return "設定"
+        case .practice: return "\u{7DF4}\u{7FD2}" // 練習 — Practice (matches the IA)
+        case .explore:  return "\u{5B66}\u{7FD2}" // 学習
+        case .settings: return "\u{8A2D}\u{5B9A}" // 設定
         }
     }
 
