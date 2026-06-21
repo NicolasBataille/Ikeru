@@ -29,26 +29,37 @@ public enum MarbleVariant: String, Sendable, CaseIterable {
 public struct MarbleBackground: View {
     public let variant: MarbleVariant
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     public init(variant: MarbleVariant) {
         self.variant = variant
     }
 
     public var body: some View {
-        Canvas { context, size in
-            // 1. Ink base gradient
-            drawBase(context: context, size: size)
+        // The veins drift very slowly, so a high refresh rate (up to 120 Hz on
+        // ProMotion) would burn battery for no visible gain — throttle to ~20fps.
+        // Fully paused (and frozen at t=0) under Reduce Motion.
+        TimelineView(.animation(minimumInterval: 1.0 / 20.0, paused: reduceMotion)) { timeline in
+            let time = reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate
+            Canvas { context, size in
+                // 1. Ink base gradient
+                drawBase(context: context, size: size)
 
-            // 2. Kintsugi veins (blurred, wide, gold)
-            for vein in KintsugiVeinLibrary.veins(for: variant) {
-                drawVein(vein, context: context, size: size)
+                // 2. Kintsugi veins (blurred, wide, gold) — gently undulating
+                for (index, vein) in KintsugiVeinLibrary.veins(for: variant).enumerated() {
+                    drawVein(
+                        vein, context: context, size: size,
+                        time: time, phase: Double(index) * 1.7
+                    )
+                }
+
+                // 3. Grain veil — angular gradient overlay at ~0.03 opacity
+                drawGrainVeil(context: context, size: size)
             }
-
-            // 3. Grain veil — angular gradient overlay at ~0.03 opacity
-            drawGrainVeil(context: context, size: size)
+            .ignoresSafeArea()
+            .allowsHitTesting(false)
+            .drawingGroup()
         }
-        .ignoresSafeArea()
-        .allowsHitTesting(false)
-        .drawingGroup()
     }
 
     // MARK: Private drawing helpers
@@ -72,11 +83,23 @@ public struct MarbleBackground: View {
         )
     }
 
-    private func drawVein(_ vein: KintsugiVein, context: GraphicsContext, size: CGSize) {
+    private func drawVein(
+        _ vein: KintsugiVein, context: GraphicsContext, size: CGSize,
+        time: Double, phase: Double
+    ) {
+        // Subtle fluid drift: nudge the Bézier handles along a slow sine so the
+        // belly of each vein undulates, while the endpoints stay anchored to the
+        // screen edges. Amplitudes are in normalised space (~1–1.5 % of the
+        // screen), so the motion reads as a faint living shimmer, not a wobble.
+        let sway: CGFloat = 0.016
+        let drift: CGFloat = 0.011
+        let a = CGFloat(sin(time * 0.33 + phase))
+        let b = CGFloat(cos(time * 0.24 + phase * 1.3))
+
         // Scale normalised control points [0..1] to actual pixel coords
         let p0 = vein.p0.scaled(to: size)
-        let cp1 = vein.cp1.scaled(to: size)
-        let cp2 = vein.cp2.scaled(to: size)
+        let cp1 = CGPoint(x: vein.cp1.x + sway * a, y: vein.cp1.y + drift * b).scaled(to: size)
+        let cp2 = CGPoint(x: vein.cp2.x - sway * b, y: vein.cp2.y + drift * a).scaled(to: size)
         let p3 = vein.p3.scaled(to: size)
 
         var path = Path()
