@@ -292,6 +292,8 @@ public final class ConversationViewModel: Identifiable {
                 errorMessage = "Sakura.Error.Network"
             case .invalidResponse:
                 errorMessage = "Sakura.Error.InvalidResponse"
+            case .invalidKey:
+                errorMessage = "Sakura.Error.KeyInvalid"
             case .keyNotFound:
                 errorMessage = "Sakura.Error.KeyMissing"
             case .allProvidersExhausted:

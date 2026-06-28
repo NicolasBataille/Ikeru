@@ -10160,6 +10160,23 @@
         }
       }
     },
+    "Sakura.Error.KeyInvalid" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your AI key was rejected. Check it in Settings."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre clé IA a été refusée. Vérifiez-la dans les Réglages."
+          }
+        }
+      }
+    },
     "Sakura.Error.KeyMissing" : {
       "extractionState" : "manual",
       "localizations" : {
