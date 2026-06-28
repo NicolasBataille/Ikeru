@@ -15,7 +15,12 @@ public final class GeminiProvider: AIProvider, @unchecked Sendable {
     private let urlSession: any URLSessionProvider
     private let timeoutSeconds: Double
 
-    private static let baseURL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
+    /// Model used for conversation. `gemini-2.5-flash` is Google's current
+    /// default free-tier flash model; older IDs like `gemini-2.0-flash` can have
+    /// a free-tier quota of 0 on some projects. Bump this when the model is
+    /// retired (see ListModels: generativelanguage.googleapis.com/v1beta/models).
+    private static let model = "gemini-2.5-flash"
+    private static let baseURL = "https://generativelanguage.googleapis.com/v1beta/models/\(model):generateContent"
 
     public init(
         keychainStore: any KeychainStore = KeychainHelper(),
