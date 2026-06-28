@@ -41,6 +41,26 @@ private final class MockConversationAIProvider: AIProvider, @unchecked Sendable 
     }
 }
 
+/// Records the last prompt it was handed so tests can assert on the assembled
+/// system prompt. Tests drive it serially on the MainActor.
+private final class CapturingAIProvider: AIProvider, @unchecked Sendable {
+    let name = "CapturingProvider"
+    let tier: AITier = .onDevice
+    private let lock = NSLock()
+    private var _lastPrompt: AIPrompt?
+
+    var lastPrompt: AIPrompt? {
+        lock.withLock { _lastPrompt }
+    }
+
+    var isAvailable: Bool { get async { true } }
+
+    func generate(prompt: AIPrompt) async throws -> AIResponse {
+        lock.withLock { _lastPrompt = prompt }
+        return AIResponse(content: "はい！", tier: tier, latencyMs: 10)
+    }
+}
+
 // MARK: - ConversationService Tests
 
 @Suite("ConversationService")
@@ -192,5 +212,53 @@ struct ConversationServiceTests {
         await #expect(throws: AIError.self) {
             try await service.sendMessage("hello", history: [], jlptLevel: JLPTLevel.n5)
         }
+    }
+
+    @Test("Known vocabulary is injected as a soft preference")
+    func injectsKnownVocabulary() async throws {
+        let provider = CapturingAIProvider()
+        let router = AIRouterService(
+            onDeviceProvider: provider,
+            geminiProvider: provider,
+            claudeProvider: provider,
+            localGPUProvider: provider
+        )
+        let service = ConversationService(aiRouter: router)
+
+        _ = try await service.sendMessage(
+            "こんにちは",
+            history: [],
+            jlptLevel: JLPTLevel.n5,
+            knownVocabulary: ["猫(ねこ)", "犬(いぬ)"]
+        )
+
+        let prompt = try #require(provider.lastPrompt?.systemPrompt)
+        #expect(prompt.contains("WORDS THE LEARNER ALREADY KNOWS"))
+        #expect(prompt.contains("猫(ねこ)"))
+        #expect(prompt.contains("犬(いぬ)"))
+        // The soft-preference framing must be present so Sakura never forces words.
+        #expect(prompt.contains("SOFT preference"))
+        #expect(prompt.contains("do NOT force"))
+    }
+
+    @Test("No known-vocabulary section when the list is empty")
+    func omitsKnownVocabularyWhenEmpty() async throws {
+        let provider = CapturingAIProvider()
+        let router = AIRouterService(
+            onDeviceProvider: provider,
+            geminiProvider: provider,
+            claudeProvider: provider,
+            localGPUProvider: provider
+        )
+        let service = ConversationService(aiRouter: router)
+
+        _ = try await service.sendMessage(
+            "こんにちは",
+            history: [],
+            jlptLevel: JLPTLevel.n5
+        )
+
+        let prompt = try #require(provider.lastPrompt?.systemPrompt)
+        #expect(!prompt.contains("WORDS THE LEARNER ALREADY KNOWS"))
     }
 }

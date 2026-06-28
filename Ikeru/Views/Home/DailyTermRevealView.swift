@@ -86,6 +86,12 @@ struct DailyTermRevealView: View {
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
+    /// Local audio engine for the pronunciation button. Plays the bundled
+    /// VOICEVOX clip for the reading when present, falling back to on-device
+    /// synthesis. The `\.audioService` environment key is never injected
+    /// app-wide, so — like every other consumer — we own one here.
+    @State private var audioService = AudioService()
+
     // Reveal animation state
     @State private var phase: RevealPhase = .veiled
 
@@ -213,9 +219,12 @@ struct DailyTermRevealView: View {
 
     private var readingBlock: some View {
         VStack(spacing: 4) {
-            Text(term.reading)
-                .font(.ikeruHeading3)
-                .foregroundStyle(Color.ikeruTextSecondary)
+            HStack(spacing: IkeruTheme.Spacing.sm) {
+                Text(term.reading)
+                    .font(.ikeruHeading3)
+                    .foregroundStyle(Color.ikeruTextSecondary)
+                listenButton
+            }
             Text(term.pronunciation)
                 .font(.ikeruCaption)
                 .foregroundStyle(Color.ikeruTextTertiary)
@@ -224,6 +233,25 @@ struct DailyTermRevealView: View {
         .opacity(phase >= .readingVisible ? 1 : 0)
         .offset(y: phase >= .readingVisible || reduceMotion ? 0 : 12)
         .animation(reduceMotion ? .easeIn(duration: 0.2) : .spring(response: 0.55, dampingFraction: 0.85), value: phase)
+    }
+
+    /// Speaks the term's reading — bundled VOICEVOX clip first, on-device
+    /// synthesis as fallback. Mirrors the kana 🔊 button in SRSCardView.
+    private var listenButton: some View {
+        Button {
+            Task { await audioService.playTTS(text: term.reading) }
+        } label: {
+            Image(systemName: "speaker.wave.2.fill")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(Color.ikeruPrimaryAccent)
+                .frame(width: 38, height: 38)
+                .background(Color.ikeruPrimaryAccent.opacity(0.08))
+                .overlay(Circle().strokeBorder(TatamiTokens.goldDim.opacity(0.5), lineWidth: 1))
+                .clipShape(Circle())
+        }
+        .buttonStyle(.plain)
+        .contentShape(Circle())
+        .accessibilityLabel(Text("Listen"))
     }
 
     private var meaningBlock: some View {

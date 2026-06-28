@@ -18,9 +18,11 @@ Docker Desktop, via Apple's native container runtime (macOS 26+):
     python3 scripts/generate-audio.py            # idempotent; skips existing
 
 Texts: the 92 base kana + every N5 vocabulary reading + every example sentence
-from Ikeru/Resources/ContentBundles/n5-content.sqlite (~390 clips, ~8 MB).
+from Ikeru/Resources/ContentBundles/n5-content.sqlite, PLUS every "term of the
+day" reading parsed straight from IkeruCore's DailyTermCatalog.swift (so the set
+stays in lock-step with the catalog) (~450 clips, ~8 MB).
 """
-import hashlib, os, sqlite3, subprocess, tempfile, urllib.parse, urllib.request
+import hashlib, os, re, sqlite3, subprocess, tempfile, urllib.parse, urllib.request
 
 IP = open("/tmp/voicevox_ip.txt").read().strip()
 BASE = f"http://{IP}:50021"
@@ -34,6 +36,19 @@ KATAKANA = "アイウエオカキクケコサシスセソタチツテトナニ�
 def key_for(text):
     return hashlib.sha256(text.encode("utf-8")).hexdigest()[:16]
 
+DAILY_TERM_CATALOG = "IkeruCore/Sources/Models/DailyTerm/DailyTermCatalog.swift"
+
+def collect_daily_term_readings():
+    """The 🔊 button on the term-of-the-day reveal speaks `term.reading`.
+    Parse the readings straight from the Swift catalog so this list never
+    drifts from what the app actually pronounces. Matches `reading: "..."`."""
+    try:
+        src = open(DAILY_TERM_CATALOG, encoding="utf-8").read()
+    except FileNotFoundError:
+        print(f"WARN: {DAILY_TERM_CATALOG} not found — skipping daily terms", flush=True)
+        return []
+    return [m.strip() for m in re.findall(r'reading:\s*"([^"]+)"', src) if m.strip()]
+
 def collect_texts():
     texts = []
     for ch in HIRAGANA + KATAKANA:
@@ -44,6 +59,7 @@ def collect_texts():
     for (s,) in con.execute("SELECT DISTINCT japanese FROM sentences WHERE japanese IS NOT NULL AND TRIM(japanese)!=''"):
         texts.append(s.strip())
     con.close()
+    texts.extend(collect_daily_term_readings())
     # de-dup, preserve order
     seen, uniq = set(), []
     for t in texts:

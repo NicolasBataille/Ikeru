@@ -83,6 +83,13 @@ public final class ConversationViewModel: Identifiable {
     private let speechDelegate: SpeechRecognitionDelegate?
     private let vocabularyRepository: VocabularyRepository?
 
+    /// `word(reading)` tokens for the words the learner has saved to their
+    /// dictionary, fetched once on appear and passed to Sakura as a SOFT
+    /// preference (reuse only when natural — never forced). Capped so the
+    /// system prompt stays bounded no matter how large the dictionary grows.
+    private var knownVocabulary: [String] = []
+    private static let maxKnownVocabulary = 40
+
     // MARK: - Init
 
     public init(
@@ -106,10 +113,24 @@ public final class ConversationViewModel: Identifiable {
         let statuses = conversationService.aiRouter.tierStatuses
         isAIAvailable = statuses.values.contains { $0 == .available }
 
+        await loadKnownVocabulary()
+
         if let topic = seedTopic, isAIAvailable, messages.isEmpty {
             seedTopic = nil
             await startWithTopic(topic)
         }
+    }
+
+    /// Fetches the learner's saved dictionary words once and caches them as
+    /// `word(reading)` tokens, ranked most-mastered first so the capped slice
+    /// favours words worth reinforcing. Whole-array replacement — no mutation.
+    private func loadKnownVocabulary() async {
+        guard let repo = vocabularyRepository else { return }
+        let entries = await repo.allEntries()
+        knownVocabulary = entries
+            .sorted { ($0.mastery.rawValue, $0.encounterCount) > ($1.mastery.rawValue, $1.encounterCount) }
+            .prefix(Self.maxKnownVocabulary)
+            .map { $0.reading.isEmpty ? $0.word : "\($0.word)(\($0.reading))" }
     }
 
     // MARK: - Topic Seeding
@@ -167,7 +188,8 @@ public final class ConversationViewModel: Identifiable {
             let response = try await conversationService.sendMessage(
                 userText,
                 history: messages,
-                jlptLevel: jlptLevel
+                jlptLevel: jlptLevel,
+                knownVocabulary: knownVocabulary
             )
             messages.append(response)
             await logVocabularyEncounters(response)
