@@ -117,7 +117,13 @@ struct AISettingsView: View {
                     }
                     .tint(.ikeruTextSecondary)
 
-                    localRigSection
+                    // The VOICEVOX "Local Rig" setup is retired from the UI:
+                    // pronunciation audio now ships as pre-generated bundled
+                    // clips (BundledAudioLocator) with on-device synthesis as a
+                    // fallback, so there is nothing for the user to set up. The
+                    // `localRigSection` + rig machinery stay in the codebase
+                    // (dormant) in case a self-hosted heavy-model bridge returns.
+                    // localRigSection
                 }
                 .padding(IkeruTheme.Spacing.md)
             }

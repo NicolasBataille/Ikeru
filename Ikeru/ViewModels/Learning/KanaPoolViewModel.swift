@@ -92,14 +92,17 @@ public final class KanaPoolViewModel {
     // MARK: Loading
 
     public func loadMasteries() async {
-        // Guard against concurrent re-entry: `seedIfNeeded` reads the existing
-        // fronts and then inserts whatever is missing, so two overlapping runs
-        // would each see a partial store and both insert the full set —
-        // creating duplicate cards (which later trap `mastery(for:)`'s
-        // unique-keyed Dictionary).
+        // Guard against concurrent re-entry: `seed` reads the existing fronts
+        // and then inserts whatever is missing, so two overlapping runs would
+        // each see a partial store and both insert — creating duplicate cards
+        // (which later trap `mastery(for:)`'s unique-keyed Dictionary).
         if case .loading = loadingState { return }
         loadingState = .loading
-        await repository.seedIfNeeded()
+        // Seed ONLY the currently-selected groups, not all 92 kana. Opening the
+        // grid no longer materialises the entire katakana set as immediately-due
+        // cards — that was the source of katakana leaking into Home Practice.
+        // Un-selected groups still render (0%) from KanaGroup metadata.
+        await repository.seed(groups: selectedGroups)
         let allGroups = Set(KanaGroup.allCases)
         let result = await repository.mastery(for: allGroups)
         let allCards = await repository.cardsForGroups(allGroups)
@@ -159,6 +162,10 @@ public final class KanaPoolViewModel {
     // MARK: Fetching cards for drill modes
 
     public func cards(for mode: KanaDrillMode) async -> [CardDTO] {
+        // Make sure the currently-selected groups have backing cards before we
+        // query them — a group the user just selected may not have been seeded
+        // yet (seeding is selection-scoped, not bulk).
+        await repository.seed(groups: selectedGroups)
         switch mode {
         case .dueReview:
             return await repository.dueCardsForGroups(selectedGroups, now: Date())
@@ -167,6 +174,15 @@ public final class KanaPoolViewModel {
         case .weakReinforcement:
             return await repository.weakCardsForGroups(selectedGroups)
         }
+    }
+
+    /// Confirm the current selection as the learner's study set: persist it
+    /// (already done via `selectedGroups.didSet`), seed its cards, and mark the
+    /// choice so Home stops showing the "choose your kana" gate. Used by the
+    /// first-run chooser presented from Home.
+    public func confirmStudySet() async {
+        await repository.seed(groups: selectedGroups)
+        StudySetStore.markChosen()
     }
 
     // MARK: Persistence helpers
@@ -183,5 +199,37 @@ public final class KanaPoolViewModel {
     private static func loadPersistedSelection() -> Set<KanaGroup>? {
         guard let data = UserDefaults.standard.data(forKey: storageKey) else { return nil }
         return try? JSONDecoder().decode(Set<KanaGroup>.self, from: data)
+    }
+}
+
+// MARK: - StudySetStore
+
+/// Tiny persistence facade over the learner's chosen kana study set. It shares
+/// the `KanaPoolViewModel` selection key (so the pool selector and the Home
+/// gate are one source of truth) and adds a "has chosen" flag that Home reads
+/// to decide whether to invite the learner to pick their kana before practising.
+///
+/// Lives here (rather than in its own file) because the app target is
+/// non-synchronised — folding it into an existing source file avoids a
+/// project.pbxproj edit. It is intentionally global/single-user, matching the
+/// existing selection persistence.
+enum StudySetStore {
+    private static let groupsKey = "ikeru.kana.selectedGroups"        // shared with KanaPoolViewModel
+    private static let chosenKey = "ikeru.kana.hasChosenStudySet"
+
+    /// Whether the learner has explicitly confirmed a study set at least once.
+    static var hasChosenStudySet: Bool {
+        UserDefaults.standard.bool(forKey: chosenKey)
+    }
+
+    /// The chosen kana groups (decoded from the shared selection key).
+    static var chosenGroups: Set<KanaGroup> {
+        guard let data = UserDefaults.standard.data(forKey: groupsKey) else { return [] }
+        return (try? JSONDecoder().decode(Set<KanaGroup>.self, from: data)) ?? []
+    }
+
+    /// Mark that the learner has made an explicit study-set choice.
+    static func markChosen() {
+        UserDefaults.standard.set(true, forKey: chosenKey)
     }
 }

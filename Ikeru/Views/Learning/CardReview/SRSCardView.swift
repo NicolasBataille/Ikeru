@@ -69,6 +69,11 @@ struct SRSCardView: View {
     @State private var flyingRevealed: Bool = false
     @State private var flyingDirection: SwipeDirection?
 
+    /// Drives the kana pronunciation button. Plays a bundled VOICEVOX clip when
+    /// one exists for the character, else falls back to on-device synthesis —
+    /// either way, zero setup. Only the interactive (current) card shows it.
+    @State private var audioService = AudioService()
+
     @Namespace private var deckNamespace
 
     /// Distance (in points) at which the grade indicator starts appearing.
@@ -189,7 +194,7 @@ struct SRSCardView: View {
     // MARK: - Card Layers
 
     private var currentCard: some View {
-        cardContent(for: card, revealed: isRevealed)
+        cardContent(for: card, revealed: isRevealed, interactive: true)
             .tatamiRoom(.glass, padding: EdgeInsets(top: 28, leading: 28, bottom: 28, trailing: 28))
             // While dragging the glass card, the cards behind in the deck
             // bleed through and read as a distracting visual halo. An
@@ -217,7 +222,7 @@ struct SRSCardView: View {
     // state layers a kintsugi gold hairline between the kana and romaji —
     // the literal "repair seam" between what you saw and what you know.
 
-    private func cardContent(for card: CardDTO, revealed: Bool) -> some View {
+    private func cardContent(for card: CardDTO, revealed: Bool, interactive: Bool = false) -> some View {
         ZStack {
             if revealed {
                 cardBackContent(for: card)
@@ -238,11 +243,18 @@ struct SRSCardView: View {
             }
             .allowsHitTesting(false)
 
-            // (The bottom hint-chip row was removed: Listen / Hint / Mark and
-            // Strokes / Example were all unwired — every tap was a no-op, which
-            // reads as broken on a first session. Reintroduce a chip here only
-            // once it performs a real action, e.g. Listen → AudioService.playTTS
-            // (needs an injected `audioService`), Mark → bookmark toggle.)
+            // Kana pronunciation — the one real, wired control that replaces the
+            // old dead hint-chip row. Shown only for kana on the interactive
+            // (current) card, pinned to the bottom. The card front carries no
+            // drag gesture (reveal-before-swipe), so the button never fights a
+            // swipe. Plays a bundled VOICEVOX clip, falling back to synthesis.
+            if interactive && card.isKana {
+                VStack {
+                    Spacer()
+                    kanaListenButton(card)
+                        .padding(.bottom, 8)
+                }
+            }
         }
         .frame(maxWidth: .infinity)
         .frame(minHeight: 360)
@@ -353,6 +365,28 @@ struct SRSCardView: View {
                 .minimumScaleFactor(0.5)
                 .padding(.horizontal, IkeruTheme.Spacing.md)
         }
+    }
+
+    // MARK: - Kana Pronunciation Button
+
+    /// A small speaker control that plays the kana's pronunciation. Lives in the
+    /// card's bottom region; tapping it neither reveals nor swipes (Button
+    /// consumes the tap, and the front has no drag gesture).
+    private func kanaListenButton(_ card: CardDTO) -> some View {
+        Button {
+            Task { await audioService.playTTS(text: card.front) }
+        } label: {
+            Image(systemName: "speaker.wave.2.fill")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(Color.ikeruPrimaryAccent)
+                .frame(width: 42, height: 42)
+                .background(Color.ikeruPrimaryAccent.opacity(0.08))
+                .overlay(Circle().strokeBorder(TatamiTokens.goldDim.opacity(0.5), lineWidth: 1))
+                .clipShape(Circle())
+        }
+        .buttonStyle(.plain)
+        .contentShape(Circle())
+        .accessibilityLabel(Text("Listen"))
     }
 
     // MARK: - Dominant Direction (progressive)

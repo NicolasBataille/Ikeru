@@ -182,6 +182,7 @@
 		EFA3DDE7B5BBFA82A09873CB /* SentenceConstructionViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 929D91F5E4CA898816722EFF /* SentenceConstructionViewModel.swift */; };
 		EFB4AC9FEB8312A7E21BAB67 /* KanjiStudyViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0751CC1AD8BD9B3CB495986 /* KanjiStudyViewModel.swift */; };
 		EFFC7E378C0AE8C64CD48AEB /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = B397E03A82EFF499E855C79D /* PrivacyInfo.xcprivacy */; };
+		A0D10F1CE0000000000A0002 /* Audio in Resources */ = {isa = PBXBuildFile; fileRef = A0D10F1CE0000000000A0001 /* Audio */; };
 		F0BDE207FB9AD47E59F1AE92 /* ConversationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9ADB1F486DEEFD4CE3C20C5C /* ConversationView.swift */; };
 		F2A0D73D1228BC5748D9C024 /* SRSCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2CD2275E34C699B7B4288B1 /* SRSCardView.swift */; };
 		F692C438F2EC4A4E6BF13432 /* MountainGlyph.swift in Sources */ = {isa = PBXBuildFile; fileRef = D08D4F4B23347E79AF13DD74 /* MountainGlyph.swift */; };
@@ -346,6 +347,7 @@
 		AF87E7A18DDA1BE176F0B8CE /* DisplayModeToggleRow.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DisplayModeToggleRow.swift; sourceTree = "<group>"; };
 		B04C74F735B5D471036C7A40 /* VocabularyDetailSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VocabularyDetailSheet.swift; sourceTree = "<group>"; };
 		B397E03A82EFF499E855C79D /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		A0D10F1CE0000000000A0001 /* Audio */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Audio; sourceTree = "<group>"; };
 		B46DF69A2A765C203CB58B09 /* SessionLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionLiveActivity.swift; sourceTree = "<group>"; };
 		B5EC7CD071A02DEB1F3611E0 /* ListeningViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListeningViewModelTests.swift; sourceTree = "<group>"; };
 		B5FD009AD0E461931F7476EE /* IkeruFlowLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IkeruFlowLayout.swift; sourceTree = "<group>"; };
@@ -521,6 +523,7 @@
 			isa = PBXGroup;
 			children = (
 				2DE7B7F90FE1037146766705 /* ContentBundles */,
+				A0D10F1CE0000000000A0001 /* Audio */,
 				C5A2D6A86325FDCBF4A95238 /* Fonts */,
 				E2839E6E122B09254AB7E515 /* Assets.xcassets */,
 				B397E03A82EFF499E855C79D /* PrivacyInfo.xcprivacy */,
@@ -1131,6 +1134,7 @@
 				2599E15EC556738138D16158 /* Assets.xcassets in Resources */,
 				EFFC7E378C0AE8C64CD48AEB /* PrivacyInfo.xcprivacy in Resources */,
 				699CDC8CCD6C70501B8AF94A /* n5-content.sqlite in Resources */,
+				A0D10F1CE0000000000A0002 /* Audio in Resources */,
 				7A80AB8856661612D39AAB05 /* Localizable.xcstrings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

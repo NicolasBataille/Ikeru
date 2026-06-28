@@ -46,6 +46,7 @@ struct HomeView: View {
     @State private var showSession = false
     @State private var heroAppeared = false
     @State private var dailyTermSheet: DailyTermSheet?
+    @State private var showStudySetChooser = false
     @AppStorage(DailyTermSettings.enabledKey) private var dailyTermEnabled: Bool = false
 
     var body: some View {
@@ -70,6 +71,15 @@ struct HomeView: View {
         }
         .sheet(item: $dailyTermSheet) { sheet in
             dailyTermSheetContent(sheet)
+        }
+        .sheet(isPresented: $showStudySetChooser) {
+            NavigationStack {
+                KanaPoolSelectorView(onStudySetConfirmed: {
+                    showStudySetChooser = false
+                    Task { await viewModel?.loadData() }
+                })
+            }
+            .presentationDragIndicator(.visible)
         }
         .task {
             initializeViewModels()
@@ -168,6 +178,7 @@ struct HomeView: View {
                 proverbHero(vm)
                 dailyTermSection
                 sessionBreakdown(vm)
+                nextStepSection(vm)
             }
             .padding(.horizontal, IkeruTheme.Spacing.lg)
             .padding(.top, IkeruTheme.Spacing.md)
@@ -195,6 +206,41 @@ struct HomeView: View {
                 .overlay(Rectangle().strokeBorder(TatamiTokens.goldDim.opacity(0.5), lineWidth: 0.6))
         }
         .sumiCorners(color: TatamiTokens.goldDim, size: 5, weight: 0.9)
+    }
+
+    // MARK: - Choose-your-kana CTA (soft study-set gate)
+
+    /// Shown when the learner hasn't yet chosen a study set. A calm invitation
+    /// to pick their kana first — no urgency, no locked wall — so Practice
+    /// always matches what they actually started learning.
+    private var chooseKanaCTA: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Home.ChooseKana.Hint")
+                .ikeruScaledFont(12, relativeTo: .caption)
+                .italic()
+                .foregroundStyle(Color.ikeruTextSecondary)
+
+            Button {
+                showStudySetChooser = true
+            } label: {
+                HStack {
+                    Spacer()
+                    Text("\u{4EEE}\u{540D}\u{3092}\u{9078}\u{3076} \u{00B7} ") // 仮名を選ぶ
+                        .ikeruScaledFont(13, weight: .regular, design: .serif, relativeTo: .body)
+                    Text("CHOOSE YOUR KANA", comment: "Home CTA: pick a kana study set first")
+                        .ikeruScaledFont(13, weight: .bold, relativeTo: .body)
+                        .tracking(1.4)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                    Spacer()
+                }
+                .foregroundStyle(Color.ikeruBackground)
+                .padding(.vertical, 14)
+                .background(Color.ikeruPrimaryAccent)
+                .sumiCorners(color: Color.ikeruBackground.opacity(0.6), size: 6, weight: 1.2, inset: -1)
+            }
+            .buttonStyle(.plain)
+        }
     }
 
     // MARK: - Top Bar
@@ -344,6 +390,10 @@ struct HomeView: View {
             // actually something composable, so it can never launch an empty session.
             if vm.restDayActive {
                 restDayBlock
+            } else if vm.needsStudySetChoice {
+                // Soft gate: invite the learner to pick their kana before any
+                // practice, so the session always matches what they chose.
+                chooseKanaCTA
             } else if vm.todayKind == .empty {
                 quietState
             } else {
@@ -474,6 +524,87 @@ struct HomeView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 10)
+    }
+
+    // MARK: - Next-step suggestion (calm progression nudge)
+    //
+    // One gentle "do this next" card derived from the learner's progress (the
+    // first unmet rung of the ladder). Shown only once the learner has started
+    // (not while the choose-your-kana gate is up) and hidden when fully caught
+    // up. Kana rungs are tappable (open the chooser to add the next groups);
+    // later rungs are calm, informational — never dead taps.
+
+    @ViewBuilder
+    private func nextStepSection(_ vm: HomeViewModel) -> some View {
+        if !vm.needsStudySetChoice,
+           let step = vm.nextStep,
+           step.stage != .allCaughtUp {
+            if isKanaStage(step.stage) {
+                Button { showStudySetChooser = true } label: { nextStepCard(step) }
+                    .buttonStyle(.plain)
+            } else {
+                nextStepCard(step)
+            }
+        }
+    }
+
+    private func isKanaStage(_ stage: NextStep.Stage) -> Bool {
+        stage == .learnHiragana || stage == .learnKatakana
+    }
+
+    @ViewBuilder
+    private func nextStepCard(_ step: NextStep) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 8) {
+                Text("Home.NextStep.Eyebrow")
+                    .ikeruScaledFont(10, weight: .semibold, relativeTo: .caption2)
+                    .tracking(1.6)
+                    .textCase(.uppercase)
+                    .foregroundStyle(Color.ikeruPrimaryAccent)
+                Spacer()
+                if step.required > 0 {
+                    Text("\(step.current)/\(step.required)")
+                        .ikeruScaledFont(11, design: .serif, relativeTo: .caption)
+                        .monospacedDigit()
+                        .foregroundStyle(Color.ikeruTextTertiary)
+                }
+            }
+            Text(nextStepTitle(step.stage))
+                .ikeruScaledFont(15, weight: .regular, design: .serif, relativeTo: .body)
+                .foregroundStyle(Color.ikeruTextPrimary)
+            Text(nextStepBody(step.stage))
+                .ikeruScaledFont(11, relativeTo: .caption2)
+                .foregroundStyle(Color.ikeruTextSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .tatamiRoom(.standard, padding: 14)
+    }
+
+    private func nextStepTitle(_ stage: NextStep.Stage) -> LocalizedStringKey {
+        switch stage {
+        case .learnHiragana:      return "Home.NextStep.Hiragana.Title"
+        case .learnKatakana:      return "Home.NextStep.Katakana.Title"
+        case .buildVocabulary:    return "Home.NextStep.Vocabulary.Title"
+        case .learnKanji:         return "Home.NextStep.Kanji.Title"
+        case .studyGrammar:       return "Home.NextStep.Grammar.Title"
+        case .readingListening:   return "Home.NextStep.Reading.Title"
+        case .converseWithSakura: return "Home.NextStep.Sakura.Title"
+        case .allCaughtUp:        return "Home.NextStep.CaughtUp.Title"
+        }
+    }
+
+    private func nextStepBody(_ stage: NextStep.Stage) -> LocalizedStringKey {
+        switch stage {
+        case .learnHiragana:      return "Home.NextStep.Hiragana.Body"
+        case .learnKatakana:      return "Home.NextStep.Katakana.Body"
+        case .buildVocabulary:    return "Home.NextStep.Vocabulary.Body"
+        case .learnKanji:         return "Home.NextStep.Kanji.Body"
+        case .studyGrammar:       return "Home.NextStep.Grammar.Body"
+        case .readingListening:   return "Home.NextStep.Reading.Body"
+        case .converseWithSakura: return "Home.NextStep.Sakura.Body"
+        case .allCaughtUp:        return "Home.NextStep.CaughtUp.Body"
+        }
     }
 
     // MARK: - Helpers

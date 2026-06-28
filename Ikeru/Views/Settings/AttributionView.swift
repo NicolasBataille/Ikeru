@@ -108,6 +108,13 @@ struct Attribution: Identifiable {
             license: "CC BY-SA 4.0",
             description: "Japanese-English dictionary data used for vocabulary entries and definitions."
         ),
+        Attribution(
+            id: "voicevox",
+            name: "VOICEVOX：四国めたん",
+            author: "VOICEVOX / Hiroshiba",
+            license: "VOICEVOX Terms (credit required)",
+            description: "Pronunciation audio for kana, vocabulary, and example sentences is pre-generated with the free VOICEVOX speech engine (voice: 四国めたん) and bundled for offline playback — no setup required."
+        ),
     ]
 }
 

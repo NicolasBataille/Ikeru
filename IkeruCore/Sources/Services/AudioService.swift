@@ -177,6 +177,14 @@ public final class AudioService {
         language: String = "ja-JP",
         rate: PlaybackRate? = nil
     ) async {
+        // Prefer a pre-generated, bundled clip (offline, consistent VOICEVOX
+        // voice, zero setup). Fall back to on-device synthesis when no clip is
+        // bundled for this exact text — so nothing ever goes silent.
+        if let bundledURL = BundledAudioLocator.url(for: text) {
+            await playCachedAudio(url: bundledURL, rate: rate)
+            return
+        }
+
         stop()
 
         let effectiveRate = rate ?? currentRate

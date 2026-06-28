@@ -12,6 +12,9 @@ struct ConversationView: View {
     /// True until the async provider-availability sweep finishes, so we show a
     /// spinner instead of flashing the "no AI" section while it's still unknown.
     @State private var isInitializing = true
+    /// In-app language (FR/EN), injected at the root via AppLocale. Drives which
+    /// language the beginner starter chips open in.
+    @Environment(\.locale) private var locale
 
     init(viewModel: ConversationViewModel) {
         _viewModel = State(initialValue: viewModel)
@@ -162,7 +165,7 @@ struct ConversationView: View {
                         .foregroundStyle(Color.ikeruTextSecondary)
 
                     // JLPT level badge — encre rectangle, no capsule
-                    Text(viewModel.jlptLevel.rawValue)
+                    Text(viewModel.jlptLevel.displayName)
                         .ikeruScaledFont(11, weight: .semibold, relativeTo: .caption)
                         .lineLimit(1)
                         .minimumScaleFactor(0.7)
@@ -178,11 +181,13 @@ struct ConversationView: View {
                 }
                 .multilineTextAlignment(.center)
 
-                // Suggestion chips — rectangle + sumi corners, not Capsule
+                // Suggestion chips — rectangle + sumi corners, not Capsule.
+                // Level- and language-aware: a beginner (N5) gets simple openers
+                // in their own language; from N4 up, short Japanese openers.
                 VStack(spacing: IkeruTheme.Spacing.sm) {
-                    suggestionButton("こんにちは！")
-                    suggestionButton("今日は何をしましたか？")
-                    suggestionButton("Hello! I'm learning Japanese.")
+                    ForEach(starters(for: viewModel.jlptLevel, locale: locale)) { starter in
+                        suggestionButton(starter.text)
+                    }
                 }
 
                 Spacer(minLength: IkeruTheme.Spacing.xl)
@@ -214,6 +219,36 @@ struct ConversationView: View {
                 .sumiCorners(color: TatamiTokens.goldDim, size: 6, weight: 1.1)
         }
         .buttonStyle(.plain)
+    }
+
+    // MARK: - Starter Chips
+
+    /// A starter chip: its text is already resolved to the chosen language and
+    /// is both shown and sent verbatim (Sakura replies bilingually).
+    private struct ChatStarter: Identifiable {
+        let text: String
+        var id: String { text }
+    }
+
+    /// Level- and language-aware conversation openers. A beginner (N5) gets
+    /// simple openers in their own language so they can start a conversation
+    /// without yet reading Japanese — Sakura answers in easy Japanese with an
+    /// inline translation, modelling the language. From N4 up, short Japanese
+    /// openers keep practice in Japanese.
+    private func starters(for level: JLPTLevel, locale: Locale) -> [ChatStarter] {
+        if level == .n5 {
+            let isFrench = locale.language.languageCode?.identifier == "fr"
+            let texts = isFrench
+                ? ["Bonjour ! Comment ça va ?",
+                   "J'apprends le japonais.",
+                   "Apprends-moi un mot, s'il te plaît."]
+                : ["Hello! How are you?",
+                   "I'm learning Japanese.",
+                   "Please teach me a word."]
+            return texts.map(ChatStarter.init)
+        }
+        return ["こんにちは！", "今日は何をしましたか？", "趣味について話しましょう。"]
+            .map(ChatStarter.init)
     }
 
     // MARK: - Message List
@@ -282,14 +317,16 @@ struct ConversationView: View {
                 .ikeruScaledFont(14, weight: .semibold, design: .serif, relativeTo: .body)
                 .foregroundStyle(Color.ikeruPrimaryAccent)
 
-            Text(message)
+            // message is a catalogue KEY (resolved via the injected \.locale so
+            // it honours the in-app language); unknown keys fall back to verbatim.
+            Text(LocalizedStringKey(message))
                 .font(.ikeruCaption)
                 .foregroundStyle(.ikeruTextSecondary)
 
             Spacer()
 
             Button("Retry") {
-                Task { await viewModel.sendMessage() }
+                Task { await viewModel.retryLastMessage() }
             }
             .font(.ikeruCaption)
             .fontWeight(.semibold)
@@ -386,18 +423,26 @@ struct ConversationView: View {
     // MARK: - Level Badge
 
     private var levelBadge: some View {
-        Text(viewModel.jlptLevel.rawValue)
-            .font(.ikeruCaption)
-            .fontWeight(.semibold)
-            .lineLimit(1)
-            .minimumScaleFactor(0.7)
-            .foregroundStyle(Color.ikeruPrimaryAccent)
-            .padding(.horizontal, IkeruTheme.Spacing.sm)
-            .padding(.vertical, IkeruTheme.Spacing.xs)
-            .overlay(
-                Rectangle()
-                    .strokeBorder(TatamiTokens.goldDim, lineWidth: 1)
-            )
+        Menu {
+            Picker("Sakura.Level.Picker", selection: $viewModel.jlptLevel) {
+                ForEach(JLPTLevel.allCases) { level in
+                    Text(level.displayName).tag(level)
+                }
+            }
+        } label: {
+            Text(viewModel.jlptLevel.displayName)
+                .font(.ikeruCaption)
+                .fontWeight(.semibold)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+                .foregroundStyle(Color.ikeruPrimaryAccent)
+                .padding(.horizontal, IkeruTheme.Spacing.sm)
+                .padding(.vertical, IkeruTheme.Spacing.xs)
+                .overlay(
+                    Rectangle()
+                        .strokeBorder(TatamiTokens.goldDim, lineWidth: 1)
+                )
+        }
     }
 
     // MARK: - Scroll Helpers

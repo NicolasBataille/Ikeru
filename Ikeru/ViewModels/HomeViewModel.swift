@@ -54,6 +54,17 @@ public final class HomeViewModel {
     public private(set) var kanaProgress: KanaProgress =
         KanaProgress(hiraganaMastered: 0, katakanaMastered: 0)
 
+    /// Whether Home should invite the learner to choose a kana study set before
+    /// practising (the soft "choose your kana" gate). True only for a fresh
+    /// learner who hasn't chosen a set and has no kana cards yet — so Practice
+    /// always reflects what they actually picked, never auto-seeded katakana.
+    public private(set) var needsStudySetChoice: Bool = false
+
+    /// The single calm "do this next" suggestion (first unmet rung of the
+    /// learning ladder). nil until the first load. Surfaced once the learner has
+    /// started (not while the choose-your-kana gate is up).
+    public private(set) var nextStep: NextStep?
+
     /// The honest mix of today's composed session — drives the hero label so it
     /// can't claim "À RÉVISER" while the breakdown is all-new (or vice versa).
     public enum TodayKind: Sendable { case empty, allNew, allReview, mixed }
@@ -89,8 +100,7 @@ public final class HomeViewModel {
 
     /// Re-entry guard. `loadData` is invoked from both `.task` and `.onAppear`
     /// on Home, which fire together on first appear — without this, two
-    /// concurrent runs race `ensureBeginnerContentSeeded` and each insert the
-    /// beginner vowels, creating duplicate cards.
+    /// concurrent runs could race the study-set gate and the preview compose.
     private var isLoadingData = false
 
     /// Whether Home should show 「今日は休 / Rest day」 instead of the
@@ -262,16 +272,16 @@ public final class HomeViewModel {
         let startTime = CFAbsoluteTimeGetCurrent()
 
         await loadProfile()
-        // Seed the five beginner hiragana BEFORE composing the preview, so a
-        // brand-new account already has cards and Home shows an inviting
-        // "to learn" CTA instead of the "all caught up" quiet state. (The seed
-        // previously ran only when the hidden CTA was tapped — a chicken-and-egg
-        // that stranded day-one users on an empty Home.)
-        await ensureBeginnerContentSeeded()
+        // Decide whether to invite the learner to choose their kana first. We
+        // no longer auto-seed あいうえお on appear: Practice should reflect the
+        // learner's explicit choice (issue E), so a fresh user is guided to the
+        // chooser instead of silently receiving cards.
+        await refreshStudySetGate()
         await loadRPGState()
         await loadDueCardCount()
         await loadKanjiLearnedCount()
         await loadKanaProgress()
+        await loadNextStep()
         await composeSessionPreview()
         await loadSkillBalance()
 
@@ -288,15 +298,19 @@ public final class HomeViewModel {
         displayName = ActiveProfileResolver.fetchActiveProfile(in: context)?.displayName ?? ""
     }
 
-    /// Ensures the five beginner hiragana exist before the first session
-    /// preview is composed. Idempotent (the seed service no-ops once any cards
-    /// exist), so this is safe to call on every Home appearance.
-    private func ensureBeginnerContentSeeded() async {
-        let existing = await cardRepository.allCards()
-        await ContentSeedService.seedBeginnerKanaIfNeeded(
-            repository: cardRepository,
-            existingCardCount: existing.count
-        )
+    /// Decides whether Home should show the soft "choose your kana" gate.
+    /// True only for a fresh learner: one who has neither confirmed a study set
+    /// nor accumulated any kana cards. Existing users (who already have cards)
+    /// are grandfathered straight into Practice, so this change is invisible to
+    /// them. Once the learner confirms a set in the chooser, `hasChosenStudySet`
+    /// flips and this returns false.
+    private func refreshStudySetGate() async {
+        if StudySetStore.hasChosenStudySet {
+            needsStudySetChoice = false
+            return
+        }
+        let hasKanaCards = (await cardRepository.allCards()).contains { $0.isKana }
+        needsStudySetChoice = !hasKanaCards
     }
 
     private func loadRPGState() async {
@@ -359,6 +373,28 @@ public final class HomeViewModel {
     private func loadKanaProgress() async {
         let allCards = await cardRepository.allCards()
         kanaProgress = KanaProgress.from(cards: allCards)
+    }
+
+    /// Computes the single "do this next" suggestion from a real snapshot of the
+    /// learner's cards (kana per-character mastery + vocab/kanji familiar+).
+    /// Grammar/listening signals aren't tracked yet, so they're passed as 0 —
+    /// which is correct for a beginner whose realistic next step is always a
+    /// kana or vocabulary rung.
+    private func loadNextStep() async {
+        let cards = await cardRepository.allCards()
+        let snapshot = LearnerSnapshotBuilder.build(
+            cards: cards,
+            jlptLevel: .n5,
+            grammarPointsFamiliarPlus: 0,
+            listeningAccuracyLast30: 0,
+            listeningRecallLast30Days: 0,
+            skillBalances: [:],
+            hasNewContentQueued: cards.contains { $0.fsrsState.reps == 0 },
+            lastSessionAt: nil,
+            now: Date()
+        )
+        let kana = KanaProgress.from(cards: cards)
+        nextStep = NextStepRecommender.recommend(kana: kana, snapshot: snapshot)
     }
 
     /// Composes a session preview using the same `DefaultSessionPlanner`

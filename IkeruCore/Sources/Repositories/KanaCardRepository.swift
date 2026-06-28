@@ -63,6 +63,32 @@ public actor KanaCardRepository {
         }
     }
 
+    /// Idempotent, selection-scoped seed: creates a Card for every character in
+    /// `groups` that doesn't already exist (matched by `front`). This is the
+    /// production path now — only the kana the learner actually chose become
+    /// cards, so un-chosen scripts (e.g. katakana) never enter the practice
+    /// pool. `seedIfNeeded()` (bulk, all 92) is retained for tests only.
+    public func seed(groups: Set<KanaGroup>) async {
+        guard !groups.isEmpty else { return }
+        let existingFronts = Set(await allKanaCards().map { $0.front })
+        let wanted = groups.flatMap { $0.characters }
+
+        var created = 0
+        for kana in wanted where !existingFronts.contains(kana.character) {
+            _ = await cardRepository.createCard(
+                front: kana.character,
+                back: kana.romaji,
+                type: .vocabulary,
+                dueDate: Date()
+            )
+            created += 1
+        }
+
+        if created > 0 {
+            Logger.srs.info("KanaCardRepository seeded \(created) kana cards for \(groups.count) chosen groups")
+        }
+    }
+
     // MARK: - Queries
 
     public func allKanaCards() async -> [CardDTO] {

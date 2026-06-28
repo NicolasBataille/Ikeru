@@ -15,6 +15,13 @@ struct KanaPoolSelectorView: View {
     @State private var pendingGroups: Set<KanaGroup> = []
     @State private var showDrill = false
 
+    /// When set, the selector runs as the first-run "study-set chooser" presented
+    /// from Home: the bottom bar shows a single "Start learning these" button
+    /// instead of the drill buttons. Confirming seeds the chosen groups + marks
+    /// the study set, then invokes this closure (which dismisses back to Home).
+    /// nil (the default) preserves the normal Explore behaviour.
+    var onStudySetConfirmed: (() -> Void)? = nil
+
     private let columns: [GridItem] = [
         GridItem(.flexible(), spacing: IkeruTheme.Spacing.sm),
         GridItem(.flexible(), spacing: IkeruTheme.Spacing.sm)
@@ -207,10 +214,14 @@ struct KanaPoolSelectorView: View {
                 .font(.ikeruCaption)
                 .foregroundStyle(Color.ikeruTextSecondary)
 
-            HStack(spacing: 8) {
-                drillButton(vm, mode: .dueReview, label: "Review Due", primary: true)
-                drillButton(vm, mode: .freePractice, label: "Free Practice", primary: false)
-                drillButton(vm, mode: .weakReinforcement, label: "Weak Spots", primary: false)
+            if onStudySetConfirmed != nil {
+                confirmStudySetButton(vm)
+            } else {
+                HStack(spacing: 8) {
+                    drillButton(vm, mode: .dueReview, label: "Review Due", primary: true)
+                    drillButton(vm, mode: .freePractice, label: "Free Practice", primary: false)
+                    drillButton(vm, mode: .weakReinforcement, label: "Weak Spots", primary: false)
+                }
             }
         }
         .padding(.horizontal, IkeruTheme.Spacing.lg)
@@ -258,6 +269,25 @@ struct KanaPoolSelectorView: View {
             pendingGroups = vm.selectedGroups
             showDrill = true
         }
+    }
+
+    // MARK: Study-set confirm (first-run chooser)
+
+    @ViewBuilder
+    private func confirmStudySetButton(_ vm: KanaPoolViewModel) -> some View {
+        Button {
+            Task { @MainActor in
+                await vm.confirmStudySet()
+                onStudySetConfirmed?()
+            }
+        } label: {
+            Text("Kana.StudySet.Start")
+                .font(.ikeruCaption)
+                .frame(maxWidth: .infinity)
+        }
+        .ikeruButtonStyle(.primary)
+        .disabled(vm.selectedGroups.isEmpty)
+        .opacity(vm.selectedGroups.isEmpty ? 0.5 : 1.0)
     }
 }
 
