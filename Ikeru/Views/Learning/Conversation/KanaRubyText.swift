@@ -32,6 +32,7 @@ struct KanaRubyText: View {
     let content: String
     let textColor: Color
     let showFurigana: Bool
+    let showTranslations: Bool
     let baseFont: Font
     let rubyFont: Font
     let rubyColor: Color
@@ -41,6 +42,7 @@ struct KanaRubyText: View {
         _ content: String,
         textColor: Color,
         showFurigana: Bool = true,
+        showTranslations: Bool = true,
         maxWidth: CGFloat? = nil,
         baseFont: Font = .ikeruBody,
         rubyFont: Font = .system(size: 10.5, weight: .medium, design: .rounded),
@@ -49,15 +51,22 @@ struct KanaRubyText: View {
         self.content = content
         self.textColor = textColor
         self.showFurigana = showFurigana
+        self.showTranslations = showTranslations
         self.maxWidth = maxWidth
         self.baseFont = baseFont
         self.rubyFont = rubyFont
         self.rubyColor = rubyColor ?? textColor.opacity(0.55)
     }
 
+    /// The text to actually render: with translations hidden, the learner-language
+    /// parentheticals are stripped (furigana readings are kept).
+    private var effectiveContent: String {
+        showTranslations ? content : Self.stripTranslations(content)
+    }
+
     var body: some View {
         if showFurigana {
-            let tokens = Self.tokenize(content)
+            let tokens = Self.tokenize(effectiveContent)
             // Pass maxWidth straight through (nil unless the caller overrides):
             // IkeruFlowLayout then wraps at the REAL proposed width from its
             // container. The previous `UIScreen.main.bounds.width - 120` hardcode
@@ -69,7 +78,7 @@ struct KanaRubyText: View {
                 }
             }
         } else {
-            Text(Self.stripReadings(content))
+            Text(Self.stripReadings(effectiveContent))
                 .font(baseFont)
                 .foregroundStyle(textColor)
         }
@@ -232,6 +241,36 @@ struct KanaRubyText: View {
             i += 1
         }
         return result
+    }
+
+    // MARK: - Strip / Detect Translations
+
+    /// Remove learner-language translation parentheticals (e.g. `(Today I went…)`)
+    /// while KEEPING furigana readings (`漢字(かんじ)`). A parenthetical is treated
+    /// as a translation when its contents are NOT pure hiragana/katakana. Drops a
+    /// single space immediately before the parenthetical so the Japanese reads
+    /// cleanly once the translation is gone.
+    static func stripTranslations(_ input: String) -> String {
+        var result = ""
+        let chars = Array(input)
+        var i = 0
+        while i < chars.count {
+            if chars[i] == "(",
+               let closeIdx = findMatchingParen(chars, from: i),
+               !isJapaneseReading(chars, from: i + 1, to: closeIdx) {
+                if result.last == " " { result.removeLast() }
+                i = closeIdx + 1
+                continue
+            }
+            result.append(chars[i])
+            i += 1
+        }
+        return result
+    }
+
+    /// Whether the text carries a learner-language translation that can be hidden.
+    static func containsTranslation(_ input: String) -> Bool {
+        stripTranslations(input) != input
     }
 
     // MARK: - Helpers

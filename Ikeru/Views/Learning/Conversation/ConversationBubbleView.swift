@@ -83,6 +83,11 @@ struct ConversationBubbleView: View {
     @Environment(\.displayMode) private var displayMode
     @State private var selectedHint: VocabularyHint?
 
+    /// Sakura writes Japanese first, then a `(translation)` in the learner's
+    /// language. We keep the Japanese immersive by hiding that translation until
+    /// the learner taps the message to reveal it.
+    @State private var showTranslation = false
+
     private var effectiveFurigana: Bool {
         ReadingAidResolver(
             mode: displayMode,
@@ -127,17 +132,44 @@ struct ConversationBubbleView: View {
     @ViewBuilder
     private var messageContent: some View {
         if message.role == .assistant {
-            KanaRubyText(
-                message.content,
-                textColor: textColor,
-                showFurigana: effectiveFurigana
-            )
+            let hasTranslation = KanaRubyText.containsTranslation(message.content)
+            VStack(alignment: .leading, spacing: IkeruTheme.Spacing.xs) {
+                KanaRubyText(
+                    message.content,
+                    textColor: textColor,
+                    showFurigana: effectiveFurigana,
+                    showTranslations: showTranslation
+                )
+
+                if hasTranslation {
+                    translationToggleLabel
+                }
+            }
+            .contentShape(Rectangle())
+            .onTapGesture {
+                guard hasTranslation else { return }
+                withAnimation(.easeInOut(duration: 0.2)) { showTranslation.toggle() }
+            }
+            .accessibilityAddTraits(hasTranslation ? .isButton : [])
+            .accessibilityHint(hasTranslation ? Text("Tap to show or hide the translation") : Text(""))
         } else {
             Text(message.content)
                 .font(.ikeruBody)
                 .foregroundStyle(textColor)
                 .multilineTextAlignment(message.role == .user ? .trailing : .leading)
         }
+    }
+
+    /// Quiet affordance under Sakura's text: invites a tap to reveal the
+    /// translation, and flips to a "hide" hint once shown.
+    private var translationToggleLabel: some View {
+        HStack(spacing: 4) {
+            Image(systemName: "character.bubble")
+                .font(.system(size: 9, weight: .semibold))
+            Text(showTranslation ? "Hide translation" : "Show translation")
+                .font(.ikeruCaption)
+        }
+        .foregroundStyle(.white.opacity(showTranslation ? 0.35 : 0.5))
     }
 
     // MARK: - Corrections
