@@ -273,6 +273,27 @@ struct KanaRubyText: View {
         stripTranslations(input) != input
     }
 
+    /// Pull out the learner-language translation text (the contents of the
+    /// non-kana parentheticals, without the parentheses) so it can be rendered on
+    /// its own line under the Japanese. Returns "" when there is no translation.
+    static func extractTranslations(_ input: String) -> String {
+        var parts: [String] = []
+        let chars = Array(input)
+        var i = 0
+        while i < chars.count {
+            if chars[i] == "(",
+               let closeIdx = findMatchingParen(chars, from: i),
+               !isJapaneseReading(chars, from: i + 1, to: closeIdx) {
+                let inner = String(chars[(i + 1)..<closeIdx]).trimmingCharacters(in: .whitespaces)
+                if !inner.isEmpty { parts.append(inner) }
+                i = closeIdx + 1
+                continue
+            }
+            i += 1
+        }
+        return parts.joined(separator: " ")
+    }
+
     // MARK: - Helpers
 
     private static func findMatchingParen(_ chars: [Character], from openIdx: Int) -> Int? {

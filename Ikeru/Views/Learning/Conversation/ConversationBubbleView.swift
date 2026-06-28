@@ -133,13 +133,10 @@ struct ConversationBubbleView: View {
     private var messageContent: some View {
         if message.role == .assistant {
             let hasTranslation = KanaRubyText.containsTranslation(message.content)
-            VStack(alignment: .leading, spacing: IkeruTheme.Spacing.xs) {
-                KanaRubyText(
-                    message.content,
-                    textColor: textColor,
-                    showFurigana: effectiveFurigana,
-                    showTranslations: showTranslation
-                )
+            VStack(alignment: .leading, spacing: IkeruTheme.Spacing.sm) {
+                ForEach(Array(assistantLines.enumerated()), id: \.offset) { _, line in
+                    sentenceView(line)
+                }
 
                 if hasTranslation {
                     translationToggleLabel
@@ -157,6 +154,38 @@ struct ConversationBubbleView: View {
                 .font(.ikeruBody)
                 .foregroundStyle(textColor)
                 .multilineTextAlignment(message.role == .user ? .trailing : .leading)
+        }
+    }
+
+    /// Sakura writes one "Japanese (translation)" unit per line; split so each
+    /// sentence can show its translation directly beneath it.
+    private var assistantLines: [String] {
+        message.content
+            .components(separatedBy: "\n")
+            .filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
+    }
+
+    /// One sentence: the Japanese (furigana, translation stripped), with the
+    /// learner-language translation revealed as a quiet line underneath.
+    @ViewBuilder
+    private func sentenceView(_ line: String) -> some View {
+        VStack(alignment: .leading, spacing: 3) {
+            KanaRubyText(
+                line,
+                textColor: textColor,
+                showFurigana: effectiveFurigana,
+                showTranslations: false
+            )
+
+            if showTranslation {
+                let translation = KanaRubyText.extractTranslations(line)
+                if !translation.isEmpty {
+                    Text(translation)
+                        .font(.ikeruCaption)
+                        .foregroundStyle(textColor.opacity(0.5))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
         }
     }
 
