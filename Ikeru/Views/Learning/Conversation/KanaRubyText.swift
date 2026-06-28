@@ -43,7 +43,7 @@ struct KanaRubyText: View {
         showFurigana: Bool = true,
         maxWidth: CGFloat? = nil,
         baseFont: Font = .ikeruBody,
-        rubyFont: Font = .system(size: 9, weight: .medium, design: .rounded),
+        rubyFont: Font = .system(size: 10.5, weight: .medium, design: .rounded),
         rubyColor: Color? = nil
     ) {
         self.content = content
@@ -78,24 +78,27 @@ struct KanaRubyText: View {
     @ViewBuilder
     private func tokenView(_ token: Token) -> some View {
         switch token {
-        case .kana(let character, let romaji):
+        case .kana(let character, _):
+            // Kana render as clean characters — NO romaji on top. Stacking romaji
+            // above every hiragana/katakana made sentences noisy and broke the
+            // reading flow; the learner reads the kana directly (furigana stays
+            // on kanji only). The hidden spacer matches the ruby row height so
+            // kana baseline-align with furigana'd kanji on the same line.
             VStack(spacing: 0) {
-                Text(romaji)
+                Text(" ")
                     .font(rubyFont)
-                    .foregroundStyle(rubyColor)
                     .lineLimit(1)
-                    .fixedSize()
+                    .hidden()
                 Text(character)
                     .font(baseFont)
                     .foregroundStyle(textColor)
             }
-            .padding(.horizontal, 0.5)
 
         case .kanji(let base, let reading):
-            VStack(spacing: 0) {
+            VStack(spacing: 1) {
                 Text(reading)
                     .font(rubyFont)
-                    .foregroundStyle(Color.ikeruPrimaryAccent.opacity(0.7))
+                    .foregroundStyle(Color.ikeruPrimaryAccent.opacity(0.92))
                     .lineLimit(1)
                     .fixedSize()
                 Text(base)
