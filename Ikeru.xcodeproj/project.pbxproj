@@ -192,6 +192,7 @@
 		FDA86090738921E4E18E79CE /* SessionSummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8BD1F07D5A033139C8C8A83 /* SessionSummaryView.swift */; };
 		FDC87A32E50CF633C3BDC97D /* HoldToConfirmButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2CBFF6AF9FE7C9F48E34A51 /* HoldToConfirmButton.swift */; };
 		FF89BFE59885EB3742A25989 /* HandwritingExerciseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6662134E08023C0DBD738ED /* HandwritingExerciseView.swift */; };
+		A0D20F1CE0000000000B0001 /* IkeruWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 41DE2FB348D4D1AFBF4143ED /* IkeruWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -209,6 +210,13 @@
 			remoteGlobalIDString = 5E31F15C6A31BAD7198508F4;
 			remoteInfo = IkeruWidget;
 		};
+		A0D20F1CE0000000000B0002 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 44FF3435A5B11DC2E0D31918 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AB63406F8CCDE07382570F0B;
+			remoteInfo = IkeruWatch;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -221,6 +229,17 @@
 				CF13EFF3CE9BC5A619F0B16D /* IkeruWidget.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A0D20F1CE0000000000B0003 /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				A0D20F1CE0000000000B0001 /* IkeruWatch.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
@@ -1060,11 +1079,13 @@
 				05E704457ED3467819DD63DB /* Resources */,
 				B425F8A581EEF932D98C24E6 /* Frameworks */,
 				144B808990A1D5825BB8E28C /* Embed Foundation Extensions */,
+				A0D20F1CE0000000000B0003 /* Embed Watch Content */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 				6B5EFA12D68F711EDA158C69 /* PBXTargetDependency */,
+				A0D20F1CE0000000000B0004 /* PBXTargetDependency */,
 			);
 			name = Ikeru;
 			packageProductDependencies = (
@@ -1358,6 +1379,11 @@
 			isa = PBXTargetDependency;
 			target = 5E31F15C6A31BAD7198508F4 /* IkeruWidget */;
 			targetProxy = 433E1B3B24082529B9000005 /* PBXContainerItemProxy */;
+		};
+		A0D20F1CE0000000000B0004 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AB63406F8CCDE07382570F0B /* IkeruWatch */;
+			targetProxy = A0D20F1CE0000000000B0002 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
