@@ -141,7 +141,6 @@
 		B3118C50A4B7018CE6CF5AE0 /* DrillUtilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDB2946DC6619B99A4BBD591 /* DrillUtilities.swift */; };
 		B4D53BD2C72F596C888D6FAB /* KanjiStudyViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6C995B4118F51F9AD485135 /* KanjiStudyViewModelTests.swift */; };
 		B645B881692E0AE7FE378DE4 /* AdaptiveSessionViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 769F5F51519266322B36DD05 /* AdaptiveSessionViewModelTests.swift */; };
-		B6C31E378ED030EB4ED10D9B /* SessionConfigIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A026C938CB364847F71607FC /* SessionConfigIntegrationTests.swift */; };
 		BBA6E2D02D5B48ED55329B5B /* EquippedCosmeticsBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5ED0FD029F24B4FBBB570679 /* EquippedCosmeticsBridge.swift */; };
 		BBE2383F1411582FB9D27014 /* GradeButtonsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBEFE3A537DA4FB93E2E2B46 /* GradeButtonsView.swift */; };
 		BC727BB5AEAC7CAFA04263C3 /* ShadowingIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C1446591A309B0937C15FAC /* ShadowingIntegrationTests.swift */; };
@@ -350,7 +349,6 @@
 		9C1446591A309B0937C15FAC /* ShadowingIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShadowingIntegrationTests.swift; sourceTree = "<group>"; };
 		9CD329CF724A6DBCD80A22CD /* ShadowingExerciseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShadowingExerciseView.swift; sourceTree = "<group>"; };
 		9F4FD0C67B08C1DEFCC562B6 /* HandwritingViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HandwritingViewModel.swift; sourceTree = "<group>"; };
-		A026C938CB364847F71607FC /* SessionConfigIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionConfigIntegrationTests.swift; sourceTree = "<group>"; };
 		A0751CC1AD8BD9B3CB495986 /* KanjiStudyViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KanjiStudyViewModel.swift; sourceTree = "<group>"; };
 		A2CD2275E34C699B7B4288B1 /* SRSCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SRSCardView.swift; sourceTree = "<group>"; };
 		A3C8E2C7FFD4176128B70C18 /* WordDefinitionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordDefinitionView.swift; sourceTree = "<group>"; };
@@ -725,7 +723,6 @@
 				B5EC7CD071A02DEB1F3611E0 /* ListeningViewModelTests.swift */,
 				AF20C958BD43ABB601BE2B23 /* ProfileViewModelTests.swift */,
 				6554CA8A229ACD1B1EAF84B9 /* RigJobsViewModelTests.swift */,
-				A026C938CB364847F71607FC /* SessionConfigIntegrationTests.swift */,
 				DB8329720757C93EEDE0EF41 /* SessionIntegrationTests.swift */,
 				8908562DCE1E539972918E03 /* SessionViewModelTests.swift */,
 				9C1446591A309B0937C15FAC /* ShadowingIntegrationTests.swift */,
@@ -1191,7 +1188,6 @@
 				784365F25937638D410F69D3 /* ListeningViewModelTests.swift in Sources */,
 				1F267C7F06B849E143C9F872 /* ProfileViewModelTests.swift in Sources */,
 				EEC2FC135D0B9B16BB75E3CA /* RigJobsViewModelTests.swift in Sources */,
-				B6C31E378ED030EB4ED10D9B /* SessionConfigIntegrationTests.swift in Sources */,
 				7F007D67BD6304542673C64D /* SessionIntegrationTests.swift in Sources */,
 				96B7AA4DDFCB52A92BA246C3 /* SessionViewModelTests.swift in Sources */,
 				BC727BB5AEAC7CAFA04263C3 /* ShadowingIntegrationTests.swift in Sources */,
