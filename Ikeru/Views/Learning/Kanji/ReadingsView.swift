@@ -21,21 +21,21 @@ struct ReadingsView: View {
     private func readingSection(title: String, readings: [String]) -> some View {
         VStack(alignment: .leading, spacing: IkeruTheme.Spacing.xs) {
             Text(title)
-                .font(.system(size: IkeruTheme.Typography.Size.caption, weight: .semibold))
+                .ikeruScaledFont(IkeruTheme.Typography.Size.caption, weight: .semibold, relativeTo: .caption2)
                 .foregroundStyle(
                     Color(hex: IkeruTheme.Colors.primaryAccent)
                 )
 
             if readings.isEmpty {
                 Text("-")
-                    .font(.system(size: IkeruTheme.Typography.Size.body))
+                    .ikeruScaledFont(IkeruTheme.Typography.Size.body, relativeTo: .body)
                     .foregroundStyle(
                         Color(hex: IkeruTheme.Colors.textPrimary)
                             .opacity(IkeruTheme.Colors.textSecondaryOpacity)
                     )
             } else {
                 Text(readings.joined(separator: ", "))
-                    .font(.system(size: IkeruTheme.Typography.Size.body))
+                    .ikeruScaledFont(IkeruTheme.Typography.Size.body, relativeTo: .body)
                     .foregroundStyle(Color(hex: IkeruTheme.Colors.textPrimary))
             }
         }

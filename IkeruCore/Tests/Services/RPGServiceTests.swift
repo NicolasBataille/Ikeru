@@ -7,7 +7,7 @@ struct RPGServiceTests {
 
     // MARK: - XP Award
 
-    @Test("awardXP gives 10 XP for Good grade")
+    @Test("awardXP gives 6 XP for Good grade")
     func awardXPGood() {
         let result = RPGService.awardXP(
             grade: .good,
@@ -15,12 +15,12 @@ struct RPGServiceTests {
             currentLevel: 1,
             totalReviews: 0
         )
-        #expect(result.xpAwarded == 10)
-        #expect(result.newXP == 10)
+        #expect(result.xpAwarded == RPGConstants.xpForGrade(.good))
+        #expect(result.newXP == RPGConstants.xpForGrade(.good))
         #expect(result.newTotalReviews == 1)
     }
 
-    @Test("awardXP gives 10 XP for Easy grade")
+    @Test("awardXP gives 6 XP for Easy grade")
     func awardXPEasy() {
         let result = RPGService.awardXP(
             grade: .easy,
@@ -28,11 +28,11 @@ struct RPGServiceTests {
             currentLevel: 1,
             totalReviews: 0
         )
-        #expect(result.xpAwarded == 10)
-        #expect(result.newXP == 10)
+        #expect(result.xpAwarded == RPGConstants.xpForGrade(.easy))
+        #expect(result.newXP == RPGConstants.xpForGrade(.easy))
     }
 
-    @Test("awardXP gives 5 XP for Hard grade")
+    @Test("awardXP gives 6 XP for Hard grade")
     func awardXPHard() {
         let result = RPGService.awardXP(
             grade: .hard,
@@ -40,11 +40,11 @@ struct RPGServiceTests {
             currentLevel: 1,
             totalReviews: 0
         )
-        #expect(result.xpAwarded == 5)
-        #expect(result.newXP == 5)
+        #expect(result.xpAwarded == RPGConstants.xpForGrade(.hard))
+        #expect(result.newXP == RPGConstants.xpForGrade(.hard))
     }
 
-    @Test("awardXP gives 2 XP for Again grade")
+    @Test("awardXP gives 3 XP for Again grade")
     func awardXPAgain() {
         let result = RPGService.awardXP(
             grade: .again,
@@ -52,19 +52,20 @@ struct RPGServiceTests {
             currentLevel: 1,
             totalReviews: 0
         )
-        #expect(result.xpAwarded == 2)
-        #expect(result.newXP == 2)
+        #expect(result.xpAwarded == RPGConstants.xpForGrade(.again))
+        #expect(result.newXP == RPGConstants.xpForGrade(.again))
     }
 
     @Test("awardXP accumulates XP correctly")
     func awardXPAccumulates() {
+        let goodXP = RPGConstants.xpForGrade(.good)
         let result = RPGService.awardXP(
             grade: .good,
             currentXP: 50,
             currentLevel: 1,
             totalReviews: 5
         )
-        #expect(result.newXP == 60)
+        #expect(result.newXP == 50 + goodXP)
         #expect(result.newTotalReviews == 6)
     }
 

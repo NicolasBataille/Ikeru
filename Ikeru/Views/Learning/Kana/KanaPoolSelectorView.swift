@@ -12,7 +12,15 @@ struct KanaPoolSelectorView: View {
     @State private var viewModel: KanaPoolViewModel?
     @State private var pendingMode: KanaDrillMode?
     @State private var pendingCards: [CardDTO] = []
+    @State private var pendingGroups: Set<KanaGroup> = []
     @State private var showDrill = false
+
+    /// When set, the selector runs as the first-run "study-set chooser" presented
+    /// from Home: the bottom bar shows a single "Start learning these" button
+    /// instead of the drill buttons. Confirming seeds the chosen groups + marks
+    /// the study set, then invokes this closure (which dismisses back to Home).
+    /// nil (the default) preserves the normal Explore behaviour.
+    var onStudySetConfirmed: (() -> Void)? = nil
 
     private let columns: [GridItem] = [
         GridItem(.flexible(), spacing: IkeruTheme.Spacing.sm),
@@ -35,7 +43,7 @@ struct KanaPoolSelectorView: View {
         }
         .navigationDestination(isPresented: $showDrill) {
             if let mode = pendingMode {
-                KanaDrillModeSelector(mode: mode, cards: pendingCards)
+                KanaDrillModeSelector(mode: mode, groups: pendingGroups, cards: pendingCards)
             }
         }
     }
@@ -96,19 +104,14 @@ struct KanaPoolSelectorView: View {
                             vm.applyPreset(preset)
                         }
                     } label: {
-                        Text(preset.displayName)
+                        Text(LocalizedStringKey(preset.displayName))
                             .font(.ikeruCaption)
                             .foregroundStyle(Color.ikeruTextPrimary)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 8)
-                            .background {
-                                Capsule()
-                                    .fill(.ultraThinMaterial)
-                            }
-                            .overlay {
-                                Capsule()
-                                    .strokeBorder(Color.white.opacity(0.14), lineWidth: 0.6)
-                            }
+                            .background(.ultraThinMaterial)
+                            .overlay(Rectangle().strokeBorder(TatamiTokens.goldDim.opacity(0.5), lineWidth: 1))
+                            .sumiCorners(color: TatamiTokens.goldDim, size: 6, weight: 1.1)
                     }
                     .buttonStyle(.plain)
                 }
@@ -123,9 +126,9 @@ struct KanaPoolSelectorView: View {
                         .foregroundStyle(Color.ikeruTextSecondary)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 8)
-                        .background {
-                            Capsule().fill(Color.white.opacity(0.03))
-                        }
+                        .background(Color.ikeruSurface.opacity(0.3))
+                        .overlay(Rectangle().strokeBorder(TatamiTokens.goldDim.opacity(0.25), lineWidth: 0.8))
+                        .sumiCorners(color: TatamiTokens.goldDim.opacity(0.5), size: 5, weight: 0.9)
                 }
                 .buttonStyle(.plain)
             }
@@ -146,7 +149,9 @@ struct KanaPoolSelectorView: View {
     }
 
     private func scriptEyebrow(_ script: KanaScript) -> String {
-        script == .hiragana ? "Fluid syllabary" : "Angular syllabary"
+        script == .hiragana
+            ? String(localized: "Fluid syllabary")
+            : String(localized: "Angular syllabary")
     }
 
     @ViewBuilder
@@ -154,7 +159,7 @@ struct KanaPoolSelectorView: View {
         _ vm: KanaPoolViewModel,
         script: KanaScript,
         section: KanaSection,
-        title: String
+        title: LocalizedStringKey
     ) -> some View {
         let groups = KanaGroup.allCases.filter { $0.script == script && $0.section == section }
         if !groups.isEmpty {
@@ -170,7 +175,7 @@ struct KanaPoolSelectorView: View {
                         }
                     } label: {
                         Text(vm.isSectionFullySelected(section, script: script)
-                             ? "Deselect all" : "Select all")
+                             ? LocalizedStringKey("Deselect all") : LocalizedStringKey("Select all"))
                             .font(.ikeruMicro)
                             .ikeruTracking(.micro)
                             .foregroundStyle(Color.ikeruPrimaryAccent)
@@ -209,10 +214,14 @@ struct KanaPoolSelectorView: View {
                 .font(.ikeruCaption)
                 .foregroundStyle(Color.ikeruTextSecondary)
 
-            HStack(spacing: 8) {
-                drillButton(vm, mode: .dueReview, label: "Review Due", primary: true)
-                drillButton(vm, mode: .freePractice, label: "Free Practice", primary: false)
-                drillButton(vm, mode: .weakReinforcement, label: "Weak Spots", primary: false)
+            if onStudySetConfirmed != nil {
+                confirmStudySetButton(vm)
+            } else {
+                HStack(spacing: 8) {
+                    drillButton(vm, mode: .dueReview, label: "Review Due", primary: true)
+                    drillButton(vm, mode: .freePractice, label: "Free Practice", primary: false)
+                    drillButton(vm, mode: .weakReinforcement, label: "Weak Spots", primary: false)
+                }
             }
         }
         .padding(.horizontal, IkeruTheme.Spacing.lg)
@@ -237,7 +246,7 @@ struct KanaPoolSelectorView: View {
     private func drillButton(
         _ vm: KanaPoolViewModel,
         mode: KanaDrillMode,
-        label: String,
+        label: LocalizedStringKey,
         primary: Bool
     ) -> some View {
         Button {
@@ -257,8 +266,28 @@ struct KanaPoolSelectorView: View {
             let cards = await vm.cards(for: mode)
             pendingMode = mode
             pendingCards = cards
+            pendingGroups = vm.selectedGroups
             showDrill = true
         }
+    }
+
+    // MARK: Study-set confirm (first-run chooser)
+
+    @ViewBuilder
+    private func confirmStudySetButton(_ vm: KanaPoolViewModel) -> some View {
+        Button {
+            Task { @MainActor in
+                await vm.confirmStudySet()
+                onStudySetConfirmed?()
+            }
+        } label: {
+            Text("Kana.StudySet.Start")
+                .font(.ikeruCaption)
+                .frame(maxWidth: .infinity)
+        }
+        .ikeruButtonStyle(.primary)
+        .disabled(vm.selectedGroups.isEmpty)
+        .opacity(vm.selectedGroups.isEmpty ? 0.5 : 1.0)
     }
 }
 
@@ -294,7 +323,7 @@ struct KanaDrillPlaceholderView: View {
                         Text("No cards available for this mode.")
                             .font(.ikeruCaption)
                             .foregroundStyle(Color.ikeruTextTertiary)
-                            .ikeruCard(.standard)
+                            .tatamiRoom(.standard)
                     } else {
                         LazyVGrid(
                             columns: [
@@ -307,10 +336,9 @@ struct KanaDrillPlaceholderView: View {
                                     .font(.system(size: 28, weight: .regular, design: .serif))
                                     .foregroundStyle(Color.ikeruTextPrimary)
                                     .frame(width: 56, height: 56)
-                                    .background {
-                                        RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                            .fill(.ultraThinMaterial)
-                                    }
+                                    .background(.ultraThinMaterial)
+                                    .overlay(Rectangle().strokeBorder(TatamiTokens.goldDim.opacity(0.4), lineWidth: 0.8))
+                                    .sumiCorners(color: TatamiTokens.goldDim, size: 5, weight: 1.0)
                             }
                         }
                     }

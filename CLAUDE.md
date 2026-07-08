@@ -32,6 +32,27 @@ Les strings vivent dans `Ikeru/Localization/Localizable.xcstrings` (catalogue av
 
 Pour les modèles qui exposent du texte (`struct Page { let title: String }`), typer `title` en `LocalizedStringKey` (compatible avec les littéraux grâce à `ExpressibleByStringLiteral`). Pour les strings runtime assignées à un `@State`, utiliser `String(localized: "...")` au site d'assignation. Voir PR #13 pour le pattern canonique.
 
+> **`String(localized:)` dans IkeruCore résout le MAUVAIS bundle** et ignore l'override `AppLocale` (le `\.locale` injecté à `MainTabView`). Pour du texte runtime venant de Core, stocker la **clé** du catalogue et rendre via `Text(LocalizedStringKey(key))` dans la couche vue (app target) — pas dans Core.
+
+## Sakura / IA (Gemini)
+
+Sakura (partenaire de conversation) passe par `AIRouterService` → chaîne de fallback de providers. Sur un iPhone A16 (14 Pro) le modèle on-device d'Apple n'existe pas, donc **Gemini est le seul provider utilisable** : clé absente/refusée = Sakura échoue.
+
+- **Modèle** : `gemini-2.5-flash` (constante `GeminiProvider.model`). L'ancien `gemini-2.0-flash` a un quota free-tier de **0** sur certains projets Google → `429 RESOURCE_EXHAUSTED, limit: 0`. Bumper la constante quand le modèle est retiré.
+- **Clé** : Réglages → IA → Gemini (Keychain, `KeychainKeys.geminiAPIKey`). Les clés Google AI Studio existent désormais au format **`AQ.…`** autant que `AIzaSy…` — **les deux sont valides**, ne pas rejeter une clé `AQ.`.
+- **Erreurs** : clé refusée (`400 API_KEY_INVALID` / 401 / 403) → `AIError.invalidKey` → « Votre clé IA a été refusée » (au lieu d'un générique « Sakura n'a pas pu répondre »). Triage : `curl -H "x-goog-api-key: <clé>" .../v1beta/models/<modèle>:generateContent`.
+- **Contexte vocabulaire** : le VM passe les mots « connus » (dictionnaire, plafonné à 40) au prompt système comme préférence **souple** — Sakura les réutilise seulement si c'est naturel, jamais de force.
+- **Rendu chat** : `KanaRubyText` met les furigana (hiragana) au-dessus des kanji uniquement (pas de romaji sur chaque kana) ; la traduction est masquée par défaut et révélée au tap, en ligne dimmée **sous** chaque phrase.
+
+## Audio bundlé (prononciation offline)
+
+Clips pré-générés et embarqués dans `Ikeru/Resources/Audio/` (un `.m4a` par chaîne, nommé `SHA-256(texte).hex[:16]`). `AudioService.playTTS` joue le clip bundlé via `BundledAudioLocator`, sinon fallback synthèse on-device. Zéro setup, zéro réseau.
+
+- Régénérer : `scripts/generate-audio.py` (idempotent). Voix **VOICEVOX** speaker 2 (四国めたん), moteur libre lancé via Apple `container` (Docker ne démarre pas headless) — voir la memory `reference-bundled-audio`. Créditer VOICEVOX dans `AttributionView`.
+- Textes : 92 kana + readings vocabulaire + phrases (depuis `n5-content.sqlite`) + readings des « termes du jour » (parsés depuis `DailyTermCatalog.swift`).
+- La clé Swift (`BundledAudioLocator`) et la clé Python doivent rester **identiques**.
+- `Audio/` est une **folder reference** dans le pbxproj (`lastKnownFileType = folder`) → nouveaux clips inclus sans édition pbxproj.
+
 ## Pipeline CI
 
 Workflow : `.github/workflows/ci.yml`.
@@ -58,8 +79,37 @@ Le repo est **public pour le portfolio**. Ne jamais committer :
 
 Tous les secrets sensibles sont gérés via GitHub Actions secrets.
 
+## Outils développeur en TestFlight (`IKERU_DEV_TOOLS`)
+
+La section « Outils dev » dans Réglages (sliders fixture profile + boutons Wipe / Lootbox / Level-up / Clear cache / Build info) ainsi que le code TestFixtures sont gatés par le flag de compilation `IKERU_DEV_TOOLS`.
+
+Ce flag est activé dans **Debug ET Release** (cf. `SWIFT_ACTIVE_COMPILATION_CONDITIONS` dans `Ikeru.xcodeproj/project.pbxproj` lignes ~1687 et Release config Project Ikeru) — donc visible dans les builds TestFlight le temps des tests.
+
+### Removing `IKERU_DEV_TOOLS` avant App Store
+
+Avant la première submission App Store, retirer le flag du Release config du projet :
+
+1. Ouvrir `Ikeru.xcodeproj/project.pbxproj` dans un éditeur texte
+2. Localiser la config Release du PBXProject « Ikeru » (id `7D6595C8356D9F7F7E05434C`)
+3. Supprimer la ligne `SWIFT_ACTIVE_COMPILATION_CONDITIONS = IKERU_DEV_TOOLS;`
+4. Optionnel : aussi dans la config Debug PBXProject (id `A45A6F037871A5F44542F639`) ramener `SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;` (au lieu de `"DEBUG IKERU_DEV_TOOLS"`)
+5. Rebuild : la section disparaît, le code `TestFixtures` est exclu du binaire
+
+Vérifier ensuite avec `grep -rn "IKERU_DEV_TOOLS" Ikeru.xcodeproj/project.pbxproj` qui doit retourner zero match avant submit App Store.
+
+Le code Swift gardant les `#if IKERU_DEV_TOOLS` reste en place — il est juste exclu à la compilation. Pratique pour réintroduire le menu plus tard si besoin (juste re-add le flag).
+
 ## App targets
 
 - iPhone uniquement (`TARGETED_DEVICE_FAMILY = "1"`) — pas d'iPad pour l'instant. Si support iPad un jour, prévoir les 4 orientations dans `INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad`.
 - Architecture arm64, iOS 17.0+ minimum, watchOS 10+ pour la Watch app.
 - Team ID Apple : `N84YXYF2NZ` (payant, ne pas confondre avec le team perso gratuit `SY88W6CB3G`).
+
+## Watch app (companion embarquée)
+
+`IkeruWatch` (cible watchOS single-target moderne, `WKApplication`) est **embarquée dans l'app iPhone** comme companion — plus une app standalone. Elle s'installe donc via l'app Watch de l'iPhone (« Apps disponibles ») et part avec les builds TestFlight, sans sideload manuel ni Developer Mode.
+
+- Câblage pbxproj (calqué sur l'embed du widget) : phase `PBXCopyFilesBuildPhase` « Embed Watch Content » (`dstSubfolderSpec = 16`, `dstPath = "$(CONTENTS_FOLDER_PATH)/Watch"`) sur la cible `Ikeru`, + `PBXBuildFile` (IkeruWatch.app, `RemoveHeadersOnCopy`) + `PBXTargetDependency`. Résultat : `Ikeru.app/Watch/IkeruWatch.app` (vérifié par `ValidateEmbeddedBinary`).
+- Linkage : `INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.ikeru.app` (config IkeruWatch). Bundle id watch : `com.ikeru.app.watch` (doit être préfixé par l'app hôte).
+- Signature CI : pipeline en **automatique** (`-allowProvisioningUpdates` + clé API ASC) → `com.ikeru.app.watch` provisionné tout seul au 1er archive qui l'embarque (surveiller cette 1ère release).
+- Contenu : deux nano-sessions (quiz kana hiragana, drill d'accent tonique haptique) + une complication (données encore en dur, TODO App Group `UserDefaults`).

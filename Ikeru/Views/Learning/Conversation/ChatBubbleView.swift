@@ -2,16 +2,21 @@ import SwiftUI
 import IkeruCore
 
 // MARK: - ChatBubbleVariant
+//
+// Typealias kept for source compatibility. `MessageBubbleVariant` (defined in
+// ConversationBubbleView.swift) is the canonical enum; ChatBubbleVariant
+// mirrors its cases so existing callers compile without changes.
 
-enum ChatBubbleVariant {
-    case companion
-    case user
-}
+typealias ChatBubbleVariant = MessageBubbleVariant
 
 // MARK: - ChatBubbleView
+//
+// Chat bubble for CompanionChatSheet. Renders companion/user messages with
+// full ChatContentParser block support (kanji cards, mnemonics, quizzes).
+// Chrome delegates to MessageBubbleChrome for the shared Tatami appearance.
 
-/// Chat bubble that renders companion messages (warm tint, left-aligned)
-/// and user messages (glass, right-aligned) with inline content embeds.
+/// Chat bubble with rich content support (kanji/mnemonic/quiz embeds).
+/// Uses MessageBubbleChrome for the canonical Tatami bubble chrome.
 struct ChatBubbleView: View {
 
     let content: String
@@ -19,6 +24,20 @@ struct ChatBubbleView: View {
     @AppStorage("ikeru.furigana.enabled") private var furiganaEnabled = true
     @AppStorage("ikeru.furigana.userTouched") private var furiganaUserTouched = false
     @Environment(\.displayMode) private var displayMode
+
+    // Measured width of the full message row. The bubble fills the row
+    // (maxWidth:.infinity), so this is the available width independent of the
+    // bubble's own content — used to cap the rich-text wrap width so the
+    // furigana flow never lays out wider than the bubble (which would centre
+    // an oversized flow and clip the leading character).
+    @State private var rowWidth: CGFloat = 0
+
+    private var textMaxWidth: CGFloat? {
+        guard rowWidth > 0 else { return nil }
+        // row − trailing spacer (48) − bubble's leading+trailing padding (2×md)
+        let available = rowWidth - 48 - IkeruTheme.Spacing.md * 2
+        return available > 40 ? available : nil
+    }
 
     private var effectiveFurigana: Bool {
         ReadingAidResolver(
@@ -28,42 +47,47 @@ struct ChatBubbleView: View {
         ).effective
     }
 
+    private var alignment: HorizontalAlignment {
+        variant == .companion ? .leading : .trailing
+    }
+
     // MARK: - Body
 
     var body: some View {
         HStack {
             if variant == .user { Spacer(minLength: 48) }
 
-            VStack(alignment: alignment, spacing: IkeruTheme.Spacing.xs) {
-                richContentView
+            // inset: 0 keeps sumi marks flush with the bubble edge so they
+            // never overflow into the scroll view's leading margin and get
+            // clipped — fixes the leading-character clip in CompanionChatSheet.
+            MessageBubbleChrome(
+                variant: variant,
+                padding: .init(
+                    top: IkeruTheme.Spacing.sm + 2,
+                    leading: IkeruTheme.Spacing.md,
+                    bottom: IkeruTheme.Spacing.sm + 2,
+                    trailing: IkeruTheme.Spacing.md
+                ),
+                sumiInset: 0
+            ) {
+                VStack(alignment: alignment, spacing: IkeruTheme.Spacing.xs) {
+                    richContentView
+                }
             }
-            .padding(.horizontal, IkeruTheme.Spacing.md)
-            .padding(.vertical, IkeruTheme.Spacing.sm + 2)
-            .background { bubbleBackground }
-            .clipShape(RoundedRectangle(cornerRadius: IkeruTheme.Radius.lg))
 
             if variant == .companion { Spacer(minLength: 48) }
         }
-    }
-
-    // MARK: - Alignment
-
-    private var alignment: HorizontalAlignment {
-        variant == .companion ? .leading : .trailing
-    }
-
-    // MARK: - Background
-
-    @ViewBuilder
-    private var bubbleBackground: some View {
-        switch variant {
-        case .companion:
-            RoundedRectangle(cornerRadius: IkeruTheme.Radius.lg)
-                .fill(Color(hex: IkeruTheme.Colors.primaryAccent, opacity: 0.15))
-        case .user:
-            RoundedRectangle(cornerRadius: IkeruTheme.Radius.lg)
-                .fill(.ultraThinMaterial)
-        }
+        // Anchor to leading/trailing explicitly. A plain maxWidth:.infinity
+        // defaults to centre alignment, so when the rich content reports an
+        // over-wide intrinsic size the whole HStack is centred and the
+        // companion bubble's first characters get pushed off-screen left.
+        .frame(maxWidth: .infinity, alignment: variant == .companion ? .leading : .trailing)
+        .background(
+            GeometryReader { geo in
+                Color.clear.preference(key: RowWidthKey.self, value: geo.size.width)
+            }
+        )
+        .onPreferenceChange(RowWidthKey.self) { rowWidth = $0 }
     }
 
     // MARK: - Rich Content
@@ -86,7 +110,8 @@ struct ChatBubbleView: View {
             KanaRubyText(
                 text,
                 textColor: textColor,
-                showFurigana: variant == .companion && effectiveFurigana
+                showFurigana: variant == .companion && effectiveFurigana,
+                maxWidth: textMaxWidth
             )
 
         case .kanji(let character):
@@ -113,6 +138,17 @@ struct ChatBubbleView: View {
         case .user:
             return .white
         }
+    }
+}
+
+// MARK: - Row Width Preference
+
+/// Carries the measured message-row width up so the bubble can cap its
+/// rich-text wrap width to the real available space.
+private struct RowWidthKey: PreferenceKey {
+    static let defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
     }
 }
 

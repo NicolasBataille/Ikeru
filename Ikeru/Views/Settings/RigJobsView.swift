@@ -139,9 +139,9 @@ private struct RigJobRow: View {
             .foregroundStyle(.white)
             .padding(.horizontal, 8)
             .padding(.vertical, 2)
-            .background {
-                Capsule().fill(statusColor(for: job.status))
-            }
+            .background(statusColor(for: job.status).opacity(0.18))
+            .overlay(Rectangle().strokeBorder(statusColor(for: job.status).opacity(0.7), lineWidth: 0.8))
+            .sumiCorners(color: TatamiTokens.goldDim, size: 4, weight: 0.9)
     }
 }
 
@@ -195,7 +195,9 @@ private struct RigJobDetailSheet: View {
                     .foregroundStyle(.white)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 2)
-                    .background { Capsule().fill(statusColor(for: job.status)) }
+                    .background(statusColor(for: job.status).opacity(0.18))
+                    .overlay(Rectangle().strokeBorder(statusColor(for: job.status).opacity(0.7), lineWidth: 0.8))
+                    .sumiCorners(color: TatamiTokens.goldDim, size: 4, weight: 0.9)
 
                 Text(elapsedString(from: job.createdAt))
                     .font(.ikeruMicro)
@@ -215,7 +217,7 @@ private struct RigJobDetailSheet: View {
                 .font(.ikeruCaption)
                 .foregroundStyle(Color.ikeruDanger)
         }
-        .ikeruCard(.standard)
+        .tatamiRoom(.standard)
     }
 
     private var paramsBlock: some View {
@@ -237,7 +239,7 @@ private struct RigJobDetailSheet: View {
                 }
             }
         }
-        .ikeruCard(.standard)
+        .tatamiRoom(.standard)
     }
 
     private var actionsBlock: some View {
@@ -277,11 +279,11 @@ private func iconName(for type: String) -> String {
 
 private func statusColor(for status: String) -> Color {
     switch status {
-    case "queued": return Color.gray
-    case "running": return Color.blue
-    case "done": return Color.green
-    case "error": return Color.red
-    default: return Color.gray
+    case "queued": return TatamiTokens.goldDim
+    case "running": return Color.ikeruPrimaryAccent
+    case "done": return Color.ikeruSuccess
+    case "error": return Color.ikeruDanger
+    default: return TatamiTokens.goldDim
     }
 }
 

@@ -56,13 +56,12 @@ struct IkeruTabBar: View {
         withAnimation(Self.tapSpring) { selection = tab }
     }
 
+    /// Maps a tab to its feature-tour spotlight target (3-tab IA).
     private func tourTarget(for tab: AppTab) -> TourTarget {
         switch tab {
-        case .companion: return .companionTab
-        case .study:     return .studyTab
-        case .home:      return .homeTab
-        case .rpg:       return .rpgTab
-        case .settings:  return .settingsTab
+        case .explore:  return .exploreTab
+        case .practice: return .practiceTab
+        case .settings: return .settingsTab
         }
     }
 }
@@ -105,31 +104,25 @@ private struct TatamiTabCell: View {
 
     private var japaneseLabel: String {
         switch tab {
-        case .home:      return "稽古"
-        case .study:     return "辞書"
-        case .companion: return "対話"
-        case .rpg:       return "段位"
-        case .settings:  return "設定"
+        case .practice: return "\u{7DF4}\u{7FD2}" // 練習 — Practice (matches the IA)
+        case .explore:  return "\u{5B66}\u{7FD2}" // 学習
+        case .settings: return "\u{8A2D}\u{5B9A}" // 設定
         }
     }
 
     private var accessibilityLabel: LocalizedStringKey {
         switch tab {
-        case .home:      return "Practice"
-        case .study:     return "Study"
-        case .companion: return "Talk"
-        case .rpg:       return "Profile"
-        case .settings:  return "Settings"
+        case .practice: return "Practice"
+        case .explore:  return "Explore"
+        case .settings: return "Settings"
         }
     }
 
     private var monKind: MonKind {
         switch tab {
-        case .home:      return .asanoha
-        case .study:     return .kikkou
-        case .companion: return .genji
-        case .rpg:       return .maru
-        case .settings:  return .kikkou  // shares with Study but never both active simultaneously
+        case .practice: return .asanoha
+        case .explore:  return .kikkou
+        case .settings: return .maru
         }
     }
 }
@@ -138,7 +131,7 @@ private struct TatamiTabCell: View {
 
 #Preview("IkeruTabBar") {
     struct Wrapper: View {
-        @State var selection: AppTab = .home
+        @State var selection: AppTab = .practice
         var body: some View {
             ZStack(alignment: .bottom) {
                 IkeruScreenBackground()

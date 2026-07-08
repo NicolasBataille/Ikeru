@@ -22,6 +22,8 @@ struct DailyTermBanner: View {
                         Text("NEW TERM ARRIVED")
                             .font(.ikeruMicro)
                             .ikeruTracking(.micro)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
                             .foregroundStyle(Color.ikeruPrimaryAccent)
                         Text("Tap to discover today's word")
                             .font(.ikeruBody)
@@ -36,18 +38,12 @@ struct DailyTermBanner: View {
                     yesterdayReminder(yesterday)
                 }
             }
-            .padding(IkeruTheme.Spacing.md)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background {
-                IkeruGlassSurface(
-                    cornerRadius: IkeruTheme.Radius.lg,
-                    tint: Color.ikeruPrimaryAccent,
-                    tintOpacity: 0.10,
-                    highlight: 0.18,
-                    strokeOpacity: 0.22
-                )
-            }
-            .clipShape(RoundedRectangle(cornerRadius: IkeruTheme.Radius.lg, style: .continuous))
+            .tatamiRoom(.standard, padding: EdgeInsets(
+                top: IkeruTheme.Spacing.md,
+                leading: IkeruTheme.Spacing.md,
+                bottom: IkeruTheme.Spacing.md,
+                trailing: IkeruTheme.Spacing.md
+            ))
             .shadow(color: Color.black.opacity(0.4), radius: 18, y: 8)
             .contentShape(Rectangle())
         }
@@ -62,13 +58,10 @@ struct DailyTermBanner: View {
 
     private var icon: some View {
         ZStack {
-            Circle()
+            Rectangle()
                 .fill(Color.ikeruPrimaryAccent.opacity(0.18))
                 .frame(width: 36, height: 36)
-            Circle()
-                .stroke(Color.ikeruPrimaryAccent.opacity(pulse ? 0.55 : 0.0), lineWidth: 1)
-                .frame(width: 46, height: 46)
-                .scaleEffect(pulse ? 1.15 : 1.0)
+                .sumiCorners(color: Color.ikeruPrimaryAccent, size: 6, weight: 1.0)
             Image(systemName: "sparkles")
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundStyle(Color.ikeruPrimaryAccent)
@@ -84,6 +77,8 @@ struct DailyTermBanner: View {
             Text("Yesterday")
                 .font(.ikeruMicro)
                 .ikeruTracking(.micro)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
                 .foregroundStyle(Color.ikeruTextTertiary)
             Text(term.word)
                 .font(.ikeruCaption)
@@ -93,8 +88,9 @@ struct DailyTermBanner: View {
                 .foregroundStyle(Color.ikeruTextTertiary)
             Text(term.meaning)
                 .font(.ikeruCaption)
-                .foregroundStyle(Color.ikeruTextSecondary)
                 .lineLimit(1)
+                .minimumScaleFactor(0.7)
+                .foregroundStyle(Color.ikeruTextSecondary)
         }
     }
 }
@@ -118,6 +114,8 @@ struct DailyTermRevealedPill: View {
                 Text("Today")
                     .font(.ikeruMicro)
                     .ikeruTracking(.micro)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
                     .foregroundStyle(Color.ikeruTextTertiary)
                 Text(term.word)
                     .font(.ikeruCaption)
@@ -127,8 +125,9 @@ struct DailyTermRevealedPill: View {
                     .foregroundStyle(Color.ikeruTextTertiary)
                 Text(term.meaning)
                     .font(.ikeruCaption)
-                    .foregroundStyle(Color.ikeruTextSecondary)
                     .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                    .foregroundStyle(Color.ikeruTextSecondary)
                 Spacer(minLength: 0)
                 if yesterday != nil {
                     Image(systemName: "clock.arrow.circlepath")
@@ -139,11 +138,10 @@ struct DailyTermRevealedPill: View {
             .padding(.horizontal, 14)
             .padding(.vertical, 10)
             .background {
-                Capsule().fill(.ultraThinMaterial)
+                Rectangle().fill(.ultraThinMaterial)
+                    .overlay(Rectangle().strokeBorder(TatamiTokens.goldDim.opacity(0.5), lineWidth: 0.6))
             }
-            .overlay(
-                Capsule().strokeBorder(Color.white.opacity(0.10), lineWidth: 0.6)
-            )
+            .sumiCorners(color: TatamiTokens.goldDim, size: 5, weight: 0.9)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

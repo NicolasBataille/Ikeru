@@ -106,6 +106,11 @@ public enum AIError: Error, @unchecked Sendable {
     case rateLimited(AITier)
     /// The provider returned an unparseable response.
     case invalidResponse
+    /// The provider rejected the configured API key (e.g. HTTP 400
+    /// API_KEY_INVALID, 401, or 403). Distinct from `keyNotFound`: a key IS
+    /// configured, but the service refused it — so the UI can tell the user to
+    /// fix the key rather than showing a generic "couldn't reply".
+    case invalidKey(AITier)
     /// A network-level error occurred.
     case networkError(any Error)
     /// A required API key or token was not found in the Keychain.

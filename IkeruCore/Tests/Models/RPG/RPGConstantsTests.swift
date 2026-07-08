@@ -133,11 +133,14 @@ struct RPGConstantsTests {
 
     // MARK: - XP For Grade
 
-    @Test("xpForGrade returns correct values")
+    @Test("xpForGrade returns correct values (flat attendance-based awards)")
     func xpForGradeValues() {
-        #expect(RPGConstants.xpForGrade(.easy) == 10)
-        #expect(RPGConstants.xpForGrade(.good) == 10)
-        #expect(RPGConstants.xpForGrade(.hard) == 5)
-        #expect(RPGConstants.xpForGrade(.again) == 2)
+        // Flat XP design: Easy/Good/Hard all give 6 XP (showing up is rewarded,
+        // not grade accuracy), Again gives 3 XP.
+        // See RPGConstants.xpForGrade for rationale.
+        #expect(RPGConstants.xpForGrade(.easy) == 6)
+        #expect(RPGConstants.xpForGrade(.good) == 6)
+        #expect(RPGConstants.xpForGrade(.hard) == 6)
+        #expect(RPGConstants.xpForGrade(.again) == 3)
     }
 }

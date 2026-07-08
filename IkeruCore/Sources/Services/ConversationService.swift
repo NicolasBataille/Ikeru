@@ -26,14 +26,19 @@ public final class ConversationService: @unchecked Sendable {
     ///   - userMessage: The learner's message text.
     ///   - history: Previous conversation messages for context.
     ///   - jlptLevel: The learner's current JLPT level.
+    ///   - knownVocabulary: Words the learner has already studied, as
+    ///     `word(reading)` tokens. Passed as a SOFT preference: Sakura is
+    ///     told to reuse them only when they fit naturally, never to force
+    ///     them. Empty by default so existing callers are unaffected.
     /// - Returns: A ConversationMessage from the assistant.
     @MainActor
     public func sendMessage(
         _ userMessage: String,
         history: [ConversationMessage],
-        jlptLevel: JLPTLevel
+        jlptLevel: JLPTLevel,
+        knownVocabulary: [String] = []
     ) async throws -> ConversationMessage {
-        let systemPrompt = buildSystemPrompt(for: jlptLevel)
+        let systemPrompt = buildSystemPrompt(for: jlptLevel, knownVocabulary: knownVocabulary)
 
         // Build combined user message with recent history context
         let contextMessage = buildContextMessage(from: history, userMessage: userMessage)
@@ -61,8 +66,9 @@ public final class ConversationService: @unchecked Sendable {
 
     // MARK: - System Prompt
 
-    private func buildSystemPrompt(for level: JLPTLevel) -> String {
+    private func buildSystemPrompt(for level: JLPTLevel, knownVocabulary: [String] = []) -> String {
         let levelGuidance = levelSpecificGuidance(for: level)
+        let knownVocabSection = knownVocabularySection(knownVocabulary)
 
         return """
         You are a friendly Japanese conversation partner for a language learner.
@@ -89,13 +95,32 @@ public final class ConversationService: @unchecked Sendable {
         9. Ask follow-up questions to keep the conversation going.
         10. Encourage the learner to try responding in Japanese, even partially.
 
-        RESPONSE FORMAT:
+        \(knownVocabSection)RESPONSE FORMAT:
         Write your conversational response first (Japanese with inline translations), \
         then any corrections and vocab on separate lines.
 
         EXAMPLE RESPONSE for a French-speaking N5 learner who said "Bonjour":
         こんにちは！元気(げんき)ですか？(Bonjour ! Comment vas-tu ?)
         今日(きょう)は何(なに)をしましたか？(Qu'as-tu fait aujourd'hui ?)
+        """
+    }
+
+    /// Builds an optional, soft-preference vocabulary block for the system
+    /// prompt. Returns an empty string when the learner has no studied words
+    /// (so the prompt is unchanged). When present, it lists the words and
+    /// explicitly frames them as a gentle preference — Sakura must reuse them
+    /// only when they fit naturally and must never force or distort the
+    /// conversation to include them. Returns a trailing blank line so it slots
+    /// cleanly before the RESPONSE FORMAT section.
+    private func knownVocabularySection(_ knownVocabulary: [String]) -> String {
+        guard !knownVocabulary.isEmpty else { return "" }
+        return """
+        WORDS THE LEARNER ALREADY KNOWS (\(knownVocabulary.count)): \(knownVocabulary.joined(separator: ", ")).
+        When one of these fits the conversation NATURALLY, prefer reusing it — it helps the learner \
+        consolidate what they have studied. This is a SOFT preference, never a requirement: do NOT force \
+        these words in, do NOT distort a sentence or steer the topic just to use one. If none of them fit \
+        naturally, simply ignore this list.
+
         """
     }
 

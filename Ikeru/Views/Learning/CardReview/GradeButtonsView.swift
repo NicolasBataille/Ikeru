@@ -24,8 +24,8 @@ struct GradeButtonsView: View {
     private let dueHints: [Grade: String] = [
         .again: "<1m",
         .hard:  "~6m",
-        .good:  "1d",
-        .easy:  "4d"
+        .good:  String(localized: "1d"),
+        .easy:  String(localized: "4d")
     ]
 
     private struct GradeSpec {
@@ -64,8 +64,10 @@ struct GradeButtonsView: View {
                             .foregroundStyle(spec.color)
                             .padding(.bottom, 2)
                         Text(spec.label)
-                            .font(.system(size: 11, weight: .bold))
+                            .ikeruScaledFont(11, weight: .bold, relativeTo: .caption2)
                             .tracking(1)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
                             .foregroundStyle(Color.ikeruTextPrimary)
                             .textCase(.uppercase)
                         SerifNumeral(

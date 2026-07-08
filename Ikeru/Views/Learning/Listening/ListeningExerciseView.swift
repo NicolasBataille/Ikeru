@@ -17,7 +17,7 @@ struct ListeningExerciseView: View {
             audioControls
             exerciseContent
         }
-        .ikeruCard(.interactive)
+        .tatamiRoom(.standard)
         .padding(.horizontal, IkeruTheme.Spacing.md)
         .sensoryFeedback(.success, trigger: hapticCorrect)
         .sensoryFeedback(.warning, trigger: hapticIncorrect)
@@ -127,77 +127,83 @@ struct ListeningExerciseView: View {
             HStack {
                 Text(choice)
                     .font(.ikeruBody)
-                    .foregroundStyle(.white)
+                    .foregroundStyle(answerForeground(isSelected: isSelected, isAnswered: isAnswered, isCorrectChoice: isCorrectChoice))
 
                 Spacer()
 
                 if isAnswered && isCorrectChoice {
                     Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(Color.ikeruSuccess)
+                        .foregroundStyle(Color(red: 0.102, green: 0.078, blue: 0.055))
                 } else if isAnswered && isSelected && !isCorrectChoice {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundStyle(Color.ikeruSecondaryAccent)
+                        .foregroundStyle(Color.ikeruError)
                 }
             }
             .padding(IkeruTheme.Spacing.md)
             .background {
-                RoundedRectangle(cornerRadius: IkeruTheme.Radius.sm)
-                    .fill(answerBackgroundColor(
-                        isSelected: isSelected,
-                        isAnswered: isAnswered,
-                        isCorrectChoice: isCorrectChoice
-                    ))
+                answerBackgroundView(
+                    isSelected: isSelected,
+                    isAnswered: isAnswered,
+                    isCorrectChoice: isCorrectChoice
+                )
             }
-            .overlay {
-                RoundedRectangle(cornerRadius: IkeruTheme.Radius.sm)
-                    .strokeBorder(
-                        answerBorderColor(
-                            isSelected: isSelected,
-                            isAnswered: isAnswered,
-                            isCorrectChoice: isCorrectChoice
-                        ),
-                        lineWidth: isSelected ? 2 : 1
-                    )
-            }
+            .sumiCorners(
+                color: answerCornerColor(
+                    isSelected: isSelected,
+                    isAnswered: isAnswered,
+                    isCorrectChoice: isCorrectChoice
+                ),
+                size: 8,
+                weight: 1.2
+            )
         }
         .buttonStyle(.plain)
         .disabled(isAnswered)
     }
 
-    // MARK: - Answer Colors
+    // MARK: - Answer Appearance
 
-    private func answerBackgroundColor(
-        isSelected: Bool,
-        isAnswered: Bool,
-        isCorrectChoice: Bool
-    ) -> Color {
-        guard isAnswered else {
-            return Color.ikeruSurface.opacity(0.5)
-        }
-        if isCorrectChoice {
-            return Color.ikeruSuccess.opacity(0.15)
-        }
-        if isSelected {
-            return Color.ikeruSecondaryAccent.opacity(0.15)
-        }
-        return Color.ikeruSurface.opacity(0.3)
+    private func answerForeground(isSelected: Bool, isAnswered: Bool, isCorrectChoice: Bool) -> Color {
+        guard isAnswered else { return .white }
+        if isCorrectChoice { return Color(red: 0.102, green: 0.078, blue: 0.055) }
+        if isSelected { return .white }
+        return Color.white.opacity(0.35)
     }
 
-    private func answerBorderColor(
+    @ViewBuilder
+    private func answerBackgroundView(
+        isSelected: Bool,
+        isAnswered: Bool,
+        isCorrectChoice: Bool
+    ) -> some View {
+        if isAnswered {
+            if isCorrectChoice {
+                LinearGradient.ikeruGold
+            } else if isSelected {
+                ZStack {
+                    Rectangle().fill(.ultraThinMaterial)
+                    Rectangle().fill(Color.ikeruError.opacity(0.22))
+                }
+            } else {
+                Color(red: 0.102, green: 0.102, blue: 0.133).opacity(0.45)
+            }
+        } else {
+            ZStack {
+                Rectangle().fill(.ultraThinMaterial)
+                Rectangle().fill(Color(red: 0.102, green: 0.102, blue: 0.133).opacity(0.6))
+            }
+        }
+    }
+
+    private func answerCornerColor(
         isSelected: Bool,
         isAnswered: Bool,
         isCorrectChoice: Bool
     ) -> Color {
-        guard isAnswered else {
-            return Color.white.opacity(0.1)
-        }
-        if isCorrectChoice {
-            return Color.ikeruSuccess
-        }
-        if isSelected {
-            return Color.ikeruSecondaryAccent
-        }
-        return Color.white.opacity(0.05)
+        guard isAnswered else { return TatamiTokens.goldDim }
+        if isCorrectChoice { return .ikeruPrimaryAccent }
+        if isSelected { return Color.ikeruError.opacity(0.7) }
+        return TatamiTokens.goldDim.opacity(0.3)
     }
 }
 
@@ -211,7 +217,7 @@ private struct WaveformBar: View {
     @State private var height: CGFloat = 4
 
     var body: some View {
-        RoundedRectangle(cornerRadius: 2)
+        Rectangle()
             .fill(Color.ikeruPrimaryAccent)
             .frame(width: 3, height: height)
             .onAppear {

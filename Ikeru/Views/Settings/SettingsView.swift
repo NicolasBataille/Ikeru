@@ -130,11 +130,13 @@ struct SettingsView: View {
 
                     practiceSection
                     displaySection
-                    memorySection
                     accountSection
                     aiSection
-                    storageSection
+                    dataStorageLinkSection
                     aboutSection
+                    #if IKERU_DEV_TOOLS
+                    devToolsLinkSection
+                    #endif
                 }
                 .padding(.horizontal, 22)
                 .padding(.top, 14)
@@ -215,7 +217,7 @@ struct SettingsView: View {
         VStack(alignment: .leading, spacing: 6) {
             BilingualLabel(japanese: "設定", chrome: "Settings")
             Text("Preferences", comment: "Settings heading")
-                .font(.system(size: 28, weight: .light, design: .serif))
+                .ikeruScaledFont(28, weight: .light, design: .serif, relativeTo: .title)
                 .foregroundStyle(Color.ikeruTextPrimary)
         }
     }
@@ -224,11 +226,6 @@ struct SettingsView: View {
 
     private var practiceSection: some View {
         section(label: ("稽古", "Practice"), mon: .asanoha) {
-            settingRow(
-                jp: "一日の目標",
-                label: "Daily goal",
-                value: "12 cards"
-            )
             reminderToggleRow(
                 jp: "通知",
                 label: "Reminders",
@@ -253,7 +250,7 @@ struct SettingsView: View {
                     } else {
                         AnyView(
                             Text("Off")
-                                .font(.system(size: 13, design: .serif))
+                                .ikeruScaledFont(13, design: .serif, relativeTo: .caption)
                                 .foregroundStyle(TatamiTokens.paperGhost)
                         )
                     }
@@ -297,7 +294,7 @@ struct SettingsView: View {
                     } else {
                         AnyView(
                             Text("Off")
-                                .font(.system(size: 13, design: .serif))
+                                .ikeruScaledFont(13, design: .serif, relativeTo: .caption)
                                 .foregroundStyle(TatamiTokens.paperGhost)
                         )
                     }
@@ -314,27 +311,23 @@ struct SettingsView: View {
                     if dailyTermEnabled {
                         AnyView(
                             Text(formattedTime(dailyTermHour, dailyTermMinute))
-                                .font(.system(size: 13, design: .serif))
+                                .ikeruScaledFont(13, design: .serif, relativeTo: .caption)
                                 .foregroundStyle(Color.ikeruPrimaryAccent)
                         )
                     } else {
                         AnyView(
                             Text("Off")
-                                .font(.system(size: 13, design: .serif))
+                                .ikeruScaledFont(13, design: .serif, relativeTo: .caption)
                                 .foregroundStyle(TatamiTokens.paperGhost)
                         )
                     }
                 }
             )
             settingRow(
-                jp: "音声",
-                label: "Sound",
-                value: String(localized: "On")
-            )
-            settingRow(
                 jp: "振り仮名",
                 label: "Furigana",
-                value: localizedString(furiganaStatusValue)
+                value: localizedString(furiganaStatusValue),
+                showChevron: false
             ) {
                 withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) {
                     furiganaEnabled.toggle()
@@ -352,19 +345,7 @@ struct SettingsView: View {
         section(label: ("表示", "Display"), mon: .kikkou) {
             if let repo = displayModeRepo {
                 DisplayModeToggleRow(repository: repo)
-                    .padding(.horizontal, IkeruTheme.Spacing.md)
-                    .padding(.vertical, IkeruTheme.Spacing.sm)
             }
-        }
-    }
-
-    // MARK: - Section: 記憶 / Memory algorithm
-
-    private var memorySection: some View {
-        section(label: ("記憶", "Memory algorithm"), mon: .kikkou) {
-            settingRow(jp: "FSRSパラメータ", label: "FSRS parameters", value: "Optimized")
-            settingRow(jp: "保持率",         label: "Target retention", value: "90%")
-            settingRow(jp: "最大間隔",       label: "Maximum interval", value: "36500d")
         }
     }
 
@@ -375,7 +356,8 @@ struct SettingsView: View {
             settingRow(
                 jp: "プロフィール",
                 label: "Profile",
-                value: profileNameValue
+                value: profileNameValue,
+                showChevron: false
             ) {
                 editingName = profileNameValue
                 withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) {
@@ -444,7 +426,7 @@ struct SettingsView: View {
     private var inlineNameEditor: some View {
         HStack(spacing: 12) {
             TextField("Your name", text: $editingName)
-                .font(.system(size: 14, design: .serif))
+                .ikeruScaledFont(14, design: .serif, relativeTo: .body)
                 .foregroundStyle(Color.ikeruTextPrimary)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 10)
@@ -497,19 +479,23 @@ struct SettingsView: View {
         } label: {
             HStack(spacing: 16) {
                 Text("︙")
-                    .font(.system(size: 13, design: .serif))
+                    .ikeruScaledFont(13, design: .serif, relativeTo: .caption)
                     .foregroundStyle(TatamiTokens.paperGhost)
                 Text(profile.displayName)
-                    .font(.system(size: 13))
+                    .ikeruScaledFont(13, relativeTo: .caption)
                     .foregroundStyle(Color.ikeruTextPrimary)
                 Spacer()
                 if isCurrent {
                     Text("Active", comment: "Active profile indicator")
-                        .font(.system(size: 13, design: .serif))
+                        .ikeruScaledFont(13, design: .serif, relativeTo: .caption)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
                         .foregroundStyle(Color.ikeruPrimaryAccent)
                 } else {
                     Text("Switch", comment: "Switch profile action")
-                        .font(.system(size: 13, design: .serif))
+                        .ikeruScaledFont(13, design: .serif, relativeTo: .caption)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
                         .foregroundStyle(Color.ikeruPrimaryAccent)
                     Text("›")
                         .font(.system(size: 14))
@@ -538,14 +524,16 @@ struct SettingsView: View {
         Button { showingLanguagePicker = true } label: {
             HStack(spacing: 16) {
                 Text("言語")
-                    .font(.system(size: 13, design: .serif))
+                    .ikeruScaledFont(13, design: .serif, relativeTo: .caption)
                     .foregroundStyle(TatamiTokens.paperGhost)
                 Text("Language", comment: "Settings row label")
-                    .font(.system(size: 13))
+                    .ikeruScaledFont(13, relativeTo: .caption)
                     .foregroundStyle(Color.ikeruTextPrimary)
                 Spacer()
                 Text(currentLanguageLabel)
-                    .font(.system(size: 13, design: .serif))
+                    .ikeruScaledFont(13, design: .serif, relativeTo: .caption)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
                     .foregroundStyle(Color.ikeruPrimaryAccent)
                 Text("›")
                     .font(.system(size: 14))
@@ -577,65 +565,55 @@ struct SettingsView: View {
         }
     }
 
-    // MARK: - Section: 倉庫 / Storage (asset cache + local rig)
+    // MARK: - Section link: 倉庫 / Data & Storage (sub-page)
 
-    private var storageSection: some View {
-        section(label: ("倉庫", "Storage"), mon: .maru) {
-            settingRow(
-                jp: "資産キャッシュ",
-                label: "Asset cache",
-                value: cacheUsageValue
-            ) {
-                showClearAllAlert = true
-            }
-
-            settingRow(
-                jp: "予熱",
-                label: "Pre-warm audio",
-                value: localizedString(preWarmStatusValue)
-            ) {
-                withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) {
-                    preWarmEnabled.toggle()
-                }
-            }
-
-            settingRow(
-                jp: "予熱通知",
-                label: "Pre-warm notifications",
-                value: preWarmNotify ? String(localized: "On") : String(localized: "Off")
-            ) {
-                withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) {
-                    preWarmNotify.toggle()
-                }
-            }
-
-            settingRow(
-                jp: "今すぐ予熱",
-                label: "Pre-warm now",
-                value: isPreWarming ? String(localized: "Working") : ""
-            ) {
-                runPreWarmNow()
-            }
-
+    private var dataStorageLinkSection: some View {
+        section(label: ("倉庫", "Data & Storage"), mon: .maru) {
             NavigationLink {
-                if let client = makeRigClient() {
-                    RigJobsView(client: client)
-                } else {
-                    Text("Configure rig first in AI Providers")
-                        .font(.ikeruCaption)
-                        .foregroundStyle(Color.ikeruTextSecondary)
-                        .padding()
-                }
+                DataStorageSettingsView(
+                    cacheStats: cacheStats,
+                    cacheQuotaMB: cacheQuotaMB,
+                    preWarmEnabled: $preWarmEnabled,
+                    preWarmNotify: $preWarmNotify,
+                    isPreWarming: $isPreWarming,
+                    onClearCache: {
+                        assetCache?.clearAll()
+                        cacheStats = assetCache?.stats()
+                    },
+                    onPreWarmNow: runPreWarmNow,
+                    makeRigClient: makeRigClient
+                )
             } label: {
                 rowChrome(
-                    jp: "ジョブ",
-                    label: "Rig jobs",
+                    jp: "保管",
+                    label: "Cache & pre-warm",
+                    value: cacheUsageValue
+                )
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    #if IKERU_DEV_TOOLS
+    // MARK: - Section link: 開発 / Dev tools (sub-page)
+
+    private var devToolsLinkSection: some View {
+        section(label: ("開発", "Dev tools"), mon: .maru) {
+            NavigationLink {
+                DevToolsSettingsView()
+            } label: {
+                rowChrome(
+                    jp: "開発",
+                    label: "Developer tools",
                     value: ""
                 )
             }
             .buttonStyle(.plain)
         }
     }
+    #endif
+
+    // MARK: - Cache usage (used by dataStorageLinkSection value display)
 
     private var cacheUsageValue: String {
         guard let stats = cacheStats else { return "" }
@@ -647,12 +625,11 @@ struct SettingsView: View {
 
     private var aboutSection: some View {
         section(label: ("関連", "About"), mon: .maru) {
+            settingRow(jp: "バージョン", label: "Version", value: appVersionValue)
+
             settingRow(jp: "案内", label: "Tour.Settings.Replay", value: "") {
                 NotificationCenter.default.post(name: .replayFeatureTour, object: nil)
             }
-            settingRow(jp: "バージョン", label: "Version", value: appVersionValue)
-            settingRow(jp: "利用規約",   label: "Terms",   value: "")
-            settingRow(jp: "お問い合わせ", label: "Support", value: "")
 
             NavigationLink {
                 AttributionView()
@@ -688,12 +665,13 @@ struct SettingsView: View {
         jp: String,
         label: LocalizedStringKey,
         value: String,
+        showChevron: Bool = true,
         action: (() -> Void)? = nil
     ) -> some View {
         Button {
             action?()
         } label: {
-            rowChrome(jp: jp, label: label, value: value)
+            rowChrome(jp: jp, label: label, value: value, showChevron: showChevron)
         }
         .buttonStyle(.plain)
         .disabled(action == nil)
@@ -712,12 +690,12 @@ struct SettingsView: View {
     ) -> some View {
         HStack(spacing: 10) {
             Text(jp)
-                .font(.system(size: 13, design: .serif))
+                .ikeruScaledFont(13, design: .serif, relativeTo: .caption)
                 .foregroundStyle(TatamiTokens.paperGhost)
                 .lineLimit(1)
                 .fixedSize(horizontal: true, vertical: false)
             Text(label)
-                .font(.system(size: 13))
+                .ikeruScaledFont(13, relativeTo: .caption)
                 .foregroundStyle(Color.ikeruTextPrimary)
                 .lineLimit(1)
                 .layoutPriority(1)
@@ -752,7 +730,7 @@ struct SettingsView: View {
         } label: {
             HStack(spacing: 3) {
                 Text(String(format: "%02d:00", selected.wrappedValue))
-                    .font(.system(size: 13, design: .serif))
+                    .ikeruScaledFont(13, design: .serif, relativeTo: .caption)
                     .foregroundStyle(Color.ikeruPrimaryAccent)
                 Text("\u{25BE}") // ▾
                     .font(.system(size: 9))
@@ -780,7 +758,7 @@ struct SettingsView: View {
         } label: {
             HStack(spacing: 3) {
                 Text(shortWeekdayName(selected.wrappedValue))
-                    .font(.system(size: 13, design: .serif))
+                    .ikeruScaledFont(13, design: .serif, relativeTo: .caption)
                     .foregroundStyle(Color.ikeruPrimaryAccent)
                 Text("\u{25BE}") // ▾
                     .font(.system(size: 9))
@@ -815,24 +793,31 @@ struct SettingsView: View {
     private func rowChrome(
         jp: String,
         label: LocalizedStringKey,
-        value: String
+        value: String,
+        showChevron: Bool = true
     ) -> some View {
         HStack(spacing: 16) {
             Text(jp)
-                .font(.system(size: 13, design: .serif))
+                .ikeruScaledFont(13, design: .serif, relativeTo: .caption)
                 .foregroundStyle(TatamiTokens.paperGhost)
             Text(label)
-                .font(.system(size: 13))
+                .ikeruScaledFont(13, relativeTo: .caption)
                 .foregroundStyle(Color.ikeruTextPrimary)
             Spacer()
             if !value.isEmpty {
                 Text(value)
-                    .font(.system(size: 13, design: .serif))
+                    .ikeruScaledFont(13, design: .serif, relativeTo: .caption)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
                     .foregroundStyle(Color.ikeruPrimaryAccent)
             }
-            Text("›")
-                .font(.system(size: 14))
-                .foregroundStyle(TatamiTokens.goldDim)
+            // Toggle-style rows (e.g. Furigana) show their On/Off value, not a
+            // chevron — a chevron there falsely signals navigation.
+            if showChevron {
+                Text("›")
+                    .font(.system(size: 14))
+                    .foregroundStyle(TatamiTokens.goldDim)
+            }
         }
         .padding(.horizontal, 16).padding(.vertical, 14)
         .overlay(alignment: .bottom) {
@@ -958,6 +943,357 @@ struct SettingsView: View {
         }
     }
 }
+
+// MARK: - Sub-page: Data & Storage Settings
+
+private struct DataStorageSettingsView: View {
+
+    let cacheStats: AssetCache.Stats?
+    let cacheQuotaMB: Double
+    @Binding var preWarmEnabled: Bool
+    @Binding var preWarmNotify: Bool
+    @Binding var isPreWarming: Bool
+    let onClearCache: () -> Void
+    let onPreWarmNow: () -> Void
+    let makeRigClient: () -> RigClient?
+
+    @State private var showClearAllAlert = false
+    @Environment(\.toastManager) private var toastManager
+
+    var body: some View {
+        ZStack {
+            IkeruScreenBackground(variant: .auxiliary)
+                .ignoresSafeArea()
+
+            ScrollView(showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 24) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        BilingualLabel(japanese: "倉庫", chrome: "Data & Storage")
+                        Text("Cache & Pre-warm", comment: "Data & Storage subpage heading")
+                            .ikeruScaledFont(28, weight: .light, design: .serif, relativeTo: .title)
+                            .foregroundStyle(Color.ikeruTextPrimary)
+                    }
+
+                    storageContentSection
+                }
+                .padding(.horizontal, 22)
+                .padding(.top, 14)
+                .padding(.bottom, 60)
+            }
+        }
+        .navigationTitle("Data & Storage")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar(.hidden, for: .navigationBar)
+        .alert("Clear cache?", isPresented: $showClearAllAlert) {
+            Button("Cancel", role: .cancel) { }
+            Button("Clear all", role: .destructive) {
+                onClearCache()
+            }
+        } message: {
+            Text("Removes every cached audio file and image. Assets will be regenerated on next use.")
+        }
+    }
+
+    private var cacheUsageValue: String {
+        guard let stats = cacheStats else { return "" }
+        let usedMB = Double(stats.totalBytes) / 1_048_576.0
+        return String(format: "%.0f / %.0f MB", usedMB, cacheQuotaMB)
+    }
+
+    private var preWarmStatusValue: LocalizedStringKey {
+        preWarmEnabled ? "On" : "Off"
+    }
+
+    private var storageContentSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            BilingualLabel(japanese: "倉庫", chrome: "Storage", mon: .maru)
+            VStack(spacing: 0) {
+                storageRow(
+                    jp: "資産キャッシュ",
+                    label: "Asset cache",
+                    value: cacheUsageValue
+                ) { showClearAllAlert = true }
+
+                storageToggleRow(
+                    jp: "予熱",
+                    label: "Pre-warm audio",
+                    value: preWarmEnabled ? String(localized: "On") : String(localized: "Off")
+                ) {
+                    withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) {
+                        preWarmEnabled.toggle()
+                    }
+                }
+
+                storageToggleRow(
+                    jp: "予熱通知",
+                    label: "Pre-warm notifications",
+                    value: preWarmNotify ? String(localized: "On") : String(localized: "Off")
+                ) {
+                    withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) {
+                        preWarmNotify.toggle()
+                    }
+                }
+
+                storageRow(
+                    jp: "今すぐ予熱",
+                    label: "Pre-warm now",
+                    value: isPreWarming ? String(localized: "Working") : ""
+                ) { onPreWarmNow() }
+
+                NavigationLink {
+                    if let client = makeRigClient() {
+                        RigJobsView(client: client)
+                    } else {
+                        Text("Configure rig first in AI Providers")
+                            .font(.ikeruCaption)
+                            .foregroundStyle(Color.ikeruTextSecondary)
+                            .padding()
+                    }
+                } label: {
+                    storageChrome(jp: "ジョブ", label: "Rig jobs", value: "")
+                }
+                .buttonStyle(.plain)
+            }
+            .tatamiRoom(.standard, padding: 0)
+        }
+    }
+
+    @ViewBuilder
+    private func storageRow(jp: String, label: LocalizedStringKey, value: String, action: (() -> Void)? = nil) -> some View {
+        Button { action?() } label: {
+            storageChrome(jp: jp, label: label, value: value)
+        }
+        .buttonStyle(.plain)
+        .disabled(action == nil)
+    }
+
+    @ViewBuilder
+    private func storageToggleRow(jp: String, label: LocalizedStringKey, value: String, action: @escaping () -> Void) -> some View {
+        Button { action() } label: {
+            storageChrome(jp: jp, label: label, value: value)
+        }
+        .buttonStyle(.plain)
+    }
+
+    @ViewBuilder
+    private func storageChrome(jp: String, label: LocalizedStringKey, value: String) -> some View {
+        HStack(spacing: 16) {
+            Text(jp)
+                .ikeruScaledFont(13, design: .serif, relativeTo: .caption)
+                .foregroundStyle(TatamiTokens.paperGhost)
+            Text(label)
+                .ikeruScaledFont(13, relativeTo: .caption)
+                .foregroundStyle(Color.ikeruTextPrimary)
+            Spacer()
+            if !value.isEmpty {
+                Text(value)
+                    .ikeruScaledFont(13, design: .serif, relativeTo: .caption)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                    .foregroundStyle(Color.ikeruPrimaryAccent)
+            }
+            Text("›")
+                .font(.system(size: 14))
+                .foregroundStyle(TatamiTokens.goldDim)
+        }
+        .padding(.horizontal, 16).padding(.vertical, 14)
+        .overlay(alignment: .bottom) {
+            Rectangle().fill(TatamiTokens.goldDim.opacity(0.2))
+                .frame(height: 1).padding(.horizontal, 16)
+        }
+    }
+}
+
+// MARK: - Sub-page: Dev Tools Settings
+
+#if IKERU_DEV_TOOLS
+private struct DevToolsSettingsView: View {
+
+    @Environment(\.profileViewModel) private var profileViewModel
+    @Environment(\.modelContext) private var modelContext
+    @Environment(\.assetCache) private var assetCache
+
+    @State private var devSeedLevel: Double = 15
+    @State private var devSeedDue: Double = 20
+    @State private var devSeedMastered: Double = 120
+    @State private var devSeedLootboxes: Double = 3
+    @State private var devSeedInventory: Double = 8
+    @State private var devShowResetConfirm = false
+    @State private var devLastAction: String = ""
+
+    var body: some View {
+        ZStack {
+            IkeruScreenBackground(variant: .auxiliary)
+                .ignoresSafeArea()
+
+            ScrollView(showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 24) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        BilingualLabel(japanese: "開発", chrome: "Dev tools")
+                        Text("Developer Tools", comment: "Dev tools subpage heading")
+                            .ikeruScaledFont(28, weight: .light, design: .serif, relativeTo: .title)
+                            .foregroundStyle(Color.ikeruTextPrimary)
+                    }
+
+                    devSection
+                }
+                .padding(.horizontal, 22)
+                .padding(.top, 14)
+                .padding(.bottom, 60)
+            }
+        }
+        .navigationTitle("Dev tools")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar(.hidden, for: .navigationBar)
+        .alert("Reset profile?", isPresented: $devShowResetConfirm) {
+            Button("Cancel", role: .cancel) {}
+            Button("Wipe", role: .destructive) {
+                guard let vm = profileViewModel else { return }
+                TestFixtures.wipeAll(context: modelContext, profileVM: vm)
+                devLastAction = "✓ Profile wiped — relaunch to see onboarding"
+            }
+        } message: {
+            Text("Deletes every profile, RPG state, card, vocab encounter. Onboarding triggers on next cold launch.")
+        }
+    }
+
+    private var devSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            BilingualLabel(japanese: "開発", chrome: "Dev tools", mon: .maru)
+            VStack(spacing: 0) {
+                devSeedRow
+                Rectangle().fill(TatamiTokens.goldDim.opacity(0.2)).frame(height: 1)
+                devActionRow(jp: "削除", label: "Wipe profile",    value: "destructive") { devShowResetConfirm = true }
+                devActionRow(jp: "宝箱", label: "Grant lootbox",   value: "add") {
+                    TestFixtures.addLootbox(context: modelContext)
+                    devLastAction = "✓ Lootbox granted — open Rang to see it"
+                }
+                devActionRow(jp: "昇段", label: "Force level-up",  value: "next") {
+                    TestFixtures.grantLevelUp(context: modelContext)
+                    devLastAction = "✓ XP bumped past next grade"
+                }
+                devActionRow(jp: "資産", label: "Clear asset cache", value: "purge") {
+                    assetCache?.clearAll()
+                    devLastAction = "✓ Asset cache cleared"
+                }
+                devActionRow(jp: "情報", label: "Build info",       value: devBuildInfo, action: nil)
+
+                if !devLastAction.isEmpty {
+                    Text(devLastAction)
+                        .font(.system(size: 11, weight: .regular, design: .monospaced))
+                        .foregroundStyle(Color.ikeruSuccess)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                }
+            }
+            .tatamiRoom(.standard, padding: 0)
+        }
+    }
+
+    @ViewBuilder
+    private func devActionRow(jp: String, label: LocalizedStringKey, value: String, action: (() -> Void)?) -> some View {
+        Button { action?() } label: {
+            HStack(spacing: 16) {
+                Text(jp)
+                    .ikeruScaledFont(13, design: .serif, relativeTo: .caption)
+                    .foregroundStyle(TatamiTokens.paperGhost)
+                Text(label)
+                    .ikeruScaledFont(13, relativeTo: .caption)
+                    .foregroundStyle(Color.ikeruTextPrimary)
+                Spacer()
+                if !value.isEmpty {
+                    Text(value)
+                        .ikeruScaledFont(13, design: .serif, relativeTo: .caption)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                        .foregroundStyle(Color.ikeruPrimaryAccent)
+                }
+                Text("›")
+                    .font(.system(size: 14))
+                    .foregroundStyle(TatamiTokens.goldDim)
+            }
+            .padding(.horizontal, 16).padding(.vertical, 14)
+            .overlay(alignment: .bottom) {
+                Rectangle().fill(TatamiTokens.goldDim.opacity(0.2))
+                    .frame(height: 1).padding(.horizontal, 16)
+            }
+        }
+        .buttonStyle(.plain)
+        .disabled(action == nil)
+    }
+
+    private var devSeedRow: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text("Seed fixture profile")
+                    .ikeruScaledFont(13, relativeTo: .caption)
+                    .foregroundStyle(Color.ikeruTextPrimary)
+                Spacer()
+                Button {
+                    guard let vm = profileViewModel else { return }
+                    TestFixtures.wipeAndSeed(
+                        context: modelContext,
+                        profileVM: vm,
+                        level: Int(devSeedLevel),
+                        dueCount: Int(devSeedDue),
+                        masteredCount: Int(devSeedMastered),
+                        lootboxCount: Int(devSeedLootboxes),
+                        inventoryCount: Int(devSeedInventory)
+                    )
+                    devLastAction = "✓ Seeded: lvl \(Int(devSeedLevel)), \(Int(devSeedDue)) due, \(Int(devSeedMastered)) mastered"
+                } label: {
+                    Text("Seed")
+                        .ikeruScaledFont(12, weight: .semibold, relativeTo: .caption2)
+                        .foregroundStyle(Color.ikeruPrimaryAccent)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(
+                            RoundedRectangle(cornerRadius: 6)
+                                .fill(Color.ikeruPrimaryAccent.opacity(0.12))
+                        )
+                }
+                .buttonStyle(.plain)
+            }
+
+            devSlider(label: "Level",     value: $devSeedLevel,     range: 1...30,   step: 1)
+            devSlider(label: "Due",       value: $devSeedDue,       range: 0...50,   step: 5)
+            devSlider(label: "Mastered",  value: $devSeedMastered,  range: 0...200,  step: 10)
+            devSlider(label: "Lootboxes", value: $devSeedLootboxes, range: 0...5,    step: 1)
+            devSlider(label: "Inventory", value: $devSeedInventory, range: 0...20,   step: 1)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+    }
+
+    private func devSlider(
+        label: LocalizedStringKey,
+        value: Binding<Double>,
+        range: ClosedRange<Double>,
+        step: Double
+    ) -> some View {
+        HStack(spacing: 12) {
+            Text(label)
+                .font(.system(size: 11, design: .monospaced))
+                .foregroundStyle(TatamiTokens.paperGhost)
+                .frame(width: 70, alignment: .leading)
+            Slider(value: value, in: range, step: step)
+                .tint(Color.ikeruPrimaryAccent)
+            Text("\(Int(value.wrappedValue))")
+                .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                .foregroundStyle(Color.ikeruTextPrimary)
+                .frame(width: 30, alignment: .trailing)
+        }
+    }
+
+    private var devBuildInfo: String {
+        let bundle = Bundle.main
+        let version = bundle.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
+        let build = bundle.infoDictionary?["CFBundleVersion"] as? String ?? "?"
+        let bid = bundle.bundleIdentifier ?? "?"
+        return "\(version) (\(build)) · \(bid)"
+    }
+}
+#endif
 
 // MARK: - Preview
 

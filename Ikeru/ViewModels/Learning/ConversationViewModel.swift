@@ -6,11 +6,35 @@ import os
 import Speech
 #endif
 
+// MARK: - Conversation Topic
+
+/// A suggested conversation topic that can seed the chat with an opening message.
+public struct ConversationTopic: Hashable, Sendable {
+    /// Japanese title shown in the topic list (e.g. "自己紹介").
+    public let japanese: String
+    /// English label shown below the Japanese title.
+    public let english: String
+    /// JLPT difficulty tag shown in the topic row badge.
+    public let jlptLevel: String
+
+    public init(japanese: String, english: String, jlptLevel: String) {
+        self.japanese = japanese
+        self.english = english
+        self.jlptLevel = jlptLevel
+    }
+}
+
 // MARK: - Conversation ViewModel
 
 @MainActor
 @Observable
-public final class ConversationViewModel {
+public final class ConversationViewModel: Identifiable {
+
+    /// Stable identity so `ConversationView` can be presented via
+    /// `.fullScreenCover(item:)` — which guarantees a non-nil value in the
+    /// cover content (the `isPresented:` + optional `if let` pattern raced and
+    /// presented an empty/black screen).
+    public let id = UUID()
 
     // MARK: - Exposed State
 
@@ -32,8 +56,14 @@ public final class ConversationViewModel {
     /// Error message to display, if any.
     public private(set) var errorMessage: String?
 
-    /// The learner's JLPT level for this conversation.
-    public let jlptLevel: JLPTLevel
+    /// The learner's JLPT level for this conversation. Mutable so the toolbar
+    /// level picker can change Sakura's reply difficulty for subsequent sends;
+    /// @Observable tracks the change and re-renders the badge + starters.
+    public var jlptLevel: JLPTLevel
+
+    /// A topic to seed when the conversation starts. Set before presenting
+    /// ConversationView; consumed (and cleared) on first appear.
+    public var seedTopic: ConversationTopic?
 
     // MARK: - Computed
 
@@ -42,9 +72,9 @@ public final class ConversationViewModel {
         !inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !isLoading
     }
 
-    /// Whether to show the welcome state (no messages yet).
+    /// Whether to show the welcome state (no messages yet and no pending seed).
     public var showWelcome: Bool {
-        messages.isEmpty && !isLoading
+        messages.isEmpty && !isLoading && seedTopic == nil
     }
 
     // MARK: - Dependencies
@@ -52,6 +82,13 @@ public final class ConversationViewModel {
     private let conversationService: ConversationService
     private let speechDelegate: SpeechRecognitionDelegate?
     private let vocabularyRepository: VocabularyRepository?
+
+    /// `word(reading)` tokens for the words the learner has saved to their
+    /// dictionary, fetched once on appear and passed to Sakura as a SOFT
+    /// preference (reuse only when natural — never forced). Capped so the
+    /// system prompt stays bounded no matter how large the dictionary grows.
+    private var knownVocabulary: [String] = []
+    private static let maxKnownVocabulary = 40
 
     // MARK: - Init
 
@@ -69,11 +106,45 @@ public final class ConversationViewModel {
 
     // MARK: - Lifecycle
 
-    /// Check AI availability on appear.
+    /// Check AI availability on appear. If a seedTopic is pending, starts the
+    /// conversation on that topic once availability is confirmed.
     public func onAppear() async {
         await conversationService.aiRouter.refreshTierStatuses()
         let statuses = conversationService.aiRouter.tierStatuses
         isAIAvailable = statuses.values.contains { $0 == .available }
+
+        await loadKnownVocabulary()
+
+        if let topic = seedTopic, isAIAvailable, messages.isEmpty {
+            seedTopic = nil
+            await startWithTopic(topic)
+        }
+    }
+
+    /// Fetches the learner's saved dictionary words once and caches them as
+    /// `word(reading)` tokens, ranked most-mastered first so the capped slice
+    /// favours words worth reinforcing. Whole-array replacement — no mutation.
+    private func loadKnownVocabulary() async {
+        guard let repo = vocabularyRepository else { return }
+        let entries = await repo.allEntries()
+        knownVocabulary = entries
+            .sorted { ($0.mastery.rawValue, $0.encounterCount) > ($1.mastery.rawValue, $1.encounterCount) }
+            .prefix(Self.maxKnownVocabulary)
+            .map { $0.reading.isEmpty ? $0.word : "\($0.word)(\($0.reading))" }
+    }
+
+    // MARK: - Topic Seeding
+
+    /// Start a conversation seeded on a suggested topic. Posts an opening
+    /// user message in the topic language and immediately requests Sakura's reply.
+    /// Call this only when isAIAvailable is true; if AI is offline the method
+    /// is a no-op so the existing "Sakura offline" banner remains visible.
+    public func startWithTopic(_ topic: ConversationTopic) async {
+        guard isAIAvailable, messages.isEmpty else { return }
+        // Opening line: use the Japanese topic title as a natural conversation
+        // starter so Sakura's first reply is contextual.
+        let opening = topic.japanese
+        await sendMessage(opening)
     }
 
     // MARK: - Send Message
@@ -83,19 +154,42 @@ public final class ConversationViewModel {
         let text = inputText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty, !isLoading else { return }
 
-        let userMessage = ConversationMessage(role: .user, content: text)
-        messages.append(userMessage)
+        messages.append(ConversationMessage(role: .user, content: text))
         inputText = ""
+        await generateReply(to: text)
+    }
+
+    /// Send a specific text as a message (used by voice input and starter chips).
+    public func sendMessage(_ text: String) async {
+        inputText = text
+        await sendMessage()
+    }
+
+    /// Re-request Sakura's reply to the most recent user message after a
+    /// transient failure — used by the inline error "Retry" button. Does not
+    /// append a duplicate user bubble and never collapses the chat surface.
+    public func retryLastMessage() async {
+        guard !isLoading,
+              let lastUser = messages.last(where: { $0.role == .user })
+        else { return }
+        await generateReply(to: lastUser.content)
+    }
+
+    /// Request Sakura's reply for `userText` against the current history.
+    /// Shared by sendMessage and retryLastMessage so both surface the same
+    /// inline, retryable error instead of the full "offline" screen on a
+    /// recoverable failure.
+    private func generateReply(to userText: String) async {
         errorMessage = nil
         isLoading = true
-
         defer { isLoading = false }
 
         do {
             let response = try await conversationService.sendMessage(
-                text,
+                userText,
                 history: messages,
-                jlptLevel: jlptLevel
+                jlptLevel: jlptLevel,
+                knownVocabulary: knownVocabulary
             )
             messages.append(response)
             await logVocabularyEncounters(response)
@@ -104,12 +198,6 @@ public final class ConversationViewModel {
             Logger.ai.error("Conversation error: \(error.localizedDescription)")
             handleError(error)
         }
-    }
-
-    /// Send a specific text as a message (used by voice input).
-    public func sendMessage(_ text: String) async {
-        inputText = text
-        await sendMessage()
     }
 
     // MARK: - Voice Input
@@ -126,7 +214,7 @@ public final class ConversationViewModel {
     /// Start voice recognition.
     public func startVoiceInput() {
         guard let delegate = speechDelegate else {
-            errorMessage = "Voice input is not available"
+            errorMessage = "Sakura.Error.VoiceUnavailable"
             return
         }
 
@@ -183,25 +271,36 @@ public final class ConversationViewModel {
     // MARK: - Error Handling
 
     private func handleError(_ error: Error) {
+        // A single recoverable send failure must NOT collapse the chat to the
+        // full "Sakura offline" screen — availability was already confirmed on
+        // appear, and on devices without on-device AI (e.g. A16) one failed
+        // call would otherwise hide the chat and the user's typed message.
+        // Instead we surface an inline, retryable error and leave isAIAvailable
+        // untouched. errorMessage holds a catalogue KEY so the view resolves it
+        // against the in-app language via Text(LocalizedStringKey:) — which
+        // String(localized:) here would not honour (it ignores the AppLocale
+        // override).
         if let aiError = error as? AIError {
             switch aiError {
             case .providerUnavailable:
-                errorMessage = "AI is currently unavailable. Please try again later."
+                errorMessage = "Sakura.Error.Unavailable"
             case .rateLimited:
-                errorMessage = "Too many requests. Please wait a moment."
+                errorMessage = "Sakura.Error.RateLimited"
             case .timeout:
-                errorMessage = "Response took too long. Please try again."
+                errorMessage = "Sakura.Error.Timeout"
             case .networkError:
-                errorMessage = "Network error. Check your connection."
+                errorMessage = "Sakura.Error.Network"
             case .invalidResponse:
-                errorMessage = "Received an invalid response. Please try again."
+                errorMessage = "Sakura.Error.InvalidResponse"
+            case .invalidKey:
+                errorMessage = "Sakura.Error.KeyInvalid"
             case .keyNotFound:
-                errorMessage = "AI configuration missing. Check Settings."
+                errorMessage = "Sakura.Error.KeyMissing"
             case .allProvidersExhausted:
-                errorMessage = "No AI providers available. Try again later."
+                errorMessage = "Sakura.Error.AllProvidersFailed"
             }
         } else {
-            errorMessage = "Something went wrong. Please try again."
+            errorMessage = "Sakura.Error.Generic"
         }
     }
 }

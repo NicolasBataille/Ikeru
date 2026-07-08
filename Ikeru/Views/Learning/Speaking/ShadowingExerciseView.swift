@@ -36,7 +36,7 @@ struct ShadowingExerciseView: View {
                 actionArea
                 feedbackSection
             }
-            .ikeruCard(.interactive)
+            .tatamiRoom(.standard)
             .padding(.horizontal, IkeruTheme.Spacing.md)
             .sensoryFeedback(.impact, trigger: hapticRecord)
         } else if viewModel.loadingState.isLoading {
@@ -308,7 +308,7 @@ struct ShadowingExerciseView: View {
             .ikeruButtonStyle(.primary)
         }
         .padding(IkeruTheme.Spacing.lg)
-        .ikeruCard(.elevated)
+        .tatamiRoom(.standard)
         .padding(.horizontal, IkeruTheme.Spacing.md)
     }
 
@@ -328,7 +328,7 @@ private struct WaveformBar: View {
     @State private var height: CGFloat = 4
 
     var body: some View {
-        RoundedRectangle(cornerRadius: 2)
+        Rectangle()
             .fill(Color.ikeruPrimaryAccent)
             .frame(width: 3, height: height)
             .onAppear {

@@ -69,6 +69,11 @@ struct SRSCardView: View {
     @State private var flyingRevealed: Bool = false
     @State private var flyingDirection: SwipeDirection?
 
+    /// Drives the kana pronunciation button. Plays a bundled VOICEVOX clip when
+    /// one exists for the character, else falls back to on-device synthesis —
+    /// either way, zero setup. Only the interactive (current) card shows it.
+    @State private var audioService = AudioService()
+
     @Namespace private var deckNamespace
 
     /// Distance (in points) at which the grade indicator starts appearing.
@@ -189,7 +194,7 @@ struct SRSCardView: View {
     // MARK: - Card Layers
 
     private var currentCard: some View {
-        cardContent(for: card, revealed: isRevealed)
+        cardContent(for: card, revealed: isRevealed, interactive: true)
             .tatamiRoom(.glass, padding: EdgeInsets(top: 28, leading: 28, bottom: 28, trailing: 28))
             // While dragging the glass card, the cards behind in the deck
             // bleed through and read as a distracting visual halo. An
@@ -217,7 +222,7 @@ struct SRSCardView: View {
     // state layers a kintsugi gold hairline between the kana and romaji —
     // the literal "repair seam" between what you saw and what you know.
 
-    private func cardContent(for card: CardDTO, revealed: Bool) -> some View {
+    private func cardContent(for card: CardDTO, revealed: Bool, interactive: Bool = false) -> some View {
         ZStack {
             if revealed {
                 cardBackContent(for: card)
@@ -238,21 +243,17 @@ struct SRSCardView: View {
             }
             .allowsHitTesting(false)
 
-            // Hint chips pinned to the bottom of the card.
-            VStack {
-                Spacer()
-                HStack(spacing: 8) {
-                    if revealed {
-                        HintChip(icon: "ear", label: "Card.Hint.Listen")
-                        HintChip(icon: "pencil.line", label: "Card.Hint.Strokes")
-                        HintChip(icon: "text.bubble", label: "Card.Hint.Example")
-                    } else {
-                        HintChip(icon: "ear", label: "Card.Hint.Listen")
-                        HintChip(icon: "eye", label: "Card.Hint.Hint")
-                        HintChip(icon: "star", label: "Card.Hint.Mark")
-                    }
+            // Kana pronunciation — the one real, wired control that replaces the
+            // old dead hint-chip row. Shown only for kana on the interactive
+            // (current) card, pinned to the bottom. The card front carries no
+            // drag gesture (reveal-before-swipe), so the button never fights a
+            // swipe. Plays a bundled VOICEVOX clip, falling back to synthesis.
+            if interactive && card.isKana {
+                VStack {
+                    Spacer()
+                    kanaListenButton(card)
+                        .padding(.bottom, 8)
                 }
-                .padding(.bottom, 6)
             }
         }
         .frame(maxWidth: .infinity)
@@ -272,6 +273,10 @@ struct SRSCardView: View {
         case .kanji:
             return kanjiOrKanaLabelPair(front: card.front)
         case .vocabulary:
+            // Kana cards are stored as single-character `.vocabulary` entries;
+            // detect them by scalar range so they read 平仮名 / 片仮名 rather
+            // than 語彙. Real (multi-character) vocabulary still reads 語彙.
+            if card.isKana { return kanjiOrKanaLabelPair(front: card.front) }
             return ("\u{8A9E}\u{5F59}", "Vocabulary")          // 語彙
         case .grammar:
             return ("\u{6587}\u{6CD5}", "Grammar")             // 文法
@@ -360,6 +365,28 @@ struct SRSCardView: View {
                 .minimumScaleFactor(0.5)
                 .padding(.horizontal, IkeruTheme.Spacing.md)
         }
+    }
+
+    // MARK: - Kana Pronunciation Button
+
+    /// A small speaker control that plays the kana's pronunciation. Lives in the
+    /// card's bottom region; tapping it neither reveals nor swipes (Button
+    /// consumes the tap, and the front has no drag gesture).
+    private func kanaListenButton(_ card: CardDTO) -> some View {
+        Button {
+            Task { await audioService.playTTS(text: card.front) }
+        } label: {
+            Image(systemName: "speaker.wave.2.fill")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(Color.ikeruPrimaryAccent)
+                .frame(width: 42, height: 42)
+                .background(Color.ikeruPrimaryAccent.opacity(0.08))
+                .overlay(Circle().strokeBorder(TatamiTokens.goldDim.opacity(0.5), lineWidth: 1))
+                .clipShape(Circle())
+        }
+        .buttonStyle(.plain)
+        .contentShape(Circle())
+        .accessibilityLabel(Text("Listen"))
     }
 
     // MARK: - Dominant Direction (progressive)

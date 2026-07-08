@@ -103,13 +103,13 @@ struct FeatureTourOverlay: View {
             HStack(alignment: .center, spacing: 10) {
                 SakuraMark(size: 30)
                 Text(verbatim: "Sakura")
-                    .font(.system(size: 12, weight: .bold))
+                    .ikeruScaledFont(12, weight: .bold, relativeTo: .caption2)
                     .tracking(1.5)
                     .foregroundStyle(Color.ikeruPrimaryAccent)
                 Spacer()
                 Button { controller.skip() } label: {
                     Text("Tour.Button.Skip")
-                        .font(.system(size: 13, weight: .medium))
+                        .ikeruScaledFont(13, weight: .medium, relativeTo: .caption)
                         .foregroundStyle(Color.ikeruTextTertiary)
                 }
                 .buttonStyle(.plain)
@@ -117,7 +117,7 @@ struct FeatureTourOverlay: View {
 
             HStack(alignment: .firstTextBaseline) {
                 Text(step.title)
-                    .font(.system(size: 20, weight: .semibold))
+                    .ikeruScaledFont(20, weight: .semibold, relativeTo: .title3)
                     .foregroundStyle(Color.ikeruTextPrimary)
                     .fixedSize(horizontal: false, vertical: true)
                 Spacer(minLength: 8)
@@ -129,7 +129,7 @@ struct FeatureTourOverlay: View {
             }
 
             Text(step.message)
-                .font(.system(size: 15))
+                .ikeruScaledFont(15, relativeTo: .body)
                 .foregroundStyle(Color.ikeruTextSecondary)
                 .lineSpacing(3)
                 .fixedSize(horizontal: false, vertical: true)

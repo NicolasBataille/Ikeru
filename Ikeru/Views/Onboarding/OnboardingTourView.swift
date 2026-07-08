@@ -17,9 +17,11 @@ private struct OnboardingPage: Identifiable {
 
 struct OnboardingTourView: View {
 
-    @Environment(\.dismiss) private var dismiss
+    /// Called when the user taps "Start Learning" on the last slide. The
+    /// onboarding coordinator advances to the next step (no nested cover).
+    var onFinish: () -> Void = {}
+
     @State private var currentPage = 0
-    @State private var showAISetup = false
 
     private let pages: [OnboardingPage] = [
         OnboardingPage(
@@ -70,11 +72,6 @@ struct OnboardingTourView: View {
                     .padding(.bottom, IkeruTheme.Spacing.xxl)
             }
         }
-        .fullScreenCover(isPresented: $showAISetup, onDismiss: {
-            dismiss()
-        }) {
-            AISetupView()
-        }
     }
 
     // MARK: - Page Indicator
@@ -97,8 +94,8 @@ struct OnboardingTourView: View {
     // MARK: - Actions
 
     private func startLearning() {
-        Logger.ui.info("Onboarding tour completed — showing AI setup")
-        showAISetup = true
+        Logger.ui.info("Onboarding tour completed — advancing to AI setup")
+        onFinish()
     }
 }
 

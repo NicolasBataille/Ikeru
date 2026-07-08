@@ -57,7 +57,7 @@ struct VocabularyQuizView: View {
                         .contentTransition(.numericText())
 
                     Text(entry.reading)
-                        .font(.system(size: 20, weight: .medium, design: .rounded))
+                        .ikeruScaledFont(20, weight: .medium, design: .rounded, relativeTo: .title3)
                         .foregroundStyle(Color.ikeruPrimaryAccent)
                 }
             }
@@ -78,7 +78,12 @@ struct VocabularyQuizView: View {
                 .foregroundStyle(Color.ikeruTextSecondary)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
-                .background { Capsule().fill(.ultraThinMaterial) }
+                .background {
+                    Rectangle()
+                        .fill(.ultraThinMaterial)
+                        .overlay { Rectangle().strokeBorder(TatamiTokens.goldDim.opacity(0.5), lineWidth: 0.5) }
+                }
+                .sumiCorners(color: TatamiTokens.goldDim, size: 6, weight: 1.1)
             Spacer()
             Text("VOCABULARY")
                 .font(.ikeruMicro)
@@ -86,7 +91,12 @@ struct VocabularyQuizView: View {
                 .foregroundStyle(Color.ikeruPrimaryAccent)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
-                .background { Capsule().fill(Color.ikeruPrimaryAccent.opacity(0.10)) }
+                .background {
+                    Rectangle()
+                        .fill(Color.ikeruPrimaryAccent.opacity(0.10))
+                        .overlay { Rectangle().strokeBorder(TatamiTokens.goldDim.opacity(0.4), lineWidth: 0.5) }
+                }
+                .sumiCorners(color: TatamiTokens.goldDim, size: 6, weight: 1.1)
         }
         .padding(.top, IkeruTheme.Spacing.sm)
     }
@@ -107,36 +117,43 @@ struct VocabularyQuizView: View {
         let isCorrect = option == viewModel.correctOption
         let answered = viewModel.isAnswered
 
-        let fill: Color = {
-            if !answered { return isSelected ? Color.ikeruPrimaryAccent.opacity(0.18) : Color.white.opacity(0.05) }
-            if isCorrect { return Color(red: 0.30, green: 0.70, blue: 0.45).opacity(0.30) }
-            if isSelected { return Color(red: 0.85, green: 0.30, blue: 0.30).opacity(0.30) }
-            return Color.white.opacity(0.04)
-        }()
-
-        let stroke: Color = {
-            if !answered { return isSelected ? Color.ikeruPrimaryAccent : Color.white.opacity(0.18) }
-            if isCorrect { return Color(red: 0.30, green: 0.70, blue: 0.45) }
-            if isSelected { return Color(red: 0.85, green: 0.30, blue: 0.30) }
-            return Color.white.opacity(0.10)
+        let isHighlightedCorrect = answered && isCorrect
+        let isHighlightedWrong = answered && isSelected && !isCorrect
+        let cornerColor: Color = {
+            if !answered { return isSelected ? Color.ikeruPrimaryAccent : TatamiTokens.goldDim }
+            if isCorrect { return Color.ikeruPrimaryAccent }
+            if isSelected { return Color.ikeruDanger.opacity(0.7) }
+            return TatamiTokens.goldDim.opacity(0.3)
         }()
 
         Button {
             viewModel.selectOption(option)
         } label: {
             Text(option)
-                .font(.system(size: 16, weight: .medium))
-                .foregroundStyle(Color.ikeruTextPrimary)
+                .ikeruScaledFont(16, weight: .medium, relativeTo: .body)
+                .foregroundStyle(isHighlightedCorrect ? Color(red: 0.102, green: 0.078, blue: 0.055) : Color.ikeruTextPrimary)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: .infinity, minHeight: 76)
                 .padding(.horizontal, 8)
                 .background {
-                    RoundedRectangle(cornerRadius: IkeruTheme.Radius.md, style: .continuous).fill(fill)
+                    if isHighlightedCorrect {
+                        LinearGradient.ikeruGold
+                    } else if isHighlightedWrong {
+                        ZStack {
+                            Rectangle().fill(.ultraThinMaterial)
+                            Rectangle().fill(Color.ikeruDanger.opacity(0.22))
+                        }
+                    } else {
+                        ZStack {
+                            Rectangle().fill(.ultraThinMaterial)
+                            Rectangle().fill(isSelected ? Color.ikeruPrimaryAccent.opacity(0.18) : Color.white.opacity(0.05))
+                        }
+                    }
                 }
                 .overlay {
-                    RoundedRectangle(cornerRadius: IkeruTheme.Radius.md, style: .continuous)
-                        .strokeBorder(stroke, lineWidth: 1.0)
+                    Rectangle().strokeBorder(cornerColor.opacity(answered ? 1.0 : 0.5), lineWidth: answered ? 1.0 : 0.5)
                 }
+                .sumiCorners(color: cornerColor, size: 8, weight: 1.2)
         }
         .buttonStyle(.plain)
         .disabled(answered)
@@ -152,7 +169,7 @@ struct VocabularyQuizView: View {
             let isCorrect = viewModel.selectedOption == viewModel.correctOption
             HStack(spacing: 8) {
                 Image(systemName: isCorrect ? "checkmark.circle.fill" : "xmark.circle.fill")
-                    .foregroundStyle(isCorrect ? Color(red: 0.30, green: 0.70, blue: 0.45) : Color(red: 0.85, green: 0.30, blue: 0.30))
+                    .foregroundStyle(isCorrect ? Color.ikeruPrimaryAccent : Color.ikeruDanger)
                 if isCorrect {
                     Text("Correct!")
                         .font(.ikeruCaption)
@@ -166,9 +183,10 @@ struct VocabularyQuizView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(12)
             .background {
-                RoundedRectangle(cornerRadius: IkeruTheme.Radius.md, style: .continuous)
-                    .fill(.ultraThinMaterial)
+                Rectangle().fill(.ultraThinMaterial)
+                    .overlay { Rectangle().strokeBorder(TatamiTokens.goldDim.opacity(0.3), lineWidth: 0.5) }
             }
+            .sumiCorners(color: TatamiTokens.goldDim, size: 6, weight: 1.0)
             .transition(.opacity)
         } else {
             Color.clear.frame(height: 44)
@@ -209,14 +227,17 @@ struct VocabularyQuizView: View {
         return VStack(alignment: .leading, spacing: 4) {
             GeometryReader { proxy in
                 ZStack(alignment: .leading) {
-                    Capsule().fill(Color.white.opacity(0.08))
-                    Capsule()
-                        .fill(Color(red: 0.30, green: 0.70, blue: 0.45))
-                        .frame(width: proxy.size.width * pct)
+                    Rectangle().fill(TatamiTokens.goldDim.opacity(0.25))
+                        .frame(height: 2)
+                    Rectangle()
+                        .fill(Color.ikeruPrimaryAccent)
+                        .frame(width: proxy.size.width * pct, height: 2)
                         .animation(.easeOut(duration: 0.4), value: pct)
                 }
+                .frame(height: 2)
+                .frame(maxHeight: .infinity, alignment: .center)
             }
-            .frame(height: 6)
+            .frame(height: 2)
             Text("\(viewModel.correctCount) / \(viewModel.correctCount + viewModel.wrongCount) correct")
                 .font(.ikeruMicro)
                 .ikeruTracking(.micro)

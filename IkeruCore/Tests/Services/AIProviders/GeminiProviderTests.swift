@@ -117,6 +117,59 @@ struct GeminiProviderTests {
         }
     }
 
+    @Test("400 API_KEY_INVALID body throws invalidKey error")
+    func rejectedKey() async {
+        let keychain = MockKeychainStore(
+            initialValues: [KeychainKeys.geminiAPIKey: "bad-key"]
+        )
+        let body = Data(#"{"error":{"code":400,"message":"API key not valid. Please pass a valid API key.","status":"INVALID_ARGUMENT","details":[{"reason":"API_KEY_INVALID"}]}}"#.utf8)
+        let mockSession = MockURLSessionProvider(responseData: body, statusCode: 400)
+        let provider = GeminiProvider(
+            keychainStore: keychain,
+            networkChecker: MockNetworkChecker(online: true),
+            urlSession: mockSession
+        )
+        let prompt = AIPrompt(systemPrompt: "Tutor", userMessage: "Hello")
+        do {
+            _ = try await provider.generate(prompt: prompt)
+            Issue.record("Expected invalidKey error")
+        } catch let error as AIError {
+            if case .invalidKey(let tier) = error {
+                #expect(tier == .gemini)
+            } else {
+                Issue.record("Expected invalidKey, got \(error)")
+            }
+        } catch {
+            Issue.record("Unexpected error: \(error)")
+        }
+    }
+
+    @Test("401 unauthorized throws invalidKey error")
+    func unauthorizedKey() async {
+        let keychain = MockKeychainStore(
+            initialValues: [KeychainKeys.geminiAPIKey: "bad-key"]
+        )
+        let mockSession = MockURLSessionProvider(responseData: Data("{}".utf8), statusCode: 401)
+        let provider = GeminiProvider(
+            keychainStore: keychain,
+            networkChecker: MockNetworkChecker(online: true),
+            urlSession: mockSession
+        )
+        let prompt = AIPrompt(systemPrompt: "Tutor", userMessage: "Hello")
+        do {
+            _ = try await provider.generate(prompt: prompt)
+            Issue.record("Expected invalidKey error")
+        } catch let error as AIError {
+            if case .invalidKey = error {
+                // expected
+            } else {
+                Issue.record("Expected invalidKey, got \(error)")
+            }
+        } catch {
+            Issue.record("Unexpected error: \(error)")
+        }
+    }
+
     @Test("Missing API key throws keyNotFound error")
     func missingAPIKey() async {
         let keychain = MockKeychainStore()

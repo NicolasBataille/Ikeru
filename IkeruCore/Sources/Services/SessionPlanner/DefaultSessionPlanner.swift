@@ -131,10 +131,19 @@ public struct DefaultSessionPlanner: SessionPlanner {
     // MARK: - Helpers
 
     /// Fills a budget by appending SRS reviews until the next would overflow.
-    private func pickReviews(from cards: [CardDTO], secondsBudget: Int) -> [ExerciseItem] {
+    /// Only cards whose `dueDate <= now` AND that the learner has actually
+    /// begun (`reps > 0`) enter the review wave. The `reps > 0` gate is what
+    /// keeps never-started characters — e.g. the full katakana set that gets
+    /// materialised as immediately-due cards the moment the kana grid is
+    /// opened — out of "Practice", which is meant to *review* what you've
+    /// started. Brand-new characters reach the session only through the
+    /// curriculum-ordered new-content drip (`pickNewContent`), never as reviews.
+    /// (`dueDate <= now` alone previously re-served a just-graded card; the
+    /// reps gate additionally stops the unlearned-katakana leak.)
+    private func pickReviews(from cards: [CardDTO], secondsBudget: Int, now: Date = Date()) -> [ExerciseItem] {
         var items: [ExerciseItem] = []
         var spent = 0
-        for card in cards {
+        for card in cards where card.dueDate <= now && card.fsrsState.reps > 0 {
             let exercise = ExerciseItem.srsReview(card)
             if spent + exercise.estimatedDurationSeconds > secondsBudget { break }
             items.append(exercise)
@@ -199,12 +208,37 @@ public struct DefaultSessionPlanner: SessionPlanner {
         return items
     }
 
-    private func pickNewContent(secondsBudget: Int, availableCards: [CardDTO]) -> ExerciseItem? {
-        if let card = availableCards.first(where: { $0.fsrsState.reps == 0 }) {
-            let exercise = ExerciseItem.srsReview(card)
-            return exercise.estimatedDurationSeconds <= secondsBudget ? exercise : nil
+    /// Curriculum index for every base kana (hiragana あいうえお… first, then
+    /// katakana), built once from the canonical group order. Used to introduce
+    /// new characters in pedagogical order rather than whatever order
+    /// `allCards()` happens to return — so day one always teaches あ, and
+    /// hiragana is always offered before katakana.
+    private static let kanaCurriculumIndex: [String: Int] = {
+        var map: [String: Int] = [:]
+        for (index, kana) in KanaGroup.allBaseCharacters.enumerated() {
+            map[kana.character] = index
         }
-        return nil
+        return map
+    }()
+
+    /// Picks the single "new" (never-reviewed) card to drip into the session.
+    /// Candidates are ordered by the kana curriculum so the introduction order
+    /// is stable and pedagogical (hiragana before katakana); non-kana new
+    /// content sorts after all kana. Without this ordering the drip grabbed an
+    /// arbitrary unseen card from `allCards()` ordering — which could be a
+    /// katakana the learner never chose.
+    private func pickNewContent(secondsBudget: Int, availableCards: [CardDTO]) -> ExerciseItem? {
+        let unseen = availableCards.filter { $0.fsrsState.reps == 0 }
+        guard !unseen.isEmpty else { return nil }
+        let ordered = unseen.sorted { lhs, rhs in
+            let li = Self.kanaCurriculumIndex[lhs.front] ?? Int.max
+            let ri = Self.kanaCurriculumIndex[rhs.front] ?? Int.max
+            if li != ri { return li < ri }
+            return lhs.front < rhs.front
+        }
+        guard let card = ordered.first else { return nil }
+        let exercise = ExerciseItem.srsReview(card)
+        return exercise.estimatedDurationSeconds <= secondsBudget ? exercise : nil
     }
 
     /// Maps an `ExerciseType` to a concrete `ExerciseItem` payload.
@@ -252,7 +286,14 @@ public struct DefaultSessionPlanner: SessionPlanner {
         Calendar(identifier: .gregorian).ordinality(of: .day, in: .year, for: now) ?? 0
     }
 
-    private func finalize(exercises: [ExerciseItem]) -> SessionPlan {
+    private func finalize(exercises rawExercises: [ExerciseItem]) -> SessionPlan {
+        // Only SRS flashcard review is a real, fully-implemented in-session
+        // exercise today. The other ExerciseItem kinds render a placeholder
+        // ("Complete" auto-grade), so we filter them out until real content
+        // exists — a session is honest SRS review, never a fake exercise.
+        let exercises = rawExercises.filter {
+            if case .srsReview = $0 { return true } else { return false }
+        }
         let secs = exercises.map(\.estimatedDurationSeconds).reduce(0, +)
         var breakdown: [SkillType: Int] = [:]
         for ex in exercises { breakdown[ex.skill, default: 0] += 1 }

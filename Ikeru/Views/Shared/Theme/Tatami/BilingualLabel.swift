@@ -40,11 +40,13 @@ struct BilingualLabel: View {
                 MonCrest(kind: mon, size: 10, color: TatamiTokens.goldDim.opacity(0.55))
             }
             Text(chrome)
-                .font(.system(size: 13, weight: .semibold))
+                .ikeruScaledFont(13, weight: .semibold, relativeTo: .caption)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
                 .foregroundStyle(Color.ikeruTextPrimary)
             if let romaji {
                 Text(romaji)
-                    .font(.system(size: 11, weight: .regular))
+                    .ikeruScaledFont(11, relativeTo: .caption2)
                     .foregroundStyle(TatamiTokens.paperGhost.opacity(0.7))
             }
         }
@@ -56,16 +58,18 @@ struct BilingualLabel: View {
                 MonCrest(kind: mon, size: 11, color: TatamiTokens.goldDim)
             }
             Text(japanese)
-                .font(.system(size: 12, weight: .regular, design: .serif))
+                .ikeruScaledFont(12, design: .serif, relativeTo: .caption2)
                 .foregroundStyle(Color.ikeruTextSecondary)
                 .tracking(1.5)
             Text("·")
                 .foregroundStyle(TatamiTokens.paperGhost)
             Text(chrome)
-                .font(.system(size: 10, weight: .semibold))
-                .foregroundStyle(TatamiTokens.paperGhost)
+                .ikeruScaledFont(10, weight: .semibold, relativeTo: .caption2)
                 .tracking(2.4)
                 .textCase(.uppercase)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+                .foregroundStyle(TatamiTokens.paperGhost)
         }
     }
 }

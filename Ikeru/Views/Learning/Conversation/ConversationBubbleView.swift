@@ -1,11 +1,80 @@
 import SwiftUI
 import IkeruCore
 
+// MARK: - Message Bubble Chrome
+//
+// Shared bubble variant used by both ConversationBubbleView (full
+// ConversationMessage with corrections/hints/timestamp) and ChatBubbleView
+// (plain content string with rich ChatContentParser blocks).
+//
+// Tatami DA: Rectangle + .sumiCorners; no RoundedRectangle/Capsule.
+// companion = encre fill + goldDim corners; user = warm gold fill + primaryAccent corners.
+
+enum MessageBubbleVariant {
+    case companion  // left-aligned, encre fill, goldDim sumi marks
+    case user       // right-aligned, warm gold fill, primaryAccent sumi marks
+}
+
+/// Provides the shared background fill and sumi-corner chrome for chat bubbles.
+/// Wrap your content in this view to get the canonical Tatami bubble appearance.
+struct MessageBubbleChrome<Content: View>: View {
+
+    let variant: MessageBubbleVariant
+    let padding: EdgeInsets
+    let sumiInset: CGFloat
+    @ViewBuilder let content: () -> Content
+
+    init(
+        variant: MessageBubbleVariant,
+        padding: EdgeInsets = .init(
+            top: IkeruTheme.Spacing.md,
+            leading: IkeruTheme.Spacing.md,
+            bottom: IkeruTheme.Spacing.md,
+            trailing: IkeruTheme.Spacing.md
+        ),
+        sumiInset: CGFloat = 0,
+        @ViewBuilder content: @escaping () -> Content
+    ) {
+        self.variant = variant
+        self.padding = padding
+        self.sumiInset = sumiInset
+        self.content = content
+    }
+
+    var body: some View {
+        content()
+            .padding(padding)
+            .background { backgroundFill }
+            .sumiCorners(color: cornerColor, size: 7, weight: 1.1, inset: sumiInset)
+    }
+
+    @ViewBuilder
+    private var backgroundFill: some View {
+        switch variant {
+        case .companion:
+            // Quiet ink fill — matches TatamiRoom .standard
+            Rectangle()
+                .fill(Color(red: 0.102, green: 0.102, blue: 0.133).opacity(0.78))
+        case .user:
+            // Warmer gold-tinted ink so the sender reads at a glance
+            Rectangle()
+                .fill(Color(red: 0.122, green: 0.102, blue: 0.071).opacity(0.82))
+        }
+    }
+
+    private var cornerColor: Color {
+        switch variant {
+        case .companion: TatamiTokens.goldDim
+        case .user: .ikeruPrimaryAccent
+        }
+    }
+}
+
 // MARK: - Conversation Bubble View
 
-/// A reusable chat bubble component for conversation messages.
-/// User messages are right-aligned with glass material; assistant messages
-/// are left-aligned with a warm amber/jade tint.
+/// Full-featured chat bubble for ConversationView: renders corrections,
+/// vocabulary hints, timestamp, and furigana-aware text.
+/// User messages are right-aligned; assistant messages are left-aligned.
 struct ConversationBubbleView: View {
 
     let message: ConversationMessage
@@ -13,6 +82,11 @@ struct ConversationBubbleView: View {
     @AppStorage("ikeru.furigana.userTouched") private var furiganaUserTouched = false
     @Environment(\.displayMode) private var displayMode
     @State private var selectedHint: VocabularyHint?
+
+    /// Sakura writes Japanese first, then a `(translation)` in the learner's
+    /// language. We keep the Japanese immersive by hiding that translation until
+    /// the learner taps the message to reveal it.
+    @State private var showTranslation = false
 
     private var effectiveFurigana: Bool {
         ReadingAidResolver(
@@ -22,26 +96,24 @@ struct ConversationBubbleView: View {
         ).effective
     }
 
+    private var variant: MessageBubbleVariant {
+        message.role == .user ? .user : .companion
+    }
+
     var body: some View {
         HStack {
             if message.role == .user {
                 Spacer(minLength: 60)
             }
 
-            VStack(alignment: bubbleAlignment, spacing: IkeruTheme.Spacing.sm) {
-                messageContent
-                correctionsSection
-                vocabularySection
-                timestampLabel
+            MessageBubbleChrome(variant: variant) {
+                VStack(alignment: bubbleAlignment, spacing: IkeruTheme.Spacing.sm) {
+                    messageContent
+                    correctionsSection
+                    vocabularySection
+                    timestampLabel
+                }
             }
-            .padding(IkeruTheme.Spacing.md)
-            .background(bubbleBackground)
-            .clipShape(RoundedRectangle(cornerRadius: IkeruTheme.Radius.lg))
-            .shadow(
-                color: .black.opacity(0.2),
-                radius: 4,
-                y: 2
-            )
             .sheet(item: $selectedHint) { hint in
                 VocabularyDetailSheet(
                     hint: hint,
@@ -60,17 +132,73 @@ struct ConversationBubbleView: View {
     @ViewBuilder
     private var messageContent: some View {
         if message.role == .assistant {
-            KanaRubyText(
-                message.content,
-                textColor: textColor,
-                showFurigana: effectiveFurigana
-            )
+            let hasTranslation = KanaRubyText.containsTranslation(message.content)
+            VStack(alignment: .leading, spacing: IkeruTheme.Spacing.sm) {
+                ForEach(Array(assistantLines.enumerated()), id: \.offset) { _, line in
+                    sentenceView(line)
+                }
+
+                if hasTranslation {
+                    translationToggleLabel
+                }
+            }
+            .contentShape(Rectangle())
+            .onTapGesture {
+                guard hasTranslation else { return }
+                withAnimation(.easeInOut(duration: 0.2)) { showTranslation.toggle() }
+            }
+            .accessibilityAddTraits(hasTranslation ? .isButton : [])
+            .accessibilityHint(hasTranslation ? Text("Tap to show or hide the translation") : Text(""))
         } else {
             Text(message.content)
                 .font(.ikeruBody)
                 .foregroundStyle(textColor)
                 .multilineTextAlignment(message.role == .user ? .trailing : .leading)
         }
+    }
+
+    /// Sakura writes one "Japanese (translation)" unit per line; split so each
+    /// sentence can show its translation directly beneath it.
+    private var assistantLines: [String] {
+        message.content
+            .components(separatedBy: "\n")
+            .filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
+    }
+
+    /// One sentence: the Japanese (furigana, translation stripped), with the
+    /// learner-language translation revealed as a quiet line underneath.
+    @ViewBuilder
+    private func sentenceView(_ line: String) -> some View {
+        VStack(alignment: .leading, spacing: 3) {
+            KanaRubyText(
+                line,
+                textColor: textColor,
+                showFurigana: effectiveFurigana,
+                showTranslations: false
+            )
+
+            if showTranslation {
+                let translation = KanaRubyText.extractTranslations(line)
+                if !translation.isEmpty {
+                    Text(translation)
+                        .font(.ikeruCaption)
+                        .foregroundStyle(textColor.opacity(0.5))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        }
+    }
+
+    /// Quiet affordance under Sakura's text: invites a tap to reveal the
+    /// translation, and flips to a "hide" hint once shown.
+    private var translationToggleLabel: some View {
+        HStack(spacing: 4) {
+            Image(systemName: "character.bubble")
+                .font(.system(size: 9, weight: .semibold))
+            Text(showTranslation ? "Hide translation" : "Show translation")
+                .font(.ikeruCaption)
+        }
+        .foregroundStyle(.white.opacity(showTranslation ? 0.35 : 0.5))
     }
 
     // MARK: - Corrections
@@ -113,28 +241,6 @@ struct ConversationBubbleView: View {
 
     private var bubbleAlignment: HorizontalAlignment {
         message.role == .user ? .trailing : .leading
-    }
-
-    @ViewBuilder
-    private var bubbleBackground: some View {
-        switch message.role {
-        case .user:
-            Rectangle().fill(.ultraThinMaterial)
-        case .assistant:
-            Color(hex: IkeruTheme.Colors.surface)
-                .overlay(
-                    LinearGradient(
-                        colors: [
-                            Color(hex: IkeruTheme.Colors.primaryAccent).opacity(0.08),
-                            Color(hex: IkeruTheme.Colors.success).opacity(0.05)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-        case .system:
-            Color.clear
-        }
     }
 
     private var textColor: Color {
@@ -195,7 +301,7 @@ private struct VocabularyChipView: View {
             VStack(spacing: 1) {
                 if !hint.reading.isEmpty {
                     Text(hint.reading)
-                        .font(.system(size: 10))
+                        .ikeruScaledFont(10, relativeTo: .caption2)
                         .foregroundStyle(.ikeruTextSecondary)
                 }
 

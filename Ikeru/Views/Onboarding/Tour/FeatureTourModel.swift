@@ -12,13 +12,10 @@ import SwiftUI
 /// `.tourAnchor(_:)`; the overlay resolves the live frame from the collected
 /// anchors at render time.
 enum TourTarget: String, CaseIterable, Identifiable, Sendable {
-    case homeTab
-    case studyTab
-    case companionTab
-    case rpgTab
+    case practiceTab
+    case exploreTab
     case settingsTab
     case sessionCTA
-    case companionAvatar
 
     var id: String { rawValue }
 }
@@ -40,60 +37,45 @@ struct TourStep: Identifiable {
 }
 
 extension TourStep {
-    /// The default "overview of the five tabs" tour. Computed (not a stored
+    /// The default "overview of the three tabs" tour. Computed (not a stored
     /// static) so it never becomes shared mutable global state under Swift 6.
+    /// Mirrors the beginner-first 3-tab IA: 練習 Practice · 学習 Explore · 設定.
     static var defaultTour: [TourStep] {
         [
         TourStep(
             id: 0,
             target: nil,
-            tab: .home,
+            tab: .practice,
             kanji: "\u{59CB}", // 始 — begin
             title: "Tour.Welcome.Title",
             message: "Tour.Welcome.Body"
         ),
         TourStep(
             id: 1,
-            target: .homeTab,
-            tab: .home,
+            target: .practiceTab,
+            tab: .practice,
             kanji: "\u{5BB6}", // 家 — home
-            title: "Tour.Home.Title",
-            message: "Tour.Home.Body"
+            title: "Tour.Practice.Title",
+            message: "Tour.Practice.Body"
         ),
         TourStep(
             id: 2,
             target: .sessionCTA,
-            tab: .home,
+            tab: .practice,
             kanji: "\u{7A3D}\u{53E4}", // 稽古 — practice
             title: "Tour.Session.Title",
             message: "Tour.Session.Body"
         ),
         TourStep(
             id: 3,
-            target: .studyTab,
-            tab: .study,
+            target: .exploreTab,
+            tab: .explore,
             kanji: "\u{5B66}", // 学 — study
-            title: "Tour.Study.Title",
-            message: "Tour.Study.Body"
+            title: "Tour.Explore.Title",
+            message: "Tour.Explore.Body"
         ),
         TourStep(
             id: 4,
-            target: .companionAvatar,
-            tab: nil, // keep a non-companion tab so the floating avatar stays visible
-            kanji: "\u{53CB}", // 友 — friend
-            title: "Tour.Companion.Title",
-            message: "Tour.Companion.Body"
-        ),
-        TourStep(
-            id: 5,
-            target: .rpgTab,
-            tab: .rpg,
-            kanji: "\u{6BB5}", // 段 — rank
-            title: "Tour.RPG.Title",
-            message: "Tour.RPG.Body"
-        ),
-        TourStep(
-            id: 6,
             target: .settingsTab,
             tab: .settings,
             kanji: "\u{8A2D}", // 設 — settings
@@ -101,9 +83,9 @@ extension TourStep {
             message: "Tour.Settings.Body"
         ),
         TourStep(
-            id: 7,
+            id: 5,
             target: nil,
-            tab: .home,
+            tab: .practice,
             kanji: "\u{884C}", // 行 — go
             title: "Tour.Finish.Title",
             message: "Tour.Finish.Body"

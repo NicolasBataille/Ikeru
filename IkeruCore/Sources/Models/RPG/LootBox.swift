@@ -87,7 +87,9 @@ extension LootBox {
 
         public var iconName: String {
             switch self {
-            case .kanjiSpeed: "character.ja"
+            // "character" shows a kanji-looking CJK glyph (漢字), while
+            // "character.ja" renders the hiragana あ — wrong for a kanji challenge.
+            case .kanjiSpeed: "character"
             case .vocabMatch: "list.bullet.rectangle.fill"
             case .kanaBlitz: "bolt.fill"
             case .grammarRush: "text.book.closed.fill"

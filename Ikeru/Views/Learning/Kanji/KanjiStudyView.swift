@@ -101,6 +101,10 @@ struct KanjiStudyView: View {
         VStack(spacing: 0) {
             sectionHeader(section)
 
+            Rectangle()
+                .fill(TatamiTokens.goldDim.opacity(0.18))
+                .frame(height: 1)
+
             if expandedSections.contains(section) {
                 content()
                     .padding(.top, IkeruTheme.Spacing.sm)
@@ -125,7 +129,7 @@ struct KanjiStudyView: View {
                     .foregroundStyle(Color(hex: IkeruTheme.Colors.primaryAccent))
 
                 Text(section.rawValue)
-                    .font(.system(size: IkeruTheme.Typography.Size.heading3, weight: .semibold))
+                    .ikeruScaledFont(IkeruTheme.Typography.Size.heading3, weight: .semibold, relativeTo: .title3)
                     .foregroundStyle(Color(hex: IkeruTheme.Colors.textPrimary))
 
                 Spacer()
@@ -160,7 +164,7 @@ struct KanjiStudyView: View {
             ProgressView()
                 .tint(Color(hex: IkeruTheme.Colors.primaryAccent))
             Text("Loading content...")
-                .font(.system(size: IkeruTheme.Typography.Size.caption))
+                .ikeruScaledFont(IkeruTheme.Typography.Size.caption, relativeTo: .caption2)
                 .foregroundStyle(
                     Color(hex: IkeruTheme.Colors.textPrimary)
                         .opacity(IkeruTheme.Colors.textSecondaryOpacity)
@@ -174,14 +178,14 @@ struct KanjiStudyView: View {
         VStack(spacing: IkeruTheme.Spacing.sm) {
             Image(systemName: "exclamationmark.triangle")
                 .font(.system(size: IkeruTheme.Typography.Size.heading1))
-                .foregroundStyle(Color(hex: IkeruTheme.Colors.secondaryAccent))
+                .foregroundStyle(Color.ikeruDanger)
 
             Text("Failed to load content")
-                .font(.system(size: IkeruTheme.Typography.Size.body, weight: .medium))
+                .ikeruScaledFont(IkeruTheme.Typography.Size.body, weight: .medium, relativeTo: .body)
                 .foregroundStyle(Color(hex: IkeruTheme.Colors.textPrimary))
 
             Text(error.localizedDescription)
-                .font(.system(size: IkeruTheme.Typography.Size.caption))
+                .ikeruScaledFont(IkeruTheme.Typography.Size.caption, relativeTo: .caption2)
                 .foregroundStyle(
                     Color(hex: IkeruTheme.Colors.textPrimary)
                         .opacity(IkeruTheme.Colors.textSecondaryOpacity)

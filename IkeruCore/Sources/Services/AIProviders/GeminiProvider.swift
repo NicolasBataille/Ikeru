@@ -15,7 +15,12 @@ public final class GeminiProvider: AIProvider, @unchecked Sendable {
     private let urlSession: any URLSessionProvider
     private let timeoutSeconds: Double
 
-    private static let baseURL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
+    /// Model used for conversation. `gemini-2.5-flash` is Google's current
+    /// default free-tier flash model; older IDs like `gemini-2.0-flash` can have
+    /// a free-tier quota of 0 on some projects. Bump this when the model is
+    /// retired (see ListModels: generativelanguage.googleapis.com/v1beta/models).
+    private static let model = "gemini-2.5-flash"
+    private static let baseURL = "https://generativelanguage.googleapis.com/v1beta/models/\(model):generateContent"
 
     public init(
         keychainStore: any KeychainStore = KeychainHelper(),
@@ -74,6 +79,15 @@ public final class GeminiProvider: AIProvider, @unchecked Sendable {
             throw AIError.rateLimited(.gemini)
         }
 
+        // A configured-but-rejected key surfaces as 401/403, or as 400 with an
+        // API_KEY_INVALID body. Map these to `invalidKey` so the UI can tell the
+        // user to fix their key instead of showing a generic failure.
+        if httpResponse.statusCode == 401 || httpResponse.statusCode == 403
+            || (httpResponse.statusCode == 400 && Self.bodyIndicatesInvalidKey(data)) {
+            Logger.ai.error("Gemini rejected the API key (HTTP \(httpResponse.statusCode))")
+            throw AIError.invalidKey(.gemini)
+        }
+
         guard (200..<300).contains(httpResponse.statusCode) else {
             Logger.ai.error("Gemini HTTP error: \(httpResponse.statusCode)")
             throw AIError.invalidResponse
@@ -96,6 +110,13 @@ public final class GeminiProvider: AIProvider, @unchecked Sendable {
     }
 
     // MARK: - Private Helpers
+
+    /// True when a 400 response body is Google's "API key not valid" error, so
+    /// we can distinguish a bad key from a genuinely malformed request.
+    private static func bodyIndicatesInvalidKey(_ data: Data) -> Bool {
+        guard let text = String(data: data, encoding: .utf8) else { return false }
+        return text.contains("API_KEY_INVALID") || text.contains("API key not valid")
+    }
 
     private func buildRequest(prompt: AIPrompt, apiKey: String) throws -> URLRequest {
         guard let url = URL(string: Self.baseURL) else {

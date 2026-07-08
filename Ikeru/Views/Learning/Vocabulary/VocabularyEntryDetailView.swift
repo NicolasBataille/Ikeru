@@ -72,7 +72,9 @@ struct VocabularyEntryDetailView: View {
                 .foregroundStyle(Color.ikeruTextPrimary)
 
             Text(entry.reading)
-                .font(.system(size: 24, weight: .medium, design: .rounded))
+                .ikeruScaledFont(24, weight: .medium, design: .rounded, relativeTo: .title2)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
                 .foregroundStyle(Color.ikeruPrimaryAccent)
 
             Text(entry.meaning)
@@ -85,8 +87,12 @@ struct VocabularyEntryDetailView: View {
                     .foregroundStyle(Color.ikeruPrimaryAccent)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 4)
-                    .background(Color.ikeruPrimaryAccent.opacity(0.12))
-                    .clipShape(Capsule())
+                    .background {
+                        Rectangle()
+                            .fill(Color.ikeruPrimaryAccent.opacity(0.12))
+                            .overlay { Rectangle().strokeBorder(TatamiTokens.goldDim.opacity(0.4), lineWidth: 0.5) }
+                    }
+                    .sumiCorners(color: TatamiTokens.goldDim, size: 5, weight: 1.0)
             }
         }
         .frame(maxWidth: .infinity)
@@ -100,6 +106,8 @@ struct VocabularyEntryDetailView: View {
             Text("MASTERY")
                 .font(.ikeruMicro)
                 .ikeruTracking(.micro)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
                 .foregroundStyle(Color.ikeruTextTertiary)
 
             HStack(spacing: 0) {
@@ -131,16 +139,20 @@ struct VocabularyEntryDetailView: View {
                 }
             }
         }
-        .ikeruCard(.standard)
+        .tatamiRoom(.standard)
     }
 
     private func statTile(value: String, label: String) -> some View {
         VStack(spacing: 4) {
             Text(value)
                 .font(.ikeruStatsLarge)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
                 .foregroundStyle(Color.ikeruPrimaryAccent)
             Text(label.uppercased())
-                .font(.system(size: 9))
+                .ikeruScaledFont(10, relativeTo: .caption2)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
                 .foregroundStyle(Color.ikeruTextTertiary)
         }
         .frame(maxWidth: .infinity)
@@ -154,6 +166,8 @@ struct VocabularyEntryDetailView: View {
             Text("ENCOUNTER HISTORY")
                 .font(.ikeruMicro)
                 .ikeruTracking(.micro)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
                 .foregroundStyle(Color.ikeruTextTertiary)
 
             if encounters.isEmpty {
@@ -169,8 +183,12 @@ struct VocabularyEntryDetailView: View {
                             .font(.system(size: 12))
                             .foregroundStyle(Color.ikeruPrimaryAccent)
                             .frame(width: 24, height: 24)
-                            .background(Color.ikeruPrimaryAccent.opacity(0.10))
-                            .clipShape(Circle())
+                            .background {
+                                Rectangle()
+                                    .fill(Color.ikeruPrimaryAccent.opacity(0.10))
+                                    .overlay { Rectangle().strokeBorder(TatamiTokens.goldDim.opacity(0.3), lineWidth: 0.5) }
+                            }
+                            .sumiCorners(color: TatamiTokens.goldDim, size: 4, weight: 0.9)
 
                         VStack(alignment: .leading, spacing: 2) {
                             HStack {
@@ -179,11 +197,13 @@ struct VocabularyEntryDetailView: View {
                                     .foregroundStyle(Color.ikeruTextPrimary)
                                 Spacer()
                                 Text(encounter.timestamp, style: .relative)
-                                    .font(.system(size: 10))
+                                    .ikeruScaledFont(10, relativeTo: .caption2)
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.7)
                                     .foregroundStyle(Color.ikeruTextTertiary)
                             }
                             Text(encounter.contextSnippet)
-                                .font(.system(size: 11))
+                                .ikeruScaledFont(11, relativeTo: .caption2)
                                 .foregroundStyle(Color.ikeruTextTertiary)
                                 .lineLimit(2)
                         }
@@ -191,14 +211,14 @@ struct VocabularyEntryDetailView: View {
 
                     if encounter.id != encounters.last?.id {
                         Rectangle()
-                            .fill(Color.white.opacity(0.06))
+                            .fill(TatamiTokens.goldDim.opacity(0.18))
                             .frame(width: 1, height: 12)
                             .padding(.leading, 12)
                     }
                 }
             }
         }
-        .ikeruCard(.standard)
+        .tatamiRoom(.standard)
     }
 
     // MARK: - Delete

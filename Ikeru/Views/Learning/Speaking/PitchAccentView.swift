@@ -32,7 +32,7 @@ struct PitchAccentView: View {
             actionControls
             accuracyStats
         }
-        .ikeruCard(.interactive)
+        .tatamiRoom(.standard)
         .padding(.horizontal, IkeruTheme.Spacing.md)
         .sensoryFeedback(.impact, trigger: hapticTrigger)
         .task {
@@ -105,13 +105,13 @@ struct PitchAccentView: View {
                 // Dashed line representation
                 HStack(spacing: 2) {
                     ForEach(0..<3, id: \.self) { _ in
-                        RoundedRectangle(cornerRadius: 1)
+                        Rectangle()
                             .fill(color)
                             .frame(width: 6, height: 2)
                     }
                 }
             } else {
-                RoundedRectangle(cornerRadius: 1)
+                Rectangle()
                     .fill(color)
                     .frame(width: 20, height: 2)
             }
@@ -281,23 +281,28 @@ struct PitchAccentView: View {
 
         return VStack(spacing: 2) {
             Text(type.rawValue)
-                .font(.system(size: 11, weight: .medium))
+                .ikeruScaledFont(11, weight: .medium, relativeTo: .caption2)
                 .foregroundStyle(.white)
 
             if attempts > 0 {
                 Text(String(format: "%.0f%%", accuracy * 100))
-                    .font(.system(size: 11))
+                    .ikeruScaledFont(11, relativeTo: .caption2)
                     .foregroundStyle(accuracy >= 0.7 ? Color.ikeruSuccess : Color.ikeruSecondaryAccent)
             } else {
                 Text("--")
-                    .font(.system(size: 11))
+                    .ikeruScaledFont(11, relativeTo: .caption2)
                     .foregroundStyle(.ikeruTextSecondary)
             }
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, IkeruTheme.Spacing.xs)
-        .background(Color.ikeruSurface.opacity(0.5))
-        .clipShape(RoundedRectangle(cornerRadius: IkeruTheme.Radius.sm))
+        .background {
+            ZStack {
+                Rectangle().fill(.ultraThinMaterial)
+                Rectangle().fill(Color(red: 0.102, green: 0.102, blue: 0.133).opacity(0.6))
+            }
+        }
+        .sumiCorners(color: TatamiTokens.goldDim, size: 6, weight: 1.0)
     }
 
     // MARK: - Recording

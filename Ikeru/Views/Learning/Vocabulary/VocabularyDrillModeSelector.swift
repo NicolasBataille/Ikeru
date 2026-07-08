@@ -113,7 +113,7 @@ struct VocabularyDrillModeSelector: View {
             }
         }
         .buttonStyle(.plain)
-        .ikeruCard(.interactive)
+        .tatamiRoom(.standard)
         .disabled(dueEntries.isEmpty)
         .opacity(dueEntries.isEmpty ? 0.5 : 1.0)
     }

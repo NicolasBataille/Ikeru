@@ -48,10 +48,14 @@ public final class AIRouterService {
     ) {
         self.providers = providers
         self.networkChecker = networkChecker
+        // All tiers start as .unavailable; refreshTierStatuses() performs the real
+        // async availability check and updates each entry. The previous code
+        // hard-coded .onDevice = .available here, which caused the Settings
+        // FoundationModels dot to appear green even on devices where the on-device
+        // model is not actually functional (e.g. simulator without model assets).
         self.tierStatuses = Dictionary(uniqueKeysWithValues: AITier.allCases.map {
-            ($0, providers[$0] != nil ? ProviderStatus.unavailable : ProviderStatus.unavailable)
+            ($0, ProviderStatus.unavailable)
         })
-        self.tierStatuses[.onDevice] = .available
     }
 
     /// Convenience initializer that wires up all default providers (FoundationModels +
@@ -112,6 +116,12 @@ public final class AIRouterService {
 
         let deadline = ContinuousClock.now + .seconds(Self.fallbackBudgetSeconds)
 
+        // Remember the most actionable failure so an exhausted chain can surface
+        // it instead of a generic "all providers failed" — e.g. when the only
+        // configured provider rejects its key, the user should be told to fix
+        // the key, not shown a vague error.
+        var lastMeaningfulError: AIError?
+
         for (index, provider) in chain.enumerated() {
             let isLastProvider = index == chain.count - 1
             let isOnDevice = provider.tier == .onDevice
@@ -155,10 +165,17 @@ public final class AIRouterService {
                     updateTierStatus(provider.tier, status: .unavailable)
                 }
 
+                // Keep the most actionable error (a rejected key or rate limit
+                // beats a vague timeout/invalid-response) to re-throw if the
+                // whole chain ends up exhausted.
+                if let tierError, Self.isActionable(tierError) {
+                    lastMeaningfulError = tierError
+                }
+
                 // If this was the last provider, throw
                 if isLastProvider {
                     Logger.ai.error("All providers exhausted for this request")
-                    throw AIError.allProvidersExhausted
+                    throw lastMeaningfulError ?? AIError.allProvidersExhausted
                 }
 
                 // Check if we still have budget
@@ -173,16 +190,28 @@ public final class AIRouterService {
                                 updateTierStatus(.onDevice, status: .available)
                                 return fallbackResponse
                             } catch {
-                                throw AIError.allProvidersExhausted
+                                throw lastMeaningfulError ?? AIError.allProvidersExhausted
                             }
                         }
                     }
-                    throw AIError.allProvidersExhausted
+                    throw lastMeaningfulError ?? AIError.allProvidersExhausted
                 }
             }
         }
 
-        throw AIError.allProvidersExhausted
+        throw lastMeaningfulError ?? AIError.allProvidersExhausted
+    }
+
+    /// Whether an error is worth surfacing verbatim to the user instead of the
+    /// generic "all providers failed" — a rejected key or a rate limit tells
+    /// the user exactly what to do; a timeout/invalid-response does not.
+    private static func isActionable(_ error: AIError) -> Bool {
+        switch error {
+        case .invalidKey, .rateLimited, .keyNotFound:
+            return true
+        default:
+            return false
+        }
     }
 
     /// Refresh the status of all tiers.

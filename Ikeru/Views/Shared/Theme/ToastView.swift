@@ -14,7 +14,7 @@ public struct ToastView: View {
                 .font(.system(size: IkeruTheme.Typography.Size.body, weight: .semibold))
 
             Text(item.message)
-                .font(.system(size: IkeruTheme.Typography.Size.body))
+                .ikeruScaledFont(IkeruTheme.Typography.Size.body, relativeTo: .body)
                 .lineLimit(3)
 
             Spacer()

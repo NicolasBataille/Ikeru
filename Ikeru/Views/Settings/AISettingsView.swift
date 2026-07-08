@@ -39,7 +39,7 @@ struct AISettingsView: View {
         CloudProviderEntry(
             id: "gemini",
             title: "Gemini",
-            subtitle: "Google AI Studio · Free tier · Recommended first provider",
+            subtitle: "Google AI Studio · Free tier",
             keychainKey: KeychainKeys.geminiAPIKey,
             signupURL: URL(string: "https://aistudio.google.com/apikey")!
         ),
@@ -117,7 +117,13 @@ struct AISettingsView: View {
                     }
                     .tint(.ikeruTextSecondary)
 
-                    localRigSection
+                    // The VOICEVOX "Local Rig" setup is retired from the UI:
+                    // pronunciation audio now ships as pre-generated bundled
+                    // clips (BundledAudioLocator) with on-device synthesis as a
+                    // fallback, so there is nothing for the user to set up. The
+                    // `localRigSection` + rig machinery stay in the codebase
+                    // (dormant) in case a self-hosted heavy-model bridge returns.
+                    // localRigSection
                 }
                 .padding(IkeruTheme.Spacing.md)
             }
@@ -162,7 +168,7 @@ struct AISettingsView: View {
                 statusDot(available: foundationModelsAvailable)
             }
         }
-        .ikeruCard(.standard)
+        .tatamiRoom(.standard)
     }
 
     // MARK: - Generic Cloud Provider Section
@@ -189,14 +195,9 @@ struct AISettingsView: View {
                 .font(.ikeruBody)
                 .foregroundStyle(.white)
                 .padding(IkeruTheme.Spacing.sm)
-                .background(
-                    RoundedRectangle(cornerRadius: IkeruTheme.Radius.sm)
-                        .fill(Color.ikeruSurface)
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: IkeruTheme.Radius.sm)
-                        .strokeBorder(Color.ikeruPrimaryAccent.opacity(0.3), lineWidth: 1)
-                )
+                .background(Rectangle().fill(Color.ikeruSurface))
+                .overlay(Rectangle().strokeBorder(TatamiTokens.goldDim.opacity(0.5), lineWidth: 1))
+                .sumiCorners(color: TatamiTokens.goldDim, size: 5, weight: 0.9)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
 
@@ -210,7 +211,7 @@ struct AISettingsView: View {
                         .padding(.horizontal, IkeruTheme.Spacing.md)
                         .padding(.vertical, IkeruTheme.Spacing.sm)
                         .background(Color.ikeruPrimaryAccent)
-                        .clipShape(RoundedRectangle(cornerRadius: IkeruTheme.Radius.sm))
+                        .sumiCorners(color: TatamiTokens.goldDim, size: 4, weight: 1.0)
                 }
                 .disabled(currentInput(entry.id).trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
 
@@ -238,7 +239,7 @@ struct AISettingsView: View {
                 }
             }
         }
-        .ikeruCard(.standard)
+        .tatamiRoom(.standard)
     }
 
     // MARK: - Local Rig Section
@@ -270,14 +271,9 @@ struct AISettingsView: View {
                     .font(.ikeruBody)
                     .foregroundStyle(.white)
                     .padding(IkeruTheme.Spacing.sm)
-                    .background(
-                        RoundedRectangle(cornerRadius: IkeruTheme.Radius.sm)
-                            .fill(Color.ikeruSurface)
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: IkeruTheme.Radius.sm)
-                            .strokeBorder(Color.ikeruPrimaryAccent.opacity(0.3), lineWidth: 1)
-                    )
+                    .background(Rectangle().fill(Color.ikeruSurface))
+                    .overlay(Rectangle().strokeBorder(TatamiTokens.goldDim.opacity(0.5), lineWidth: 1))
+                    .sumiCorners(color: TatamiTokens.goldDim, size: 5, weight: 0.9)
                     .textInputAutocapitalization(.never)
                     .keyboardType(.URL)
                     .autocorrectionDisabled()
@@ -286,14 +282,9 @@ struct AISettingsView: View {
                     .font(.ikeruBody)
                     .foregroundStyle(.white)
                     .padding(IkeruTheme.Spacing.sm)
-                    .background(
-                        RoundedRectangle(cornerRadius: IkeruTheme.Radius.sm)
-                            .fill(Color.ikeruSurface)
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: IkeruTheme.Radius.sm)
-                            .strokeBorder(Color.ikeruPrimaryAccent.opacity(0.3), lineWidth: 1)
-                    )
+                    .background(Rectangle().fill(Color.ikeruSurface))
+                    .overlay(Rectangle().strokeBorder(TatamiTokens.goldDim.opacity(0.5), lineWidth: 1))
+                    .sumiCorners(color: TatamiTokens.goldDim, size: 5, weight: 0.9)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
 
@@ -312,7 +303,7 @@ struct AISettingsView: View {
                             .padding(.horizontal, IkeruTheme.Spacing.md)
                             .padding(.vertical, IkeruTheme.Spacing.sm)
                             .background(Color.ikeruPrimaryAccent)
-                            .clipShape(RoundedRectangle(cornerRadius: IkeruTheme.Radius.sm))
+                            .sumiCorners(color: TatamiTokens.goldDim, size: 4, weight: 1.0)
                     }
 
                     Button {
@@ -339,7 +330,7 @@ struct AISettingsView: View {
                         .foregroundStyle(.ikeruSecondaryAccent)
                 }
             }
-            .ikeruCard(.standard)
+            .tatamiRoom(.standard)
         }
     }
 
@@ -359,7 +350,7 @@ struct AISettingsView: View {
 
     // MARK: - Shared Components
 
-    private func sectionHeader(_ title: String) -> some View {
+    private func sectionHeader(_ title: LocalizedStringKey) -> some View {
         Text(title)
             .font(.ikeruHeading3)
             .foregroundStyle(.ikeruTextSecondary)
@@ -367,9 +358,10 @@ struct AISettingsView: View {
     }
 
     private func statusDot(available: Bool) -> some View {
-        Circle()
-            .fill(available ? Color.ikeruSuccess : Color.gray.opacity(0.5))
-            .frame(width: 10, height: 10)
+        Rectangle()
+            .fill(available ? Color.ikeruSuccess : TatamiTokens.goldDim.opacity(0.35))
+            .frame(width: 8, height: 8)
+            .sumiCorners(color: TatamiTokens.goldDim, size: 3, weight: 0.8)
     }
 
     private var saveConfirmationToast: some View {
@@ -379,8 +371,9 @@ struct AISettingsView: View {
                 .font(.ikeruCaption)
                 .foregroundStyle(.white)
                 .padding(IkeruTheme.Spacing.md)
-                .background(Color.ikeruSurface)
-                .clipShape(RoundedRectangle(cornerRadius: IkeruTheme.Radius.sm))
+                .background(Rectangle().fill(Color.ikeruSurface))
+                .sumiCorners(color: TatamiTokens.goldDim, size: 6, weight: 1.2)
+                .shadow(color: Color.black.opacity(0.35), radius: 12)
                 .padding(.bottom, IkeruTheme.Spacing.xl)
         }
         .transition(.move(edge: .bottom).combined(with: .opacity))
