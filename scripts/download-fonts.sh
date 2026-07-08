@@ -6,12 +6,12 @@ FONT_DIR="Ikeru/Resources/Fonts"
 mkdir -p "$FONT_DIR"
 
 echo "Downloading Noto Serif JP Bold..."
-curl -L -o "$FONT_DIR/NotoSerifJP-Bold.otf" \
-  "https://github.com/googlefonts/noto-cjk/raw/main/Serif/OTF/Japanese/NotoSerifJP-Bold.otf"
+curl -L -o "$FONT_DIR/NotoSerifJP-Bold.ttf" \
+  "https://fonts.gstatic.com/s/notoserifjp/v33/xn71YHs72GKoTvER4Gn3b5eMRtWGkp6o7MjQ2bzWPebA.ttf"
 
 echo "Downloading Noto Serif JP Medium..."
-curl -L -o "$FONT_DIR/NotoSerifJP-Medium.otf" \
-  "https://github.com/googlefonts/noto-cjk/raw/main/Serif/OTF/Japanese/NotoSerifJP-Medium.otf"
+curl -L -o "$FONT_DIR/NotoSerifJP-Medium.ttf" \
+  "https://fonts.gstatic.com/s/notoserifjp/v33/xn71YHs72GKoTvER4Gn3b5eMRtWGkp6o7MjQ2bwDOubA.ttf"
 
 echo "Done! Fonts saved to $FONT_DIR"
 ls -la "$FONT_DIR"

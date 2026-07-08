@@ -188,6 +188,8 @@ Pages other than the active one render a placeholder until they're within ±1 of
 - **"Essayer"** — calls `DisplayModePreference.set(.tatami)`, marks `suggestionShown = true`, dismisses.
 - **"Plus tard" / ×** — marks `suggestionShown = true`, dismisses. Never shown again.
 
+> **Amendment (2026-07-08):** "Plus tard" is no longer permanent. The shipped implementation (`DisplayModeSuggestionCardController`) stores a dismissal *date* (`display.mode.suggestionDismissedAt.<profileID>`) and re-surfaces the card after a **14-day cooldown**; the legacy boolean above is migrated to a dismissed-now date on first launch. This also supersedes the "never shown again" acceptance criterion below.
+
 Card copy (FR primary, EN parallel via `Localizable.xcstrings`):
 
 > **Tu lis maintenant le japonais avec aisance.**

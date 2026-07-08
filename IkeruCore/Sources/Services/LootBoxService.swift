@@ -72,7 +72,14 @@ public enum LootBoxService {
         }
         // Scale gently: +1 per 5 levels, capped at base * 2
         let levelBonus = min(base, level / 5)
-        return base + levelBonus
+        // Pace cap: never require faster than one correct answer per 2.5s
+        // of the challenge's time limit. Without it, base * 2 at level 50
+        // demanded 20 correct answers in kanaBlitz's 30s window (one per
+        // 1.5s) — borderline impossible. `timeLimitSeconds * 2 / 5` is the
+        // integer form of `timeLimit / 2.5`; the outer max(base, …) keeps
+        // low-level scores untouched.
+        let paceCap = max(base, type.timeLimitSeconds * 2 / 5)
+        return min(base + levelBonus, paceCap)
     }
 
     // MARK: - Reward Generation

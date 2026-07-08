@@ -78,6 +78,14 @@ public enum IkeruTheme {
             public static let mono = "SFMono"
         }
 
+        /// Base point sizes at the default Dynamic Type content size (Large).
+        ///
+        /// These are NOT fixed render sizes: the app-layer `Font` factories
+        /// (`FontExtensions.swift` in the app target) scale them with the
+        /// user's Dynamic Type setting — custom fonts via
+        /// `Font.custom(_:size:relativeTo:)` and system fonts via text-style
+        /// variants or `UIFontMetrics`. IkeruCore stays SwiftUI-free, so the
+        /// text-style anchors live at the app layer, next to the factories.
         public enum Size {
             // Display — for hero moments
             public static let displayLarge: CGFloat = 56

@@ -10,6 +10,17 @@ on:
     branches: [master, dev]
   pull_request:
     branches: [master, dev]
+  # Manual re-run — lets us re-trigger a TestFlight deploy (e.g. after a
+  # transient Apple-side upload failure) without pushing an empty commit
+  # to master. Run it from the Actions tab on the `master` ref with
+  # `deploy_testflight: true`; with the input left false it just re-runs
+  # lint/build/test/device-build.
+  workflow_dispatch:
+    inputs:
+      deploy_testflight:
+        description: "Also run the TestFlight deploy job"
+        type: boolean
+        default: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -115,9 +126,13 @@ jobs:
         # `swift test` currently SIGSEGVs in the legacy KanaCardRepository
         # and PlannerService test suites — those need cleanup before this
         # filter can be removed. TODO: drop --filter once stale tests fixed.
+        # NOTE: `(^|[^a])CardRepository` deliberately excludes the legacy
+        # KanaCardRepository suite (one of the SIGSEGV offenders above) while
+        # matching CardRepositoryTests whether or not the test ID carries a
+        # module prefix.
         run: |
           cd IkeruCore
-          swift test --filter "JLPTReadinessFormula|JLPTBackfill|BadgeRamping|ProgressServiceJLPTRebuild|SkillXPLedger|LootDropService|SessionEnd|ExerciseXP|DailyTerm|SessionPlanner.DefaultSessionPlanner|ExerciseUnlockService|LearnerSnapshot|CardDTOJLPTLevel|BackupServiceJLPTLevel"
+          swift test --filter "JLPTReadinessFormula|JLPTBackfill|BadgeRamping|ProgressServiceJLPTRebuild|SkillXPLedger|LootDropService|SessionEnd|ExerciseXP|DailyTerm|SessionPlanner.DefaultSessionPlanner|ExerciseUnlockService|LearnerSnapshot|CardDTOJLPTLevel|BackupServiceJLPTLevel|(^|[^a])CardRepository|ProgressService|MasteryLevel|DisplayModeAdvancedThresholdMonitor"
 
       - name: Run App Tests (green subset)
         # Same — scoped to suites known to pass. KanaDrillViewModel covers
@@ -178,7 +193,11 @@ jobs:
     name: Deploy to TestFlight
     runs-on: macos-15
     needs: [lint, build, test, device-build-check]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    # Deploys on every push to master, or on a manual workflow_dispatch run
+    # with the `deploy_testflight` input checked (re-trigger a deploy
+    # without an empty commit). Dispatch deploys are pinned to master so a
+    # dev-ref dispatch can never ship a non-release build to TestFlight.
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/master') || (github.event_name == 'workflow_dispatch' && inputs.deploy_testflight == true && github.ref == 'refs/heads/master')
     environment:
       name: testflight
       url: https://appstoreconnect.apple.com/apps

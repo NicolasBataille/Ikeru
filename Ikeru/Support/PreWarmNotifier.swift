@@ -10,9 +10,12 @@ import Foundation
 enum PreWarmNotifier {
 
     static func notifyBatchFinished() async {
+        // `String(localized:)` at the call site — `postLocalNotification`
+        // takes plain `String`s, so a bare literal here would ship
+        // English-only (same pattern as NotificationManager's own copy).
         await NotificationManager.shared.postLocalNotification(
-            title: "Audio ready",
-            body: "Tomorrow's reviews are pre-warmed and waiting.",
+            title: String(localized: "Audio ready"),
+            body: String(localized: "Tomorrow's reviews are pre-warmed and waiting."),
             identifier: "ikeru.prewarm.batch-finished"
         )
     }

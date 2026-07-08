@@ -29,6 +29,23 @@ struct HankoStamp: View {
                 .foregroundStyle(Color(red: 0.961, green: 0.949, blue: 0.925)) // ikeru paper
         }
         .frame(width: size, height: size)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessibilityLabelText)
+    }
+
+    /// VoiceOver label for the seal. The two semantic kanji used across the
+    /// app get a translated label (急 = urgency marker on Home, 選 = active
+    /// pick in the language picker); anything else (achievement kanji, JLPT
+    /// levels like "N5") is read as-is.
+    private var accessibilityLabelText: String {
+        switch kanji {
+        case "急":
+            return String(localized: "Hanko.Accessibility.Urgent")
+        case "選":
+            return String(localized: "Hanko.Accessibility.Selected")
+        default:
+            return kanji
+        }
     }
 }
 

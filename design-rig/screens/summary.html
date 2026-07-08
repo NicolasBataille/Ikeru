@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ikeru rig — Summary</title>
+<link rel="stylesheet" href="../css/tokens.css">
+<link rel="stylesheet" href="../css/device.css">
+<link rel="stylesheet" href="../css/components.css">
+<script defer src="../js/rig.js"></script>
+<style>
+  /* SessionSummaryView.swift — spacing 18, padding h22 */
+  .summary-col { gap: 18px; }
+
+  /* triumph header */
+  .triumph { text-align: center; display: flex; flex-direction: column; gap: 6px; }
+  .triumph .kicker {
+    font: 700 11px/1 var(--font-system);
+    color: var(--gold);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+  .triumph .headline { font: 500 32px/1.15 var(--font-serif); color: var(--text-primary); }
+  .triumph .proverb { font: italic 400 12px/1.4 var(--font-system); color: var(--paper-ghost); margin-top: 4px; }
+
+  /* hero stat row (glass room, three serif numerals) */
+  .hero-stats { display: flex; align-items: center; }
+  .hero-stats .stat {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+  .hero-stats .n { color: var(--gold); font-size: 56px; }
+  .hero-stats .n--time { font-size: 40px; }
+  .hero-stats .k {
+    font: 600 10px/1 var(--font-system);
+    letter-spacing: 1.6px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+  }
+  .hero-stats .vline { width: 1px; height: 56px; background: rgba(138,109,74,0.4); }
+
+  /* four winds */
+  .winds { display: flex; gap: 10px; }
+  .wind {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+  .wind .head { display: flex; align-items: center; gap: 4px; }
+  .wind .head .mon { --mon-size: 11px; }
+  .wind .head .jp { font: 500 11px/1 var(--font-serif); color: var(--text-primary); }
+  .wind .plus { font: 500 22px/1 var(--font-serif); color: var(--gold); }
+  .wind .k { font: 600 9px/1 var(--font-system); letter-spacing: 1.4px; color: var(--text-secondary); text-transform: uppercase; }
+  .wind.dim .head .mon, .wind.dim .head .jp, .wind.dim .plus { color: var(--paper-ghost); }
+
+  /* XP gain rail */
+  .xp-rail { display: flex; flex-direction: column; gap: 8px; }
+  .xp-rail .head { display: flex; align-items: center; gap: 8px; }
+  .xp-rail .head .mon { --mon-size: 14px; }
+  .xp-rail .head .k { font: 600 11px/1 var(--font-system); letter-spacing: 1.4px; color: var(--text-secondary); text-transform: uppercase; }
+  .xp-rail .gain { font: 500 18px/1 var(--font-serif); color: var(--gold); margin-left: auto; }
+  .xp-rail .track { position: relative; height: 3px; background: rgba(138,109,74,0.3); }
+  .xp-rail .track .base {
+    position: absolute; left: 0; top: 1px; height: 1px;
+    background: var(--gold);
+  }
+  .xp-rail .track .glow {
+    position: absolute; top: 1px; height: 1px;
+    background: var(--gold);
+    box-shadow: 0 0 6px rgba(212,165,116,0.8);
+  }
+  .xp-rail .ranks { display: flex; justify-content: space-between; font: 500 10px/1 var(--font-serif); color: var(--paper-ghost); }
+
+  /* split cells */
+  .split { display: flex; gap: 10px; }
+  .split .cell { flex: 1; }
+  .split .head { display: flex; align-items: center; gap: 6px; }
+  .split .head .mon { --mon-size: 11px; }
+  .split .head .k { font: 600 9px/1 var(--font-system); letter-spacing: 1.4px; color: var(--paper-ghost); text-transform: uppercase; }
+  .split .val { display: flex; align-items: baseline; gap: 4px; margin-top: 8px; }
+  .split .val .n { font-size: 28px; }
+  .split .val .fuda { font: 500 11px/1 var(--font-serif); color: var(--paper-ghost); }
+  .split .cell--new  { --cell-color: rgb(157,186,124); }
+  .split .cell--redo { --cell-color: var(--vermilion); }
+  .split .head .mon, .split .val .n { color: var(--cell-color); }
+
+  .review-mistakes {
+    background: none; border: none; cursor: pointer;
+    padding: 12px 0;
+    font: 600 11px/1 var(--font-system);
+    letter-spacing: 1.4px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    width: 100%;
+  }
+</style>
+</head>
+<body data-screen="summary" data-marble="3">
+<main class="screen">
+  <div class="screen-inner no-tabbar summary-col" style="padding-top:calc(var(--safe-top) + 20px);">
+
+    <!-- Triumph header -->
+    <header class="triumph">
+      <div class="kicker">稽古終わり</div>
+      <div class="headline">Practice complete</div>
+      <div class="proverb">七転び八起き · Fall seven, rise eight</div>
+    </header>
+
+    <!-- Hero stat row: cards / recall / time -->
+    <section class="room room--glass hero-stats" style="padding:22px;">
+      <div class="stat"><span class="serif-num n">24</span><span class="k">Cards</span></div>
+      <div class="vline"></div>
+      <div class="stat"><span class="serif-num n">87%</span><span class="k">Recall</span></div>
+      <div class="vline"></div>
+      <div class="stat"><span class="serif-num n n--time">14:02</span><span class="k">Time</span></div>
+    </section>
+
+    <!-- Four winds skill XP -->
+    <section class="winds">
+      <div class="room wind" style="padding:12px;">
+        <div class="head"><span class="mon" data-kind="asanoha"></span><span class="jp">読</span></div>
+        <span class="plus">+12</span><span class="k">Reading</span>
+      </div>
+      <div class="room wind" style="padding:12px;">
+        <div class="head"><span class="mon" data-kind="genji"></span><span class="jp">書</span></div>
+        <span class="plus">+4</span><span class="k">Writing</span>
+      </div>
+      <div class="room wind" style="padding:12px;">
+        <div class="head"><span class="mon" data-kind="kikkou"></span><span class="jp">聴</span></div>
+        <span class="plus">+6</span><span class="k">Listening</span>
+      </div>
+      <div class="room wind" style="padding:12px;">
+        <div class="head"><span class="mon" data-kind="maru"></span><span class="jp">話</span></div>
+        <span class="plus">+2</span><span class="k">Speaking</span>
+      </div>
+    </section>
+
+    <!-- XP gain rail with glowing new-gain segment, 第5段 → 第6段 -->
+    <section class="room xp-rail" style="padding:18px;">
+      <div class="head">
+        <span class="mon" data-kind="asanoha" style="color:var(--gold);"></span>
+        <span class="k">XP earned</span>
+        <span class="gain">+24</span>
+      </div>
+      <div class="track">
+        <span class="base" style="width:52%;"></span>
+        <span class="glow" style="left:44%; width:8%;"></span>
+      </div>
+      <div class="ranks"><span>第5段</span><span>第6段</span></div>
+    </section>
+
+    <!-- Split cells: NEW LEARNED / RE-LEARN -->
+    <section class="split">
+      <div class="room cell cell--new" style="padding:14px;">
+        <div class="head"><span class="mon" data-kind="maru"></span><span class="k">New learned</span></div>
+        <div class="val"><span class="serif-num n">5</span><span class="fuda">札</span></div>
+      </div>
+      <div class="room cell cell--redo" style="padding:14px;">
+        <div class="head"><span class="mon" data-kind="kikkou"></span><span class="k">Re-learn</span></div>
+        <div class="val"><span class="serif-num n">3</span><span class="fuda">札</span></div>
+      </div>
+    </section>
+
+    <!-- Actions -->
+    <section class="col" style="gap:8px;">
+      <button class="cta-tatami">
+        <span class="jp">続ける ·&nbsp;</span>
+        <span class="latin">Continue</span>
+      </button>
+      <button class="review-mistakes">Review mistakes</button>
+    </section>
+
+  </div>
+</main>
+</body>
+</html>

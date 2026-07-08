@@ -21,6 +21,9 @@ struct MonCrest: View {
         MonCrestShape(kind: kind)
             .stroke(color, lineWidth: lineWidth ?? max(0.6, size * 0.066))
             .frame(width: size, height: size)
+            // Purely decorative ornament (deck identifiers, active markers) —
+            // the adjacent label carries the meaning for VoiceOver.
+            .accessibilityHidden(true)
     }
 }
 
