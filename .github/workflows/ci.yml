@@ -132,7 +132,7 @@ jobs:
         # module prefix.
         run: |
           cd IkeruCore
-          swift test --filter "JLPTReadinessFormula|JLPTBackfill|BadgeRamping|ProgressServiceJLPTRebuild|SkillXPLedger|LootDropService|SessionEnd|ExerciseXP|DailyTerm|SessionPlanner.DefaultSessionPlanner|ExerciseUnlockService|LearnerSnapshot|CardDTOJLPTLevel|BackupServiceJLPTLevel|(^|[^a])CardRepository|ProgressService|MasteryLevel|DisplayModeAdvancedThresholdMonitor"
+          swift test --filter "JLPTReadinessFormula|JLPTBackfill|BadgeRamping|ProgressServiceJLPTRebuild|SkillXPLedger|LootDropService|SessionEnd|ExerciseXP|DailyTerm|DefaultSessionPlanner|ExerciseUnlockService|LearnerSnapshot|CardDTOJLPTLevel|BackupServiceJLPTLevel|(^|[^a])CardRepository|ProgressService|MasteryLevel|DisplayModeAdvancedThresholdMonitor"
 
       - name: Run App Tests (green subset)
         # Same — scoped to suites known to pass. KanaDrillViewModel covers

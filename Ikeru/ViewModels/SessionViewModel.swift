@@ -82,6 +82,12 @@ public final class SessionViewModel {
     private var retryCounts: [UUID: Int] = [:]
     private static let maxRetriesPerCard = 2
 
+    /// Card IDs already counted toward `newItemsLearned` this session.
+    /// A same-day re-queued card is a stale pre-grade DTO (`reps == 0` for a
+    /// brand-new card), so without this guard a retried new card would be
+    /// double-counted on the summary screen.
+    private var newItemCountedIDs: Set<UUID> = []
+
     /// Whether the session is complete (all cards reviewed).
     public var isSessionComplete: Bool {
         isActive && currentIndex >= sessionQueue.count
@@ -233,6 +239,13 @@ public final class SessionViewModel {
     /// Mastery events detected during this session (graduation, burns, etc.).
     public private(set) var sessionMasteryEvents: [MasteryEvent] = []
 
+    /// Monotonic count of grading transactions whose persistence failed.
+    /// Bumped in `gradeAndAdvance` when `CardSaveErrorMonitor` reports a
+    /// failure right after the grade write; `ActiveSessionView` observes it
+    /// to surface a "your review may not count" toast. The monitor is cleared
+    /// once consumed so a failure is surfaced exactly once.
+    public private(set) var gradeSaveFailureCount: Int = 0
+
     // MARK: - Dependencies
 
     private let plannerService: PlannerService
@@ -312,10 +325,12 @@ public final class SessionViewModel {
         missedCardIDs = []
         sessionMode = .normal
         retryCounts = [:]
+        newItemCountedIDs = []
         sessionLootCount = 0
         earnedLootBox = nil
         lastSessionBonus = nil
         sessionMasteryEvents = []
+        gradeSaveFailureCount = 0
         isPaused = false
         sessionStartTime = Date()
         cardStartTime = Date()
@@ -339,7 +354,7 @@ public final class SessionViewModel {
     public func startSession() async -> Bool {
         let cards = await cardRepository.allCards()
         let snapshot = await buildSnapshot(cards: cards)
-        let unlockedTypes = unlockService.unlockedTypes(profile: snapshot)
+        let unlockedTypes = effectiveUnlockedTypes(profile: snapshot)
         let inputs = SessionPlannerInputs(
             source: .homeRecommendation,
             durationMinutes: defaultDurationMinutes,
@@ -405,7 +420,7 @@ public final class SessionViewModel {
     ) async {
         let cards = await cardRepository.allCards()
         let snapshot = await buildSnapshot(cards: cards)
-        let unlockedTypes = unlockService.unlockedTypes(profile: snapshot)
+        let unlockedTypes = effectiveUnlockedTypes(profile: snapshot)
         let inputs = SessionPlannerInputs(
             source: .studyCustom(types: types, jlptLevels: levels),
             durationMinutes: duration,
@@ -556,28 +571,12 @@ public final class SessionViewModel {
         let isCorrect = grade == .good || grade == .easy
         feedbackState = isCorrect ? .correct : .incorrect
 
-        // Track .again *and* .hard grades as mistakes — both indicate the
-        // user struggled with the card. Drives the summary's "Review
-        // mistakes" CTA and the mistakes-mode intra-session re-queue.
-        if grade == .again || grade == .hard {
+        // Track only .again grades as mistakes. A .hard grade means the recall
+        // was slow but ultimately correct — counting it as a miss conflated
+        // slow recall with failure and drilled cards the user actually knew.
+        if grade == .again {
             missedCardIDs.insert(card.id)
-
-            // Mistakes-mode intra-session re-queue: when the user fails a
-            // card during a "Review mistakes" session, append it back to
-            // the end of the queue so they actually re-drill the failure
-            // before the session ends. Capped at `maxRetriesPerCard` to
-            // prevent a stuck card from looping forever.
-            if sessionMode == .reviewMistakes {
-                let retries = retryCounts[card.id, default: 0]
-                if retries < Self.maxRetriesPerCard {
-                    retryCounts[card.id] = retries + 1
-                    sessionQueue.append(card)
-                    sessionExercises.append(.srsReview(card))
-                    Logger.srs.info(
-                        "Mistakes-mode requeue: \(card.front, privacy: .public) (retry \(retries + 1)/\(Self.maxRetriesPerCard, privacy: .public))"
-                    )
-                }
-            }
+            requeueFailedCard(card)
         }
 
         Logger.srs.debug(
@@ -590,6 +589,14 @@ public final class SessionViewModel {
             grade: grade,
             responseTimeMs: responseTimeMs
         )
+
+        // Surface persistence failures: a grade whose save failed may not count
+        // toward scheduling. Single check right after the write; clear the
+        // monitor so the same failure isn't re-surfaced on the next card.
+        if cardRepository.saveErrorMonitor.lastSaveError != nil {
+            cardRepository.saveErrorMonitor.clear()
+            gradeSaveFailureCount += 1
+        }
 
         // Award XP via ExerciseXP (per-type × JLPT-level multiplier),
         // delegating to RPGService for level-up bookkeeping. Flashcard
@@ -676,8 +683,10 @@ public final class SessionViewModel {
             await persistLootDrop(drop)
         }
 
-        // Track new items learned (first review = reps was 0)
-        if card.fsrsState.reps == 0 {
+        // Track new items learned (first review = reps was 0). The set guard
+        // keeps a same-day re-queued new card from counting twice.
+        if card.fsrsState.reps == 0 && !newItemCountedIDs.contains(card.id) {
+            newItemCountedIDs.insert(card.id)
             newItemsLearned += 1
         }
 
@@ -1171,6 +1180,55 @@ public final class SessionViewModel {
             hasNewContentQueued: cards.contains(where: { $0.fsrsState.reps == 0 }),
             lastSessionAt: lastSession,
             now: now
+        )
+    }
+
+    // MARK: - Effective Unlocks
+
+    /// Effective unlocked set for session planning: the live threshold
+    /// evaluation UNION the profile's already-acknowledged unlocks. Unlocks are
+    /// one-way — once granted (recorded in `RPGState.acknowledgedUnlocks`), a
+    /// stricter later mastery definition must never silently re-lock them.
+    private func effectiveUnlockedTypes(profile snapshot: LearnerSnapshot) -> Set<ExerciseType> {
+        let live = unlockService.unlockedTypes(profile: snapshot)
+        let acknowledged = ActiveProfileResolver
+            .fetchActiveRPGState(in: modelContainer.mainContext)?
+            .acknowledgedUnlocks ?? []
+        return live.union(acknowledged)
+    }
+
+    // MARK: - Same-Day Re-Queue
+
+    /// Same-day intra-session re-queue: a card graded `.again` comes back later
+    /// in the same session instead of disappearing until its next FSRS due date.
+    /// Mistakes mode appends to the end (drill-until-done); normal sessions
+    /// re-insert 3-5 positions later. Capped at `maxRetriesPerCard`.
+    private func requeueFailedCard(_ card: CardDTO) {
+        let retries = retryCounts[card.id, default: 0]
+        guard retries < Self.maxRetriesPerCard else { return }
+        retryCounts[card.id] = retries + 1
+        if sessionMode == .reviewMistakes {
+            sessionQueue.append(card)
+            sessionExercises.append(.srsReview(card))
+        } else {
+            let offset = Int.random(in: 3...5)
+            let queueSlot = min(currentIndex + 1 + offset, sessionQueue.count)
+            sessionQueue.insert(card, at: queueSlot)
+            let exerciseSlot = min(currentExerciseIndex + 1 + offset, sessionExercises.count)
+            sessionExercises.insert(.srsReview(card), at: exerciseSlot)
+        }
+        // The end policy captured the queue length at session start; grow it in
+        // lockstep so the queue-exhaustion check doesn't fire before the
+        // re-queued card is shown.
+        if let policy = endPolicy {
+            endPolicy = SessionEndPolicy(
+                durationBudgetMinutes: policy.durationBudgetMinutes,
+                queueLength: policy.queueLength + 1,
+                graceWindowSeconds: policy.graceWindowSeconds
+            )
+        }
+        Logger.srs.info(
+            "Same-day requeue: \(card.front, privacy: .public) (retry \(retries + 1)/\(Self.maxRetriesPerCard, privacy: .public))"
         )
     }
 
