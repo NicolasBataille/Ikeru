@@ -121,18 +121,16 @@ jobs:
       - name: Select Xcode
         run: sudo xcode-select -s "$(ls -d /Applications/Xcode*.app | sort -V | tail -1)/Contents/Developer"
 
-      - name: Run IkeruCore Tests (green subset)
-        # Scoped to known-green Spec A/B/C suites + Daily Term. The full
-        # `swift test` currently SIGSEGVs in the legacy KanaCardRepository
-        # and PlannerService test suites — those need cleanup before this
-        # filter can be removed. TODO: drop --filter once stale tests fixed.
-        # NOTE: `(^|[^a])CardRepository` deliberately excludes the legacy
-        # KanaCardRepository suite (one of the SIGSEGV offenders above) while
-        # matching CardRepositoryTests whether or not the test ID carries a
-        # module prefix.
+      - name: Run IkeruCore Tests (full suite minus IkeruTheme)
+        # Runs the full IkeruCore suite via `--skip`, excluding only the
+        # IkeruTheme snapshot suite (design-token re-baseline tracked
+        # separately). This is fail-safe for new suites — they run by default
+        # instead of being silently ignored by an allowlist. TODO: drop the
+        # last `--skip` once IkeruTheme is re-baselined, leaving bare
+        # `swift test`.
         run: |
           cd IkeruCore
-          swift test --filter "JLPTReadinessFormula|JLPTBackfill|BadgeRamping|ProgressServiceJLPTRebuild|SkillXPLedger|LootDropService|SessionEnd|ExerciseXP|DailyTerm|DefaultSessionPlanner|ExerciseUnlockService|LearnerSnapshot|CardDTOJLPTLevel|BackupServiceJLPTLevel|(^|[^a])CardRepository|ProgressService|MasteryLevel|DisplayModeAdvancedThresholdMonitor|IkeruSchema"
+          swift test --skip "IkeruTheme"
 
       - name: Run App Tests (green subset)
         # Same — scoped to suites known to pass. KanaDrillViewModel covers

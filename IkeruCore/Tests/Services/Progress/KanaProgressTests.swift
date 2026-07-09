@@ -8,8 +8,8 @@ struct KanaProgressTests {
     @Test("Counts familiar-or-better kana, bucketed by script")
     func bucketsByScript() {
         let cards = [
-            fixtureCard(front: "\u{3042}", stability: 5),    // あ hiragana → familiar ✓
-            fixtureCard(front: "\u{30A2}", stability: 10),   // ア katakana → mastered ✓
+            fixtureCard(front: "\u{3042}", stability: 5, reps: 2),    // あ hiragana → familiar ✓
+            fixtureCard(front: "\u{30A2}", stability: 10, reps: 2),   // ア katakana → mastered ✓
             fixtureCard(front: "\u{3044}", stability: 5, reps: 0), // い → new ✗
             fixtureCard(front: "\u{3046}", stability: 0.5),  // う → learning ✗ (stability < 1)
             fixtureCard(front: "\u{706B}", stability: 100),  // 火 kanji → not in base sets ✗

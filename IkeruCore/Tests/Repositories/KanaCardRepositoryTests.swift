@@ -9,8 +9,16 @@ private func makeTestContainer() throws -> ModelContainer {
     return try ModelContainer(for: schema, configurations: [config])
 }
 
+/// Seeds a UserProfile so `CardModelActor.activeProfileCards()` resolves the
+/// cards `createCard` stamps. Without a profile, `fetchActiveProfile()` returns
+/// nil, `createCard` orphans each card, and every profile-scoped read
+/// (`allKanaCards`, `cardsForGroups`, …) comes back empty. Mirror of
+/// `CardRepositoryTests.seedActiveProfile`.
+@MainActor
 private func makeRepo() throws -> (KanaCardRepository, CardRepository) {
     let container = try makeTestContainer()
+    container.mainContext.insert(UserProfile(displayName: "Test"))
+    try container.mainContext.save()
     let cardRepo = CardRepository(modelContainer: container)
     return (KanaCardRepository(cardRepository: cardRepo), cardRepo)
 }
@@ -20,7 +28,7 @@ struct KanaCardRepositoryTests {
 
     @Test("seedIfNeeded creates a card per base kana")
     func seedCreatesAllBaseCards() async throws {
-        let (repo, _) = try makeRepo()
+        let (repo, _) = try await makeRepo()
         await repo.seedIfNeeded()
         let all = await repo.allKanaCards()
         #expect(all.count == KanaGroup.allBaseCharacters.count)
@@ -28,7 +36,7 @@ struct KanaCardRepositoryTests {
 
     @Test("seedIfNeeded is idempotent")
     func seedIsIdempotent() async throws {
-        let (repo, _) = try makeRepo()
+        let (repo, _) = try await makeRepo()
         await repo.seedIfNeeded()
         let firstCount = await repo.allKanaCards().count
         await repo.seedIfNeeded()
@@ -39,7 +47,7 @@ struct KanaCardRepositoryTests {
 
     @Test("cardsForGroups([.hVowels]) returns exactly 5 cards")
     func cardsForSingleGroup() async throws {
-        let (repo, _) = try makeRepo()
+        let (repo, _) = try await makeRepo()
         await repo.seedIfNeeded()
         let cards = await repo.cardsForGroups([.hVowels])
         #expect(cards.count == 5)
@@ -49,7 +57,7 @@ struct KanaCardRepositoryTests {
 
     @Test("cardsForGroups([.hVowels, .hK]) returns 10 cards")
     func cardsForTwoGroups() async throws {
-        let (repo, _) = try makeRepo()
+        let (repo, _) = try await makeRepo()
         await repo.seedIfNeeded()
         let cards = await repo.cardsForGroups([.hVowels, .hK])
         #expect(cards.count == 10)
@@ -57,7 +65,7 @@ struct KanaCardRepositoryTests {
 
     @Test("dueCardsForGroups returns freshly seeded cards as due")
     func dueCardsForFreshSeed() async throws {
-        let (repo, _) = try makeRepo()
+        let (repo, _) = try await makeRepo()
         await repo.seedIfNeeded()
         // Use a date slightly in the future to guarantee seeded dueDates <= now.
         let future = Date().addingTimeInterval(1)
@@ -67,7 +75,7 @@ struct KanaCardRepositoryTests {
 
     @Test("mastery(for: .hVowels) returns 5 cards all .new after seeding")
     func masteryForSingleGroup() async throws {
-        let (repo, _) = try makeRepo()
+        let (repo, _) = try await makeRepo()
         await repo.seedIfNeeded()
         let mastery = await repo.mastery(for: .hVowels)
         #expect(mastery.totalCards == 5)
@@ -80,7 +88,7 @@ struct KanaCardRepositoryTests {
 
     @Test("mastery(for: Set) returns an entry for each requested group")
     func masteryForMultipleGroups() async throws {
-        let (repo, _) = try makeRepo()
+        let (repo, _) = try await makeRepo()
         await repo.seedIfNeeded()
         let result = await repo.mastery(for: [.hVowels, .hK])
         #expect(result.count == 2)

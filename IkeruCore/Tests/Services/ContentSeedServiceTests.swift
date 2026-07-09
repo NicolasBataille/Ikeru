@@ -14,6 +14,15 @@ struct ContentSeedServiceTests {
         return try ModelContainer(for: schema, configurations: [config])
     }
 
+    /// Seeds a UserProfile so profile-scoped reads (`allCards`, `dueCards`)
+    /// resolve the cards `seedBeginnerKanaIfNeeded` creates via `createCard`.
+    /// Without it, `fetchActiveProfile()` returns nil and those reads are empty.
+    @MainActor
+    private func seedProfile(in container: ModelContainer) throws {
+        container.mainContext.insert(UserProfile(displayName: "Test"))
+        try container.mainContext.save()
+    }
+
     // MARK: - Seeding Tests
 
     @Test("Seeds 5 hiragana cards when no cards exist")
@@ -60,6 +69,7 @@ struct ContentSeedServiceTests {
     @Test("Seeded cards are persisted in repository")
     func seededCardsArePersisted() async throws {
         let container = try makeContainer()
+        try await seedProfile(in: container)
         let repo = CardRepository(modelContainer: container)
 
         await ContentSeedService.seedBeginnerKanaIfNeeded(
@@ -74,6 +84,7 @@ struct ContentSeedServiceTests {
     @Test("Seeded cards are due immediately")
     func seededCardsAreDueImmediately() async throws {
         let container = try makeContainer()
+        try await seedProfile(in: container)
         let repo = CardRepository(modelContainer: container)
 
         await ContentSeedService.seedBeginnerKanaIfNeeded(

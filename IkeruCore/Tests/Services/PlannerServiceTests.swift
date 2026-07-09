@@ -15,6 +15,18 @@ struct PlannerServiceTests {
         return try ModelContainer(for: schema, configurations: [config])
     }
 
+    /// Seeds an active profile and attaches each inserted card to it. Cards
+    /// inserted directly into the context are orphans (`profile == nil`), so a
+    /// seeded profile alone leaves every profile-scoped read (`dueCards`,
+    /// `allCards`) empty; stamping the relationship at insert makes them resolve.
+    @discardableResult
+    private func seedProfile(in container: ModelContainer) throws -> UserProfile {
+        let profile = UserProfile(displayName: "Test")
+        container.mainContext.insert(profile)
+        try container.mainContext.save()
+        return profile
+    }
+
     private func seedCards(
         container: ModelContainer,
         dueCards: Int = 0,
@@ -22,6 +34,7 @@ struct PlannerServiceTests {
         futureCards: Int = 0
     ) throws {
         let context = container.mainContext
+        let profile = try seedProfile(in: container)
 
         // Due cards (due in the past)
         for i in 0..<dueCards {
@@ -32,6 +45,7 @@ struct PlannerServiceTests {
                 fsrsState: FSRSState(reps: 1), // Has been reviewed before
                 dueDate: Date().addingTimeInterval(-3600)
             )
+            card.profile = profile
             context.insert(card)
         }
 
@@ -44,6 +58,7 @@ struct PlannerServiceTests {
                 fsrsState: FSRSState(reps: 0), // Never reviewed
                 dueDate: Date().addingTimeInterval(3600) // Future — not in dueCards query
             )
+            card.profile = profile
             context.insert(card)
         }
 
@@ -56,6 +71,7 @@ struct PlannerServiceTests {
                 fsrsState: FSRSState(reps: 1),
                 dueDate: Date().addingTimeInterval(86400) // Due tomorrow
             )
+            card.profile = profile
             context.insert(card)
         }
 
@@ -118,9 +134,10 @@ struct PlannerServiceTests {
     @Test("Composes session for day-1 beginner with seeded kana")
     func composesForDayOneBeginner() async throws {
         let container = try makeContainer()
+        try seedProfile(in: container)
         let repo = CardRepository(modelContainer: container)
 
-        // Seed beginner kana
+        // Seed beginner kana (createCard auto-stamps the seeded active profile)
         await ContentSeedService.seedBeginnerKanaIfNeeded(
             repository: repo,
             existingCardCount: 0
@@ -155,6 +172,7 @@ struct PlannerServiceTests {
     func dueCardsBeforeNewCards() async throws {
         let container = try makeContainer()
         let context = container.mainContext
+        let profile = try seedProfile(in: container)
 
         // Create a due card with reps > 0
         let dueCard = Card(
@@ -164,6 +182,7 @@ struct PlannerServiceTests {
             fsrsState: FSRSState(reps: 2),
             dueDate: Date().addingTimeInterval(-3600)
         )
+        dueCard.profile = profile
         context.insert(dueCard)
 
         // Create a new card with reps == 0 and future dueDate (so it's not in dueCards)
@@ -174,6 +193,7 @@ struct PlannerServiceTests {
             fsrsState: FSRSState(reps: 0),
             dueDate: Date().addingTimeInterval(3600) // Future — won't be in dueCards
         )
+        newCard.profile = profile
         context.insert(newCard)
 
         try context.save()
@@ -183,7 +203,9 @@ struct PlannerServiceTests {
 
         let queue = await planner.composeSession()
 
-        #expect(queue.count == 2)
+        // `try #require` throws (soft-fails) instead of trapping on an empty
+        // array, so a future regression can never abort the whole parallel run.
+        try #require(queue.count == 2)
         #expect(queue[0].front == "DueCard")
         #expect(queue[1].front == "NewCard")
     }
