@@ -204,7 +204,12 @@ struct ExerciseItemTests {
 
     @Test("Writing practice skill is writing")
     func writingPracticeSkill() {
-        let exercise = ExerciseItem.writingPractice("test")
+        let card = CardDTO(
+            id: UUID(), front: "test", back: "test", type: .kanji,
+            fsrsState: FSRSState(), easeFactor: 2.5, interval: 0,
+            dueDate: Date(), lapseCount: 0, leechFlag: false
+        )
+        let exercise = ExerciseItem.writingPractice(card)
         #expect(exercise.skill == .writing)
         #expect(exercise.estimatedDurationSeconds == 90)
     }
@@ -225,7 +230,12 @@ struct ExerciseItemTests {
 
     @Test("Kanji study skill is reading")
     func kanjiStudySkill() {
-        let exercise = ExerciseItem.kanjiStudy("\u{4e00}")
+        let card = CardDTO(
+            id: UUID(), front: "\u{4e00}", back: "one", type: .kanji,
+            fsrsState: FSRSState(), easeFactor: 2.5, interval: 0,
+            dueDate: Date(), lapseCount: 0, leechFlag: false
+        )
+        let exercise = ExerciseItem.kanjiStudy(card)
         #expect(exercise.skill == .reading)
         #expect(exercise.estimatedDurationSeconds == 60)
     }

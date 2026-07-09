@@ -342,9 +342,9 @@ struct ImmersiveSessionViewTests {
         )
 
         #expect(ExerciseItem.srsReview(card).skill == .reading)
-        #expect(ExerciseItem.kanjiStudy("k").skill == .reading)
+        #expect(ExerciseItem.kanjiStudy(card).skill == .reading)
         #expect(ExerciseItem.grammarExercise(UUID()).skill == .reading)
-        #expect(ExerciseItem.writingPractice("w").skill == .writing)
+        #expect(ExerciseItem.writingPractice(card).skill == .writing)
         #expect(ExerciseItem.listeningExercise(UUID()).skill == .listening)
         #expect(ExerciseItem.speakingExercise(UUID()).skill == .speaking)
     }

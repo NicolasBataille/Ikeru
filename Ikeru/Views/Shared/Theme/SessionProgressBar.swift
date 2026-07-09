@@ -127,12 +127,12 @@ func sfSymbol(for skill: SkillType) -> String {
     let sampleExercises: [ExerciseItem] = [
         .srsReview(previewCard),
         .srsReview(previewCard),
-        .writingPractice("kanji"),
+        .writingPractice(previewCard),
         .listeningExercise(UUID()),
         .speakingExercise(UUID()),
         .srsReview(previewCard),
         .grammarExercise(UUID()),
-        .kanjiStudy("test"),
+        .kanjiStudy(previewCard),
     ]
 
     ZStack {

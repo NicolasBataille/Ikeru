@@ -284,14 +284,15 @@ public final class PlannerService: @unchecked Sendable {
     private func generateExercise(for skill: SkillType, allCards: [CardDTO]) -> ExerciseItem {
         switch skill {
         case .reading:
-            // Try kanji study from available kanji cards
+            // Kanji study needs a real card to grade; fall back to a
+            // card-free reading exercise when no kanji card is available.
             let kanjiCards = allCards.filter { $0.type == .kanji }
-            let character = kanjiCards.randomElement()?.front ?? "\u{4e00}" // default: 一
-            return .kanjiStudy(character)
+            guard let card = kanjiCards.randomElement() else { return .grammarExercise(UUID()) }
+            return .kanjiStudy(card)
         case .writing:
             let kanjiCards = allCards.filter { $0.type == .kanji }
-            let character = kanjiCards.randomElement()?.front ?? "\u{4e00}"
-            return .writingPractice(character)
+            guard let card = kanjiCards.randomElement() else { return .sentenceConstruction(UUID()) }
+            return .writingPractice(card)
         case .listening:
             return .listeningExercise(UUID())
         case .speaking:
