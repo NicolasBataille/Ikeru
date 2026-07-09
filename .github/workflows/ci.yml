@@ -168,6 +168,7 @@ jobs:
             -destination "platform=iOS Simulator,id=$DEVICE_ID" \
             -skipPackagePluginValidation \
             -only-testing:IkeruTests/KanaDrillViewModelTests \
+            -only-testing:IkeruTests/SessionDecouplingTests \
             CODE_SIGNING_ALLOWED=NO
 
   device-build-check:
