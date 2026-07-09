@@ -121,18 +121,19 @@ jobs:
       - name: Select Xcode
         run: sudo xcode-select -s "$(ls -d /Applications/Xcode*.app | sort -V | tail -1)/Contents/Developer"
 
-      - name: Run IkeruCore Tests (green subset)
-        # Scoped to known-green Spec A/B/C suites + Daily Term. The full
-        # `swift test` currently SIGSEGVs in the legacy KanaCardRepository
-        # and PlannerService test suites — those need cleanup before this
-        # filter can be removed. TODO: drop --filter once stale tests fixed.
-        # NOTE: `(^|[^a])CardRepository` deliberately excludes the legacy
-        # KanaCardRepository suite (one of the SIGSEGV offenders above) while
-        # matching CardRepositoryTests whether or not the test ID carries a
-        # module prefix.
+      - name: Run IkeruCore Tests (CI-safe allowlist)
+        # We can't run the *whole* IkeruCore suite here: the macos-15 runner's
+        # Xcode ships Swift Testing library 1501, which SIGSEGVs mid-run on a
+        # legacy suite that never surfaces on newer toolchains (local Swift
+        # 6.3.3 / library 1902 runs the full suite clean, so it's unbisectable
+        # locally). `swift test --skip …` reproduces the crash; an allowlist
+        # avoids it by never *executing* the crasher. So this stays a `--filter`
+        # allowlist of suites verified to pass on CI. Newly-fixed suites are
+        # added here after CI confirms they don't reintroduce the crash.
+        # Un-filtering fully is blocked on the runner toolchain, not our tests.
         run: |
           cd IkeruCore
-          swift test --filter "JLPTReadinessFormula|JLPTBackfill|BadgeRamping|ProgressServiceJLPTRebuild|SkillXPLedger|LootDropService|SessionEnd|ExerciseXP|DailyTerm|DefaultSessionPlanner|ExerciseUnlockService|LearnerSnapshot|CardDTOJLPTLevel|BackupServiceJLPTLevel|(^|[^a])CardRepository|ProgressService|MasteryLevel|DisplayModeAdvancedThresholdMonitor|IkeruSchema"
+          swift test --filter "JLPTReadinessFormula|JLPTBackfill|BadgeRamping|ProgressServiceJLPTRebuild|SkillXPLedger|LootDropService|SessionEnd|ExerciseXP|DailyTerm|DefaultSessionPlanner|ExerciseUnlockService|LearnerSnapshot|CardDTOJLPTLevel|BackupServiceJLPTLevel|(^|[^a])CardRepository|ProgressService|MasteryLevel|DisplayModeAdvancedThresholdMonitor|IkeruSchema|PlannerService|KanaCardRepository|ContentSeedService|ReviewForecastService|KanaProgress"
 
       - name: Run App Tests (green subset)
         # Same — scoped to suites known to pass. KanaDrillViewModel covers

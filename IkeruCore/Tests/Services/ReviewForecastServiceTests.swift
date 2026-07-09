@@ -20,6 +20,13 @@ struct ReviewForecastServiceTests {
         dueDates: [Date]
     ) throws {
         let context = container.mainContext
+        // Seed an active profile and attach each card to it. Cards inserted
+        // directly into the context keep `profile == nil` (orphans), so a
+        // profile alone is not enough — every profile-scoped read
+        // (`dueCards`, `allCards`) would come back empty. Stamping the
+        // relationship at insert makes those reads resolve.
+        let profile = UserProfile(displayName: "Test")
+        context.insert(profile)
         for (i, dueDate) in dueDates.enumerated() {
             let card = Card(
                 front: "Card \(i)",
@@ -34,6 +41,7 @@ struct ReviewForecastServiceTests {
                 ),
                 dueDate: dueDate
             )
+            card.profile = profile
             context.insert(card)
         }
         try context.save()
