@@ -12,6 +12,7 @@ struct ActiveSessionView: View {
 
     @Bindable var viewModel: SessionViewModel
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.toastManager) private var toastManager
     @State private var showPauseOverlay = false
     @State private var hapticTriggerCorrect = false
     @State private var hapticTriggerIncorrect = false
@@ -73,6 +74,16 @@ struct ActiveSessionView: View {
                 break
             }
         }
+        // Persistence-failure warning: a grade whose save failed may not count
+        // toward scheduling. Local `.toastOverlay()` is required — the root
+        // overlay in IkeruApp sits below this fullScreenCover.
+        .onChange(of: viewModel.gradeSaveFailureCount) { _, count in
+            guard count > 0 else { return }
+            toastManager.showError(
+                String(localized: "Couldn't save your review — it may not count.")
+            )
+        }
+        .toastOverlay()
         .overlay(alignment: .top) {
             if showOneMinuteToast {
                 Text(

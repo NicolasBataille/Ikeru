@@ -46,7 +46,33 @@ struct DefaultSessionPlannerHomeTests {
         #expect(hasSpeaking == false)
     }
 
-    private func fixtureDueCard() -> CardDTO {
+    @Test("Review wave drills most-overdue cards first, whatever the input order")
+    func reviewsRespectDueOrder() async {
+        let base = Date(timeIntervalSince1970: 1_700_000_000)
+        // Input deliberately in reverse due order: latest-due card first.
+        let cards = (0..<30).map { i in
+            fixtureDueCard(dueDate: base.addingTimeInterval(TimeInterval((29 - i) * 3_600)))
+        }
+        let inputs = SessionPlannerInputs(
+            source: .homeRecommendation,
+            durationMinutes: 15,
+            profile: .empty,
+            unlockedTypes: Set(ExerciseType.allCases),
+            availableCards: cards
+        )
+        let plan = await planner.compose(inputs: inputs)
+
+        let reviewedDueDates = plan.exercises.compactMap { item -> Date? in
+            if case .srsReview(let card) = item { return card.dueDate }
+            return nil
+        }
+        #expect(reviewedDueDates.count > 1)
+        #expect(reviewedDueDates == reviewedDueDates.sorted())
+        let expected = Array(cards.map(\.dueDate).sorted().prefix(reviewedDueDates.count))
+        #expect(reviewedDueDates == expected)
+    }
+
+    private func fixtureDueCard(dueDate: Date = Date(timeIntervalSince1970: 1_700_000_000)) -> CardDTO {
         CardDTO(
             id: UUID(),
             front: "x",
@@ -61,7 +87,7 @@ struct DefaultSessionPlannerHomeTests {
             ),
             easeFactor: 2.5,
             interval: 1,
-            dueDate: Date(timeIntervalSince1970: 1_700_000_000),
+            dueDate: dueDate,
             lapseCount: 0,
             leechFlag: false
         )

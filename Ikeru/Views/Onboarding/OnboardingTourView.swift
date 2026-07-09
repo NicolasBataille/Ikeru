@@ -107,6 +107,8 @@ private struct OnboardingPageView: View {
     let isLastPage: Bool
     let onStartLearning: () -> Void
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     @State private var isAnimating = false
 
     var body: some View {
@@ -129,6 +131,8 @@ private struct OnboardingPageView: View {
         }
         .padding(.horizontal, IkeruTheme.Spacing.xl)
         .onAppear {
+            // Reduce Motion: no ambient pulse — the kanji sits at rest.
+            guard !reduceMotion else { return }
             withAnimation(.easeInOut(duration: 4.0).repeatForever(autoreverses: true)) {
                 isAnimating = true
             }
@@ -153,7 +157,7 @@ private struct OnboardingPageView: View {
                     )
                 )
                 .shadow(color: Color(hex: 0xD4A574, opacity: 0.4), radius: 32)
-                .scaleEffect(isAnimating ? 1.02 : 0.98)
+                .scaleEffect(reduceMotion ? 1.0 : (isAnimating ? 1.02 : 0.98))
 
             Text(page.romaji)
                 .font(.ikeruMicro)

@@ -19,7 +19,7 @@ struct SessionLiveActivity: Widget {
                     HStack(spacing: 4) {
                         Image(systemName: "timer")
                             .font(.caption2)
-                        Text(formatTime(context.state.elapsedSeconds))
+                        Text(startDate(for: context.state), style: .timer)
                             .font(.system(.caption, design: .monospaced))
                             .fontWeight(.semibold)
                     }
@@ -73,7 +73,7 @@ struct SessionLiveActivity: Widget {
                 HStack(spacing: 2) {
                     Image(systemName: "timer")
                         .font(.system(size: 10))
-                    Text(formatTime(context.state.elapsedSeconds))
+                    Text(startDate(for: context.state), style: .timer)
                         .font(.system(size: 12, design: .monospaced))
                 }
                 .foregroundStyle(.white)
@@ -106,7 +106,7 @@ struct SessionLiveActivity: Widget {
             Spacer()
 
             VStack(alignment: .trailing, spacing: 4) {
-                Text(formatTime(context.state.elapsedSeconds))
+                Text(startDate(for: context.state), style: .timer)
                     .font(.system(.body, design: .monospaced))
                     .fontWeight(.semibold)
                     .foregroundStyle(.white)
@@ -122,9 +122,9 @@ struct SessionLiveActivity: Widget {
 
     // MARK: - Helpers
 
-    private func formatTime(_ seconds: Int) -> String {
-        let m = seconds / 60
-        let s = seconds % 60
-        return String(format: "%d:%02d", m, s)
+    /// Derives the session start date from the elapsed-seconds snapshot so the
+    /// timer keeps ticking between content-state updates.
+    private func startDate(for state: SessionActivityAttributes.ContentState) -> Date {
+        Date(timeIntervalSinceNow: -TimeInterval(state.elapsedSeconds))
     }
 }

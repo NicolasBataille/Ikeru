@@ -1,18 +1,52 @@
 import Foundation
 
-/// Pure-function FSRS-5 scheduling service.
-/// Computes next review state based on the DSR (Difficulty, Stability, Retrievability) model.
+/// Pure-function spaced-repetition scheduler: FSRS-5 pretrained weights on a
+/// **simplified** engine. Computes next review state from the DSR
+/// (Difficulty, Stability, Retrievability) model.
 ///
 /// All functions are static and pure — no side effects, no database access.
 /// Takes FSRSState + Grade, returns a new FSRSState.
+///
+/// **What this is NOT (yet): a full FSRS-5 implementation.** Known deviations:
+/// - **Forgetting curve is the FSRS-4 form**, R(t) = (1 + t/(9·S))^(-1), i.e. a
+///   fixed decay of -1 — not FSRS-5's R(t) = (1 + FACTOR·t/S)^DECAY with
+///   DECAY = -0.5 and FACTOR = 19/81. Same-stability cards therefore decay
+///   faster here than under true FSRS-5.
+/// - **w[6] is unused in the difficulty update.** FSRS-5 computes
+///   ΔD = -w[6]·(G-3) with linear damping before mean reversion; here
+///   `nextDifficulty` only does mean reversion toward D₀(G) using w[7].
+/// - **w[17]/w[18] (short-term memory parameters) are declared but unused.**
+///   FSRS-5's same-day stability update S' = S·e^(w[17]·(G-3+w[18])) is not
+///   implemented.
+/// - **desiredRetention is effectively hardcoded to 0.9.** `dueDate` accepts it
+///   as a parameter (default 0.9) but no production caller overrides it —
+///   `ProfileSettings.desiredRetention` exists but is not wired to the scheduler.
+/// - **Intervals clamp to >= 1 day** (`nextInterval` returns `max(1, …)`), so the
+///   scheduler never produces same-day steps. Same-day relearning of `.again`
+///   cards is handled by the session layer (intra-session re-queue in
+///   `SessionViewModel`), not by FSRS.
+/// - **ReviewLogs are recorded** on every grade (see `CardRepository.gradeCard`)
+///   **but not yet used for per-user weight fitting** — everyone runs on the
+///   pretrained defaults.
+///
+/// Roadmap to full FSRS-5:
+/// 1. Switch `powerForgetCurve` / `nextInterval` to the FSRS-5 curve
+///    (DECAY = -0.5, FACTOR = 19/81), migrating existing stabilities.
+/// 2. Add the w[6] linear-damped ΔD term to `nextDifficulty`.
+/// 3. Implement the short-term (same-day) stability update using w[17]/w[18].
+/// 4. Plumb `ProfileSettings.desiredRetention` through to `dueDate` callers.
+/// 5. Fit per-user weights from accumulated ReviewLogs (optimizer).
 ///
 /// Reference: https://github.com/open-spaced-repetition/fsrs-rs
 public enum FSRSService {
 
     // MARK: - Default FSRS-5 Weights
 
-    /// Default FSRS-5 optimized weights (w[0]..w[18]).
+    /// Default FSRS-5 pretrained weights (w[0]..w[18]).
     /// These are the pretrained defaults from the FSRS-5 paper.
+    /// Note: this simplified engine does not consume all of them —
+    /// w[6], w[17] and w[18] are declared for index compatibility but unused
+    /// (see the type-level doc comment).
     public static let defaultWeights: [Double] = [
         0.4072,  // w[0]:  initial stability for Again
         1.1829,  // w[1]:  initial stability for Hard
@@ -20,7 +54,7 @@ public enum FSRSService {
         15.4722, // w[3]:  initial stability for Easy
         7.2102,  // w[4]:  initial difficulty for Good
         0.5316,  // w[5]:  difficulty grade multiplier
-        1.0651,  // w[6]:  difficulty reversion weight (unused in simplified)
+        1.0651,  // w[6]:  difficulty delta per grade (UNUSED — simplified difficulty update)
         0.0589,  // w[7]:  difficulty mean reversion rate
         1.5747,  // w[8]:  stability success factor
         0.1070,  // w[9]:  stability power decay
@@ -31,8 +65,8 @@ public enum FSRSService {
         1.5489,  // w[14]: failure retrievability factor
         0.2060,  // w[15]: hard penalty
         2.9466,  // w[16]: easy bonus
-        0.2939,  // w[17]: short-term stability factor
-        0.4535,  // w[18]: short-term stability power
+        0.2939,  // w[17]: short-term stability factor (UNUSED — no same-day scheduling)
+        0.4535,  // w[18]: short-term stability offset (UNUSED — no same-day scheduling)
     ]
 
     /// Maximum interval in days (100 years)
@@ -47,7 +81,8 @@ public enum FSRSService {
     ///   - state: The current FSRS state of the card
     ///   - grade: The grade given by the learner
     ///   - now: The current timestamp (defaults to now, injectable for testing)
-    ///   - weights: FSRS weights to use (defaults to FSRS-5 pretrained)
+    ///   - weights: FSRS weights to use (defaults to FSRS-5 pretrained;
+    ///     w[6], w[17], w[18] are ignored by this simplified engine)
     /// - Returns: A new FSRSState with updated scheduling parameters
     public static func schedule(
         state: FSRSState,
@@ -69,9 +104,14 @@ public enum FSRSService {
 
     /// Compute the due date for a given FSRSState, based on desired retention.
     ///
+    /// The resulting interval is always at least 1 day (see `nextInterval`) —
+    /// this scheduler never emits same-day steps.
+    ///
     /// - Parameters:
     ///   - state: The FSRS state of the card
-    ///   - desiredRetention: Target retention rate (0.0–1.0), default 0.9
+    ///   - desiredRetention: Target retention rate (0.0–1.0), default 0.9.
+    ///     No production caller currently overrides this default, so retention
+    ///     is effectively fixed at 0.9 app-wide.
     ///   - now: Current timestamp
     ///   - maxInterval: Maximum interval in days
     /// - Returns: The next due date
@@ -90,6 +130,9 @@ public enum FSRSService {
     /// Compute the current retrievability of a card.
     ///
     /// R(t) = (1 + t / (9 * S)) ^ (-1)
+    ///
+    /// Note: this is the FSRS-4 forgetting curve (fixed decay -1), not the
+    /// FSRS-5 curve — see the type-level doc comment.
     ///
     /// - Parameters:
     ///   - state: The FSRS state of the card
@@ -181,6 +224,10 @@ public enum FSRSService {
     }
 
     /// Power forgetting curve: R(t) = (1 + t / (9 * S)) ^ (-1)
+    ///
+    /// This is the FSRS-4 form (fixed decay -1). FSRS-5 uses
+    /// R(t) = (1 + FACTOR * t / S) ^ DECAY with DECAY = -0.5, FACTOR = 19/81.
+    /// Switching curves requires migrating stored stabilities (see Roadmap).
     private static func powerForgetCurve(elapsedDays: Double, stability: Double) -> Double {
         guard stability > 0 else { return 0 }
         return pow(1 + elapsedDays / (9 * stability), -1)
@@ -199,8 +246,12 @@ public enum FSRSService {
         return weights[4] - exp(weights[5] * (g - 1)) + 1
     }
 
-    /// Next difficulty after a review.
+    /// Next difficulty after a review (simplified).
     /// D' = w[7] * D_0(G) + (1 - w[7]) * D_prev
+    ///
+    /// This is mean reversion only. Full FSRS-5 first applies
+    /// ΔD = -w[6] * (G - 3) with linear damping, then mean-reverts with w[7];
+    /// w[6] is unused here (see Roadmap).
     private static func nextDifficulty(
         currentDifficulty: Double,
         grade: Grade,
@@ -255,10 +306,13 @@ public enum FSRSService {
     }
 
     /// Compute the next interval in days from stability and desired retention.
-    /// interval = S / factor * ((1/R) - 1)
-    /// Since R(t) = (1 + t/(9*S))^(-1), solving for t when R = desiredRetention:
-    /// t = 9 * S * (R^(-1) - 1) ... but actually we solve: R = (1 + t/(9S))^(-1)
-    /// => 1/R = 1 + t/(9S) => t = 9S * (1/R - 1)
+    ///
+    /// Inverts the FSRS-4 forgetting curve R(t) = (1 + t/(9S))^(-1) at
+    /// R = desiredRetention:
+    /// 1/R = 1 + t/(9S) => t = 9S * (1/R - 1)
+    ///
+    /// The result is clamped to >= 1 day, so the scheduler never produces
+    /// same-day steps; same-day relearning is the session layer's job.
     private static func nextInterval(stability: Double, desiredRetention: Double) -> Double {
         guard desiredRetention > 0, desiredRetention < 1, stability > 0 else {
             return 1

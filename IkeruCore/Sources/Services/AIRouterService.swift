@@ -249,7 +249,9 @@ public final class AIRouterService {
         switch complexity {
         case .simple:
             // Latency wins. Prefer on-device, then sub-second Cerebras/Groq.
-            return resolve([.onDevice, .cerebras, .groq])
+            // Gemini closes the chain so users who only configured the
+            // recommended first provider (Gemini) still get cloud coverage.
+            return resolve([.onDevice, .cerebras, .groq, .gemini])
 
         case .medium:
             // Balance latency and quality. Cerebras first, broaden out before falling back.

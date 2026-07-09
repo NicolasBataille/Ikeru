@@ -45,6 +45,17 @@ struct LootBoxServiceTests {
         #expect(highLevel > lowLevel)
     }
 
+    @Test("Required score never demands a pace above one answer per 2.5s")
+    func challengeScoreRespectsPaceCap() {
+        for type in LootBox.ChallengeType.allCases {
+            let score = LootBoxService.challengeRequiredScore(for: type, level: 50)
+            // score / timeLimit <= 1 / 2.5  ⇔  score * 5 <= timeLimit * 2
+            #expect(score * 5 <= type.timeLimitSeconds * 2)
+        }
+        // kanaBlitz specifically: 30s limit caps at 12, not base * 2 = 20.
+        #expect(LootBoxService.challengeRequiredScore(for: .kanaBlitz, level: 50) == 12)
+    }
+
     @Test("Higher level lootbox has more rewards")
     func higherLevelMoreRewards() {
         let lowBox = LootBoxService.generateLootBox(level: 1)

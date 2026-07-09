@@ -1,28 +1,100 @@
 import Foundation
+import Observation
 import SwiftData
 import os
+
+// MARK: - Save Error Surfacing
+
+/// Snapshot of a persistence failure, surfaced via `CardSaveErrorMonitor`.
+/// `message` is a diagnostic description of the underlying error — not
+/// localized UI copy. UI layers presenting it should show their own
+/// localized message.
+public struct CardRepositorySaveError: Sendable, Equatable {
+    /// The repository operation that failed (e.g. "gradeCard").
+    public let operation: String
+    /// Diagnostic description of the underlying error.
+    public let message: String
+    /// When the failure occurred.
+    public let timestamp: Date
+
+    public init(operation: String, message: String, timestamp: Date) {
+        self.operation = operation
+        self.message = message
+        self.timestamp = timestamp
+    }
+}
+
+/// Observable, MainActor-isolated surface for persistence failures.
+///
+/// `CardRepository`'s write methods keep their non-throwing signatures for
+/// call-site compatibility; instead of throwing, a failed
+/// `modelContext.save()` is logged at `.error` and recorded here so SwiftUI
+/// can watch `lastSaveError` (e.g. to show a toast when a grading
+/// transaction fails to persist).
+@Observable
+@MainActor
+public final class CardSaveErrorMonitor {
+
+    /// The most recent save failure, or `nil` if none has occurred.
+    public private(set) var lastSaveError: CardRepositorySaveError? = nil
+
+    public nonisolated init() {}
+
+    /// Record a persistence failure. Internal — only `CardRepository` writes.
+    func record(_ error: CardRepositorySaveError) {
+        lastSaveError = error
+    }
+
+    /// Clear the recorded error (e.g. after the UI has surfaced it).
+    public func clear() {
+        lastSaveError = nil
+    }
+}
 
 /// Thread-safe repository for Card CRUD and query operations.
 /// Uses ModelActor for background thread safety with SwiftData.
 ///
-/// All operations are async and use SwiftData's implicit transaction/autosave
+/// All operations are async and use explicit `modelContext.save()` calls
 /// to ensure atomic writes. The `gradeCard` method atomically updates
 /// the card's FSRS state and creates a ReviewLog entry.
+///
+/// Save failures are never silently swallowed: they are logged at `.error`
+/// and published on `saveErrorMonitor.lastSaveError` for the UI to observe.
 public final class CardRepository: Sendable {
 
     /// The model actor performing thread-safe background operations.
     private let backgroundActor: CardModelActor
+
+    /// Observable surface for persistence failures. UI layers can watch
+    /// `saveErrorMonitor.lastSaveError` to detect failed writes (most
+    /// importantly failed grading transactions).
+    public let saveErrorMonitor: CardSaveErrorMonitor
 
     /// Leech threshold — a card is flagged as leech after this many lapses.
     public static let leechThreshold = 3
 
     public init(modelContainer: ModelContainer) {
         self.backgroundActor = CardModelActor(modelContainer: modelContainer)
+        self.saveErrorMonitor = CardSaveErrorMonitor()
+    }
+
+    /// Log a save failure at `.error` and publish it on `saveErrorMonitor`.
+    private func reportSaveFailure(operation: String, error: any Error) async {
+        Logger.srs.error("Persistence failure in \(operation): \(error.localizedDescription)")
+        await saveErrorMonitor.record(
+            CardRepositorySaveError(
+                operation: operation,
+                message: error.localizedDescription,
+                timestamp: Date()
+            )
+        )
     }
 
     // MARK: - CRUD Operations
 
     /// Create a new card and persist it.
+    /// On save failure the in-memory DTO is still returned (with its real id),
+    /// and the failure is logged and published on `saveErrorMonitor`.
     public func createCard(
         front: String,
         back: String,
@@ -30,13 +102,17 @@ public final class CardRepository: Sendable {
         dueDate: Date = Date(),
         leechFlag: Bool = false
     ) async -> CardDTO {
-        await backgroundActor.createCard(
+        let (dto, saveError) = await backgroundActor.createCard(
             front: front,
             back: back,
             type: type,
             dueDate: dueDate,
             leechFlag: leechFlag
         )
+        if let saveError {
+            await reportSaveFailure(operation: "createCard", error: saveError)
+        }
+        return dto
     }
 
     /// Fetch a card by its ID.
@@ -52,25 +128,47 @@ public final class CardRepository: Sendable {
     /// Attaches any orphan cards (profile == nil) to the active profile.
     /// One-shot migration for users created before per-profile card scoping.
     public func attachOrphanCards() async {
-        await backgroundActor.attachOrphanCards()
+        do {
+            try await backgroundActor.attachOrphanCards()
+        } catch {
+            await reportSaveFailure(operation: "attachOrphanCards", error: error)
+        }
     }
 
     /// Delete a card by its ID.
     public func deleteCard(by id: UUID) async {
-        await backgroundActor.deleteCard(by: id)
+        do {
+            try await backgroundActor.deleteCard(by: id)
+        } catch {
+            await reportSaveFailure(operation: "deleteCard", error: error)
+        }
     }
 
     /// Set (or clear) the JLPT level for a card. Used by `JLPTBackfillService`
     /// to tag existing seed cards on first launch.
     public func setJLPTLevel(_ level: JLPTLevel?, for cardId: UUID) async {
-        await backgroundActor.setJLPTLevel(level, for: cardId)
+        do {
+            try await backgroundActor.setJLPTLevel(level, for: cardId)
+        } catch {
+            await reportSaveFailure(operation: "setJLPTLevel", error: error)
+        }
     }
 
     // MARK: - Query Operations
 
     /// Fetch cards that are due for review before the given date.
+    /// Order is unspecified — use `dueCardsSortedByDueDate(before:)` when
+    /// overdue-first ordering matters (e.g. session composition).
     public func dueCards(before date: Date) async -> [CardDTO] {
         await backgroundActor.dueCards(before: date)
+    }
+
+    /// Fetch cards due before the given date, sorted by `dueDate` ascending
+    /// (most overdue first). Sorting is done in memory for now; moving the
+    /// filter + sort into a `#Predicate`-based `FetchDescriptor` with a
+    /// `SortDescriptor` is future work (see remediation plan item 8.3).
+    public func dueCardsSortedByDueDate(before date: Date) async -> [CardDTO] {
+        await backgroundActor.dueCardsSortedByDueDate(before: date)
     }
 
     /// Fetch cards that are flagged as leeches.
@@ -87,19 +185,25 @@ public final class CardRepository: Sendable {
 
     /// Grade a card: atomically updates the card's FSRS state and creates a ReviewLog.
     /// This is an atomic operation — the card state and review log are persisted together.
+    /// If the save fails, the failure is logged at `.error` and published on
+    /// `saveErrorMonitor` so the UI can warn that the grade did not persist.
     public func gradeCard(
         cardId: UUID,
         grade: Grade,
         responseTimeMs: Int,
         now: Date = Date()
     ) async {
-        await backgroundActor.gradeCard(
-            cardId: cardId,
-            grade: grade,
-            responseTimeMs: responseTimeMs,
-            now: now,
-            leechThreshold: Self.leechThreshold
-        )
+        do {
+            try await backgroundActor.gradeCard(
+                cardId: cardId,
+                grade: grade,
+                responseTimeMs: responseTimeMs,
+                now: now,
+                leechThreshold: Self.leechThreshold
+            )
+        } catch {
+            await reportSaveFailure(operation: "gradeCard", error: error)
+        }
     }
 
     /// Fetch review logs for a given card.
@@ -214,13 +318,16 @@ actor CardModelActor {
 
     // MARK: - CRUD (scoped to active profile)
 
+    /// Creates and persists a card. Returns the DTO (with the real card id)
+    /// alongside an optional save error, so a failed save can be reported
+    /// without losing the caller's handle on the created card.
     func createCard(
         front: String,
         back: String,
         type: CardType,
         dueDate: Date,
         leechFlag: Bool
-    ) -> CardDTO {
+    ) -> (dto: CardDTO, saveError: (any Error)?) {
         let card = Card(
             front: front,
             back: back,
@@ -230,9 +337,13 @@ actor CardModelActor {
         )
         card.profile = fetchActiveProfile()
         modelContext.insert(card)
-        try? modelContext.save()
+        do {
+            try modelContext.save()
+        } catch {
+            return (card.toDTO(), error)
+        }
         Logger.srs.debug("Created card: \(card.front)")
-        return card.toDTO()
+        return (card.toDTO(), nil)
     }
 
     func card(by id: UUID) -> CardDTO? {
@@ -249,17 +360,17 @@ actor CardModelActor {
 
     /// Attach any orphan cards (profile == nil) to the oldest profile.
     /// Safe to call on every launch — no-op once all cards have a profile.
-    func attachOrphanCards() {
+    func attachOrphanCards() throws {
         guard let fallback = fetchActiveProfile() else { return }
         let predicate = #Predicate<Card> { $0.profile == nil }
         let descriptor = FetchDescriptor(predicate: predicate)
         guard let orphans = try? modelContext.fetch(descriptor), !orphans.isEmpty else { return }
         for card in orphans { card.profile = fallback }
-        try? modelContext.save()
+        try modelContext.save()
         Logger.srs.info("Attached \(orphans.count) orphan cards to profile: \(fallback.displayName)")
     }
 
-    func deleteCard(by id: UUID) {
+    func deleteCard(by id: UUID) throws {
         let predicate = #Predicate<Card> { $0.id == id }
         let descriptor = FetchDescriptor(predicate: predicate)
         guard let cards = try? modelContext.fetch(descriptor),
@@ -267,11 +378,11 @@ actor CardModelActor {
             return
         }
         modelContext.delete(card)
-        try? modelContext.save()
+        try modelContext.save()
         Logger.srs.debug("Deleted card: \(card.front)")
     }
 
-    func setJLPTLevel(_ level: JLPTLevel?, for cardId: UUID) {
+    func setJLPTLevel(_ level: JLPTLevel?, for cardId: UUID) throws {
         let predicate = #Predicate<Card> { $0.id == cardId }
         let descriptor = FetchDescriptor(predicate: predicate)
         guard let cards = try? modelContext.fetch(descriptor),
@@ -280,13 +391,21 @@ actor CardModelActor {
             return
         }
         card.jlptLevel = level
-        try? modelContext.save()
+        try modelContext.save()
     }
 
     func dueCards(before date: Date) -> [CardDTO] {
         activeProfileCards()
             .filter { $0.dueDate < date }
             .map { $0.toDTO() }
+    }
+
+    /// Due cards sorted by dueDate ascending (most overdue first).
+    /// In-memory sort for now — future work: `#Predicate` + `SortDescriptor`
+    /// FetchDescriptor so filtering/sorting happen in the store.
+    func dueCardsSortedByDueDate(before date: Date) -> [CardDTO] {
+        dueCards(before: date)
+            .sorted { $0.dueDate < $1.dueDate }
     }
 
     func leechCards() -> [CardDTO] {
@@ -308,7 +427,7 @@ actor CardModelActor {
         responseTimeMs: Int,
         now: Date,
         leechThreshold: Int
-    ) {
+    ) throws {
         let predicate = #Predicate<Card> { $0.id == cardId }
         let descriptor = FetchDescriptor(predicate: predicate)
         guard let cards = try? modelContext.fetch(descriptor),
@@ -342,8 +461,11 @@ actor CardModelActor {
         let log = ReviewLog(card: card, grade: grade, responseTimeMs: responseTimeMs, timestamp: now)
         modelContext.insert(log)
 
-        // Save atomically — both card update and review log persist together
-        try? modelContext.save()
+        // Save atomically — both card update and review log persist together.
+        // A failed save must NOT be swallowed: it would silently desync the
+        // scheduler state from the review history. Propagate to the facade,
+        // which logs and publishes the failure.
+        try modelContext.save()
 
         Logger.srs.debug("Graded card \(card.front): grade=\(grade.rawValue), stability=\(newState.stability), due=\(newDueDate)")
     }

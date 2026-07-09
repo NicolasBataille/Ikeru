@@ -1,0 +1,165 @@
+/* ============================================================
+   device.css — iPhone chrome for the Ikeru design rig.
+   A 393×852 CSS-px viewport (iPhone 15/16 class), dark surround,
+   Dynamic Island, status bar, home indicator. Content scrolls
+   inside the frame. Everything here is rig chrome — nothing in
+   this file ports to SwiftUI.
+   ============================================================ */
+
+:root {
+  --device-w: 393px;
+  --device-h: 852px;
+  --device-radius: 55px;
+  --safe-top: 59px;     /* status bar / Dynamic Island safe area */
+  --safe-bottom: 34px;  /* home indicator safe area */
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  background: #141417;
+  min-height: 100vh;
+}
+
+body {
+  font-family: var(--font-system);
+  color: var(--text-primary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 18px 0 40px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---- Screen-switcher nav (outside the frame) ---- */
+.rig-nav {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+.rig-nav a {
+  color: #8a877f;
+  text-decoration: none;
+  font-size: 12px;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  padding: 5px 12px;
+  border: 1px solid #2c2c31;
+  border-radius: 999px;
+  background: #1a1a1e;
+}
+.rig-nav a.active {
+  color: var(--gold);
+  border-color: #4a3d2c;
+}
+.rig-nav a:hover { color: var(--text-primary); }
+
+/* ---- Device frame ---- */
+.stage { flex: 0 0 auto; }
+
+.device {
+  position: relative;
+  width: var(--device-w);
+  height: var(--device-h);
+  border-radius: var(--device-radius);
+  background: var(--bg);
+  /* titanium band + depth */
+  box-shadow:
+    0 0 0 3px #060607,
+    0 0 0 5px #3a3a3f,
+    0 0 0 6px #1a1a1c,
+    0 30px 90px rgba(0, 0, 0, 0.8);
+  overflow: hidden;
+}
+
+.device-screen {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--device-radius);
+  overflow: hidden;
+  background: var(--bg);
+}
+
+/* Marble paper — the app's per-screen baked textures
+   (MarbleBackground.swift, variant map home=1 session=2 summary=3 rpg=4 auxiliary=5) */
+.device-screen.marble-1 { background: var(--bg) url('../../Ikeru/Resources/Assets.xcassets/Tatami/Marble/marble-1.imageset/marble-1@2x.png') center / cover no-repeat; }
+.device-screen.marble-2 { background: var(--bg) url('../../Ikeru/Resources/Assets.xcassets/Tatami/Marble/marble-2.imageset/marble-2@2x.png') center / cover no-repeat; }
+.device-screen.marble-3 { background: var(--bg) url('../../Ikeru/Resources/Assets.xcassets/Tatami/Marble/marble-3.imageset/marble-3@2x.png') center / cover no-repeat; }
+.device-screen.marble-4 { background: var(--bg) url('../../Ikeru/Resources/Assets.xcassets/Tatami/Marble/marble-4.imageset/marble-4@2x.png') center / cover no-repeat; }
+.device-screen.marble-5 { background: var(--bg) url('../../Ikeru/Resources/Assets.xcassets/Tatami/Marble/marble-5.imageset/marble-5@2x.png') center / cover no-repeat; }
+
+/* ---- Dynamic Island ---- */
+.dynamic-island {
+  position: absolute;
+  top: 11px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 126px;
+  height: 37px;
+  border-radius: 20px;
+  background: #000;
+  z-index: 80;
+}
+
+/* ---- Status bar ---- */
+.status-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--safe-top);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 34px 0 46px;
+  z-index: 70;
+  color: var(--text-primary);
+  pointer-events: none;
+}
+.status-bar .sb-time {
+  font: 600 16px/1 var(--font-system);
+  letter-spacing: -0.2px;
+  font-variant-numeric: tabular-nums;
+}
+.status-bar .sb-icons {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.status-bar .sb-icons svg { display: block; }
+.status-bar.hidden { display: none; }
+
+/* ---- Home indicator ---- */
+.home-indicator {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 139px;
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(245, 242, 236, 0.32);
+  z-index: 80;
+  pointer-events: none;
+}
+
+/* ---- Scrollable screen content ---- */
+.screen {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+}
+.screen::-webkit-scrollbar { display: none; }
+
+/* Default content column: safe-area top + horizontal padding used by
+   most screens (24 = IkeruTheme.Spacing.lg on Home, 22 on Tatami screens). */
+.screen-inner {
+  padding: calc(var(--safe-top) + 10px) 22px 140px; /* bottom 140 = space for floating tab bar (HomeView.swift:212) */
+  display: flex;
+  flex-direction: column;
+}
+.screen-inner.no-tabbar { padding-bottom: calc(var(--safe-bottom) + 12px); }

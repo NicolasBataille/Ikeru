@@ -141,9 +141,21 @@ public struct DefaultSessionPlanner: SessionPlanner {
     /// (`dueDate <= now` alone previously re-served a just-graded card; the
     /// reps gate additionally stops the unlearned-katakana leak.)
     private func pickReviews(from cards: [CardDTO], secondsBudget: Int, now: Date = Date()) -> [ExerciseItem] {
+        // Most-overdue first: sort the eligible cards by dueDate ascending
+        // (stable tiebreak on input order) so budget truncation always keeps
+        // the most urgent reviews when not everything fits.
+        let ordered = cards
+            .filter { $0.dueDate <= now && $0.fsrsState.reps > 0 }
+            .enumerated()
+            .sorted { lhs, rhs in
+                lhs.element.dueDate != rhs.element.dueDate
+                    ? lhs.element.dueDate < rhs.element.dueDate
+                    : lhs.offset < rhs.offset
+            }
+            .map(\.element)
         var items: [ExerciseItem] = []
         var spent = 0
-        for card in cards where card.dueDate <= now && card.fsrsState.reps > 0 {
+        for card in ordered {
             let exercise = ExerciseItem.srsReview(card)
             if spent + exercise.estimatedDurationSeconds > secondsBudget { break }
             items.append(exercise)

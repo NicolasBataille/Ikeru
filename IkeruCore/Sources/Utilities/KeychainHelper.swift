@@ -13,7 +13,9 @@ public enum KeychainKeys {
     public static let cerebrasAPIKey = "com.ikeru.cerebras-api-key"
     public static let githubModelsAPIKey = "com.ikeru.github-models-api-key"
 
-    /// Legacy key kept for backwards-compatible read-only migration.
+    /// Legacy key kept only for the one-time migration performed by `ClaudeProvider`:
+    /// if a value exists here and `claudeAPIKey` is empty, it is copied to
+    /// `claudeAPIKey` and this entry is deleted.
     @available(*, deprecated, message: "Anthropic closed third-party subscription auth. Use claudeAPIKey for paid API access.")
     public static let claudeSessionToken = "com.ikeru.claude-session-token"
 }

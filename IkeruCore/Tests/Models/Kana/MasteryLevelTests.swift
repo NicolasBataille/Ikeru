@@ -17,10 +17,42 @@ struct MasteryLevelTests {
         #expect(MasteryLevel.from(fsrsState: s) == .learning)
     }
 
-    @Test("stability == 1.0 exactly → .familiar (boundary)")
+    @Test("Single rep stays .learning even with familiar-range stability (one 'Good' press)")
+    func singleGoodPressStaysLearning() {
+        // One 'Good' on a new card yields stability ≈ 3.13 with reps == 1.
+        let s = FSRSState(difficulty: 5, stability: 3.13, reps: 1, lapses: 0, lastReview: nil)
+        #expect(MasteryLevel.from(fsrsState: s) == .learning)
+    }
+
+    @Test("Single rep stays .learning even with mastered-range stability (one 'Easy' press)")
+    func singleEasyPressStaysLearning() {
+        // One 'Easy' on a new card yields stability ≈ 15.47 with reps == 1.
+        let s = FSRSState(difficulty: 5, stability: 15.47, reps: 1, lapses: 0, lastReview: nil)
+        #expect(MasteryLevel.from(fsrsState: s) == .learning)
+    }
+
+    @Test("Single rep with anchored-range stability stays .learning")
+    func singleRepHighStabilityStaysLearning() {
+        let s = FSRSState(difficulty: 5, stability: 100.0, reps: 1, lapses: 0, lastReview: nil)
+        #expect(MasteryLevel.from(fsrsState: s) == .learning)
+    }
+
+    @Test("stability == 1.0 exactly with reps >= 2 → .familiar (boundary)")
     func familiarAtLowerBoundary() {
-        let s = FSRSState(difficulty: 5, stability: 1.0, reps: 1, lapses: 0, lastReview: nil)
+        let s = FSRSState(difficulty: 5, stability: 1.0, reps: 2, lapses: 0, lastReview: nil)
         #expect(MasteryLevel.from(fsrsState: s) == .familiar)
+    }
+
+    @Test("reps == 2 exactly unlocks familiar-or-better tiers (boundary)")
+    func repsBoundaryUnlocksFamiliarPlus() {
+        let familiar = FSRSState(difficulty: 5, stability: 3.13, reps: 2, lapses: 0, lastReview: nil)
+        #expect(MasteryLevel.from(fsrsState: familiar) == .familiar)
+
+        let mastered = FSRSState(difficulty: 5, stability: 15.47, reps: 2, lapses: 0, lastReview: nil)
+        #expect(MasteryLevel.from(fsrsState: mastered) == .mastered)
+
+        let anchored = FSRSState(difficulty: 5, stability: 60.0, reps: 2, lapses: 0, lastReview: nil)
+        #expect(MasteryLevel.from(fsrsState: anchored) == .anchored)
     }
 
     @Test("stability == 7.0 exactly → .mastered (boundary)")

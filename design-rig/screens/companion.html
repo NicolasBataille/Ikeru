@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ikeru rig — Companion</title>
+<link rel="stylesheet" href="../css/tokens.css">
+<link rel="stylesheet" href="../css/device.css">
+<link rel="stylesheet" href="../css/components.css">
+<script defer src="../js/rig.js"></script>
+<style>
+  /* CompanionTabView.swift header + ConversationView chat surface */
+  .comp-col { gap: 16px; height: 100%; display: flex; flex-direction: column;
+              padding: calc(var(--safe-top) + 6px) 22px 0; }
+
+  .comp-header .title {
+    font: 500 24px/1.25 var(--font-serif);
+    color: var(--text-primary);
+    margin-top: 4px;
+  }
+
+  /* Sakura tutor bar (CompanionTabView tutorCard, condensed for the chat surface) */
+  .tutor-bar { display: flex; align-items: center; gap: 14px; }
+  .avatar {
+    position: relative;
+    width: 48px; height: 48px;
+    display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, rgb(42,34,26), rgb(20,17,13)); /* (CompanionTabView.swift:96-101) */
+    border: 1px solid var(--gold-dim);
+    font: 500 22px/1 var(--font-serif);
+    color: var(--gold);
+    flex-shrink: 0;
+    --room-corner: var(--gold);
+    --sumi-size: 8px;
+    --sumi-weight: 1.2px;
+    --sumi-inset: 1px;
+  }
+  .tutor-bar .name { font: 600 16px/1.2 var(--font-system); color: var(--text-primary); }
+  .tutor-bar .desc { font: italic 400 11px/1.3 var(--font-system); color: var(--paper-ghost); }
+  .online { display: flex; align-items: center; gap: 6px; }
+  .online .mon { --mon-size: 10px; color: rgb(157,186,124); }
+  .online .k { font: 600 10px/1 var(--font-system); letter-spacing: 1.2px; color: var(--text-secondary); text-transform: uppercase; }
+
+  /* chat thread */
+  .thread {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow-y: auto;
+    padding: 6px 0 12px;
+  }
+  .bubble ruby { ruby-position: over; }
+
+  /* inline quiz card (InlineQuizView inside a companion bubble) */
+  .quiz-card {
+    margin-top: 8px;
+    padding: 12px;
+    background: rgba(10,10,15,0.45);
+    border: 0.6px solid rgba(212,165,116,0.35);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .quiz-card .q { display: flex; align-items: center; gap: 10px; }
+  .quiz-card .q .glyph { font: 700 34px/1 var(--font-serif); color: var(--text-primary); }
+  .quiz-card .q .prompt { font: 600 10px/1.4 var(--font-system); letter-spacing: 1.2px; color: var(--paper-ghost); text-transform: uppercase; }
+  .quiz-card .opts { display: flex; flex-direction: column; gap: 6px; }
+  .quiz-card .opt {
+    padding: 9px 12px;
+    background: rgba(255,255,255,0.04);
+    border: 0.6px solid rgba(255,255,255,0.10);
+    color: var(--text-primary);
+    font: 400 13px/1 var(--font-system);
+    text-align: left;
+    cursor: pointer;
+  }
+  .quiz-card .opt.correct {
+    border-color: rgba(143,188,160,0.7);
+    background: rgba(143,188,160,0.12);
+    color: var(--success);
+  }
+
+  /* input bar */
+  .input-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px calc(var(--safe-bottom) + 10px);
+    background: rgba(12,12,18,0.6);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-top: 0.6px solid rgba(255,255,255,0.08);
+    margin: 0 -22px;
+  }
+  .input-bar .field {
+    flex: 1;
+    padding: 11px 16px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.05);
+    border: 0.6px solid rgba(255,255,255,0.10);
+    color: var(--text-tertiary);
+    font: 400 14px/1.2 var(--font-system);
+  }
+  .input-bar .send {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    border: none;
+    background: var(--grad-gold);
+    color: #1A1218;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+</style>
+</head>
+<body data-screen="companion" data-marble="5">
+<main class="screen">
+  <div class="comp-col">
+
+    <!-- Header -->
+    <header class="comp-header">
+      <div class="bilingual">
+        <span class="jp">対話</span><span class="dot">·</span><span class="chrome">Talk</span>
+      </div>
+      <div class="title">Sakura、 your sensei。</div>
+    </header>
+
+    <!-- Tutor bar -->
+    <div class="tutor-bar">
+      <div class="avatar has-sumi">桜</div>
+      <div class="col" style="gap:2px;">
+        <span class="name">Sakura</span>
+        <span class="desc">Patient. Specialty: keigo</span>
+      </div>
+      <span class="spacer"></span>
+      <div class="online"><span class="mon" data-kind="maru"></span><span class="k">Online</span></div>
+    </div>
+
+    <div class="kintsugi-hairline"></div>
+
+    <!-- Chat thread with furigana ruby text -->
+    <div class="thread">
+
+      <div class="chat-row chat-row--companion">
+        <div class="bubble bubble--companion">
+          <span class="jp-line">こんにちは！<ruby>今日<rt>きょう</rt></ruby>は<ruby>食<rt>た</rt></ruby>べ<ruby>物<rt>もの</rt></ruby>の<ruby>言葉<rt>ことば</rt></ruby>を<ruby>練習<rt>れんしゅう</rt></ruby>しましょう。</span><br>
+          Let's practice food words today. Ready?
+        </div>
+      </div>
+
+      <div class="chat-row chat-row--user">
+        <div class="bubble bubble--user">はい！ Let's go 🙂</div>
+      </div>
+
+      <div class="chat-row chat-row--companion">
+        <div class="bubble bubble--companion">
+          <span class="jp-line">いいですね。「<ruby>朝<rt>あさ</rt></ruby>ご<ruby>飯<rt>はん</rt></ruby>」は "breakfast" です。</span><br>
+          The kanji 食 appears in many food words — it means "to eat".
+        </div>
+      </div>
+
+      <div class="chat-row chat-row--companion">
+        <div class="bubble bubble--companion">
+          <span class="jp-line">では、クイズです。</span>
+          <!-- inline quiz card (ChatBubbleView .quiz block → InlineQuizView) -->
+          <div class="quiz-card">
+            <div class="q">
+              <span class="glyph">食</span>
+              <span class="prompt">What does this kanji mean?</span>
+            </div>
+            <div class="opts">
+              <button class="opt correct">to eat ✓</button>
+              <button class="opt">to drink</button>
+              <button class="opt">to read</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="chat-row chat-row--user">
+        <div class="bubble bubble--user">
+          <ruby>食<rt>た</rt></ruby>べる — to eat!
+        </div>
+      </div>
+
+      <div class="chat-row chat-row--companion">
+        <div class="bubble bubble--companion">
+          <span class="jp-line"><ruby>正解<rt>せいかい</rt></ruby>です！すごい！</span><br>
+          Correct! You're getting the hang of this.
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Input bar -->
+    <div class="input-bar">
+      <div class="field">Reply in Japanese or English…</div>
+      <button class="send" aria-label="Send">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><path d="M1.5 8 L14.5 1.5 11 8 14.5 14.5 Z"/></svg>
+      </button>
+    </div>
+
+  </div>
+</main>
+</body>
+</html>
