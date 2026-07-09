@@ -75,11 +75,11 @@ struct ExerciseTransitionContainer: View {
         case .srsReview:
             srsReviewView
 
-        case .kanjiStudy(let character):
+        case .kanjiStudy(let card):
             placeholderExerciseView(
                 icon: sfSymbol(for: .reading),
                 title: "Kanji Study",
-                detail: character,
+                detail: card.front,
                 skill: .reading
             )
 
@@ -91,11 +91,11 @@ struct ExerciseTransitionContainer: View {
                 skill: .reading
             )
 
-        case .writingPractice(let text):
+        case .writingPractice(let card):
             placeholderExerciseView(
                 icon: sfSymbol(for: .writing),
                 title: "Writing Practice",
-                detail: text,
+                detail: card.front,
                 skill: .writing
             )
 
@@ -313,9 +313,9 @@ extension ExerciseItem {
     var stableID: String {
         switch self {
         case .srsReview(let card): "srs-\(card.id)"
-        case .kanjiStudy(let char): "kanji-\(char)"
+        case .kanjiStudy(let card): "kanji-\(card.id)"
         case .grammarExercise(let id): "grammar-\(id)"
-        case .writingPractice(let text): "writing-\(text)"
+        case .writingPractice(let card): "writing-\(card.id)"
         case .listeningExercise(let id): "listening-\(id)"
         case .speakingExercise(let id): "speaking-\(id)"
         case .sentenceConstruction(let id): "sentence-\(id)"

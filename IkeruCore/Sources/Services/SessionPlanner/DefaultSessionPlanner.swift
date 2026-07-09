@@ -108,7 +108,11 @@ public struct DefaultSessionPlanner: SessionPlanner {
         var safety = 0
         while spent < totalSec, safety < 100 {
             let type = ordered[idx % ordered.count]
-            let item = synthesise(type: type, availableCards: inputs.availableCards)
+            guard let item = synthesise(type: type, availableCards: inputs.availableCards) else {
+                idx += 1
+                safety += 1
+                continue
+            }
             if spent + item.estimatedDurationSeconds > totalSec, !exercises.isEmpty { break }
             exercises.append(item)
             spent += item.estimatedDurationSeconds
@@ -184,7 +188,11 @@ public struct DefaultSessionPlanner: SessionPlanner {
         var safety = 0
         while spent < secondsBudget, safety < 100 {
             let type = candidates[idx % candidates.count]
-            let item = synthesise(type: type, availableCards: availableCards)
+            guard let item = synthesise(type: type, availableCards: availableCards) else {
+                idx += 1
+                safety += 1
+                continue
+            }
             if spent + item.estimatedDurationSeconds > secondsBudget { break }
             items.append(item)
             spent += item.estimatedDurationSeconds
@@ -210,7 +218,11 @@ public struct DefaultSessionPlanner: SessionPlanner {
         var safety = 0
         while spent < secondsBudget, safety < 100 {
             let type = sorted[(day + idx) % sorted.count]
-            let item = synthesise(type: type, availableCards: availableCards)
+            guard let item = synthesise(type: type, availableCards: availableCards) else {
+                idx += 1
+                safety += 1
+                continue
+            }
             if spent + item.estimatedDurationSeconds > secondsBudget { break }
             items.append(item)
             spent += item.estimatedDurationSeconds
@@ -254,21 +266,27 @@ public struct DefaultSessionPlanner: SessionPlanner {
     }
 
     /// Maps an `ExerciseType` to a concrete `ExerciseItem` payload.
-    /// Where content isn't available yet (e.g., reading passages), uses
-    /// a placeholder UUID so the planner can return a structurally valid
-    /// plan; downstream UI may show a "content coming soon" notice.
-    private func synthesise(type: ExerciseType, availableCards: [CardDTO]) -> ExerciseItem {
+    ///
+    /// Returns `nil` when the type requires a real backing card that isn't
+    /// available (kanji study / writing practice with no kanji card in the
+    /// pool): we never fabricate a card, because a synthetic card can't be
+    /// honestly FSRS-graded. Callers skip `nil` results. Content-backed kinds
+    /// that don't have a real content source yet (reading passages, listening,
+    /// etc.) still use a placeholder UUID so the planner can return a
+    /// structurally valid plan; those are filtered by `finalize` until wired.
+    private func synthesise(type: ExerciseType, availableCards: [CardDTO]) -> ExerciseItem? {
         switch type {
         case .kanaStudy, .kanjiStudy:
-            // KNOWN ISSUE: kanaStudy synthesises an .kanjiStudy ExerciseItem
+            // KNOWN ISSUE: kanaStudy synthesises a .kanjiStudy ExerciseItem
             // payload because ExerciseItem has no .kanaStudy case yet. This
             // means a kana drill is reported as 60s (kanjiStudy duration)
             // instead of the 25s the type-level estimate uses, slightly
             // inflating the plan's reported duration. Tracked as a
-            // model-level follow-up: add `case kanaStudy(String)` to
+            // model-level follow-up: add `case kanaStudy(CardDTO)` to
             // ExerciseItem and route here.
             let kanjiCards = availableCards.filter { $0.type == .kanji }
-            return .kanjiStudy(kanjiCards.randomElement()?.front ?? "\u{4E00}")
+            guard let card = kanjiCards.randomElement() else { return nil }
+            return .kanjiStudy(card)
         case .vocabularyStudy:
             return .vocabularyStudy(UUID())
         case .listeningSubtitled, .listeningUnsubtitled:
@@ -283,7 +301,8 @@ public struct DefaultSessionPlanner: SessionPlanner {
             return .readingPassage(UUID())
         case .writingPractice:
             let kanjiCards = availableCards.filter { $0.type == .kanji }
-            return .writingPractice(kanjiCards.randomElement()?.front ?? "\u{4E00}")
+            guard let card = kanjiCards.randomElement() else { return nil }
+            return .writingPractice(card)
         case .speakingPractice, .sakuraConversation:
             return .speakingExercise(UUID())
         }
