@@ -47,18 +47,10 @@ struct IkeruApp: App {
 
     init() {
         do {
-            let schema = Schema([
-                UserProfile.self,
-                Card.self,
-                ReviewLog.self,
-                RPGState.self,
-                MnemonicCache.self,
-                CompanionChatMessage.self,
-                AssetManifest.self,
-                VocabularyEntry.self,
-                VocabularyEncounter.self,
-                DailyTerm.self,
-            ])
+            // Versioned schema baseline (IkeruSchemaV1) + migration plan so future
+            // @Model changes migrate explicitly instead of relying on implicit
+            // lightweight migration. See IkeruSchema.swift in IkeruCore.
+            let schema = Schema(versionedSchema: IkeruSchemaV1.self)
             let config = ModelConfiguration(
                 "Ikeru",
                 schema: schema,
@@ -66,6 +58,7 @@ struct IkeruApp: App {
             )
             modelContainer = try ModelContainer(
                 for: schema,
+                migrationPlan: IkeruMigrationPlan.self,
                 configurations: [config]
             )
         } catch {
