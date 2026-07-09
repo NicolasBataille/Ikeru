@@ -88,9 +88,17 @@ public final class SessionViewModel {
     /// double-counted on the summary screen.
     private var newItemCountedIDs: Set<UUID> = []
 
-    /// Whether the session is complete (all cards reviewed).
+    /// Whether the session is complete (all exercises finished).
+    ///
+    /// Gated on the exercise list, NOT the SRS card queue. Once non-SRS
+    /// exercises can interleave with `.srsReview` items, `currentIndex` (an
+    /// SRS-only pointer into `sessionQueue`) and `currentExerciseIndex` no
+    /// longer move in lockstep, and a non-SRS exercise scheduled after the last
+    /// SRS card must still be presented rather than silently dropped. For a
+    /// pure-SRS session the two pointers advance together, so this stays exactly
+    /// equivalent to the previous `currentIndex >= sessionQueue.count`.
     public var isSessionComplete: Bool {
-        isActive && currentIndex >= sessionQueue.count
+        isActive && currentExerciseIndex >= sessionExercises.count
     }
 
     /// Whether the session should end now — queue exhausted OR the
@@ -728,37 +736,181 @@ public final class SessionViewModel {
             await persistLootBox(box)
         }
 
-        if shouldEndSession {
-            stopTimer()
-            await finalizeSession()
-            await liveActivityManager.endActivity(
-                elapsedSeconds: Int(elapsedTime),
-                completedCount: reviewedCount,
-                totalCount: sessionQueue.count,
-                xpEarned: xpEarned,
-                streakCount: consecutiveCorrect
+        await finishSessionIfNeeded()
+    }
+
+    /// Ends and finalizes the session when it should stop — exercise-list
+    /// exhaustion OR the time-budget policy firing. Shared by `gradeAndAdvance`
+    /// (SRS deck path) and `completeCurrentExercise` (non-SRS drill path) so both
+    /// routes finalize identically. No-op until `shouldEndSession` is true.
+    private func finishSessionIfNeeded() async {
+        guard shouldEndSession else { return }
+        stopTimer()
+        await finalizeSession()
+        await liveActivityManager.endActivity(
+            elapsedSeconds: Int(elapsedTime),
+            completedCount: reviewedCount,
+            totalCount: sessionQueue.count,
+            xpEarned: xpEarned,
+            streakCount: consecutiveCorrect
+        )
+        // Force BOTH pointers past their ends so views that observe
+        // `isSessionComplete` (computed: currentExerciseIndex >=
+        // sessionExercises.count) route to the summary even when the time
+        // budget — not exercise-list exhaustion — fired the end. The two guards
+        // are independent because the SRS queue and the exercise list can now
+        // differ in length; draining only one would leave the session neither
+        // complete nor advancing.
+        let queueDrained = reviewedCount >= sessionQueue.count
+        if currentIndex < sessionQueue.count {
+            currentIndex = sessionQueue.count
+        }
+        if currentExerciseIndex < sessionExercises.count {
+            currentExerciseIndex = sessionExercises.count
+        }
+        let budgetMinutes = self.endPolicy?.durationBudgetMinutes ?? 0
+        let queueLength = self.sessionQueue.count
+        if queueDrained {
+            Logger.ui.info(
+                "session.ended.queue durationMinutes=\(budgetMinutes, privacy: .public) elapsedSeconds=\(Int(self.elapsedTime), privacy: .public) completedCount=\(self.reviewedCount, privacy: .public) queueLength=\(queueLength, privacy: .public) xpEarned=\(self.xpEarned, privacy: .public)"
             )
-            // Force the queue pointer past the last card so views that
-            // observe `isSessionComplete` (computed: currentIndex >=
-            // sessionQueue.count) route to the summary even when the time
-            // budget — not the queue — fired the end.
-            let queueDrained = reviewedCount >= sessionQueue.count
-            if currentIndex < sessionQueue.count {
-                currentIndex = sessionQueue.count
-                currentExerciseIndex = sessionExercises.count
-            }
-            let budgetMinutes = self.endPolicy?.durationBudgetMinutes ?? 0
-            let queueLength = self.sessionQueue.count
-            if queueDrained {
-                Logger.ui.info(
-                    "session.ended.queue durationMinutes=\(budgetMinutes, privacy: .public) elapsedSeconds=\(Int(self.elapsedTime), privacy: .public) completedCount=\(self.reviewedCount, privacy: .public) queueLength=\(queueLength, privacy: .public) xpEarned=\(self.xpEarned, privacy: .public)"
-                )
-            } else {
-                Logger.ui.info(
-                    "session.ended.budget durationMinutes=\(budgetMinutes, privacy: .public) elapsedSeconds=\(Int(self.elapsedTime), privacy: .public) completedCount=\(self.reviewedCount, privacy: .public) queueLength=\(queueLength, privacy: .public) xpEarned=\(self.xpEarned, privacy: .public)"
-                )
+        } else {
+            Logger.ui.info(
+                "session.ended.budget durationMinutes=\(budgetMinutes, privacy: .public) elapsedSeconds=\(Int(self.elapsedTime), privacy: .public) completedCount=\(self.reviewedCount, privacy: .public) queueLength=\(queueLength, privacy: .public) xpEarned=\(self.xpEarned, privacy: .public)"
+            )
+        }
+    }
+
+    /// Single completion entry point for a NON-SRS exercise (kanji study,
+    /// writing, sentence construction, listening, …) surfaced by the immersive
+    /// drill container. SRS flashcards keep grading through `gradeAndAdvance`;
+    /// this method exists so a non-card exercise can be completed without
+    /// corrupting the SRS card-queue pointer.
+    ///
+    /// Index discipline (the core of the 4.1 decoupling):
+    /// - `currentExerciseIndex` ALWAYS advances — every exercise is consumed.
+    /// - `currentIndex` (the `sessionQueue` pointer) advances ONLY for
+    ///   `.srsReview`. `sessionQueue` is built from `.srsReview` payloads alone,
+    ///   so a `.kanjiStudy` card is never in it; advancing the queue pointer for
+    ///   it would over-run the queue and mis-grade the next real review.
+    ///   Invariant held: `currentIndex` == number of completed `.srsReview`
+    ///   items == index into `sessionQueue`.
+    /// - `.kanjiStudy` still writes a real FSRS grade against its backing
+    ///   `CardDTO` (the 4.4 hook) but does NOT touch `currentIndex`; every other
+    ///   non-SRS kind is XP-only.
+    ///
+    /// This path is not yet reachable in production (`DefaultSessionPlanner`
+    /// still filters the exercise list to `.srsReview` only); it is exercised by
+    /// the decoupling regression tests and is the foundation the drill views
+    /// will wire into in a later step.
+    public func completeCurrentExercise(grade: Grade) async {
+        guard let exercise = currentExercise else { return }
+
+        // SRS reviews grade through the deck path so their full card-centric
+        // behavior (mistake tracking, same-day requeue, mastery / leech / loot
+        // detection, new-item counting) is preserved exactly.
+        if case .srsReview = exercise {
+            await gradeAndAdvance(grade: grade)
+            return
+        }
+
+        let responseTimeMs = Int(Date().timeIntervalSince(cardStartTime) * 1000)
+
+        // Only `.kanjiStudy` carries a real, gradeable card. Write its FSRS
+        // grade WITHOUT advancing `currentIndex` (its card is not in
+        // `sessionQueue`). All other non-SRS kinds are XP-only for now.
+        if case .kanjiStudy(let card) = exercise {
+            Logger.srs.debug(
+                "Grading kanjiStudy card \(card.front): grade=\(grade.rawValue), responseTime=\(responseTimeMs)ms"
+            )
+            await cardRepository.gradeCard(
+                cardId: card.id,
+                grade: grade,
+                responseTimeMs: responseTimeMs
+            )
+            if cardRepository.saveErrorMonitor.lastSaveError != nil {
+                cardRepository.saveErrorMonitor.clear()
+                gradeSaveFailureCount += 1
             }
         }
+
+        // Award XP for the exercise kind (per-type × JLPT-level multiplier).
+        // `grade` is forwarded for `.perGrade` kinds (e.g. kanjiStudy) and
+        // ignored by the rule table for `.perCompletion` kinds.
+        let resolvedType = exerciseType(for: exercise)
+        let xpAmount = ExerciseXP.award(
+            type: resolvedType,
+            level: sessionJLPTLevel,
+            grade: grade
+        )
+        let result = RPGService.awardXP(
+            amount: xpAmount,
+            currentXP: totalXP,
+            currentLevel: currentLevel,
+            totalReviews: reviewedCount
+        )
+        totalXP = result.newXP
+        currentLevel = result.newLevel
+        xpEarned += result.xpAwarded
+        lastXPGained = result.xpAwarded
+
+        // Record per-skill attribution into the session ledger; surfaces on
+        // SessionSummaryView's four-winds row.
+        let recordedType = resolvedType
+        let recordedAmount = xpAmount
+        Task { [ledger] in
+            await ledger.record(xp: recordedAmount, exerciseType: recordedType)
+            let snap = await ledger.snapshot()
+            await MainActor.run { self.skillContribution = snap }
+        }
+
+        // Persist RPG state.
+        await persistRPGState()
+
+        // Check for level-up.
+        if result.didLevelUp {
+            levelUpLevel = result.newLevel
+        }
+
+        // Track consecutive / total correct (display only).
+        let isCorrect = grade == .good || grade == .easy
+        if isCorrect {
+            consecutiveCorrect += 1
+            correctCount += 1
+        } else {
+            consecutiveCorrect = 0
+        }
+
+        // `reviewedCount` counts completed exercises (not just SRS cards): it
+        // gates the time-budget policy's `completedCount`, the endSession
+        // zero-skip, the lootbox milestone, the Live Activity, and the abandon
+        // label — so a non-SRS completion must bump it too.
+        reviewedCount += 1
+        cardStartTime = Date()
+
+        // Update Live Activity with current progress (label = the just-completed
+        // exercise, mirroring gradeAndAdvance's ordering).
+        let exerciseLabel = currentExercise.map { exerciseDisplayName($0) } ?? "Review"
+        await liveActivityManager.updateActivity(
+            elapsedSeconds: Int(elapsedTime),
+            exerciseType: exerciseLabel,
+            completedCount: reviewedCount,
+            totalCount: sessionExercises.count,
+            xpEarned: xpEarned,
+            streakCount: consecutiveCorrect
+        )
+
+        // Advance the exercise pointer (never the SRS queue pointer here).
+        advanceToNextExercise()
+
+        // Check for lootbox milestone (every 25 completions in session).
+        if LootBoxService.shouldAwardLootBox(reviewsInSession: reviewedCount) {
+            let box = LootBoxService.generateLootBox(level: currentLevel)
+            earnedLootBox = box
+            await persistLootBox(box)
+        }
+
+        await finishSessionIfNeeded()
     }
 
     // MARK: - Session Finalization
@@ -1039,6 +1191,26 @@ public final class SessionViewModel {
         }
     }
 
+    /// Maps ANY `ExerciseItem` kind to the matching `ExerciseType` for XP
+    /// attribution via `ExerciseXP.award`. `.srsReview` routes by its card's
+    /// `CardType` (same rule as `exerciseTypeForCurrentReview`); the non-SRS
+    /// kinds map to their capability identifier. Used by
+    /// `completeCurrentExercise` so drill exercises award XP for the right skill.
+    private func exerciseType(for exercise: ExerciseItem) -> ExerciseType {
+        switch exercise {
+        case .srsReview(let card):  return exerciseTypeForCurrentReview(card: card)
+        case .kanjiStudy:           return .kanjiStudy
+        case .grammarExercise:      return .grammarExercise
+        case .vocabularyStudy:      return .vocabularyStudy
+        case .fillInBlank:          return .fillInBlank
+        case .readingPassage:       return .readingPassage
+        case .writingPractice:      return .writingPractice
+        case .listeningExercise:    return .listeningSubtitled
+        case .speakingExercise:     return .speakingPractice
+        case .sentenceConstruction: return .sentenceConstruction
+        }
+    }
+
     /// Sets `oneMinuteRemainingFired` once when elapsed crosses the
     /// (budget − 60s) threshold. Idempotent — drives a single toast.
     private func checkOneMinuteRemaining() {
@@ -1208,14 +1380,28 @@ public final class SessionViewModel {
         guard retries < Self.maxRetriesPerCard else { return }
         retryCounts[card.id] = retries + 1
         if sessionMode == .reviewMistakes {
+            // Append to both ends — the appended `.srsReview` is the last
+            // card-backed exercise, so its queue slot is simply the current
+            // queue length; correspondence is preserved.
             sessionQueue.append(card)
             sessionExercises.append(.srsReview(card))
         } else {
             let offset = Int.random(in: 3...5)
-            let queueSlot = min(currentIndex + 1 + offset, sessionQueue.count)
-            sessionQueue.insert(card, at: queueSlot)
             let exerciseSlot = min(currentExerciseIndex + 1 + offset, sessionExercises.count)
+            // Derive the SRS-queue slot FROM the exercise slot so the two arrays
+            // stay in lockstep when non-SRS exercises interleave: `sessionQueue`
+            // holds only `.srsReview` payloads, so the requeued card's queue
+            // position is the number of `.srsReview` items preceding its
+            // exercise-list slot. Computing an independent `currentIndex + offset`
+            // (the old behavior) desyncs the two the moment a non-SRS item sits
+            // between the pointers, making the deck grade the wrong card. In a
+            // pure-SRS session every preceding item is `.srsReview`, so this
+            // equals the old `currentIndex + 1 + offset` exactly.
+            let queueSlot = sessionExercises[..<exerciseSlot].reduce(into: 0) { count, item in
+                if case .srsReview = item { count += 1 }
+            }
             sessionExercises.insert(.srsReview(card), at: exerciseSlot)
+            sessionQueue.insert(card, at: queueSlot)
         }
         // The end policy captured the queue length at session start; grow it in
         // lockstep so the queue-exhaustion check doesn't fire before the
