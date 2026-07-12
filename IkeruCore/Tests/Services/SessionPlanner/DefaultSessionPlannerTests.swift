@@ -105,8 +105,9 @@ struct DefaultSessionPlannerStudyTests {
     @Test("Study-custom of still-filtered (Tier-3) types yields an empty session")
     func studyCustomPlaceholderOnlyIsEmpty() async {
         // study-custom synthesises only the selected typed exercises. Here they
-        // resolve to still-filtered kinds — kanaStudy needs a kanji card (none
-        // in this vocabulary-only pool → nil) and grammarExercise is Tier-3
+        // resolve to non-scheduling kinds — kanaStudy synthesises nothing (kana
+        // is not an SRS card, so there is no in-session unit — see
+        // kanaStudyNeverSynthesisesKanjiDrill) and grammarExercise is Tier-3
         // (filtered) — so after the allowlist the plan is empty. (vocabularyStudy
         // is now LIVE — see vocabularyStudySurvives — so it is excluded here.)
         let cards = (0..<10).map { _ in fixtureDueCard() }
@@ -127,8 +128,9 @@ struct DefaultSessionPlannerStudyTests {
     @Test("Still-filtered (Tier-3) exercise types are never scheduled")
     func filteredTypesNeverScheduled() async {
         // grammarExercise → .grammarExercise (Tier-3) and fillInBlank →
-        // .fillInBlank (Tier-3) remain filtered; kanaStudy needs a kanji card
-        // (none here) so it synthesises nothing. Nothing survives finalize.
+        // .fillInBlank (Tier-3) remain filtered; kanaStudy synthesises nothing
+        // (kana is not an SRS card — see kanaStudyNeverSynthesisesKanjiDrill).
+        // Nothing survives finalize.
         // (speakingPractice / listeningSubtitled / vocabularyStudy are now LIVE
         // — see tier2AudioDrillsSurvive / vocabularyStudySurvives — so they are
         // deliberately excluded here.)
@@ -224,6 +226,48 @@ struct DefaultSessionPlannerStudyTests {
             if case .sentenceConstruction = $0 { return true } else { return false }
         }
         #expect(allSentence, "expected .sentenceConstruction items, got \(plan.exercises)")
+    }
+
+    @Test("kanaStudy never synthesises a kanji drill, even when kanji cards are present")
+    func kanaStudyNeverSynthesisesKanjiDrill() async {
+        // Regression: kanaStudy used to share a branch with kanjiStudy and return
+        // .kanjiStudy(card) from a kanji card — a kana request producing a kanji
+        // handwriting drill on the wrong card type. Kana is not an SRS card, so a
+        // kana study request must synthesise nothing, NOT a kanji drill. Supply
+        // kanji cards (the pool that would have been mis-used) and assert no
+        // .kanjiStudy leaks in and the plan is empty.
+        let kanjiCards = (0..<10).map { _ in fixtureKanjiCard() }
+        let inputs = SessionPlannerInputs(
+            source: .studyCustom(
+                types: [.kanaStudy],
+                jlptLevels: [.n5]
+            ),
+            durationMinutes: 15,
+            profile: .empty,
+            unlockedTypes: Set(ExerciseType.allCases),
+            availableCards: kanjiCards
+        )
+        let plan = await planner.compose(inputs: inputs)
+        let kanjiDrills = plan.exercises.filter {
+            if case .kanjiStudy = $0 { return true } else { return false }
+        }
+        #expect(kanjiDrills.isEmpty, "kanaStudy must not synthesise a kanjiStudy: \(plan.exercises)")
+        #expect(plan.exercises.isEmpty)
+    }
+
+    private func fixtureKanjiCard() -> CardDTO {
+        CardDTO(
+            id: UUID(),
+            front: "日",
+            back: "day",
+            type: .kanji,
+            fsrsState: FSRSState(difficulty: 5, stability: 5, reps: 1, lapses: 0, lastReview: nil),
+            easeFactor: 2.5,
+            interval: 1,
+            dueDate: Date(timeIntervalSince1970: 1_700_000_000),
+            lapseCount: 0,
+            leechFlag: false
+        )
     }
 
     private func fixtureDueCard() -> CardDTO {
