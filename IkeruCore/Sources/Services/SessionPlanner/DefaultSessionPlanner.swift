@@ -276,17 +276,22 @@ public struct DefaultSessionPlanner: SessionPlanner {
     /// structurally valid plan; those are filtered by `finalize` until wired.
     private func synthesise(type: ExerciseType, availableCards: [CardDTO]) -> ExerciseItem? {
         switch type {
-        case .kanaStudy, .kanjiStudy:
-            // KNOWN ISSUE: kanaStudy synthesises a .kanjiStudy ExerciseItem
-            // payload because ExerciseItem has no .kanaStudy case yet. This
-            // means a kana drill is reported as 60s (kanjiStudy duration)
-            // instead of the 25s the type-level estimate uses, slightly
-            // inflating the plan's reported duration. Tracked as a
-            // model-level follow-up: add `case kanaStudy(CardDTO)` to
-            // ExerciseItem and route here.
+        case .kanjiStudy:
             let kanjiCards = availableCards.filter { $0.type == .kanji }
             guard let card = kanjiCards.randomElement() else { return nil }
             return .kanjiStudy(card)
+        case .kanaStudy:
+            // Kana is NOT an SRS `Card`: it lives in the separate KanaCharacter /
+            // KanaData model, drilled by the standalone KanaDrillViewModel. There
+            // is therefore no `CardDTO` to back a kana study exercise, no
+            // `.kanaStudy` case on `ExerciseItem`, and no single-kana in-session
+            // drill unit. Synthesise nothing rather than fabricating a wrong-type
+            // kanji drill from a kanji card (the prior bug: `.kanaStudy` shared
+            // this branch with `.kanjiStudy` and returned `.kanjiStudy(card)`,
+            // showing a kanji handwriting drill for a kana request). A real
+            // kana-in-mixed-session unit — a dedicated `ExerciseItem` case + view
+            // sourcing KanaCharacters — is future work for the Compose/Étude sheet.
+            return nil
         case .vocabularyStudy:
             return .vocabularyStudy(UUID())
         case .listeningSubtitled, .listeningUnsubtitled:
