@@ -6,15 +6,33 @@ import os
 // MARK: - DataExportManager
 
 /// Exports learning data in JSON and CSV formats for AI agent analysis.
-/// Generates a structured export bundle with a context.json describing the data model.
+/// Generates a structured export bundle (zipped into a single `.zip` for
+/// sharing) with a context.json describing the data model.
 @MainActor
 final class DataExportManager {
 
     // MARK: - Export
 
-    /// Generates a complete data export bundle as a temporary directory URL.
-    /// Contains: cards.json, reviews.json, rpg.json, context.json, cards.csv
+    /// Generates a complete data export as a single `.zip` archive and returns
+    /// its temporary URL. The archive contains: cards.json, reviews.json,
+    /// rpg.json, context.json, cards.csv.
+    ///
+    /// The intermediate export directory is zipped (so the share sheet hands the
+    /// user one file, not a bare folder) and then deleted. A serialization or
+    /// archiving failure throws — nothing partial is ever shared.
     func exportData(modelContainer: ModelContainer) async throws -> URL {
+        let exportDir = try await buildExportDirectory(modelContainer: modelContainer)
+        defer { try? FileManager.default.removeItem(at: exportDir) }
+
+        let zipURL = try zipDirectory(exportDir)
+        Logger.ui.info("Data export archived at \(zipURL.path)")
+        return zipURL
+    }
+
+    /// Writes every export file into a fresh temporary directory and returns it.
+    /// Factored out of `exportData` so the file contents can be validated
+    /// independently of the archiving step.
+    func buildExportDirectory(modelContainer: ModelContainer) async throws -> URL {
         let exportDir = FileManager.default.temporaryDirectory
             .appending(path: "ikeru-export-\(Date().timeIntervalSince1970)", directoryHint: .isDirectory)
 
@@ -34,6 +52,12 @@ final class DataExportManager {
         // Cards CSV
         let csv = generateCardsCSV(cards: allCards)
         try csv.write(to: exportDir.appending(path: "cards.csv"), atomically: true, encoding: .utf8)
+
+        // Review logs — every recorded grade across all cards. Empty history
+        // still writes a valid `[]` rather than omitting the promised file.
+        let reviewLogs = await cardRepo.allReviewLogs(from: .distantPast, to: .distantFuture)
+        let reviewsData = try encoder.encode(reviewLogs.map { ReviewExportRow(from: $0) })
+        try reviewsData.write(to: exportDir.appending(path: "reviews.json"))
 
         // RPG State
         let rpgStates = (try? context.fetch(FetchDescriptor<RPGState>())) ?? []
@@ -58,16 +82,53 @@ final class DataExportManager {
             encoding: .utf8
         )
 
-        Logger.ui.info("Data export completed at \(exportDir.path)")
+        Logger.ui.info("Data export written to \(exportDir.path)")
         return exportDir
+    }
+
+    // MARK: - Archiving
+
+    /// Zips a directory into a sibling `.zip` file using `NSFileCoordinator`'s
+    /// `.forUploading` reading intent — the system-provided, dependency-free way
+    /// to produce a zip of a folder. The coordinator hands back a temporary
+    /// archive that is only valid inside the accessor closure, so it is moved to
+    /// a stable location before returning.
+    func zipDirectory(_ directory: URL) throws -> URL {
+        let coordinator = NSFileCoordinator()
+        var coordinatorError: NSError?
+        var moveError: Error?
+        var producedURL: URL?
+
+        let destination = directory.deletingLastPathComponent()
+            .appending(path: directory.lastPathComponent + ".zip")
+        try? FileManager.default.removeItem(at: destination)
+
+        coordinator.coordinate(
+            readingItemAt: directory,
+            options: [.forUploading],
+            error: &coordinatorError
+        ) { temporaryZipURL in
+            do {
+                try FileManager.default.moveItem(at: temporaryZipURL, to: destination)
+                producedURL = destination
+            } catch {
+                moveError = error
+            }
+        }
+
+        if let coordinatorError { throw coordinatorError }
+        if let moveError { throw moveError }
+        guard let producedURL else { throw ExportError.archivingFailed }
+        return producedURL
     }
 
     // MARK: - Cleanup
 
-    /// Deletes the temporary export directory. Call after the share sheet is dismissed.
+    /// Deletes the temporary export artifact (the `.zip`). Call after the share
+    /// sheet is dismissed.
     func cleanup(url: URL) {
         try? FileManager.default.removeItem(at: url)
-        Logger.ui.info("Cleaned up export directory at \(url.path)")
+        Logger.ui.info("Cleaned up export artifact at \(url.path)")
     }
 
     // MARK: - CSV Generation
@@ -127,6 +188,18 @@ final class DataExportManager {
             "cards.csv": {
               "description": "Same data as cards.json in CSV format for spreadsheet analysis"
             },
+            "reviews.json": {
+              "description": "Full review history — one entry per graded review across all cards",
+              "fields": {
+                "id": "UUID — unique review log identifier",
+                "cardId": "UUID of the reviewed card (null if the card was deleted)",
+                "cardType": "Card category at review time: kanji, vocabulary, grammar, listening",
+                "timestamp": "ISO8601 date when the review occurred",
+                "grade": "FSRS grade 1-4 (1=again, 2=hard, 3=good, 4=easy)",
+                "gradeLabel": "Human-readable grade: again, hard, good, easy",
+                "responseTimeMs": "Time taken to answer, in milliseconds"
+              }
+            },
             "rpg.json": {
               "description": "RPG progression state",
               "fields": {
@@ -179,6 +252,26 @@ private struct CardExportRow: Codable {
     }
 }
 
+private struct ReviewExportRow: Codable {
+    let id: UUID
+    let cardId: UUID?
+    let cardType: String?
+    let timestamp: Date
+    let grade: Int
+    let gradeLabel: String
+    let responseTimeMs: Int
+
+    init(from dto: ReviewLogDTO) {
+        self.id = dto.id
+        self.cardId = dto.cardId
+        self.cardType = dto.cardType?.rawValue
+        self.timestamp = dto.timestamp
+        self.grade = dto.grade.rawValue
+        self.gradeLabel = String(describing: dto.grade)
+        self.responseTimeMs = dto.responseTimeMs
+    }
+}
+
 private struct RPGExport: Codable {
     let xp: Int
     let level: Int
@@ -187,4 +280,19 @@ private struct RPGExport: Codable {
     let attributes: [RPGAttribute]
     let inventoryCount: Int
     let unopenedLootBoxes: Int
+}
+
+// MARK: - Errors
+
+/// Errors surfaced by the data export pipeline. Conforms to `LocalizedError`
+/// so the UI can present a human-readable reason via `localizedDescription`.
+enum ExportError: LocalizedError {
+    case archivingFailed
+
+    var errorDescription: String? {
+        switch self {
+        case .archivingFailed:
+            return String(localized: "Could not create the export archive.")
+        }
+    }
 }
