@@ -325,6 +325,17 @@ struct ShadowingExerciseView: View {
                 Label("Open Settings", systemImage: "gear")
             }
             .ikeruButtonStyle(.primary)
+
+            // Skip — mic access is required to score shadowing, so when it's
+            // denied let the learner advance the session rather than dead-ending
+            // on this drill. Graded `.again` (skipped); speaking is XP-only
+            // downstream so the grade only shapes the completion signal.
+            Button {
+                onComplete(.again)
+            } label: {
+                Label("Skip", systemImage: "arrow.right")
+            }
+            .ikeruButtonStyle(.secondary)
         }
         .padding(IkeruTheme.Spacing.lg)
         .tatamiRoom(.standard)
