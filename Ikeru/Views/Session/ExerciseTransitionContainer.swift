@@ -125,12 +125,11 @@ struct ExerciseTransitionContainer: View {
             SentenceConstructionDrillHost(onComplete: onExerciseComplete)
 
         case .vocabularyStudy:
-            placeholderExerciseView(
-                icon: sfSymbol(for: .reading),
-                title: "Vocabulary Study",
-                detail: "Learn new vocabulary",
-                skill: .reading
-            )
+            // Multiple-choice recall built lazily from the session vocabulary
+            // pool. XP-only completion (no FSRS write): `.vocabularyStudy` has
+            // no backing SwiftData Card, so SessionViewModel awards XP without
+            // grading a card (the card-grade branch is gated on `.kanjiStudy`).
+            VocabularyRecallDrillHost(vocabulary: vocabularyPool, onComplete: onExerciseComplete)
 
         case .fillInBlank:
             placeholderExerciseView(
@@ -336,6 +335,15 @@ enum DrillGradeMapping {
     static func listening(isCorrect: Bool) -> Grade {
         isCorrect ? .good : .again
     }
+
+    /// Vocabulary multiple-choice recall correctness → `Grade`: a correct
+    /// choice is `.good`, anything else `.again` (one MC answer has no partial
+    /// tier). Vocabulary recall is XP-only downstream — `.vocabularyStudy` has
+    /// NO backing FSRS card, so this grade only scales the XP award
+    /// (`vocabularyStudy` is `.perGrade`) and is NEVER written to FSRS.
+    static func vocabularyRecall(isCorrect: Bool) -> Grade {
+        isCorrect ? .good : .again
+    }
 }
 
 // MARK: - Drill Hosts
@@ -466,6 +474,65 @@ private struct ListeningDrillHost: View {
             )
             didAttemptLoad = true
         }
+    }
+}
+
+/// Owns one multiple-choice vocabulary-recall question for the lifetime of a
+/// `.vocabularyStudy` exercise. Picks a random target from the session
+/// vocabulary pool and builds its answer options ONCE (the container keeps view
+/// identity stable via `.id(exercise.stableID)`, so the `@State` question
+/// persists across body re-evaluations and resets only when the exercise
+/// changes), then renders `VocabularyRecallView`.
+///
+/// XP-only completion (intentional, FSRS deferred): `.vocabularyStudy` has NO
+/// backing SwiftData `Card` — vocabulary lives only in the read-only content DB
+/// — so `SessionViewModel.completeCurrentExercise` awards XP for it WITHOUT
+/// grading a card or writing a `ReviewLog` (the card-grade branch there is
+/// gated on `.kanjiStudy`). FSRS scheduling for vocabulary waits on the
+/// vocab-dictionary feature that would make vocab cards gradeable.
+///
+/// Falls back to `DrillUnavailableView` when the pool can't yield a full
+/// question (needs ≥ N+1 distinct meanings, e.g. an empty content bundle) so
+/// the session never dead-ends on a degenerate one-option question.
+private struct VocabularyRecallDrillHost: View {
+    let vocabulary: [VocabularyItem]
+    let onComplete: (Grade) -> Void
+    @State private var question: Question?
+
+    /// A resolved recall question: the target word plus its shuffled options.
+    private struct Question: Equatable {
+        let target: VocabularyItem
+        let options: VocabularyRecallOptions
+    }
+
+    init(vocabulary: [VocabularyItem], onComplete: @escaping (Grade) -> Void) {
+        self.vocabulary = vocabulary
+        self.onComplete = onComplete
+        _question = State(initialValue: Self.buildQuestion(from: vocabulary))
+    }
+
+    var body: some View {
+        if let question {
+            VocabularyRecallView(
+                target: question.target,
+                options: question.options,
+                onComplete: onComplete
+            )
+        } else {
+            DrillUnavailableView { onComplete(.again) }
+        }
+    }
+
+    /// Builds a full recall question from the pool, or `nil` when the pool has
+    /// fewer than `defaultDistractorCount + 1` DISTINCT meanings — in that case
+    /// no honest multiple-choice question can be formed, so the host shows a
+    /// skip affordance instead of a degenerate 1–3 option question.
+    private static func buildQuestion(from vocabulary: [VocabularyItem]) -> Question? {
+        guard let target = vocabulary.randomElement() else { return nil }
+        let options = VocabularyRecallOptionsBuilder.build(target: target, pool: vocabulary)
+        let requiredOptionCount = VocabularyRecallOptionsBuilder.defaultDistractorCount + 1
+        guard options.options.count >= requiredOptionCount else { return nil }
+        return Question(target: target, options: options)
     }
 }
 

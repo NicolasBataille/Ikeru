@@ -133,7 +133,7 @@ jobs:
         # Un-filtering fully is blocked on the runner toolchain, not our tests.
         run: |
           cd IkeruCore
-          swift test --filter "JLPTReadinessFormula|JLPTBackfill|BadgeRamping|ProgressServiceJLPTRebuild|SkillXPLedger|LootDropService|SessionEnd|ExerciseXP|DailyTerm|DefaultSessionPlanner|ExerciseUnlockService|LearnerSnapshot|CardDTOJLPTLevel|BackupServiceJLPTLevel|(^|[^a])CardRepository|ProgressService|MasteryLevel|DisplayModeAdvancedThresholdMonitor|IkeruSchema|PlannerService|KanaCardRepository|ContentSeedService|ReviewForecastService|KanaProgress|VocabularyItemMapper"
+          swift test --filter "JLPTReadinessFormula|JLPTBackfill|BadgeRamping|ProgressServiceJLPTRebuild|SkillXPLedger|LootDropService|SessionEnd|ExerciseXP|DailyTerm|DefaultSessionPlanner|ExerciseUnlockService|LearnerSnapshot|CardDTOJLPTLevel|BackupServiceJLPTLevel|(^|[^a])CardRepository|ProgressService|MasteryLevel|DisplayModeAdvancedThresholdMonitor|IkeruSchema|PlannerService|KanaCardRepository|ContentSeedService|ReviewForecastService|KanaProgress|VocabularyItemMapper|VocabularyRecallOptionsBuilder"
 
       - name: Run App Tests (green subset)
         # Same — scoped to suites known to pass. KanaDrillViewModel covers
@@ -171,6 +171,7 @@ jobs:
             -only-testing:IkeruTests/SessionDecouplingTests \
             -only-testing:IkeruTests/Tier1KanjiStudyBookkeepingTests \
             -only-testing:IkeruTests/Tier2AudioDrillCompletionTests \
+            -only-testing:IkeruTests/Tier2VocabRecallTests \
             -only-testing:IkeruTests/DrillGradeMappingTests \
             CODE_SIGNING_ALLOWED=NO
 

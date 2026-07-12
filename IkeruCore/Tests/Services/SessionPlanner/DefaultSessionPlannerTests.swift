@@ -102,16 +102,17 @@ struct DefaultSessionPlannerStudyTests {
 
     private let planner = DefaultSessionPlanner()
 
-    @Test("Study-custom of still-filtered (Tier-2/3) types yields an empty session")
+    @Test("Study-custom of still-filtered (Tier-3) types yields an empty session")
     func studyCustomPlaceholderOnlyIsEmpty() async {
         // study-custom synthesises only the selected typed exercises. Here they
         // resolve to still-filtered kinds — kanaStudy needs a kanji card (none
-        // in this vocabulary-only pool → nil) and vocabularyStudy is Tier-2
-        // (filtered) — so after the allowlist the plan is empty.
+        // in this vocabulary-only pool → nil) and grammarExercise is Tier-3
+        // (filtered) — so after the allowlist the plan is empty. (vocabularyStudy
+        // is now LIVE — see vocabularyStudySurvives — so it is excluded here.)
         let cards = (0..<10).map { _ in fixtureDueCard() }
         let inputs = SessionPlannerInputs(
             source: .studyCustom(
-                types: [.kanaStudy, .vocabularyStudy],
+                types: [.kanaStudy, .grammarExercise],
                 jlptLevels: [.n5]
             ),
             durationMinutes: 15,
@@ -123,18 +124,18 @@ struct DefaultSessionPlannerStudyTests {
         #expect(plan.exercises.isEmpty)
     }
 
-    @Test("Still-filtered (vocabularyStudy + Tier-3) exercise types are never scheduled")
+    @Test("Still-filtered (Tier-3) exercise types are never scheduled")
     func filteredTypesNeverScheduled() async {
-        // grammarExercise → .grammarExercise (Tier-3), vocabularyStudy →
-        // .vocabularyStudy (still-filtered Tier-2), and fillInBlank →
-        // .fillInBlank (Tier-3) all remain filtered; kanaStudy needs a kanji
-        // card (none here) so it synthesises nothing. Nothing survives finalize.
-        // (speakingPractice / listeningSubtitled are now LIVE — see
-        // tier2AudioDrillsSurvive — so they are deliberately excluded here.)
+        // grammarExercise → .grammarExercise (Tier-3) and fillInBlank →
+        // .fillInBlank (Tier-3) remain filtered; kanaStudy needs a kanji card
+        // (none here) so it synthesises nothing. Nothing survives finalize.
+        // (speakingPractice / listeningSubtitled / vocabularyStudy are now LIVE
+        // — see tier2AudioDrillsSurvive / vocabularyStudySurvives — so they are
+        // deliberately excluded here.)
         let cards = (0..<10).map { _ in fixtureDueCard() }
         let inputs = SessionPlannerInputs(
             source: .studyCustom(
-                types: [.kanaStudy, .grammarExercise, .vocabularyStudy, .fillInBlank],
+                types: [.kanaStudy, .grammarExercise, .fillInBlank],
                 jlptLevels: [.n5]
             ),
             durationMinutes: 15,
@@ -173,6 +174,32 @@ struct DefaultSessionPlannerStudyTests {
             }
         }
         #expect(allAudio, "expected only .speakingExercise/.listeningExercise, got \(plan.exercises)")
+    }
+
+    @Test("Tier-2 vocabularyStudy survives finalize (allowlist un-filters it)")
+    func vocabularyStudySurvives() async {
+        // vocabularyStudy → .vocabularyStudy is now a wired Tier-2 drill
+        // (VocabularyRecallView, XP-only), so a study-custom session that
+        // selects it must schedule real .vocabularyStudy items — the positive
+        // counterpart to filteredTypesNeverScheduled. It needs no backing card
+        // (the recall question is built from the session vocabulary pool at
+        // render time), so an empty card pool still yields items.
+        let inputs = SessionPlannerInputs(
+            source: .studyCustom(
+                types: [.vocabularyStudy],
+                jlptLevels: [.n5]
+            ),
+            durationMinutes: 15,
+            profile: .empty,
+            unlockedTypes: Set(ExerciseType.allCases),
+            availableCards: []
+        )
+        let plan = await planner.compose(inputs: inputs)
+        #expect(!plan.exercises.isEmpty)
+        let allVocab = plan.exercises.allSatisfy {
+            if case .vocabularyStudy = $0 { return true } else { return false }
+        }
+        #expect(allVocab, "expected .vocabularyStudy items, got \(plan.exercises)")
     }
 
     @Test("Tier-1 sentenceConstruction survives finalize (allowlist un-filters it)")

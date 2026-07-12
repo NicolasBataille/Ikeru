@@ -243,4 +243,10 @@ struct DrillGradeMappingTests {
         #expect(DrillGradeMapping.listening(isCorrect: true) == .good)
         #expect(DrillGradeMapping.listening(isCorrect: false) == .again)
     }
+
+    @Test("VocabularyRecall: correct → .good, incorrect → .again")
+    func vocabularyRecallMapping() {
+        #expect(DrillGradeMapping.vocabularyRecall(isCorrect: true) == .good)
+        #expect(DrillGradeMapping.vocabularyRecall(isCorrect: false) == .again)
+    }
 }
