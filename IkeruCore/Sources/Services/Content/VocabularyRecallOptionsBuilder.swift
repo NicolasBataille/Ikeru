@@ -89,7 +89,14 @@ public enum VocabularyRecallOptionsBuilder {
         let options = ([target] + distractors).shuffled(using: &generator)
         // Locate the target by identity — robust even if a distractor happens
         // to be `==` the target by value (ids differ, so this is unambiguous).
-        let correctIndex = options.firstIndex { $0.id == target.id } ?? 0
+        // `options` always contains `target`, so this lookup can't miss today.
+        // Guard it loudly anyway: in a learning app, silently marking the wrong
+        // option "correct" (teaching a wrong answer) is worse than a debug crash
+        // if a future change ever breaks that invariant — release degrades safely.
+        guard let correctIndex = options.firstIndex(where: { $0.id == target.id }) else {
+            assertionFailure("VocabularyRecallOptions built without the target present in options")
+            return VocabularyRecallOptions(options: options, correctIndex: 0)
+        }
         return VocabularyRecallOptions(options: options, correctIndex: correctIndex)
     }
 
