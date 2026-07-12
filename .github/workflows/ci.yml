@@ -169,6 +169,8 @@ jobs:
             -skipPackagePluginValidation \
             -only-testing:IkeruTests/KanaDrillViewModelTests \
             -only-testing:IkeruTests/SessionDecouplingTests \
+            -only-testing:IkeruTests/Tier1KanjiStudyBookkeepingTests \
+            -only-testing:IkeruTests/DrillGradeMappingTests \
             CODE_SIGNING_ALLOWED=NO
 
   device-build-check:
