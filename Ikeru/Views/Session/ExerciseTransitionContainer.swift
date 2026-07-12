@@ -408,7 +408,7 @@ private struct ShadowingDrillHost: View {
             if viewModel.currentExercise != nil || viewModel.loadingState.isLoading {
                 ShadowingExerciseView(viewModel: viewModel, onComplete: onComplete)
             } else if didAttemptLoad {
-                DrillUnavailableView { onComplete(.good) }
+                DrillUnavailableView { onComplete(.again) }
             } else {
                 ProgressView().tint(Color.ikeruPrimaryAccent)
             }
@@ -453,7 +453,7 @@ private struct ListeningDrillHost: View {
             if viewModel.currentExercise != nil || viewModel.loadingState.isLoading {
                 ListeningExerciseView(viewModel: viewModel, onComplete: onComplete)
             } else if didAttemptLoad {
-                DrillUnavailableView { onComplete(.good) }
+                DrillUnavailableView { onComplete(.again) }
             } else {
                 ProgressView().tint(Color.ikeruPrimaryAccent)
             }
@@ -473,7 +473,9 @@ private struct ListeningDrillHost: View {
 /// session pool (e.g. the content bundle was missing so `vocabularyPool` is
 /// empty, or the level has too few items). Rather than dead-ending the session
 /// on a blank view, it offers a single "Continue" that completes the exercise so
-/// the session advances. XP-only kinds ignore the grade, so `.good` is neutral.
+/// the session advances. Graded `.again` (like the mic-denied Shadowing skip): XP-only kinds
+/// ignore the grade amount, and marking an un-attempted drill "incorrect" avoids inflating the
+/// session's correct-streak / accuracy stats for content the learner never actually saw.
 private struct DrillUnavailableView: View {
     let onSkip: () -> Void
 

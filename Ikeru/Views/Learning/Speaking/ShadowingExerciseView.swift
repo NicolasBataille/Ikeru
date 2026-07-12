@@ -21,16 +21,37 @@ struct ShadowingExerciseView: View {
 
     var body: some View {
         Group {
-            if viewModel.permissionStatus == .denied
-                || viewModel.permissionStatus == .restricted {
-                permissionDeniedView
-            } else {
+            if canRecord {
                 exerciseContent
+            } else {
+                // .denied / .restricted / .unavailable — recording can never
+                // start, so show the Skip affordance rather than stranding the
+                // learner on a record phase whose mic button silently no-ops.
+                permissionDeniedView
             }
         }
         .task {
-            viewModel.checkPermissions()
+            // Resolve OS mic/speech permission on first appearance. `.notDetermined`
+            // is the default state for every user, and this drill is the app's
+            // only entry point that requests speech authorization — without the
+            // prompt, `startRecording()` silently no-ops and the record phase
+            // dead-ends the whole session. Requesting flips it to `.authorized`
+            // (recording enabled) or `.denied` (permissionDeniedView's Skip keeps
+            // the session moving).
+            if viewModel.permissionStatus == .notDetermined {
+                _ = await viewModel.requestPermissions()
+            } else {
+                viewModel.checkPermissions()
+            }
         }
+    }
+
+    /// Whether the record phase can function. `.notDetermined` counts as
+    /// recordable because `.task` requests authorization on appear — it resolves
+    /// to `.authorized` or `.denied` before the learner reaches the mic button.
+    private var canRecord: Bool {
+        viewModel.permissionStatus == .authorized
+            || viewModel.permissionStatus == .notDetermined
     }
 
     // MARK: - Exercise Content
