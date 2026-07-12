@@ -171,6 +171,7 @@ jobs:
             -only-testing:IkeruTests/SessionDecouplingTests \
             -only-testing:IkeruTests/Tier1KanjiStudyBookkeepingTests \
             -only-testing:IkeruTests/Tier2AudioDrillCompletionTests \
+            -only-testing:IkeruTests/Tier2VocabRecallTests \
             -only-testing:IkeruTests/DrillGradeMappingTests \
             CODE_SIGNING_ALLOWED=NO
 
