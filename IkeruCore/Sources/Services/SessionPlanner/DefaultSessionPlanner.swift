@@ -315,21 +315,26 @@ public struct DefaultSessionPlanner: SessionPlanner {
     /// Exhaustive on `ExerciseItem` on purpose: adding a new kind forces an
     /// explicit live/filtered decision here rather than silently defaulting.
     ///
-    ///   LIVE (Tier 1 — wired drill views this PR):
-    ///     .srsReview            — SRS flashcard deck
-    ///     .kanjiStudy           — HandwritingExerciseView, writes a real FSRS grade
-    ///     .writingPractice      — HandwritingExerciseView, XP-only
-    ///     .sentenceConstruction — SentenceConstructionView, XP-only
+    ///   LIVE (wired drill views):
+    ///     Tier 1:
+    ///       .srsReview            — SRS flashcard deck
+    ///       .kanjiStudy           — HandwritingExerciseView, writes a real FSRS grade
+    ///       .writingPractice      — HandwritingExerciseView, XP-only
+    ///       .sentenceConstruction — SentenceConstructionView, XP-only
+    ///     Tier 2 (word/meaning audio drills, XP-only):
+    ///       .listeningExercise    — ListeningExerciseView (word/meaning subtypes)
+    ///       .speakingExercise     — ShadowingExerciseView
     ///
     ///   STILL FILTERED (no wired view / no real content source yet):
-    ///     Tier 2 (later PR):  .listeningExercise, .speakingExercise, .vocabularyStudy
+    ///     Tier 2 (later PR):  .vocabularyStudy
     ///     Tier 3 (deferred):  .fillInBlank, .readingPassage, .grammarExercise
+    ///     (listening PASSAGE comprehension also stays out — no passages table.)
     static func isLive(_ item: ExerciseItem) -> Bool {
         switch item {
-        case .srsReview, .kanjiStudy, .writingPractice, .sentenceConstruction:
+        case .srsReview, .kanjiStudy, .writingPractice, .sentenceConstruction,
+             .listeningExercise, .speakingExercise:
             return true
-        case .listeningExercise, .speakingExercise, .vocabularyStudy,
-             .fillInBlank, .readingPassage, .grammarExercise:
+        case .vocabularyStudy, .fillInBlank, .readingPassage, .grammarExercise:
             return false
         }
     }

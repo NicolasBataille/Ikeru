@@ -33,6 +33,13 @@ struct ExerciseTransitionContainer: View {
     /// Feedback state for correct/incorrect overlay.
     let feedbackState: FeedbackState?
 
+    /// Session vocabulary pool (level-scoped) for the audio drills (Shadowing +
+    /// word/meaning Listening). The container is the composition root
+    /// (blueprint §2): it holds the pool and builds each audio drill's view
+    /// model lazily at render time, mirroring each view's `#Preview`. Empty when
+    /// no content bundle was available; the hosts then show a skip affordance.
+    let vocabularyPool: [VocabularyItem]
+
     @Namespace private var exerciseAnimation
     @State private var isRevealed = false
 
@@ -103,20 +110,14 @@ struct ExerciseTransitionContainer: View {
             HandwritingDrillHost(character: card.front, onComplete: onExerciseComplete)
 
         case .listeningExercise:
-            placeholderExerciseView(
-                icon: sfSymbol(for: .listening),
-                title: "Listening Exercise",
-                detail: "Listen and respond",
-                skill: .listening
-            )
+            // Word/meaning listening drill built lazily from the session
+            // vocabulary pool. XP-only completion (no FSRS write).
+            ListeningDrillHost(vocabulary: vocabularyPool, onComplete: onExerciseComplete)
 
         case .speakingExercise:
-            placeholderExerciseView(
-                icon: sfSymbol(for: .speaking),
-                title: "Speaking Exercise",
-                detail: "Speak the phrase",
-                skill: .speaking
-            )
+            // Shadowing drill built lazily from the session vocabulary pool.
+            // XP-only completion (no FSRS write).
+            ShadowingDrillHost(vocabulary: vocabularyPool, onComplete: onExerciseComplete)
 
         case .sentenceConstruction:
             // Self-contained token-arrangement drill (built-in N5 templates);
@@ -314,6 +315,27 @@ enum DrillGradeMapping {
     static func sentenceConstruction(isCorrect: Bool) -> Grade {
         isCorrect ? .good : .again
     }
+
+    /// Shadowing pronunciation accuracy (0…1) → `Grade`, per blueprint §3:
+    /// ≥0.9 → `.easy`, ≥0.7 → `.good`, ≥0.4 → `.hard`, else `.again`. Shadowing
+    /// is XP-only downstream (`speakingPractice` is `.perCompletion`), so this
+    /// grade only shapes the completion signal — it is never written to FSRS.
+    static func shadowing(accuracy: Double) -> Grade {
+        switch accuracy {
+        case 0.9...:     return .easy
+        case 0.7..<0.9:  return .good
+        case 0.4..<0.7:  return .hard
+        default:         return .again
+        }
+    }
+
+    /// Listening answer correctness → `Grade`, per blueprint §3: a correct
+    /// choice is `.good`, anything else `.again` (a single multiple-choice
+    /// answer has no partial tier). Listening is XP-only downstream
+    /// (`listeningSubtitled`/`Unsubtitled` are `.perCompletion`).
+    static func listening(isCorrect: Bool) -> Grade {
+        isCorrect ? .good : .again
+    }
 }
 
 // MARK: - Drill Hosts
@@ -355,6 +377,131 @@ private struct SentenceConstructionDrillHost: View {
                     viewModel.loadExercise(difficulty: .beginner)
                 }
             }
+    }
+}
+
+/// Owns a `ShadowingViewModel` (with a fresh `AudioService` +
+/// `SpeechRecognitionService`) for the lifetime of one `.speakingExercise`.
+/// Loads a word-level exercise from the session vocabulary pool on appear and
+/// forwards completion to `onComplete`. The exercise level is derived from the
+/// pool (which is already level-scoped) so generation never filters to empty on
+/// a level mismatch. If the pool can't produce an exercise (e.g. no content
+/// bundle), a skip affordance keeps the session from dead-ending.
+private struct ShadowingDrillHost: View {
+    let vocabulary: [VocabularyItem]
+    let onComplete: (Grade) -> Void
+    @State private var viewModel: ShadowingViewModel
+    @State private var didAttemptLoad = false
+
+    init(vocabulary: [VocabularyItem], onComplete: @escaping (Grade) -> Void) {
+        self.vocabulary = vocabulary
+        self.onComplete = onComplete
+        _viewModel = State(initialValue: ShadowingViewModel(
+            audioService: AudioService(),
+            speechService: SpeechRecognitionService(),
+            vocabulary: vocabulary
+        ))
+    }
+
+    var body: some View {
+        Group {
+            if viewModel.currentExercise != nil || viewModel.loadingState.isLoading {
+                ShadowingExerciseView(viewModel: viewModel, onComplete: onComplete)
+            } else if didAttemptLoad {
+                DrillUnavailableView { onComplete(.again) }
+            } else {
+                ProgressView().tint(Color.ikeruPrimaryAccent)
+            }
+        }
+        .task {
+            guard viewModel.currentExercise == nil, !didAttemptLoad else { return }
+            await viewModel.loadExercise(
+                difficulty: .word,
+                level: vocabulary.first?.jlptLevel ?? .n5
+            )
+            didAttemptLoad = true
+        }
+    }
+}
+
+/// Owns a `ListeningViewModel` (with a fresh `AudioService`) for the lifetime of
+/// one `.listeningExercise`. Loads a word-recognition exercise from the session
+/// vocabulary pool on appear and forwards completion to `onComplete`. Passes an
+/// EMPTY passages array so ONLY the word/meaning subtypes generate — there is no
+/// passages table in the content bundle (blueprint §1.4), so passage
+/// comprehension is intentionally out of scope for this pass. Falls back to a
+/// skip affordance when the pool is too small to build an exercise
+/// (`wordRecognition` needs ≥4 items at the level).
+private struct ListeningDrillHost: View {
+    let vocabulary: [VocabularyItem]
+    let onComplete: (Grade) -> Void
+    @State private var viewModel: ListeningViewModel
+    @State private var didAttemptLoad = false
+
+    init(vocabulary: [VocabularyItem], onComplete: @escaping (Grade) -> Void) {
+        self.vocabulary = vocabulary
+        self.onComplete = onComplete
+        _viewModel = State(initialValue: ListeningViewModel(
+            audioService: AudioService(),
+            vocabulary: vocabulary,
+            passages: []
+        ))
+    }
+
+    var body: some View {
+        Group {
+            if viewModel.currentExercise != nil || viewModel.loadingState.isLoading {
+                ListeningExerciseView(viewModel: viewModel, onComplete: onComplete)
+            } else if didAttemptLoad {
+                DrillUnavailableView { onComplete(.again) }
+            } else {
+                ProgressView().tint(Color.ikeruPrimaryAccent)
+            }
+        }
+        .task {
+            guard viewModel.currentExercise == nil, !didAttemptLoad else { return }
+            await viewModel.loadExercise(
+                type: .wordRecognition,
+                level: vocabulary.first?.jlptLevel ?? .n5
+            )
+            didAttemptLoad = true
+        }
+    }
+}
+
+/// Fail-safe surface shown when an audio drill can't build an exercise from the
+/// session pool (e.g. the content bundle was missing so `vocabularyPool` is
+/// empty, or the level has too few items). Rather than dead-ending the session
+/// on a blank view, it offers a single "Continue" that completes the exercise so
+/// the session advances. Graded `.again` (like the mic-denied Shadowing skip): XP-only kinds
+/// ignore the grade amount, and marking an un-attempted drill "incorrect" avoids inflating the
+/// session's correct-streak / accuracy stats for content the learner never actually saw.
+private struct DrillUnavailableView: View {
+    let onSkip: () -> Void
+
+    var body: some View {
+        VStack(spacing: IkeruTheme.Spacing.lg) {
+            Spacer()
+
+            Image(systemName: "speaker.slash.fill")
+                .font(.system(size: 48))
+                .foregroundStyle(.ikeruTextSecondary)
+
+            Text("This exercise isn't available right now")
+                .font(.ikeruBody)
+                .foregroundStyle(.ikeruTextSecondary)
+                .multilineTextAlignment(.center)
+
+            Spacer()
+
+            Button("Continue") {
+                onSkip()
+            }
+            .ikeruButtonStyle(.primary)
+            .frame(maxWidth: .infinity)
+            .padding(.horizontal, IkeruTheme.Spacing.md)
+            .padding(.bottom, IkeruTheme.Spacing.md)
+        }
     }
 }
 

@@ -8,21 +8,50 @@ struct ShadowingExerciseView: View {
 
     @Bindable var viewModel: ShadowingViewModel
 
+    /// Invoked when the learner accepts their attempt and advances the session.
+    /// The pronunciation accuracy is mapped to an FSRS `Grade` via
+    /// `DrillGradeMapping.shadowing` (blueprint §3); shadowing is XP-only
+    /// downstream (`speakingPractice` is `.perCompletion`), so the grade shapes
+    /// only the completion signal, never an FSRS write. Defaults to a no-op so
+    /// the standalone `#Preview` still compiles.
+    var onComplete: (Grade) -> Void = { _ in }
+
     @State private var hapticRecord = false
     @State private var recordingPulse = false
 
     var body: some View {
         Group {
-            if viewModel.permissionStatus == .denied
-                || viewModel.permissionStatus == .restricted {
-                permissionDeniedView
-            } else {
+            if canRecord {
                 exerciseContent
+            } else {
+                // .denied / .restricted / .unavailable — recording can never
+                // start, so show the Skip affordance rather than stranding the
+                // learner on a record phase whose mic button silently no-ops.
+                permissionDeniedView
             }
         }
         .task {
-            viewModel.checkPermissions()
+            // Resolve OS mic/speech permission on first appearance. `.notDetermined`
+            // is the default state for every user, and this drill is the app's
+            // only entry point that requests speech authorization — without the
+            // prompt, `startRecording()` silently no-ops and the record phase
+            // dead-ends the whole session. Requesting flips it to `.authorized`
+            // (recording enabled) or `.denied` (permissionDeniedView's Skip keeps
+            // the session moving).
+            if viewModel.permissionStatus == .notDetermined {
+                _ = await viewModel.requestPermissions()
+            } else {
+                viewModel.checkPermissions()
+            }
         }
+    }
+
+    /// Whether the record phase can function. `.notDetermined` counts as
+    /// recordable because `.task` requests authorization on appear — it resolves
+    /// to `.authorized` or `.denied` before the learner reaches the mic button.
+    private var canRecord: Bool {
+        viewModel.permissionStatus == .authorized
+            || viewModel.permissionStatus == .notDetermined
     }
 
     // MARK: - Exercise Content
@@ -253,11 +282,22 @@ struct ShadowingExerciseView: View {
             }
             .ikeruButtonStyle(.secondary)
 
-            // Retry
+            // Retry — a fresh attempt at the same phrase; does not advance.
             Button {
                 viewModel.retryExercise()
             } label: {
                 Label("Try Again", systemImage: "arrow.clockwise")
+            }
+            .ikeruButtonStyle(.secondary)
+
+            // Continue — accept this attempt and advance the session. Maps the
+            // pronunciation accuracy → FSRS Grade (DrillGradeMapping.shadowing).
+            Button {
+                onComplete(DrillGradeMapping.shadowing(
+                    accuracy: viewModel.shadowingResult?.accuracy ?? 0
+                ))
+            } label: {
+                Label("Continue", systemImage: "arrow.right")
             }
             .ikeruButtonStyle(.primary)
         }
@@ -306,6 +346,17 @@ struct ShadowingExerciseView: View {
                 Label("Open Settings", systemImage: "gear")
             }
             .ikeruButtonStyle(.primary)
+
+            // Skip — mic access is required to score shadowing, so when it's
+            // denied let the learner advance the session rather than dead-ending
+            // on this drill. Graded `.again` (skipped); speaking is XP-only
+            // downstream so the grade only shapes the completion signal.
+            Button {
+                onComplete(.again)
+            } label: {
+                Label("Skip", systemImage: "arrow.right")
+            }
+            .ikeruButtonStyle(.secondary)
         }
         .padding(IkeruTheme.Spacing.lg)
         .tatamiRoom(.standard)

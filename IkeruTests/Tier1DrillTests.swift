@@ -219,4 +219,28 @@ struct DrillGradeMappingTests {
         #expect(DrillGradeMapping.sentenceConstruction(isCorrect: true) == .good)
         #expect(DrillGradeMapping.sentenceConstruction(isCorrect: false) == .again)
     }
+
+    // MARK: - Tier-2 mappings (blueprint §3)
+
+    @Test("Shadowing accuracy maps to the four grade bands with correct boundaries")
+    func shadowingAccuracyBands() {
+        // ≥0.9 → .easy (inclusive at the boundary)
+        #expect(DrillGradeMapping.shadowing(accuracy: 1.0) == .easy)
+        #expect(DrillGradeMapping.shadowing(accuracy: 0.9) == .easy)
+        // [0.7, 0.9) → .good
+        #expect(DrillGradeMapping.shadowing(accuracy: 0.89) == .good)
+        #expect(DrillGradeMapping.shadowing(accuracy: 0.7) == .good)
+        // [0.4, 0.7) → .hard
+        #expect(DrillGradeMapping.shadowing(accuracy: 0.69) == .hard)
+        #expect(DrillGradeMapping.shadowing(accuracy: 0.4) == .hard)
+        // <0.4 → .again
+        #expect(DrillGradeMapping.shadowing(accuracy: 0.39) == .again)
+        #expect(DrillGradeMapping.shadowing(accuracy: 0.0) == .again)
+    }
+
+    @Test("Listening: correct → .good, incorrect → .again")
+    func listeningMapping() {
+        #expect(DrillGradeMapping.listening(isCorrect: true) == .good)
+        #expect(DrillGradeMapping.listening(isCorrect: false) == .again)
+    }
 }

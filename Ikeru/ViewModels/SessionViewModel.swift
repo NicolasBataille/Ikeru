@@ -187,6 +187,16 @@ public final class SessionViewModel {
     /// The ordered list of exercises for the current session (adaptive or SRS-only).
     public private(set) var sessionExercises: [ExerciseItem] = []
 
+    /// Session-scoped vocabulary pool for the audio drills (Shadowing +
+    /// word/meaning Listening). Fetched once at session start from the injected
+    /// `ContentRepository` (level-scoped) and mapped via `VocabularyItemMapper`.
+    /// The immersive drill container reads this as its content pool and builds
+    /// each audio drill's view model lazily at render time — the composition-root
+    /// pattern from blueprint §2 (no per-item payload threaded through
+    /// `ExerciseItem`). Empty when no repository was injected or the level has no
+    /// vocabulary; the container degrades gracefully in that case.
+    public private(set) var vocabularyPool: [VocabularyItem] = []
+
     /// Index of the current exercise in the sessionExercises array.
     public private(set) var currentExerciseIndex: Int = 0
 
@@ -260,6 +270,11 @@ public final class SessionViewModel {
     private let sessionPlanner: any SessionPlanner
     private let unlockService: any ExerciseUnlockService
     private let cardRepository: CardRepository
+    /// Read-only static-content facade (bundled SQLite). Optional so existing
+    /// call sites (previews, tests) compile unchanged; `nil` yields an empty
+    /// `vocabularyPool` and the audio drills degrade gracefully. Injected by
+    /// `HomeView.initializeViewModels()` in production (blueprint 4.1 Step 0).
+    private let contentRepository: ContentRepository?
     private let modelContainer: ModelContainer
     private let liveActivityManager = LiveActivityManager()
     private var cardStartTime: Date = Date()
@@ -307,12 +322,14 @@ public final class SessionViewModel {
         cardRepository: CardRepository,
         modelContainer: ModelContainer,
         sessionPlanner: any SessionPlanner = DefaultSessionPlanner(),
-        unlockService: any ExerciseUnlockService = DefaultExerciseUnlockService()
+        unlockService: any ExerciseUnlockService = DefaultExerciseUnlockService(),
+        contentRepository: ContentRepository? = nil
     ) {
         self.plannerService = plannerService
         self.sessionPlanner = sessionPlanner
         self.unlockService = unlockService
         self.cardRepository = cardRepository
+        self.contentRepository = contentRepository
         self.modelContainer = modelContainer
     }
 
@@ -352,6 +369,7 @@ public final class SessionViewModel {
         oneMinuteRemainingFired = false
         ledger = SkillXPLedger()
         skillContribution = .zero
+        vocabularyPool = []
     }
 
     /// Composes a session queue via the new `SessionPlanner` pipeline and
@@ -402,6 +420,11 @@ public final class SessionViewModel {
         )
         sessionJLPTLevel = snapshot.jlptLevel
 
+        // Fetch the session-scoped vocabulary pool for the audio drills, at the
+        // same level used for the XP multiplier. Fail-safe: no repository or an
+        // empty level yields an empty pool (the drill container degrades).
+        await loadVocabularyPool(level: sessionJLPTLevel)
+
         // Start timer
         startTimer()
 
@@ -415,6 +438,22 @@ public final class SessionViewModel {
             "Session started via SessionPlanner: \(plan.exercises.count) exercises (\(srsCards.count) SRS), ~\(plan.estimatedDurationMinutes)min"
         )
         return true
+    }
+
+    /// Loads and maps the session vocabulary pool for the audio drills
+    /// (Shadowing / Listening). No-op leaving an empty pool when no
+    /// `ContentRepository` was injected (previews / tests) — never throws,
+    /// never blocks the session start on a failed content read.
+    private func loadVocabularyPool(level: JLPTLevel) async {
+        guard let contentRepository else {
+            vocabularyPool = []
+            return
+        }
+        let rows = await contentRepository.vocabularyByLevel(level)
+        vocabularyPool = VocabularyItemMapper.map(rows)
+        Logger.ui.info(
+            "session.vocabPool level=\(level.rawValue, privacy: .public) count=\(self.vocabularyPool.count, privacy: .public)"
+        )
     }
 
     /// Composes a custom session from the Étude → Compose sheet. Same
@@ -457,6 +496,9 @@ public final class SessionViewModel {
         // their estimated level. Falls back to snapshot estimate if no
         // levels were selected (defensive — UI requires a selection).
         sessionJLPTLevel = levels.max() ?? snapshot.jlptLevel
+
+        // Audio-drill pool at the session's difficulty (see startSession()).
+        await loadVocabularyPool(level: sessionJLPTLevel)
 
         startTimer()
         await loadRPGState()

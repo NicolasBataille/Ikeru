@@ -239,7 +239,8 @@ struct ActiveSessionView: View {
                 },
                 currentCard: viewModel.currentCard,
                 upcomingCards: viewModel.upcomingCards,
-                feedbackState: viewModel.feedbackState
+                feedbackState: viewModel.feedbackState,
+                vocabularyPool: viewModel.vocabularyPool
             )
             .frame(maxHeight: .infinity)
         }
