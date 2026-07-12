@@ -9,6 +9,13 @@ struct ListeningExerciseView: View {
 
     @Bindable var viewModel: ListeningViewModel
 
+    /// Invoked when the learner accepts their answer and advances the session.
+    /// Correctness is mapped to an FSRS `Grade` via `DrillGradeMapping.listening`
+    /// (blueprint §3); listening is XP-only downstream (`listeningSubtitled` is
+    /// `.perCompletion`), so the grade shapes only the completion signal, never
+    /// an FSRS write. Defaults to a no-op so the standalone `#Preview` compiles.
+    var onComplete: (Grade) -> Void = { _ in }
+
     @State private var hapticCorrect = false
     @State private var hapticIncorrect = false
 
@@ -90,7 +97,7 @@ struct ListeningExerciseView: View {
                     }
                 }
 
-                // Play Again button (visible after answering)
+                // Play Again + Continue (visible after answering)
                 if viewModel.exerciseResult != nil {
                     Button {
                         Task {
@@ -100,6 +107,17 @@ struct ListeningExerciseView: View {
                         Label("Play Again", systemImage: "arrow.clockwise")
                     }
                     .ikeruButtonStyle(.secondary)
+
+                    // Continue — accept the answer and advance the session. Maps
+                    // correctness → FSRS Grade (DrillGradeMapping.listening).
+                    Button {
+                        onComplete(DrillGradeMapping.listening(
+                            isCorrect: viewModel.exerciseResult == .correct
+                        ))
+                    } label: {
+                        Label("Continue", systemImage: "arrow.right")
+                    }
+                    .ikeruButtonStyle(.primary)
                 }
             }
         } else if viewModel.loadingState.isLoading {

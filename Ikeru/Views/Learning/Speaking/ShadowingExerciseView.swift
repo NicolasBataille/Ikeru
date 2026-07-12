@@ -8,6 +8,14 @@ struct ShadowingExerciseView: View {
 
     @Bindable var viewModel: ShadowingViewModel
 
+    /// Invoked when the learner accepts their attempt and advances the session.
+    /// The pronunciation accuracy is mapped to an FSRS `Grade` via
+    /// `DrillGradeMapping.shadowing` (blueprint §3); shadowing is XP-only
+    /// downstream (`speakingPractice` is `.perCompletion`), so the grade shapes
+    /// only the completion signal, never an FSRS write. Defaults to a no-op so
+    /// the standalone `#Preview` still compiles.
+    var onComplete: (Grade) -> Void = { _ in }
+
     @State private var hapticRecord = false
     @State private var recordingPulse = false
 
@@ -253,11 +261,22 @@ struct ShadowingExerciseView: View {
             }
             .ikeruButtonStyle(.secondary)
 
-            // Retry
+            // Retry — a fresh attempt at the same phrase; does not advance.
             Button {
                 viewModel.retryExercise()
             } label: {
                 Label("Try Again", systemImage: "arrow.clockwise")
+            }
+            .ikeruButtonStyle(.secondary)
+
+            // Continue — accept this attempt and advance the session. Maps the
+            // pronunciation accuracy → FSRS Grade (DrillGradeMapping.shadowing).
+            Button {
+                onComplete(DrillGradeMapping.shadowing(
+                    accuracy: viewModel.shadowingResult?.accuracy ?? 0
+                ))
+            } label: {
+                Label("Continue", systemImage: "arrow.right")
             }
             .ikeruButtonStyle(.primary)
         }
