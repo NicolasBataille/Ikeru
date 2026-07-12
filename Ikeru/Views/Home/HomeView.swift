@@ -624,8 +624,22 @@ struct HomeView: View {
         sessionViewModel = SessionViewModel(
             plannerService: planner,
             cardRepository: repo,
-            modelContainer: container
+            modelContainer: container,
+            contentRepository: Self.makeContentRepository()
         )
+    }
+
+    /// Resolves the bundled `n5-content.sqlite` and builds a read-only
+    /// `ContentRepository` for the session (blueprint 4.1 Step 0 — the app has
+    /// never stood one up before). Fail-safe: a missing resource logs and
+    /// returns nil so the session still starts; the audio drills just get an
+    /// empty vocabulary pool rather than crashing.
+    private static func makeContentRepository() -> ContentRepository? {
+        guard let url = Bundle.main.url(forResource: "n5-content", withExtension: "sqlite") else {
+            Logger.ui.error("n5-content.sqlite not found in bundle — audio drills will have no content")
+            return nil
+        }
+        return ContentRepository(bundleURL: url)
     }
 
     private func startSession() {
