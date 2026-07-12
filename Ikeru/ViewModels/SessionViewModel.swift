@@ -1085,7 +1085,10 @@ public final class SessionViewModel {
             await liveActivityManager.endActivity(
                 elapsedSeconds: Int(elapsedTime),
                 completedCount: reviewedCount,
-                totalCount: sessionQueue.count,
+                // Exercise-list length, matching updateActivity / finishSessionIfNeeded.
+                // On an abandoned mixed SRS + drill session, sessionQueue.count
+                // (SRS-only) would under-report and make completedCount > totalCount.
+                totalCount: sessionExercises.count,
                 xpEarned: xpEarned,
                 streakCount: consecutiveCorrect
             )
