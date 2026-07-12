@@ -9,6 +9,12 @@ struct HandwritingExerciseView: View {
 
     @Bindable var viewModel: HandwritingViewModel
 
+    /// Invoked when the learner accepts the current recognition result and
+    /// advances the session. The feedback tier is mapped to an FSRS `Grade`
+    /// via `DrillGradeMapping.handwriting` (blueprint §3). Defaults to a no-op
+    /// so the standalone `#Preview` (and any non-session use) still compiles.
+    var onComplete: (Grade) -> Void = { _ in }
+
     var body: some View {
         VStack(spacing: IkeruTheme.Spacing.md) {
             // Header with target character
@@ -129,7 +135,8 @@ struct HandwritingExerciseView: View {
                     .ikeruScaledFont(IkeruTheme.Typography.Size.caption, relativeTo: .caption)
                     .foregroundStyle(.ikeruTextSecondary)
 
-                // Retry button
+                // Retry button — only when the result wasn't a clean match, so
+                // the learner can improve their grade before continuing.
                 if viewModel.feedbackState != .correct {
                     Button {
                         viewModel.retry()
@@ -137,9 +144,24 @@ struct HandwritingExerciseView: View {
                         Label("Try Again", systemImage: "arrow.counterclockwise")
                             .ikeruScaledFont(IkeruTheme.Typography.Size.body, relativeTo: .body)
                     }
-                    .buttonStyle(.borderedProminent)
+                    .buttonStyle(.bordered)
                     .tint(Color.ikeruPrimaryAccent)
                 }
+
+                // Continue — accept the current result and advance the session.
+                // Maps the feedback tier → FSRS Grade (DrillGradeMapping).
+                Button {
+                    onComplete(DrillGradeMapping.handwriting(
+                        feedback: viewModel.feedbackState,
+                        topConfidence: viewModel.recognitionResult?.candidates.first?.confidence
+                    ))
+                } label: {
+                    Label("Continue", systemImage: "arrow.right")
+                        .ikeruScaledFont(IkeruTheme.Typography.Size.body, relativeTo: .body)
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(Color.ikeruPrimaryAccent)
             }
             .tatamiRoom(.standard)
         }

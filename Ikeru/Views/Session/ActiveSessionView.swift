@@ -231,6 +231,12 @@ struct ActiveSessionView: View {
                         await viewModel.gradeAndAdvance(grade: grade)
                     }
                 },
+                onExerciseComplete: { grade in
+                    Task {
+                        triggerHaptic(for: grade)
+                        await viewModel.completeCurrentExercise(grade: grade)
+                    }
+                },
                 currentCard: viewModel.currentCard,
                 upcomingCards: viewModel.upcomingCards,
                 feedbackState: viewModel.feedbackState

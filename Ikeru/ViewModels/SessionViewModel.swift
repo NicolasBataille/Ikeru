@@ -662,50 +662,15 @@ public final class SessionViewModel {
             consecutiveCorrect = 0
         }
 
-        // Mastery events (Phase 3): pre-grade card state → forced drops at event rarity.
-        // Detected BEFORE RNG drop so they always take priority when both would fire.
-        // Named mastery drops (e.g. "First Steps") are once-per-profile — if the
-        // inventory already contains the drop, skip it. Otherwise the same badge
-        // would re-appear every time a new card is graded Good/Easy.
-        lastLootDrop = nil
-        let masteryEvents = MasteryEventDetector.detect(preGradeCard: card, grade: grade)
-        if let event = masteryEvents.first {
-            let drop = LootDropService.generateMasteryDrop(for: event, learnerLevel: sessionJLPTLevel)
-            let alreadyOwned = await inventoryContains(name: drop.name)
-            if !alreadyOwned {
-                lastLootDrop = drop
-                sessionLootCount += 1
-                sessionMasteryEvents.append(event)
-                await persistLootDrop(drop)
-                Logger.rpg.info("Mastery drop: \(event.displayName) → \(drop.name) (\(drop.rarity.displayName))")
-            } else {
-                Logger.rpg.info("Mastery drop skipped (\(drop.name) already in inventory)")
-            }
-        } else if LootDropService.shouldDropLoot(
-            grade: grade,
-            sessionLootCount: sessionLootCount
-        ) {
-            let drop = LootDropService.generateDrop(level: currentLevel)
-            lastLootDrop = drop
-            sessionLootCount += 1
-            await persistLootDrop(drop)
-        }
-
-        // Track new items learned (first review = reps was 0). The set guard
-        // keeps a same-day re-queued new card from counting twice.
-        if card.fsrsState.reps == 0 && !newItemCountedIDs.contains(card.id) {
-            newItemCountedIDs.insert(card.id)
-            newItemsLearned += 1
-        }
-
-        // Check for leech detection after grading
-        if let leechEvent = LeechDetectionService.checkForLeech(
-            card: card,
-            grade: grade,
-            threshold: CardRepository.leechThreshold
-        ) {
-            lastLeechEvent = leechEvent
-        }
+        // Card-derived grade side-effects (mastery detection + loot drop,
+        // first-review `newItemsLearned` counting, leech detection). Extracted
+        // so the `.kanjiStudy` drill path in `completeCurrentExercise` runs the
+        // SAME bookkeeping — a kanji card that becomes a leech or is newly
+        // learned is detected regardless of which UI graded it. Called here at
+        // the exact position (after the XP/RPG update — the RNG drop reads the
+        // post-award `currentLevel` — and before either index advances) so SRS
+        // behavior is byte-for-byte unchanged.
+        await applyCardGradeSideEffects(preGradeCard: card, grade: grade)
 
         reviewedCount += 1
         currentIndex += 1
@@ -739,6 +704,73 @@ public final class SessionViewModel {
         await finishSessionIfNeeded()
     }
 
+    /// Card-derived grade side-effects shared by the SRS deck path
+    /// (`gradeAndAdvance`) and the `.kanjiStudy` drill path
+    /// (`completeCurrentExercise`). Both grade a real FSRS `CardDTO`, so both
+    /// must run identical detection/counting:
+    ///   1. mastery events (Phase 3) → forced loot drop at event rarity, taking
+    ///      priority over the RNG drop; else the RNG loot drop;
+    ///   2. first-review `newItemsLearned` counting (reps was 0), deduped so a
+    ///      same-day re-queued new card isn't double-counted;
+    ///   3. leech detection.
+    ///
+    /// Must be called AFTER the XP/RPG update (the RNG drop reads the post-award
+    /// `currentLevel`) and BEFORE either index advances.
+    ///
+    /// NOTE: mistake tracking + same-day requeue (`missedCardIDs` /
+    /// `requeueFailedCard`) are deliberately NOT here. `requeueFailedCard`
+    /// re-inserts an `.srsReview(card)` into `sessionQueue`, which holds SRS
+    /// payloads only; a `.kanjiStudy` card is intentionally never in that queue
+    /// (the §4.1 index-decoupling invariant), so requeuing it would silently
+    /// convert a handwriting drill into a deck review. That stays in the
+    /// `.srsReview` deck path (`gradeAndAdvance`).
+    private func applyCardGradeSideEffects(preGradeCard card: CardDTO, grade: Grade) async {
+        // Mastery events: pre-grade card state → forced drops at event rarity.
+        // Detected BEFORE RNG drop so they always take priority when both would
+        // fire. Named mastery drops (e.g. "First Steps") are once-per-profile —
+        // if the inventory already contains the drop, skip it. Otherwise the
+        // same badge would re-appear every time a new card is graded Good/Easy.
+        lastLootDrop = nil
+        let masteryEvents = MasteryEventDetector.detect(preGradeCard: card, grade: grade)
+        if let event = masteryEvents.first {
+            let drop = LootDropService.generateMasteryDrop(for: event, learnerLevel: sessionJLPTLevel)
+            let alreadyOwned = await inventoryContains(name: drop.name)
+            if !alreadyOwned {
+                lastLootDrop = drop
+                sessionLootCount += 1
+                sessionMasteryEvents.append(event)
+                await persistLootDrop(drop)
+                Logger.rpg.info("Mastery drop: \(event.displayName) → \(drop.name) (\(drop.rarity.displayName))")
+            } else {
+                Logger.rpg.info("Mastery drop skipped (\(drop.name) already in inventory)")
+            }
+        } else if LootDropService.shouldDropLoot(
+            grade: grade,
+            sessionLootCount: sessionLootCount
+        ) {
+            let drop = LootDropService.generateDrop(level: currentLevel)
+            lastLootDrop = drop
+            sessionLootCount += 1
+            await persistLootDrop(drop)
+        }
+
+        // Track new items learned (first review = reps was 0). The set guard
+        // keeps a same-day re-queued new card from counting twice.
+        if card.fsrsState.reps == 0 && !newItemCountedIDs.contains(card.id) {
+            newItemCountedIDs.insert(card.id)
+            newItemsLearned += 1
+        }
+
+        // Check for leech detection after grading.
+        if let leechEvent = LeechDetectionService.checkForLeech(
+            card: card,
+            grade: grade,
+            threshold: CardRepository.leechThreshold
+        ) {
+            lastLeechEvent = leechEvent
+        }
+    }
+
     /// Ends and finalizes the session when it should stop — exercise-list
     /// exhaustion OR the time-budget policy firing. Shared by `gradeAndAdvance`
     /// (SRS deck path) and `completeCurrentExercise` (non-SRS drill path) so both
@@ -750,7 +782,11 @@ public final class SessionViewModel {
         await liveActivityManager.endActivity(
             elapsedSeconds: Int(elapsedTime),
             completedCount: reviewedCount,
-            totalCount: sessionQueue.count,
+            // Total is the exercise-list length, matching `updateActivity`
+            // (which already reports `sessionExercises.count`). With mixed
+            // SRS + drill sessions now reachable, `sessionQueue.count` (SRS-only)
+            // would under-report the denominator on the ending Live Activity.
+            totalCount: sessionExercises.count,
             xpEarned: xpEarned,
             streakCount: consecutiveCorrect
         )
@@ -879,6 +915,15 @@ public final class SessionViewModel {
             correctCount += 1
         } else {
             consecutiveCorrect = 0
+        }
+
+        // Only `.kanjiStudy` carries a real, gradeable card, so it (and only it)
+        // runs the shared card-grade side-effects: mastery / leech detection and
+        // first-review counting, identical to the SRS deck path. Positioned after
+        // the XP/RPG update (parity with `gradeAndAdvance`) and before the
+        // exercise pointer advances. Every other non-SRS kind is XP-only.
+        if case .kanjiStudy(let card) = exercise {
+            await applyCardGradeSideEffects(preGradeCard: card, grade: grade)
         }
 
         // `reviewedCount` counts completed exercises (not just SRS cards): it
@@ -1040,7 +1085,10 @@ public final class SessionViewModel {
             await liveActivityManager.endActivity(
                 elapsedSeconds: Int(elapsedTime),
                 completedCount: reviewedCount,
-                totalCount: sessionQueue.count,
+                // Exercise-list length, matching updateActivity / finishSessionIfNeeded.
+                // On an abandoned mixed SRS + drill session, sessionQueue.count
+                // (SRS-only) would under-report and make completedCount > totalCount.
+                totalCount: sessionExercises.count,
                 xpEarned: xpEarned,
                 streakCount: consecutiveCorrect
             )

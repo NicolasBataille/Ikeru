@@ -10,6 +10,13 @@ struct SentenceConstructionView: View {
     @Bindable var viewModel: SentenceConstructionViewModel
     @Namespace private var tokenAnimation
 
+    /// Invoked when the learner accepts the feedback and advances the session.
+    /// `validationResult.isCorrect` is mapped to an FSRS `Grade` via
+    /// `DrillGradeMapping.sentenceConstruction` (blueprint §3). Defaults to a
+    /// no-op so the standalone `#Preview` still compiles; the preview overrides
+    /// it to cycle the built-in templates instead.
+    var onComplete: (Grade) -> Void = { _ in }
+
     var body: some View {
         VStack(spacing: IkeruTheme.Spacing.lg) {
             // Translation prompt
@@ -142,9 +149,12 @@ struct SentenceConstructionView: View {
 
         case .feedback:
             Button {
-                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                    viewModel.nextExercise()
-                }
+                // Completing this exercise advances the SESSION (not the view
+                // model's internal template cursor). The grade is derived from
+                // whether the arrangement was correct.
+                onComplete(DrillGradeMapping.sentenceConstruction(
+                    isCorrect: viewModel.validationResult?.isCorrect ?? false
+                ))
             } label: {
                 Label("Next", systemImage: "arrow.right")
             }
@@ -359,10 +369,14 @@ private struct HeightPreferenceKey: PreferenceKey {
 #Preview {
     let viewModel = SentenceConstructionViewModel()
 
-    SentenceConstructionView(viewModel: viewModel)
-        .background(Color.ikeruBackground)
-        .preferredColorScheme(.dark)
-        .onAppear {
-            viewModel.loadExercise(difficulty: .beginner)
-        }
+    // Standalone preview cycles the built-in templates on completion; inside a
+    // real session the container routes `onComplete` to the session view model.
+    SentenceConstructionView(viewModel: viewModel) { _ in
+        viewModel.nextExercise()
+    }
+    .background(Color.ikeruBackground)
+    .preferredColorScheme(.dark)
+    .onAppear {
+        viewModel.loadExercise(difficulty: .beginner)
+    }
 }

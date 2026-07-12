@@ -308,6 +308,32 @@ public struct DefaultSessionPlanner: SessionPlanner {
         }
     }
 
+    /// Whether an exercise kind is "live" — i.e. backed by a real, wired
+    /// in-session drill view that can present and honestly grade it. Used by
+    /// `finalize` as an allowlist so the planner never schedules a placeholder.
+    ///
+    /// Exhaustive on `ExerciseItem` on purpose: adding a new kind forces an
+    /// explicit live/filtered decision here rather than silently defaulting.
+    ///
+    ///   LIVE (Tier 1 — wired drill views this PR):
+    ///     .srsReview            — SRS flashcard deck
+    ///     .kanjiStudy           — HandwritingExerciseView, writes a real FSRS grade
+    ///     .writingPractice      — HandwritingExerciseView, XP-only
+    ///     .sentenceConstruction — SentenceConstructionView, XP-only
+    ///
+    ///   STILL FILTERED (no wired view / no real content source yet):
+    ///     Tier 2 (later PR):  .listeningExercise, .speakingExercise, .vocabularyStudy
+    ///     Tier 3 (deferred):  .fillInBlank, .readingPassage, .grammarExercise
+    static func isLive(_ item: ExerciseItem) -> Bool {
+        switch item {
+        case .srsReview, .kanjiStudy, .writingPractice, .sentenceConstruction:
+            return true
+        case .listeningExercise, .speakingExercise, .vocabularyStudy,
+             .fillInBlank, .readingPassage, .grammarExercise:
+            return false
+        }
+    }
+
     private func lowestSkill(in balances: [SkillType: Double]) -> SkillType {
         let sorted = SkillType.allCases.sorted { (balances[$0] ?? 0) < (balances[$1] ?? 0) }
         return sorted.first ?? .reading
@@ -318,13 +344,11 @@ public struct DefaultSessionPlanner: SessionPlanner {
     }
 
     private func finalize(exercises rawExercises: [ExerciseItem]) -> SessionPlan {
-        // Only SRS flashcard review is a real, fully-implemented in-session
-        // exercise today. The other ExerciseItem kinds render a placeholder
-        // ("Complete" auto-grade), so we filter them out until real content
-        // exists — a session is honest SRS review, never a fake exercise.
-        let exercises = rawExercises.filter {
-            if case .srsReview = $0 { return true } else { return false }
-        }
+        // Allowlist of exercise kinds that have a real, fully-wired in-session
+        // drill view TODAY. Everything else still renders a placeholder, so the
+        // planner filters it out rather than scheduling something the UI cannot
+        // honestly present or grade. This replaces the previous SRS-only filter.
+        let exercises = rawExercises.filter { Self.isLive($0) }
         let secs = exercises.map(\.estimatedDurationSeconds).reduce(0, +)
         var breakdown: [SkillType: Int] = [:]
         for ex in exercises { breakdown[ex.skill, default: 0] += 1 }

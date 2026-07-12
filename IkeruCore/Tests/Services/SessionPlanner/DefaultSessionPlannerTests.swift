@@ -7,8 +7,8 @@ struct DefaultSessionPlannerHomeTests {
 
     private let planner = DefaultSessionPlanner()
 
-    @Test("Home session contains only SRS review (placeholder exercises filtered)")
-    func srsOnlyHomeSession() async {
+    @Test("Home session schedules only allowlisted (Tier-1 + SRS) kinds, never Tier-2/3")
+    func homeSessionAllowlisted() async {
         let cards = (0..<30).map { _ in fixtureDueCard() }
         let inputs = SessionPlannerInputs(
             source: .homeRecommendation,
@@ -19,14 +19,17 @@ struct DefaultSessionPlannerHomeTests {
         )
         let plan = await planner.compose(inputs: inputs)
 
-        // Only SRS flashcard review is a real in-session exercise today; the
-        // planner filters out the placeholder exercise kinds. Every item must
-        // be an SRS review and there must be some (30 cards are due).
+        // Phase 4.1: `finalize` is now an allowlist, not an SRS-only filter.
+        // Tier-1 drill kinds MAY appear (they have wired views); the still-
+        // unwired Tier-2/3 kinds must NOT. There must be some items (30 due
+        // cards feed the review wave).
         #expect(plan.exercises.count > 0)
-        let allSRS = plan.exercises.allSatisfy {
-            if case .srsReview = $0 { return true } else { return false }
-        }
-        #expect(allSRS, "expected only .srsReview, got \(plan.exercises)")
+        let allAllowlisted = plan.exercises.allSatisfy { DefaultSessionPlanner.isLive($0) }
+        #expect(allAllowlisted, "expected only allowlisted (Tier-1 + SRS) kinds, got \(plan.exercises)")
+
+        // Explicitly: no filtered (Tier-2/3) kind ever survives finalize.
+        let filtered = plan.exercises.filter { !DefaultSessionPlanner.isLive($0) }
+        #expect(filtered.isEmpty, "Tier-2/3 kinds must be filtered: \(filtered)")
     }
 
     @Test("N5 learner never gets speakingPractice in Home, even if unlocked")
@@ -99,11 +102,12 @@ struct DefaultSessionPlannerStudyTests {
 
     private let planner = DefaultSessionPlanner()
 
-    @Test("Study-custom of placeholder-only types yields an empty session")
+    @Test("Study-custom of still-filtered (Tier-2/3) types yields an empty session")
     func studyCustomPlaceholderOnlyIsEmpty() async {
-        // study-custom synthesises only the selected typed exercises; none of
-        // them are real yet, so after the SRS-only filter the plan is empty.
-        // (The Compose feature is deferred until real exercise content exists.)
+        // study-custom synthesises only the selected typed exercises. Here they
+        // resolve to still-filtered kinds — kanaStudy needs a kanji card (none
+        // in this vocabulary-only pool → nil) and vocabularyStudy is Tier-2
+        // (filtered) — so after the allowlist the plan is empty.
         let cards = (0..<10).map { _ in fixtureDueCard() }
         let inputs = SessionPlannerInputs(
             source: .studyCustom(
@@ -119,8 +123,11 @@ struct DefaultSessionPlannerStudyTests {
         #expect(plan.exercises.isEmpty)
     }
 
-    @Test("Placeholder (non-SRS) exercise types are never scheduled")
-    func placeholderTypesNeverScheduled() async {
+    @Test("Still-filtered (Tier-2/3) exercise types are never scheduled")
+    func filteredTypesNeverScheduled() async {
+        // speakingPractice → .speakingExercise (Tier-2) and grammarExercise →
+        // .grammarExercise (Tier-3) are still filtered; kanaStudy needs a kanji
+        // card (none here) so it synthesises nothing. Nothing survives finalize.
         let cards = (0..<10).map { _ in fixtureDueCard() }
         let inputs = SessionPlannerInputs(
             source: .studyCustom(
@@ -133,10 +140,33 @@ struct DefaultSessionPlannerStudyTests {
             availableCards: cards
         )
         let plan = await planner.compose(inputs: inputs)
-        let nonSRS = plan.exercises.filter {
-            if case .srsReview = $0 { return false } else { return true }
+        // Post-allowlist assertion: no NON-allowlisted (Tier-2/3) kind appears.
+        let filtered = plan.exercises.filter { !DefaultSessionPlanner.isLive($0) }
+        #expect(filtered.isEmpty, "Tier-2/3 exercises should be filtered: \(filtered)")
+    }
+
+    @Test("Tier-1 sentenceConstruction survives finalize (allowlist un-filters it)")
+    func tier1SentenceConstructionSurvives() async {
+        // sentenceConstruction is self-sufficient (built-in templates, no card
+        // needed) and is a wired Tier-1 drill, so a study-custom session that
+        // selects it must now schedule real .sentenceConstruction items — the
+        // positive counterpart to the filtered-kinds assertions above.
+        let inputs = SessionPlannerInputs(
+            source: .studyCustom(
+                types: [.sentenceConstruction],
+                jlptLevels: [.n5]
+            ),
+            durationMinutes: 15,
+            profile: .empty,
+            unlockedTypes: Set(ExerciseType.allCases),
+            availableCards: []
+        )
+        let plan = await planner.compose(inputs: inputs)
+        #expect(!plan.exercises.isEmpty)
+        let allSentence = plan.exercises.allSatisfy {
+            if case .sentenceConstruction = $0 { return true } else { return false }
         }
-        #expect(nonSRS.isEmpty, "non-SRS exercises should be filtered: \(nonSRS)")
+        #expect(allSentence, "expected .sentenceConstruction items, got \(plan.exercises)")
     }
 
     private func fixtureDueCard() -> CardDTO {

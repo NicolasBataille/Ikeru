@@ -17,6 +17,13 @@ struct ExerciseTransitionContainer: View {
     /// Callback when the user completes an SRS card via button.
     let onButtonGrade: (Grade) -> Void
 
+    /// Callback when the user completes a NON-SRS drill exercise (kanji study,
+    /// writing practice, sentence construction). Distinct from the SRS grade
+    /// closures above: this routes to `SessionViewModel.completeCurrentExercise`
+    /// which advances the exercise pointer without moving the SRS queue pointer.
+    /// Each drill maps its own internal result → `Grade` before calling this.
+    let onExerciseComplete: (Grade) -> Void
+
     /// The current card for SRS review exercises.
     let currentCard: CardDTO?
 
@@ -76,12 +83,10 @@ struct ExerciseTransitionContainer: View {
             srsReviewView
 
         case .kanjiStudy(let card):
-            placeholderExerciseView(
-                icon: sfSymbol(for: .reading),
-                title: "Kanji Study",
-                detail: card.front,
-                skill: .reading
-            )
+            // Kanji study reuses the handwriting drill against the real card's
+            // front character; completion writes a REAL FSRS grade for the card
+            // (via SessionViewModel.completeCurrentExercise → gradeCard).
+            HandwritingDrillHost(character: card.front, onComplete: onExerciseComplete)
 
         case .grammarExercise:
             placeholderExerciseView(
@@ -92,12 +97,10 @@ struct ExerciseTransitionContainer: View {
             )
 
         case .writingPractice(let card):
-            placeholderExerciseView(
-                icon: sfSymbol(for: .writing),
-                title: "Writing Practice",
-                detail: card.front,
-                skill: .writing
-            )
+            // Writing practice reuses the same handwriting drill but is XP-only
+            // (no FSRS write) — SessionViewModel awards XP for .writingPractice
+            // without grading a card, per the ExerciseXP rule table.
+            HandwritingDrillHost(character: card.front, onComplete: onExerciseComplete)
 
         case .listeningExercise:
             placeholderExerciseView(
@@ -116,12 +119,9 @@ struct ExerciseTransitionContainer: View {
             )
 
         case .sentenceConstruction:
-            placeholderExerciseView(
-                icon: sfSymbol(for: .writing),
-                title: "Sentence Construction",
-                detail: "Arrange words to form a sentence",
-                skill: .writing
-            )
+            // Self-contained token-arrangement drill (built-in N5 templates);
+            // XP-only completion.
+            SentenceConstructionDrillHost(onComplete: onExerciseComplete)
 
         case .vocabularyStudy:
             placeholderExerciseView(
@@ -273,6 +273,88 @@ struct ExerciseTransitionContainer: View {
         case .listening: Color(hex: IkeruTheme.Colors.Skills.listening)
         case .speaking: Color(hex: IkeruTheme.Colors.Skills.speaking)
         }
+    }
+}
+
+// MARK: - Drill Grade Mapping
+
+/// Pure mapping from each Tier-1 drill view's internal result to an FSRS
+/// `Grade`, per Phase 4.1 blueprint §3. Kept as standalone static functions so
+/// the mapping is unit-testable without instantiating a view or view model.
+enum DrillGradeMapping {
+
+    /// Top-candidate confidence at/above which a *correct* handwriting result is
+    /// graded `.easy` rather than `.good`. The recogniser's "correct" threshold
+    /// is 0.7 (`HandwritingViewModel.correctThreshold`); a near-certain top
+    /// match earns the longer `.easy` interval.
+    static let easyConfidenceThreshold: Double = 0.95
+
+    /// Handwriting recognition feedback → `Grade`.
+    /// `.correct` → `.good` (or `.easy` on very high confidence),
+    /// `.partial` → `.hard`, `.incorrect`/`.idle` → `.again`.
+    static func handwriting(
+        feedback: HandwritingFeedbackState,
+        topConfidence: Double?
+    ) -> Grade {
+        switch feedback {
+        case .correct:
+            if let confidence = topConfidence, confidence >= easyConfidenceThreshold {
+                return .easy
+            }
+            return .good
+        case .partial:
+            return .hard
+        case .incorrect, .idle:
+            return .again
+        }
+    }
+
+    /// Sentence-construction validation → `Grade`. A correct arrangement is
+    /// `.good`, anything else `.again` (no partial-credit tier for ordering).
+    static func sentenceConstruction(isCorrect: Bool) -> Grade {
+        isCorrect ? .good : .again
+    }
+}
+
+// MARK: - Drill Hosts
+
+/// Owns a `HandwritingViewModel` for the lifetime of one exercise (the
+/// container keeps view identity stable via `.id(exercise.stableID)`, so the
+/// `@State` model persists across body re-evaluations and resets when the
+/// exercise changes). Loads the target character once and forwards completion
+/// to `onComplete`. Shared by `.kanjiStudy` and `.writingPractice`; the FSRS
+/// vs XP-only distinction is made downstream in `SessionViewModel` by exercise
+/// kind, not here.
+private struct HandwritingDrillHost: View {
+    let character: String
+    let onComplete: (Grade) -> Void
+    @State private var viewModel = HandwritingViewModel()
+
+    var body: some View {
+        HandwritingExerciseView(viewModel: viewModel, onComplete: onComplete)
+            .onAppear {
+                if viewModel.targetCharacter != character {
+                    viewModel.loadTarget(character: character)
+                }
+            }
+    }
+}
+
+/// Owns a `SentenceConstructionViewModel`, loads a beginner-difficulty exercise
+/// once on appear, and forwards completion to `onComplete`. (Difficulty is
+/// fixed to `.beginner` for this Tier-1 pass; a JLPT-level mapping is a later
+/// refinement.)
+private struct SentenceConstructionDrillHost: View {
+    let onComplete: (Grade) -> Void
+    @State private var viewModel = SentenceConstructionViewModel()
+
+    var body: some View {
+        SentenceConstructionView(viewModel: viewModel, onComplete: onComplete)
+            .onAppear {
+                if viewModel.currentExercise == nil {
+                    viewModel.loadExercise(difficulty: .beginner)
+                }
+            }
     }
 }
 
