@@ -321,20 +321,27 @@ public struct DefaultSessionPlanner: SessionPlanner {
     ///       .kanjiStudy           — HandwritingExerciseView, writes a real FSRS grade
     ///       .writingPractice      — HandwritingExerciseView, XP-only
     ///       .sentenceConstruction — SentenceConstructionView, XP-only
-    ///     Tier 2 (word/meaning audio drills, XP-only):
+    ///     Tier 2 (XP-only drills):
     ///       .listeningExercise    — ListeningExerciseView (word/meaning subtypes)
     ///       .speakingExercise     — ShadowingExerciseView
+    ///       .vocabularyStudy      — VocabularyRecallView (multiple-choice recall)
     ///
     ///   STILL FILTERED (no wired view / no real content source yet):
-    ///     Tier 2 (later PR):  .vocabularyStudy
     ///     Tier 3 (deferred):  .fillInBlank, .readingPassage, .grammarExercise
     ///     (listening PASSAGE comprehension also stays out — no passages table.)
+    ///
+    /// NOTE (`.vocabularyStudy` XP-only): vocabulary has NO backing SwiftData
+    /// `Card` (it lives only in the read-only content DB), so its completion is
+    /// XP-only — it never writes an FSRS grade or `ReviewLog`. See
+    /// `SessionViewModel.completeCurrentExercise`, where only `.kanjiStudy`
+    /// reaches `gradeCard`. FSRS scheduling for vocabulary is deferred until the
+    /// vocab-dictionary feature makes vocab cards gradeable.
     static func isLive(_ item: ExerciseItem) -> Bool {
         switch item {
         case .srsReview, .kanjiStudy, .writingPractice, .sentenceConstruction,
-             .listeningExercise, .speakingExercise:
+             .listeningExercise, .speakingExercise, .vocabularyStudy:
             return true
-        case .vocabularyStudy, .fillInBlank, .readingPassage, .grammarExercise:
+        case .fillInBlank, .readingPassage, .grammarExercise:
             return false
         }
     }
