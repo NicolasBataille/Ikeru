@@ -129,19 +129,32 @@ public final class GeminiProvider: AIProvider, @unchecked Sendable {
         request.addValue(apiKey, forHTTPHeaderField: "x-goog-api-key")
         request.timeoutInterval = timeoutSeconds
 
+        request.httpBody = try Self.encodeRequestBody(
+            systemPrompt: prompt.systemPrompt,
+            messages: prompt.messages
+        )
+        return request
+    }
+
+    /// Builds Gemini's `generateContent` JSON body from a system prompt and an
+    /// ordered multi-turn conversation. The system prompt goes into
+    /// `system_instruction`; every turn maps to a `contents` entry with Gemini's
+    /// role vocabulary (`user`, and `model` for the assistant). Pure and
+    /// `static` so the multi-turn shape can be unit-tested without the network.
+    static func encodeRequestBody(systemPrompt: String, messages: [AIMessage]) throws -> Data {
         let body = GeminiRequestBody(
             systemInstruction: GeminiContent(
-                parts: [GeminiPart(text: prompt.systemPrompt)]
+                role: nil,
+                parts: [GeminiPart(text: systemPrompt)]
             ),
-            contents: [
+            contents: messages.map { message in
                 GeminiContent(
-                    parts: [GeminiPart(text: prompt.userMessage)]
+                    role: message.role == .user ? "user" : "model",
+                    parts: [GeminiPart(text: message.text)]
                 )
-            ]
+            }
         )
-
-        request.httpBody = try JSONEncoder().encode(body)
-        return request
+        return try JSONEncoder().encode(body)
     }
 
     private func parseResponse(data: Data) throws -> String {
@@ -175,6 +188,9 @@ private struct GeminiRequestBody: Encodable {
 }
 
 private struct GeminiContent: Codable {
+    /// Gemini's role for a turn: `user` or `model`. Omitted (nil) for
+    /// `system_instruction`, which is roleless.
+    let role: String?
     let parts: [GeminiPart]?
 }
 

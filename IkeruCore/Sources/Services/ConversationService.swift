@@ -38,16 +38,11 @@ public final class ConversationService: @unchecked Sendable {
         jlptLevel: JLPTLevel,
         knownVocabulary: [String] = []
     ) async throws -> ConversationMessage {
-        let systemPrompt = buildSystemPrompt(for: jlptLevel, knownVocabulary: knownVocabulary)
-
-        // Build combined user message with recent history context
-        let contextMessage = buildContextMessage(from: history, userMessage: userMessage)
-
-        let prompt = AIPrompt(
-            systemPrompt: systemPrompt,
-            userMessage: contextMessage,
-            context: ["jlpt_level": jlptLevel.rawValue],
-            complexity: .medium
+        let prompt = buildPrompt(
+            userMessage: userMessage,
+            history: history,
+            jlptLevel: jlptLevel,
+            knownVocabulary: knownVocabulary
         )
 
         let response = try await aiRouter.generate(prompt: prompt)
@@ -153,26 +148,55 @@ public final class ConversationService: @unchecked Sendable {
         }
     }
 
-    // MARK: - Message Building
+    // MARK: - Prompt Building
 
-    private func buildContextMessage(
-        from history: [ConversationMessage],
-        userMessage: String
-    ) -> String {
-        // Include recent history (last 20 messages) as context
-        let recentHistory = history.suffix(20)
+    /// Number of most-recent history turns forwarded to the provider. Bounds
+    /// token use on long conversations. Mirrors the previous flattened cap.
+    private static let maxHistoryTurns = 20
 
-        if recentHistory.isEmpty {
-            return userMessage
+    /// Assemble the `AIPrompt` for a turn as a real ordered multi-turn
+    /// conversation. Prior turns become `AIMessage` values (oldest first,
+    /// capped to `maxHistoryTurns`) and `userMessage` is carried as the latest
+    /// user turn, so the provider receives system + prior user/assistant turns
+    /// + new user message instead of one flattened string.
+    ///
+    /// The app view model appends the new user bubble to its `messages` before
+    /// calling, so `history` typically already ends with a `.user` turn equal
+    /// to `userMessage`. That trailing duplicate is dropped here so the latest
+    /// user message appears exactly once (as the final turn of `prompt.messages`).
+    ///
+    /// `internal` rather than `private` so it can be unit-tested without the
+    /// network — pinning the multi-turn shape end to end.
+    func buildPrompt(
+        userMessage: String,
+        history: [ConversationMessage],
+        jlptLevel: JLPTLevel,
+        knownVocabulary: [String] = []
+    ) -> AIPrompt {
+        let systemPrompt = buildSystemPrompt(for: jlptLevel, knownVocabulary: knownVocabulary)
+
+        var priorTurns = history
+            .suffix(Self.maxHistoryTurns)
+            .map { message in
+                AIMessage(
+                    role: message.role == .user ? .user : .assistant,
+                    text: message.content
+                )
+            }
+
+        // Avoid duplicating the latest user message when the caller already
+        // included it in `history`.
+        if let last = priorTurns.last, last.role == .user, last.text == userMessage {
+            priorTurns.removeLast()
         }
 
-        var context = "Previous messages:\n"
-        for msg in recentHistory {
-            let role = msg.role == .user ? "Learner" : "Sakura"
-            context += "\(role): \(msg.content)\n"
-        }
-        context += "\nLearner: \(userMessage)"
-        return context
+        return AIPrompt(
+            systemPrompt: systemPrompt,
+            userMessage: userMessage,
+            history: priorTurns,
+            context: ["jlpt_level": jlptLevel.rawValue],
+            complexity: .medium
+        )
     }
 
     // MARK: - Response Parsing

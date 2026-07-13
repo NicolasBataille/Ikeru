@@ -74,7 +74,7 @@ public struct OpenAICompatibleTransport: Sendable {
         request.httpBody = try OpenAIChatCodec.encodeRequest(
             model: model,
             systemPrompt: prompt.systemPrompt,
-            userMessage: prompt.userMessage
+            messages: prompt.messages
         )
 
         let data: Data

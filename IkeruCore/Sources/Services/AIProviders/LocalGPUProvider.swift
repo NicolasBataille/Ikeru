@@ -286,9 +286,11 @@ public final class LocalGPUProvider: AIProvider, @unchecked Sendable {
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
         request.timeoutInterval = timeoutSeconds
 
+        // The local bridge endpoint takes a single user string, so prior turns
+        // are folded in as labelled context to preserve conversation memory.
         let body = LocalGPURequestBody(
             systemPrompt: prompt.systemPrompt,
-            userMessage: prompt.userMessage,
+            userMessage: prompt.flattenedConversation,
             context: prompt.context
         )
 

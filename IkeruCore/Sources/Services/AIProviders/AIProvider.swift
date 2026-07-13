@@ -34,6 +34,31 @@ public enum PromptComplexity: Sendable {
     case batch
 }
 
+// MARK: - AIMessage
+
+/// A single role-tagged turn in a multi-turn conversation sent to a provider.
+///
+/// Only `user` and `assistant` roles are modelled here: the system prompt is
+/// carried separately on `AIPrompt.systemPrompt` because most provider APIs put
+/// it in a dedicated field (`system_instruction` / `system`) rather than inline
+/// in the turn array.
+public struct AIMessage: Sendable, Equatable {
+
+    /// The author of a conversation turn.
+    public enum Role: String, Sendable, Equatable {
+        case user
+        case assistant
+    }
+
+    public let role: Role
+    public let text: String
+
+    public init(role: Role, text: String) {
+        self.role = role
+        self.text = text
+    }
+}
+
 // MARK: - AIPrompt
 
 /// A structured prompt sent to an AI provider.
@@ -41,8 +66,15 @@ public struct AIPrompt: Sendable {
     /// System-level instructions for the AI model.
     public let systemPrompt: String
 
-    /// The user's actual message or question.
+    /// The user's actual (latest) message or question.
     public let userMessage: String
+
+    /// Prior conversation turns (oldest first), NOT including the latest
+    /// `userMessage`. Empty for single-shot prompts (mnemonics, one-off
+    /// generations). Providers that support multi-turn map `messages` to their
+    /// native role array so Sakura remembers earlier turns instead of receiving
+    /// a single flattened blob.
+    public let history: [AIMessage]
 
     /// Additional context such as learner level, recent errors, etc.
     public let context: [String: String]
@@ -53,13 +85,39 @@ public struct AIPrompt: Sendable {
     public init(
         systemPrompt: String,
         userMessage: String,
+        history: [AIMessage] = [],
         context: [String: String] = [:],
         complexity: PromptComplexity = .simple
     ) {
         self.systemPrompt = systemPrompt
         self.userMessage = userMessage
+        self.history = history
         self.context = context
         self.complexity = complexity
+    }
+
+    /// The full ordered conversation: prior turns followed by the latest user
+    /// message as a trailing `user` turn. This is the single source of truth
+    /// that providers map to their native multi-turn request shape.
+    public var messages: [AIMessage] {
+        history + [AIMessage(role: .user, text: userMessage)]
+    }
+
+    /// A flattened, role-labelled rendering of the conversation for providers
+    /// whose API only accepts a single string (on-device FoundationModels, the
+    /// local GPU bridge). When there is no prior history this is just the raw
+    /// `userMessage`, preserving single-shot behaviour; otherwise earlier turns
+    /// are prefixed as labelled context so history is not silently dropped.
+    public var flattenedConversation: String {
+        guard !history.isEmpty else { return userMessage }
+
+        var lines: [String] = []
+        for message in history {
+            let label = message.role == .user ? "User" : "Assistant"
+            lines.append("\(label): \(message.text)")
+        }
+        lines.append(userMessage)
+        return lines.joined(separator: "\n")
     }
 }
 
