@@ -88,17 +88,20 @@ public final class MockURLSessionProvider: URLSessionProvider, @unchecked Sendab
     private let statusCode: Int
     private let error: (any Error)?
     private let delay: Duration?
+    private let headerFields: [String: String]?
 
     public init(
         responseData: Data = Data(),
         statusCode: Int = 200,
         error: (any Error)? = nil,
-        delay: Duration? = nil
+        delay: Duration? = nil,
+        headerFields: [String: String]? = nil
     ) {
         self.responseData = responseData
         self.statusCode = statusCode
         self.error = error
         self.delay = delay
+        self.headerFields = headerFields
     }
 
     public func data(for request: URLRequest) async throws -> (Data, URLResponse) {
@@ -114,7 +117,7 @@ public final class MockURLSessionProvider: URLSessionProvider, @unchecked Sendab
             url: request.url ?? URL(string: "https://example.com")!,
             statusCode: statusCode,
             httpVersion: "HTTP/1.1",
-            headerFields: nil
+            headerFields: headerFields
         )!
 
         return (responseData, response)

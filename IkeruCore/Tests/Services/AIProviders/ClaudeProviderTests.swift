@@ -152,8 +152,40 @@ struct ClaudeProviderTests {
             _ = try await provider.generate(prompt: prompt)
             Issue.record("Expected rateLimited error")
         } catch let error as AIError {
-            if case .rateLimited(let tier) = error {
+            if case .rateLimited(let tier, let retryAfter) = error {
                 #expect(tier == .claude)
+                #expect(retryAfter == nil)
+            } else {
+                Issue.record("Expected rateLimited, got \(error)")
+            }
+        } catch {
+            Issue.record("Unexpected error: \(error)")
+        }
+    }
+
+    @Test("Rate limited response with Retry-After header carries retryAfter")
+    func rateLimitedWithRetryAfterHeader() async {
+        let keychain = MockKeychainStore(
+            initialValues: [KeychainKeys.claudeAPIKey: "test-token"]
+        )
+        let mockSession = MockURLSessionProvider(
+            responseData: Data("{}".utf8),
+            statusCode: 429,
+            headerFields: ["Retry-After": "45"]
+        )
+        let provider = ClaudeProvider(
+            keychainStore: keychain,
+            networkChecker: MockNetworkChecker(online: true),
+            urlSession: mockSession
+        )
+        let prompt = AIPrompt(systemPrompt: "Tutor", userMessage: "Hello")
+        do {
+            _ = try await provider.generate(prompt: prompt)
+            Issue.record("Expected rateLimited error")
+        } catch let error as AIError {
+            if case .rateLimited(let tier, let retryAfter) = error {
+                #expect(tier == .claude)
+                #expect(retryAfter == 45)
             } else {
                 Issue.record("Expected rateLimited, got \(error)")
             }

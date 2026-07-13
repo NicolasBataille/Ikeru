@@ -70,7 +70,10 @@ public final class ClaudeProvider: AIProvider, @unchecked Sendable {
 
         if httpResponse.statusCode == 429 {
             Logger.ai.warning("Claude rate limited")
-            throw AIError.rateLimited(.claude)
+            let retryAfter = RetryAfterParsing.parseRetryAfterHeader(
+                httpResponse.value(forHTTPHeaderField: "Retry-After")
+            )
+            throw AIError.rateLimited(.claude, retryAfter: retryAfter)
         }
 
         guard (200..<300).contains(httpResponse.statusCode) else {

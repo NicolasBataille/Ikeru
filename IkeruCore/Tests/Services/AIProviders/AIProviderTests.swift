@@ -122,11 +122,23 @@ struct AIProviderTests {
         }
     }
 
-    @Test("AIError rateLimited carries tier")
+    @Test("AIError rateLimited carries tier and retryAfter")
     func errorRateLimited() {
-        let error = AIError.rateLimited(.gemini)
-        if case .rateLimited(let tier) = error {
+        let error = AIError.rateLimited(.gemini, retryAfter: 30)
+        if case .rateLimited(let tier, let retryAfter) = error {
             #expect(tier == .gemini)
+            #expect(retryAfter == 30)
+        } else {
+            Issue.record("Expected rateLimited")
+        }
+    }
+
+    @Test("AIError rateLimited retryAfter can be nil")
+    func errorRateLimitedNilRetryAfter() {
+        let error = AIError.rateLimited(.claude, retryAfter: nil)
+        if case .rateLimited(let tier, let retryAfter) = error {
+            #expect(tier == .claude)
+            #expect(retryAfter == nil)
         } else {
             Issue.record("Expected rateLimited")
         }

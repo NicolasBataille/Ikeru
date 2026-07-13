@@ -100,7 +100,10 @@ public struct OpenAICompatibleTransport: Sendable {
             throw AIError.keyNotFound(keychainKey)
         case 429:
             Logger.ai.warning("\(providerName) rate limited")
-            throw AIError.rateLimited(tier)
+            let retryAfter = RetryAfterParsing.parseRetryAfterHeader(
+                http.value(forHTTPHeaderField: "Retry-After")
+            )
+            throw AIError.rateLimited(tier, retryAfter: retryAfter)
         default:
             Logger.ai.error("\(providerName) HTTP error: \(http.statusCode)")
             throw AIError.invalidResponse
