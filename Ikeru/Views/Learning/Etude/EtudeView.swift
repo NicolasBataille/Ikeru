@@ -1,6 +1,7 @@
 import SwiftUI
 import IkeruCore
 import SwiftData
+import os
 
 // MARK: - ExploreView
 //
@@ -178,7 +179,20 @@ struct ExploreView: View {
         conversationViewModel = ConversationViewModel(
             conversationService: service,
             jlptLevel: .n5,
-            vocabularyRepository: vocabRepo
+            vocabularyRepository: vocabRepo,
+            contentRepository: Self.makeContentRepository()
         )
+    }
+
+    /// Resolves the bundled `n5-content.sqlite` and builds a read-only
+    /// `ContentRepository` so Sakura can validate the furigana she suggests
+    /// against curated readings (remediation 6.7). Fail-safe: a missing
+    /// resource logs and returns nil, and reading-validation simply no-ops.
+    private static func makeContentRepository() -> ContentRepository? {
+        guard let url = Bundle.main.url(forResource: "n5-content", withExtension: "sqlite") else {
+            Logger.ui.error("n5-content.sqlite not found in bundle — Sakura reading validation disabled")
+            return nil
+        }
+        return ContentRepository(bundleURL: url)
     }
 }
