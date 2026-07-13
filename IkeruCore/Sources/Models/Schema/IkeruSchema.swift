@@ -35,6 +35,40 @@ public enum IkeruSchemaV1: VersionedSchema {
     }
 }
 
+// MARK: - Versioned Schema V2
+
+/// **V2** — adds the `ExerciseOutcomeLog` entity (remediation 4.4): persisted
+/// outcomes of pool-based output drills (listening / shadowing) that have no
+/// backing FSRS `Card`.
+///
+/// The change is purely additive: a brand-new entity whose only cross-entity
+/// reference is a scalar `profileID: UUID` (not a SwiftData relationship), so no
+/// existing V1 entity — `UserProfile` included — changes shape. That makes the
+/// V1→V2 stage `.lightweight`-safe.
+///
+/// - Important: this copies V1's ten models verbatim and appends the new one.
+///   V1 stays frozen; never edit it.
+public enum IkeruSchemaV2: VersionedSchema {
+
+    public static var versionIdentifier: Schema.Version { Schema.Version(2, 0, 0) }
+
+    public static var models: [any PersistentModel.Type] {
+        [
+            UserProfile.self,
+            Card.self,
+            ReviewLog.self,
+            RPGState.self,
+            MnemonicCache.self,
+            CompanionChatMessage.self,
+            AssetManifest.self,
+            VocabularyEntry.self,
+            VocabularyEncounter.self,
+            DailyTerm.self,
+            ExerciseOutcomeLog.self,
+        ]
+    }
+}
+
 // MARK: - Migration Plan
 
 /// The app's schema migration plan.
@@ -61,10 +95,13 @@ public enum IkeruSchemaV1: VersionedSchema {
 public enum IkeruMigrationPlan: SchemaMigrationPlan {
 
     public static var schemas: [any VersionedSchema.Type] {
-        [IkeruSchemaV1.self]
+        [IkeruSchemaV1.self, IkeruSchemaV2.self]
     }
 
     public static var stages: [MigrationStage] {
-        []
+        // V1 → V2 adds only the `ExerciseOutcomeLog` entity (no changes to any
+        // existing entity), so a lightweight stage is sufficient and safe: it
+        // adds the new table and leaves all V1 data untouched.
+        [.lightweight(fromVersion: IkeruSchemaV1.self, toVersion: IkeruSchemaV2.self)]
     }
 }

@@ -106,6 +106,19 @@ public final class ProfileViewModel {
         }
 
         let wasActive = currentProfile?.id == profile.id
+
+        // ExerciseOutcomeLog is scoped by a scalar `profileID` (not a
+        // relationship), so it does NOT cascade with the profile the way Card /
+        // ReviewLog / RPGState do — delete its rows explicitly so no orphaned
+        // outcome history lingers after the profile is gone.
+        let deletedID = profile.id
+        let outcomeDescriptor = FetchDescriptor<ExerciseOutcomeLog>(
+            predicate: #Predicate { $0.profileID == deletedID }
+        )
+        if let outcomes = try? modelContext.fetch(outcomeDescriptor) {
+            for outcome in outcomes { modelContext.delete(outcome) }
+        }
+
         modelContext.delete(profile)
         do {
             try modelContext.save()

@@ -992,6 +992,21 @@ public final class SessionViewModel {
             await applyCardGradeSideEffects(preGradeCard: card, grade: grade)
         }
 
+        // Persist pool-based output outcomes (listening / shadowing) — these have
+        // no backing FSRS card, so their accuracy is recorded here instead. It
+        // feeds `LearnerSnapshot.listeningAccuracyLast30` / `listeningRecallLast30Days`
+        // (which unlock `.listeningUnsubtitled` / `.speakingPractice`) and the
+        // speaking axis of `SkillBalanceSnapshot` (remediation 4.4). A skip via
+        // DrillUnavailableView arrives as `.again` → 0.0, which conservatively
+        // (never falsely) keeps the gates locked.
+        switch exercise {
+        case .listeningExercise, .speakingExercise:
+            let accuracy = ExerciseOutcomeAccuracy.from(grade: grade, skill: exercise.skill)
+            await cardRepository.recordExerciseOutcome(skill: exercise.skill, accuracy: accuracy)
+        default:
+            break
+        }
+
         // `reviewedCount` counts completed exercises (not just SRS cards): it
         // gates the time-budget policy's `completedCount`, the endSession
         // zero-skip, the lootbox milestone, the Live Activity, and the abandon
@@ -1445,10 +1460,10 @@ public final class SessionViewModel {
     /// — no side effects beyond reading the active RPG state for the
     /// `lastSessionAt` timestamp.
     ///
-    /// Feeds real skill balances (from `ProgressService`) and grammar mastery
-    /// (derived by the builder from `.grammar` cards) into the snapshot. The
-    /// listening accuracy / recall axes still pass `0` — they have no persisted
-    /// source until output-exercise outcomes are recorded (remediation 4.4 PR2).
+    /// Feeds real skill balances (from `ProgressService`), grammar mastery
+    /// (derived by the builder from `.grammar` cards) and listening accuracy /
+    /// recall (from persisted `ExerciseOutcomeLog`s) into the snapshot — the last
+    /// two unlock `.listeningUnsubtitled` / `.speakingPractice` (remediation 4.4).
     private func buildSnapshot(cards: [CardDTO]) async -> LearnerSnapshot {
         let now = Date()
         let progressService = ProgressService(cardRepository: cardRepository)
@@ -1457,11 +1472,13 @@ public final class SessionViewModel {
         let lastSession = ActiveProfileResolver
             .fetchActiveRPGState(in: modelContainer.mainContext)?
             .lastSessionDate
+        let listeningAccuracy = await cardRepository.listeningAccuracyLast30()
+        let listeningRecall = await cardRepository.listeningRecallLast30Days(now: now)
         return LearnerSnapshotBuilder.build(
             cards: cards,
             jlptLevel: jlptLevel,
-            listeningAccuracyLast30: 0,
-            listeningRecallLast30Days: 0,
+            listeningAccuracyLast30: listeningAccuracy,
+            listeningRecallLast30Days: listeningRecall,
             skillBalances: progress.skillBalance.asSkillBalances,
             hasNewContentQueued: cards.contains(where: { $0.fsrsState.reps == 0 }),
             lastSessionAt: lastSession,

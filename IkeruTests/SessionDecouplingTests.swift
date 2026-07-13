@@ -22,7 +22,8 @@ struct SessionDecouplingTests {
     // MARK: - Helpers
 
     private func makeContainer() throws -> ModelContainer {
-        let schema = Schema([UserProfile.self, Card.self, ReviewLog.self, RPGState.self])
+        // Full V2 schema so pool-drill outcomes (ExerciseOutcomeLog) can persist.
+        let schema = Schema(versionedSchema: IkeruSchemaV2.self)
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         ActiveProfileResolver.setActiveProfileID(nil)
         return try ModelContainer(for: schema, configurations: [config])
@@ -384,6 +385,35 @@ struct SessionDecouplingTests {
         #expect(vm.reviewedCount == 3)
         #expect(vm.currentIndex == vm.sessionQueue.count)
         #expect(vm.currentExerciseIndex == vm.sessionExercises.count)
+    }
+
+    @Test("Completing a .listeningExercise records an outcome that feeds listeningAccuracyLast30 (remediation 4.4)")
+    func listeningExerciseRecordsOutcome() async throws {
+        let container = try makeContainer()
+        let repo = CardRepository(modelContainer: container)
+        // Trailing SRS card so the session starts; the listening drill has no card.
+        try seedCards(container: container, fronts: ["A"])
+        try suppressFirstSessionBonus(container: container)
+        let dtos = await repo.allCards()
+        let a = try dto("A", in: dtos)
+        let listeningID = UUID()
+
+        let planner = MockSessionPlanner()
+        planner.plan = buildPlan([.listeningExercise(listeningID), .srsReview(a)])
+        let vm = makeVM(container: container, planner: planner)
+
+        await vm.startSession()
+        #expect(vm.currentExercise == .listeningExercise(listeningID))
+
+        // No outcome recorded yet.
+        #expect(await repo.listeningAccuracyLast30() == 0)
+
+        // A correct listening answer → grade .good → accuracy 1.0 persisted.
+        await vm.completeCurrentExercise(grade: .good)
+
+        #expect(await repo.listeningAccuracyLast30() == 1.0)
+        // Listening completion writes NO FSRS ReviewLog (it has no backing card).
+        #expect(await repo.reviewLogs(for: a.id).isEmpty)
     }
 
     @Test("Pure-SRS regression: an .again requeue still coordinates both arrays (correspondence invariant)")
