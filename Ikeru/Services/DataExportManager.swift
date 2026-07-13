@@ -24,7 +24,13 @@ final class DataExportManager {
         let exportDir = try await buildExportDirectory(modelContainer: modelContainer)
         defer { try? FileManager.default.removeItem(at: exportDir) }
 
-        let zipURL = try zipDirectory(exportDir)
+        // Zipping is blocking file I/O — run it off the main actor so a large
+        // export never hitches the UI. `zipDirectory` is a `nonisolated static`
+        // function touching only `FileManager`/`NSFileCoordinator`, so it is
+        // safe to invoke from a detached task.
+        let zipURL = try await Task.detached(priority: .utility) {
+            try Self.zipDirectory(exportDir)
+        }.value
         Logger.ui.info("Data export archived at \(zipURL.path)")
         return zipURL
     }
@@ -32,7 +38,76 @@ final class DataExportManager {
     /// Writes every export file into a fresh temporary directory and returns it.
     /// Factored out of `exportData` so the file contents can be validated
     /// independently of the archiving step.
+    ///
+    /// SwiftData access (cards, review logs, RPG state) happens here on the
+    /// MainActor and is converted to Sendable value types immediately. The
+    /// heavy work — JSON encoding, CSV generation, and file writes — then runs
+    /// off the main actor inside a detached task, so encoding a large review
+    /// history never hitches the UI.
     func buildExportDirectory(modelContainer: ModelContainer) async throws -> URL {
+        let context = modelContainer.mainContext
+
+        // Cards + review logs — CardRepository already fetches on a background
+        // ModelActor and hands back Sendable DTOs (CardDTO / ReviewLogDTO).
+        let cardRepo = CardRepository(modelContainer: modelContainer)
+        let allCards = await cardRepo.allCards()
+
+        // Review logs — scoped to the ACTIVE PROFILE only. The export leaves
+        // the device, so it must never bundle another profile's review
+        // history. Empty history still writes a valid `[]` rather than
+        // omitting the file.
+        let reviewLogs = await cardRepo.activeProfileReviewLogs()
+
+        // RPG state — scoped to the ACTIVE PROFILE only (the export leaves
+        // the device, so it must never leak another profile's progression,
+        // exactly like the reviews.json scoping above).
+        //
+        // Deliberately reads `profile.rpgState` directly rather than calling
+        // `ActiveProfileResolver.fetchActiveRPGState(in:)`: that helper
+        // lazily creates *and saves* a new RPGState for a profile that
+        // predates one, and an export must never mutate persisted state the
+        // user didn't ask for. This read-only lookup preserves the original
+        // "omit rpg.json if no RPG state exists" behavior without ever
+        // calling `context.save()`. The extraction happens synchronously on
+        // the MainActor, converting the non-Sendable `RPGState` model into
+        // the Sendable `RPGExport` value type before anything crosses an
+        // isolation boundary.
+        var rpgExport: RPGExport?
+        if let profile = ActiveProfileResolver.fetchActiveProfile(in: context),
+            let rpg = profile.rpgState {
+            rpgExport = RPGExport(
+                xp: rpg.xp,
+                level: rpg.level,
+                totalReviewsCompleted: rpg.totalReviewsCompleted,
+                totalSessionsCompleted: rpg.totalSessionsCompleted,
+                attributes: rpg.attributes,
+                inventoryCount: rpg.lootInventory.count,
+                unopenedLootBoxes: rpg.unopenedLootBoxes.count
+            )
+        }
+
+        // Only Sendable value types (CardDTO, ReviewLogDTO, RPGExport) cross
+        // into the detached task below — no ModelContext, ModelContainer, or
+        // @Model instance is ever captured off the main actor.
+        let exportDir = try await Task.detached(priority: .utility) {
+            try Self.writeExportFiles(cards: allCards, reviews: reviewLogs, rpg: rpgExport)
+        }.value
+
+        Logger.ui.info("Data export written to \(exportDir.path)")
+        return exportDir
+    }
+
+    // MARK: - Off-main writing
+
+    /// Builds a fresh temporary directory and writes every export file into
+    /// it: cards.json, cards.csv, reviews.json, rpg.json (if present), and
+    /// context.json. Runs off the main actor — only Sendable inputs
+    /// (`CardDTO`, `ReviewLogDTO`, `RPGExport`) are accepted.
+    nonisolated private static func writeExportFiles(
+        cards: [CardDTO],
+        reviews: [ReviewLogDTO],
+        rpg: RPGExport?
+    ) throws -> URL {
         let exportDir = FileManager.default.temporaryDirectory
             .appending(path: "ikeru-export-\(Date().timeIntervalSince1970)", directoryHint: .isDirectory)
 
@@ -43,41 +118,25 @@ final class DataExportManager {
         var succeeded = false
         defer { if !succeeded { try? FileManager.default.removeItem(at: exportDir) } }
 
-        let context = modelContainer.mainContext
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
 
         // Cards
-        let cardRepo = CardRepository(modelContainer: modelContainer)
-        let allCards = await cardRepo.allCards()
-        let cardsData = try encoder.encode(allCards.map { CardExportRow(from: $0) })
+        let cardsData = try encoder.encode(cards.map { CardExportRow(from: $0) })
         try cardsData.write(to: exportDir.appending(path: "cards.json"))
 
         // Cards CSV
-        let csv = generateCardsCSV(cards: allCards)
+        let csv = generateCardsCSV(cards: cards)
         try csv.write(to: exportDir.appending(path: "cards.csv"), atomically: true, encoding: .utf8)
 
-        // Review logs — scoped to the ACTIVE PROFILE only. The export leaves the
-        // device, so it must never bundle another profile's review history.
-        // Empty history still writes a valid `[]` rather than omitting the file.
-        let reviewLogs = await cardRepo.activeProfileReviewLogs()
-        let reviewsData = try encoder.encode(reviewLogs.map { ReviewExportRow(from: $0) })
+        // Review logs
+        let reviewsData = try encoder.encode(reviews.map { ReviewExportRow(from: $0) })
         try reviewsData.write(to: exportDir.appending(path: "reviews.json"))
 
-        // RPG State
-        let rpgStates = (try? context.fetch(FetchDescriptor<RPGState>())) ?? []
-        if let rpg = rpgStates.first {
-            let rpgExport = RPGExport(
-                xp: rpg.xp,
-                level: rpg.level,
-                totalReviewsCompleted: rpg.totalReviewsCompleted,
-                totalSessionsCompleted: rpg.totalSessionsCompleted,
-                attributes: rpg.attributes,
-                inventoryCount: rpg.lootInventory.count,
-                unopenedLootBoxes: rpg.unopenedLootBoxes.count
-            )
-            try encoder.encode(rpgExport).write(to: exportDir.appending(path: "rpg.json"))
+        // RPG state — omitted entirely when the active profile has none.
+        if let rpg {
+            try encoder.encode(rpg).write(to: exportDir.appending(path: "rpg.json"))
         }
 
         // Context file (data model documentation)
@@ -89,7 +148,6 @@ final class DataExportManager {
         )
 
         succeeded = true
-        Logger.ui.info("Data export written to \(exportDir.path)")
         return exportDir
     }
 
@@ -100,7 +158,10 @@ final class DataExportManager {
     /// to produce a zip of a folder. The coordinator hands back a temporary
     /// archive that is only valid inside the accessor closure, so it is moved to
     /// a stable location before returning.
-    func zipDirectory(_ directory: URL) throws -> URL {
+    ///
+    /// `nonisolated static` so it can run off the main actor: it touches no
+    /// actor-isolated state, only `FileManager`/`NSFileCoordinator`.
+    nonisolated private static func zipDirectory(_ directory: URL) throws -> URL {
         let coordinator = NSFileCoordinator()
         var coordinatorError: NSError?
         var moveError: Error?
@@ -145,7 +206,7 @@ final class DataExportManager {
 
     // MARK: - CSV Generation
 
-    private func generateCardsCSV(cards: [CardDTO]) -> String {
+    nonisolated private static func generateCardsCSV(cards: [CardDTO]) -> String {
         var csv = "id,front,back,type,due_date,ease_factor,interval,reps,lapse_count,leech_flag\n"
         let dateFormatter = ISO8601DateFormatter()
 
@@ -167,7 +228,7 @@ final class DataExportManager {
         return csv
     }
 
-    private func escapeCSV(_ value: String) -> String {
+    nonisolated private static func escapeCSV(_ value: String) -> String {
         if value.contains(",") || value.contains("\"") || value.contains("\n") {
             return "\"" + value.replacingOccurrences(of: "\"", with: "\"\"") + "\""
         }
@@ -176,7 +237,7 @@ final class DataExportManager {
 
     // MARK: - Context JSON
 
-    private func generateContextJSON() -> String {
+    nonisolated private static func generateContextJSON() -> String {
         """
         {
           "export_format": "ikeru-v1",
@@ -238,7 +299,7 @@ final class DataExportManager {
 
 // MARK: - Export Types
 
-private struct CardExportRow: Codable {
+private struct CardExportRow: Codable, Sendable {
     let id: UUID
     let front: String
     let back: String
@@ -264,7 +325,7 @@ private struct CardExportRow: Codable {
     }
 }
 
-private struct ReviewExportRow: Codable {
+private struct ReviewExportRow: Codable, Sendable {
     let id: UUID
     let cardId: UUID?
     let cardType: String?
@@ -297,7 +358,9 @@ private struct ReviewExportRow: Codable {
     }
 }
 
-private struct RPGExport: Codable {
+/// Sendable so it can cross from the MainActor extraction step (in
+/// `buildExportDirectory`) into the off-main `writeExportFiles` task.
+private struct RPGExport: Codable, Sendable {
     let xp: Int
     let level: Int
     let totalReviewsCompleted: Int

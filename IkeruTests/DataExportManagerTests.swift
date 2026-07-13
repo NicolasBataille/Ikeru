@@ -7,7 +7,13 @@ import SwiftData
 /// Coverage for remediation 7.7 — the data export must actually write
 /// `reviews.json` (it previously only promised it in the bundle docs) and hand
 /// the share sheet a single `.zip` archive rather than a bare directory.
-@Suite("Data Export — reviews.json + zip")
+// Serialized: every test mutates the process-global active-profile id
+// (ActiveProfileResolver, backed by shared UserDefaults). Running them in
+// parallel lets one test clobber another's active id mid-export, which can
+// send fetchActiveProfile to its oldest-profile fallback and surface the wrong
+// profile's data — a test artifact, not a production condition (where the
+// active id is stable and profiles have distinct timestamps).
+@Suite("Data Export — reviews.json + zip", .serialized)
 @MainActor
 struct DataExportManagerTests {
 
@@ -149,6 +155,64 @@ struct DataExportManagerTests {
         #expect(rows.first?.cardId == cardA.id)
         #expect(rows.allSatisfy { $0.cardId != cardB.id })
     }
+
+    // MARK: - rpg.json is scoped to the active profile
+
+    private struct DecodedRPG: Codable {
+        let xp: Int
+        let level: Int
+        let totalReviewsCompleted: Int
+    }
+
+    @Test("rpg.json is scoped to the active profile — no cross-profile leak")
+    func rpgJSONScopedToActiveProfile() async throws {
+        let container = try makeContainer()
+        let context = container.mainContext
+
+        // Two profiles, each with their own distinct RPG state.
+        let profileA = UserProfile(displayName: "A")
+        let profileB = UserProfile(displayName: "B")
+        context.insert(profileA)
+        context.insert(profileB)
+
+        let rpgA = RPGState(xp: 500, level: 5, totalReviewsCompleted: 42)
+        rpgA.profile = profileA
+        profileA.rpgState = rpgA
+        context.insert(rpgA)
+
+        let rpgB = RPGState(xp: 9_000, level: 42, totalReviewsCompleted: 999)
+        rpgB.profile = profileB
+        profileB.rpgState = rpgB
+        context.insert(rpgB)
+
+        try context.save()
+
+        // Active profile = B, the SECOND-inserted profile. This deliberately
+        // differs from insertion order: the old unscoped code took
+        // `fetch(FetchDescriptor<RPGState>()).first`, which returns rpgA
+        // (insertion-first) — so this test FAILS against the old bug and only
+        // passes when the export truly reads the ACTIVE profile's state.
+        ActiveProfileResolver.setActiveProfileID(profileB.id)
+
+        let dir = try await DataExportManager().buildExportDirectory(modelContainer: container)
+        defer { try? FileManager.default.removeItem(at: dir) }
+
+        let rpgURL = dir.appending(path: "rpg.json")
+        #expect(FileManager.default.fileExists(atPath: rpgURL.path))
+
+        let decoded = try decoder().decode(DecodedRPG.self, from: Data(contentsOf: rpgURL))
+        #expect(decoded.xp == 9_000)
+        #expect(decoded.level == 42)
+        #expect(decoded.totalReviewsCompleted == 999)
+        #expect(decoded.xp != rpgA.xp)
+        #expect(decoded.level != rpgA.level)
+    }
+
+    // NOTE: an "rpg.json omitted when the active profile has no RPGState" case
+    // is intentionally NOT tested — `UserProfile.init` always creates a default
+    // `RPGState` (UserProfile.swift:43), so a normally-created profile always
+    // has one. The omit branch only covers legacy profiles that predate the
+    // RPGState relationship, which cannot be constructed through the public API.
 
     // MARK: - The shared artifact is a single zip, not a directory
 
