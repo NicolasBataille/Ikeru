@@ -356,4 +356,22 @@ struct ProgressServiceTests {
 
         #expect(elapsed < 1000, "Dashboard load took \(elapsed)ms, exceeding 1000ms budget")
     }
+
+    // MARK: - SkillBalanceSnapshot → LearnerSnapshot mapping (remediation 4.3)
+
+    @Test("asSkillBalances projects all four axes onto the [SkillType: Double] map")
+    func skillBalancesMappingCoversAllAxes() {
+        let snapshot = SkillBalanceSnapshot(
+            reading: 0.8,
+            writing: 0.5,
+            listening: 0.3,
+            speaking: 0.1
+        )
+        let balances = snapshot.asSkillBalances
+        #expect(balances[.reading] == 0.8)
+        #expect(balances[.writing] == 0.5)
+        #expect(balances[.listening] == 0.3)
+        #expect(balances[.speaking] == 0.1)
+        #expect(balances.count == SkillType.allCases.count)
+    }
 }

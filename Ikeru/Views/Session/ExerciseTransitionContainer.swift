@@ -104,9 +104,10 @@ struct ExerciseTransitionContainer: View {
             )
 
         case .writingPractice(let card):
-            // Writing practice reuses the same handwriting drill but is XP-only
-            // (no FSRS write) — SessionViewModel awards XP for .writingPractice
-            // without grading a card, per the ExerciseXP rule table.
+            // Writing practice reuses the same handwriting drill and, like
+            // .kanjiStudy, writes a REAL FSRS grade for its backing card (via
+            // SessionViewModel.completeCurrentExercise → gradeCard). XP is also
+            // awarded (.perCompletion, grade-independent).
             HandwritingDrillHost(character: card.front, onComplete: onExerciseComplete)
 
         case .listeningExercise:

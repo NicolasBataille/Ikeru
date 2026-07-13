@@ -212,10 +212,14 @@ struct IkeruApp: App {
                     leechFlag: card.leechFlag
                 )
             }
+            // Grammar familiar+ is now derived from `cards` by the builder, so
+            // the grammar unlock gate backfills correctly. `skillBalances` is
+            // left empty here on purpose: the unlock service keys off mastery /
+            // listening thresholds, never skill balances, so loading dashboard
+            // data at launch just to fill this would be wasted I/O.
             let snapshot = LearnerSnapshotBuilder.build(
                 cards: cards,
                 jlptLevel: .n5,
-                grammarPointsFamiliarPlus: 0,
                 listeningAccuracyLast30: 0,
                 listeningRecallLast30Days: 0,
                 skillBalances: [:],

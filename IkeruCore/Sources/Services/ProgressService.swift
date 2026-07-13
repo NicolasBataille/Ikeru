@@ -27,6 +27,19 @@ public struct SkillBalanceSnapshot: Sendable, Equatable {
         self.listening = listening
         self.speaking = speaking
     }
+
+    /// Projects the four axes onto the `[SkillType: Double]` shape the
+    /// `LearnerSnapshot` (and thus the planner's skill-balance booster +
+    /// `skillImbalance`) consumes. Single source of truth for the mapping so
+    /// every snapshot construction site stays consistent.
+    public var asSkillBalances: [SkillType: Double] {
+        [
+            .reading: reading,
+            .writing: writing,
+            .listening: listening,
+            .speaking: speaking,
+        ]
+    }
 }
 
 // MARK: - JLPT Estimate
@@ -231,10 +244,16 @@ public final class ProgressService: Sendable {
         allCards: [CardDTO],
         now: Date
     ) -> JLPTEstimate {
+        // Readiness-only placeholder snapshot: `JLPTReadinessFormula.compute`
+        // reads only the per-level mastery buckets (vocab/kanji/grammar counts,
+        // all derived from `allCards` by the builder) plus the listening axes.
+        // It never reads `skillBalances`, so this stays `[:]` — feeding real
+        // balances here would need `computeSkillBalance` and risk a cycle within
+        // the same service. Listening accuracy has no source here (dashboard
+        // load path), so 0 caps the listening axis honestly.
         let snapshot = LearnerSnapshotBuilder.build(
             cards: allCards,
             jlptLevel: .n5,
-            grammarPointsFamiliarPlus: 0,
             listeningAccuracyLast30: 0,
             listeningRecallLast30Days: 0,
             skillBalances: [:],

@@ -17,7 +17,6 @@ struct LearnerSnapshotBuilderPerLevelTests {
         let snap = LearnerSnapshotBuilder.build(
             cards: [card],
             jlptLevel: .n5,
-            grammarPointsFamiliarPlus: 0,
             listeningAccuracyLast30: 0,
             listeningRecallLast30Days: 0,
             skillBalances: [:],
@@ -44,7 +43,6 @@ struct LearnerSnapshotBuilderPerLevelTests {
         let snap = LearnerSnapshotBuilder.build(
             cards: [card],
             jlptLevel: .n5,
-            grammarPointsFamiliarPlus: 0,
             listeningAccuracyLast30: 0,
             listeningRecallLast30Days: 0,
             skillBalances: [:],
@@ -71,7 +69,6 @@ struct LearnerSnapshotBuilderPerLevelTests {
         let snap = LearnerSnapshotBuilder.build(
             cards: [card],
             jlptLevel: .n5,
-            grammarPointsFamiliarPlus: 0,
             listeningAccuracyLast30: 0,
             listeningRecallLast30Days: 0,
             skillBalances: [:],
@@ -96,7 +93,6 @@ struct LearnerSnapshotBuilderPerLevelTests {
         let snap = LearnerSnapshotBuilder.build(
             cards: [card],
             jlptLevel: .n5,
-            grammarPointsFamiliarPlus: 0,
             listeningAccuracyLast30: 0,
             listeningRecallLast30Days: 0,
             skillBalances: [:],
@@ -123,7 +119,6 @@ struct LearnerSnapshotBuilderPerLevelTests {
         let snap = LearnerSnapshotBuilder.build(
             cards: [card],
             jlptLevel: .n5,
-            grammarPointsFamiliarPlus: 0,
             listeningAccuracyLast30: 0,
             listeningRecallLast30Days: 0,
             skillBalances: [:],
@@ -146,7 +141,6 @@ struct LearnerSnapshotBuilderPerLevelTests {
         let snap = LearnerSnapshotBuilder.build(
             cards: cards,
             jlptLevel: .n5,
-            grammarPointsFamiliarPlus: 0,
             listeningAccuracyLast30: 0,
             listeningRecallLast30Days: 0,
             skillBalances: [:],

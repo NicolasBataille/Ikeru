@@ -324,7 +324,7 @@ public struct DefaultSessionPlanner: SessionPlanner {
     ///     Tier 1:
     ///       .srsReview            — SRS flashcard deck
     ///       .kanjiStudy           — HandwritingExerciseView, writes a real FSRS grade
-    ///       .writingPractice      — HandwritingExerciseView, XP-only
+    ///       .writingPractice      — HandwritingExerciseView, writes a real FSRS grade
     ///       .sentenceConstruction — SentenceConstructionView, XP-only
     ///     Tier 2 (XP-only drills):
     ///       .listeningExercise    — ListeningExerciseView (word/meaning subtypes)

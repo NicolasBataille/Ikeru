@@ -148,6 +148,43 @@ struct SessionDecouplingTests {
         #expect(vm.reviewedCount == 1)
     }
 
+    @Test("Scenario A2: completing .writingPractice grades its card via FSRS, leaves currentIndex, does not end the session (remediation 4.4)")
+    func writingPracticeGradesCardWithoutAdvancingQueue() async throws {
+        let container = try makeContainer()
+        let repo = CardRepository(modelContainer: container)
+        try seedCards(container: container, fronts: ["A", "W"])
+        try suppressFirstSessionBonus(container: container)
+        let dtos = await repo.allCards()
+        let a = try dto("A", in: dtos)
+        let w = try dto("W", in: dtos)
+
+        let planner = MockSessionPlanner()
+        planner.plan = buildPlan([.writingPractice(w), .srsReview(a)])
+        let vm = makeVM(container: container, planner: planner)
+
+        await vm.startSession()
+        // sessionQueue is the .srsReview compactMap → [A]; W is never in it.
+        #expect(vm.sessionQueue.count == 1)
+        #expect(vm.currentExercise == .writingPractice(w))
+        #expect(vm.currentCard?.id == a.id)
+
+        await vm.completeCurrentExercise(grade: .good)
+
+        // The SRS queue pointer must NOT move — W's card is not in sessionQueue.
+        #expect(vm.currentIndex == 0)
+        #expect(vm.currentCard?.id == a.id)
+        #expect(vm.currentExerciseIndex == 1)
+        #expect(vm.currentExercise == .srsReview(a))
+        #expect(vm.isSessionComplete == false)
+
+        // 4.4: W graded via FSRS (a ReviewLog written), A untouched.
+        let wLogs = await repo.reviewLogs(for: w.id)
+        let aLogs = await repo.reviewLogs(for: a.id)
+        #expect(wLogs.count == 1)
+        #expect(aLogs.isEmpty)
+        #expect(vm.reviewedCount == 1)
+    }
+
     // MARK: - Scenario B — a trailing non-SRS exercise must not be dropped
 
     @Test("Scenario B: a non-SRS exercise scheduled after the last SRS card is still presented, not dropped")

@@ -194,12 +194,6 @@ public final class HomeViewModel {
         let context = modelContainer.mainContext
         let lastSession = ActiveProfileResolver
             .fetchActiveRPGState(in: context)?.lastSessionDate
-        let balances: [SkillType: Double] = [
-            .reading:   skillBalance.reading,
-            .listening: skillBalance.listening,
-            .writing:   skillBalance.writing,
-            .speaking:  skillBalance.speaking,
-        ]
         let snapshot = LearnerSnapshot(
             jlptLevel: .n5,
             vocabularyMasteredFamiliarPlus: 0,
@@ -209,7 +203,7 @@ public final class HomeViewModel {
             grammarPointsFamiliarPlus: 0,
             listeningAccuracyLast30: 0,
             listeningRecallLast30Days: 0,
-            skillBalances: balances,
+            skillBalances: skillBalance.asSkillBalances,
             dueCardCount: cards.filter { $0.dueDate <= Date() }.count,
             hasNewContentQueued: cards.contains(where: { $0.fsrsState.reps == 0 }),
             lastSessionAt: lastSession
@@ -376,19 +370,18 @@ public final class HomeViewModel {
     }
 
     /// Computes the single "do this next" suggestion from a real snapshot of the
-    /// learner's cards (kana per-character mastery + vocab/kanji familiar+).
-    /// Grammar/listening signals aren't tracked yet, so they're passed as 0 —
-    /// which is correct for a beginner whose realistic next step is always a
-    /// kana or vocabulary rung.
+    /// learner's cards (kana per-character mastery + vocab/kanji/grammar
+    /// familiar+, all derived by the builder). Listening accuracy still has no
+    /// source on this path, so it stays 0 — correct for a beginner whose
+    /// realistic next step is always a kana or vocabulary rung.
     private func loadNextStep() async {
         let cards = await cardRepository.allCards()
         let snapshot = LearnerSnapshotBuilder.build(
             cards: cards,
             jlptLevel: .n5,
-            grammarPointsFamiliarPlus: 0,
             listeningAccuracyLast30: 0,
             listeningRecallLast30Days: 0,
-            skillBalances: [:],
+            skillBalances: skillBalance.asSkillBalances,
             hasNewContentQueued: cards.contains { $0.fsrsState.reps == 0 },
             lastSessionAt: nil,
             now: Date()
@@ -411,9 +404,11 @@ public final class HomeViewModel {
         let durationMinutes = UserDefaults.standard.integer(forKey: "ikeru.session.defaultDurationMinutes")
         let effectiveDuration = durationMinutes > 0 ? durationMinutes : 15
 
-        // Build a minimal snapshot so the planner can size the segments.
-        // Skill-balance fields default to empty (equal split) — sufficient
-        // for computing how many SRS reviews fit in the review-wave budget.
+        // Build a minimal snapshot so the planner can size the segments. Real
+        // skill balances are fed (via `skillBalance`) so the preview's booster
+        // segment targets the same weakest skill the real session will — the
+        // hero SRS-review count is unaffected either way, but keeping the input
+        // consistent with `SessionViewModel.buildSnapshot` avoids preview drift.
         let unlockedTypes = Set(ExerciseType.allCases)
         let inputs = SessionPlannerInputs(
             source: .homeRecommendation,
@@ -427,7 +422,7 @@ public final class HomeViewModel {
                 grammarPointsFamiliarPlus: 0,
                 listeningAccuracyLast30: 0,
                 listeningRecallLast30Days: 0,
-                skillBalances: [:],
+                skillBalances: skillBalance.asSkillBalances,
                 dueCardCount: cards.filter { $0.dueDate <= Date() }.count,
                 hasNewContentQueued: cards.contains(where: { $0.fsrsState.reps == 0 }),
                 lastSessionAt: nil
