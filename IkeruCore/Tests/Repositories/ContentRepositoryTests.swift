@@ -216,6 +216,20 @@ struct ContentRepositoryTests {
         #expect(lookup == ["日本": "にほん"])
     }
 
+    @Test("buildReadingLookup tie-break is deterministic: lowest id wins regardless of input order")
+    func buildReadingLookupLowestIdWins() {
+        // Same homograph, supplied out of id order — the lowest-id reading must
+        // win deterministically, not whichever row happens to come first.
+        let vocabulary = [
+            Vocabulary(id: 5, word: "何", reading: "なに", meaning: "what", kanjiCharacter: nil, jlptLevel: .n5, exampleSentences: []),
+            Vocabulary(id: 2, word: "何", reading: "なん", meaning: "how many", kanjiCharacter: nil, jlptLevel: .n5, exampleSentences: [])
+        ]
+
+        let lookup = ContentRepository.buildReadingLookup(from: vocabulary)
+
+        #expect(lookup == ["何": "なん"])
+    }
+
     // MARK: - Error Handling
 
     @Test("Repository handles missing database file gracefully")
