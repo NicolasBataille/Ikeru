@@ -44,6 +44,12 @@ public final class AIRouterService {
     /// just returned HTTP 429.
     private static let defaultRateLimitCooldownSeconds: Double = 60
 
+    /// Upper bound on any cooldown window. A server (or a proxy in front of it)
+    /// can advise an absurdly large `Retry-After`; clamping keeps a single 429
+    /// from pinning a tier — the only usable one, on an A16 — out of rotation
+    /// for longer than makes sense. Beyond this we simply retry.
+    private static let maxRateLimitCooldownSeconds: Double = 3600
+
     /// Tiers currently serving a rate-limit cooldown, keyed to the instant the
     /// cooldown expires. Reuses `ContinuousClock` (already used for the
     /// fallback budget deadline) rather than wall-clock `Date` so cooldown math
@@ -203,7 +209,8 @@ public final class AIRouterService {
                 // provider that just rate-limited us. Use the server-advised
                 // delay when present, otherwise fall back to a fixed window.
                 if case .rateLimited(let rateLimitedTier, let retryAfter)? = tierError {
-                    let cooldownSeconds = retryAfter ?? Self.defaultRateLimitCooldownSeconds
+                    let advised = retryAfter ?? Self.defaultRateLimitCooldownSeconds
+                    let cooldownSeconds = min(max(0, advised), Self.maxRateLimitCooldownSeconds)
                     rateLimitCooldowns[rateLimitedTier] = ContinuousClock.now + .seconds(cooldownSeconds)
                 }
 
@@ -257,10 +264,20 @@ public final class AIRouterService {
     }
 
     /// Refresh the status of all tiers.
+    ///
+    /// A tier still inside its rate-limit cooldown reports `.degraded` even if
+    /// its provider is otherwise reachable — otherwise the Settings dot would
+    /// show green while `generate(prompt:)` is actively skipping that tier for
+    /// the cooldown window (a real desync on an A16, where the cooled-down tier
+    /// is the only usable cloud provider).
     public func refreshTierStatuses() async {
         for tier in AITier.allCases {
             guard let provider = providers[tier] else {
                 updateTierStatus(tier, status: .unavailable)
+                continue
+            }
+            if let cooldownUntil = rateLimitCooldowns[tier], ContinuousClock.now < cooldownUntil {
+                updateTierStatus(tier, status: .degraded)
                 continue
             }
             let available = await provider.isAvailable

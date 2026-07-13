@@ -172,7 +172,7 @@ struct ConversationViewModelTests {
 
     @Test("Handles rate limit error")
     func handlesRateLimit() async {
-        let (vm, _) = makeViewModel(shouldThrow: AIError.rateLimited(.onDevice))
+        let (vm, _) = makeViewModel(shouldThrow: AIError.rateLimited(.onDevice, retryAfter: nil))
         vm.inputText = "hello"
 
         await vm.sendMessage()

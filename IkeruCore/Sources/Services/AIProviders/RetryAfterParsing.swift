@@ -29,7 +29,7 @@ enum RetryAfterParsing {
         let trimmed = header.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return nil }
 
-        if let seconds = TimeInterval(trimmed), seconds >= 0 {
+        if let seconds = TimeInterval(trimmed), seconds.isFinite, seconds >= 0 {
             return seconds
         }
 
@@ -68,7 +68,7 @@ enum RetryAfterParsing {
     private static func parseDurationString(_ value: String) -> TimeInterval? {
         guard value.hasSuffix("s") else { return nil }
         let numericPart = value.dropLast()
-        guard let seconds = TimeInterval(numericPart), seconds >= 0 else { return nil }
+        guard let seconds = TimeInterval(numericPart), seconds.isFinite, seconds >= 0 else { return nil }
         return seconds
     }
 

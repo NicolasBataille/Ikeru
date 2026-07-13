@@ -56,6 +56,22 @@ struct RetryAfterParsingTests {
         #expect(result == nil)
     }
 
+    // A non-finite header ("infinity"/"inf") parses to Double.infinity, which
+    // would trap in Duration.seconds(_:) if it reached the cooldown math. The
+    // parser must reject it so untrusted upstream input can never crash the app.
+    @Test("Infinity header returns nil (never reaches Duration.seconds)", arguments: ["infinity", "inf", "  inf  ", "-inf", "nan"])
+    func nonFiniteHeaderReturnsNil(_ header: String) {
+        #expect(RetryAfterParsing.parseRetryAfterHeader(header) == nil)
+    }
+
+    @Test("Infinity Gemini retryDelay ('infs') returns nil")
+    func nonFiniteGeminiRetryDelayReturnsNil() {
+        let body = Data("""
+        {"error":{"details":[{"@type":"type.googleapis.com/google.rpc.RetryInfo","retryDelay":"infs"}]}}
+        """.utf8)
+        #expect(RetryAfterParsing.parseGeminiRetryDelay(fromBody: body) == nil)
+    }
+
     // MARK: - Header: HTTP-date form
 
     @Test("HTTP-date header in the future returns the correct positive offset from now")

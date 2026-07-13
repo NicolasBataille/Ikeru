@@ -390,6 +390,56 @@ struct AIRouterServiceTests {
         _ = try await router.generate(prompt: prompt)
         #expect(geminiMock.generateCallCount == 2, "Gemini should be retried once its cooldown has elapsed")
     }
+
+    @Test("Cooled-down tier that is last in the chain (no on-device) throws rate-limited without re-hitting it")
+    func rateLimitedLastProviderInCooldownThrows() async throws {
+        // No on-device registered, so the chain is just [gemini]: the cooldown
+        // check fires on the LAST provider, exercising the skip-path throw
+        // branch (which the two-provider tests never reach).
+        let geminiMock = ConfigurableMockProvider(
+            tier: .gemini,
+            content: "gemini response",
+            available: true,
+            error: .rateLimited(.gemini, retryAfter: 30)
+        )
+        let router = AIRouterService(
+            providers: [.gemini: geminiMock],
+            networkChecker: MockNetworkChecker(online: true)
+        )
+        let prompt = AIPrompt(systemPrompt: "System", userMessage: "Test", complexity: .medium)
+
+        // First call hits Gemini, gets 429, exhausts the chain → throws.
+        await #expect(throws: AIError.self) { try await router.generate(prompt: prompt) }
+        #expect(geminiMock.generateCallCount == 1)
+
+        // Second call within cooldown skips Gemini and throws via the skip path,
+        // without re-hitting the rate-limited provider.
+        await #expect(throws: AIError.self) { try await router.generate(prompt: prompt) }
+        #expect(geminiMock.generateCallCount == 1, "Gemini must not be re-hit while cooling down, even as last provider")
+    }
+
+    @Test("refreshTierStatuses reports a cooling-down tier as degraded even when its provider is available")
+    func refreshTierStatusesHonorsCooldown() async throws {
+        let geminiMock = ConfigurableMockProvider(
+            tier: .gemini,
+            content: "gemini response",
+            available: true,
+            error: .rateLimited(.gemini, retryAfter: 30)
+        )
+        let onDeviceMock = MockFoundationModelsProvider(available: true, responseContent: "on-device response")
+        let router = AIRouterService(
+            providers: [.gemini: geminiMock, .onDevice: onDeviceMock],
+            networkChecker: MockNetworkChecker(online: true)
+        )
+        let prompt = AIPrompt(systemPrompt: "System", userMessage: "Test", complexity: .medium)
+
+        _ = try await router.generate(prompt: prompt)
+
+        // Gemini's provider is still "available", but a Settings refresh must
+        // surface the active cooldown as degraded rather than green.
+        await router.refreshTierStatuses()
+        #expect(isDegraded(router.tierStatuses[.gemini]))
+    }
 }
 
 // MARK: - ConfigurableMockProvider
