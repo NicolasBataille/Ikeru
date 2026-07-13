@@ -160,8 +160,12 @@ public enum AIError: Error, @unchecked Sendable {
     case providerUnavailable(AITier)
     /// The request to the given tier timed out.
     case timeout(AITier)
-    /// The provider returned a rate limiting response.
-    case rateLimited(AITier)
+    /// The provider returned a rate limiting response. `retryAfter` is the
+    /// server-advised backoff in seconds (parsed from the `Retry-After` header
+    /// or, for Gemini, the `RetryInfo.retryDelay` body field), or `nil` when
+    /// the server gave no hint and the caller should fall back to a default
+    /// cooldown window.
+    case rateLimited(AITier, retryAfter: TimeInterval?)
     /// The provider returned an unparseable response.
     case invalidResponse
     /// The provider rejected the configured API key (e.g. HTTP 400

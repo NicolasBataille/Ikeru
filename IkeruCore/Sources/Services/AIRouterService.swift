@@ -38,6 +38,19 @@ public final class AIRouterService {
     /// returning a response.
     private static let fallbackBudgetSeconds: Double = 10.0
 
+    /// Default cooldown applied to a rate-limited tier when the provider gave
+    /// no server-advised `retryAfter`. Prevents a retry storm where the very
+    /// next `generate(prompt:)` call immediately re-hits the same tier that
+    /// just returned HTTP 429.
+    private static let defaultRateLimitCooldownSeconds: Double = 60
+
+    /// Tiers currently serving a rate-limit cooldown, keyed to the instant the
+    /// cooldown expires. Reuses `ContinuousClock` (already used for the
+    /// fallback budget deadline) rather than wall-clock `Date` so cooldown math
+    /// stays monotonic and unaffected by clock changes.
+    @ObservationIgnored
+    private var rateLimitCooldowns: [AITier: ContinuousClock.Instant] = [:]
+
     // MARK: - Initialization
 
     /// Designated initializer accepting an explicit dictionary of providers.
@@ -126,6 +139,26 @@ public final class AIRouterService {
             let isLastProvider = index == chain.count - 1
             let isOnDevice = provider.tier == .onDevice
 
+            // Skip a tier that is still within its rate-limit cooldown window
+            // instead of re-hitting a provider that just returned HTTP 429.
+            // Once the window has elapsed the entry is cleared and the tier is
+            // retried normally.
+            if let cooldownUntil = rateLimitCooldowns[provider.tier] {
+                if ContinuousClock.now < cooldownUntil {
+                    Logger.ai.info("Skipping \(provider.name): in rate-limit cooldown")
+                    updateTierStatus(provider.tier, status: .degraded)
+                    if lastMeaningfulError == nil || !Self.isActionable(lastMeaningfulError!) {
+                        lastMeaningfulError = .rateLimited(provider.tier, retryAfter: nil)
+                    }
+                    if isLastProvider {
+                        Logger.ai.error("All providers exhausted for this request")
+                        throw lastMeaningfulError ?? AIError.allProvidersExhausted
+                    }
+                    continue
+                }
+                rateLimitCooldowns[provider.tier] = nil
+            }
+
             // Check availability before attempting
             let available = await provider.isAvailable
             guard available else {
@@ -163,6 +196,15 @@ public final class AIRouterService {
                     updateTierStatus(provider.tier, status: .degraded)
                 } else {
                     updateTierStatus(provider.tier, status: .unavailable)
+                }
+
+                // A 429 starts a cooldown for this tier so the very next
+                // `generate(prompt:)` call doesn't immediately re-hit a
+                // provider that just rate-limited us. Use the server-advised
+                // delay when present, otherwise fall back to a fixed window.
+                if case .rateLimited(let rateLimitedTier, let retryAfter)? = tierError {
+                    let cooldownSeconds = retryAfter ?? Self.defaultRateLimitCooldownSeconds
+                    rateLimitCooldowns[rateLimitedTier] = ContinuousClock.now + .seconds(cooldownSeconds)
                 }
 
                 // Keep the most actionable error (a rejected key or rate limit

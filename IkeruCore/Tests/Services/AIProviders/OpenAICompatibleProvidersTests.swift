@@ -88,6 +88,38 @@ struct OpenAICompatibleTransportTests {
         }
     }
 
+    @Test("429 with Retry-After header carries retryAfter on rateLimited")
+    func rateLimitedWithRetryAfterHeader() async {
+        let keychain = MockKeychainStore(
+            initialValues: [KeychainKeys.openRouterAPIKey: "ok"]
+        )
+        let session = MockURLSessionProvider(
+            responseData: Data("{}".utf8),
+            statusCode: 429,
+            headerFields: ["Retry-After": "12"]
+        )
+        let provider = OpenRouterProvider(
+            keychainStore: keychain,
+            networkChecker: MockNetworkChecker(online: true),
+            urlSession: session
+        )
+        do {
+            _ = try await provider.generate(
+                prompt: AIPrompt(systemPrompt: "s", userMessage: "u")
+            )
+            Issue.record("Expected rateLimited error")
+        } catch let error as AIError {
+            if case .rateLimited(let tier, let retryAfter) = error {
+                #expect(tier == .openRouter)
+                #expect(retryAfter == 12)
+            } else {
+                Issue.record("Expected rateLimited, got \(error)")
+            }
+        } catch {
+            Issue.record("Unexpected error: \(error)")
+        }
+    }
+
     @Test("Throws invalidResponse on malformed JSON")
     func malformedResponse() async {
         let keychain = MockKeychainStore(

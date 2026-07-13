@@ -100,7 +100,7 @@ struct AIRouterIntegrationTests {
                 tier: .gemini,
                 content: "",
                 available: true,
-                error: .rateLimited(.gemini)
+                error: .rateLimited(.gemini, retryAfter: nil)
             ),
             claudeProvider: makeConfigurableMock(tier: .claude, content: "claude"),
             localGPUProvider: makeConfigurableMock(tier: .localGPU, content: "gpu"),

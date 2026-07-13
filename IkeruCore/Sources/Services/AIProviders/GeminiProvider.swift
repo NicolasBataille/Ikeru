@@ -76,7 +76,12 @@ public final class GeminiProvider: AIProvider, @unchecked Sendable {
 
         if httpResponse.statusCode == 429 {
             Logger.ai.warning("Gemini rate limited")
-            throw AIError.rateLimited(.gemini)
+            // Prefer the standard Retry-After header; Google's 429s usually omit
+            // it and instead carry the delay in the JSON body's RetryInfo detail.
+            let retryAfter = RetryAfterParsing.parseRetryAfterHeader(
+                httpResponse.value(forHTTPHeaderField: "Retry-After")
+            ) ?? RetryAfterParsing.parseGeminiRetryDelay(fromBody: data)
+            throw AIError.rateLimited(.gemini, retryAfter: retryAfter)
         }
 
         // A configured-but-rejected key surfaces as 401/403, or as 400 with an
