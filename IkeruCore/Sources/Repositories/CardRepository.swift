@@ -73,6 +73,11 @@ public final class CardRepository: Sendable {
     /// Leech threshold — a card is flagged as leech after this many lapses.
     public static let leechThreshold = 3
 
+    /// Window (most-recent N outcomes) for the speaking skill-balance signal.
+    /// Owned here rather than borrowed from an unlock-gate constant so the two
+    /// can diverge without a silent coupling — see `speakingAccuracyLast30`.
+    public static let speakingBalanceWindow = 30
+
     public init(modelContainer: ModelContainer) {
         self.backgroundActor = CardModelActor(modelContainer: modelContainer)
         self.saveErrorMonitor = CardSaveErrorMonitor()
@@ -263,7 +268,7 @@ public final class CardRepository: Sendable {
     public func speakingAccuracyLast30() async -> Double {
         await backgroundActor.meanAccuracy(
             skill: .speaking,
-            limit: DefaultExerciseUnlockService.listeningUnsubtitledWindow
+            limit: Self.speakingBalanceWindow
         )
     }
 }
@@ -563,9 +568,13 @@ actor CardModelActor {
             Logger.srs.error("recordExerciseOutcome: no active profile — outcome dropped")
             return
         }
+        // Clamp at the persistence boundary: aggregations (and the unlock gates
+        // they feed) assume accuracy ∈ [0, 1]. Today's only caller is bounded by
+        // construction, but a future one shouldn't be able to skew the mean.
+        let clampedAccuracy = min(1, max(0, accuracy))
         let log = ExerciseOutcomeLog(
             skill: skill,
-            accuracy: accuracy,
+            accuracy: clampedAccuracy,
             profileID: profileID,
             timestamp: now
         )

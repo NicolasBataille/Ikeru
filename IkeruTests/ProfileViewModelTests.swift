@@ -10,7 +10,9 @@ struct ProfileViewModelTests {
     // MARK: - Helpers
 
     private func makeModelContext() throws -> ModelContext {
-        let schema = Schema([UserProfile.self, Card.self, ReviewLog.self, RPGState.self])
+        // Full V2 schema so ExerciseOutcomeLog (scalar-scoped, no cascade) is
+        // present for the deletion-cleanup test.
+        let schema = Schema(versionedSchema: IkeruSchemaV2.self)
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         let container = try ModelContainer(for: schema, configurations: [config])
         return container.mainContext
@@ -152,5 +154,30 @@ struct ProfileViewModelTests {
 
         #expect(nameBefore == "Before")
         #expect(nameAfter == "After")
+    }
+
+    @Test("Deleting a profile removes its ExerciseOutcomeLog rows (no orphans)")
+    func deleteProfileRemovesOutcomes() throws {
+        let context = try makeModelContext()
+        let viewModel = ProfileViewModel(modelContext: context)
+        viewModel.createProfile(name: "A")
+        viewModel.createProfile(name: "B")
+
+        let target = try #require(viewModel.allProfiles.first { $0.displayName == "A" })
+        let keep = try #require(viewModel.allProfiles.first { $0.displayName == "B" })
+
+        // ExerciseOutcomeLog is scalar-scoped (no cascade), so deleteProfile
+        // must remove the deleted profile's rows explicitly.
+        context.insert(ExerciseOutcomeLog(skill: .listening, accuracy: 1.0, profileID: target.id))
+        context.insert(ExerciseOutcomeLog(skill: .speaking, accuracy: 0.8, profileID: target.id))
+        context.insert(ExerciseOutcomeLog(skill: .listening, accuracy: 0.0, profileID: keep.id))
+        try context.save()
+
+        viewModel.deleteProfile(target)
+
+        let remaining = try context.fetch(FetchDescriptor<ExerciseOutcomeLog>())
+        // Only the surviving profile's single outcome remains.
+        #expect(remaining.count == 1)
+        #expect(remaining.first?.profileID == keep.id)
     }
 }

@@ -189,6 +189,7 @@ public enum TestFixtures {
             CompanionChatMessage.self,
             VocabularyEncounter.self,
             VocabularyEntry.self,
+            ExerciseOutcomeLog.self,
         ]
         for entity in entities {
             do {

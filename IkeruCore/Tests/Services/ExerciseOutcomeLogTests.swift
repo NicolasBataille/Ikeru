@@ -158,6 +158,22 @@ struct ExerciseOutcomeLogAggregationTests {
         #expect(await repo.listeningAccuracyLast30() == 0.0)
     }
 
+    @Test("Out-of-range accuracy is clamped to [0, 1] at the persistence boundary")
+    func accuracyClamped() async throws {
+        let container = try makeContainer()
+        try seedProfile(container, active: true)
+        defer { clearActiveKey() }
+        let repo = CardRepository(modelContainer: container)
+        // 1.5 clamps to 1.0, -0.5 clamps to 0.0 → mean 0.5 (not (1.5-0.5)/2=0.5
+        // by coincidence; use asymmetric values to prove clamping, not luck).
+        await repo.recordExerciseOutcome(skill: .listening, accuracy: 1.5)
+        await repo.recordExerciseOutcome(skill: .listening, accuracy: 1.5)
+        await repo.recordExerciseOutcome(skill: .listening, accuracy: -0.5)
+        // Clamped: (1.0 + 1.0 + 0.0) / 3 = 0.666…, not (1.5+1.5-0.5)/3 = 0.833…
+        let mean = await repo.listeningAccuracyLast30()
+        #expect(abs(mean - (2.0 / 3.0)) < 1e-9)
+    }
+
     @Test("Recorded shadowing outcomes feed speakingAccuracyLast30")
     func speakingAggregation() async throws {
         let container = try makeContainer()
