@@ -238,4 +238,29 @@ struct ChatMarkerParsingTests {
             #expect(!result.content.contains("[vocab"))
         }
     }
+
+    // MARK: - Boundary Positions
+
+    @Test("Marker at the very start of the string, prose immediately after ]")
+    func markerAtStringStartWithTrailingProse() {
+        let result = ChatMarkerParser.parse("[CORRECTION: 食べます → 食べました]ありがとう！")
+
+        #expect(result.content == "ありがとう！")
+        #expect(result.corrections.count == 1)
+        #expect(result.corrections[0].original == "食べます")
+        #expect(result.corrections[0].corrected == "食べました")
+        #expect(!result.content.contains("[CORRECTION"))
+    }
+
+    @Test("Marker whose inner text is wrapped across a newline still parses and is stripped")
+    func markerInnerSpanningNewline() {
+        let result = ChatMarkerParser.parse("いいですね！\n[CORRECTION: 食べます →\n食べました | past tense]")
+
+        #expect(result.content == "いいですね！")
+        #expect(result.corrections.count == 1)
+        #expect(result.corrections[0].original == "食べます")
+        #expect(result.corrections[0].corrected == "食べました")
+        #expect(result.corrections[0].explanation == "past tense")
+        #expect(!result.content.contains("[CORRECTION"))
+    }
 }

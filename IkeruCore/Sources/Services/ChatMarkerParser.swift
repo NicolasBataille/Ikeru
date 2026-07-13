@@ -117,17 +117,19 @@ enum ChatMarkerParser {
 
     // MARK: - Content Cleanup
 
-    /// Collapses the whitespace/blank-line residue left behind after marker
-    /// removal so `content` reads as natural prose: runs of spaces/tabs
-    /// collapse to one, lines that became empty are dropped, and the result
-    /// is trimmed. Intra-prose newlines that were never part of a marker
-    /// line are preserved.
+    /// Normalizes `content` so it reads as natural prose after marker removal.
+    /// Applied unconditionally to EVERY line (not only marker-adjacent ones):
+    /// runs of spaces/tabs collapse to a single space, lines that are now empty
+    /// are dropped, and each line is trimmed. Interior double-spaces in ordinary
+    /// prose are therefore also collapsed — an accepted tradeoff for reliably
+    /// mopping up the gaps left where an inline marker was excised. Intra-prose
+    /// newlines that were never part of a marker line are preserved.
     private static func cleanedContent(from text: String) -> String {
         let lines = text
             .components(separatedBy: "\n")
             .map { line in
                 line.replacingOccurrences(of: #"[ \t]+"#, with: " ", options: .regularExpression)
-                    .trimmingCharacters(in: .whitespaces)
+                    .trimmingCharacters(in: .whitespacesAndNewlines)
             }
             .filter { !$0.isEmpty }
 
@@ -144,18 +146,18 @@ enum ChatMarkerParser {
         guard let arrowRange = firstRange(of: arrowVariants, in: inner) else { return nil }
 
         let original = String(inner[inner.startIndex..<arrowRange.lowerBound])
-            .trimmingCharacters(in: .whitespaces)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
         let afterArrow = inner[arrowRange.upperBound...]
 
         let corrected: String
         let explanation: String
         if let pipeRange = firstRange(of: pipeVariants, in: afterArrow) {
             corrected = String(afterArrow[afterArrow.startIndex..<pipeRange.lowerBound])
-                .trimmingCharacters(in: .whitespaces)
+                .trimmingCharacters(in: .whitespacesAndNewlines)
             explanation = String(afterArrow[pipeRange.upperBound...])
-                .trimmingCharacters(in: .whitespaces)
+                .trimmingCharacters(in: .whitespacesAndNewlines)
         } else {
-            corrected = String(afterArrow).trimmingCharacters(in: .whitespaces)
+            corrected = String(afterArrow).trimmingCharacters(in: .whitespacesAndNewlines)
             explanation = ""
         }
 
@@ -172,9 +174,9 @@ enum ChatMarkerParser {
         guard let equalsRange = firstRange(of: equalsVariants, in: inner) else { return nil }
 
         let wordPart = String(inner[inner.startIndex..<equalsRange.lowerBound])
-            .trimmingCharacters(in: .whitespaces)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
         let meaning = String(inner[equalsRange.upperBound...])
-            .trimmingCharacters(in: .whitespaces)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
 
         let (word, reading) = extractReading(from: wordPart)
         return VocabularyHint(word: word, reading: reading, meaning: meaning)
@@ -192,8 +194,8 @@ enum ChatMarkerParser {
             return (wordPart, "")
         }
 
-        let word = String(wordPart[wordPart.startIndex..<openIndex]).trimmingCharacters(in: .whitespaces)
-        let reading = String(wordPart[afterOpen..<closeIndex]).trimmingCharacters(in: .whitespaces)
+        let word = String(wordPart[wordPart.startIndex..<openIndex]).trimmingCharacters(in: .whitespacesAndNewlines)
+        let reading = String(wordPart[afterOpen..<closeIndex]).trimmingCharacters(in: .whitespacesAndNewlines)
         return (word, reading)
     }
 
