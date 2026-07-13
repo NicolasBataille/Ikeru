@@ -173,6 +173,7 @@ jobs:
             -only-testing:IkeruTests/Tier2AudioDrillCompletionTests \
             -only-testing:IkeruTests/Tier2VocabRecallTests \
             -only-testing:IkeruTests/DrillGradeMappingTests \
+            -only-testing:IkeruTests/DataExportManagerTests \
             CODE_SIGNING_ALLOWED=NO
 
   device-build-check:
