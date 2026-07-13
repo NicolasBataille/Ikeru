@@ -16,7 +16,6 @@ struct LearnerSnapshotBuilderTests {
         let s = LearnerSnapshotBuilder.build(
             cards: cards,
             jlptLevel: .n5,
-            grammarPointsFamiliarPlus: 0,
             listeningAccuracyLast30: 0,
             listeningRecallLast30Days: 0,
             skillBalances: [:],
@@ -26,6 +25,30 @@ struct LearnerSnapshotBuilderTests {
         )
         #expect(s.vocabularyMasteredFamiliarPlus == 1)
         #expect(s.kanjiMasteredFamiliarPlus == 2)
+    }
+
+    @Test("Builds grammar familiar+ count from .grammar cards (remediation 4.3)")
+    func grammarFamiliarPlusCount() {
+        let cards = [
+            fixture(type: .grammar, front: "grammar1", stability: 8.0, reps: 3),   // familiar
+            fixture(type: .grammar, front: "grammar2", stability: 30.0, reps: 5),  // mastered
+            fixture(type: .grammar, front: "grammar3", stability: 0.5, reps: 1),   // learning (excluded)
+            fixture(type: .grammar, front: "grammar4", stability: 0, reps: 0),     // new (excluded)
+            fixture(type: .vocabulary, front: "vocab1", stability: 30.0, reps: 5), // not grammar
+        ]
+        let s = LearnerSnapshotBuilder.build(
+            cards: cards,
+            jlptLevel: .n5,
+            listeningAccuracyLast30: 0,
+            listeningRecallLast30Days: 0,
+            skillBalances: [:],
+            hasNewContentQueued: false,
+            lastSessionAt: nil,
+            now: Date(timeIntervalSince1970: 1_800_000_000)
+        )
+        // Only the two familiar+ grammar cards count; learning/new grammar and
+        // the vocab card are excluded.
+        #expect(s.grammarPointsFamiliarPlus == 2)
     }
 
     @Test("hiraganaMastered flips only when all 46 base kana are familiar+ (vocab cards)")
@@ -43,7 +66,6 @@ struct LearnerSnapshotBuilderTests {
         let sFortyFive = LearnerSnapshotBuilder.build(
             cards: fortyFiveCards,
             jlptLevel: .n5,
-            grammarPointsFamiliarPlus: 0,
             listeningAccuracyLast30: 0,
             listeningRecallLast30Days: 0,
             skillBalances: [:],
@@ -63,7 +85,6 @@ struct LearnerSnapshotBuilderTests {
         let sFortySix = LearnerSnapshotBuilder.build(
             cards: fortySixCards,
             jlptLevel: .n5,
-            grammarPointsFamiliarPlus: 0,
             listeningAccuracyLast30: 0,
             listeningRecallLast30Days: 0,
             skillBalances: [:],
@@ -89,7 +110,6 @@ struct LearnerSnapshotBuilderTests {
         let sFortyFive = LearnerSnapshotBuilder.build(
             cards: fortyFiveCards,
             jlptLevel: .n5,
-            grammarPointsFamiliarPlus: 0,
             listeningAccuracyLast30: 0,
             listeningRecallLast30Days: 0,
             skillBalances: [:],
@@ -108,7 +128,6 @@ struct LearnerSnapshotBuilderTests {
         let sFortySix = LearnerSnapshotBuilder.build(
             cards: fortySixCards,
             jlptLevel: .n5,
-            grammarPointsFamiliarPlus: 0,
             listeningAccuracyLast30: 0,
             listeningRecallLast30Days: 0,
             skillBalances: [:],
@@ -148,7 +167,6 @@ struct LearnerSnapshotBuilderTests {
         let s = LearnerSnapshotBuilder.build(
             cards: cards,
             jlptLevel: .n5,
-            grammarPointsFamiliarPlus: 0,
             listeningAccuracyLast30: 0,
             listeningRecallLast30Days: 0,
             skillBalances: [:],
@@ -167,7 +185,6 @@ struct LearnerSnapshotBuilderTests {
         let s = LearnerSnapshotBuilder.build(
             cards: cards,
             jlptLevel: .n5,
-            grammarPointsFamiliarPlus: 0,
             listeningAccuracyLast30: 0,
             listeningRecallLast30Days: 0,
             skillBalances: [:],
@@ -191,7 +208,6 @@ struct LearnerSnapshotBuilderTests {
         let s = LearnerSnapshotBuilder.build(
             cards: cards,
             jlptLevel: .n5,
-            grammarPointsFamiliarPlus: 0,
             listeningAccuracyLast30: 0,
             listeningRecallLast30Days: 0,
             skillBalances: [:],

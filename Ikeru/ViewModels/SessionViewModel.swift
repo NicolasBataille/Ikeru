@@ -88,6 +88,15 @@ public final class SessionViewModel {
     /// double-counted on the summary screen.
     private var newItemCountedIDs: Set<UUID> = []
 
+    /// Card IDs already FSRS-graded this session through the NON-SRS drill path
+    /// (`completeCurrentExercise`). `.kanjiStudy` and `.writingPractice` are both
+    /// backed by kanji cards drawn independently by the planner, so one session
+    /// can surface both against the same character; this guard ensures a card is
+    /// FSRS-graded at most once per session via that path (XP is still awarded
+    /// for the second completion). The SRS deck path (`gradeAndAdvance`) is
+    /// separate and unaffected, so legitimate same-day requeues still re-grade.
+    private var nonSRSGradedCardIDs: Set<UUID> = []
+
     /// Whether the session is complete (all exercises finished).
     ///
     /// Gated on the exercise list, NOT the SRS card queue. Once non-SRS
@@ -351,6 +360,7 @@ public final class SessionViewModel {
         sessionMode = .normal
         retryCounts = [:]
         newItemCountedIDs = []
+        nonSRSGradedCardIDs = []
         sessionLootCount = 0
         earnedLootBox = nil
         lastSessionBonus = nil
@@ -873,14 +883,14 @@ public final class SessionViewModel {
     ///   it would over-run the queue and mis-grade the next real review.
     ///   Invariant held: `currentIndex` == number of completed `.srsReview`
     ///   items == index into `sessionQueue`.
-    /// - `.kanjiStudy` still writes a real FSRS grade against its backing
-    ///   `CardDTO` (the 4.4 hook) but does NOT touch `currentIndex`; every other
-    ///   non-SRS kind is XP-only.
+    /// - `.kanjiStudy` and `.writingPractice` each write a real FSRS grade
+    ///   against their backing `CardDTO` (the 4.4 hook) but do NOT touch
+    ///   `currentIndex`; every other non-SRS kind is XP-only.
     ///
-    /// This path is not yet reachable in production (`DefaultSessionPlanner`
-    /// still filters the exercise list to `.srsReview` only); it is exercised by
-    /// the decoupling regression tests and is the foundation the drill views
-    /// will wire into in a later step.
+    /// Reachable in production: `DefaultSessionPlanner` schedules the wired
+    /// non-SRS drills (`.kanjiStudy`, `.writingPractice`, `.sentenceConstruction`,
+    /// listening / shadowing / vocabulary) via its `isLive` allowlist. It is also
+    /// exercised by the decoupling regression tests.
     public func completeCurrentExercise(grade: Grade) async {
         guard let exercise = currentExercise else { return }
 
@@ -894,12 +904,26 @@ public final class SessionViewModel {
 
         let responseTimeMs = Int(Date().timeIntervalSince(cardStartTime) * 1000)
 
-        // Only `.kanjiStudy` carries a real, gradeable card. Write its FSRS
-        // grade WITHOUT advancing `currentIndex` (its card is not in
-        // `sessionQueue`). All other non-SRS kinds are XP-only for now.
-        if case .kanjiStudy(let card) = exercise {
+        // `.kanjiStudy` and `.writingPractice` both carry a real, gradeable
+        // card, so write their FSRS grade WITHOUT advancing `currentIndex`
+        // (their cards are not in `sessionQueue`). Every other non-SRS kind is
+        // XP-only (no backing card). XP is still awarded below for all kinds.
+        //
+        // `nonSRSGradedCardIDs` de-dupes: if this same card was already graded
+        // through this path earlier in the session (kanjiStudy + writingPractice
+        // can both target it), skip the second FSRS write + side-effects so one
+        // character isn't counted as two independent reviews. XP still accrues.
+        let gradeableCard: CardDTO?
+        switch exercise {
+        case .kanjiStudy(let card), .writingPractice(let card):
+            gradeableCard = nonSRSGradedCardIDs.contains(card.id) ? nil : card
+        default:
+            gradeableCard = nil
+        }
+        if let card = gradeableCard {
+            nonSRSGradedCardIDs.insert(card.id)
             Logger.srs.debug(
-                "Grading kanjiStudy card \(card.front): grade=\(grade.rawValue), responseTime=\(responseTimeMs)ms"
+                "Grading card \(card.front): grade=\(grade.rawValue), responseTime=\(responseTimeMs)ms"
             )
             await cardRepository.gradeCard(
                 cardId: card.id,
@@ -959,12 +983,12 @@ public final class SessionViewModel {
             consecutiveCorrect = 0
         }
 
-        // Only `.kanjiStudy` carries a real, gradeable card, so it (and only it)
-        // runs the shared card-grade side-effects: mastery / leech detection and
+        // The card-backed kinds (`.kanjiStudy`, `.writingPractice`) run the
+        // shared card-grade side-effects: mastery / leech detection and
         // first-review counting, identical to the SRS deck path. Positioned after
         // the XP/RPG update (parity with `gradeAndAdvance`) and before the
         // exercise pointer advances. Every other non-SRS kind is XP-only.
-        if case .kanjiStudy(let card) = exercise {
+        if let card = gradeableCard {
             await applyCardGradeSideEffects(preGradeCard: card, grade: grade)
         }
 
@@ -1421,9 +1445,10 @@ public final class SessionViewModel {
     /// — no side effects beyond reading the active RPG state for the
     /// `lastSessionAt` timestamp.
     ///
-    /// Currently passes `0`/`empty` for fields the app does not yet
-    /// track (grammar mastery, listening accuracy/recall, skill
-    /// balances). These will be wired up as the supporting services land.
+    /// Feeds real skill balances (from `ProgressService`) and grammar mastery
+    /// (derived by the builder from `.grammar` cards) into the snapshot. The
+    /// listening accuracy / recall axes still pass `0` — they have no persisted
+    /// source until output-exercise outcomes are recorded (remediation 4.4 PR2).
     private func buildSnapshot(cards: [CardDTO]) async -> LearnerSnapshot {
         let now = Date()
         let progressService = ProgressService(cardRepository: cardRepository)
@@ -1435,10 +1460,9 @@ public final class SessionViewModel {
         return LearnerSnapshotBuilder.build(
             cards: cards,
             jlptLevel: jlptLevel,
-            grammarPointsFamiliarPlus: 0,
             listeningAccuracyLast30: 0,
             listeningRecallLast30Days: 0,
-            skillBalances: [:],
+            skillBalances: progress.skillBalance.asSkillBalances,
             hasNewContentQueued: cards.contains(where: { $0.fsrsState.reps == 0 }),
             lastSessionAt: lastSession,
             now: now

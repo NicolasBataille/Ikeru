@@ -3,6 +3,12 @@ import Foundation
 
 /// Builds a `LearnerSnapshot` from real, ambient state (cards, RPG, etc).
 /// Pure (no I/O) — caller is responsible for fetching data.
+///
+/// Vocab / kanji / grammar familiar+ counts are all derived directly from the
+/// `cards` pool (a `.grammar` card counts toward `grammarPointsFamiliarPlus`
+/// once it reaches familiar+, mirroring vocab/kanji). Listening accuracy and
+/// skill balances are not derivable from the card pool alone, so they stay
+/// caller-supplied parameters.
 public enum LearnerSnapshotBuilder {
 
     /// The 46 base hiragana characters (gojūon — no dakuten / handakuten /
@@ -39,7 +45,6 @@ public enum LearnerSnapshotBuilder {
     public static func build(
         cards: [CardDTO],
         jlptLevel: JLPTLevel,
-        grammarPointsFamiliarPlus: Int,
         listeningAccuracyLast30: Double,
         listeningRecallLast30Days: Double,
         skillBalances: [SkillType: Double],
@@ -50,6 +55,7 @@ public enum LearnerSnapshotBuilder {
 
         var vocab = 0
         var kanji = 0
+        var grammar = 0
         var hiraganaFamiliarFronts: Set<String> = []
         var katakanaFamiliarFronts: Set<String> = []
         var due = 0
@@ -92,7 +98,9 @@ public enum LearnerSnapshotBuilder {
                 if familiarPlus { vocab += 1 }
             case .kanji:
                 if familiarPlus { kanji += 1 }
-            case .grammar, .listening:
+            case .grammar:
+                if familiarPlus { grammar += 1 }
+            case .listening:
                 break
             }
 
@@ -118,7 +126,7 @@ public enum LearnerSnapshotBuilder {
             kanjiMasteredFamiliarPlus: kanji,
             hiraganaMastered: hiraganaFamiliarFronts.count >= baseHiragana.count,
             katakanaMastered: katakanaFamiliarFronts.count >= baseKatakana.count,
-            grammarPointsFamiliarPlus: grammarPointsFamiliarPlus,
+            grammarPointsFamiliarPlus: grammar,
             listeningAccuracyLast30: listeningAccuracyLast30,
             listeningRecallLast30Days: listeningRecallLast30Days,
             skillBalances: skillBalances,

@@ -160,14 +160,16 @@ struct Tier1KanjiStudyBookkeepingTests {
         #expect(vm.currentExerciseIndex == 1)
     }
 
-    @Test("writingPractice completion awards XP but writes NO FSRS grade")
-    func writingPracticeIsXPOnly() async throws {
+    @Test("writingPractice completion writes a real FSRS grade AND awards XP (remediation 4.4)")
+    func writingPracticeWritesGradeAndAwardsXP() async throws {
         let container = try makeContainer()
         let repo = CardRepository(modelContainer: container)
         try seedCards(container: container, fronts: ["W", "A"])
         let dtos = await repo.allCards()
         let w = try dto("W", in: dtos)
         let a = try dto("A", in: dtos)
+        // Precondition the first-review bookkeeping depends on: W is brand-new.
+        #expect(w.fsrsState.reps == 0)
 
         let planner = MockSessionPlanner()
         planner.plan = buildPlan([.writingPractice(w), .srsReview(a)])
@@ -178,13 +180,15 @@ struct Tier1KanjiStudyBookkeepingTests {
 
         await vm.completeCurrentExercise(grade: .good)
 
-        // XP-only: no ReviewLog written for the practiced card…
+        // 4.4: writingPractice now writes a real FSRS grade for its backing card,
+        // like kanjiStudy (it carries a real CardDTO).
         let wLogs = await repo.reviewLogs(for: w.id)
-        #expect(wLogs.isEmpty)
-        // …but XP was still awarded for the completion.
+        #expect(wLogs.count == 1)
+        // XP is still awarded for the completion (.perCompletion, grade-independent).
         #expect(vm.xpEarned > 0)
-        // writingPractice is not a first-review of a graded card → not counted.
-        #expect(vm.newItemsLearned == 0)
+        // Brand-new card → the shared card-grade side-effects count its first review.
+        #expect(vm.newItemsLearned == 1)
+        // SRS queue pointer untouched; exercise pointer advanced.
         #expect(vm.currentIndex == 0)
         #expect(vm.currentExerciseIndex == 1)
         #expect(vm.reviewedCount == 1)
