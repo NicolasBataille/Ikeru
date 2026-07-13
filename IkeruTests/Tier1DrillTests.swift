@@ -214,6 +214,85 @@ struct DrillGradeMappingTests {
         #expect(DrillGradeMapping.handwriting(feedback: .idle, topConfidence: nil) == .again)
     }
 
+    // MARK: - Honest self-grade (remediation 7.8)
+
+    @Test("Handwriting: .unavailable never fabricates a pass — maps to .again even at high confidence")
+    func handwritingUnavailableNeverPasses() {
+        // The self-grade path uses explicit onComplete(.good/.again); this
+        // mapping is only a safety net. It must never yield a passing grade,
+        // regardless of any leftover confidence value.
+        #expect(DrillGradeMapping.handwriting(feedback: .unavailable, topConfidence: nil) == .again)
+        #expect(DrillGradeMapping.handwriting(feedback: .unavailable, topConfidence: 0.99) == .again)
+    }
+
+    @Test("Handwriting decision: no usable read routes to .unavailable, not an auto-pass")
+    func handwritingDecisionUnavailable() {
+        let target = "\u{5c71}" // 山
+        // No candidates at all → recogniser gave no verdict → self-grade.
+        #expect(HandwritingViewModel.evaluateFeedback(
+            candidates: [],
+            target: target,
+            correctThreshold: 0.7,
+            partialThreshold: 0.3
+        ) == .unavailable)
+        // Top candidate is the target but below the partial threshold → the
+        // recogniser wasn't confident about anything → self-grade, NOT .correct.
+        #expect(HandwritingViewModel.evaluateFeedback(
+            candidates: [RecognitionCandidate(character: target, confidence: 0.2)],
+            target: target,
+            correctThreshold: 0.7,
+            partialThreshold: 0.3
+        ) == .unavailable)
+    }
+
+    @Test("Handwriting decision: confident reads still grade honestly (correct/partial/incorrect)")
+    func handwritingDecisionConfidentTiers() {
+        let target = "\u{5c71}" // 山
+        let other = "\u{5ddd}"  // 川
+        // Confident target → .correct.
+        #expect(HandwritingViewModel.evaluateFeedback(
+            candidates: [RecognitionCandidate(character: target, confidence: 0.9)],
+            target: target,
+            correctThreshold: 0.7,
+            partialThreshold: 0.3
+        ) == .correct)
+        // Target present but not the top, ≥ partial → .partial.
+        #expect(HandwritingViewModel.evaluateFeedback(
+            candidates: [
+                RecognitionCandidate(character: other, confidence: 0.8),
+                RecognitionCandidate(character: target, confidence: 0.5),
+            ],
+            target: target,
+            correctThreshold: 0.7,
+            partialThreshold: 0.3
+        ) == .partial)
+        // Recogniser confident about something else, target absent → honest .incorrect.
+        #expect(HandwritingViewModel.evaluateFeedback(
+            candidates: [RecognitionCandidate(character: other, confidence: 0.9)],
+            target: target,
+            correctThreshold: 0.7,
+            partialThreshold: 0.3
+        ) == .incorrect)
+    }
+
+    @Test("Handwriting decision: verdict is independent of candidate array order")
+    func handwritingDecisionOrderIndependent() {
+        let target = "\u{5c71}" // 山
+        let other = "\u{5ddd}"  // 川
+        // A high-confidence target that is NOT first in the array must still be
+        // read as .correct — the honesty verdict cannot depend on the provider
+        // happening to sort its candidates (regression guard for the .first bug).
+        #expect(HandwritingViewModel.evaluateFeedback(
+            candidates: [
+                RecognitionCandidate(character: other, confidence: 0.2),
+                RecognitionCandidate(character: target, confidence: 0.9),
+            ],
+            target: target,
+            correctThreshold: 0.7,
+            partialThreshold: 0.3
+        ) == .correct)
+    }
+
     @Test("SentenceConstruction: correct → .good, incorrect → .again")
     func sentenceConstructionMapping() {
         #expect(DrillGradeMapping.sentenceConstruction(isCorrect: true) == .good)

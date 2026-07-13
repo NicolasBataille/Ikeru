@@ -292,6 +292,12 @@ enum DrillGradeMapping {
     /// Handwriting recognition feedback → `Grade`.
     /// `.correct` → `.good` (or `.easy` on very high confidence),
     /// `.partial` → `.hard`, `.incorrect`/`.idle` → `.again`.
+    ///
+    /// `.unavailable` is NOT auto-graded here (remediation 7.8): when the
+    /// recogniser can't read the scribble, the view shows an explicit self-grade
+    /// affordance and calls `onComplete` with the learner's own honest verdict
+    /// (`.good`/`.again`). This mapping is only a safe non-passing fallback so an
+    /// unavailable state can never fabricate a pass if it ever reaches here.
     static func handwriting(
         feedback: HandwritingFeedbackState,
         topConfidence: Double?
@@ -304,7 +310,7 @@ enum DrillGradeMapping {
             return .good
         case .partial:
             return .hard
-        case .incorrect, .idle:
+        case .incorrect, .idle, .unavailable:
             return .again
         }
     }

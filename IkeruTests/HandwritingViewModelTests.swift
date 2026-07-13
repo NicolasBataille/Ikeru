@@ -206,20 +206,26 @@ struct HandwritingViewModelTests {
         #expect(vm.feedbackState == .incorrect)
     }
 
-    @Test("submitForRecognition sets incorrect on provider error")
+    @Test("submitForRecognition routes to self-grade (.unavailable) on provider error")
     func submitProviderError() async {
+        // Remediation 7.8: a thrown recogniser error means no verdict was
+        // produced — the honest response is the self-grade path, NOT an
+        // automatic .incorrect (and certainly not a pass).
         let vm = makeViewModel(shouldThrow: true)
         vm.loadTarget(character: "\u{5c71}")
         vm.addStroke(points: [CGPoint(x: 10, y: 10), CGPoint(x: 90, y: 90)])
 
         await vm.submitForRecognition()
 
-        #expect(vm.feedbackState == .incorrect)
+        #expect(vm.feedbackState == .unavailable)
         #expect(vm.recognitionState.isFailed)
     }
 
-    @Test("submitForRecognition sets incorrect for low-confidence target match")
+    @Test("submitForRecognition routes to self-grade (.unavailable) when nothing clears the confidence threshold")
     func submitLowConfidenceMatch() async {
+        // Remediation 7.8: the recogniser's best guess is below the partial
+        // threshold, so it has no usable read → self-grade rather than a silent
+        // .incorrect verdict.
         let vm = makeViewModel(candidates: [
             RecognitionCandidate(character: "\u{5c71}", confidence: 0.2)
         ])
@@ -228,7 +234,21 @@ struct HandwritingViewModelTests {
 
         await vm.submitForRecognition()
 
-        #expect(vm.feedbackState == .incorrect)
+        #expect(vm.feedbackState == .unavailable)
+    }
+
+    @Test("submitForRecognition routes to self-grade (.unavailable) when the recogniser returns no candidates")
+    func submitNoCandidates() async {
+        let vm = makeViewModel(candidates: [])
+        vm.loadTarget(character: "\u{5c71}")
+        vm.addStroke(points: [CGPoint(x: 10, y: 10), CGPoint(x: 90, y: 90)])
+
+        await vm.submitForRecognition()
+
+        #expect(vm.feedbackState == .unavailable)
+        // Not a pass, and not a fabricated result.
+        #expect(vm.feedbackState != .correct)
+        #expect(vm.feedbackState != .partial)
     }
 
     // MARK: - Retry

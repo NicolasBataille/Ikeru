@@ -12,8 +12,14 @@ public enum HandwritingFeedbackState: Sendable, Equatable {
     case correct
     /// Target found in candidates but not top match, or lower confidence (>= 0.3).
     case partial
-    /// Target not found in candidates or all below threshold.
+    /// Recogniser was confident about *something* (a candidate cleared the
+    /// partial threshold) but it was not the target — an honest miss.
     case incorrect
+    /// The recogniser could not produce a usable verdict: it errored, returned
+    /// no candidates, or its best guess fell below the partial-confidence
+    /// threshold. We DO NOT fabricate a pass (or a fail) from a scribble the
+    /// machine couldn't read — the learner self-grades honestly instead.
+    case unavailable
 }
 
 // MARK: - HandwritingViewModel
@@ -118,16 +124,24 @@ public final class HandwritingViewModel {
 
             recognitionResult = result
             recognitionState = .loaded(result)
-            feedbackState = evaluateFeedback(result: result)
+            feedbackState = Self.evaluateFeedback(
+                candidates: result.candidates,
+                target: targetCharacter,
+                correctThreshold: correctThreshold,
+                partialThreshold: partialThreshold
+            )
 
             Logger.content.info(
                 "Recognition for '\(self.targetCharacter)': \(String(describing: self.feedbackState)) in \(result.formattedDuration)"
             )
         } catch {
+            // A thrown error means the recogniser is unavailable (Vision failed
+            // or is missing). Do NOT mark the attempt incorrect — the machine
+            // never rendered a verdict — surface the honest self-grade path.
             recognitionState = .failed(error)
-            feedbackState = .incorrect
+            feedbackState = .unavailable
             Logger.content.error(
-                "Recognition failed for '\(self.targetCharacter)': \(error.localizedDescription)"
+                "Recognition unavailable for '\(self.targetCharacter)': \(error.localizedDescription)"
             )
         }
     }
@@ -143,23 +157,47 @@ public final class HandwritingViewModel {
 
     // MARK: - Feedback Evaluation
 
-    /// Determine feedback state by comparing recognition candidates against the target.
-    private func evaluateFeedback(result: RecognitionResult) -> HandwritingFeedbackState {
-        guard !result.candidates.isEmpty else { return .incorrect }
+    /// Pure decision: map recognition candidates (sorted by confidence
+    /// descending) against the target to a feedback tier. Kept `nonisolated
+    /// static` so it can be unit-tested directly without a MainActor view model.
+    ///
+    /// Honesty contract (remediation 7.8): when the recogniser produces no
+    /// usable read — no candidates, or a top candidate below the partial
+    /// threshold — we return `.unavailable` (self-grade) rather than fabricating
+    /// a `.correct`/`.partial` pass or silently stamping `.incorrect`. A pass is
+    /// only ever returned when the recogniser was genuinely confident the target
+    /// was drawn.
+    nonisolated static func evaluateFeedback(
+        candidates: [RecognitionCandidate],
+        target: String,
+        correctThreshold: Double,
+        partialThreshold: Double
+    ) -> HandwritingFeedbackState {
+        // Pick the most-confident candidate by value, NOT by array position —
+        // the honesty verdict must not depend on the provider happening to sort
+        // its output. If even the best guess is below the partial threshold, the
+        // machine has no usable verdict → route to self-grade.
+        guard let topCandidate = candidates.max(by: { $0.confidence < $1.confidence }),
+              topCandidate.confidence >= partialThreshold else {
+            return .unavailable
+        }
 
-        // Check if top candidate matches target with high confidence
-        if let topCandidate = result.candidates.first,
-           topCandidate.character == targetCharacter,
+        // Best candidate is the target at high confidence → a real pass.
+        if topCandidate.character == target,
            topCandidate.confidence >= correctThreshold {
             return .correct
         }
 
-        // Check if target appears anywhere in candidates with partial confidence
-        let targetCandidate = result.candidates.first { $0.character == targetCharacter }
-        if let candidate = targetCandidate, candidate.confidence >= partialThreshold {
+        // The target appears among candidates with at least partial confidence
+        // (use its most-confident occurrence, again independent of order).
+        if let candidate = candidates
+            .filter({ $0.character == target })
+            .max(by: { $0.confidence < $1.confidence }),
+           candidate.confidence >= partialThreshold {
             return .partial
         }
 
+        // Recogniser was confident about something else → an honest miss.
         return .incorrect
     }
 }
