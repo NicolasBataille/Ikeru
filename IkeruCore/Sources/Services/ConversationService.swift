@@ -177,11 +177,16 @@ public final class ConversationService: @unchecked Sendable {
 
         var priorTurns = history
             .suffix(Self.maxHistoryTurns)
-            .map { message in
-                AIMessage(
-                    role: message.role == .user ? .user : .assistant,
-                    text: message.content
-                )
+            .compactMap { message -> AIMessage? in
+                // Exhaustive over MessageRole so a future `.system` history turn
+                // is never silently relabelled `assistant` and replayed to the AI
+                // as if Sakura had said it. System content lives in the system
+                // prompt, so any `.system` turn in the transcript is dropped here.
+                switch message.role {
+                case .user: return AIMessage(role: .user, text: message.content)
+                case .assistant: return AIMessage(role: .assistant, text: message.content)
+                case .system: return nil
+                }
             }
 
         // Avoid duplicating the latest user message when the caller already
