@@ -212,80 +212,15 @@ public final class ConversationService: @unchecked Sendable {
         let vocabularyHints: [VocabularyHint]
     }
 
+    /// Delegates to `ChatMarkerParser` for the tolerant marker parsing
+    /// itself; this method just adapts its result into the service's own
+    /// `ParsedResponse` shape.
     private func parseResponse(_ text: String) -> ParsedResponse {
-        var contentLines: [String] = []
-        var corrections: [Correction] = []
-        var vocabularyHints: [VocabularyHint] = []
-
-        for line in text.components(separatedBy: "\n") {
-            let trimmed = line.trimmingCharacters(in: .whitespaces)
-
-            if let correction = parseCorrection(trimmed) {
-                corrections.append(correction)
-            } else if let hint = parseVocabularyHint(trimmed) {
-                vocabularyHints.append(hint)
-            } else if !trimmed.isEmpty {
-                contentLines.append(trimmed)
-            }
-        }
-
-        let content = contentLines.joined(separator: "\n")
+        let result = ChatMarkerParser.parse(text)
         return ParsedResponse(
-            content: content,
-            corrections: corrections,
-            vocabularyHints: vocabularyHints
+            content: result.content,
+            corrections: result.corrections,
+            vocabularyHints: result.vocabularyHints
         )
-    }
-
-    /// Parses `[CORRECTION: original → corrected | explanation]`
-    private func parseCorrection(_ line: String) -> Correction? {
-        guard line.hasPrefix("[CORRECTION:"), line.hasSuffix("]") else {
-            return nil
-        }
-
-        let inner = String(line.dropFirst("[CORRECTION:".count).dropLast())
-            .trimmingCharacters(in: .whitespaces)
-
-        let arrowParts = inner.components(separatedBy: " → ")
-        guard arrowParts.count == 2 else { return nil }
-
-        let original = arrowParts[0].trimmingCharacters(in: .whitespaces)
-        let restParts = arrowParts[1].components(separatedBy: " | ")
-
-        let corrected = restParts[0].trimmingCharacters(in: .whitespaces)
-        let explanation = restParts.count > 1
-            ? restParts[1].trimmingCharacters(in: .whitespaces)
-            : ""
-
-        return Correction(
-            original: original,
-            corrected: corrected,
-            explanation: explanation
-        )
-    }
-
-    /// Parses `[VOCAB: word(reading) = meaning]`
-    private func parseVocabularyHint(_ line: String) -> VocabularyHint? {
-        guard line.hasPrefix("[VOCAB:"), line.hasSuffix("]") else {
-            return nil
-        }
-
-        let inner = String(line.dropFirst("[VOCAB:".count).dropLast())
-            .trimmingCharacters(in: .whitespaces)
-
-        let equalParts = inner.components(separatedBy: " = ")
-        guard equalParts.count == 2 else { return nil }
-
-        let wordPart = equalParts[0].trimmingCharacters(in: .whitespaces)
-        let meaning = equalParts[1].trimmingCharacters(in: .whitespaces)
-
-        if let parenStart = wordPart.firstIndex(of: "("),
-           let parenEnd = wordPart.firstIndex(of: ")") {
-            let word = String(wordPart[wordPart.startIndex..<parenStart])
-            let reading = String(wordPart[wordPart.index(after: parenStart)..<parenEnd])
-            return VocabularyHint(word: word, reading: reading, meaning: meaning)
-        }
-
-        return VocabularyHint(word: wordPart, reading: "", meaning: meaning)
     }
 }
