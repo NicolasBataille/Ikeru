@@ -108,6 +108,29 @@ public final class ContentRepository: Sendable {
         await actor.vocabularyByLevel(level)
     }
 
+    /// Build a `word -> reading` lookup for a given JLPT level from the
+    /// curated bundle. Used to validate/correct AI-generated furigana in
+    /// conversation vocabulary hints (see `ReadingValidator`) — the bundle's
+    /// readings are authoritative, unlike the model's.
+    /// - Parameter level: The JLPT level to filter by.
+    /// - Returns: A `word -> reading` map, skipping entries with an empty
+    ///   word or empty reading. First writer wins on duplicate words.
+    public func readingLookup(for level: JLPTLevel) async -> [String: String] {
+        Self.buildReadingLookup(from: await vocabularyByLevel(level))
+    }
+
+    /// Pure dedupe step factored out of `readingLookup(for:)` so it is
+    /// unit-testable without a database.
+    static func buildReadingLookup(from vocabulary: [Vocabulary]) -> [String: String] {
+        var lookup: [String: String] = [:]
+        for entry in vocabulary where !entry.word.isEmpty && !entry.reading.isEmpty {
+            if lookup[entry.word] == nil {
+                lookup[entry.word] = entry.reading
+            }
+        }
+        return lookup
+    }
+
     // MARK: - Grammar Queries
 
     /// Fetch grammar points for a given JLPT level.

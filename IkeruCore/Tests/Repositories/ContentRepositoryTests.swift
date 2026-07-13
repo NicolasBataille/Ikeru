@@ -171,6 +171,51 @@ struct ContentRepositoryTests {
         #expect(radicals.allSatisfy { !$0.character.isEmpty })
     }
 
+    // MARK: - Reading Lookup
+
+    @Test("readingLookup returns the word to reading map for a level")
+    func readingLookupReturnsMap() async throws {
+        let repo = try makeTestRepository()
+        let lookup = await repo.readingLookup(for: .n5)
+
+        #expect(lookup["\u{65E5}\u{672C}"] == "\u{306B}\u{307B}\u{3093}") // 日本 -> にほん
+        #expect(lookup["\u{4ECA}\u{65E5}"] == "\u{304D}\u{3087}\u{3046}") // 今日 -> きょう
+        #expect(lookup["\u{5B66}\u{751F}"] == "\u{304C}\u{304F}\u{305B}\u{3044}") // 学生 -> がくせい
+    }
+
+    @Test("readingLookup returns empty map for a level with no vocabulary")
+    func readingLookupEmptyForUnknownLevel() async throws {
+        let repo = try makeTestRepository()
+        let lookup = await repo.readingLookup(for: .n1)
+
+        #expect(lookup.isEmpty)
+    }
+
+    @Test("buildReadingLookup skips entries with an empty word or empty reading")
+    func buildReadingLookupSkipsEmptyEntries() {
+        let vocabulary = [
+            Vocabulary(id: 1, word: "日本", reading: "にほん", meaning: "Japan", kanjiCharacter: nil, jlptLevel: .n5, exampleSentences: []),
+            Vocabulary(id: 2, word: "", reading: "からっぽ", meaning: "empty word", kanjiCharacter: nil, jlptLevel: .n5, exampleSentences: []),
+            Vocabulary(id: 3, word: "空", reading: "", meaning: "empty reading", kanjiCharacter: nil, jlptLevel: .n5, exampleSentences: [])
+        ]
+
+        let lookup = ContentRepository.buildReadingLookup(from: vocabulary)
+
+        #expect(lookup == ["日本": "にほん"])
+    }
+
+    @Test("buildReadingLookup keeps the first reading on duplicate words")
+    func buildReadingLookupFirstWriterWins() {
+        let vocabulary = [
+            Vocabulary(id: 1, word: "日本", reading: "にほん", meaning: "Japan", kanjiCharacter: nil, jlptLevel: .n5, exampleSentences: []),
+            Vocabulary(id: 2, word: "日本", reading: "にっぽん", meaning: "Japan (alt)", kanjiCharacter: nil, jlptLevel: .n5, exampleSentences: [])
+        ]
+
+        let lookup = ContentRepository.buildReadingLookup(from: vocabulary)
+
+        #expect(lookup == ["日本": "にほん"])
+    }
+
     // MARK: - Error Handling
 
     @Test("Repository handles missing database file gracefully")
