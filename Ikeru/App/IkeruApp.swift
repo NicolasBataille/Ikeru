@@ -47,10 +47,11 @@ struct IkeruApp: App {
 
     init() {
         do {
-            // Versioned schema baseline (IkeruSchemaV1) + migration plan so future
+            // Current versioned schema (IkeruSchemaV2) + migration plan so
             // @Model changes migrate explicitly instead of relying on implicit
-            // lightweight migration. See IkeruSchema.swift in IkeruCore.
-            let schema = Schema(versionedSchema: IkeruSchemaV1.self)
+            // lightweight migration. The plan carries the V1→V2 stage that adds
+            // ExerciseOutcomeLog. See IkeruSchema.swift in IkeruCore.
+            let schema = Schema(versionedSchema: IkeruSchemaV2.self)
             let config = ModelConfiguration(
                 "Ikeru",
                 schema: schema,

@@ -158,8 +158,12 @@ public final class ProgressService: Sendable {
             windowStart = monthStart
         }
         let reviewLogs = await cardRepository.allReviewLogs(from: windowStart, to: now)
+        let speakingAccuracy = await cardRepository.speakingAccuracyLast30()
 
-        let skillBalance = computeSkillBalance(allCards: allCards)
+        let skillBalance = computeSkillBalance(
+            allCards: allCards,
+            speakingAccuracy: speakingAccuracy
+        )
         let jlptEstimate = computeJLPTReadinessEstimate(allCards: allCards, now: now)
         let dueTodayCount = computeDueTodayCount(allCards: allCards, now: now)
         let forecast = computeForecast(allCards: allCards, now: now)
@@ -186,8 +190,13 @@ public final class ProgressService: Sendable {
 
     // MARK: - Skill Balance
 
-    /// Computes skill balance as fraction of mastered cards per type.
-    private func computeSkillBalance(allCards: [CardDTO]) -> SkillBalanceSnapshot {
+    /// Computes skill balance as fraction of mastered cards per type. The
+    /// speaking axis is not derivable from cards (no `.speaking` card type), so
+    /// the caller supplies `speakingAccuracy` from persisted shadowing outcomes.
+    private func computeSkillBalance(
+        allCards: [CardDTO],
+        speakingAccuracy: Double
+    ) -> SkillBalanceSnapshot {
         let masteredByType = Dictionary(grouping: allCards) { $0.type }
 
         func masteryRatio(for type: CardType) -> Double {
@@ -213,16 +222,11 @@ public final class ProgressService: Sendable {
             reading: readingRatio,
             writing: masteryRatio(for: .grammar),
             listening: masteryRatio(for: .listening),
-            // No real speaking signal is reachable from CardRepository:
-            // there is no `.speaking` card type, and speaking-exercise
-            // results (e.g. shadowing accuracy) are not persisted where
-            // this service can read them. The previous ease-factor proxy
-            // rendered a constant (~0.71) because `gradeCard` never mutates
-            // `easeFactor`. Report an honest 0 ("no data yet") until a
-            // dedicated speaking signal exists. Consumers (SkillRadarView,
-            // RPGProfileView, HomeViewModel) take a non-optional Double,
-            // so 0 stands in for "absent".
-            speaking: 0
+            // Speaking has no `.speaking` card type, so its signal comes from
+            // persisted shadowing outcomes (`ExerciseOutcomeLog`), aggregated by
+            // `CardRepository.speakingAccuracyLast30()` and passed in here. Still
+            // 0 ("no data yet") until the learner has completed shadowing drills.
+            speaking: speakingAccuracy
         )
     }
 

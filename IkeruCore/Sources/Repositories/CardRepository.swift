@@ -222,6 +222,50 @@ public final class CardRepository: Sendable {
     public func activeProfileReviewLogs() async -> [ReviewLogDTO] {
         await backgroundActor.activeProfileReviewLogs()
     }
+
+    // MARK: - Exercise Outcomes
+
+    /// Records a pool-based drill outcome (listening / shadowing). Failures are
+    /// reported on `saveErrorMonitor` like `gradeCard`, never silently swallowed.
+    public func recordExerciseOutcome(
+        skill: SkillType,
+        accuracy: Double,
+        now: Date = Date()
+    ) async {
+        do {
+            try await backgroundActor.recordExerciseOutcome(skill: skill, accuracy: accuracy, now: now)
+        } catch {
+            await reportSaveFailure(operation: "recordExerciseOutcome", error: error)
+        }
+    }
+
+    /// Mean listening accuracy over the most recent listening outcomes — the
+    /// window used by the `.listeningUnsubtitled` unlock gate. 0 when none.
+    public func listeningAccuracyLast30() async -> Double {
+        await backgroundActor.meanAccuracy(
+            skill: .listening,
+            limit: DefaultExerciseUnlockService.listeningUnsubtitledWindow
+        )
+    }
+
+    /// Mean listening accuracy over listening outcomes in the recent-days window
+    /// used by the `.speakingPractice` unlock gate. 0 when none.
+    public func listeningRecallLast30Days(now: Date = Date()) async -> Double {
+        await backgroundActor.meanAccuracy(
+            skill: .listening,
+            withinDays: DefaultExerciseUnlockService.speakingRecallWindowDays,
+            now: now
+        )
+    }
+
+    /// Mean speaking (shadowing) accuracy over the most recent outcomes — feeds
+    /// the speaking axis of `SkillBalanceSnapshot`. 0 when none.
+    public func speakingAccuracyLast30() async -> Double {
+        await backgroundActor.meanAccuracy(
+            skill: .speaking,
+            limit: DefaultExerciseUnlockService.listeningUnsubtitledWindow
+        )
+    }
 }
 
 // MARK: - Data Transfer Objects
@@ -508,6 +552,60 @@ actor CardModelActor {
             .flatMap { $0.reviewLogs ?? [] }
             .sorted { $0.timestamp < $1.timestamp }
             .map { $0.toDTO() }
+    }
+
+    // MARK: - Exercise Outcomes (pool-based output drills, no backing Card)
+
+    /// Records one pool-based drill outcome (listening / shadowing) for the
+    /// active profile. No-op (logged) if no profile can be resolved.
+    func recordExerciseOutcome(skill: SkillType, accuracy: Double, now: Date) throws {
+        guard let profileID = fetchActiveProfile()?.id else {
+            Logger.srs.error("recordExerciseOutcome: no active profile — outcome dropped")
+            return
+        }
+        let log = ExerciseOutcomeLog(
+            skill: skill,
+            accuracy: accuracy,
+            profileID: profileID,
+            timestamp: now
+        )
+        modelContext.insert(log)
+        try modelContext.save()
+    }
+
+    /// Mean accuracy over the most recent `limit` outcomes of `skill` for the
+    /// active profile. Returns 0 when there are none.
+    func meanAccuracy(skill: SkillType, limit: Int) -> Double {
+        guard let profileID = fetchActiveProfile()?.id else { return 0 }
+        let raw = skill.rawValue
+        var descriptor = FetchDescriptor<ExerciseOutcomeLog>(
+            predicate: #Predicate { $0.profileID == profileID && $0.skillRawValue == raw },
+            sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
+        )
+        descriptor.fetchLimit = limit
+        let logs = (try? modelContext.fetch(descriptor)) ?? []
+        return Self.mean(of: logs.map(\.accuracy))
+    }
+
+    /// Mean accuracy over outcomes of `skill` within the last `days` days for
+    /// the active profile. Returns 0 when there are none.
+    func meanAccuracy(skill: SkillType, withinDays days: Int, now: Date) -> Double {
+        guard let profileID = fetchActiveProfile()?.id,
+              let cutoff = Calendar.current.date(byAdding: .day, value: -days, to: now)
+        else { return 0 }
+        let raw = skill.rawValue
+        let descriptor = FetchDescriptor<ExerciseOutcomeLog>(
+            predicate: #Predicate {
+                $0.profileID == profileID && $0.skillRawValue == raw && $0.timestamp >= cutoff
+            }
+        )
+        let logs = (try? modelContext.fetch(descriptor)) ?? []
+        return Self.mean(of: logs.map(\.accuracy))
+    }
+
+    private static func mean(of values: [Double]) -> Double {
+        guard !values.isEmpty else { return 0 }
+        return values.reduce(0, +) / Double(values.count)
     }
 }
 
