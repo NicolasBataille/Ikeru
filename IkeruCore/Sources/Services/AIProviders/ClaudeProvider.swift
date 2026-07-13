@@ -140,9 +140,12 @@ public final class ClaudeProvider: AIProvider, @unchecked Sendable {
             model: model,
             maxTokens: 1024,
             system: prompt.systemPrompt,
-            messages: [
-                ClaudeMessage(role: "user", content: prompt.userMessage)
-            ]
+            messages: prompt.messages.map { message in
+                ClaudeMessage(
+                    role: message.role == .user ? "user" : "assistant",
+                    content: message.text
+                )
+            }
         )
 
         request.httpBody = try JSONEncoder().encode(body)

@@ -9,7 +9,35 @@ import Foundation
 /// Builds the JSON body for an OpenAI-compatible chat completion request.
 public enum OpenAIChatCodec {
 
-    /// Encodes a system + user message pair into the standard chat-completion JSON body.
+    /// Encodes a system prompt plus an ordered multi-turn conversation into the
+    /// standard chat-completion JSON body. The system prompt leads, followed by
+    /// each conversation turn in order with its role mapped to OpenAI's
+    /// `"user"` / `"assistant"` vocabulary.
+    public static func encodeRequest(
+        model: String,
+        systemPrompt: String,
+        messages: [AIMessage],
+        maxTokens: Int = 1024,
+        temperature: Double = 0.7
+    ) throws -> Data {
+        var wire = [OpenAIChatMessage(role: "system", content: systemPrompt)]
+        wire.append(contentsOf: messages.map { message in
+            OpenAIChatMessage(
+                role: message.role == .user ? "user" : "assistant",
+                content: message.text
+            )
+        })
+
+        let body = OpenAIChatRequest(
+            model: model,
+            messages: wire,
+            maxTokens: maxTokens,
+            temperature: temperature
+        )
+        return try JSONEncoder().encode(body)
+    }
+
+    /// Convenience for single-turn callers: a system prompt + one user message.
     public static func encodeRequest(
         model: String,
         systemPrompt: String,
@@ -17,16 +45,13 @@ public enum OpenAIChatCodec {
         maxTokens: Int = 1024,
         temperature: Double = 0.7
     ) throws -> Data {
-        let body = OpenAIChatRequest(
+        try encodeRequest(
             model: model,
-            messages: [
-                OpenAIChatMessage(role: "system", content: systemPrompt),
-                OpenAIChatMessage(role: "user", content: userMessage),
-            ],
+            systemPrompt: systemPrompt,
+            messages: [AIMessage(role: .user, text: userMessage)],
             maxTokens: maxTokens,
             temperature: temperature
         )
-        return try JSONEncoder().encode(body)
     }
 
     /// Decodes the OpenAI-compatible chat completion response and returns the
