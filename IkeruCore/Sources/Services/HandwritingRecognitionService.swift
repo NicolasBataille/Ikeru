@@ -139,66 +139,14 @@ public struct VisionRecognitionProvider: RecognitionProvider, Sendable {
     }
 }
 
-// MARK: - Shape Matching Fallback Provider
-
-/// Basic shape matching fallback when Vision is unavailable.
-/// Compares the drawn image against a rendered reference of the target character.
-/// Returns low-confidence results as a best-effort fallback.
-public struct ShapeMatchingProvider: RecognitionProvider, Sendable {
-
-    private let targetCharacter: String
-
-    public init(targetCharacter: String) {
-        self.targetCharacter = targetCharacter
-    }
-
-    public func recognize(image: CGImage) async throws -> [RecognitionCandidate] {
-        // Basic fallback: compare pixel density as a rough similarity measure.
-        // This is intentionally simple -- Vision is the primary path.
-        let drawnDensity = pixelDensity(of: image)
-
-        // A drawn character with reasonable ink coverage suggests a match attempt.
-        // Use density as a rough confidence proxy.
-        let confidence = min(max(drawnDensity * 2.0, 0.1), 0.5)
-
-        return [RecognitionCandidate(
-            character: targetCharacter,
-            confidence: confidence
-        )]
-    }
-
-    /// Calculate the ratio of non-black pixels to total pixels.
-    private func pixelDensity(of image: CGImage) -> Double {
-        let width = image.width
-        let height = image.height
-        let totalPixels = width * height
-        guard totalPixels > 0, totalPixels <= 256 * 256 else { return 0 }
-
-        guard let context = CGContext(
-            data: nil,
-            width: width,
-            height: height,
-            bitsPerComponent: 8,
-            bytesPerRow: width,
-            space: CGColorSpaceCreateDeviceGray(),
-            bitmapInfo: CGImageAlphaInfo.none.rawValue
-        ) else { return 0 }
-
-        context.draw(image, in: CGRect(x: 0, y: 0, width: width, height: height))
-
-        guard let data = context.data else { return 0 }
-        let pixelData = data.bindMemory(to: UInt8.self, capacity: totalPixels)
-
-        var litPixels = 0
-        for i in 0..<totalPixels {
-            if pixelData[i] > 128 {
-                litPixels += 1
-            }
-        }
-
-        return Double(litPixels) / Double(totalPixels)
-    }
-}
+// NOTE (remediation 7.8): a `ShapeMatchingProvider` used to live here as the
+// "fallback when Vision is unavailable". It ALWAYS returned the target character
+// (confidence 0.1–0.5) regardless of what was drawn, so any inked scribble was
+// dishonestly reported as the target being recognised — an auto-pass. It has
+// been removed. When recognition can't produce a confident verdict the app now
+// routes to an honest self-grade path (`HandwritingFeedbackState.unavailable`)
+// rather than fabricating a recognition result. Real shape/stroke-order matching
+// is deferred to the KanjiVG work (item 4.2).
 
 // MARK: - Handwriting Recognition Error
 
