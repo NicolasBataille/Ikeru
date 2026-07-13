@@ -150,6 +150,55 @@ struct DataExportManagerTests {
         #expect(rows.allSatisfy { $0.cardId != cardB.id })
     }
 
+    // MARK: - rpg.json is scoped to the active profile
+
+    private struct DecodedRPG: Codable {
+        let xp: Int
+        let level: Int
+        let totalReviewsCompleted: Int
+    }
+
+    @Test("rpg.json is scoped to the active profile — no cross-profile leak")
+    func rpgJSONScopedToActiveProfile() async throws {
+        let container = try makeContainer()
+        let context = container.mainContext
+
+        // Two profiles, each with their own distinct RPG state.
+        let profileA = UserProfile(displayName: "A")
+        let profileB = UserProfile(displayName: "B")
+        context.insert(profileA)
+        context.insert(profileB)
+
+        let rpgA = RPGState(xp: 500, level: 5, totalReviewsCompleted: 42)
+        rpgA.profile = profileA
+        profileA.rpgState = rpgA
+        context.insert(rpgA)
+
+        let rpgB = RPGState(xp: 9_000, level: 42, totalReviewsCompleted: 999)
+        rpgB.profile = profileB
+        profileB.rpgState = rpgB
+        context.insert(rpgB)
+
+        try context.save()
+
+        // Active profile = A. The export must reflect ONLY A's RPG state —
+        // profile B's progression must never leak into a shared archive.
+        ActiveProfileResolver.setActiveProfileID(profileA.id)
+
+        let dir = try await DataExportManager().buildExportDirectory(modelContainer: container)
+        defer { try? FileManager.default.removeItem(at: dir) }
+
+        let rpgURL = dir.appending(path: "rpg.json")
+        #expect(FileManager.default.fileExists(atPath: rpgURL.path))
+
+        let decoded = try decoder().decode(DecodedRPG.self, from: Data(contentsOf: rpgURL))
+        #expect(decoded.xp == 500)
+        #expect(decoded.level == 5)
+        #expect(decoded.totalReviewsCompleted == 42)
+        #expect(decoded.xp != rpgB.xp)
+        #expect(decoded.level != rpgB.level)
+    }
+
     // MARK: - The shared artifact is a single zip, not a directory
 
     @Test("exportData returns a single non-empty .zip file")
