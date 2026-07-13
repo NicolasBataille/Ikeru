@@ -30,13 +30,21 @@ public final class ConversationService: @unchecked Sendable {
     ///     `word(reading)` tokens. Passed as a SOFT preference: Sakura is
     ///     told to reuse them only when they fit naturally, never to force
     ///     them. Empty by default so existing callers are unaffected.
+    ///   - bundleReadings: `word -> reading` lookup built from the curated
+    ///     content bundle (see `ContentRepository.readingLookup(for:)`). The
+    ///     AI's furigana is generated text and can be hallucinated; every
+    ///     parsed vocabulary hint whose word is a known bundle word has its
+    ///     reading reconciled against this map (bundle wins) via
+    ///     `ReadingValidator`. Empty by default so existing callers are
+    ///     unaffected.
     /// - Returns: A ConversationMessage from the assistant.
     @MainActor
     public func sendMessage(
         _ userMessage: String,
         history: [ConversationMessage],
         jlptLevel: JLPTLevel,
-        knownVocabulary: [String] = []
+        knownVocabulary: [String] = [],
+        bundleReadings: [String: String] = [:]
     ) async throws -> ConversationMessage {
         let prompt = buildPrompt(
             userMessage: userMessage,
@@ -50,13 +58,32 @@ public final class ConversationService: @unchecked Sendable {
         Logger.ai.info("Conversation response from tier \(String(describing: response.tier)) in \(response.latencyMs)ms")
 
         let parsed = parseResponse(response.content)
+        let reconciledHints = reconcileVocabularyHints(parsed.vocabularyHints, against: bundleReadings)
 
         return ConversationMessage(
             role: .assistant,
             content: parsed.content,
             corrections: parsed.corrections,
-            vocabularyHints: parsed.vocabularyHints
+            vocabularyHints: reconciledHints
         )
+    }
+
+    /// Reconciles each parsed vocabulary hint's reading against the content
+    /// bundle via `ReadingValidator`, logging once per correction so
+    /// hallucinated readings are traceable in the console.
+    private func reconcileVocabularyHints(
+        _ hints: [VocabularyHint],
+        against bundleReadings: [String: String]
+    ) -> [VocabularyHint] {
+        hints.map { hint in
+            let reconciled = ReadingValidator.reconcile(hint, against: bundleReadings)
+            if reconciled.corrected {
+                Logger.ai.info(
+                    "Corrected AI reading for \(hint.word): \(hint.reading) -> \(reconciled.hint.reading)"
+                )
+            }
+            return reconciled.hint
+        }
     }
 
     // MARK: - System Prompt

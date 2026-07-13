@@ -82,6 +82,7 @@ public final class ConversationViewModel: Identifiable {
     private let conversationService: ConversationService
     private let speechDelegate: SpeechRecognitionDelegate?
     private let vocabularyRepository: VocabularyRepository?
+    private let contentRepository: ContentRepository?
 
     /// `word(reading)` tokens for the words the learner has saved to their
     /// dictionary, fetched once on appear and passed to Sakura as a SOFT
@@ -90,18 +91,27 @@ public final class ConversationViewModel: Identifiable {
     private var knownVocabulary: [String] = []
     private static let maxKnownVocabulary = 40
 
+    /// `word -> reading` lookup from the curated content bundle, fetched once
+    /// on appear and passed to `conversationService.sendMessage` so AI vocab
+    /// hints can be reconciled against authoritative readings (see
+    /// `ReadingValidator`). Empty when `contentRepository` is nil — the
+    /// feature is then a no-op and hints pass through unvalidated.
+    private var bundleReadings: [String: String] = [:]
+
     // MARK: - Init
 
     public init(
         conversationService: ConversationService,
         jlptLevel: JLPTLevel = .n5,
         speechDelegate: SpeechRecognitionDelegate? = nil,
-        vocabularyRepository: VocabularyRepository? = nil
+        vocabularyRepository: VocabularyRepository? = nil,
+        contentRepository: ContentRepository? = nil
     ) {
         self.conversationService = conversationService
         self.jlptLevel = jlptLevel
         self.speechDelegate = speechDelegate
         self.vocabularyRepository = vocabularyRepository
+        self.contentRepository = contentRepository
     }
 
     // MARK: - Lifecycle
@@ -114,6 +124,7 @@ public final class ConversationViewModel: Identifiable {
         isAIAvailable = statuses.values.contains { $0 == .available }
 
         await loadKnownVocabulary()
+        bundleReadings = await contentRepository?.readingLookup(for: jlptLevel) ?? [:]
 
         if let topic = seedTopic, isAIAvailable, messages.isEmpty {
             seedTopic = nil
@@ -189,7 +200,8 @@ public final class ConversationViewModel: Identifiable {
                 userText,
                 history: messages,
                 jlptLevel: jlptLevel,
-                knownVocabulary: knownVocabulary
+                knownVocabulary: knownVocabulary,
+                bundleReadings: bundleReadings
             )
             messages.append(response)
             await logVocabularyEncounters(response)

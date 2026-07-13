@@ -108,6 +108,33 @@ public final class ContentRepository: Sendable {
         await actor.vocabularyByLevel(level)
     }
 
+    /// Build a `word -> reading` lookup for a given JLPT level from the
+    /// curated bundle. Used to validate/correct AI-generated furigana in
+    /// conversation vocabulary hints (see `ReadingValidator`) — the bundle's
+    /// readings are authoritative, unlike the model's.
+    /// - Parameter level: The JLPT level to filter by.
+    /// - Returns: A `word -> reading` map, skipping entries with an empty
+    ///   word or empty reading. On a duplicate word (a future homograph with
+    ///   two curated rows) the lowest-`id` entry wins, so the reading Sakura
+    ///   enforces is deterministic rather than dependent on unordered SQL.
+    public func readingLookup(for level: JLPTLevel) async -> [String: String] {
+        Self.buildReadingLookup(from: await vocabularyByLevel(level))
+    }
+
+    /// Pure dedupe step factored out of `readingLookup(for:)` so it is
+    /// unit-testable without a database. Sorted by `id` first so the
+    /// first-writer-wins tie-break is deterministic (lowest id wins)
+    /// regardless of the order rows come back from the query.
+    static func buildReadingLookup(from vocabulary: [Vocabulary]) -> [String: String] {
+        var lookup: [String: String] = [:]
+        for entry in vocabulary.sorted(by: { $0.id < $1.id }) where !entry.word.isEmpty && !entry.reading.isEmpty {
+            if lookup[entry.word] == nil {
+                lookup[entry.word] = entry.reading
+            }
+        }
+        return lookup
+    }
+
     // MARK: - Grammar Queries
 
     /// Fetch grammar points for a given JLPT level.
