@@ -37,6 +37,11 @@ final class DataExportManager {
             .appending(path: "ikeru-export-\(Date().timeIntervalSince1970)", directoryHint: .isDirectory)
 
         try FileManager.default.createDirectory(at: exportDir, withIntermediateDirectories: true)
+        // Clean up the partial directory if any subsequent write throws: the
+        // caller only ever cleans up the returned URL, and on failure it never
+        // receives one. `succeeded` flips true only after every file is written.
+        var succeeded = false
+        defer { if !succeeded { try? FileManager.default.removeItem(at: exportDir) } }
 
         let context = modelContainer.mainContext
         let encoder = JSONEncoder()
@@ -53,9 +58,10 @@ final class DataExportManager {
         let csv = generateCardsCSV(cards: allCards)
         try csv.write(to: exportDir.appending(path: "cards.csv"), atomically: true, encoding: .utf8)
 
-        // Review logs — every recorded grade across all cards. Empty history
-        // still writes a valid `[]` rather than omitting the promised file.
-        let reviewLogs = await cardRepo.allReviewLogs(from: .distantPast, to: .distantFuture)
+        // Review logs — scoped to the ACTIVE PROFILE only. The export leaves the
+        // device, so it must never bundle another profile's review history.
+        // Empty history still writes a valid `[]` rather than omitting the file.
+        let reviewLogs = await cardRepo.activeProfileReviewLogs()
         let reviewsData = try encoder.encode(reviewLogs.map { ReviewExportRow(from: $0) })
         try reviewsData.write(to: exportDir.appending(path: "reviews.json"))
 
@@ -82,6 +88,7 @@ final class DataExportManager {
             encoding: .utf8
         )
 
+        succeeded = true
         Logger.ui.info("Data export written to \(exportDir.path)")
         return exportDir
     }
@@ -116,7 +123,12 @@ final class DataExportManager {
             }
         }
 
-        if let coordinatorError { throw coordinatorError }
+        // If the coordinator reported an error even after the move succeeded,
+        // don't leave the moved archive orphaned at `destination`.
+        if let coordinatorError {
+            try? FileManager.default.removeItem(at: destination)
+            throw coordinatorError
+        }
         if let moveError { throw moveError }
         guard let producedURL else { throw ExportError.archivingFailed }
         return producedURL
@@ -267,8 +279,21 @@ private struct ReviewExportRow: Codable {
         self.cardType = dto.cardType?.rawValue
         self.timestamp = dto.timestamp
         self.grade = dto.grade.rawValue
-        self.gradeLabel = String(describing: dto.grade)
+        self.gradeLabel = Self.label(for: dto.grade)
         self.responseTimeMs = dto.responseTimeMs
+    }
+
+    /// Explicit grade → label mapping for the exported `gradeLabel` field.
+    /// An explicit switch (rather than `String(describing:)`) keeps the exported
+    /// contract stable even if `Grade` later gains a `CustomStringConvertible`
+    /// conformance for UI display, and is exhaustive-checked by the compiler.
+    private static func label(for grade: Grade) -> String {
+        switch grade {
+        case .again: "again"
+        case .hard: "hard"
+        case .good: "good"
+        case .easy: "easy"
+        }
     }
 }
 

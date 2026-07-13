@@ -215,6 +215,13 @@ public final class CardRepository: Sendable {
     public func allReviewLogs(from startDate: Date, to endDate: Date) async -> [ReviewLogDTO] {
         await backgroundActor.allReviewLogs(from: startDate, to: endDate)
     }
+
+    /// Review logs scoped to the **active profile only**, ordered by timestamp.
+    /// Use this for anything that leaves the device (e.g. data export) so one
+    /// profile's history never leaks another's. Mirrors `allCards()` scoping.
+    public func activeProfileReviewLogs() async -> [ReviewLogDTO] {
+        await backgroundActor.activeProfileReviewLogs()
+    }
 }
 
 // MARK: - Data Transfer Objects
@@ -489,6 +496,18 @@ actor CardModelActor {
         let descriptor = FetchDescriptor(predicate: predicate)
         let results = (try? modelContext.fetch(descriptor)) ?? []
         return results.map { $0.toDTO() }
+    }
+
+    /// Review logs for the active profile's cards only, ordered by timestamp.
+    /// Traverses the `Card.reviewLogs` relationship of `activeProfileCards()`
+    /// rather than fetching every log in the store — so no other profile's
+    /// history is reachable. Orphan logs whose card was deleted are omitted
+    /// (they can't be attributed to a profile, so they never leak into exports).
+    func activeProfileReviewLogs() -> [ReviewLogDTO] {
+        activeProfileCards()
+            .flatMap { $0.reviewLogs ?? [] }
+            .sorted { $0.timestamp < $1.timestamp }
+            .map { $0.toDTO() }
     }
 }
 

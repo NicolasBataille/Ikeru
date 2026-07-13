@@ -106,6 +106,50 @@ struct DataExportManagerTests {
         #expect(rows.isEmpty)
     }
 
+    @Test("reviews.json is scoped to the active profile — no cross-profile leak")
+    func reviewsJSONScopedToActiveProfile() async throws {
+        let container = try makeContainer()
+        let context = container.mainContext
+
+        // Two profiles, each with one card and one review log.
+        let profileA = UserProfile(displayName: "A")
+        let profileB = UserProfile(displayName: "B")
+        context.insert(profileA)
+        context.insert(profileB)
+
+        let cardA = Card(front: "甲", back: "A", type: .kanji, dueDate: Date())
+        cardA.profile = profileA
+        context.insert(cardA)
+        context.insert(ReviewLog(
+            card: cardA, grade: .good, responseTimeMs: 100,
+            timestamp: Date(timeIntervalSince1970: 1_700_000_000)
+        ))
+
+        let cardB = Card(front: "乙", back: "B", type: .kanji, dueDate: Date())
+        cardB.profile = profileB
+        context.insert(cardB)
+        context.insert(ReviewLog(
+            card: cardB, grade: .again, responseTimeMs: 200,
+            timestamp: Date(timeIntervalSince1970: 1_700_000_500)
+        ))
+        try context.save()
+
+        // Active profile = A. The export must contain ONLY A's review log —
+        // profile B's history must never leak into a shared archive.
+        ActiveProfileResolver.setActiveProfileID(profileA.id)
+
+        let dir = try await DataExportManager().buildExportDirectory(modelContainer: container)
+        defer { try? FileManager.default.removeItem(at: dir) }
+
+        let rows = try decoder().decode(
+            [DecodedReview].self,
+            from: Data(contentsOf: dir.appending(path: "reviews.json"))
+        )
+        #expect(rows.count == 1)
+        #expect(rows.first?.cardId == cardA.id)
+        #expect(rows.allSatisfy { $0.cardId != cardB.id })
+    }
+
     // MARK: - The shared artifact is a single zip, not a directory
 
     @Test("exportData returns a single non-empty .zip file")
