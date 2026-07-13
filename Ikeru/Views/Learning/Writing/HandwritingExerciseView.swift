@@ -38,7 +38,14 @@ struct HandwritingExerciseView: View {
                 recognizingIndicator
             }
 
-            if viewModel.recognitionResult != nil {
+            // When the recogniser couldn't read the scribble (error, no
+            // candidates, or below the confidence threshold) we show an honest
+            // self-grade panel instead of an automatic verdict — even when
+            // there is no `recognitionResult` (e.g. Vision threw). Otherwise, a
+            // real recognition result drives the normal feedback + candidates.
+            if viewModel.feedbackState == .unavailable {
+                selfGradeSection
+            } else if viewModel.recognitionResult != nil {
                 resultsSection
             }
         }
@@ -167,6 +174,66 @@ struct HandwritingExerciseView: View {
         }
     }
 
+    // MARK: - Self-Grade Section
+
+    /// Shown when recognition is unavailable/inconclusive (remediation 7.8).
+    /// Rather than auto-passing (or silently failing) a scribble the recogniser
+    /// couldn't read, the learner compares the target (in the header) against
+    /// their own drawing (still on the canvas above) and grades themselves
+    /// honestly. Both verdicts advance the session via the same `onComplete`
+    /// contract: "I got it" → `.good`, "Missed it" → `.again`.
+    private var selfGradeSection: some View {
+        VStack(spacing: IkeruTheme.Spacing.sm) {
+            HStack(spacing: IkeruTheme.Spacing.sm) {
+                Image(systemName: "questionmark.circle")
+                    .font(.system(size: IkeruTheme.Typography.Size.heading2))
+                Text("Recognition unavailable — grade yourself")
+                    .ikeruScaledFont(IkeruTheme.Typography.Size.body, weight: .medium, relativeTo: .body)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .foregroundStyle(.ikeruTextSecondary)
+
+            Text("Compare your writing above with the target. Did you get it right?")
+                .ikeruScaledFont(IkeruTheme.Typography.Size.caption, relativeTo: .caption)
+                .foregroundStyle(.ikeruTextSecondary)
+                .multilineTextAlignment(.center)
+
+            // Redraw without grading.
+            Button {
+                viewModel.retry()
+            } label: {
+                Label("Try Again", systemImage: "arrow.counterclockwise")
+                    .ikeruScaledFont(IkeruTheme.Typography.Size.body, relativeTo: .body)
+            }
+            .buttonStyle(.bordered)
+            .tint(Color.ikeruPrimaryAccent)
+
+            // Honest self-verdict. Both advance the session via `onComplete`.
+            HStack(spacing: IkeruTheme.Spacing.md) {
+                Button {
+                    onComplete(.again)
+                } label: {
+                    Label("Missed it", systemImage: "xmark")
+                        .ikeruScaledFont(IkeruTheme.Typography.Size.body, relativeTo: .body)
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+                .tint(Color.ikeruDanger)
+
+                Button {
+                    onComplete(.good)
+                } label: {
+                    Label("I got it", systemImage: "checkmark")
+                        .ikeruScaledFont(IkeruTheme.Typography.Size.body, relativeTo: .body)
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(Color.ikeruPrimaryAccent)
+            }
+        }
+        .tatamiRoom(.standard)
+    }
+
     // MARK: - Feedback Banner
 
     private var feedbackBanner: some View {
@@ -187,7 +254,7 @@ struct HandwritingExerciseView: View {
             "exclamationmark.circle.fill"
         case .incorrect:
             "xmark.circle.fill"
-        case .idle:
+        case .idle, .unavailable:
             "questionmark.circle"
         }
     }
@@ -200,7 +267,7 @@ struct HandwritingExerciseView: View {
             "Close! Your character was recognized but not as the top match."
         case .incorrect:
             "Not quite. Try again!"
-        case .idle:
+        case .idle, .unavailable:
             ""
         }
     }
@@ -213,7 +280,7 @@ struct HandwritingExerciseView: View {
             Color.ikeruPrimaryAccent
         case .incorrect:
             Color.ikeruDanger
-        case .idle:
+        case .idle, .unavailable:
             .ikeruTextSecondary
         }
     }
