@@ -151,6 +151,7 @@
 		BC727BB5AEAC7CAFA04263C3 /* ShadowingIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C1446591A309B0937C15FAC /* ShadowingIntegrationTests.swift */; };
 		BE51F2E828552A87D898A01B /* HapticPitchDrillView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5835C532A5799C48001C02D1 /* HapticPitchDrillView.swift */; };
 		BEE0EC302B51BA5C52D75402 /* KanaDrillViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D97512A99D55C0A04CB5169 /* KanaDrillViewModelTests.swift */; };
+		C8791565381697FAD51E1B5E /* DataExportManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7ED8FEE7E6DB3BF633869CD /* DataExportManagerTests.swift */; };
 		C358723CA33135214981E57A /* InfoPlist.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 6DEDCF41425A22C7A18D2ADB /* InfoPlist.xcstrings */; };
 		C4AA3905DE90177682E212A8 /* ReadingPassageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E028A7B4AD2AB9F9E1802817 /* ReadingPassageView.swift */; };
 		C4B37AEF0AEE863FEFADF4A4 /* LanguagePickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF577B22FC29A2FA15CD6A15 /* LanguagePickerView.swift */; };
@@ -263,6 +264,7 @@
 		15C00EAAA3BA98179DFE119D /* KanjiStudyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KanjiStudyView.swift; sourceTree = "<group>"; };
 		1BFAD9F3F0796D53A41F3F2A /* GrammarPointView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GrammarPointView.swift; sourceTree = "<group>"; };
 		1D97512A99D55C0A04CB5169 /* KanaDrillViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KanaDrillViewModelTests.swift; sourceTree = "<group>"; };
+		F7ED8FEE7E6DB3BF633869CD /* DataExportManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataExportManagerTests.swift; sourceTree = "<group>"; };
 		1E4D340B0F01E28B73402EFC /* StrokeOrderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StrokeOrderView.swift; sourceTree = "<group>"; };
 		20F7294FBF874E97C93D7639 /* AISetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AISetupView.swift; sourceTree = "<group>"; };
 		2435124626D304119CA77076 /* HandwritingCanvasView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HandwritingCanvasView.swift; sourceTree = "<group>"; };
@@ -733,6 +735,7 @@
 				44FF091731003AFD23A516FF /* HomeViewModelTests.swift */,
 				E415FB60B6790A37E7C422E7 /* ImmersiveSessionViewTests.swift */,
 				1D97512A99D55C0A04CB5169 /* KanaDrillViewModelTests.swift */,
+				F7ED8FEE7E6DB3BF633869CD /* DataExportManagerTests.swift */,
 				E31012D5FE194F87406D24E5 /* FeatureTourControllerTests.swift */,
 				A6C995B4118F51F9AD485135 /* KanjiStudyViewModelTests.swift */,
 				566DAE0C74757C138694AE80 /* KanjiStudyViewStateTests.swift */,
@@ -1208,6 +1211,7 @@
 				7AD47972332D13661BE1885F /* HomeViewModelTests.swift in Sources */,
 				588F16A9AD56FA5DE5DDB103 /* ImmersiveSessionViewTests.swift in Sources */,
 				BEE0EC302B51BA5C52D75402 /* KanaDrillViewModelTests.swift in Sources */,
+				C8791565381697FAD51E1B5E /* DataExportManagerTests.swift in Sources */,
 				2A8442649FE4B865F041A3C3 /* FeatureTourControllerTests.swift in Sources */,
 				B4D53BD2C72F596C888D6FAB /* KanjiStudyViewModelTests.swift in Sources */,
 				3F46A142E358DF4FAF74F67B /* KanjiStudyViewStateTests.swift in Sources */,

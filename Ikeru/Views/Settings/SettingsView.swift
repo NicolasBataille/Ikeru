@@ -410,9 +410,13 @@ struct SettingsView: View {
             ) {
                 Task {
                     let manager = DataExportManager()
-                    if let url = try? await manager.exportData(modelContainer: modelContext.container) {
+                    do {
+                        let url = try await manager.exportData(modelContainer: modelContext.container)
                         exportURL = url
                         showExportShare = true
+                    } catch {
+                        Logger.ui.error("Data export failed: \(error.localizedDescription)")
+                        toastManager.showError("Export failed: \(error.localizedDescription)")
                     }
                 }
             }
