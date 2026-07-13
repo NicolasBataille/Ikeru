@@ -275,6 +275,24 @@ struct DrillGradeMappingTests {
         ) == .incorrect)
     }
 
+    @Test("Handwriting decision: verdict is independent of candidate array order")
+    func handwritingDecisionOrderIndependent() {
+        let target = "\u{5c71}" // 山
+        let other = "\u{5ddd}"  // 川
+        // A high-confidence target that is NOT first in the array must still be
+        // read as .correct — the honesty verdict cannot depend on the provider
+        // happening to sort its candidates (regression guard for the .first bug).
+        #expect(HandwritingViewModel.evaluateFeedback(
+            candidates: [
+                RecognitionCandidate(character: other, confidence: 0.2),
+                RecognitionCandidate(character: target, confidence: 0.9),
+            ],
+            target: target,
+            correctThreshold: 0.7,
+            partialThreshold: 0.3
+        ) == .correct)
+    }
+
     @Test("SentenceConstruction: correct → .good, incorrect → .again")
     func sentenceConstructionMapping() {
         #expect(DrillGradeMapping.sentenceConstruction(isCorrect: true) == .good)

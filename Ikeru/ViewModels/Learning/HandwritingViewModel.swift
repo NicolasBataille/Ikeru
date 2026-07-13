@@ -173,21 +173,26 @@ public final class HandwritingViewModel {
         correctThreshold: Double,
         partialThreshold: Double
     ) -> HandwritingFeedbackState {
-        // No candidate cleared even the partial threshold → the machine has no
-        // usable verdict. Route to self-grade instead of an automatic result.
-        guard let topCandidate = candidates.first,
+        // Pick the most-confident candidate by value, NOT by array position —
+        // the honesty verdict must not depend on the provider happening to sort
+        // its output. If even the best guess is below the partial threshold, the
+        // machine has no usable verdict → route to self-grade.
+        guard let topCandidate = candidates.max(by: { $0.confidence < $1.confidence }),
               topCandidate.confidence >= partialThreshold else {
             return .unavailable
         }
 
-        // Top candidate is the target at high confidence → a real pass.
+        // Best candidate is the target at high confidence → a real pass.
         if topCandidate.character == target,
            topCandidate.confidence >= correctThreshold {
             return .correct
         }
 
-        // Target appears among candidates with at least partial confidence.
-        if let candidate = candidates.first(where: { $0.character == target }),
+        // The target appears among candidates with at least partial confidence
+        // (use its most-confident occurrence, again independent of order).
+        if let candidate = candidates
+            .filter({ $0.character == target })
+            .max(by: { $0.confidence < $1.confidence }),
            candidate.confidence >= partialThreshold {
             return .partial
         }
