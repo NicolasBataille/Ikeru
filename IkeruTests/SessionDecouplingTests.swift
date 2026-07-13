@@ -185,6 +185,37 @@ struct SessionDecouplingTests {
         #expect(vm.reviewedCount == 1)
     }
 
+    @Test("Scenario A3: kanjiStudy + writingPractice on the SAME card grade FSRS once, not twice (dedup guard)")
+    func sameCardKanjiAndWritingGradesOnce() async throws {
+        let container = try makeContainer()
+        let repo = CardRepository(modelContainer: container)
+        // A trailing .srsReview card (A) is required so the session is non-empty
+        // (`startSession` bails when no SRS cards are composable). The dedup is
+        // exercised by K appearing as BOTH kanjiStudy and writingPractice.
+        try seedCards(container: container, fronts: ["A", "K"])
+        try suppressFirstSessionBonus(container: container)
+        let dtos = await repo.allCards()
+        let a = try dto("A", in: dtos)
+        let k = try dto("K", in: dtos)
+
+        let planner = MockSessionPlanner()
+        planner.plan = buildPlan([.kanjiStudy(k), .writingPractice(k), .srsReview(a)])
+        let vm = makeVM(container: container, planner: planner)
+
+        await vm.startSession()
+        await vm.completeCurrentExercise(grade: .good) // kanjiStudy(K) → grades K
+        await vm.completeCurrentExercise(grade: .good) // writingPractice(K) → dedup: XP only
+
+        // K is FSRS-graded exactly once despite two card-backed completions.
+        let kLogs = await repo.reviewLogs(for: k.id)
+        #expect(kLogs.count == 1)
+        // Both K exercises still counted as completed (XP awarded for both).
+        #expect(vm.reviewedCount == 2)
+        // A hasn't been graded yet (still the current SRS card).
+        let aLogs = await repo.reviewLogs(for: a.id)
+        #expect(aLogs.isEmpty)
+    }
+
     // MARK: - Scenario B — a trailing non-SRS exercise must not be dropped
 
     @Test("Scenario B: a non-SRS exercise scheduled after the last SRS card is still presented, not dropped")

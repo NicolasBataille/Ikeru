@@ -275,9 +275,12 @@ public final class HomeViewModel {
         await loadDueCardCount()
         await loadKanjiLearnedCount()
         await loadKanaProgress()
+        // Skill balance must load BEFORE the snapshot consumers below
+        // (`loadNextStep` / `composeSessionPreview` feed `skillBalance` into the
+        // planner), otherwise they read the previous cycle's stale value.
+        await loadSkillBalance()
         await loadNextStep()
         await composeSessionPreview()
-        await loadSkillBalance()
 
         hasLoaded = true
 

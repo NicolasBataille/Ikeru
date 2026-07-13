@@ -88,6 +88,15 @@ public final class SessionViewModel {
     /// double-counted on the summary screen.
     private var newItemCountedIDs: Set<UUID> = []
 
+    /// Card IDs already FSRS-graded this session through the NON-SRS drill path
+    /// (`completeCurrentExercise`). `.kanjiStudy` and `.writingPractice` are both
+    /// backed by kanji cards drawn independently by the planner, so one session
+    /// can surface both against the same character; this guard ensures a card is
+    /// FSRS-graded at most once per session via that path (XP is still awarded
+    /// for the second completion). The SRS deck path (`gradeAndAdvance`) is
+    /// separate and unaffected, so legitimate same-day requeues still re-grade.
+    private var nonSRSGradedCardIDs: Set<UUID> = []
+
     /// Whether the session is complete (all exercises finished).
     ///
     /// Gated on the exercise list, NOT the SRS card queue. Once non-SRS
@@ -351,6 +360,7 @@ public final class SessionViewModel {
         sessionMode = .normal
         retryCounts = [:]
         newItemCountedIDs = []
+        nonSRSGradedCardIDs = []
         sessionLootCount = 0
         earnedLootBox = nil
         lastSessionBonus = nil
@@ -898,14 +908,20 @@ public final class SessionViewModel {
         // card, so write their FSRS grade WITHOUT advancing `currentIndex`
         // (their cards are not in `sessionQueue`). Every other non-SRS kind is
         // XP-only (no backing card). XP is still awarded below for all kinds.
+        //
+        // `nonSRSGradedCardIDs` de-dupes: if this same card was already graded
+        // through this path earlier in the session (kanjiStudy + writingPractice
+        // can both target it), skip the second FSRS write + side-effects so one
+        // character isn't counted as two independent reviews. XP still accrues.
         let gradeableCard: CardDTO?
         switch exercise {
         case .kanjiStudy(let card), .writingPractice(let card):
-            gradeableCard = card
+            gradeableCard = nonSRSGradedCardIDs.contains(card.id) ? nil : card
         default:
             gradeableCard = nil
         }
         if let card = gradeableCard {
+            nonSRSGradedCardIDs.insert(card.id)
             Logger.srs.debug(
                 "Grading card \(card.front): grade=\(grade.rawValue), responseTime=\(responseTimeMs)ms"
             )

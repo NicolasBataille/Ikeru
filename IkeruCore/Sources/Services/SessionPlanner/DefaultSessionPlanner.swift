@@ -338,9 +338,10 @@ public struct DefaultSessionPlanner: SessionPlanner {
     /// NOTE (`.vocabularyStudy` XP-only): vocabulary has NO backing SwiftData
     /// `Card` (it lives only in the read-only content DB), so its completion is
     /// XP-only — it never writes an FSRS grade or `ReviewLog`. See
-    /// `SessionViewModel.completeCurrentExercise`, where only `.kanjiStudy`
-    /// reaches `gradeCard`. FSRS scheduling for vocabulary is deferred until the
-    /// vocab-dictionary feature makes vocab cards gradeable.
+    /// `SessionViewModel.completeCurrentExercise`, where only the card-backed
+    /// kinds (`.kanjiStudy`, `.writingPractice`) reach `gradeCard`. FSRS
+    /// scheduling for vocabulary is deferred until the vocab-dictionary feature
+    /// makes vocab cards gradeable.
     static func isLive(_ item: ExerciseItem) -> Bool {
         switch item {
         case .srsReview, .kanjiStudy, .writingPractice, .sentenceConstruction,
