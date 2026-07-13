@@ -139,7 +139,7 @@ struct MultiTurnConversationTests {
         let data = try GeminiProvider.encodeRequestBody(systemPrompt: "SYS", messages: messages)
         let decoded = try JSONDecoder().decode(DecodedGeminiBody.self, from: data)
 
-        #expect(decoded.system_instruction?.parts?.first?.text == "SYS")
+        #expect(decoded.systemInstruction?.parts?.first?.text == "SYS")
         #expect(decoded.contents.map { $0.role } == ["user", "model", "user"])
         #expect(decoded.contents.map { $0.parts?.first?.text } == ["A", "B", "C"])
     }
@@ -168,8 +168,13 @@ struct MultiTurnConversationTests {
 // MARK: - Decoding Helpers (mirror the providers' wire shapes)
 
 private struct DecodedGeminiBody: Decodable {
-    let system_instruction: DecodedGeminiContent?
+    let systemInstruction: DecodedGeminiContent?
     let contents: [DecodedGeminiContent]
+
+    enum CodingKeys: String, CodingKey {
+        case systemInstruction = "system_instruction"
+        case contents
+    }
 }
 
 private struct DecodedGeminiContent: Decodable {
