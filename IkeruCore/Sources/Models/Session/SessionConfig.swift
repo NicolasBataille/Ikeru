@@ -7,10 +7,6 @@ public struct SessionConfig: Sendable, Equatable {
     /// Available time in minutes for this session.
     public let availableTimeMinutes: Int
 
-    /// Whether audio playback is unavailable (e.g., volume muted).
-    /// When true, listening and speaking exercises are excluded.
-    public let isSilentMode: Bool
-
     /// Current skill balance ratios from recent history.
     /// Keys are SkillType, values are 0.0-1.0 ratios summing to ~1.0.
     public let currentSkillBalances: [SkillType: Double]
@@ -20,16 +16,23 @@ public struct SessionConfig: Sendable, Equatable {
 
     public init(
         availableTimeMinutes: Int = 20,
-        isSilentMode: Bool = false,
         currentSkillBalances: [SkillType: Double] = [:],
         preferredIntensity: SessionIntensity = .normal
     ) {
         self.availableTimeMinutes = availableTimeMinutes
-        self.isSilentMode = isSilentMode
         self.currentSkillBalances = currentSkillBalances
         self.preferredIntensity = preferredIntensity
     }
 }
+
+// Removed (remediation 7.9): `isSilentMode` used to exclude listening/speaking
+// exercises when the volume was 0. It was fed by `AudioService.isSilentMode`,
+// which checked `outputVolume` — the volume slider, not the physical mute
+// switch — and TTS playback runs in `.playback` category, which ignores the
+// mute switch regardless. The flag gave false confidence that audio-dependent
+// exercises would actually be silenced, so it — and the exclusion logic in
+// `PlannerService.availableSkills()` that read it — has been removed rather
+// than wired to a real signal.
 
 /// Session intensity level (reserved for future use).
 public enum SessionIntensity: String, Codable, Sendable, Equatable {

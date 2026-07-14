@@ -232,7 +232,13 @@ private struct WaveformBar: View {
     let index: Int
     let isAnimating: Bool
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     @State private var height: CGFloat = 4
+
+    /// Reduce Motion: freeze at a fixed, per-bar height instead of animating —
+    /// still reads as a waveform glyph, just static.
+    private static let staticHeights: [CGFloat] = [10, 18, 24, 16, 12]
 
     var body: some View {
         Rectangle()
@@ -253,6 +259,10 @@ private struct WaveformBar: View {
     }
 
     private func startAnimation() {
+        guard !reduceMotion else {
+            height = Self.staticHeights[index % Self.staticHeights.count]
+            return
+        }
         let delay = Double(index) * 0.1
         withAnimation(
             .easeInOut(duration: 0.4)

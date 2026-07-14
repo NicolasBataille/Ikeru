@@ -67,45 +67,12 @@ struct VolumeDetectorTests {
         #expect(detector.isMuted == false)
     }
 
-    // MARK: - SessionConfig Integration
-
-    @Test("SessionConfig builds correctly with muted flag true")
-    func configWithMutedFlag() {
-        let config = SessionConfig(
-            availableTimeMinutes: 20,
-            isSilentMode: true
-        )
-        #expect(config.isSilentMode == true)
-        #expect(config.availableTimeMinutes == 20)
-    }
-
-    @Test("SessionConfig builds correctly with muted flag false")
-    func configWithUnmutedFlag() {
-        let config = SessionConfig(
-            availableTimeMinutes: 30,
-            isSilentMode: false
-        )
-        #expect(config.isSilentMode == false)
-        #expect(config.availableTimeMinutes == 30)
-    }
-
-    @Test("Muted detector produces silent mode config")
-    func mutedDetectorProducesSilentConfig() {
-        let detector = MockVolumeDetector(volume: 0)
-        let config = SessionConfig(
-            availableTimeMinutes: 20,
-            isSilentMode: detector.isMuted
-        )
-        #expect(config.isSilentMode == true)
-    }
-
-    @Test("Unmuted detector produces non-silent config")
-    func unmutedDetectorProducesNonSilentConfig() {
-        let detector = MockVolumeDetector(volume: 0.7)
-        let config = SessionConfig(
-            availableTimeMinutes: 20,
-            isSilentMode: detector.isMuted
-        )
-        #expect(config.isSilentMode == false)
-    }
+    // SessionConfig Integration tests removed (remediation 7.9):
+    // `SessionConfig.isSilentMode` was fed by the same unreliable
+    // `outputVolume == 0.0` signal as `AudioService.isSilentMode` (volume
+    // slider, not the mute switch) and has been removed along with the
+    // exclusion logic in `PlannerService.availableSkills()` that read it.
+    // `VolumeDetector`/`MockVolumeDetector` above remain — they're a
+    // correctly-implemented, KVO-based mute detector — just not wired to
+    // session composition (yet).
 }

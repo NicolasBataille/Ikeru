@@ -1,4 +1,5 @@
 import SwiftUI
+import Combine
 import IkeruCore
 import os
 
@@ -378,11 +379,22 @@ struct SettingsView: View {
     // MARK: - Section: 表示 / Display
 
     @Environment(\.displayModeRepository) private var displayModeRepo
+    /// Reactive mirror of the repository's mode so TatamiEligibilityRow
+    /// hides/shows immediately when DisplayModeToggleRow flips the mode
+    /// (a one-time `repo.current()` snapshot went stale until re-render).
+    @State private var currentDisplayMode: DisplayMode?
 
     private var displaySection: some View {
         section(label: ("表示", "Display"), mon: .kikkou) {
             if let repo = displayModeRepo {
                 DisplayModeToggleRow(repository: repo)
+                TatamiEligibilityRow(
+                    modelContainer: modelContext.container,
+                    activeProfileID: { ActiveProfileResolver.activeProfileID() },
+                    displayMode: currentDisplayMode ?? repo.current()
+                )
+                .onAppear { currentDisplayMode = repo.current() }
+                .onReceive(repo.publisher) { currentDisplayMode = $0 }
             }
         }
     }

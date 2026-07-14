@@ -466,17 +466,20 @@ struct ConversationView: View {
 private struct TypingDot: View {
 
     let delay: Double
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var isAnimating = false
 
     var body: some View {
         Circle()
             .fill(Color(hex: IkeruTheme.Colors.primaryAccent).opacity(0.6))
             .frame(width: 8, height: 8)
-            .offset(y: isAnimating ? -4 : 0)
+            // Reduce Motion: three static dots still read as "typing…" without
+            // the bouncing loop.
+            .offset(y: reduceMotion ? 0 : (isAnimating ? -4 : 0))
             .animation(
-                .easeInOut(duration: 0.5)
-                .repeatForever()
-                .delay(delay),
+                reduceMotion ? nil : .easeInOut(duration: 0.5)
+                    .repeatForever()
+                    .delay(delay),
                 value: isAnimating
             )
             .onAppear {

@@ -214,23 +214,39 @@ public final class HomeViewModel {
 
     // MARK: - Data Loading
 
-    /// Snapshot of the competence signals used by the
+    /// Snapshot of the signals used by the
     /// `DisplayModeAdvancedThresholdMonitor` to decide whether the
-    /// "you're ready for Tatami" suggestion card should appear.
-    /// Streak is no longer included: eligibility is based on cumulative
-    /// competence only (reviews volume + mastery depth), not daily-login pressure.
+    /// "you're ready for Tatami" suggestion should appear. Eligibility is
+    /// `(reviews AND mastery) OR (activeDays)` — no daily-streak gate.
     public struct AdvancedThresholdSignals: Sendable {
         public let reviews: Int
         public let mastery: Int
+        public let activeDays: Int
+
+        public init(reviews: Int, mastery: Int, activeDays: Int) {
+            self.reviews = reviews
+            self.mastery = mastery
+            self.activeDays = activeDays
+        }
+
+        /// Runs the signals through `DisplayModeAdvancedThresholdMonitor`.
+        public var eligibility: DisplayModeThresholdResult {
+            DisplayModeAdvancedThresholdMonitor.evaluate(
+                totalReviewsCompleted: reviews,
+                cardsAtFamiliarOrAbove: mastery,
+                activeDaysCount: activeDays
+            )
+        }
     }
 
     /// Returns the current threshold signals for the active profile.
-    /// Reads `RPGState` for total reviews and the card repository
-    /// for the mastered-card count. Safe to call on the main actor.
+    /// Reads `RPGState` for total reviews / active days and the card
+    /// repository for the mastered-card count. Safe to call on the main actor.
     public func advancedThresholdSignals() async -> AdvancedThresholdSignals {
         let context = modelContainer.mainContext
         let rpg = ActiveProfileResolver.fetchActiveRPGState(in: context)
         let reviews = rpg?.totalReviewsCompleted ?? 0
+        let activeDays = rpg?.activeDaysCount ?? 0
         let allCards = await cardRepository.allCards()
         let masteryCount = allCards.filter { card in
             MasteryLevel.from(fsrsState: card.fsrsState).rawValue
@@ -238,7 +254,8 @@ public final class HomeViewModel {
         }.count
         return AdvancedThresholdSignals(
             reviews: reviews,
-            mastery: masteryCount
+            mastery: masteryCount,
+            activeDays: activeDays
         )
     }
 
