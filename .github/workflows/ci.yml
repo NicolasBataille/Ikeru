@@ -32,17 +32,40 @@ jobs:
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Full history so the changed-files step below can diff against
+          # origin/<base-ref> — the default shallow (depth-1) clone only
+          # has HEAD and can't compute that merge-base.
+          fetch-depth: 0
 
       - name: Install SwiftLint
         run: brew install swiftlint
 
-      - name: Run SwiftLint
+      - name: Run SwiftLint (whole repo, non-strict)
         # `--strict` promotes warnings to errors — the legacy codebase has
         # ~200 stylistic warnings (identifier_name on short var names,
         # comma spacing, etc.). The gate stays informational for now: the
         # warnings show up in the GitHub UI but don't block. Errors (force
         # unwraps, hard violations) still fail the job.
         run: swiftlint lint --reporter github-actions-logging
+
+      - name: SwiftLint --strict on changed files (PRs only)
+        # Holds *new* code to the strict standard (warnings fail the job)
+        # without blocking on the ~200-warning legacy backlog above. Only
+        # meaningful on a pull_request event, where `github.base_ref` gives
+        # us something to diff against; on a push to dev/master there's no
+        # base ref, so this step no-ops there.
+        if: github.event_name == 'pull_request'
+        run: |
+          git fetch origin "${{ github.base_ref }}:refs/remotes/origin/${{ github.base_ref }}" --force
+          CHANGED_SWIFT_FILES=$(git diff --name-only --diff-filter=ACMR "origin/${{ github.base_ref }}...HEAD" -- '*.swift')
+          if [ -z "$CHANGED_SWIFT_FILES" ]; then
+            echo "No changed Swift files — skipping strict lint."
+            exit 0
+          fi
+          echo "Changed Swift files:"
+          echo "$CHANGED_SWIFT_FILES"
+          echo "$CHANGED_SWIFT_FILES" | xargs swiftlint lint --strict --reporter github-actions-logging
 
   i18n-lint:
     name: i18n Lint
