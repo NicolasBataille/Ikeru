@@ -42,7 +42,7 @@ struct HapticPitchDrillView: View {
             HStack(spacing: 4) {
                 ForEach(Array(viewModel.currentMoraHighLow.enumerated()), id: \.offset) { _, isHigh in
                     Circle()
-                        .fill(isHigh ? Color.orange : Color.gray)
+                        .fill(isHigh ? IkeruPlatformTheme.gold : Color.gray)
                         .frame(width: 10, height: 10)
                         .offset(y: isHigh ? -4 : 4)
                 }
@@ -58,7 +58,7 @@ struct HapticPitchDrillView: View {
                         .font(.system(size: 16))
                 }
                 .buttonStyle(.bordered)
-                .tint(.orange)
+                .tint(IkeruPlatformTheme.gold)
 
                 Button {
                     viewModel.nextWord()
@@ -67,7 +67,7 @@ struct HapticPitchDrillView: View {
                         .font(.system(size: 16))
                 }
                 .buttonStyle(.bordered)
-                .tint(.blue)
+                .tint(IkeruPlatformTheme.gold)
             }
 
             // Progress

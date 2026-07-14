@@ -34,7 +34,7 @@ struct SessionLiveActivity: Widget {
                             .font(.caption)
                             .fontWeight(.semibold)
                     }
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(IkeruPlatformTheme.gold)
                 }
 
                 DynamicIslandExpandedRegion(.center) {
@@ -49,7 +49,7 @@ struct SessionLiveActivity: Widget {
                                 RoundedRectangle(cornerRadius: 3)
                                     .fill(.gray.opacity(0.3))
                                 RoundedRectangle(cornerRadius: 3)
-                                    .fill(.orange)
+                                    .fill(IkeruPlatformTheme.gold)
                                     .frame(width: geo.size.width * context.state.progressFraction)
                             }
                         }
@@ -65,7 +65,7 @@ struct SessionLiveActivity: Widget {
                     if context.state.streakCount > 2 {
                         Text("🔥 \(context.state.streakCount) streak")
                             .font(.caption2)
-                            .foregroundStyle(.orange)
+                            .foregroundStyle(IkeruPlatformTheme.gold)
                     }
                 }
             } compactLeading: {
@@ -84,7 +84,7 @@ struct SessionLiveActivity: Widget {
             } minimal: {
                 Image(systemName: "book.fill")
                     .font(.system(size: 12))
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(IkeruPlatformTheme.gold)
             }
         }
     }
@@ -113,7 +113,7 @@ struct SessionLiveActivity: Widget {
 
                 Text("\(context.state.completedCount)/\(context.state.totalCount)")
                     .font(.caption)
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(IkeruPlatformTheme.gold)
             }
         }
         .padding()

@@ -12,7 +12,7 @@ struct StandByFlashcardWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: FlashcardTimelineProvider()) { entry in
             StandByFlashcardView(entry: entry)
-                .containerBackground(.black, for: .widget)
+                .containerBackground(IkeruPlatformTheme.ink, for: .widget)
         }
         .configurationDisplayName("Japanese Flashcard")
         .description("Learn kanji in StandBy mode.")
@@ -98,7 +98,7 @@ struct StandByFlashcardView: View {
             // Reading in hiragana
             Text(entry.reading)
                 .font(.system(size: family == .systemLarge ? 24 : 16))
-                .foregroundStyle(.orange)
+                .foregroundStyle(IkeruPlatformTheme.gold)
 
             // Meaning
             Text(entry.meaning)
