@@ -159,6 +159,40 @@ public final class ProfileViewModel {
             Logger.ui.error("Failed to save display name update: \(error)")
         }
     }
+
+    /// Updates the FSRS desired-retention target for the current profile.
+    /// Clamped to `FSRSService.desiredRetentionRange` (0.8...0.95) — matches
+    /// the read side in `CardModelActor.gradeCard`.
+    /// - Parameter newValue: The new target retention rate.
+    public func updateDesiredRetention(_ newValue: Double) {
+        guard let profile = currentProfile else {
+            Logger.ui.warning("No profile to update desired retention")
+            return
+        }
+
+        let clamped = min(
+            max(newValue, FSRSService.desiredRetentionRange.lowerBound),
+            FSRSService.desiredRetentionRange.upperBound
+        )
+        let current = profile.settings
+        profile.settings = ProfileSettings(
+            desiredRetention: clamped,
+            dailyNewCardLimit: current.dailyNewCardLimit,
+            dailyReviewLimit: current.dailyReviewLimit,
+            reviewReminderEnabled: current.reviewReminderEnabled,
+            reviewReminderHour: current.reviewReminderHour,
+            weeklyCheckInEnabled: current.weeklyCheckInEnabled,
+            weeklyCheckInDay: current.weeklyCheckInDay,
+            weeklyCheckInHour: current.weeklyCheckInHour
+        )
+
+        do {
+            try modelContext.save()
+            Logger.ui.info("Updated desired retention to: \(clamped)")
+        } catch {
+            Logger.ui.error("Failed to save desired retention update: \(error)")
+        }
+    }
 }
 
 // MARK: - Notifications
