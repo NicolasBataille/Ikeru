@@ -153,6 +153,39 @@ struct PlannerServiceTests {
         #expect(fronts.contains("\u{3044}")) // い
     }
 
+    @Test("Due cards are ordered most-overdue-first, whatever the insertion order")
+    func dueCardsOrderedMostOverdueFirst() async throws {
+        let container = try makeContainer()
+        let context = container.mainContext
+        let profile = try seedProfile(in: container)
+
+        // Insert deliberately out of due-date order: least-overdue first.
+        let base = Date()
+        let offsets: [TimeInterval] = [-3_600, -360_000, -7_200, -1_800]
+        for (i, offset) in offsets.enumerated() {
+            let card = Card(
+                front: "Due \(i)",
+                back: "Back \(i)",
+                type: .kanji,
+                fsrsState: FSRSState(reps: 1),
+                dueDate: base.addingTimeInterval(offset)
+            )
+            card.profile = profile
+            context.insert(card)
+        }
+        try context.save()
+
+        let repo = CardRepository(modelContainer: container)
+        let planner = PlannerService(cardRepository: repo)
+
+        let queue = await planner.composeSession()
+
+        try #require(queue.count == offsets.count)
+        #expect(queue.map(\.dueDate) == queue.map(\.dueDate).sorted())
+        // Most overdue (offset -360_000) must lead.
+        #expect(queue.first?.front == "Due 1")
+    }
+
     @Test("Session composition completes quickly")
     func compositionIsPerformant() async throws {
         let container = try makeContainer()

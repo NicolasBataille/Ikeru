@@ -33,7 +33,10 @@ public final class PlannerService: @unchecked Sendable {
         let startTime = CFAbsoluteTimeGetCurrent()
 
         let now = Date()
-        let dueCards = await cardRepository.dueCards(before: now)
+        // Most-overdue-first: this queue is user-facing order, and any future
+        // caller truncating it (e.g. to a max size) must keep the most urgent
+        // reviews, not an arbitrary storage-order prefix.
+        let dueCards = await cardRepository.dueCardsSortedByDueDate(before: now)
         let allCards = await cardRepository.allCards()
 
         let dueCardIds = Set(dueCards.map(\.id))
@@ -63,7 +66,11 @@ public final class PlannerService: @unchecked Sendable {
         let startTime = CFAbsoluteTimeGetCurrent()
 
         let now = Date()
-        let dueCards = await cardRepository.dueCards(before: now)
+        // Most-overdue-first: `selectSRSCards` below prefix-truncates to
+        // `duration.maxSRSCards`, so an unsorted feed would silently drop
+        // whichever due cards happened to sort last in storage rather than
+        // the least urgent ones.
+        let dueCards = await cardRepository.dueCardsSortedByDueDate(before: now)
         let allCards = await cardRepository.allCards()
 
         let duration = SessionDuration.from(minutes: config.availableTimeMinutes)

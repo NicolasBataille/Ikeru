@@ -12,6 +12,11 @@ import os
 ///   - 20 % variety tile (rotating, drawn from level-tied variety pool,
 ///     excluding the booster's skill so the same skill isn't doubled up)
 ///   - 10 % new-content drip (one unseen card)
+/// The four segments are built independently (each keeps its own internal
+/// order — e.g. review stays most-overdue-first) and then merged into a
+/// single deterministic interleave (`interleave(streams:)`) proportional to
+/// their 40/30/20/10 weights, so a session reads as a mix of kinds rather
+/// than four contiguous blocks.
 ///
 /// Étude/Study composition is round-robin across the user's selected
 /// types, intersected with the unlocked set, ordered by pedagogical
@@ -43,14 +48,13 @@ public struct DefaultSessionPlanner: SessionPlanner {
 
     private func composeHome(inputs: SessionPlannerInputs) -> SessionPlan {
         let totalSec = inputs.durationMinutes * 60
-        var exercises: [ExerciseItem] = []
 
         // Segment 1: Review wave (40 %)
         let reviewBudget = Int(Double(totalSec) * Self.homeReviewFraction)
-        exercises.append(contentsOf: pickReviews(
+        let reviewItems = pickReviews(
             from: inputs.availableCards,
             secondsBudget: reviewBudget
-        ))
+        )
 
         // Segment 2: Skill-balance booster (30 %)
         let skillBoosterBudget = Int(Double(totalSec) * Self.homeSkillBalanceBoosterFraction)
@@ -59,33 +63,83 @@ public struct DefaultSessionPlanner: SessionPlanner {
             for: inputs.profile.jlptLevel,
             unlockedTypes: inputs.unlockedTypes
         )
-        exercises.append(contentsOf: fillSegment(
+        let boosterItems = fillSegment(
             forSkill: lowestSkill,
             inPool: boosterPool,
             secondsBudget: skillBoosterBudget,
             availableCards: inputs.availableCards
-        ))
+        )
 
         // Segment 3: Variety tile (20 %) — different skill from booster.
         let varietyBudget = Int(Double(totalSec) * Self.homeVarietyTileFraction)
         let varietyPool = boosterPool.filter { $0.skill != lowestSkill }
-        exercises.append(contentsOf: fillRotating(
+        let varietyItems = fillRotating(
             inPool: varietyPool,
             secondsBudget: varietyBudget,
             day: dayOfYear(),
             availableCards: inputs.availableCards
-        ))
+        )
 
         // Segment 4: New content drip (10 %)
         let newContentBudget = Int(Double(totalSec) * Self.homeNewContentFraction)
-        if let item = pickNewContent(
+        let newItems: [ExerciseItem] = pickNewContent(
             secondsBudget: newContentBudget,
             availableCards: inputs.availableCards
-        ) {
-            exercises.append(item)
-        }
+        ).map { [$0] } ?? []
+
+        // Merge the four segment streams into one interleaved order,
+        // proportional to their 40/30/20/10 weights, instead of four
+        // contiguous blocks. Same exercise SET and per-segment counts as
+        // before — only the cross-segment ORDER changes.
+        let exercises = interleave(streams: [
+            (items: reviewItems, weight: Self.homeReviewFraction),
+            (items: boosterItems, weight: Self.homeSkillBalanceBoosterFraction),
+            (items: varietyItems, weight: Self.homeVarietyTileFraction),
+            (items: newItems, weight: Self.homeNewContentFraction)
+        ])
 
         return finalize(exercises: exercises)
+    }
+
+    /// Deterministically interleaves multiple ordered streams proportional to
+    /// their weights, using the "smooth weighted round-robin" scheduling
+    /// algorithm (as used by nginx's upstream load balancer): every tick, each
+    /// stream's credit accrues by its own weight; the stream with the highest
+    /// credit is drained by exactly one item and its credit is reduced by the
+    /// total weight. Ties break by stream order (first-declared wins), which
+    /// keeps the result a pure function of the inputs — no randomness, so
+    /// identical inputs always produce an identical merge.
+    ///
+    /// Each stream's own internal order is preserved: items are always popped
+    /// front-to-back, never reordered within a stream (e.g. the review
+    /// stream's most-overdue-first ordering from `pickReviews` survives).
+    /// A stream that runs dry (or was empty) is simply skipped for the rest
+    /// of the merge — its remaining weight is not redistributed, matching
+    /// standard smooth-WRR behaviour.
+    private func interleave(streams: [(items: [ExerciseItem], weight: Double)]) -> [ExerciseItem] {
+        var queues = streams.map(\.items)
+        let weights = streams.map(\.weight)
+        let totalWeight = weights.reduce(0, +)
+        let totalItems = queues.reduce(0) { $0 + $1.count }
+        guard totalWeight > 0, totalItems > 0 else { return queues.flatMap { $0 } }
+
+        var currentWeights = [Double](repeating: 0, count: streams.count)
+        var result: [ExerciseItem] = []
+        result.reserveCapacity(totalItems)
+
+        while result.count < totalItems {
+            var bestIndex: Int?
+            for index in queues.indices where !queues[index].isEmpty {
+                currentWeights[index] += weights[index]
+                if bestIndex == nil || currentWeights[index] > currentWeights[bestIndex!] {
+                    bestIndex = index
+                }
+            }
+            guard let selected = bestIndex else { break }
+            result.append(queues[selected].removeFirst())
+            currentWeights[selected] -= totalWeight
+        }
+        return result
     }
 
     // MARK: - Study custom

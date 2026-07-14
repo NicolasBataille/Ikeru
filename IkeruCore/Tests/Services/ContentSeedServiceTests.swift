@@ -47,9 +47,10 @@ struct ContentSeedServiceTests {
         let expectedBacks: Set<String> = ["a", "i", "u", "e", "o"]
         #expect(backs == expectedBacks)
 
-        // Verify card type
+        // Verify card type — kana is `.vocabulary`, matching the production
+        // seeder (`KanaCardRepository`), not `.kanji`.
         for card in seeded {
-            #expect(card.type == .kanji)
+            #expect(card.type == .vocabulary)
         }
     }
 
