@@ -69,6 +69,7 @@ targets:
     platform: watchOS
     sources:
       - path: IkeruWatch
+      - path: Shared
     dependencies:
       - package: IkeruCore
     settings:
@@ -86,6 +87,7 @@ targets:
     platform: iOS
     sources:
       - path: IkeruWidget
+      - path: Shared
     dependencies:
       - package: IkeruCore
     settings:

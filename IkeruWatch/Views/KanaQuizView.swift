@@ -81,27 +81,27 @@ struct KanaQuizView: View {
                 viewModel.startSession()
             }
             .buttonStyle(.bordered)
-            .tint(.blue)
+            .tint(IkeruPlatformTheme.gold)
         }
     }
 
     // MARK: - Helpers
 
     private func answerTint(for choice: KanaData.Entry) -> Color {
-        guard let lastAnswer = viewModel.lastAnswerResult else { return .blue }
+        guard let lastAnswer = viewModel.lastAnswerResult else { return IkeruPlatformTheme.gold }
         guard viewModel.lastAnsweredId == choice.id else {
             // Show correct answer in green
             if !lastAnswer && choice.id == viewModel.correctId {
                 return .green
             }
-            return .blue
+            return IkeruPlatformTheme.gold
         }
-        return lastAnswer ? .green : .red
+        return lastAnswer ? .green : IkeruPlatformTheme.danger
     }
 
     private func dotColor(for index: Int) -> Color {
         if index < viewModel.currentQuestion {
-            return viewModel.questionResults[index] ? .green : .red
+            return viewModel.questionResults[index] ? .green : IkeruPlatformTheme.danger
         } else if index == viewModel.currentQuestion {
             return .white
         }
