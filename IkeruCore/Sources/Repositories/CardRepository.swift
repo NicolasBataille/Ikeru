@@ -372,6 +372,18 @@ actor CardModelActor {
         return profile.cards ?? []
     }
 
+    /// The active profile's `desiredRetention`, clamped to
+    /// `FSRSService.desiredRetentionRange` (0.8...0.95). Falls back to the
+    /// FSRSService default (0.9) when no profile resolves — e.g. in tests
+    /// that grade a card without seeding a `UserProfile`.
+    private func activeDesiredRetention() -> Double {
+        guard let profile = fetchActiveProfile() else { return 0.9 }
+        return min(
+            max(profile.settings.desiredRetention, FSRSService.desiredRetentionRange.lowerBound),
+            FSRSService.desiredRetentionRange.upperBound
+        )
+    }
+
     // MARK: - CRUD (scoped to active profile)
 
     /// Creates and persists a card. Returns the DTO (with the real card id)
@@ -495,8 +507,13 @@ actor CardModelActor {
         // Compute new FSRS state (pure function)
         let newState = FSRSService.schedule(state: card.fsrsState, grade: grade, now: now)
 
-        // Compute new due date
-        let newDueDate = FSRSService.dueDate(for: newState, now: now)
+        // Compute new due date using the active profile's desired retention
+        // (clamped to a sane band — see `activeDesiredRetention`).
+        let newDueDate = FSRSService.dueDate(
+            for: newState,
+            desiredRetention: activeDesiredRetention(),
+            now: now
+        )
 
         // Compute interval in days from due date
         let intervalDays = max(1, Int(newDueDate.timeIntervalSince(now) / 86400))

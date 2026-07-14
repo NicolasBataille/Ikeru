@@ -276,6 +276,79 @@ struct CardRepositoryTests {
         #expect(fetched?.jlptLevel == nil)
     }
 
+    // MARK: - desiredRetention Plumbing
+
+    /// Seeds a UserProfile with a specific `desiredRetention` — like
+    /// `seedActiveProfile` but lets the test control the FSRS retention
+    /// target read by `CardModelActor.gradeCard`.
+    @MainActor
+    private func seedActiveProfileWithRetention(in container: ModelContainer, desiredRetention: Double) throws {
+        let context = container.mainContext
+        context.insert(UserProfile(
+            displayName: "Test",
+            settings: ProfileSettings(desiredRetention: desiredRetention)
+        ))
+        try context.save()
+    }
+
+    @Test("gradeCard reads the active profile's desiredRetention: 0.95 due date is sooner than 0.8's")
+    func gradeCardUsesActiveProfileDesiredRetention() async throws {
+        let lowRetentionContainer = try makeTestContainer()
+        try await seedActiveProfileWithRetention(in: lowRetentionContainer, desiredRetention: 0.8)
+        let lowRetentionRepository = CardRepository(modelContainer: lowRetentionContainer)
+
+        let highRetentionContainer = try makeTestContainer()
+        try await seedActiveProfileWithRetention(in: highRetentionContainer, desiredRetention: 0.95)
+        let highRetentionRepository = CardRepository(modelContainer: highRetentionContainer)
+
+        // Same card, same grade, same (approximate) instant — the only
+        // difference between the two containers is the active profile's
+        // desiredRetention.
+        let lowCard = await lowRetentionRepository.createCard(front: "日", back: "day", type: .kanji)
+        let highCard = await highRetentionRepository.createCard(front: "日", back: "day", type: .kanji)
+
+        await lowRetentionRepository.gradeCard(cardId: lowCard.id, grade: .good, responseTimeMs: 1000)
+        await highRetentionRepository.gradeCard(cardId: highCard.id, grade: .good, responseTimeMs: 1000)
+
+        let lowResult = await lowRetentionRepository.card(by: lowCard.id)
+        let highResult = await highRetentionRepository.card(by: highCard.id)
+
+        // Higher desired retention => shorter interval => sooner due date.
+        #expect(highResult?.dueDate != nil)
+        #expect(lowResult?.dueDate != nil)
+        #expect(highResult!.dueDate < lowResult!.dueDate)
+    }
+
+    @Test("gradeCard clamps an out-of-band desiredRetention to the 0.8...0.95 range")
+    func gradeCardClampsDesiredRetention() async throws {
+        // A profile persisted (or migrated) with an out-of-range value
+        // (e.g. from a future/older settings surface) must not push the
+        // scheduler outside the supported band.
+        let extremeContainer = try makeTestContainer()
+        try await seedActiveProfileWithRetention(in: extremeContainer, desiredRetention: 0.5)
+        let extremeRepository = CardRepository(modelContainer: extremeContainer)
+
+        let clampedContainer = try makeTestContainer()
+        try await seedActiveProfileWithRetention(in: clampedContainer, desiredRetention: 0.8)
+        let clampedRepository = CardRepository(modelContainer: clampedContainer)
+
+        let extremeCard = await extremeRepository.createCard(front: "日", back: "day", type: .kanji)
+        let clampedCard = await clampedRepository.createCard(front: "日", back: "day", type: .kanji)
+
+        await extremeRepository.gradeCard(cardId: extremeCard.id, grade: .good, responseTimeMs: 1000)
+        await clampedRepository.gradeCard(cardId: clampedCard.id, grade: .good, responseTimeMs: 1000)
+
+        let extremeResult = await extremeRepository.card(by: extremeCard.id)
+        let clampedResult = await clampedRepository.card(by: clampedCard.id)
+
+        // 0.5 should clamp to the same effective 0.8 floor, producing the
+        // same due date as a profile explicitly set to 0.8 (within a
+        // one-second tolerance for wall-clock skew between the two grades).
+        #expect(extremeResult?.dueDate != nil)
+        #expect(clampedResult?.dueDate != nil)
+        #expect(abs(extremeResult!.dueDate.timeIntervalSince(clampedResult!.dueDate)) < 2.0)
+    }
+
     // MARK: - Save Error Surfacing
 
     @Test("Successful writes leave lastSaveError nil")

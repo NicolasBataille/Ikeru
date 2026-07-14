@@ -5387,6 +5387,42 @@
         }
       }
     },
+    "Retention target" : {
+      "comment" : "Settings row label for the FSRS desired-retention control",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retention target"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Objectif de rétention"
+          }
+        }
+      }
+    },
+    "Higher means better recall, but more daily reviews" : {
+      "comment" : "Retention target explainer",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Higher means better recall, but more daily reviews"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plus élevé signifie une meilleure mémorisation, mais plus de révisions quotidiennes"
+          }
+        }
+      }
+    },
     "Review" : {
       "comment" : "Session preview: number of review cards",
       "localizations" : {

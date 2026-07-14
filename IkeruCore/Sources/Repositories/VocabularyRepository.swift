@@ -151,6 +151,46 @@ public struct VocabularyEncounterDTO: Sendable, Identifiable {
 @ModelActor
 actor VocabularyModelActor {
 
+    // MARK: - Active Profile (desired retention)
+
+    /// Reads the UserDefaults-backed active profile id. Returns nil if unset.
+    /// Mirrors `CardModelActor.activeProfileID()` so both FSRS surfaces
+    /// resolve the same profile.
+    private func activeProfileID() -> UUID? {
+        guard
+            let raw = UserDefaults.standard.string(forKey: UserProfile.activeProfileIDDefaultsKey),
+            !raw.isEmpty,
+            let id = UUID(uuidString: raw)
+        else { return nil }
+        return id
+    }
+
+    private func fetchActiveProfile() -> UserProfile? {
+        if let id = activeProfileID() {
+            let predicate = #Predicate<UserProfile> { $0.id == id }
+            var descriptor = FetchDescriptor<UserProfile>(predicate: predicate)
+            descriptor.fetchLimit = 1
+            if let profile = (try? modelContext.fetch(descriptor))?.first {
+                return profile
+            }
+        }
+        var descriptor = FetchDescriptor<UserProfile>(
+            sortBy: [SortDescriptor(\.createdAt, order: .forward)]
+        )
+        descriptor.fetchLimit = 1
+        return (try? modelContext.fetch(descriptor))?.first
+    }
+
+    /// The active profile's desired retention, clamped to the scheduler's
+    /// supported band. Mirrors `CardModelActor.activeDesiredRetention()`.
+    private func activeDesiredRetention() -> Double {
+        guard let profile = fetchActiveProfile() else { return 0.9 }
+        return min(
+            max(profile.settings.desiredRetention, FSRSService.desiredRetentionRange.lowerBound),
+            FSRSService.desiredRetentionRange.upperBound
+        )
+    }
+
     func addEntry(
         word: String,
         reading: String,
@@ -303,7 +343,14 @@ actor VocabularyModelActor {
         }
 
         let newState = FSRSService.schedule(state: entry.fsrsState, grade: grade, now: now)
-        let newDueDate = FSRSService.dueDate(for: newState, now: now)
+        // Due date honours the active profile's desired retention (clamped),
+        // mirroring CardModelActor.gradeCard so both FSRS surfaces schedule
+        // consistently.
+        let newDueDate = FSRSService.dueDate(
+            for: newState,
+            desiredRetention: activeDesiredRetention(),
+            now: now
+        )
         let intervalDays = max(1, Int(newDueDate.timeIntervalSince(now) / 86400))
 
         entry.fsrsState = newState

@@ -336,6 +336,42 @@ struct SettingsView: View {
                     furiganaUserTouched = true
                 }
             }
+
+            retentionRow
+        }
+    }
+
+    // MARK: Retention target (FSRS desiredRetention)
+
+    private static let retentionOptions: [Double] = [0.80, 0.85, 0.90, 0.95]
+
+    private var desiredRetentionValue: String {
+        let retention = profileViewModel?.currentProfile?.settings.desiredRetention ?? 0.9
+        return String(format: "%.0f%%", retention * 100)
+    }
+
+    private var retentionRow: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Menu {
+                ForEach(Self.retentionOptions, id: \.self) { option in
+                    Button(String(format: "%.0f%%", option * 100)) {
+                        profileViewModel?.updateDesiredRetention(option)
+                    }
+                }
+            } label: {
+                rowChrome(
+                    jp: "定着率",
+                    label: "Retention target",
+                    value: desiredRetentionValue,
+                    showChevron: false
+                )
+            }
+            .buttonStyle(.plain)
+            Text("Higher means better recall, but more daily reviews", comment: "Retention target explainer")
+                .ikeruScaledFont(11, relativeTo: .caption2)
+                .foregroundStyle(TatamiTokens.paperGhost)
+                .padding(.horizontal, 16)
+                .padding(.bottom, 12)
         }
     }
 
