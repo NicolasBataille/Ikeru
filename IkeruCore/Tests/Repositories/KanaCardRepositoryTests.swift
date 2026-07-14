@@ -34,6 +34,15 @@ struct KanaCardRepositoryTests {
         #expect(all.count == KanaGroup.allBaseCharacters.count)
     }
 
+    @Test("seedIfNeeded seeds every base kana as CardType .vocabulary, not .kanji")
+    func seedCreatesVocabularyTypedCards() async throws {
+        let (repo, _) = try await makeRepo()
+        await repo.seedIfNeeded()
+        let all = await repo.allKanaCards()
+        #expect(!all.isEmpty)
+        #expect(all.allSatisfy { $0.type == .vocabulary })
+    }
+
     @Test("seedIfNeeded is idempotent")
     func seedIsIdempotent() async throws {
         let (repo, _) = try await makeRepo()

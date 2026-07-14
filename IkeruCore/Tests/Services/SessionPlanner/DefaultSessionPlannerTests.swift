@@ -75,6 +75,113 @@ struct DefaultSessionPlannerHomeTests {
         #expect(reviewedDueDates == expected)
     }
 
+    /// Profile that forces `.writing` as the lowest-balance skill (used to
+    /// steer the booster segment onto a *live* type — `.sentenceConstruction`
+    /// — so this suite can observe it surviving `finalize` and interleaving
+    /// with the review wave).
+    private func writingBoosterProfile(jlptLevel: JLPTLevel = .n4) -> LearnerSnapshot {
+        LearnerSnapshot(
+            jlptLevel: jlptLevel,
+            vocabularyMasteredFamiliarPlus: 0,
+            kanjiMasteredFamiliarPlus: 0,
+            hiraganaMastered: false,
+            katakanaMastered: false,
+            grammarPointsFamiliarPlus: 0,
+            listeningAccuracyLast30: 0,
+            listeningRecallLast30Days: 0,
+            skillBalances: [.reading: 1.0, .listening: 1.0, .speaking: 1.0, .writing: 0.0],
+            dueCardCount: 0,
+            hasNewContentQueued: false,
+            lastSessionAt: nil
+        )
+    }
+
+    /// Coarse label for an `ExerciseItem`'s case, ignoring its (possibly
+    /// non-deterministic, e.g. random `UUID()`) payload — used to compare
+    /// plan *shape* across calls without depending on synthesised content IDs.
+    private func kindLabel(_ item: ExerciseItem) -> String {
+        switch item {
+        case .srsReview: "srsReview"
+        case .kanjiStudy: "kanjiStudy"
+        case .grammarExercise: "grammarExercise"
+        case .vocabularyStudy: "vocabularyStudy"
+        case .fillInBlank: "fillInBlank"
+        case .readingPassage: "readingPassage"
+        case .writingPractice: "writingPractice"
+        case .listeningExercise: "listeningExercise"
+        case .speakingExercise: "speakingExercise"
+        case .sentenceConstruction: "sentenceConstruction"
+        }
+    }
+
+    @Test("Home session interleaves review + booster segments instead of scheduling four contiguous blocks")
+    func homeSessionInterleavesSegments() async throws {
+        // 40 already-started due cards feed a review wave large enough that,
+        // absent interleaving, it would occupy one uninterrupted block before
+        // any booster item ever appeared.
+        let cards = (0..<40).map { _ in fixtureDueCard() }
+        let inputs = SessionPlannerInputs(
+            source: .homeRecommendation,
+            durationMinutes: 20,
+            profile: writingBoosterProfile(),
+            unlockedTypes: Set(ExerciseType.allCases),
+            availableCards: cards
+        )
+        let plan = await planner.compose(inputs: inputs)
+
+        let kinds = plan.exercises.map(kindLabel)
+        try #require(kinds.contains("srsReview"), "expected review items, got \(kinds)")
+        try #require(kinds.contains("sentenceConstruction"), "expected a live booster item (writing → sentenceConstruction), got \(kinds)")
+
+        let firstBoosterIndex = kinds.firstIndex(of: "sentenceConstruction")!
+        let lastReviewIndex = kinds.lastIndex(of: "srsReview")!
+        #expect(
+            firstBoosterIndex < lastReviewIndex,
+            "expected booster items interleaved among reviews, not appended after every review: \(kinds)"
+        )
+    }
+
+    @Test("Home session merge order is deterministic — identical inputs produce identical plan shape")
+    func homeSessionInterleaveIsDeterministic() async throws {
+        let base = Date(timeIntervalSince1970: 1_700_000_000)
+        let cards = (0..<40).map { i in
+            fixtureDueCard(dueDate: base.addingTimeInterval(TimeInterval(i * 3_600)))
+        }
+        let inputs = SessionPlannerInputs(
+            source: .homeRecommendation,
+            durationMinutes: 20,
+            profile: writingBoosterProfile(),
+            unlockedTypes: Set(ExerciseType.allCases),
+            availableCards: cards
+        )
+
+        let planA = await planner.compose(inputs: inputs)
+        let planB = await planner.compose(inputs: inputs)
+
+        // The plan's *shape* — kind sequence, skill sequence, counts, timing,
+        // and breakdown — must be identical across calls with the same
+        // inputs. (Synthesised placeholder content for non-card-backed kinds
+        // uses a fresh `UUID()` per call by design — see the type's doc
+        // comment — so this compares shape, not raw payload equality.)
+        #expect(planA.exercises.count == planB.exercises.count)
+        #expect(planA.exercises.map(kindLabel) == planB.exercises.map(kindLabel))
+        #expect(planA.exercises.map(\.skill) == planB.exercises.map(\.skill))
+        #expect(planA.estimatedDurationMinutes == planB.estimatedDurationMinutes)
+        #expect(planA.exerciseBreakdown == planB.exerciseBreakdown)
+
+        // Review items are fully deterministic (no `randomElement()` in
+        // `pickReviews`), so those must match exactly, in the same order.
+        let reviewA = planA.exercises.compactMap { item -> CardDTO? in
+            if case .srsReview(let card) = item { return card }
+            return nil
+        }
+        let reviewB = planB.exercises.compactMap { item -> CardDTO? in
+            if case .srsReview(let card) = item { return card }
+            return nil
+        }
+        #expect(reviewA == reviewB)
+    }
+
     private func fixtureDueCard(dueDate: Date = Date(timeIntervalSince1970: 1_700_000_000)) -> CardDTO {
         CardDTO(
             id: UUID(),
