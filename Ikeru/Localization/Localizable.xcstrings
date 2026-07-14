@@ -11288,6 +11288,78 @@
           }
         }
       }
+    },
+    "Vocabulary, kanji readings, grammar notes, and example sentences are original content written for Ikeru." : {
+      "comment" : "AttributionView header note clarifying content provenance",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vocabulary, kanji readings, grammar notes, and example sentences are original content written for Ikeru."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le vocabulaire, les lectures de kanji, les notes de grammaire et les phrases d'exemple sont un contenu original rédigé pour Ikeru."
+          }
+        }
+      }
+    },
+    "Stroke order data for kanji characters. Provides the vector paths used in stroke order animations and tracing exercises." : {
+      "comment" : "AttributionView — KanjiVG entry description",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stroke order data for kanji characters. Provides the vector paths used in stroke order animations and tracing exercises."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Données de tracé des kanji. Fournit les tracés vectoriels utilisés dans les animations d'ordre des traits et les exercices de calligraphie."
+          }
+        }
+      }
+    },
+    "Japanese serif typeface bundled with the app, used to render kanji and Japanese text on every device." : {
+      "comment" : "AttributionView — Noto Serif JP entry description",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Japanese serif typeface bundled with the app, used to render kanji and Japanese text on every device."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Police à empattements japonaise embarquée dans l'app, utilisée pour afficher les kanji et le texte japonais sur tous les appareils."
+          }
+        }
+      }
+    },
+    "Pronunciation audio for kana, vocabulary, and example sentences is pre-generated with the free VOICEVOX speech engine (voice: 四国めたん) and bundled for offline playback — no setup required." : {
+      "comment" : "AttributionView — VOICEVOX entry description",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pronunciation audio for kana, vocabulary, and example sentences is pre-generated with the free VOICEVOX speech engine (voice: 四国めたん) and bundled for offline playback — no setup required."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L'audio de prononciation pour les kana, le vocabulaire et les phrases d'exemple est pré-généré avec le moteur vocal gratuit VOICEVOX (voix : 四国めたん) et embarqué pour une lecture hors ligne — aucune configuration requise."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
