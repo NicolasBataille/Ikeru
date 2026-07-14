@@ -11479,6 +11479,38 @@
           }
         }
       }
+    },
+    "Start Challenge" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start Challenge"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Commencer le défi"
+          }
+        }
+      }
+    },
+    "Which kana matches this reading?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Which kana matches this reading?"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quel kana correspond à cette lecture ?"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
