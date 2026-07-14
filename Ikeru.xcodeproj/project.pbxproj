@@ -32,6 +32,7 @@
 		1F267C7F06B849E143C9F872 /* ProfileViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF20C958BD43ABB601BE2B23 /* ProfileViewModelTests.swift */; };
 		205D80613A068A92C245B81A /* DisplayModeToggleRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF87E7A18DDA1BE176F0B8CE /* DisplayModeToggleRow.swift */; };
 		4858E3B046D54B20A40347B8 /* TatamiEligibilityRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1C5552DA1C2410D97DEDAB8 /* TatamiEligibilityRow.swift */; };
+		DF2785372E7EC932634DD2B0 /* LootBoxChallengeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2296FB5D1E765D4336DB61FE /* LootBoxChallengeView.swift */; };
 		24B1C98084294C7E17812BF1 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8CF84F59DAF36277A923CF3 /* SettingsView.swift */; };
 		2599E15EC556738138D16158 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E2839E6E122B09254AB7E515 /* Assets.xcassets */; };
 		2A8442649FE4B865F041A3C3 /* FeatureTourControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E31012D5FE194F87406D24E5 /* FeatureTourControllerTests.swift */; };
@@ -377,6 +378,7 @@
 		AF5EE898AF9C8846B82F6918 /* DensityAware.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DensityAware.swift; sourceTree = "<group>"; };
 		AF87E7A18DDA1BE176F0B8CE /* DisplayModeToggleRow.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DisplayModeToggleRow.swift; sourceTree = "<group>"; };
 		A1C5552DA1C2410D97DEDAB8 /* TatamiEligibilityRow.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TatamiEligibilityRow.swift; sourceTree = "<group>"; };
+		2296FB5D1E765D4336DB61FE /* LootBoxChallengeView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LootBoxChallengeView.swift; sourceTree = "<group>"; };
 		B04C74F735B5D471036C7A40 /* VocabularyDetailSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VocabularyDetailSheet.swift; sourceTree = "<group>"; };
 		B397E03A82EFF499E855C79D /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		B46DF69A2A765C203CB58B09 /* SessionLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionLiveActivity.swift; sourceTree = "<group>"; };
@@ -680,6 +682,7 @@
 		6A9F7504043CBF673DAB0FDF /* RPG */ = {
 			isa = PBXGroup;
 			children = (
+				2296FB5D1E765D4336DB61FE /* LootBoxChallengeView.swift */,
 			);
 			path = RPG;
 			sourceTree = "<group>";
@@ -1397,6 +1400,7 @@
 				B2A19C98B279E06BB89BFFB4 /* DensityAware.swift in Sources */,
 				205D80613A068A92C245B81A /* DisplayModeToggleRow.swift in Sources */,
 				4858E3B046D54B20A40347B8 /* TatamiEligibilityRow.swift in Sources */,
+				DF2785372E7EC932634DD2B0 /* LootBoxChallengeView.swift in Sources */,
 				FCCD64A5882BBE00824541F2 /* PagedLearningStack.swift in Sources */,
 				0A53BBFFB15FC953A5B00198 /* TatamiToggle.swift in Sources */,
 				02CD127A519AC0865600390C /* EtudeView.swift in Sources */,
