@@ -972,22 +972,6 @@
         }
       }
     },
-    "%@ / %@ correct" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$@ / %2$@ correct"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ / %@ corrects"
-          }
-        }
-      }
-    },
     "%@ / %@ XP" : {
       "localizations" : {
         "en" : {
@@ -1020,146 +1004,98 @@
         }
       }
     },
-    "%@ cards" : {
+    "%lld cards" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ cartes"
+            "value" : "%lld cartes"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ cards"
+            "value" : "%lld cards"
           }
         }
       }
     },
-    "%@ cards ready" : {
+    "%lld cards remaining" : {
       "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ cartes prêtes"
-          }
-        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ cards ready"
+            "value" : "%lld cards remaining"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld cartes restantes"
           }
         }
       }
     },
-    "%@ cards remaining" : {
+    "%lld exercises" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ cards remaining"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ cartes restantes"
+            "value" : "%lld exercices"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld exercises"
           }
         }
       }
     },
-    "%@ characters selected" : {
+    "%lld words" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ characters selected"
-          }
-        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ caractères sélectionnés"
+            "value" : "%lld mots"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld words"
           }
         }
       }
     },
-    "%@ correct · %@ missed" : {
+    "%lld words due for review" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$@ correct · %2$@ missed"
+            "state" : "translated",
+            "value" : "%lld words due for review"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ correct · %@ manqué"
+            "value" : "%lld mots à réviser"
           }
         }
       }
     },
-    "%@ exercises" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ exercices"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ exercises"
-          }
-        }
-      }
-    },
-    "%@ words" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ mots"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ words"
-          }
-        }
-      }
-    },
-    "%@ words due for review" : {
+    "%lld words ready for review" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ words due for review"
+            "value" : "%lld words ready for review"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ mots à réviser"
-          }
-        }
-      }
-    },
-    "%@ words ready for review" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ words ready for review"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ mots prêts à réviser"
+            "value" : "%lld mots prêts à réviser"
           }
         }
       }
@@ -1246,18 +1182,18 @@
         }
       }
     },
-    "%@/%@ correct" : {
+    "%lld/%lld correct" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "%1$@/%2$@ correct"
+            "value" : "%1$lld/%2$lld correct"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@/%@ corrects"
+            "value" : "%lld/%lld corrects"
           }
         }
       }
@@ -1278,34 +1214,34 @@
         }
       }
     },
-    "%@m" : {
+    "%lldm" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@m"
+            "value" : "%lldm"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@m"
+            "value" : "%lldm"
           }
         }
       }
     },
-    "%@s" : {
+    "%llds" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@s"
+            "value" : "%llds"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@s"
+            "value" : "%llds"
           }
         }
       }
@@ -1410,18 +1346,18 @@
         }
       }
     },
-    "~%@ min" : {
+    "~%lld min" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "~%@ min"
+            "value" : "~%lld min"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "~%@ min"
+            "value" : "~%lld min"
           }
         }
       }
@@ -4086,34 +4022,34 @@
         }
       }
     },
-    "Level %@" : {
+    "Level %lld" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Niveau %@"
+            "value" : "Niveau %lld"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Level %@"
+            "value" : "Level %lld"
           }
         }
       }
     },
-    "LEVEL %@" : {
+    "LEVEL %lld" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "NIVEAU %@"
+            "value" : "NIVEAU %lld"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "LEVEL %@"
+            "value" : "LEVEL %lld"
           }
         }
       }
@@ -5702,50 +5638,34 @@
         }
       }
     },
-    "Score %@ in %@s" : {
+    "Score %lld in %llds" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "Score %1$@ in %2$@s"
+            "value" : "Score %1$lld in %2$llds"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Score %@ en %@s"
+            "value" : "Score %lld en %llds"
           }
         }
       }
     },
-    "Score %@ to open" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Score %@ pour débloquer"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Score %@ to open"
-          }
-        }
-      }
-    },
-    "Score: %@/%@" : {
+    "Score: %lld/%lld" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "Score: %1$@/%2$@"
+            "value" : "Score: %1$lld/%2$lld"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Score : %@/%@"
+            "value" : "Score : %lld/%lld"
           }
         }
       }
@@ -5766,18 +5686,18 @@
         }
       }
     },
-    "Sentence %@" : {
+    "Sentence %lld" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Phrase %@"
+            "value" : "Phrase %lld"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sentence %@"
+            "value" : "Sentence %lld"
           }
         }
       }
@@ -6979,18 +6899,18 @@
         }
       }
     },
-    "Unlocks at Lv. %@" : {
+    "Unlocks at Lv. %lld" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Unlocks at Lv. %@"
+            "value" : "Unlocks at Lv. %lld"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Se débloque au niv. %@"
+            "value" : "Se débloque au niv. %lld"
           }
         }
       }
