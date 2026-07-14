@@ -185,19 +185,9 @@ struct ListeningViewModelTests {
         }
     }
 
-    // MARK: - Silent Mode Integration Tests
-
-    @Test("shouldSkipAudioExercises reflects AudioService state")
-    func shouldSkipReflectsAudioService() {
-        let audioService = AudioService()
-        let vm = ListeningViewModel(
-            audioService: audioService,
-            vocabulary: makeSampleVocabulary(),
-            passages: makeSamplePassages()
-        )
-
-        // This test just verifies the property is accessible and returns a Bool
-        let result = vm.shouldSkipAudioExercises
-        #expect(result is Bool)
-    }
+    // Silent Mode Integration Tests removed (remediation 7.9):
+    // `ListeningViewModel.shouldSkipAudioExercises` delegated to
+    // `AudioService.shouldSkipAudioExercises`, which detected
+    // `outputVolume == 0.0` — the volume slider, not the physical mute
+    // switch. Both properties were removed as an unreliable signal.
 }

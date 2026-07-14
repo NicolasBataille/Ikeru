@@ -11,6 +11,8 @@ struct DailyTermBanner: View {
     let yesterday: DailyTermDTO?
     var onTap: () -> Void
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     @State private var pulse = false
 
     var body: some View {
@@ -50,6 +52,9 @@ struct DailyTermBanner: View {
         .buttonStyle(.plain)
         .accessibilityHint("Opens today's new vocabulary term")
         .onAppear {
+            // Reduce Motion: skip the ambient pulse loop entirely — the banner
+            // reads fine at rest, nothing else depends on `pulse` toggling.
+            guard !reduceMotion else { return }
             withAnimation(.easeInOut(duration: 1.6).repeatForever(autoreverses: true)) {
                 pulse = true
             }

@@ -72,18 +72,12 @@ struct AudioServiceTests {
         #expect(service.isPlaying == false)
     }
 
-    // MARK: - Silent Mode Detection Tests
-
-    @Test("shouldSkipAudioExercises returns true when volume is zero")
-    @MainActor
-    func shouldSkipWhenVolumeZero() {
-        let service = AudioService()
-        // When outputVolume is 0.0, exercises should be skipped
-        // Note: We can't set the system volume in tests, but we verify the logic
-        // by checking that the property is accessible and returns a Bool
-        let result = service.shouldSkipAudioExercises
-        #expect(result is Bool)
-    }
+    // Silent Mode Detection Tests removed (remediation 7.9):
+    // `AudioService.isSilentMode`/`shouldSkipAudioExercises` detected
+    // `outputVolume == 0.0` — the volume slider, not the physical mute
+    // switch — and were never a reliable signal (TTS in `.playback` category
+    // ignores the mute switch anyway). The properties were removed; see the
+    // comment left in `AudioService.swift` where they used to live.
 }
 
 #endif

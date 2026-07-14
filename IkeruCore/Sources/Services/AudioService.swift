@@ -286,21 +286,15 @@ public final class AudioService {
         }
     }
 
-    // MARK: - Silent Mode Detection
-
-    /// Whether the system volume is effectively muted.
-    public var isSilentMode: Bool {
-        #if os(iOS) || os(watchOS)
-        AVAudioSession.sharedInstance().outputVolume == 0.0
-        #else
-        false
-        #endif
-    }
-
-    /// Whether audio exercises should be skipped due to silent mode.
-    public var shouldSkipAudioExercises: Bool {
-        isSilentMode
-    }
+    // Removed (remediation 7.9): `isSilentMode` / `shouldSkipAudioExercises`
+    // used to detect "silent mode" by checking `outputVolume == 0.0`. That's
+    // the volume slider, not the physical mute switch — the switch doesn't
+    // touch `outputVolume` at all — and playback here runs in `.playback`
+    // audio session category, which ignores the mute switch by design anyway.
+    // The old skip logic gave callers false confidence that audio would stay
+    // silent when it wouldn't. If real mute-switch-aware behavior is wanted
+    // later, build on `VolumeDetector`/`SystemVolumeDetector` (KVO-based,
+    // already implemented and tested) rather than resurrecting this check.
 
     // MARK: - Cleanup
 

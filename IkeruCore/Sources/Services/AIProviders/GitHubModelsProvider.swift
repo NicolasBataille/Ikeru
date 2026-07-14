@@ -8,6 +8,14 @@ import Foundation
 //
 // Get a free PAT: https://github.com/settings/personal-access-tokens
 // (No special scope required for the public Models inference endpoint.)
+//
+// Endpoint migrated from the legacy Azure bridge (models.inference.ai.azure.com)
+// to GitHub's native `models.github.ai` per current docs
+// (https://docs.github.com/en/rest/models/inference). The native endpoint also
+// requires model ids in `{publisher}/{model_name}` form, not the bare name the
+// Azure bridge accepted — updated the default accordingly
+// (verified against the live catalog: https://models.github.ai/catalog/models
+// lists it as `meta/llama-3.3-70b-instruct` — lowercase, publisher `meta`).
 
 public final class GitHubModelsProvider: AIProvider, @unchecked Sendable {
 
@@ -17,7 +25,7 @@ public final class GitHubModelsProvider: AIProvider, @unchecked Sendable {
     private let transport: OpenAICompatibleTransport
 
     public init(
-        model: String = "Llama-3.3-70B-Instruct",
+        model: String = "meta/llama-3.3-70b-instruct",
         keychainStore: any KeychainStore = KeychainHelper(),
         networkChecker: any NetworkChecker = NWPathNetworkChecker(),
         urlSession: any URLSessionProvider = URLSession.shared,
@@ -26,7 +34,7 @@ public final class GitHubModelsProvider: AIProvider, @unchecked Sendable {
         self.transport = OpenAICompatibleTransport(
             providerName: "GitHub Models",
             tier: .githubModels,
-            endpoint: URL(string: "https://models.inference.ai.azure.com/chat/completions")!,
+            endpoint: URL(string: "https://models.github.ai/inference/chat/completions")!,
             model: model,
             keychainKey: KeychainKeys.githubModelsAPIKey,
             keychainStore: keychainStore,

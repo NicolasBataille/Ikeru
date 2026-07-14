@@ -16,6 +16,8 @@ struct ShadowingExerciseView: View {
     /// the standalone `#Preview` still compiles.
     var onComplete: (Grade) -> Void = { _ in }
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     @State private var hapticRecord = false
     @State private var recordingPulse = false
 
@@ -241,18 +243,18 @@ struct ShadowingExerciseView: View {
 
     private var recordButton: some View {
         ZStack {
-            // Pulsing ring animation
+            // Pulsing ring animation (Reduce Motion: static ring, no pulse loop)
             if viewModel.isRecording {
                 Circle()
-                    .stroke(Color.ikeruSecondaryAccent.opacity(0.3), lineWidth: 3)
+                    .stroke(Color.ikeruSecondaryAccent.opacity(reduceMotion ? 0.6 : 0.3), lineWidth: 3)
                     .frame(width: 72, height: 72)
-                    .scaleEffect(recordingPulse ? 1.3 : 1.0)
-                    .opacity(recordingPulse ? 0.0 : 1.0)
+                    .scaleEffect(reduceMotion ? 1.0 : (recordingPulse ? 1.3 : 1.0))
+                    .opacity(reduceMotion ? 1.0 : (recordingPulse ? 0.0 : 1.0))
                     .animation(
-                        .easeInOut(duration: 1.0).repeatForever(autoreverses: false),
+                        reduceMotion ? nil : .easeInOut(duration: 1.0).repeatForever(autoreverses: false),
                         value: recordingPulse
                     )
-                    .onAppear { recordingPulse = true }
+                    .onAppear { if !reduceMotion { recordingPulse = true } }
                     .onDisappear { recordingPulse = false }
             }
 
@@ -376,7 +378,13 @@ private struct WaveformBar: View {
     let index: Int
     let isAnimating: Bool
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     @State private var height: CGFloat = 4
+
+    /// Reduce Motion: freeze at a fixed, per-bar height instead of animating —
+    /// still reads as a waveform glyph, just static.
+    private static let staticHeights: [CGFloat] = [10, 18, 24, 16, 12]
 
     var body: some View {
         Rectangle()
@@ -397,6 +405,10 @@ private struct WaveformBar: View {
     }
 
     private func startAnimation() {
+        guard !reduceMotion else {
+            height = Self.staticHeights[index % Self.staticHeights.count]
+            return
+        }
         let delay = Double(index) * 0.1
         withAnimation(
             .easeInOut(duration: 0.4)

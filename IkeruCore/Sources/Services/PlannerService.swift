@@ -186,7 +186,7 @@ public final class PlannerService: @unchecked Sendable {
         allCards: [CardDTO]
     ) -> [ExerciseItem] {
         // Determine which skills are available given context
-        let availableSkills = availableSkills(for: config)
+        let availableSkills = availableSkills()
 
         // Compute deficit-based weights for skill selection
         let currentBalances = config.currentSkillBalances.isEmpty
@@ -248,14 +248,15 @@ public final class PlannerService: @unchecked Sendable {
         return exercises.sorted { $0.skill.pedagogicalOrder < $1.skill.pedagogicalOrder }
     }
 
-    /// Returns the set of skills available given the session config.
-    /// Excludes audio-requiring skills in silent mode.
-    private func availableSkills(for config: SessionConfig) -> [SkillType] {
-        if config.isSilentMode {
-            Logger.planner.info("Silent mode: excluding listening and speaking exercises")
-            return SkillType.allCases.filter { !$0.requiresAudio }
-        }
-        return SkillType.allCases.map { $0 }
+    /// Returns the set of skills available for supplementary exercise selection.
+    ///
+    /// Used to exclude audio-requiring skills when `SessionConfig.isSilentMode`
+    /// was set (remediation 7.9: removed — it detected `outputVolume == 0.0`,
+    /// which is the volume slider, not the physical mute switch, and TTS
+    /// playback in `.playback` category ignores the mute switch anyway). All
+    /// skills are available unconditionally now.
+    private func availableSkills() -> [SkillType] {
+        SkillType.allCases.map { $0 }
     }
 
     /// Normalizes weights to only include the given skills, re-summing to 1.0.

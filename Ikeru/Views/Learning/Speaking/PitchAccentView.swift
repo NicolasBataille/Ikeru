@@ -19,6 +19,8 @@ struct PitchAccentView: View {
     /// The word reading (hiragana) for TTS playback.
     let reading: String
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     @State private var isRecording = false
     @State private var recordingPulse = false
     @State private var audioEngine: AVAudioEngine?
@@ -174,16 +176,18 @@ struct PitchAccentView: View {
     private var recordButton: some View {
         ZStack {
             if isRecording {
+                // Reduce Motion: a static ring around the mic still signals
+                // "recording" — no expanding/fading pulse loop.
                 Circle()
-                    .stroke(Color.ikeruSecondaryAccent.opacity(0.3), lineWidth: 3)
+                    .stroke(Color.ikeruSecondaryAccent.opacity(reduceMotion ? 0.6 : 0.3), lineWidth: 3)
                     .frame(width: 72, height: 72)
-                    .scaleEffect(recordingPulse ? 1.3 : 1.0)
-                    .opacity(recordingPulse ? 0.0 : 1.0)
+                    .scaleEffect(reduceMotion ? 1.0 : (recordingPulse ? 1.3 : 1.0))
+                    .opacity(reduceMotion ? 1.0 : (recordingPulse ? 0.0 : 1.0))
                     .animation(
-                        .easeInOut(duration: 1.0).repeatForever(autoreverses: false),
+                        reduceMotion ? nil : .easeInOut(duration: 1.0).repeatForever(autoreverses: false),
                         value: recordingPulse
                     )
-                    .onAppear { recordingPulse = true }
+                    .onAppear { if !reduceMotion { recordingPulse = true } }
                     .onDisappear { recordingPulse = false }
             }
 

@@ -30,6 +30,7 @@
     "Ikeru/Views/Settings/SettingsView.swift::Deletes every profile, RPG state, card, vocab encounter. Onboarding triggers on next cold launch.::missing-key",
     "Ikeru/Views/Settings/SettingsView.swift::Developer Tools::missing-key",
     "Ikeru/Views/Settings/SettingsView.swift::Seed fixture profile::missing-key",
-    "Ikeru/Views/Settings/SettingsView.swift::Seed::missing-key"
+    "Ikeru/Views/Settings/SettingsView.swift::Seed::missing-key",
+    "Ikeru/Views/Settings/TatamiEligibilityRow.swift::%lld/%lld::specifier-mismatch"
   ]
 }

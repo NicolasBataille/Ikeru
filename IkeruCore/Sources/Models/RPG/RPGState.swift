@@ -59,6 +59,14 @@ public final class RPGState {
     /// Highest daily streak reached, for posterity.
     public var longestDailyStreak: Int = 0
 
+    /// Lifetime count of distinct calendar days with at least one completed
+    /// session (not a streak — a gap doesn't reset it). Feeds the
+    /// `OR active days ≥ 30` path of `DisplayModeAdvancedThresholdMonitor`.
+    /// Existing rows decode as `0` (conservative: pre-existing profiles start
+    /// this count fresh rather than backfilling an approximation from
+    /// `totalSessionsCompleted`, which would overcount multi-session days).
+    public var activeDaysCount: Int = 0
+
     /// One-shot JLPT backfill schema version. `0` means the backfill has not
     /// run yet; `1` means it has completed. Existing rows decode as `0` so
     /// the boot-time backfill task fires once for migrating users. Mirrors

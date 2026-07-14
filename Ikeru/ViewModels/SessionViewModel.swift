@@ -1088,6 +1088,12 @@ public final class SessionViewModel {
         state.longestDailyStreak = bonus.newLongestStreak
         state.lastSessionDate = now
         state.totalSessionsCompleted += 1
+        // `isNewDay` is true on any calendar-day change vs. the last session,
+        // streak-continuity aside — exactly "a distinct active day". Feeds
+        // DisplayModeAdvancedThresholdMonitor's `OR active days ≥ 30` path.
+        if bonus.isNewDay {
+            state.activeDaysCount += 1
+        }
 
         do {
             try context.save()
