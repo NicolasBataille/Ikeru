@@ -87,6 +87,17 @@ struct SessionViewModelTests {
         try context.save()
     }
 
+    /// The XP `gradeAndAdvance` actually awards for `seedDueCards`' cards.
+    /// Those are `.kanji`-typed, which route to `.kanjiStudy` in
+    /// `ExerciseXP.rule(for:grade:)` (a +2 bonus over the flat
+    /// `RPGConstants.xpForGrade`), at the `.n5` multiplier (1.0x) new
+    /// profiles resolve to. Mirrors the production formula so the
+    /// assertion tracks *why* the number is what it is rather than
+    /// hardcoding a magic constant.
+    private func expectedXP(for grade: Grade) -> Int {
+        ExerciseXP.award(type: .kanjiStudy, level: .n5, grade: grade)
+    }
+
     private func seedDueCards(container: ModelContainer, count: Int) throws -> [UUID] {
         let context = container.mainContext
         let profile = try ensureProfile(container: container)
@@ -125,16 +136,20 @@ struct SessionViewModelTests {
         #expect(vm.xpEarned == 0)
     }
 
-    @Test("startSession with no cards results in empty queue")
+    @Test("startSession with no cards never activates the session")
     func startSessionEmptyQueue() async throws {
         let container = try makeContainer()
         let vm = makeViewModel(container: container)
 
         await vm.startSession()
 
-        #expect(vm.isActive == true)
+        // `startSession` guards against an empty composed plan so no
+        // timer / Live Activity spins up for a hollow session — it
+        // returns early with `isActive` left `false` rather than
+        // entering an active-but-already-complete state.
+        #expect(vm.isActive == false)
         #expect(vm.sessionQueue.isEmpty)
-        #expect(vm.isSessionComplete == true)
+        #expect(vm.isSessionComplete == false)
         #expect(vm.currentCard == nil)
     }
 
@@ -168,7 +183,7 @@ struct SessionViewModelTests {
         await vm.startSession()
         await vm.gradeAndAdvance(grade: .good)
 
-        #expect(vm.xpEarned == RPGConstants.xpForGrade(.good))
+        #expect(vm.xpEarned == expectedXP(for: .good))
     }
 
     @Test("gradeAndAdvance earns flat XP for easy grade")
@@ -182,7 +197,7 @@ struct SessionViewModelTests {
         await vm.startSession()
         await vm.gradeAndAdvance(grade: .easy)
 
-        #expect(vm.xpEarned == RPGConstants.xpForGrade(.easy))
+        #expect(vm.xpEarned == expectedXP(for: .easy))
     }
 
     @Test("gradeAndAdvance earns flat XP for hard grade")
@@ -196,7 +211,7 @@ struct SessionViewModelTests {
         await vm.startSession()
         await vm.gradeAndAdvance(grade: .hard)
 
-        #expect(vm.xpEarned == RPGConstants.xpForGrade(.hard))
+        #expect(vm.xpEarned == expectedXP(for: .hard))
     }
 
     @Test("gradeAndAdvance earns reduced XP for again grade")
@@ -210,7 +225,7 @@ struct SessionViewModelTests {
         await vm.startSession()
         await vm.gradeAndAdvance(grade: .again)
 
-        #expect(vm.xpEarned == RPGConstants.xpForGrade(.again))
+        #expect(vm.xpEarned == expectedXP(for: .again))
     }
 
     @Test("Session completes when all cards graded")
@@ -228,7 +243,7 @@ struct SessionViewModelTests {
         #expect(vm.isSessionComplete == true)
         #expect(vm.currentCard == nil)
         #expect(vm.reviewedCount == 2)
-        #expect(vm.xpEarned == 2 * RPGConstants.xpForGrade(.good))
+        #expect(vm.xpEarned == 2 * expectedXP(for: .good))
     }
 
     @Test("Session progress tracks correctly")
@@ -317,7 +332,7 @@ struct SessionViewModelTests {
 
         #expect(vm.isSessionComplete == true)
         #expect(vm.reviewedCount == 2) // Only 2 were actually reviewed
-        #expect(vm.xpEarned == 2 * RPGConstants.xpForGrade(.good))
+        #expect(vm.xpEarned == 2 * expectedXP(for: .good))
     }
 
     // MARK: - Dismiss Tests
@@ -385,7 +400,7 @@ struct SessionViewModelTests {
         #expect(vm.totalXP == 0)
 
         await vm.gradeAndAdvance(grade: .good)
-        #expect(vm.totalXP == RPGConstants.xpForGrade(.good))
+        #expect(vm.totalXP == expectedXP(for: .good))
     }
 
     @Test("gradeAndAdvance persists RPG state to SwiftData")
@@ -403,7 +418,7 @@ struct SessionViewModelTests {
         let descriptor = FetchDescriptor<RPGState>()
         let states = try container.mainContext.fetch(descriptor)
         #expect(states.count == 1)
-        #expect(states.first?.xp == RPGConstants.xpForGrade(.good))
+        #expect(states.first?.xp == expectedXP(for: .good))
     }
 
     @Test("startSession creates RPGState if none exists")
@@ -435,9 +450,9 @@ struct SessionViewModelTests {
         await vm.gradeAndAdvance(grade: .hard)
         await vm.gradeAndAdvance(grade: .again)
 
-        let expected = RPGConstants.xpForGrade(.good)
-            + RPGConstants.xpForGrade(.hard)
-            + RPGConstants.xpForGrade(.again)
+        let expected = expectedXP(for: .good)
+            + expectedXP(for: .hard)
+            + expectedXP(for: .again)
         #expect(vm.xpEarned == expected)
         #expect(vm.totalXP == expected)
     }
