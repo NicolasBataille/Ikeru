@@ -61,7 +61,7 @@ struct SessionProgressBar: View {
         }
         .frame(height: 6)
         .padding(.vertical, 4)
-        .overlay(alignment: .top)    { FusumaRail(opacity: 0.6) }
+        .overlay(alignment: .top) { FusumaRail(opacity: 0.6) }
         .overlay(alignment: .bottom) { FusumaRail(opacity: 0.6, inverted: true) }
     }
 

@@ -424,19 +424,21 @@ private extension LootBox.ChallengeType {
 #Preview("LootBoxChallengeView") {
     let schema = Schema([UserProfile.self, Card.self, ReviewLog.self, RPGState.self])
     let config = ModelConfiguration(isStoredInMemoryOnly: true)
-    let container = try! ModelContainer(for: schema, configurations: [config])
-    let repo = CardRepository(modelContainer: container)
 
-    LootBoxChallengeView(
-        lootBox: LootBox(
-            challengeType: .kanjiSpeed,
-            requiredScore: 5,
-            rewards: [
-                LootItem(category: .badge, rarity: .epic, name: "Dragon Scale", iconName: "shield.lefthalf.filled"),
-                LootItem(category: .scroll, rarity: .rare, name: "Proverb Scroll", iconName: "scroll.fill"),
-            ]
-        ),
-        cardRepository: repo
-    )
-    .preferredColorScheme(.dark)
+    if let container = try? ModelContainer(for: schema, configurations: [config]) {
+        LootBoxChallengeView(
+            lootBox: LootBox(
+                challengeType: .kanjiSpeed,
+                requiredScore: 5,
+                rewards: [
+                    LootItem(category: .badge, rarity: .epic, name: "Dragon Scale", iconName: "shield.lefthalf.filled"),
+                    LootItem(category: .scroll, rarity: .rare, name: "Proverb Scroll", iconName: "scroll.fill"),
+                ]
+            ),
+            cardRepository: CardRepository(modelContainer: container)
+        )
+        .preferredColorScheme(.dark)
+    } else {
+        Text(verbatim: "Preview container unavailable")
+    }
 }
