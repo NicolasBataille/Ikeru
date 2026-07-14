@@ -34,6 +34,10 @@ struct AttributionView: View {
             Text("Ikeru is made possible by these open-source resources.")
                 .font(.ikeruBody)
                 .foregroundStyle(.ikeruTextSecondary)
+
+            Text("Vocabulary, kanji readings, grammar notes, and example sentences are original content written for Ikeru.")
+                .font(.ikeruCaption)
+                .foregroundStyle(.ikeruTextSecondary)
         }
     }
 
@@ -42,13 +46,13 @@ struct AttributionView: View {
     private func attributionCard(_ item: Attribution) -> some View {
         VStack(alignment: .leading, spacing: IkeruTheme.Spacing.sm) {
             HStack {
-                Text(item.name)
+                Text(verbatim: item.name)
                     .font(.ikeruHeading3)
                     .foregroundStyle(.white)
 
                 Spacer()
 
-                Text(item.license)
+                Text(verbatim: item.license)
                     .font(.ikeruCaption)
                     .foregroundStyle(Color.ikeruPrimaryAccent)
                     .padding(.horizontal, IkeruTheme.Spacing.sm)
@@ -58,7 +62,7 @@ struct AttributionView: View {
                     .sumiCorners(color: TatamiTokens.goldDim, size: 4, weight: 0.9)
             }
 
-            Text(item.author)
+            Text(verbatim: item.author)
                 .font(.ikeruStats)
                 .foregroundStyle(.ikeruTextSecondary)
 
@@ -77,8 +81,19 @@ struct Attribution: Identifiable {
     let name: String
     let author: String
     let license: String
-    let description: String
+    /// Typed as `LocalizedStringKey` (not `String`) so the literals below
+    /// resolve against the string catalog when rendered via `Text(_:)`
+    /// instead of falling into the verbatim initializer — see CLAUDE.md.
+    let description: LocalizedStringKey
 
+    /// Resources actually used by the shipped content bundle and app.
+    ///
+    /// Kept intentionally short: kanji readings/meanings/radicals,
+    /// vocabulary, and example sentences are hand-authored for Ikeru
+    /// (see `scripts/generate-content-bundle.swift`) rather than imported
+    /// from JMdict, KANJIDIC/RADKFILE, or the Tatoeba corpus, so those are
+    /// not credited here.
+    @MainActor
     static let all: [Attribution] = [
         Attribution(
             id: "kanjivg",
@@ -88,25 +103,11 @@ struct Attribution: Identifiable {
             description: "Stroke order data for kanji characters. Provides the vector paths used in stroke order animations and tracing exercises."
         ),
         Attribution(
-            id: "tatoeba",
-            name: "Tatoeba",
-            author: "Tatoeba Contributors",
-            license: "CC BY 2.0",
-            description: "Example sentences used in grammar exercises and sentence construction practice. A collaborative database of multilingual sentences."
-        ),
-        Attribution(
-            id: "kanjidic",
-            name: "KANJIDIC / RADKFILE",
-            author: "Electronic Dictionary Research and Development Group (EDRDG), Jim Breen",
-            license: "CC BY-SA 4.0",
-            description: "Kanji readings, meanings, and radical decomposition data. Powers the kanji knowledge graph and radical-based learning."
-        ),
-        Attribution(
-            id: "jmdict",
-            name: "JMdict",
-            author: "Electronic Dictionary Research and Development Group (EDRDG), Jim Breen",
-            license: "CC BY-SA 4.0",
-            description: "Japanese-English dictionary data used for vocabulary entries and definitions."
+            id: "noto-serif-jp",
+            name: "Noto Serif JP",
+            author: "Google Fonts",
+            license: "SIL OFL 1.1",
+            description: "Japanese serif typeface bundled with the app, used to render kanji and Japanese text on every device."
         ),
         Attribution(
             id: "voicevox",

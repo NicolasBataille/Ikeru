@@ -1,5 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Rationale (kept in sync with docs/privacy.html — see item 1.3 of the
+  2026-07-08 remediation plan):
+
+  - Companion chat messages (CompanionChatMessage, via CompanionChatRepository)
+    are persisted locally on-device via SwiftData. That local storage alone is
+    not third-party data collection.
+  - If — and only if — the user configures their own API key for an AI
+    provider (Gemini, Groq, Cerebras, OpenRouter, GitHub Models, or Claude;
+    see AIRouterService), the text of the conversation or mnemonic request is
+    sent to that provider to generate a response. This is opt-in: with no key
+    configured, nothing is sent anywhere. Declared below as
+    NSPrivacyCollectedDataTypeOtherUserContent, not linked to identity and not
+    used for tracking, collected only for the app's own functionality.
+  - NSPrivacyAccessedAPITypes below covers UserDefaults access (reason
+    CA92.1: reading/writing app settings). Network requests to AI providers
+    are ordinary URLSession calls and are not part of Apple's Required
+    Reason API categories, so no additional entry is needed there.
+-->
 <plist version="1.0">
 <dict>
 	<key>NSPrivacyTracking</key>
@@ -7,7 +26,20 @@
 	<key>NSPrivacyTrackingDomains</key>
 	<array/>
 	<key>NSPrivacyCollectedDataTypes</key>
-	<array/>
+	<array>
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypeOtherUserContent</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+			</array>
+		</dict>
+	</array>
 	<key>NSPrivacyAccessedAPITypes</key>
 	<array>
 		<dict>
