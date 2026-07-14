@@ -20,7 +20,7 @@ struct AIRouterServiceTests {
             onDeviceProvider: onDevice ?? MockFoundationModelsProvider(available: true, responseContent: "on-device response"),
             geminiProvider: gemini ?? makeConfigurableMock(tier: .gemini, content: "gemini response"),
             claudeProvider: claude ?? makeConfigurableMock(tier: .claude, content: "claude response"),
-            localGPUProvider: localGPU ?? makeConfigurableMock(tier: .localGPU, content: "localGPU response"),
+            localGPUProvider: localGPU ?? makeConfigurableMock(tier: .localGPU, content: "localGPU response", available: false),
             networkChecker: networkChecker
         )
     }
