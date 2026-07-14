@@ -148,7 +148,19 @@ struct SessionIntegrationTests {
         )
 
         let planner = PlannerService(cardRepository: repo)
-        let vm = SessionViewModel(plannerService: planner, cardRepository: repo, modelContainer: container)
+        // Inject a planner that returns exactly the seeded cards as SRS
+        // reviews. With the real `DefaultSessionPlanner`'s 40/30/20/10
+        // budget composition, the interleaved review segment for 5
+        // brand-new cards can be much shorter than 5 — this test needs a
+        // queue deep enough to grade three cards across the pause/resume
+        // boundary, independent of that budget shape.
+        let mockPlanner = await plannerWithSeededCards(repo: repo)
+        let vm = SessionViewModel(
+            plannerService: planner,
+            cardRepository: repo,
+            modelContainer: container,
+            sessionPlanner: mockPlanner
+        )
 
         await vm.startSession()
 
@@ -179,18 +191,21 @@ struct SessionIntegrationTests {
         #expect(vm.reviewedCount == reviewedBeforePause + 1)
     }
 
-    @Test("Empty queue shows All caught up state")
+    @Test("Empty queue never activates the session")
     func emptyQueueAllCaughtUp() async throws {
         let container = try makeContainer()
         let repo = CardRepository(modelContainer: container)
         let planner = PlannerService(cardRepository: repo)
         let vm = SessionViewModel(plannerService: planner, cardRepository: repo, modelContainer: container)
 
-        // Start session with no cards
+        // Start session with no cards. `startSession` guards against an
+        // empty composed plan so no timer / Live Activity spins up for a
+        // hollow session — it returns early with `isActive` left `false`
+        // rather than entering an active-but-already-complete state.
         await vm.startSession()
 
-        #expect(vm.isActive == true)
-        #expect(vm.isSessionComplete == true)
+        #expect(vm.isActive == false)
+        #expect(vm.isSessionComplete == false)
         #expect(vm.sessionQueue.isEmpty)
         #expect(vm.currentCard == nil)
         #expect(vm.reviewedCount == 0)
@@ -279,10 +294,14 @@ struct SessionIntegrationTests {
         await vm.gradeAndAdvance(grade: .hard)
         await vm.gradeAndAdvance(grade: .again)
 
-        let expected = RPGConstants.xpForGrade(.easy)
-            + RPGConstants.xpForGrade(.good)
-            + RPGConstants.xpForGrade(.hard)
-            + RPGConstants.xpForGrade(.again)
+        // Cards are `.kanji`-typed, which route to `.kanjiStudy` in
+        // `ExerciseXP.rule(for:grade:)` (+2 bonus over the flat
+        // `RPGConstants.xpForGrade`), at the `.n5` multiplier (1.0x) a
+        // brand-new profile resolves to.
+        let expected = ExerciseXP.award(type: .kanjiStudy, level: .n5, grade: .easy)
+            + ExerciseXP.award(type: .kanjiStudy, level: .n5, grade: .good)
+            + ExerciseXP.award(type: .kanjiStudy, level: .n5, grade: .hard)
+            + ExerciseXP.award(type: .kanjiStudy, level: .n5, grade: .again)
         #expect(vm.xpEarned == expected)
         #expect(vm.reviewedCount == 4)
     }
@@ -313,7 +332,7 @@ struct SessionIntegrationTests {
 
     // MARK: - Planner Input Ordering
 
-    @Test("startSession passes the card pool due-sorted to the planner")
+    @Test("startSession passes the full card pool to the planner, overdue and not-yet-due alike")
     func plannerReceivesDueSortedCards() async throws {
         let container = try makeContainer()
         let context = container.mainContext
@@ -345,11 +364,19 @@ struct SessionIntegrationTests {
 
         await vm.startSession()
 
+        // `SessionViewModel` no longer pre-sorts the pool before invoking the
+        // planner — that was a redundant "double sort" dropped when the
+        // review-wave sort moved (and stayed) inside
+        // `DefaultSessionPlanner.pickReviews`, which is due-sort-order-agnostic
+        // on its input (see `DefaultSessionPlannerTests`'s "Review wave drills
+        // most-overdue cards first, whatever the input order"). What
+        // `SessionViewModel` must still guarantee is that the *entire* pool —
+        // overdue, not-yet-due, all of it — reaches the planner unfiltered, so
+        // segments like new-content/booster/variety (which draw from
+        // not-yet-due or unseen cards) have the full set to choose from.
         #expect(recorder.capturedCards.count == 3)
-        let dueDates = recorder.capturedCards.map(\.dueDate)
-        #expect(dueDates == dueDates.sorted())
-        // Overdue first, not-yet-due last.
-        #expect(recorder.capturedCards.last?.front == "Card 0")
+        let capturedFronts = Set(recorder.capturedCards.map(\.front))
+        #expect(capturedFronts == Set(["Card 0", "Card 1", "Card 2"]))
     }
 
     // MARK: - Mistake Tracking & Same-Day Re-Queue
