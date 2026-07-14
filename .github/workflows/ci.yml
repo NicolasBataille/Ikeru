@@ -44,6 +44,21 @@ jobs:
         # unwraps, hard violations) still fail the job.
         run: swiftlint lint --reporter github-actions-logging
 
+  i18n-lint:
+    name: i18n Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run i18n lint
+        # Reconstructs the LocalizedStringKey SwiftUI generates for every
+        # Text(...) call site in the app target and checks it against
+        # Localizable.xcstrings (missing key, missing FR, or a %lld/%@
+        # specifier mismatch — see scripts/i18n-lint.py). Only fails on
+        # violations not already captured in the baseline, so today's
+        # backlog stays green and only *new* leaks block CI.
+        run: python3 scripts/i18n-lint.py --baseline scripts/i18n-lint-baseline.json
+
   build:
     name: Build (${{ matrix.scheme }})
     runs-on: macos-15
@@ -199,7 +214,7 @@ jobs:
   deploy-testflight:
     name: Deploy to TestFlight
     runs-on: macos-15
-    needs: [lint, build, test, device-build-check]
+    needs: [lint, build, test, device-build-check, i18n-lint]
     # Deploys on every push to master, or on a manual workflow_dispatch run
     # with the `deploy_testflight` input checked (re-trigger a deploy
     # without an empty commit). Dispatch deploys are pinned to master so a
