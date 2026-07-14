@@ -38,7 +38,7 @@ public final class CardSaveErrorMonitor {
     /// The most recent save failure, or `nil` if none has occurred.
     public private(set) var lastSaveError: CardRepositorySaveError? = nil
 
-    public nonisolated init() {}
+    nonisolated public init() {}
 
     /// Record a persistence failure. Internal — only `CardRepository` writes.
     func record(_ error: CardRepositorySaveError) {
@@ -169,9 +169,9 @@ public final class CardRepository: Sendable {
     }
 
     /// Fetch cards due before the given date, sorted by `dueDate` ascending
-    /// (most overdue first). Sorting is done in memory for now; moving the
-    /// filter + sort into a `#Predicate`-based `FetchDescriptor` with a
-    /// `SortDescriptor` is future work (see remediation plan item 8.3).
+    /// (most overdue first). Filtering and sorting both happen in the store
+    /// via a `#Predicate`-based `FetchDescriptor` with a `SortDescriptor`
+    /// (see remediation plan item 8.3).
     public func dueCardsSortedByDueDate(before date: Date) async -> [CardDTO] {
         await backgroundActor.dueCardsSortedByDueDate(before: date)
     }
@@ -462,31 +462,64 @@ actor CardModelActor {
         try modelContext.save()
     }
 
+    /// Due cards for the active profile, filtered in the store via a
+    /// `#Predicate`-based `FetchDescriptor` (see remediation plan item 8.3).
+    /// Scoping matches `activeProfileCards()`: cards whose `profile` relates
+    /// to the resolved active profile — orphans (`profile == nil`) are
+    /// excluded unless already migrated by `attachOrphanCards`. Reads the
+    /// UserDefaults-backed active profile id once per call (via
+    /// `fetchActiveProfile()`), not once per card.
     func dueCards(before date: Date) -> [CardDTO] {
-        activeProfileCards()
-            .filter { $0.dueDate < date }
-            .map { $0.toDTO() }
+        guard let profileID = fetchActiveProfile()?.id else { return [] }
+        let predicate = #Predicate<Card> {
+            $0.profile?.id == profileID && $0.dueDate < date
+        }
+        let descriptor = FetchDescriptor(predicate: predicate)
+        let results = (try? modelContext.fetch(descriptor)) ?? []
+        return results.map { $0.toDTO() }
     }
 
-    /// Due cards sorted by dueDate ascending (most overdue first).
-    /// In-memory sort for now — future work: `#Predicate` + `SortDescriptor`
-    /// FetchDescriptor so filtering/sorting happen in the store.
+    /// Due cards sorted by dueDate ascending (most overdue first). Filtering
+    /// and sorting both happen in the store via a `#Predicate` +
+    /// `SortDescriptor` `FetchDescriptor` (see remediation plan item 8.3).
     func dueCardsSortedByDueDate(before date: Date) -> [CardDTO] {
-        dueCards(before: date)
-            .sorted { $0.dueDate < $1.dueDate }
+        guard let profileID = fetchActiveProfile()?.id else { return [] }
+        let predicate = #Predicate<Card> {
+            $0.profile?.id == profileID && $0.dueDate < date
+        }
+        let descriptor = FetchDescriptor<Card>(
+            predicate: predicate,
+            sortBy: [SortDescriptor(\.dueDate, order: .forward)]
+        )
+        let results = (try? modelContext.fetch(descriptor)) ?? []
+        return results.map { $0.toDTO() }
     }
 
+    /// Leech-flagged cards for the active profile, filtered in the store
+    /// (see remediation plan item 8.3). Same profile-scoping semantics as
+    /// `dueCards(before:)`.
     func leechCards() -> [CardDTO] {
-        activeProfileCards()
-            .filter { $0.leechFlag }
-            .map { $0.toDTO() }
+        guard let profileID = fetchActiveProfile()?.id else { return [] }
+        let predicate = #Predicate<Card> {
+            $0.profile?.id == profileID && $0.leechFlag
+        }
+        let descriptor = FetchDescriptor(predicate: predicate)
+        let results = (try? modelContext.fetch(descriptor)) ?? []
+        return results.map { $0.toDTO() }
     }
 
+    /// Cards of the given type for the active profile, filtered in the
+    /// store (see remediation plan item 8.3). Same profile-scoping
+    /// semantics as `dueCards(before:)`.
     func cards(byType type: CardType) -> [CardDTO] {
+        guard let profileID = fetchActiveProfile()?.id else { return [] }
         let raw = type.rawValue
-        return activeProfileCards()
-            .filter { $0.typeRawValue == raw }
-            .map { $0.toDTO() }
+        let predicate = #Predicate<Card> {
+            $0.profile?.id == profileID && $0.typeRawValue == raw
+        }
+        let descriptor = FetchDescriptor(predicate: predicate)
+        let results = (try? modelContext.fetch(descriptor)) ?? []
+        return results.map { $0.toDTO() }
     }
 
     func gradeCard(

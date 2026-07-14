@@ -396,3 +396,122 @@ struct CardRepositoryTests {
         #expect(monitor.lastSaveError == nil)
     }
 }
+
+// MARK: - Multi-Profile Scoping (remediation item 8.3)
+
+/// Verifies `dueCards(before:)`, `dueCardsSortedByDueDate(before:)`,
+/// `leechCards()` and `cards(byType:)` stay scoped to exactly the resolved
+/// active profile — excluding both the *other* profile's cards and orphan
+/// cards (`profile == nil`) — after item 8.3 swapped their in-memory
+/// fetch-all-then-filter implementation for `#Predicate`-based
+/// `FetchDescriptor`s.
+///
+/// Deliberately does NOT write `UserProfile.activeProfileIDDefaultsKey`:
+/// that's a process-global UserDefaults key also mutated (under its own
+/// `.serialized` suite) by `ExerciseOutcomeLogAggregationTests`, and two
+/// `.serialized` suites don't serialize against *each other* — writing it
+/// here raced with that suite under the parallel test runner. Instead, each
+/// scenario gets its own in-memory container with exactly two profiles and
+/// controls which one resolves active via `fetchActiveProfile()`'s
+/// documented fallback (oldest `createdAt` wins when no key is set) —
+/// same no-UserDefaults-writes rationale as `seedActiveProfile` above.
+@Suite("CardRepository — multi-profile scoping")
+struct CardRepositoryMultiProfileScopingTests {
+
+    private func makeTestContainer() throws -> ModelContainer {
+        let schema = Schema([UserProfile.self, Card.self, ReviewLog.self, RPGState.self])
+        let config = ModelConfiguration(isStoredInMemoryOnly: true)
+        return try ModelContainer(for: schema, configurations: [config])
+    }
+
+    /// Seeds a store with two profiles — `olderName` is created with the
+    /// earlier `createdAt` so it resolves as the active profile via the
+    /// oldest-profile fallback — plus cards for both and one orphan card,
+    /// then returns a repository over that store.
+    ///
+    /// Fixture per profile: a due+leech kanji card and a not-due vocabulary
+    /// card for the older (active) profile; a due (non-leech) kanji card
+    /// for the newer (other) profile; a due+leech kanji orphan card
+    /// (`profile == nil`) that must never surface for either profile.
+    @MainActor
+    private func seedTwoProfileStore(
+        olderName: String,
+        newerName: String
+    ) throws -> CardRepository {
+        let container = try makeTestContainer()
+        let context = container.mainContext
+
+        let older = UserProfile(displayName: olderName)
+        older.createdAt = Date(timeIntervalSince1970: 0)
+        let newer = UserProfile(displayName: newerName)
+        newer.createdAt = Date(timeIntervalSince1970: 3600)
+        context.insert(older)
+        context.insert(newer)
+
+        let now = Date()
+        let yesterday = now.addingTimeInterval(-86400)
+        let tomorrow = now.addingTimeInterval(86400)
+
+        let olderDueLeech = Card(front: "\(olderName)-due-leech", back: "1", type: .kanji, dueDate: yesterday, leechFlag: true)
+        olderDueLeech.profile = older
+        let olderNotDue = Card(front: "\(olderName)-not-due", back: "2", type: .vocabulary, dueDate: tomorrow)
+        olderNotDue.profile = older
+
+        let newerDue = Card(front: "\(newerName)-due", back: "3", type: .kanji, dueDate: yesterday)
+        newerDue.profile = newer
+
+        // Orphan: due + leech + kanji — must never surface for either
+        // profile (matches pre-8.3 `activeProfileCards()` behavior, which
+        // only traverses `profile.cards`).
+        let orphan = Card(front: "Orphan-due-leech", back: "4", type: .kanji, dueDate: yesterday, leechFlag: true)
+
+        context.insert(olderDueLeech)
+        context.insert(olderNotDue)
+        context.insert(newerDue)
+        context.insert(orphan)
+        try context.save()
+
+        return CardRepository(modelContainer: container)
+    }
+
+    @Test("dueCards/leechCards/cards(byType:) return only the resolved-active (oldest) profile's cards, excluding the other profile's and orphans")
+    func queriesScopedToOldestResolvedProfile() async throws {
+        let repository = try await seedTwoProfileStore(olderName: "Active", newerName: "Other")
+        let now = Date()
+
+        let due = await repository.dueCards(before: now)
+        #expect(due.map(\.front) == ["Active-due-leech"])
+
+        let sorted = await repository.dueCardsSortedByDueDate(before: now)
+        #expect(sorted.map(\.front) == ["Active-due-leech"])
+
+        let leeches = await repository.leechCards()
+        #expect(leeches.map(\.front) == ["Active-due-leech"])
+
+        let kanji = await repository.cards(byType: .kanji)
+        #expect(kanji.map(\.front) == ["Active-due-leech"])
+
+        let vocab = await repository.cards(byType: .vocabulary)
+        #expect(vocab.map(\.front) == ["Active-not-due"])
+    }
+
+    @Test("Swapping which profile is oldest flips which profile's cards the same queries return — proves scoping follows the resolved active profile, not a hardcoded one")
+    func queriesFollowWhicheverProfileResolvesActive() async throws {
+        // Same fixture as above, but this time "Other" is the older
+        // (hence resolved-active) profile.
+        let repository = try await seedTwoProfileStore(olderName: "Other", newerName: "Active")
+        let now = Date()
+
+        let due = await repository.dueCards(before: now)
+        #expect(due.map(\.front) == ["Other-due-leech"])
+
+        let leeches = await repository.leechCards()
+        #expect(leeches.map(\.front) == ["Other-due-leech"])
+
+        let kanji = await repository.cards(byType: .kanji)
+        #expect(kanji.map(\.front) == ["Other-due-leech"])
+
+        let vocab = await repository.cards(byType: .vocabulary)
+        #expect(vocab.map(\.front) == ["Other-not-due"])
+    }
+}
