@@ -203,7 +203,9 @@ struct SettingsView: View {
             Text("Removes every cached audio file and image. Assets will be regenerated on next use.")
         }
         .task {
-            await backupManager.checkLastBackup()
+            if CloudBackupManager.iCloudEnabled {
+                await backupManager.checkLastBackup()
+            }
             cacheStats = assetCache?.stats()
             if let cache = assetCache {
                 cacheQuotaMB = Double(cache.configuration.quotaBytes) / 1_048_576.0
@@ -385,22 +387,24 @@ struct SettingsView: View {
                 showNewProfile = true
             }
 
-            settingRow(
-                jp: "バックアップ",
-                label: "iCloud sync",
-                value: localizedString(iCloudStatusValue)
-            ) {
-                Task {
-                    await backupManager.backup(modelContainer: modelContext.container)
+            if CloudBackupManager.iCloudEnabled {
+                settingRow(
+                    jp: "バックアップ",
+                    label: "iCloud sync",
+                    value: localizedString(iCloudStatusValue)
+                ) {
+                    Task {
+                        await backupManager.backup(modelContainer: modelContext.container)
+                    }
                 }
-            }
 
-            settingRow(
-                jp: "復元",
-                label: "Restore from iCloud",
-                value: ""
-            ) {
-                showRestoreConfirmation = true
+                settingRow(
+                    jp: "復元",
+                    label: "Restore from iCloud",
+                    value: ""
+                ) {
+                    showRestoreConfirmation = true
+                }
             }
 
             settingRow(

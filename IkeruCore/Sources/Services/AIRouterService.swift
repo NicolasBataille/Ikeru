@@ -128,7 +128,7 @@ public final class AIRouterService {
     /// - Returns: The AI response from whichever tier successfully served it.
     /// - Throws: AIError if all providers are exhausted.
     public func generate(prompt: AIPrompt) async throws -> AIResponse {
-        let chain = buildFallbackChain(for: prompt.complexity)
+        let chain = await buildFallbackChain(for: prompt.complexity)
 
         let tierNames = chain.map { $0.name }.joined(separator: " -> ")
         Logger.ai.info("AI request: complexity=\(String(describing: prompt.complexity)), chain=\(tierNames)")
@@ -285,6 +285,15 @@ public final class AIRouterService {
         }
     }
 
+    /// Starts Bonjour discovery for the `.localGPU` tier, so a rig on the local
+    /// network (RTX 5090 bridge) is picked up in time for the next `.medium`
+    /// request to prepend it. Safe no-op when no `.localGPU` provider is
+    /// registered, or when it isn't a `LocalGPUProvider` (e.g. test fixtures).
+    public func startLocalGPUDiscovery() {
+        guard let localGPU = providers[.localGPU] as? LocalGPUProvider else { return }
+        localGPU.startDiscovery()
+    }
+
     // MARK: - Tier Selection
 
     /// Resolve a tier order to concrete providers, dropping any that aren't installed.
@@ -299,7 +308,7 @@ public final class AIRouterService {
 
     /// Build the fallback chain based on complexity and network state.
     /// The chain starts with the ideal provider and ends with FoundationModels.
-    private func buildFallbackChain(for complexity: PromptComplexity) -> [any AIProvider] {
+    private func buildFallbackChain(for complexity: PromptComplexity) async -> [any AIProvider] {
         // Offline: only on-device
         guard networkChecker.isOnline else {
             return providers[.onDevice].map { [$0] } ?? []
@@ -314,7 +323,17 @@ public final class AIRouterService {
 
         case .medium:
             // Balance latency and quality. Cerebras first, broaden out before falling back.
-            return resolve([.cerebras, .groq, .openRouter, .gemini, .githubModels])
+            var order: [AITier] = [.cerebras, .groq, .openRouter, .gemini, .githubModels]
+
+            // If a rig is discovered on the local network (RTX 5090 bridge via
+            // Bonjour), prefer it ahead of the cloud tiers — lowest latency and
+            // free. When no rig is discovered (the common case) this check is a
+            // no-op and the chain is byte-identical to the pre-existing order.
+            if let localGPU = providers[.localGPU], await localGPU.isAvailable {
+                order = [.localGPU] + order
+            }
+
+            return resolve(order)
 
         case .complex:
             // Quality wins. OpenRouter (Llama 70B free) and Gemini Pro-class first.

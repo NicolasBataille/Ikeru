@@ -164,6 +164,8 @@ public final class NWBonjourDiscovery: BonjourDiscovery, @unchecked Sendable {
 public final class MockBonjourDiscovery: BonjourDiscovery, @unchecked Sendable {
 
     private var _endpoint: BonjourEndpoint?
+    private var _startBrowsingCallCount = 0
+    private var _stopBrowsingCallCount = 0
     private let lock = NSLock()
 
     public var discoveredEndpoint: BonjourEndpoint? {
@@ -172,12 +174,37 @@ public final class MockBonjourDiscovery: BonjourDiscovery, @unchecked Sendable {
         return _endpoint
     }
 
+    /// Number of times `startBrowsing()` was invoked. Lets tests assert that
+    /// discovery was actually kicked off (e.g. from `AIRouterService.startLocalGPUDiscovery()`)
+    /// without needing a real Bonjour browser.
+    public var startBrowsingCallCount: Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return _startBrowsingCallCount
+    }
+
+    /// Number of times `stopBrowsing()` was invoked.
+    public var stopBrowsingCallCount: Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return _stopBrowsingCallCount
+    }
+
     public init(endpoint: BonjourEndpoint?) {
         self._endpoint = endpoint
     }
 
-    public func startBrowsing() {}
-    public func stopBrowsing() {}
+    public func startBrowsing() {
+        lock.lock()
+        _startBrowsingCallCount += 1
+        lock.unlock()
+    }
+
+    public func stopBrowsing() {
+        lock.lock()
+        _stopBrowsingCallCount += 1
+        lock.unlock()
+    }
 
     /// Update the mock endpoint (for testing discovery changes).
     public func setEndpoint(_ endpoint: BonjourEndpoint?) {

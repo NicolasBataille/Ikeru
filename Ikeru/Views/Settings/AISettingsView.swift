@@ -134,6 +134,7 @@ struct AISettingsView: View {
         .task {
             loadExistingConfiguration()
             localGPUStatus = .searching
+            aiRouterService?.startLocalGPUDiscovery()
             await checkProviderStatuses()
             if rigViewModel == nil, let cache = assetCache {
                 rigViewModel = RigSettingsViewModel(cache: cache)
