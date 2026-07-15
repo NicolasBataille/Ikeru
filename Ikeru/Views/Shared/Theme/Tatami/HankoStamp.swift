@@ -11,6 +11,11 @@ struct HankoStamp: View {
     let kanji: String
     var size: CGFloat = 32
     var opacity: Double = 0.95
+    /// Set when the seal is pure ornament at this call site — its meaning
+    /// already carried by adjacent text (e.g. a subtitle right below it).
+    /// Hides it from VoiceOver instead of reading the raw kanji, which would
+    /// otherwise be announced untranslated.
+    var isDecorative: Bool = false
 
     var body: some View {
         ZStack {
@@ -31,6 +36,7 @@ struct HankoStamp: View {
         .frame(width: size, height: size)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityLabelText)
+        .accessibilityHidden(isDecorative)
     }
 
     /// VoiceOver label for the seal. The two semantic kanji used across the
@@ -52,14 +58,14 @@ struct HankoStamp: View {
 private struct HankoMaskShape: Shape {
     func path(in rect: CGRect) -> Path {
         let w = rect.width, h = rect.height
-        var p = Path()
+        var path = Path()
         // Tiny offsets each corner — irregularities of a stamp impression
-        p.move(to: CGPoint(x: w * 0.02, y: 0))
-        p.addLine(to: CGPoint(x: w * 0.98, y: h * 0.01))
-        p.addLine(to: CGPoint(x: w, y: h * 0.97))
-        p.addLine(to: CGPoint(x: w * 0.01, y: h * 0.99))
-        p.closeSubpath()
-        return p
+        path.move(to: CGPoint(x: w * 0.02, y: 0))
+        path.addLine(to: CGPoint(x: w * 0.98, y: h * 0.01))
+        path.addLine(to: CGPoint(x: w, y: h * 0.97))
+        path.addLine(to: CGPoint(x: w * 0.01, y: h * 0.99))
+        path.closeSubpath()
+        return path
     }
 }
 
