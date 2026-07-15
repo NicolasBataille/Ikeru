@@ -41,30 +41,54 @@ struct IkeruApp: App {
     @State private var hasFinishedLaunch: Bool = IkeruApp.hasPlayedLaunchAnimation
     @State private var aiRouterService = AIRouterService()
     @State private var assetCache: AssetCache?
+    @State private var showStoreRecoveryNotice = false
     @Environment(\.scenePhase) private var scenePhase
 
     let modelContainer: ModelContainer
 
     init() {
+        // Current versioned schema (IkeruSchemaV2) + migration plan so
+        // @Model changes migrate explicitly instead of relying on implicit
+        // lightweight migration. The plan carries the V1→V2 stage that adds
+        // ExerciseOutcomeLog. See IkeruSchema.swift in IkeruCore.
+        let schema = Schema(versionedSchema: IkeruSchemaV2.self)
+
         do {
-            // Current versioned schema (IkeruSchemaV2) + migration plan so
-            // @Model changes migrate explicitly instead of relying on implicit
-            // lightweight migration. The plan carries the V1→V2 stage that adds
-            // ExerciseOutcomeLog. See IkeruSchema.swift in IkeruCore.
-            let schema = Schema(versionedSchema: IkeruSchemaV2.self)
-            let config = ModelConfiguration(
-                "Ikeru",
-                schema: schema,
-                cloudKitDatabase: .none  // Manual backup via CloudBackupManager, not auto-sync
-            )
-            modelContainer = try ModelContainer(
-                for: schema,
-                migrationPlan: IkeruMigrationPlan.self,
-                configurations: [config]
-            )
+            modelContainer = try Self.makeModelContainer(schema: schema)
         } catch {
             Logger.srs.critical("Failed to create ModelContainer: \(error)")
+
+            #if DEBUG
+            // Developers should see a broken store immediately, not have it
+            // silently swept aside — a real V1→V2 migration bug should fail
+            // loudly in development.
             fatalError("Failed to create ModelContainer: \(error)")
+            #else
+            // TestFlight/production: this is now a real risk surface (the
+            // V1→V2 migration ships to users with existing stores). Move the
+            // store directory aside — NEVER deleting anything — and retry
+            // once with a fresh, empty store rather than crash-looping the
+            // app on every launch.
+            Logger.srs.critical("Attempting conservative store recovery (move-aside + retry)…")
+            do {
+                // The store's REAL on-disk location, from the same
+                // ModelConfiguration the container opens — never a guessed
+                // path (a named configuration's files live directly in
+                // Application Support, not a per-bundle subdirectory).
+                let storeURL = Self.storeConfiguration(schema: schema).url
+                if let recoveryDestination = try StoreRecovery.moveStoreAside(storeURL: storeURL) {
+                    Logger.srs.critical(
+                        "Store moved aside to \(recoveryDestination.path, privacy: .public) — retrying with a fresh store"
+                    )
+                    StoreRecoveryNotice.markPending(recoveryDirectory: recoveryDestination)
+                }
+                modelContainer = try Self.makeModelContainer(schema: schema)
+                Logger.srs.critical("Store recovery succeeded — app launching with a fresh store")
+            } catch {
+                Logger.srs.critical("Store recovery ALSO failed: \(error) — nothing left to try")
+                fatalError("Failed to create ModelContainer even after store recovery: \(error)")
+            }
+            #endif
         }
 
         // Initialise the AssetCache synchronously so the first body evaluation
@@ -112,9 +136,24 @@ struct IkeruApp: App {
                     await scheduleNotificationsFromSettings()
                     schedulePreWarmTask()
                     await WidgetSnapshotRefresher.refresh(modelContainer: modelContainer)
+                    if StoreRecoveryNotice.isPending() {
+                        showStoreRecoveryNotice = true
+                    }
                 }
                 .onOpenURL { url in
                     handleDeepLink(url)
+                }
+                .alert(
+                    "Your data was recovered",
+                    isPresented: $showStoreRecoveryNotice
+                ) {
+                    Button("Dismiss") {
+                        StoreRecoveryNotice.acknowledge()
+                    }
+                } message: {
+                    Text(
+                        "A migration issue was detected at launch. Your data was preserved on this device, not lost. Export it from Settings or contact support if you need help."
+                    )
                 }
         }
         .modelContainer(modelContainer)
@@ -127,6 +166,31 @@ struct IkeruApp: App {
                 }
             }
         }
+    }
+
+    // MARK: - ModelContainer
+
+    /// Builds the app's `ModelContainer` against the current versioned schema
+    /// + migration plan. Factored out of `init` so the container-creation
+    /// call can be retried identically after a store-recovery move-aside.
+    /// The single source of truth for the store's configuration — and hence
+    /// its on-disk `url`, which the store-recovery path relies on. Keep any
+    /// future configuration change here so recovery can never target a stale
+    /// location.
+    private static func storeConfiguration(schema: Schema) -> ModelConfiguration {
+        ModelConfiguration(
+            "Ikeru",
+            schema: schema,
+            cloudKitDatabase: .none  // Manual backup via CloudBackupManager, not auto-sync
+        )
+    }
+
+    private static func makeModelContainer(schema: Schema) throws -> ModelContainer {
+        try ModelContainer(
+            for: schema,
+            migrationPlan: IkeruMigrationPlan.self,
+            configurations: [storeConfiguration(schema: schema)]
+        )
     }
 
     // MARK: - Deep Links

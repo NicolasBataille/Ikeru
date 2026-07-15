@@ -218,6 +218,9 @@ jobs:
             -only-testing:IkeruTests/DataExportManagerTests \
             -only-testing:IkeruTests/SessionViewModelTests \
             -only-testing:IkeruTests/SessionIntegrationTests \
+            -only-testing:IkeruTests/WidgetSnapshotStoreTests \
+            -only-testing:IkeruTests/StoreRecoveryTests \
+            -only-testing:IkeruTests/StoreRecoveryNoticeTests \
             CODE_SIGNING_ALLOWED=NO
 
   device-build-check:
