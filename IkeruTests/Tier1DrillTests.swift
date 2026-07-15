@@ -155,6 +155,13 @@ struct Tier1KanjiStudyBookkeepingTests {
         let leech = try #require(vm.lastLeechEvent)
         #expect(leech.lapseCount == CardRepository.leechThreshold)
         #expect(leech.isNewLeech == true)
+        // Companion intervention was generated for the leech (no ContentRepository
+        // injected here, so it falls back to the sync overload's hand-written
+        // distractor pools — real-bundle sampling via the async overload is
+        // covered in IkeruCore's LeechInterventionServiceTests
+        // ("Async contentRepository overload samples real bundle distractors").
+        let intervention = try #require(vm.lastLeechIntervention)
+        #expect(intervention.message.contains(leechKanji.front))
         // A failed kanjiStudy must NOT move the SRS queue pointer.
         #expect(vm.currentIndex == 0)
         #expect(vm.currentExerciseIndex == 1)

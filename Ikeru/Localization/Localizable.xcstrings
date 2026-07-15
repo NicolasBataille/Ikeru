@@ -11513,6 +11513,40 @@
         }
       }
     },
+    "Your data was recovered" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your data was recovered"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tes données ont été récupérées"
+          }
+        }
+      }
+    },
+    "A migration issue was detected at launch. Your data was preserved on this device, not lost. Export it from Settings or contact support if you need help." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A migration issue was detected at launch. Your data was preserved on this device, not lost. Export it from Settings or contact support if you need help."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un problème de migration a été détecté au lancement. Tes données ont été préservées sur cet appareil, pas perdues. Exporte-les depuis Réglages ou contacte le support si besoin."
+          }
+        }
+      }
+    },
     "Home.DailyTermPrompt.Title" : {
       "extractionState" : "manual",
       "localizations" : {

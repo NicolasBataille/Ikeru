@@ -4,9 +4,9 @@ import SwiftData
 @testable import Ikeru
 @testable import IkeruCore
 
-/// Coverage for remediation 7.7 — the data export must actually write
-/// `reviews.json` (it previously only promised it in the bundle docs) and hand
-/// the share sheet a single `.zip` archive rather than a bare directory.
+// Coverage for remediation 7.7 — the data export must actually write
+// `reviews.json` (it previously only promised it in the bundle docs) and hand
+// the share sheet a single `.zip` archive rather than a bare directory.
 // Serialized: every test mutates the process-global active-profile id
 // (ActiveProfileResolver, backed by shared UserDefaults). Running them in
 // parallel lets one test clobber another's active id mid-export, which can
@@ -38,7 +38,9 @@ struct DataExportManagerTests {
     // MARK: - Fixtures
 
     private func makeContainer() throws -> ModelContainer {
-        let schema = Schema([UserProfile.self, Card.self, ReviewLog.self, RPGState.self])
+        let schema = Schema([
+            UserProfile.self, Card.self, ReviewLog.self, RPGState.self, ExerciseOutcomeLog.self,
+        ])
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         ActiveProfileResolver.setActiveProfileID(nil)
         return try ModelContainer(for: schema, configurations: [config])
@@ -213,6 +215,97 @@ struct DataExportManagerTests {
     // `RPGState` (UserProfile.swift:43), so a normally-created profile always
     // has one. The omit branch only covers legacy profiles that predate the
     // RPGState relationship, which cannot be constructed through the public API.
+
+    // MARK: - outcomes.json (ITEM A — ExerciseOutcomeLog export)
+
+    private struct DecodedOutcome: Codable {
+        let id: UUID
+        let timestamp: Date
+        let skill: String
+        let accuracy: Double
+    }
+
+    @Test("outcomes.json round-trips the recorded exercise outcomes")
+    func outcomesJSONRoundTrip() async throws {
+        let container = try makeContainer()
+        let profile = try seedProfile(container)
+        let context = container.mainContext
+
+        let t1 = Date(timeIntervalSince1970: 1_700_000_000)
+        let t2 = Date(timeIntervalSince1970: 1_700_000_600)
+        context.insert(ExerciseOutcomeLog(skill: .listening, accuracy: 1.0, profileID: profile.id, timestamp: t1))
+        context.insert(ExerciseOutcomeLog(skill: .speaking, accuracy: 0.8, profileID: profile.id, timestamp: t2))
+        try context.save()
+
+        let dir = try await DataExportManager().buildExportDirectory(modelContainer: container)
+        defer { try? FileManager.default.removeItem(at: dir) }
+
+        let outcomesURL = dir.appending(path: "outcomes.json")
+        #expect(FileManager.default.fileExists(atPath: outcomesURL.path))
+
+        let data = try Data(contentsOf: outcomesURL)
+        let rows = try decoder().decode([DecodedOutcome].self, from: data)
+        #expect(rows.count == 2)
+
+        let bySkill = Dictionary(grouping: rows, by: { $0.skill })
+        let listening = try #require(bySkill["listening"]?.first)
+        let speaking = try #require(bySkill["speaking"]?.first)
+
+        #expect(listening.accuracy == 1.0)
+        #expect(listening.timestamp == t1)
+        #expect(speaking.accuracy == 0.8)
+        #expect(speaking.timestamp == t2)
+    }
+
+    @Test("outcomes.json is a valid empty array when there is no outcome history")
+    func outcomesJSONEmpty() async throws {
+        let container = try makeContainer()
+        _ = try seedProfile(container)
+
+        let dir = try await DataExportManager().buildExportDirectory(modelContainer: container)
+        defer { try? FileManager.default.removeItem(at: dir) }
+
+        let outcomesURL = dir.appending(path: "outcomes.json")
+        #expect(FileManager.default.fileExists(atPath: outcomesURL.path))
+
+        let rows = try decoder().decode([DecodedOutcome].self, from: Data(contentsOf: outcomesURL))
+        #expect(rows.isEmpty)
+    }
+
+    @Test("outcomes.json is scoped to the active profile — no cross-profile leak")
+    func outcomesJSONScopedToActiveProfile() async throws {
+        let container = try makeContainer()
+        let context = container.mainContext
+
+        let profileA = UserProfile(displayName: "A")
+        let profileB = UserProfile(displayName: "B")
+        context.insert(profileA)
+        context.insert(profileB)
+
+        context.insert(ExerciseOutcomeLog(
+            skill: .listening, accuracy: 1.0, profileID: profileA.id,
+            timestamp: Date(timeIntervalSince1970: 1_700_000_000)
+        ))
+        context.insert(ExerciseOutcomeLog(
+            skill: .listening, accuracy: 0.0, profileID: profileB.id,
+            timestamp: Date(timeIntervalSince1970: 1_700_000_500)
+        ))
+        try context.save()
+
+        // Active profile = A. The export must contain ONLY A's outcome —
+        // profile B's history must never leak into a shared archive.
+        ActiveProfileResolver.setActiveProfileID(profileA.id)
+
+        let dir = try await DataExportManager().buildExportDirectory(modelContainer: container)
+        defer { try? FileManager.default.removeItem(at: dir) }
+
+        let rows = try decoder().decode(
+            [DecodedOutcome].self,
+            from: Data(contentsOf: dir.appending(path: "outcomes.json"))
+        )
+        #expect(rows.count == 1)
+        #expect(rows.first?.accuracy == 1.0)
+    }
 
     // MARK: - The shared artifact is a single zip, not a directory
 

@@ -15,7 +15,7 @@ final class DataExportManager {
 
     /// Generates a complete data export as a single `.zip` archive and returns
     /// its temporary URL. The archive contains: cards.json, reviews.json,
-    /// rpg.json, context.json, cards.csv.
+    /// outcomes.json, rpg.json, context.json, cards.csv.
     ///
     /// The intermediate export directory is zipped (so the share sheet hands the
     /// user one file, not a bare folder) and then deleted. A serialization or
@@ -58,6 +58,11 @@ final class DataExportManager {
         // omitting the file.
         let reviewLogs = await cardRepo.activeProfileReviewLogs()
 
+        // Exercise outcomes (listening / shadowing drills with no backing
+        // Card) — scoped to the ACTIVE PROFILE only, exactly like
+        // reviews.json above. Empty history still writes a valid `[]`.
+        let exerciseOutcomes = await cardRepo.activeProfileExerciseOutcomes()
+
         // RPG state — scoped to the ACTIVE PROFILE only (the export leaves
         // the device, so it must never leak another profile's progression,
         // exactly like the reviews.json scoping above).
@@ -86,11 +91,17 @@ final class DataExportManager {
             )
         }
 
-        // Only Sendable value types (CardDTO, ReviewLogDTO, RPGExport) cross
-        // into the detached task below — no ModelContext, ModelContainer, or
-        // @Model instance is ever captured off the main actor.
+        // Only Sendable value types (CardDTO, ReviewLogDTO,
+        // ExerciseOutcomeLogDTO, RPGExport) cross into the detached task below
+        // — no ModelContext, ModelContainer, or @Model instance is ever
+        // captured off the main actor.
         let exportDir = try await Task.detached(priority: .utility) {
-            try Self.writeExportFiles(cards: allCards, reviews: reviewLogs, rpg: rpgExport)
+            try Self.writeExportFiles(
+                cards: allCards,
+                reviews: reviewLogs,
+                outcomes: exerciseOutcomes,
+                rpg: rpgExport
+            )
         }.value
 
         Logger.ui.info("Data export written to \(exportDir.path)")
@@ -100,12 +111,14 @@ final class DataExportManager {
     // MARK: - Off-main writing
 
     /// Builds a fresh temporary directory and writes every export file into
-    /// it: cards.json, cards.csv, reviews.json, rpg.json (if present), and
-    /// context.json. Runs off the main actor — only Sendable inputs
-    /// (`CardDTO`, `ReviewLogDTO`, `RPGExport`) are accepted.
+    /// it: cards.json, cards.csv, reviews.json, outcomes.json, rpg.json (if
+    /// present), and context.json. Runs off the main actor — only Sendable
+    /// inputs (`CardDTO`, `ReviewLogDTO`, `ExerciseOutcomeLogDTO`, `RPGExport`)
+    /// are accepted.
     nonisolated private static func writeExportFiles(
         cards: [CardDTO],
         reviews: [ReviewLogDTO],
+        outcomes: [ExerciseOutcomeLogDTO],
         rpg: RPGExport?
     ) throws -> URL {
         let exportDir = FileManager.default.temporaryDirectory
@@ -133,6 +146,10 @@ final class DataExportManager {
         // Review logs
         let reviewsData = try encoder.encode(reviews.map { ReviewExportRow(from: $0) })
         try reviewsData.write(to: exportDir.appending(path: "reviews.json"))
+
+        // Exercise outcomes (listening / shadowing, no backing Card)
+        let outcomesData = try encoder.encode(outcomes.map { OutcomeExportRow(from: $0) })
+        try outcomesData.write(to: exportDir.appending(path: "outcomes.json"))
 
         // RPG state — omitted entirely when the active profile has none.
         if let rpg {
@@ -273,6 +290,15 @@ final class DataExportManager {
                 "responseTimeMs": "Time taken to answer, in milliseconds"
               }
             },
+            "outcomes.json": {
+              "description": "Pool-based output drill outcomes (listening / shadowing) with no backing flashcard",
+              "fields": {
+                "id": "UUID — unique outcome entry identifier",
+                "timestamp": "ISO8601 date when the drill was completed",
+                "skill": "Skill measured: listening or speaking",
+                "accuracy": "Accuracy 0.0-1.0 (binary pass/fail for listening, banded for shadowing)"
+              }
+            },
             "rpg.json": {
               "description": "RPG progression state",
               "fields": {
@@ -355,6 +381,20 @@ private struct ReviewExportRow: Codable, Sendable {
         case .good: "good"
         case .easy: "easy"
         }
+    }
+}
+
+private struct OutcomeExportRow: Codable, Sendable {
+    let id: UUID
+    let timestamp: Date
+    let skill: String
+    let accuracy: Double
+
+    init(from dto: ExerciseOutcomeLogDTO) {
+        self.id = dto.id
+        self.timestamp = dto.timestamp
+        self.skill = dto.skill.rawValue
+        self.accuracy = dto.accuracy
     }
 }
 

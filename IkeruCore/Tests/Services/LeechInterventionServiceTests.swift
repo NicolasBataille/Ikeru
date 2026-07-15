@@ -1,5 +1,6 @@
 import Testing
 import Foundation
+import SQLite3
 @testable import IkeruCore
 
 @Suite("LeechInterventionService")
@@ -291,6 +292,91 @@ struct LeechInterventionServiceTests {
         }
     }
 
+    // MARK: - Async ContentRepository Overload
+
+    /// End-to-end coverage for the async `contentRepository:` overload — the
+    /// bridge from a real (SQLite-backed) `ContentRepository` to the sync
+    /// distractor-sampling core. Exercises the exact wiring
+    /// `SessionRPGPersistence.applyCardGradeSideEffects` now calls: kanji
+    /// distractors must come from the bundle, not the hand-written fallback
+    /// pool that would otherwise fire for "水".
+    @Test("Async contentRepository overload samples real bundle distractors")
+    func asyncOverloadUsesRealBundleDistractors() async throws {
+        let dbURL = try Self.makeTestKanjiDatabase()
+        defer { try? FileManager.default.removeItem(at: dbURL) }
+        let repository = ContentRepository(bundleURL: dbURL)
+
+        let card = makeCard(front: "水", back: "water", type: .kanji, jlptLevel: .n5)
+        let confusion = ConfusionPattern(target: "水", description: "Test", type: .generalDifficulty)
+
+        let intervention = await LeechInterventionService.generateIntervention(
+            card: card,
+            confusionPattern: confusion,
+            contentRepository: repository
+        )
+
+        let distractors = parseDistractors(from: intervention.quizTag)
+        #expect(distractors.count == 2)
+        #expect(!distractors.contains { $0.lowercased() == "water" })
+        // Bundle-sourced meanings, not the hand-written fallback pool (which
+        // has no entry for "water" and would emit "not this meaning" / "something else").
+        let bundleMeanings: Set<String> = ["fire", "tree", "gold"]
+        for distractor in distractors {
+            #expect(bundleMeanings.contains(distractor.lowercased()))
+        }
+    }
+
+    /// Creates a temporary SQLite database with a handful of N5 kanji rows —
+    /// enough for `ContentRepository.kanjiByLevel(.n5)` to return real
+    /// distractor candidates for the async overload test above.
+    private static func makeTestKanjiDatabase() throws -> URL {
+        let dbURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent("leech-intervention-test-\(UUID().uuidString).sqlite")
+
+        var db: OpaquePointer?
+        guard sqlite3_open(dbURL.path, &db) == SQLITE_OK else {
+            throw LeechInterventionTestDatabaseError.cannotOpen
+        }
+        defer { sqlite3_close(db) }
+
+        let schemaSQL = """
+            CREATE TABLE kanji (
+                character TEXT PRIMARY KEY,
+                on_readings TEXT,
+                kun_readings TEXT,
+                meanings TEXT,
+                jlpt_level TEXT,
+                stroke_count INTEGER,
+                stroke_order_svg TEXT
+            );
+            CREATE TABLE vocabulary (
+                id INTEGER PRIMARY KEY, word TEXT, reading TEXT, meaning TEXT,
+                kanji_character TEXT, jlpt_level TEXT
+            );
+            CREATE TABLE grammar_points (
+                id INTEGER PRIMARY KEY, jlpt_level TEXT, title TEXT, explanation TEXT, examples TEXT
+            );
+            """
+        sqlite3_exec(db, schemaSQL, nil, nil, nil)
+
+        let kanjiRows: [(character: String, meaning: String)] = [
+            ("水", "water"), ("火", "fire"), ("木", "tree"), ("金", "gold"),
+        ]
+        for row in kanjiRows {
+            let sql = "INSERT INTO kanji VALUES (?, '[]', '[]', ?, 'n5', 1, NULL)"
+            var stmt: OpaquePointer?
+            sqlite3_prepare_v2(db, sql, -1, &stmt, nil)
+            sqlite3_bind_text(stmt, 1, row.character, -1, unsafeBitCast(-1, to: sqlite3_destructor_type.self))
+            sqlite3_bind_text(
+                stmt, 2, "[\"\(row.meaning)\"]", -1, unsafeBitCast(-1, to: sqlite3_destructor_type.self)
+            )
+            sqlite3_step(stmt)
+            sqlite3_finalize(stmt)
+        }
+
+        return dbURL
+    }
+
     // MARK: - Helpers
 
     private func makeCard(
@@ -359,4 +445,8 @@ struct LeechInterventionServiceTests {
         guard parts.count == 4 else { return [] }
         return [parts[2], parts[3]]
     }
+}
+
+private enum LeechInterventionTestDatabaseError: Error {
+    case cannotOpen
 }
