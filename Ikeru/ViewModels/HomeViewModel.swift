@@ -43,9 +43,6 @@ public final class HomeViewModel {
     /// Recent achievement text (e.g., "Unlocked Listening!").
     public private(set) var recentAchievement: String?
 
-    /// Number of unopened lootboxes.
-    public private(set) var unopenedLootBoxCount: Int = 0
-
     /// Skill balance snapshot for the home radar card.
     public private(set) var skillBalance: SkillBalanceSnapshot = SkillBalanceSnapshot()
 
@@ -352,28 +349,23 @@ public final class HomeViewModel {
                 )
             }
             level = derivedLevel
-            unopenedLootBoxCount = state.unopenedLootBoxes.count
             totalReviewsCompleted = state.totalReviewsCompleted
             EquippedCosmeticsBridge.sync(state: state)
 
-            // Compute recent achievement from last inventory item
-            let inventory = state.lootInventory
-            if let lastItem = inventory.last {
-                recentAchievement = lastItem.name
+            // Compute recent achievement from recently unlocked attributes.
+            // Previously fell back to the last loot-inventory item first —
+            // dropped with the loot pipeline retirement (2026-07-15) since no
+            // new loot can be earned; attribute unlocks are the sole signal now.
+            let attrs = state.attributes
+            if let lastAttr = attrs.last {
+                recentAchievement = "Unlocked \(lastAttr.name)!"
             } else {
-                // Check for recently unlocked attributes
-                let attrs = state.attributes
-                if let lastAttr = attrs.last {
-                    recentAchievement = "Unlocked \(lastAttr.name)!"
-                } else {
-                    recentAchievement = nil
-                }
+                recentAchievement = nil
             }
         } else {
             xp = 0
             level = 1
             recentAchievement = nil
-            unopenedLootBoxCount = 0
             totalReviewsCompleted = 0
         }
 

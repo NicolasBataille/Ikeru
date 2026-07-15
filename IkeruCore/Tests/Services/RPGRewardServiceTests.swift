@@ -59,38 +59,6 @@ struct RPGRewardServiceTests {
         #expect(ids.contains("speaking"))
     }
 
-    // MARK: - Level Rewards
-
-    @Test("Level 2 gives a common badge reward")
-    func level2Reward() {
-        let reward = RPGRewardService.levelReward(forLevel: 2)
-        #expect(reward != nil)
-        #expect(reward?.rarity == .common)
-        #expect(reward?.category == .badge)
-        #expect(reward?.name == "First Steps")
-    }
-
-    @Test("Level 10 gives a rare badge")
-    func level10Reward() {
-        let reward = RPGRewardService.levelReward(forLevel: 10)
-        #expect(reward != nil)
-        #expect(reward?.rarity == .rare)
-    }
-
-    @Test("Level 50 gives a legendary badge")
-    func level50Reward() {
-        let reward = RPGRewardService.levelReward(forLevel: 50)
-        #expect(reward != nil)
-        #expect(reward?.rarity == .legendary)
-    }
-
-    @Test("Non-milestone levels give no reward")
-    func nonMilestoneNoReward() {
-        #expect(RPGRewardService.levelReward(forLevel: 3) == nil)
-        #expect(RPGRewardService.levelReward(forLevel: 7) == nil)
-        #expect(RPGRewardService.levelReward(forLevel: 42) == nil)
-    }
-
     // MARK: - Attribute Value Updates
 
     @Test("High success rate increases matching attribute value")

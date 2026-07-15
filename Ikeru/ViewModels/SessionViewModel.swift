@@ -259,23 +259,12 @@ public final class SessionViewModel {
     /// of the session fires, then holds the most recent one's intervention.
     public private(set) var lastLeechIntervention: LeechIntervention?
 
-    /// Loot item dropped from the most recent review (drives LootDropView overlay).
-    public private(set) var lastLootDrop: LootItem?
-
-    /// Count of consecutive correct answers in this session (affects loot drop rate).
+    /// Count of consecutive correct answers in this session (display/Live
+    /// Activity streak only — no longer feeds loot RNG since loot retirement).
     public private(set) var consecutiveCorrect: Int = 0
-
-    /// Total loot items earned this session.
-    public private(set) var sessionLootCount: Int = 0
-
-    /// Lootbox earned during this session (presented after session summary).
-    public private(set) var earnedLootBox: LootBox?
 
     /// XP bonus awarded at session end for daily engagement / streak (nil if none).
     public private(set) var lastSessionBonus: SessionBonusService.Result?
-
-    /// Mastery events detected during this session (graduation, burns, etc.).
-    public private(set) var sessionMasteryEvents: [MasteryEvent] = []
 
     /// Monotonic count of grading transactions whose persistence failed.
     /// Bumped in `gradeAndAdvance` when `CardSaveErrorMonitor` reports a
@@ -300,7 +289,7 @@ public final class SessionViewModel {
     /// Foreground-only elapsed-time bookkeeping, extracted off this class
     /// (remediation 8.4) — see `SessionTimerCoordinator`.
     private let timerCoordinator = SessionTimerCoordinator()
-    /// RPG XP/level/loot persistence + finalization, extracted off this
+    /// RPG XP/level persistence + finalization, extracted off this
     /// class (remediation 8.4) — see `SessionRPGPersistence`.
     private let rpgPersistence: SessionRPGPersistence
     /// `SessionPlanner`-pipeline session composition, extracted off this
@@ -372,7 +361,6 @@ public final class SessionViewModel {
         newItemsLearned = 0
         lastXPGained = nil
         levelUpLevel = nil
-        lastLootDrop = nil
         consecutiveCorrect = 0
         correctCount = 0
         missedCardIDs = []
@@ -380,10 +368,7 @@ public final class SessionViewModel {
         retryCounts = [:]
         newItemCountedIDs = []
         nonSRSGradedCardIDs = []
-        sessionLootCount = 0
-        earnedLootBox = nil
         lastSessionBonus = nil
-        sessionMasteryEvents = []
         gradeSaveFailureCount = 0
         isPaused = false
         sessionStartTime = Date()
@@ -573,17 +558,16 @@ public final class SessionViewModel {
         let exerciseType = SessionExerciseSupport.exerciseTypeForCurrentReview(card: card)
         await awardExerciseXP(type: exerciseType, grade: grade, sampledTelemetry: true)
 
-        // Track consecutive correct (affects display only — no longer feeds loot RNG)
+        // Track consecutive correct (display / Live Activity streak only).
         trackCorrectness(isCorrect: isCorrect)
 
-        // Card-derived grade side-effects (mastery detection + loot drop,
-        // first-review `newItemsLearned` counting, leech detection). Extracted
-        // so the `.kanjiStudy` drill path in `completeCurrentExercise` runs the
-        // SAME bookkeeping — a kanji card that becomes a leech or is newly
-        // learned is detected regardless of which UI graded it. Called here at
-        // the exact position (after the XP/RPG update — the RNG drop reads the
-        // post-award `currentLevel` — and before either index advances) so SRS
-        // behavior is byte-for-byte unchanged.
+        // Card-derived grade side-effects (first-review `newItemsLearned`
+        // counting, leech detection). Extracted so the `.kanjiStudy` drill
+        // path in `completeCurrentExercise` runs the SAME bookkeeping — a
+        // kanji card that becomes a leech or is newly learned is detected
+        // regardless of which UI graded it. Called here at the exact
+        // position (after the XP/RPG update, before either index advances)
+        // so SRS behavior is byte-for-byte unchanged.
         await applyCardGradeSideEffects(preGradeCard: card, grade: grade)
 
         reviewedCount += 1
@@ -599,9 +583,6 @@ public final class SessionViewModel {
         // Clear feedback after brief display
         try? await Task.sleep(for: .milliseconds(300))
         feedbackState = nil
-
-        // Check for lootbox milestone (every 25 reviews in session)
-        await checkLootBoxMilestone()
 
         await finishSessionIfNeeded()
     }
@@ -636,18 +617,6 @@ public final class SessionViewModel {
             correctCount += 1
         } else {
             consecutiveCorrect = 0
-        }
-    }
-
-    /// Checks for the lootbox milestone (every 25 reviews/completions in
-    /// session) and persists a new box if earned. Shared by `gradeAndAdvance`
-    /// and `completeCurrentExercise` — both check the identical condition at
-    /// the identical point (after `reviewedCount` is bumped).
-    private func checkLootBoxMilestone() async {
-        if LootBoxService.shouldAwardLootBox(reviewsInSession: reviewedCount) {
-            let box = LootBoxService.generateLootBox(level: currentLevel)
-            earnedLootBox = box
-            await persistLootBox(box)
         }
     }
 
@@ -791,8 +760,8 @@ public final class SessionViewModel {
         guard let exercise = currentExercise else { return }
 
         // SRS reviews grade through the deck path so their full card-centric
-        // behavior (mistake tracking, same-day requeue, mastery / leech / loot
-        // detection, new-item counting) is preserved exactly.
+        // behavior (mistake tracking, same-day requeue, leech detection,
+        // new-item counting) is preserved exactly.
         if case .srsReview = exercise {
             await gradeAndAdvance(grade: grade)
             return
@@ -831,8 +800,8 @@ public final class SessionViewModel {
         trackCorrectness(isCorrect: grade == .good || grade == .easy)
 
         // The card-backed kinds (`.kanjiStudy`, `.writingPractice`) run the
-        // shared card-grade side-effects: mastery / leech detection and
-        // first-review counting, identical to the SRS deck path. Positioned after
+        // shared card-grade side-effects: leech detection and first-review
+        // counting, identical to the SRS deck path. Positioned after
         // the XP/RPG update (parity with `gradeAndAdvance`) and before the
         // exercise pointer advances. Every other non-SRS kind is XP-only.
         if let card = gradeableCard {
@@ -856,8 +825,8 @@ public final class SessionViewModel {
 
         // `reviewedCount` counts completed exercises (not just SRS cards): it
         // gates the time-budget policy's `completedCount`, the endSession
-        // zero-skip, the lootbox milestone, the Live Activity, and the abandon
-        // label — so a non-SRS completion must bump it too.
+        // zero-skip, the Live Activity, and the abandon label — so a non-SRS
+        // completion must bump it too.
         reviewedCount += 1
         cardStartTime = Date()
 
@@ -868,17 +837,14 @@ public final class SessionViewModel {
         // Advance the exercise pointer (never the SRS queue pointer here).
         advanceToNextExercise()
 
-        // Check for lootbox milestone (every 25 completions in session).
-        await checkLootBoxMilestone()
-
         await finishSessionIfNeeded()
     }
 
     // MARK: - Session Finalization
 
-    /// Applies end-of-session effects: daily/streak bonus and pity-drop check.
+    /// Applies end-of-session effects: daily/streak bonus.
     /// Runs once when the session's last card has been graded. Persistence +
-    /// pity/bonus computation live in `SessionRPGPersistence.finalize`
+    /// bonus computation live in `SessionRPGPersistence.finalize`
     /// (remediation 8.4 extraction); this wrapper applies the result onto
     /// `@Observable` state with the exact same conditionals as the original
     /// inline implementation (e.g. `totalXP`/`currentLevel`/`levelUpLevel`
@@ -887,12 +853,8 @@ public final class SessionViewModel {
     private func finalizeSession() async {
         guard let result = await rpgPersistence.finalize(
             currentXP: totalXP,
-            currentLevel: currentLevel,
-            sessionLootCount: sessionLootCount
+            currentLevel: currentLevel
         ) else { return }
-
-        lastLootDrop = result.lootDrop ?? lastLootDrop
-        sessionLootCount = result.updatedSessionLootCount
 
         if result.bonusXPAwarded > 0 {
             totalXP = result.updatedTotalXP
@@ -921,15 +883,6 @@ public final class SessionViewModel {
         levelUpLevel = nil
     }
 
-    /// Clears the loot drop display (called by the overlay after animation).
-    public func clearLootDrop() {
-        lastLootDrop = nil
-    }
-
-    /// Clears the earned lootbox (called after opening or dismissing).
-    public func clearLootBox() {
-        earnedLootBox = nil
-    }
 
     /// Pauses the current session.
     public func pauseSession() {
@@ -1105,11 +1058,6 @@ public final class SessionViewModel {
         await rpgPersistence.persistState(xp: totalXP, level: currentLevel)
     }
 
-    /// Persists a lootbox to the RPG state.
-    private func persistLootBox(_ box: LootBox) async {
-        await rpgPersistence.persistLootBox(box)
-    }
-
     // MARK: - Same-Day Re-Queue
 
     /// Same-day intra-session re-queue: a card graded `.again` comes back later
@@ -1147,14 +1095,9 @@ extension SessionViewModel {
     /// (`gradeAndAdvance`) and the `.kanjiStudy` drill path
     /// (`completeCurrentExercise`). Detection/persistence logic lives in
     /// `SessionRPGPersistence.applyCardGradeSideEffects` (remediation 8.4
-    /// extraction); this wrapper applies the result onto `@Observable` state
-    /// exactly as the original inline implementation did — `lastLootDrop` is
-    /// unconditionally set to the result's drop (nil-or-drop), matching the
-    /// original's unconditional `lastLootDrop = nil` reset followed by a
-    /// conditional overwrite.
+    /// extraction); this wrapper applies the result onto `@Observable` state.
     ///
-    /// Must be called AFTER the XP/RPG update (the RNG drop reads the post-award
-    /// `currentLevel`) and BEFORE either index advances.
+    /// Must be called AFTER the XP/RPG update and BEFORE either index advances.
     ///
     /// NOTE: mistake tracking + same-day requeue (`missedCardIDs` /
     /// `requeueFailedCard`) are deliberately NOT here — that stays in the
@@ -1163,17 +1106,9 @@ extension SessionViewModel {
         let effects = await rpgPersistence.applyCardGradeSideEffects(
             preGradeCard: card,
             grade: grade,
-            sessionJLPTLevel: sessionJLPTLevel,
-            currentLevel: currentLevel,
-            sessionLootCount: sessionLootCount,
             alreadyCountedNewItem: newItemCountedIDs.contains(card.id),
             contentRepository: contentRepository
         )
-        lastLootDrop = effects.lootDrop
-        sessionLootCount += effects.sessionLootCountDelta
-        if let event = effects.masteryEvent {
-            sessionMasteryEvents.append(event)
-        }
         if effects.isNewItem {
             newItemCountedIDs.insert(card.id)
             newItemsLearned += 1

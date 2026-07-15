@@ -6,16 +6,22 @@ import os
 // MARK: - SessionRPGPersistence
 //
 // Owns every SwiftData read/write `SessionViewModel` makes against the active
-// profile's `RPGState` — XP/level load & persist, loot/lootbox persistence,
-// pity-drop + daily/streak bonus finalization, and the shared card-grade
-// side-effect detection (mastery/loot/leech/new-item). Extracted from
-// `SessionViewModel` (remediation 8.4): every method body here is a verbatim
-// move of the corresponding private method, just re-homed off the
-// `modelContainer` captured at init instead of `self.modelContainer`.
+// profile's `RPGState` — XP/level load & persist, daily/streak bonus
+// finalization, and the shared card-grade side-effect detection
+// (leech/new-item). Extracted from `SessionViewModel` (remediation 8.4):
+// every method body here is a verbatim move of the corresponding private
+// method, just re-homed off the `modelContainer` captured at init instead of
+// `self.modelContainer`.
+//
+// The loot/lootbox drop-generation, pity-timer, and mastery-event detection
+// behavior that used to live here was retired (loot pipeline retirement,
+// 2026-07-15) — XP + LevelUpView + the badge system are the only remaining
+// gamification. `RPGState`'s stored loot fields stay untouched (dormant) to
+// avoid a schema migration; see IkeruSchema.
 //
 // Not `@Observable` — this type holds no published UI state of its own.
-// `SessionViewModel` owns all the `@Observable` fields (totalXP, currentLevel,
-// lastLootDrop, …) and applies the results these methods return/persist.
+// `SessionViewModel` owns all the `@Observable` fields (totalXP, currentLevel, …)
+// and applies the results these methods return/persist.
 @MainActor
 final class SessionRPGPersistence {
 
@@ -65,40 +71,15 @@ final class SessionRPGPersistence {
         }
     }
 
-    /// Persists a loot drop to the RPG state inventory.
-    func persistLootDrop(_ item: LootItem) async {
-        await withRPGState { state in
-            state.addLootItem(item)
-            Logger.rpg.info("Loot drop persisted: \(item.name) (\(item.rarity.displayName))")
-        }
-    }
-
-    /// Returns true if the active profile's RPG inventory already contains a
-    /// loot item with the given name. Used to dedup once-per-profile named
-    /// mastery rewards like "First Steps" so they aren't re-awarded on every
-    /// new card graded Good/Easy.
-    func inventoryContains(name: String) async -> Bool {
-        let context = modelContainer.mainContext
-        guard let state = ActiveProfileResolver.fetchActiveRPGState(in: context) else {
-            return false
-        }
-        return state.lootInventory.contains { $0.name == name }
-    }
-
-    /// Persists a lootbox to the RPG state.
-    func persistLootBox(_ box: LootBox) async {
-        await withRPGState { state in
-            state.addLootBox(box)
-            Logger.rpg.info("Lootbox persisted: \(box.challengeType.displayName)")
-        }
-    }
-
     // MARK: - Newly-Unlocked Processing
 
-    /// After a session ends, grants a one-time `Loot.NewExerciseUnlocked`
-    /// badge for each `ExerciseType` that crossed its unlock threshold during
-    /// the session. No-op if there's no active profile or nothing newly
-    /// unlocked.
+    /// After a session ends, records each `ExerciseType` that crossed its
+    /// unlock threshold during the session so it isn't re-announced next
+    /// time. No-op if there's no active profile or nothing newly unlocked.
+    /// Previously also granted a `Loot.NewExerciseUnlocked` badge — dropped
+    /// with the loot pipeline retirement (2026-07-15) since no UI ever
+    /// displayed it; the acknowledgedUnlocks dedup bookkeeping is the actual
+    /// progression signal and is unchanged.
     func processNewlyUnlocked(
         snapshot: LearnerSnapshot,
         unlockService: any ExerciseUnlockService
@@ -109,13 +90,6 @@ final class SessionRPGPersistence {
         let delta = unlockService.newlyUnlocked(profile: snapshot, previous: previous)
         guard !delta.isEmpty else { return }
         for type in delta {
-            let drop = LootItem(
-                category: .badge,
-                rarity: .rare,
-                name: String(localized: "Loot.NewExerciseUnlocked"),
-                iconName: "leaf.fill"
-            )
-            state.addLootItem(drop)
             Logger.rpg.info("unlock.granted type=\(type.rawValue, privacy: .public)")
         }
         state.acknowledgedUnlocks = previous.union(delta)
@@ -124,14 +98,10 @@ final class SessionRPGPersistence {
 
     // MARK: - Card-Grade Side Effects
 
-    /// Result of the shared card-grade side-effect detection (mastery events,
-    /// RNG/mastery loot drops, first-review counting, leech detection). See
-    /// `SessionViewModel.applyCardGradeSideEffects` for how the caller applies
-    /// each field back onto its own `@Observable` state.
+    /// Result of the shared card-grade side-effect detection (first-review
+    /// counting, leech detection). See `SessionViewModel.applyCardGradeSideEffects`
+    /// for how the caller applies each field back onto its own `@Observable` state.
     struct CardGradeSideEffects {
-        let lootDrop: LootItem?
-        let sessionLootCountDelta: Int
-        let masteryEvent: MasteryEvent?
         let isNewItem: Bool
         let leechEvent: LeechEvent?
         /// Companion intervention content generated when `leechEvent` fires,
@@ -146,62 +116,26 @@ final class SessionRPGPersistence {
     /// (`gradeAndAdvance`) and the `.kanjiStudy` drill path
     /// (`completeCurrentExercise`). Both grade a real FSRS `CardDTO`, so both
     /// must run identical detection/counting:
-    ///   1. mastery events (Phase 3) → forced loot drop at event rarity, taking
-    ///      priority over the RNG drop; else the RNG loot drop;
-    ///   2. first-review `newItemsLearned` counting (reps was 0), deduped by
+    ///   1. first-review `newItemsLearned` counting (reps was 0), deduped by
     ///      the caller so a same-day re-queued new card isn't double-counted;
-    ///   3. leech detection + companion intervention (real bundle distractors
+    ///   2. leech detection + companion intervention (real bundle distractors
     ///      when `contentRepository` is available, hand-written fallback pool
     ///      otherwise).
     ///
-    /// Must be called by the caller AFTER the XP/RPG update (the RNG drop reads
-    /// the post-award `currentLevel`) and BEFORE either index advances —
-    /// unchanged from the original ordering constraint.
+    /// Must be called by the caller AFTER the XP/RPG update and BEFORE either
+    /// index advances — unchanged from the original ordering constraint.
     ///
     /// NOTE: mistake tracking + same-day requeue (`missedCardIDs` /
     /// `requeueFailedCard`) are deliberately NOT here, same as before — that
-    /// stays on `SessionViewModel` in the `.srsReview` deck path.
+    /// stays on `SessionViewModel` in the `.srsReview` deck path. Mastery-event
+    /// detection + RNG/mastery loot drops used to run here too — retired with
+    /// the loot pipeline (2026-07-15).
     func applyCardGradeSideEffects(
         preGradeCard card: CardDTO,
         grade: Grade,
-        sessionJLPTLevel: JLPTLevel,
-        currentLevel: Int,
-        sessionLootCount: Int,
         alreadyCountedNewItem: Bool,
         contentRepository: ContentRepository?
     ) async -> CardGradeSideEffects {
-        // Mastery events: pre-grade card state → forced drops at event rarity.
-        // Detected BEFORE RNG drop so they always take priority when both would
-        // fire. Named mastery drops (e.g. "First Steps") are once-per-profile —
-        // if the inventory already contains the drop, skip it. Otherwise the
-        // same badge would re-appear every time a new card is graded Good/Easy.
-        var lootDrop: LootItem?
-        var lootCountDelta = 0
-        var masteryEvent: MasteryEvent?
-
-        let masteryEvents = MasteryEventDetector.detect(preGradeCard: card, grade: grade)
-        if let event = masteryEvents.first {
-            let drop = LootDropService.generateMasteryDrop(for: event, learnerLevel: sessionJLPTLevel)
-            let alreadyOwned = await inventoryContains(name: drop.name)
-            if !alreadyOwned {
-                lootDrop = drop
-                lootCountDelta = 1
-                masteryEvent = event
-                await persistLootDrop(drop)
-                Logger.rpg.info("Mastery drop: \(event.displayName) → \(drop.name) (\(drop.rarity.displayName))")
-            } else {
-                Logger.rpg.info("Mastery drop skipped (\(drop.name) already in inventory)")
-            }
-        } else if LootDropService.shouldDropLoot(
-            grade: grade,
-            sessionLootCount: sessionLootCount
-        ) {
-            let drop = LootDropService.generateDrop(level: currentLevel)
-            lootDrop = drop
-            lootCountDelta = 1
-            await persistLootDrop(drop)
-        }
-
         // Track new items learned (first review = reps was 0). The caller's
         // set guard keeps a same-day re-queued new card from counting twice.
         let isNewItem = card.fsrsState.reps == 0 && !alreadyCountedNewItem
@@ -236,9 +170,6 @@ final class SessionRPGPersistence {
         }
 
         return CardGradeSideEffects(
-            lootDrop: lootDrop,
-            sessionLootCountDelta: lootCountDelta,
-            masteryEvent: masteryEvent,
             isNewItem: isNewItem,
             leechEvent: leechEvent,
             intervention: intervention
@@ -247,48 +178,28 @@ final class SessionRPGPersistence {
 
     // MARK: - Session Finalization
 
-    /// Result of end-of-session finalization (pity-drop check + daily/streak
-    /// bonus). See `SessionViewModel.finalizeSession` for how the caller
-    /// applies each field back onto its own `@Observable` state.
+    /// Result of end-of-session finalization (daily/streak bonus). See
+    /// `SessionViewModel.finalizeSession` for how the caller applies each
+    /// field back onto its own `@Observable` state.
     struct FinalizationResult {
         let updatedTotalXP: Int
         let updatedLevel: Int
         let didLevelUp: Bool
         let bonusXPAwarded: Int
-        let lootDrop: LootItem?
-        let updatedSessionLootCount: Int
         let bonus: SessionBonusService.Result
     }
 
-    /// Applies end-of-session effects: daily/streak bonus and pity-drop check.
+    /// Applies end-of-session effects: daily/streak bonus.
     /// Runs once when the session's last card has been graded. Returns nil if
     /// there's no active profile (caller no-ops, mirroring the original
     /// `guard let state = ... else { return }`).
     func finalize(
         currentXP: Int,
-        currentLevel: Int,
-        sessionLootCount: Int
+        currentLevel: Int
     ) async -> FinalizationResult? {
         let now = Date()
         let context = modelContainer.mainContext
         guard let state = ActiveProfileResolver.fetchActiveRPGState(in: context) else { return nil }
-
-        // Pity timer — if no drop this session, bump counter and force a drop at threshold.
-        var lootDrop: LootItem?
-        var updatedSessionLootCount = sessionLootCount
-        if sessionLootCount == 0 {
-            state.sessionsSinceLastDrop += 1
-            if LootDropService.shouldForcePityDrop(sessionsSinceLastDrop: state.sessionsSinceLastDrop) {
-                let drop = LootDropService.generateDrop(level: currentLevel)
-                state.addLootItem(drop)
-                lootDrop = drop
-                updatedSessionLootCount += 1
-                state.sessionsSinceLastDrop = 0
-                Logger.rpg.info("Pity drop awarded: \(drop.name) (\(drop.rarity.displayName))")
-            }
-        } else {
-            state.sessionsSinceLastDrop = 0
-        }
 
         // Session bonus (daily / streak).
         let bonus = SessionBonusService.evaluate(
@@ -339,8 +250,6 @@ final class SessionRPGPersistence {
             updatedLevel: updatedLevel,
             didLevelUp: didLevelUp,
             bonusXPAwarded: bonus.bonusXP,
-            lootDrop: lootDrop,
-            updatedSessionLootCount: updatedSessionLootCount,
             bonus: bonus
         )
     }

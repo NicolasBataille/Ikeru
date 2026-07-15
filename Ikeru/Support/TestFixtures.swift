@@ -10,11 +10,11 @@ import os
 /// Launch-args usage (Debug builds):
 /// ```bash
 /// xcrun simctl launch booted com.ikeru.app \
-///   -mockProfile -mockLevel=15 -mockDue=25 -mockMastered=120 -mockLootboxes=3
+///   -mockProfile -mockLevel=15 -mockDue=25 -mockMastered=120
 /// ```
 ///
 /// In-app usage (Debug + TestFlight): the `Outils développeur` section in Réglages
-/// exposes the same controls (`wipeAndSeed`, `wipeAll`, `addLootbox`, `grantLevelUp`).
+/// exposes the same controls (`wipeAndSeed`, `wipeAll`, `grantLevelUp`).
 ///
 /// The whole file is gated behind `#if IKERU_DEV_TOOLS` so the App Store build,
 /// which strips the flag, cannot ship fixture code. See CLAUDE.md "Removing
@@ -40,15 +40,13 @@ public enum TestFixtures {
         let level = AppEnvironment.intArg("mockLevel") ?? 5
         let dueCount = AppEnvironment.intArg("mockDue") ?? 12
         let masteredCount = AppEnvironment.intArg("mockMastered") ?? 40
-        let lootboxCount = AppEnvironment.intArg("mockLootboxes") ?? 1
-        let inventoryCount = AppEnvironment.intArg("mockInventory") ?? 4
 
-        logger.info("Seeding fixture profile: level=\(level) due=\(dueCount) mastered=\(masteredCount) lootboxes=\(lootboxCount) inventory=\(inventoryCount)")
+        logger.info("Seeding fixture profile: level=\(level) due=\(dueCount) mastered=\(masteredCount)")
 
         let profile = UserProfile(displayName: "Nico")
         context.insert(profile)
 
-        let state = seedRPGState(profile: profile, level: level, lootboxCount: lootboxCount, inventoryCount: inventoryCount)
+        let state = seedRPGState(profile: profile, level: level)
         context.insert(state)
         seedCards(context: context, profile: profile, due: dueCount, mastered: masteredCount)
 
@@ -68,9 +66,7 @@ public enum TestFixtures {
     @discardableResult
     private static func seedRPGState(
         profile: UserProfile,
-        level: Int,
-        lootboxCount: Int,
-        inventoryCount: Int
+        level: Int
     ) -> RPGState {
         let xpForLevel = xpRequired(forLevel: level)
         let xpForNext = xpRequired(forLevel: level + 1)
@@ -86,41 +82,6 @@ public enum TestFixtures {
             return attr.withValue(value)
         }
         state.setAttributes(scaled)
-
-        // Inventory
-        if inventoryCount > 0 {
-            let rarities: [LootRarity] = [.common, .rare, .epic, .legendary]
-            let categories: [LootItem.Category] = [.theme, .title, .badge, .scroll]
-            let items = (0..<inventoryCount).map { idx -> LootItem in
-                let rarity = rarities[idx % rarities.count]
-                let category = categories[idx % categories.count]
-                return LootItem(
-                    category: category,
-                    rarity: rarity,
-                    name: "\(rarity.rawValue.capitalized) \(category.displayName)",
-                    iconName: category.iconName
-                )
-            }
-            state.setLootInventory(items)
-        }
-
-        // Lootboxes
-        if lootboxCount > 0 {
-            let placeholderReward = LootItem(
-                category: .scroll,
-                rarity: .rare,
-                name: "Mystery Scroll",
-                iconName: "scroll.fill"
-            )
-            let boxes = (0..<lootboxCount).map { _ in
-                LootBox(
-                    challengeType: .kanjiSpeed,
-                    requiredScore: 5,
-                    rewards: [placeholderReward]
-                )
-            }
-            state.setLootBoxes(boxes)
-        }
 
         state.profile = profile
         profile.rpgState = state
@@ -147,21 +108,14 @@ public enum TestFixtures {
         profileVM: ProfileViewModel,
         level: Int,
         dueCount: Int,
-        masteredCount: Int,
-        lootboxCount: Int,
-        inventoryCount: Int
+        masteredCount: Int
     ) {
         wipeAll(context: context, profileVM: profileVM)
 
         let profile = UserProfile(displayName: "Nico")
         context.insert(profile)
 
-        let state = seedRPGState(
-            profile: profile,
-            level: level,
-            lootboxCount: lootboxCount,
-            inventoryCount: inventoryCount
-        )
+        let state = seedRPGState(profile: profile, level: level)
         context.insert(state)
         seedCards(context: context, profile: profile, due: dueCount, mastered: masteredCount)
 
@@ -173,7 +127,7 @@ public enum TestFixtures {
         }
 
         profileVM.loadProfile()
-        logger.info("wipeAndSeed: level=\(level) due=\(dueCount) mastered=\(masteredCount) loot=\(lootboxCount) inv=\(inventoryCount)")
+        logger.info("wipeAndSeed: level=\(level) due=\(dueCount) mastered=\(masteredCount)")
     }
 
     /// Deletes every UserProfile + RPGState + Card so the next launch returns
@@ -206,35 +160,6 @@ public enum TestFixtures {
         UserDefaults.standard.removeObject(forKey: ActiveProfileResolver.activeProfileIDKey)
         profileVM.loadProfile()
         logger.info("wipeAll: cleared all persisted state")
-    }
-
-    /// Appends a mock LootBox to the active profile's RPG state so a tester can
-    /// open it from the Rang tab and capture the open-modal flow.
-    @MainActor
-    public static func addLootbox(context: ModelContext) {
-        guard let state = ActiveProfileResolver.fetchActiveRPGState(in: context) else {
-            logger.warning("addLootbox skipped — no active profile")
-            return
-        }
-        let reward = LootItem(
-            category: .scroll,
-            rarity: .rare,
-            name: "Outils dev — Scroll de test",
-            iconName: "scroll.fill"
-        )
-        var boxes = state.lootBoxes
-        boxes.append(LootBox(
-            challengeType: .kanjiSpeed,
-            requiredScore: 5,
-            rewards: [reward]
-        ))
-        state.setLootBoxes(boxes)
-        do {
-            try context.save()
-            logger.info("addLootbox: now \(boxes.count) box(es)")
-        } catch {
-            logger.error("addLootbox save failed: \(error.localizedDescription)")
-        }
     }
 
     /// Bumps the active profile's XP past the next-level threshold so the Home
