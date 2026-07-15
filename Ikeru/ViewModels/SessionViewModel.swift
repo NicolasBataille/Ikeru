@@ -253,6 +253,12 @@ public final class SessionViewModel {
     /// The most recent leech event detected during this session, if any.
     public private(set) var lastLeechEvent: LeechEvent?
 
+    /// Companion intervention content (message/mnemonic/quiz) for
+    /// `lastLeechEvent`, sourced from the same-JLPT-level content bundle when
+    /// available. Set alongside `lastLeechEvent` — nil until the first leech
+    /// of the session fires, then holds the most recent one's intervention.
+    public private(set) var lastLeechIntervention: LeechIntervention?
+
     /// Loot item dropped from the most recent review (drives LootDropView overlay).
     public private(set) var lastLootDrop: LootItem?
 
@@ -713,45 +719,6 @@ public final class SessionViewModel {
         return xpAmount
     }
 
-    /// Card-derived grade side-effects shared by the SRS deck path
-    /// (`gradeAndAdvance`) and the `.kanjiStudy` drill path
-    /// (`completeCurrentExercise`). Detection/persistence logic lives in
-    /// `SessionRPGPersistence.applyCardGradeSideEffects` (remediation 8.4
-    /// extraction); this wrapper applies the result onto `@Observable` state
-    /// exactly as the original inline implementation did — `lastLootDrop` is
-    /// unconditionally set to the result's drop (nil-or-drop), matching the
-    /// original's unconditional `lastLootDrop = nil` reset followed by a
-    /// conditional overwrite.
-    ///
-    /// Must be called AFTER the XP/RPG update (the RNG drop reads the post-award
-    /// `currentLevel`) and BEFORE either index advances.
-    ///
-    /// NOTE: mistake tracking + same-day requeue (`missedCardIDs` /
-    /// `requeueFailedCard`) are deliberately NOT here — that stays in the
-    /// `.srsReview` deck path (`gradeAndAdvance`).
-    private func applyCardGradeSideEffects(preGradeCard card: CardDTO, grade: Grade) async {
-        let effects = await rpgPersistence.applyCardGradeSideEffects(
-            preGradeCard: card,
-            grade: grade,
-            sessionJLPTLevel: sessionJLPTLevel,
-            currentLevel: currentLevel,
-            sessionLootCount: sessionLootCount,
-            alreadyCountedNewItem: newItemCountedIDs.contains(card.id)
-        )
-        lastLootDrop = effects.lootDrop
-        sessionLootCount += effects.sessionLootCountDelta
-        if let event = effects.masteryEvent {
-            sessionMasteryEvents.append(event)
-        }
-        if effects.isNewItem {
-            newItemCountedIDs.insert(card.id)
-            newItemsLearned += 1
-        }
-        if let leechEvent = effects.leechEvent {
-            lastLeechEvent = leechEvent
-        }
-    }
-
     /// Ends and finalizes the session when it should stop — exercise-list
     /// exhaustion OR the time-budget policy firing. Shared by `gradeAndAdvance`
     /// (SRS deck path) and `completeCurrentExercise` (non-SRS drill path) so both
@@ -1172,6 +1139,50 @@ public final class SessionViewModel {
         )
     }
 
+}
+
+// MARK: - Card-Grade Side Effects (extracted to keep the class body under type_body_length)
+extension SessionViewModel {
+    /// Card-derived grade side-effects shared by the SRS deck path
+    /// (`gradeAndAdvance`) and the `.kanjiStudy` drill path
+    /// (`completeCurrentExercise`). Detection/persistence logic lives in
+    /// `SessionRPGPersistence.applyCardGradeSideEffects` (remediation 8.4
+    /// extraction); this wrapper applies the result onto `@Observable` state
+    /// exactly as the original inline implementation did — `lastLootDrop` is
+    /// unconditionally set to the result's drop (nil-or-drop), matching the
+    /// original's unconditional `lastLootDrop = nil` reset followed by a
+    /// conditional overwrite.
+    ///
+    /// Must be called AFTER the XP/RPG update (the RNG drop reads the post-award
+    /// `currentLevel`) and BEFORE either index advances.
+    ///
+    /// NOTE: mistake tracking + same-day requeue (`missedCardIDs` /
+    /// `requeueFailedCard`) are deliberately NOT here — that stays in the
+    /// `.srsReview` deck path (`gradeAndAdvance`).
+    private func applyCardGradeSideEffects(preGradeCard card: CardDTO, grade: Grade) async {
+        let effects = await rpgPersistence.applyCardGradeSideEffects(
+            preGradeCard: card,
+            grade: grade,
+            sessionJLPTLevel: sessionJLPTLevel,
+            currentLevel: currentLevel,
+            sessionLootCount: sessionLootCount,
+            alreadyCountedNewItem: newItemCountedIDs.contains(card.id),
+            contentRepository: contentRepository
+        )
+        lastLootDrop = effects.lootDrop
+        sessionLootCount += effects.sessionLootCountDelta
+        if let event = effects.masteryEvent {
+            sessionMasteryEvents.append(event)
+        }
+        if effects.isNewItem {
+            newItemCountedIDs.insert(card.id)
+            newItemsLearned += 1
+        }
+        if let leechEvent = effects.leechEvent {
+            lastLeechEvent = leechEvent
+            lastLeechIntervention = effects.intervention
+        }
+    }
 }
 
 // MARK: - Environment Key

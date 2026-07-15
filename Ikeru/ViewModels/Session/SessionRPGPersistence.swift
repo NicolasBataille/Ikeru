@@ -134,6 +134,12 @@ final class SessionRPGPersistence {
         let masteryEvent: MasteryEvent?
         let isNewItem: Bool
         let leechEvent: LeechEvent?
+        /// Companion intervention content generated when `leechEvent` fires,
+        /// nil otherwise. Distractors are sampled from the same-JLPT-level
+        /// content bundle when `contentRepository` is available (async
+        /// overload); falls back to the hand-written generic pools (sync
+        /// overload) when it isn't — e.g. previews/tests that don't inject one.
+        let intervention: LeechIntervention?
     }
 
     /// Card-derived grade side-effects shared by the SRS deck path
@@ -144,7 +150,9 @@ final class SessionRPGPersistence {
     ///      priority over the RNG drop; else the RNG loot drop;
     ///   2. first-review `newItemsLearned` counting (reps was 0), deduped by
     ///      the caller so a same-day re-queued new card isn't double-counted;
-    ///   3. leech detection.
+    ///   3. leech detection + companion intervention (real bundle distractors
+    ///      when `contentRepository` is available, hand-written fallback pool
+    ///      otherwise).
     ///
     /// Must be called by the caller AFTER the XP/RPG update (the RNG drop reads
     /// the post-award `currentLevel`) and BEFORE either index advances —
@@ -159,7 +167,8 @@ final class SessionRPGPersistence {
         sessionJLPTLevel: JLPTLevel,
         currentLevel: Int,
         sessionLootCount: Int,
-        alreadyCountedNewItem: Bool
+        alreadyCountedNewItem: Bool,
+        contentRepository: ContentRepository?
     ) async -> CardGradeSideEffects {
         // Mastery events: pre-grade card state → forced drops at event rarity.
         // Detected BEFORE RNG drop so they always take priority when both would
@@ -204,12 +213,35 @@ final class SessionRPGPersistence {
             threshold: CardRepository.leechThreshold
         )
 
+        // Generate companion intervention content for a newly-detected leech.
+        // Prefers the async overload (real same-JLPT-level bundle distractors)
+        // when a `ContentRepository` is available; falls back to the sync
+        // overload's hand-written generic pools otherwise (previews/tests that
+        // don't inject one).
+        var intervention: LeechIntervention?
+        if leechEvent != nil {
+            let confusionPattern = LeechDetectionService.analyzeConfusion(card: card)
+            if let contentRepository {
+                intervention = await LeechInterventionService.generateIntervention(
+                    card: card,
+                    confusionPattern: confusionPattern,
+                    contentRepository: contentRepository
+                )
+            } else {
+                intervention = LeechInterventionService.generateIntervention(
+                    card: card,
+                    confusionPattern: confusionPattern
+                )
+            }
+        }
+
         return CardGradeSideEffects(
             lootDrop: lootDrop,
             sessionLootCountDelta: lootCountDelta,
             masteryEvent: masteryEvent,
             isNewItem: isNewItem,
-            leechEvent: leechEvent
+            leechEvent: leechEvent,
+            intervention: intervention
         )
     }
 
