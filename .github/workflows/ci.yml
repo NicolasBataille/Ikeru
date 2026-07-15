@@ -49,12 +49,15 @@ jobs:
         # unwraps, hard violations) still fail the job.
         run: swiftlint lint --reporter github-actions-logging
 
-      - name: SwiftLint --strict on changed files (PRs only)
+      - name: SwiftLint --strict on changed lines (PRs only)
         # Holds *new* code to the strict standard (warnings fail the job)
-        # without blocking on the ~200-warning legacy backlog above. Only
-        # meaningful on a pull_request event, where `github.base_ref` gives
-        # us something to diff against; on a push to dev/master there's no
-        # base ref, so this step no-ops there.
+        # without blocking on the legacy backlog above. Diff-HUNK aware:
+        # a violation only fails the job if it sits on a line this PR
+        # touched (whole-file linting false-blocked PR #54 on pre-existing
+        # size violations in a lightly-touched 1500-line legacy file).
+        # File-level rules (file_length/type_body_length) only count for
+        # files ADDED by the PR — see scripts/swiftlint-diff-filter.py.
+        # Only meaningful on a pull_request event; no-ops on push.
         if: github.event_name == 'pull_request'
         run: |
           git fetch origin "${{ github.base_ref }}:refs/remotes/origin/${{ github.base_ref }}" --force
@@ -65,7 +68,8 @@ jobs:
           fi
           echo "Changed Swift files:"
           echo "$CHANGED_SWIFT_FILES"
-          echo "$CHANGED_SWIFT_FILES" | xargs swiftlint lint --strict --reporter github-actions-logging
+          echo "$CHANGED_SWIFT_FILES" | xargs swiftlint lint --reporter json --quiet \
+            | python3 scripts/swiftlint-diff-filter.py "origin/${{ github.base_ref }}"
 
   i18n-lint:
     name: i18n Lint
