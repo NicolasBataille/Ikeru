@@ -49,6 +49,16 @@ struct ActiveSessionView: View {
                     .transition(.opacity)
                     .zIndex(20)
             }
+
+            // Level-up celebration — sits above everything else in this
+            // ZStack (drawn last), including the pause/abandon overlays.
+            if let level = viewModel.levelUpLevel {
+                LevelUpView(level: level) {
+                    viewModel.clearLevelUp()
+                }
+                .transition(.opacity)
+                .zIndex(30)
+            }
         }
         .toolbar(.hidden, for: .tabBar)
         .statusBarHidden(true)
@@ -56,12 +66,27 @@ struct ActiveSessionView: View {
         .onAppear { maybeShowSwipeTutorial() }
         .onChange(of: viewModel.currentCard?.id) { _, _ in maybeShowSwipeTutorial() }
         .animation(.easeInOut(duration: 0.3), value: showSwipeTutorial)
+        .animation(.easeInOut(duration: 0.25), value: viewModel.levelUpLevel)
         .sensoryFeedback(.success, trigger: hapticTriggerCorrect)
         .sensoryFeedback(.warning, trigger: hapticTriggerIncorrect)
         .animation(
             .spring(response: 0.38, dampingFraction: 0.82),
             value: viewModel.showAbandonConfirmation
         )
+        // XP-gain is otherwise silent to VoiceOver (no dedicated visual
+        // toast exists yet) — announce it directly, following ToastView's
+        // pattern. Cleared right after so the next identical award (same
+        // XP amount twice in a row) still triggers a fresh announcement.
+        // On a level-up rep both lastXPGained and levelUpLevel are set in the
+        // same grading call — skip the XP announcement then so it doesn't
+        // collide with LevelUpView's own (more important) announcement.
+        .onChange(of: viewModel.lastXPGained) { _, xp in
+            guard let xp else { return }
+            defer { viewModel.clearXPGain() }
+            guard viewModel.levelUpLevel == nil else { return }
+            let format = String(localized: "+%@ XP")
+            AccessibilityNotification.Announcement(String(format: format, "\(xp)")).post()
+        }
         // Pause the session timer when the app moves to background or becomes
         // inactive so background time is not counted toward session duration.
         .onChange(of: scenePhase) { _, newPhase in
@@ -421,18 +446,22 @@ struct ActiveSessionView: View {
 #Preview("ActiveSessionView") {
     let schema = Schema([UserProfile.self, Card.self, ReviewLog.self, RPGState.self])
     let config = ModelConfiguration(isStoredInMemoryOnly: true)
-    let container = try! ModelContainer(for: schema, configurations: [config])
-    let repo = CardRepository(modelContainer: container)
-    let planner = PlannerService(cardRepository: repo)
-    let viewModel = SessionViewModel(
-        plannerService: planner,
-        cardRepository: repo,
-        modelContainer: container
-    )
 
-    ActiveSessionView(viewModel: viewModel)
-        .preferredColorScheme(.dark)
-        .task {
-            await viewModel.startSession()
-        }
+    if let container = try? ModelContainer(for: schema, configurations: [config]) {
+        let repo = CardRepository(modelContainer: container)
+        let planner = PlannerService(cardRepository: repo)
+        let viewModel = SessionViewModel(
+            plannerService: planner,
+            cardRepository: repo,
+            modelContainer: container
+        )
+
+        ActiveSessionView(viewModel: viewModel)
+            .preferredColorScheme(.dark)
+            .task {
+                await viewModel.startSession()
+            }
+    } else {
+        Text(verbatim: "Preview container unavailable")
+    }
 }

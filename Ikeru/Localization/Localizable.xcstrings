@@ -8412,6 +8412,24 @@
         }
       }
     },
+    "Rank" : {
+      "comment" : "EnsoRankView accessibility label prefix — read before the level number, e.g. \"Rank 12\"",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rank"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rang"
+          }
+        }
+      }
+    },
     "Tap for next item" : {
       "comment" : "LootRevealView hint — more items remain to be revealed",
       "extractionState" : "manual",

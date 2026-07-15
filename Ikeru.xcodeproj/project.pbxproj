@@ -113,6 +113,7 @@
 		89472D6F07C417CF74A6F34D /* FontExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4EB5EA8CFACFEDD72045EB3 /* FontExtensions.swift */; };
 		8EFA25811F530A1ED76EB8B2 /* PreWarmNotifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4E3A9795F94E20D35EBA364 /* PreWarmNotifier.swift */; };
 		8FE42D1296D1C55BB83BC1BB /* HankoStamp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25B2C6EAEDBB0C07B73E2710 /* HankoStamp.swift */; };
+		5A504372A38005F6DECF8D42 /* EnsoRankView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C84439135D1D1D63B33B11C /* EnsoRankView.swift */; };
 		90422BEF9BC8E04D637D5227 /* KanjiStudyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15C00EAAA3BA98179DFE119D /* KanjiStudyView.swift */; };
 		91C9AABD240546C6C4380CFA /* FusumaRail.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FCAA1C6D8004A72C4233DEE /* FusumaRail.swift */; };
 		93BF5688D23C97D381684CDD /* PlaybackRateSelector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C436FC5E8920ED935DA2049 /* PlaybackRateSelector.swift */; };
@@ -140,6 +141,7 @@
 		AA397C3039E08FF07C2ACE70 /* VocabularyDrillModeSelector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 674064B18632FB421FD3E37E /* VocabularyDrillModeSelector.swift */; };
 		AB876BD7DDC67C76C138EBDC /* PitchAccentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8AB076B8A600D63B3107B9F /* PitchAccentView.swift */; };
 		ABA74ED79DF7BC71F7543DBF /* ActiveSessionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C153A64FF1D3081D81EEFDCC /* ActiveSessionView.swift */; };
+		524D3563E401A4FCE430B8DC /* LevelUpView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C5C9EC363C339C0B3D867D8 /* LevelUpView.swift */; };
 		ABB829D69579D496F77AC77F /* ReadingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 406C6BA699B52A4C383A75E1 /* ReadingsView.swift */; };
 		AF2A856D7DBDC342722B07BD /* StrokeOrderExerciseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 903AD257C1627C8BC35CD73B /* StrokeOrderExerciseView.swift */; };
 		AF7E68B51D1243B8032E53E7 /* MarbleBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = D96B344D5EAABEB91F4B5EE2 /* MarbleBackground.swift */; };
@@ -275,6 +277,7 @@
 		24AB1AB1DDE2D5EE0D52DA0C /* IkeruCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IkeruCard.swift; sourceTree = "<group>"; };
 		25A2EBFE2B6872980172B207 /* WatchHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchHomeView.swift; sourceTree = "<group>"; };
 		25B2C6EAEDBB0C07B73E2710 /* HankoStamp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HankoStamp.swift; sourceTree = "<group>"; };
+		0C84439135D1D1D63B33B11C /* EnsoRankView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = EnsoRankView.swift; sourceTree = "<group>"; };
 		2CA34FB1B1DB4560EB47114B /* IkeruTabBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IkeruTabBar.swift; sourceTree = "<group>"; };
 		2DDE2DBC0AC80C3C72CCE6E1 /* AttributionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttributionView.swift; sourceTree = "<group>"; };
 		2DFC0A4678F7D8B667D36783 /* ShortcutsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutsManager.swift; sourceTree = "<group>"; };
@@ -398,6 +401,7 @@
 		BFC50EBFAD8E44D18F442E7C /* ExerciseTransitionContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseTransitionContainer.swift; sourceTree = "<group>"; };
 		BFEC7CF072B2F623A157D5BE /* SakuraMark.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SakuraMark.swift; sourceTree = "<group>"; };
 		C153A64FF1D3081D81EEFDCC /* ActiveSessionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActiveSessionView.swift; sourceTree = "<group>"; };
+		4C5C9EC363C339C0B3D867D8 /* LevelUpView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LevelUpView.swift; sourceTree = "<group>"; };
 		C25AF36F3C7104A9671C3E1D /* SumiCornerFrame.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SumiCornerFrame.swift; sourceTree = "<group>"; };
 		C35F712DF50CE51F1C7EBF58 /* OnboardingFlags.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OnboardingFlags.swift; sourceTree = "<group>"; };
 		C365C4F5BEDC3A891466ECC7 /* ToastManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToastManager.swift; sourceTree = "<group>"; };
@@ -634,6 +638,7 @@
 				C25AF36F3C7104A9671C3E1D /* SumiCornerFrame.swift */,
 				AB4EE3B167E71594816FFDAD /* MonCrest.swift */,
 				25B2C6EAEDBB0C07B73E2710 /* HankoStamp.swift */,
+				0C84439135D1D1D63B33B11C /* EnsoRankView.swift */,
 				69C7077A729B04B8A3E50617 /* BilingualLabel.swift */,
 				D96B344D5EAABEB91F4B5EE2 /* MarbleBackground.swift */,
 				65DEBB395B1A802524B7AF83 /* ToriiFrame.swift */,
@@ -962,6 +967,7 @@
 			isa = PBXGroup;
 			children = (
 				C153A64FF1D3081D81EEFDCC /* ActiveSessionView.swift */,
+				4C5C9EC363C339C0B3D867D8 /* LevelUpView.swift */,
 				BFC50EBFAD8E44D18F442E7C /* ExerciseTransitionContainer.swift */,
 				F8BD1F07D5A033139C8C8A83 /* SessionSummaryView.swift */,
 			);
@@ -1279,6 +1285,7 @@
 				5D6DB2EC7FDC91D838A51BF6 /* AISetupView.swift in Sources */,
 				09A567494E1C0017CD0F2625 /* ActiveProfileResolver.swift in Sources */,
 				ABA74ED79DF7BC71F7543DBF /* ActiveSessionView.swift in Sources */,
+				524D3563E401A4FCE430B8DC /* LevelUpView.swift in Sources */,
 				2D7ACFA4B2B18DF787E54372 /* AppEnvironment.swift in Sources */,
 				318AD0DC566D55CF8F54F721 /* AttributionView.swift in Sources */,
 				80928CE01894C7B023866E4A /* ChatBubbleView.swift in Sources */,
@@ -1398,6 +1405,7 @@
 				A00ED71AC785B8E955FF9A08 /* WordDefinitionView.swift in Sources */,
 				99E26C3CCDD74700B6074011 /* TatamiTokens.swift in Sources */,
 				1EB643DBDF51CC4C61434B2C /* SerifNumeral.swift in Sources */,
+				5A504372A38005F6DECF8D42 /* EnsoRankView.swift in Sources */,
 				91C9AABD240546C6C4380CFA /* FusumaRail.swift in Sources */,
 				7BDD9E9FFFF5D8479593CBA0 /* SumiCornerFrame.swift in Sources */,
 				D47F7C461CF1CFA5343E2BA8 /* MonCrest.swift in Sources */,
