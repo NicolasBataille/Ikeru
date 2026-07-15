@@ -33,8 +33,17 @@ enum WidgetSnapshotStore {
     /// profile that has never completed a session has no study date yet —
     /// passing `nil` leaves whatever was previously stored untouched rather
     /// than clobbering it.
-    static func write(dueCount: Int, level: Int, lastStudyDate: Date?) {
-        guard let defaults = UserDefaults(suiteName: WidgetSnapshotKeys.suiteName) else { return }
+    ///
+    /// `suiteName` defaults to the real shared app-group suite; tests inject a
+    /// throwaway suite name so this logic can be exercised without touching
+    /// the production app-group container.
+    static func write(
+        dueCount: Int,
+        level: Int,
+        lastStudyDate: Date?,
+        suiteName: String = WidgetSnapshotKeys.suiteName
+    ) {
+        guard let defaults = UserDefaults(suiteName: suiteName) else { return }
         defaults.set(dueCount, forKey: WidgetSnapshotKeys.dueCount)
         defaults.set(level, forKey: WidgetSnapshotKeys.level)
         if let lastStudyDate {
@@ -44,9 +53,14 @@ enum WidgetSnapshotStore {
 
     /// Reads the last-written snapshot. Returns nil when nothing has been
     /// written yet (fresh install, before the first session/foreground
-    /// refresh) or when the shared suite can't be opened.
-    static func read() -> WidgetSnapshot? {
-        guard let defaults = UserDefaults(suiteName: WidgetSnapshotKeys.suiteName) else { return nil }
+    /// refresh) or when the shared suite can't be opened — including the
+    /// documented `UserDefaults(suiteName:)` failure mode of passing the
+    /// current process's own bundle identifier.
+    ///
+    /// `suiteName` defaults to the real shared app-group suite; tests inject a
+    /// throwaway suite name so this logic can be exercised in isolation.
+    static func read(suiteName: String = WidgetSnapshotKeys.suiteName) -> WidgetSnapshot? {
+        guard let defaults = UserDefaults(suiteName: suiteName) else { return nil }
         guard defaults.object(forKey: WidgetSnapshotKeys.dueCount) != nil else { return nil }
         return WidgetSnapshot(
             dueCount: defaults.integer(forKey: WidgetSnapshotKeys.dueCount),

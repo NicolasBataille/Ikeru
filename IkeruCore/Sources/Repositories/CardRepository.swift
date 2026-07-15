@@ -228,6 +228,14 @@ public final class CardRepository: Sendable {
         await backgroundActor.activeProfileReviewLogs()
     }
 
+    /// Exercise outcomes (listening / shadowing) scoped to the **active
+    /// profile only**, ordered by timestamp. Use this for anything that
+    /// leaves the device (e.g. data export) so one profile's history never
+    /// leaks another's. Mirrors `activeProfileReviewLogs()` scoping.
+    public func activeProfileExerciseOutcomes() async -> [ExerciseOutcomeLogDTO] {
+        await backgroundActor.activeProfileExerciseOutcomes()
+    }
+
     // MARK: - Exercise Outcomes
 
     /// Records a pool-based drill outcome (listening / shadowing). Failures are
@@ -327,6 +335,15 @@ public struct ReviewLogDTO: Sendable, Identifiable {
     public let timestamp: Date
     public let grade: Grade
     public let responseTimeMs: Int
+}
+
+/// Lightweight, Sendable snapshot of an `ExerciseOutcomeLog` for cross-actor
+/// transfer (e.g. data export).
+public struct ExerciseOutcomeLogDTO: Sendable, Identifiable {
+    public let id: UUID
+    public let timestamp: Date
+    public let skill: SkillType
+    public let accuracy: Double
 }
 
 // MARK: - Model Actor
@@ -609,6 +626,21 @@ actor CardModelActor {
             .map { $0.toDTO() }
     }
 
+    /// Exercise outcomes (listening / shadowing) for the active profile only,
+    /// ordered by timestamp. `ExerciseOutcomeLog` has no `Card` relationship
+    /// to traverse (it's scoped by a scalar `profileID`, see its doc comment),
+    /// so this fetches directly rather than going through
+    /// `activeProfileCards()`.
+    func activeProfileExerciseOutcomes() -> [ExerciseOutcomeLogDTO] {
+        guard let profileID = fetchActiveProfile()?.id else { return [] }
+        let descriptor = FetchDescriptor<ExerciseOutcomeLog>(
+            predicate: #Predicate { $0.profileID == profileID },
+            sortBy: [SortDescriptor(\.timestamp, order: .forward)]
+        )
+        let logs = (try? modelContext.fetch(descriptor)) ?? []
+        return logs.map { $0.toDTO() }
+    }
+
     // MARK: - Exercise Outcomes (pool-based output drills, no backing Card)
 
     /// Records one pool-based drill outcome (listening / shadowing) for the
@@ -697,6 +729,17 @@ extension ReviewLog {
             timestamp: timestamp,
             grade: grade,
             responseTimeMs: responseTimeMs
+        )
+    }
+}
+
+extension ExerciseOutcomeLog {
+    func toDTO() -> ExerciseOutcomeLogDTO {
+        ExerciseOutcomeLogDTO(
+            id: id,
+            timestamp: timestamp,
+            skill: skill,
+            accuracy: accuracy
         )
     }
 }
