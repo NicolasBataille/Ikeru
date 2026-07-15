@@ -5607,23 +5607,6 @@
         }
       }
     },
-    "Sakura.NoAI.Body" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No AI provider is configured yet. To chat with Sakura, set up a provider (cloud or on-device) in Settings → AI."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aucun fournisseur IA n'est encore configuré. Pour discuter avec Sakura, configure un fournisseur (cloud ou local) dans Réglages → IA."
-          }
-        }
-      }
-    },
     "Sakura.NoAI.Setup" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -11560,6 +11543,108 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Un problème de migration a été détecté au lancement. Tes données ont été préservées sur cet appareil, pas perdues. Exporte-les depuis Réglages ou contacte le support si besoin."
+          }
+        }
+      }
+    },
+    "Home.DailyTermPrompt.Title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Try the daily term?"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Essayer le mot du jour ?"
+          }
+        }
+      }
+    },
+    "Home.DailyTermPrompt.Message" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "One new Japanese word each morning — quiet, and easy to turn off."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un nouveau mot japonais chaque matin — discret, et facile à désactiver."
+          }
+        }
+      }
+    },
+    "Home.DailyTermPrompt.Enable" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enable"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activer"
+          }
+        }
+      }
+    },
+    "Home.DailyTermPrompt.NotNow" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not now"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plus tard"
+          }
+        }
+      }
+    },
+    "Sakura.NoAI.KeySetup" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sakura runs on a free AI key — takes ~2 minutes."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sakura fonctionne avec une clé IA gratuite — environ 2 minutes."
+          }
+        }
+      }
+    },
+    "Sakura.NoAI.Offline" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You're offline — Sakura will be back once you're connected."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous êtes hors ligne — Sakura reviendra une fois connecté(e)."
           }
         }
       }

@@ -53,6 +53,13 @@ public final class ConversationViewModel: Identifiable {
     /// Whether the AI service is available.
     public private(set) var isAIAvailable: Bool = false
 
+    /// Whether the device is currently offline. Checked independently of
+    /// `isAIAvailable` (each cloud provider's own availability check already
+    /// folds in reachability) so the "no AI" fallback can tell "you have no
+    /// key configured" apart from "you have no internet" — nagging an offline
+    /// user to go set up an AI key would be a dark pattern.
+    public private(set) var isOffline: Bool = false
+
     /// Error message to display, if any.
     public private(set) var errorMessage: String?
 
@@ -83,6 +90,7 @@ public final class ConversationViewModel: Identifiable {
     private let speechDelegate: SpeechRecognitionDelegate?
     private let vocabularyRepository: VocabularyRepository?
     private let contentRepository: ContentRepository?
+    private let networkChecker: any NetworkChecker
 
     /// `word(reading)` tokens for the words the learner has saved to their
     /// dictionary, fetched once on appear and passed to Sakura as a SOFT
@@ -105,13 +113,15 @@ public final class ConversationViewModel: Identifiable {
         jlptLevel: JLPTLevel = .n5,
         speechDelegate: SpeechRecognitionDelegate? = nil,
         vocabularyRepository: VocabularyRepository? = nil,
-        contentRepository: ContentRepository? = nil
+        contentRepository: ContentRepository? = nil,
+        networkChecker: any NetworkChecker = NWPathNetworkChecker()
     ) {
         self.conversationService = conversationService
         self.jlptLevel = jlptLevel
         self.speechDelegate = speechDelegate
         self.vocabularyRepository = vocabularyRepository
         self.contentRepository = contentRepository
+        self.networkChecker = networkChecker
     }
 
     // MARK: - Lifecycle
@@ -122,6 +132,7 @@ public final class ConversationViewModel: Identifiable {
         await conversationService.aiRouter.refreshTierStatuses()
         let statuses = conversationService.aiRouter.tierStatuses
         isAIAvailable = statuses.values.contains { $0 == .available }
+        isOffline = await Self.confirmOffline(networkChecker)
 
         await loadKnownVocabulary()
         bundleReadings = await contentRepository?.readingLookup(for: jlptLevel) ?? [:]
@@ -130,6 +141,18 @@ public final class ConversationViewModel: Identifiable {
             seedTopic = nil
             await startWithTopic(topic)
         }
+    }
+
+    /// `NWPathNetworkChecker` reports `isOnline == false` until its
+    /// NWPathMonitor delivers the first path update — a freshly created
+    /// checker read too early would misclassify an online user as offline
+    /// (and hide the key-setup CTA behind the offline notice). An "online"
+    /// answer is always trustworthy; an "offline" answer must survive a
+    /// short grace re-check before we believe it.
+    private static func confirmOffline(_ checker: any NetworkChecker) async -> Bool {
+        if checker.isOnline { return false }
+        try? await Task.sleep(for: .milliseconds(400))
+        return !checker.isOnline
     }
 
     /// Fetches the learner's saved dictionary words once and caches them as

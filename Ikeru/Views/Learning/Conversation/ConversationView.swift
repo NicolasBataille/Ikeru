@@ -85,18 +85,48 @@ struct ConversationView: View {
                 .font(.system(size: 64, weight: .light, design: .serif))
                 .foregroundStyle(Color.ikeruPrimaryAccent.opacity(0.45))
 
-            VStack(spacing: IkeruTheme.Spacing.sm) {
-                Text("Sakura.NoAI.Title")
-                    .ikeruScaledFont(22, weight: .light, design: .serif, relativeTo: .title3)
-                    .foregroundStyle(Color.ikeruTextPrimary)
-                    .multilineTextAlignment(.center)
-
-                Text("Sakura.NoAI.Body")
-                    .ikeruScaledFont(14, relativeTo: .body)
-                    .foregroundStyle(Color.ikeruTextSecondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, IkeruTheme.Spacing.lg)
+            // Offline and "no key configured" are different situations: nudging
+            // an offline learner to go set up an AI key is a dark pattern (there
+            // is nothing they can do about it right now), so the two get
+            // distinct, honest copy.
+            if viewModel.isOffline {
+                offlineNotice
+            } else {
+                keySetupCTA
             }
+
+            Spacer()
+        }
+        .padding(.horizontal, IkeruTheme.Spacing.lg)
+    }
+
+    /// Shown when the device has no network. No setup button — there is
+    /// nothing actionable to offer while offline.
+    private var offlineNotice: some View {
+        VStack(spacing: IkeruTheme.Spacing.sm) {
+            Text("Sakura.NoAI.Title")
+                .ikeruScaledFont(22, weight: .light, design: .serif, relativeTo: .title3)
+                .foregroundStyle(Color.ikeruTextPrimary)
+                .multilineTextAlignment(.center)
+
+            Text("Sakura.NoAI.Offline")
+                .ikeruScaledFont(14, relativeTo: .body)
+                .foregroundStyle(Color.ikeruTextSecondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, IkeruTheme.Spacing.lg)
+        }
+    }
+
+    /// Compact "bring your own key" CTA — shown only when the device is
+    /// online and simply has no working AI provider configured, so setting
+    /// one up in Settings → AI is an action the learner can take right now.
+    private var keySetupCTA: some View {
+        VStack(spacing: IkeruTheme.Spacing.md) {
+            Text("Sakura.NoAI.KeySetup")
+                .ikeruScaledFont(14, relativeTo: .body)
+                .foregroundStyle(Color.ikeruTextSecondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, IkeruTheme.Spacing.lg)
 
             NavigationLink {
                 AISettingsView()
@@ -116,10 +146,7 @@ struct ConversationView: View {
                              size: 6, weight: 1.2, inset: -1)
             }
             .buttonStyle(.plain)
-
-            Spacer()
         }
-        .padding(.horizontal, IkeruTheme.Spacing.lg)
     }
 
     // MARK: - Welcome Section

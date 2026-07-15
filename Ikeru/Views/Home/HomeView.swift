@@ -49,6 +49,13 @@ struct HomeView: View {
     @State private var showStudySetChooser = false
     @AppStorage(DailyTermSettings.enabledKey) private var dailyTermEnabled: Bool = false
 
+    /// Lifetime review count captured right before `startSession()` launches
+    /// the session sheet — compared against the post-session count to detect
+    /// the learner's first-ever completed session (0 → >0 crossing) so the
+    /// one-time daily-term prompt fires exactly once, right after it.
+    @State private var reviewsBeforeSession = 0
+    @State private var showFirstSessionDailyTermPrompt = false
+
     var body: some View {
         ZStack {
             IkeruScreenBackground(variant: .home)
@@ -64,10 +71,24 @@ struct HomeView: View {
                     .onChange(of: svm.isActive) { _, isActive in
                         if !isActive {
                             showSession = false
-                            Task { await viewModel?.refreshAfterSession() }
+                            Task {
+                                await viewModel?.refreshAfterSession()
+                                evaluateFirstSessionDailyTermPrompt()
+                            }
                         }
                     }
             }
+        }
+        .alert(
+            "Home.DailyTermPrompt.Title",
+            isPresented: $showFirstSessionDailyTermPrompt
+        ) {
+            Button("Home.DailyTermPrompt.Enable") {
+                enableDailyTermFromPrompt()
+            }
+            Button("Home.DailyTermPrompt.NotNow", role: .cancel) {}
+        } message: {
+            Text("Home.DailyTermPrompt.Message")
         }
         .sheet(item: $dailyTermSheet) { sheet in
             dailyTermSheetContent(sheet)
@@ -644,6 +665,7 @@ struct HomeView: View {
 
     private func startSession() {
         guard let svm = sessionViewModel else { return }
+        reviewsBeforeSession = viewModel?.totalReviewsCompleted ?? 0
         Task {
             // Beginner content is seeded in HomeViewModel.loadData() before the
             // preview is composed, so cards already exist by the time this CTA
@@ -651,6 +673,50 @@ struct HomeView: View {
             // an empty plan must never show a hollow "0 cards / 0% recall" summary.
             let started = await svm.startSession()
             showSession = started
+        }
+    }
+
+    // MARK: - First-session daily-term prompt
+
+    /// Fires once, right after the learner's first-ever completed session
+    /// (lifetime review count crossing 0 → >0). Never re-prompts once shown
+    /// (accepted or declined — the flag is set unconditionally before the
+    /// alert is shown), and never prompts if the feature is already on.
+    ///
+    /// Scoping note (deliberate asymmetry): the seen-flag is per-profile
+    /// (`OnboardingFlags`), while the daily-term toggle itself is app-level
+    /// (`@AppStorage`) — the daily term is a device-level habit shared across
+    /// profiles, so enabling it once answers the question for everyone.
+    private func evaluateFirstSessionDailyTermPrompt() {
+        guard reviewsBeforeSession == 0,
+              let vm = viewModel,
+              vm.totalReviewsCompleted > 0,
+              !dailyTermEnabled,
+              let profileID = ActiveProfileResolver.activeProfileID(),
+              !OnboardingFlags.hasSeenFirstSessionDailyTermPrompt(profileID: profileID)
+        else { return }
+
+        OnboardingFlags.markFirstSessionDailyTermPromptSeen(profileID: profileID)
+        showFirstSessionDailyTermPrompt = true
+    }
+
+    /// Enables the daily-term feature equivalently to Settings: request
+    /// notification authorization, schedule the reminder at the default time
+    /// on success, then flip the on/off flag. (Settings flips its bound
+    /// toggle optimistically FIRST and reverts on denial; here the flag flips
+    /// last — same end state on every path, slightly different ordering, so
+    /// any observer of the transient `true` behaves the same either way.)
+    /// Declining the system permission leaves the feature off, matching
+    /// Settings' behavior.
+    private func enableDailyTermFromPrompt() {
+        Task {
+            let authorized = await NotificationManager.shared.requestAuthorization()
+            guard authorized else { return }
+            await NotificationManager.shared.scheduleDailyTermReminder(
+                hour: DailyTermSettings.defaultHour,
+                minute: DailyTermSettings.defaultMinute
+            )
+            dailyTermEnabled = true
         }
     }
 }

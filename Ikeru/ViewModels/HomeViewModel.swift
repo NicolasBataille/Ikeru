@@ -29,6 +29,11 @@ public final class HomeViewModel {
     /// Number of kanji cards the user has learned (reviewed at least once).
     public private(set) var kanjiLearnedCount: Int = 0
 
+    /// Lifetime review count for the active profile's `RPGState`. Home reads
+    /// this (before vs. after a session) to detect the learner's first-ever
+    /// completed session, which drives the one-time daily-term prompt.
+    public private(set) var totalReviewsCompleted: Int = 0
+
     /// Estimated card count for the next session preview.
     public private(set) var sessionPreviewCardCount: Int = 0
 
@@ -348,6 +353,7 @@ public final class HomeViewModel {
             }
             level = derivedLevel
             unopenedLootBoxCount = state.unopenedLootBoxes.count
+            totalReviewsCompleted = state.totalReviewsCompleted
             EquippedCosmeticsBridge.sync(state: state)
 
             // Compute recent achievement from last inventory item
@@ -368,6 +374,7 @@ public final class HomeViewModel {
             level = 1
             recentAchievement = nil
             unopenedLootBoxCount = 0
+            totalReviewsCompleted = 0
         }
 
         xpForNextLevel = RPGConstants.xpForLevel(level)
