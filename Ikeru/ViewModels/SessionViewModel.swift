@@ -158,19 +158,24 @@ public final class SessionViewModel {
     }
 
     /// Elapsed session duration in seconds (driven by ContinuousClock timer).
-    public private(set) var elapsedTime: TimeInterval = 0
+    /// Forwarded from `timerCoordinator` (remediation 8.4 extraction) —
+    /// SwiftUI observation still tracks this correctly through the computed
+    /// property because Observation's access tracking registers against
+    /// whichever object's registrar backs the property actually read, not
+    /// the object the caller went through. See `SessionTimerCoordinator`.
+    public var elapsedTime: TimeInterval { timerCoordinator.elapsedTime }
 
     /// Whether the ContinuousClock timer is actively ticking.
-    public private(set) var isTimerRunning: Bool = false
+    public var isTimerRunning: Bool { timerCoordinator.isTimerRunning }
 
     /// Fires once when the active session crosses the (durationBudget − 60s)
     /// mark. Drives the "1 minute remaining" toast on `ActiveSessionView`.
     /// Reset to false on each new session.
-    public private(set) var oneMinuteRemainingFired: Bool = false
+    public var oneMinuteRemainingFired: Bool { timerCoordinator.oneMinuteRemainingFired }
 
     /// Formatted elapsed time string (MM:SS).
     public var elapsedTimeFormatted: String {
-        formatTime(elapsedTime)
+        SessionExerciseSupport.formatTime(elapsedTime)
     }
 
     /// Estimated total session duration in seconds, computed from exercise list.
@@ -185,7 +190,7 @@ public final class SessionViewModel {
 
     /// Formatted estimated remaining time string ("-MM:SS").
     public var estimatedRemainingTimeFormatted: String {
-        "-" + formatTime(estimatedRemainingTime)
+        "-" + SessionExerciseSupport.formatTime(estimatedRemainingTime)
     }
 
     /// Estimated session card count for preview.
@@ -286,17 +291,16 @@ public final class SessionViewModel {
     private let contentRepository: ContentRepository?
     private let modelContainer: ModelContainer
     private let liveActivityManager = LiveActivityManager()
+    /// Foreground-only elapsed-time bookkeeping, extracted off this class
+    /// (remediation 8.4) — see `SessionTimerCoordinator`.
+    private let timerCoordinator = SessionTimerCoordinator()
+    /// RPG XP/level/loot persistence + finalization, extracted off this
+    /// class (remediation 8.4) — see `SessionRPGPersistence`.
+    private let rpgPersistence: SessionRPGPersistence
+    /// `SessionPlanner`-pipeline session composition, extracted off this
+    /// class (remediation 8.4) — see `SessionComposer`.
+    private let sessionComposer: SessionComposer
     private var cardStartTime: Date = Date()
-    private var timerTask: Task<Void, Never>?
-
-    /// Accumulated active time from completed intervals (before the current
-    /// timer run). Updated whenever the timer is paused mid-session so that
-    /// background time is excluded from the session duration.
-    private var baseElapsedTime: TimeInterval = 0
-
-    /// Wall-clock anchor for the current timer run. Set whenever `startTimer()`
-    /// begins a new interval so elapsed = base + (now − resume).
-    private var timerResumeTime: Date = Date()
 
     /// Policy that decides when an active session ends. Built when the
     /// session starts; nil between sessions. Drives both queue-exhaustion
@@ -340,6 +344,15 @@ public final class SessionViewModel {
         self.cardRepository = cardRepository
         self.contentRepository = contentRepository
         self.modelContainer = modelContainer
+        self.rpgPersistence = SessionRPGPersistence(modelContainer: modelContainer)
+        self.sessionComposer = SessionComposer(
+            plannerService: plannerService,
+            sessionPlanner: sessionPlanner,
+            unlockService: unlockService,
+            cardRepository: cardRepository,
+            contentRepository: contentRepository,
+            modelContainer: modelContainer
+        )
     }
 
     // MARK: - Session Lifecycle
@@ -372,173 +385,103 @@ public final class SessionViewModel {
         isActive = true
         currentExerciseIndex = 0
         showAbandonConfirmation = false
-        elapsedTime = 0
-        baseElapsedTime = 0
-        timerResumeTime = Date()
+        timerCoordinator.reset()
         endPolicy = nil
-        oneMinuteRemainingFired = false
         ledger = SkillXPLedger()
         skillContribution = .zero
         vocabularyPool = []
     }
 
     /// Composes a session queue via the new `SessionPlanner` pipeline and
-    /// starts the session. Builds a `LearnerSnapshot` from the live card
-    /// pool, resolves unlocked exercise types, and asks the planner for a
-    /// home-recommendation plan tuned to `defaultDurationMinutes`.
+    /// starts the session. Composition (snapshot, unlock resolution, planner
+    /// call, SRS-card extraction, vocab pool) lives in
+    /// `SessionComposer.composeHomeRecommendation` (remediation 8.4
+    /// extraction); this method applies the result and starts the
+    /// timer/RPG-load/Live-Activity side effects exactly as before.
+    ///
+    /// Never starts an empty session — it would drop the user straight into a
+    /// hollow "0 cards / 0% recall" summary that reads as failure. The
+    /// composer returns nil in that case so no timer / Live Activity spins up
+    /// for nothing. The Home CTA is also gated when nothing is composable.
     @discardableResult
     public func startSession() async -> Bool {
-        let cards = await cardRepository.allCards()
-        let snapshot = await buildSnapshot(cards: cards)
-        let unlockedTypes = effectiveUnlockedTypes(profile: snapshot)
-        let inputs = SessionPlannerInputs(
-            source: .homeRecommendation,
-            durationMinutes: defaultDurationMinutes,
-            profile: snapshot,
-            unlockedTypes: unlockedTypes,
-            availableCards: cards
-        )
-        let plan = await sessionPlanner.compose(inputs: inputs)
-
-        // Extract CardDTOs from SRS review exercises for the swipeable queue.
-        // Non-SRS exercises (variety / new content tiles) are still tracked
-        // in `sessionExercises` so immersive mode can render them.
-        let srsCards = plan.exercises.compactMap { exercise -> CardDTO? in
-            if case .srsReview(let card) = exercise { return card }
-            return nil
-        }
-
-        // Never start an empty session — it would drop the user straight into a
-        // hollow "0 cards / 0% recall" summary that reads as failure. Guard at
-        // the source so no timer / Live Activity spins up for nothing. The Home
-        // CTA is also gated when nothing is composable.
-        guard !srsCards.isEmpty else {
+        guard let composed = await sessionComposer.composeHomeRecommendation(
+            durationMinutes: defaultDurationMinutes
+        ) else {
             Logger.ui.info("startSession: composed plan is empty — not starting")
             return false
         }
 
-        sessionQueue = srsCards
+        sessionQueue = composed.sessionQueue
         resetSessionState()
-        estimatedCardCount = plan.exercises.count
+        estimatedCardCount = composed.sessionExercises.count
+        sessionExercises = composed.sessionExercises
+        endPolicy = composed.endPolicy
+        sessionJLPTLevel = composed.jlptLevel
+        vocabularyPool = composed.vocabularyPool
 
-        // Store full exercise list for immersive mode.
-        sessionExercises = plan.exercises
-
-        endPolicy = SessionEndPolicy(
-            durationBudgetMinutes: defaultDurationMinutes,
-            queueLength: plan.exercises.count
-        )
-        sessionJLPTLevel = snapshot.jlptLevel
-
-        // Fetch the session-scoped vocabulary pool for the audio drills, at the
-        // same level used for the XP multiplier. Fail-safe: no repository or an
-        // empty level yields an empty pool (the drill container degrades).
-        await loadVocabularyPool(level: sessionJLPTLevel)
-
-        // Start timer
         startTimer()
-
-        // Load persisted RPG state
         await loadRPGState()
-
-        // Start Live Activity for Dynamic Island
-        liveActivityManager.startActivity(totalExercises: plan.exercises.count)
+        liveActivityManager.startActivity(totalExercises: composed.sessionExercises.count)
 
         Logger.ui.info(
-            "Session started via SessionPlanner: \(plan.exercises.count) exercises (\(srsCards.count) SRS), ~\(plan.estimatedDurationMinutes)min"
+            "Session started via SessionPlanner: \(composed.sessionExercises.count) exercises (\(composed.srsCardCount) SRS), ~\(composed.estimatedDurationMinutes)min"
         )
         return true
     }
 
-    /// Loads and maps the session vocabulary pool for the audio drills
-    /// (Shadowing / Listening). No-op leaving an empty pool when no
-    /// `ContentRepository` was injected (previews / tests) — never throws,
-    /// never blocks the session start on a failed content read.
-    private func loadVocabularyPool(level: JLPTLevel) async {
-        guard let contentRepository else {
-            vocabularyPool = []
-            return
-        }
-        let rows = await contentRepository.vocabularyByLevel(level)
-        vocabularyPool = VocabularyItemMapper.map(rows)
-        Logger.ui.info(
-            "session.vocabPool level=\(level.rawValue, privacy: .public) count=\(self.vocabularyPool.count, privacy: .public)"
-        )
-    }
-
     /// Composes a custom session from the Étude → Compose sheet. Same
     /// pipeline as `startSession()` but with `.studyCustom` as the planner
-    /// source so the planner respects the user's chosen exercise types
-    /// and JLPT levels rather than the home recommendation skeleton.
+    /// source (see `SessionComposer.composeStudyCustom`) so the planner
+    /// respects the user's chosen exercise types and JLPT levels rather than
+    /// the home recommendation skeleton. Unlike `startSession()`, never
+    /// guards on an empty queue (unchanged from the original).
     public func startStudyCustomSession(
         types: Set<ExerciseType>,
         levels: Set<JLPTLevel>,
         duration: Int
     ) async {
-        let cards = await cardRepository.allCards()
-        let snapshot = await buildSnapshot(cards: cards)
-        let unlockedTypes = effectiveUnlockedTypes(profile: snapshot)
-        let inputs = SessionPlannerInputs(
-            source: .studyCustom(types: types, jlptLevels: levels),
-            durationMinutes: duration,
-            profile: snapshot,
-            unlockedTypes: unlockedTypes,
-            availableCards: cards
+        let composed = await sessionComposer.composeStudyCustom(
+            types: types,
+            levels: levels,
+            duration: duration
         )
-        let plan = await sessionPlanner.compose(inputs: inputs)
 
-        let srsCards = plan.exercises.compactMap { exercise -> CardDTO? in
-            if case .srsReview(let card) = exercise { return card }
-            return nil
-        }
-
-        sessionQueue = srsCards
+        sessionQueue = composed.sessionQueue
         resetSessionState()
-        estimatedCardCount = plan.exercises.count
-        sessionExercises = plan.exercises
-
-        endPolicy = SessionEndPolicy(
-            durationBudgetMinutes: duration,
-            queueLength: plan.exercises.count
-        )
-        // Custom sessions: use the highest selected JLPT level so the XP
-        // multiplier matches the user's chosen difficulty rather than
-        // their estimated level. Falls back to snapshot estimate if no
-        // levels were selected (defensive — UI requires a selection).
-        sessionJLPTLevel = levels.max() ?? snapshot.jlptLevel
-
-        // Audio-drill pool at the session's difficulty (see startSession()).
-        await loadVocabularyPool(level: sessionJLPTLevel)
+        estimatedCardCount = composed.sessionExercises.count
+        sessionExercises = composed.sessionExercises
+        endPolicy = composed.endPolicy
+        sessionJLPTLevel = composed.jlptLevel
+        vocabularyPool = composed.vocabularyPool
 
         startTimer()
         await loadRPGState()
-        liveActivityManager.startActivity(totalExercises: plan.exercises.count)
+        liveActivityManager.startActivity(totalExercises: composed.sessionExercises.count)
 
         Logger.ui.info(
-            "Study custom session started: \(plan.exercises.count) exercises (\(srsCards.count) SRS), ~\(plan.estimatedDurationMinutes)min"
+            "Study custom session started: \(composed.sessionExercises.count) exercises (\(composed.srsCardCount) SRS), ~\(composed.estimatedDurationMinutes)min"
         )
     }
 
     /// Restarts the session with only the cards graded `.again` in the
     /// previous session. Drives the summary screen's "Review mistakes" CTA.
-    /// No-op if the missed-set is empty (button should be hidden in that
-    /// case, but the guard keeps callers safe).
+    /// No-op if the missed-set (or resolved card list) is empty — see
+    /// `SessionComposer.composeReviewMistakes` for the guard.
     public func startReviewMistakes() async {
-        let mistakeIDs = missedCardIDs
-        guard !mistakeIDs.isEmpty else { return }
-        let allCards = await cardRepository.allCards()
-        let mistakes = allCards.filter { mistakeIDs.contains($0.id) }
-        guard !mistakes.isEmpty else { return }
+        guard let composed = await sessionComposer.composeReviewMistakes(
+            missedCardIDs: missedCardIDs
+        ) else { return }
 
-        sessionQueue = mistakes
+        sessionQueue = composed.sessionQueue
         resetSessionState()
         sessionMode = .reviewMistakes
-        estimatedCardCount = mistakes.count
-        sessionExercises = mistakes.map { ExerciseItem.srsReview($0) }
+        estimatedCardCount = composed.sessionExercises.count
+        sessionExercises = composed.sessionExercises
 
         endPolicy = SessionEndPolicy(
             durationBudgetMinutes: defaultDurationMinutes,
-            queueLength: mistakes.count
+            queueLength: composed.sessionExercises.count
         )
         // Review-mistakes carries forward whatever level the prior session
         // ran at — the cards themselves haven't changed.
@@ -546,10 +489,10 @@ public final class SessionViewModel {
 
         startTimer()
         await loadRPGState()
-        liveActivityManager.startActivity(totalExercises: mistakes.count)
+        liveActivityManager.startActivity(totalExercises: composed.sessionExercises.count)
 
         Logger.ui.info(
-            "Review-mistakes session started: \(mistakes.count) cards"
+            "Review-mistakes session started: \(composed.sessionExercises.count) cards"
         )
     }
 
@@ -557,28 +500,12 @@ public final class SessionViewModel {
     /// Uses adaptive composition to provide detailed exercise breakdown.
     /// - Parameter config: Session configuration (time, mode, balances).
     public func loadSessionPreview(config: SessionConfig = SessionConfig()) async {
-        let plan = await plannerService.composeAdaptiveSession(config: config)
-        let totalExercises = plan.exercises.count
-        let totalSeconds = plan.exercises.reduce(0) { $0 + $1.estimatedDurationSeconds }
-
-        var skillSplit: [SkillType: Double] = [:]
-        if totalExercises > 0 {
-            for (skill, count) in plan.exerciseBreakdown {
-                skillSplit[skill] = Double(count) / Double(totalExercises)
-            }
-        }
-
-        sessionPreview = SessionPreview(
-            estimatedMinutes: plan.estimatedDurationMinutes,
-            cardCount: totalExercises,
-            exerciseBreakdown: plan.exerciseBreakdown,
-            skillSplit: skillSplit
-        )
-
-        estimatedCardCount = totalExercises
+        let result = await sessionComposer.composePreview(config: config)
+        sessionPreview = result.preview
+        estimatedCardCount = result.totalExercises
 
         Logger.ui.info(
-            "Session preview loaded: \(totalExercises) exercises, ~\(totalSeconds / 60) min"
+            "Session preview loaded: \(result.totalExercises) exercises, ~\(result.totalSeconds / 60) min"
         )
     }
 
@@ -586,26 +513,18 @@ public final class SessionViewModel {
     /// Falls back to basic composition if adaptive session produces no exercises.
     /// - Parameter config: Session configuration for adaptive composition.
     public func startAdaptiveSession(config: SessionConfig) async {
-        let plan = await plannerService.composeAdaptiveSession(config: config)
-
-        if plan.exercises.isEmpty {
+        guard let composed = await sessionComposer.composeAdaptive(config: config) else {
             // Fallback to basic composition
             await startSession()
             return
         }
 
-        // Extract CardDTOs from SRS review exercises for the queue
-        let srsCards = plan.exercises.compactMap { exercise -> CardDTO? in
-            if case .srsReview(let card) = exercise { return card }
-            return nil
-        }
-
-        sessionQueue = srsCards
+        sessionQueue = composed.sessionQueue
         resetSessionState()
-        estimatedCardCount = plan.exercises.count
+        estimatedCardCount = composed.sessionExercises.count
 
         // Store full exercise list for immersive mode
-        sessionExercises = plan.exercises
+        sessionExercises = composed.sessionExercises
 
         // Start timer
         startTimer()
@@ -613,10 +532,10 @@ public final class SessionViewModel {
         await loadRPGState()
 
         // Start Live Activity for Dynamic Island
-        liveActivityManager.startActivity(totalExercises: plan.exercises.count)
+        liveActivityManager.startActivity(totalExercises: composed.sessionExercises.count)
 
         Logger.ui.info(
-            "Adaptive session started: \(srsCards.count) SRS cards, \(plan.supplementaryExerciseCount) supplementary"
+            "Adaptive session started: \(composed.srsCardCount) SRS cards, \(composed.supplementaryExerciseCount) supplementary"
         )
     }
 
@@ -639,80 +558,17 @@ public final class SessionViewModel {
             requeueFailedCard(card)
         }
 
-        Logger.srs.debug(
-            "Grading card \(card.front): grade=\(grade.rawValue), responseTime=\(responseTimeMs)ms"
-        )
-
-        // Persist grade via repository
-        await cardRepository.gradeCard(
-            cardId: card.id,
-            grade: grade,
-            responseTimeMs: responseTimeMs
-        )
-
-        // Surface persistence failures: a grade whose save failed may not count
-        // toward scheduling. Single check right after the write; clear the
-        // monitor so the same failure isn't re-surfaced on the next card.
-        if cardRepository.saveErrorMonitor.lastSaveError != nil {
-            cardRepository.saveErrorMonitor.clear()
-            gradeSaveFailureCount += 1
-        }
+        await gradeCardAndCheckSaveErrors(card: card, grade: grade, responseTimeMs: responseTimeMs)
 
         // Award XP via ExerciseXP (per-type × JLPT-level multiplier),
         // delegating to RPGService for level-up bookkeeping. Flashcard
         // types still match `xpForGrade` totals (delegation in the rule
         // table), so kana-only N5 sessions award the same XP as before.
-        let exerciseType = exerciseTypeForCurrentReview(card: card)
-        let xpAmount = ExerciseXP.award(
-            type: exerciseType,
-            level: sessionJLPTLevel,
-            grade: grade
-        )
-        let result = RPGService.awardXP(
-            amount: xpAmount,
-            currentXP: totalXP,
-            currentLevel: currentLevel,
-            totalReviews: reviewedCount
-        )
-
-        totalXP = result.newXP
-        currentLevel = result.newLevel
-        xpEarned += result.xpAwarded
-        lastXPGained = result.xpAwarded
-
-        // Record per-skill attribution into the session ledger; surfaces
-        // on SessionSummaryView's four-winds row.
-        let recordedType = exerciseType
-        let recordedAmount = xpAmount
-        Task { [ledger] in
-            await ledger.record(xp: recordedAmount, exerciseType: recordedType)
-            let snap = await ledger.snapshot()
-            await MainActor.run { self.skillContribution = snap }
-        }
-
-        // 10% sampled telemetry — high-volume event, full coverage would
-        // bloat the log. Sampling rate documented in the design doc.
-        if Int.random(in: 0..<100) < 10 {
-            Logger.ui.info(
-                "xp.attributed type=\(exerciseType.rawValue, privacy: .public) level=\(self.sessionJLPTLevel.rawValue, privacy: .public) finalXP=\(xpAmount, privacy: .public)"
-            )
-        }
-
-        // Persist RPG state
-        await persistRPGState()
-
-        // Check for level-up
-        if result.didLevelUp {
-            levelUpLevel = result.newLevel
-        }
+        let exerciseType = SessionExerciseSupport.exerciseTypeForCurrentReview(card: card)
+        await awardExerciseXP(type: exerciseType, grade: grade, sampledTelemetry: true)
 
         // Track consecutive correct (affects display only — no longer feeds loot RNG)
-        if isCorrect {
-            consecutiveCorrect += 1
-            correctCount += 1
-        } else {
-            consecutiveCorrect = 0
-        }
+        trackCorrectness(isCorrect: isCorrect)
 
         // Card-derived grade side-effects (mastery detection + loot drop,
         // first-review `newItemsLearned` counting, leech detection). Extracted
@@ -729,15 +585,7 @@ public final class SessionViewModel {
         cardStartTime = Date()
 
         // Update Live Activity with current progress
-        let exerciseLabel = currentExercise.map { exerciseDisplayName($0) } ?? "Review"
-        await liveActivityManager.updateActivity(
-            elapsedSeconds: Int(elapsedTime),
-            exerciseType: exerciseLabel,
-            completedCount: reviewedCount,
-            totalCount: sessionExercises.count,
-            xpEarned: xpEarned,
-            streakCount: consecutiveCorrect
-        )
+        await reportLiveActivityProgress()
 
         // Advance exercise index to stay in sync
         advanceToNextExercise()
@@ -747,78 +595,159 @@ public final class SessionViewModel {
         feedbackState = nil
 
         // Check for lootbox milestone (every 25 reviews in session)
+        await checkLootBoxMilestone()
+
+        await finishSessionIfNeeded()
+    }
+
+    /// Persists a card's FSRS grade and surfaces persistence failures. Shared
+    /// by the SRS deck path (`gradeAndAdvance`, always grades `currentCard`)
+    /// and the non-SRS drill path (`completeCurrentExercise`, conditionally
+    /// grades its `gradeableCard`) — both write the identical FSRS grade +
+    /// save-error-monitor check. A grade whose save failed may not count
+    /// toward scheduling; this checks once right after the write and clears
+    /// the monitor so the same failure isn't re-surfaced on the next card.
+    private func gradeCardAndCheckSaveErrors(card: CardDTO, grade: Grade, responseTimeMs: Int) async {
+        Logger.srs.debug(
+            "Grading card \(card.front): grade=\(grade.rawValue), responseTime=\(responseTimeMs)ms"
+        )
+        await cardRepository.gradeCard(
+            cardId: card.id,
+            grade: grade,
+            responseTimeMs: responseTimeMs
+        )
+        if cardRepository.saveErrorMonitor.lastSaveError != nil {
+            cardRepository.saveErrorMonitor.clear()
+            gradeSaveFailureCount += 1
+        }
+    }
+
+    /// Updates the display-only correctness streak. Shared by `gradeAndAdvance`
+    /// and `completeCurrentExercise` — both apply the identical increment/reset.
+    private func trackCorrectness(isCorrect: Bool) {
+        if isCorrect {
+            consecutiveCorrect += 1
+            correctCount += 1
+        } else {
+            consecutiveCorrect = 0
+        }
+    }
+
+    /// Checks for the lootbox milestone (every 25 reviews/completions in
+    /// session) and persists a new box if earned. Shared by `gradeAndAdvance`
+    /// and `completeCurrentExercise` — both check the identical condition at
+    /// the identical point (after `reviewedCount` is bumped).
+    private func checkLootBoxMilestone() async {
         if LootBoxService.shouldAwardLootBox(reviewsInSession: reviewedCount) {
             let box = LootBoxService.generateLootBox(level: currentLevel)
             earnedLootBox = box
             await persistLootBox(box)
         }
+    }
 
-        await finishSessionIfNeeded()
+    /// Reports current progress to the Live Activity / Dynamic Island.
+    /// Shared by `gradeAndAdvance` and `completeCurrentExercise` — both read
+    /// `currentExercise` for the label at the exact same point (after
+    /// `reviewedCount`/index bookkeeping, before the exercise pointer
+    /// advances), so both see the just-completed exercise, matching the
+    /// original per-call-site computation exactly.
+    private func reportLiveActivityProgress() async {
+        let exerciseLabel = currentExercise.map { SessionExerciseSupport.exerciseDisplayName($0) } ?? "Review"
+        await liveActivityManager.updateActivity(
+            elapsedSeconds: Int(elapsedTime),
+            exerciseType: exerciseLabel,
+            completedCount: reviewedCount,
+            totalCount: sessionExercises.count,
+            xpEarned: xpEarned,
+            streakCount: consecutiveCorrect
+        )
+    }
+
+    /// XP-award bookkeeping shared by the SRS deck path (`gradeAndAdvance`)
+    /// and the non-SRS drill path (`completeCurrentExercise`): computes the
+    /// per-type × JLPT-level XP via `ExerciseXP.award`, delegates to
+    /// `RPGService` for level-up bookkeeping, records per-skill attribution
+    /// into the session ledger, persists RPG state, and sets `levelUpLevel`
+    /// on level-up. `sampledTelemetry` gates the 10%-sampled `xp.attributed`
+    /// log line, which only `gradeAndAdvance` originally emitted (the SRS
+    /// deck path is the high-volume event the sampling comment refers to).
+    @discardableResult
+    private func awardExerciseXP(type: ExerciseType, grade: Grade, sampledTelemetry: Bool) async -> Int {
+        let xpAmount = ExerciseXP.award(type: type, level: sessionJLPTLevel, grade: grade)
+        let result = RPGService.awardXP(
+            amount: xpAmount,
+            currentXP: totalXP,
+            currentLevel: currentLevel,
+            totalReviews: reviewedCount
+        )
+
+        totalXP = result.newXP
+        currentLevel = result.newLevel
+        xpEarned += result.xpAwarded
+        lastXPGained = result.xpAwarded
+
+        // Record per-skill attribution into the session ledger; surfaces
+        // on SessionSummaryView's four-winds row.
+        Task { [ledger] in
+            await ledger.record(xp: xpAmount, exerciseType: type)
+            let snap = await ledger.snapshot()
+            await MainActor.run { self.skillContribution = snap }
+        }
+
+        // 10% sampled telemetry — high-volume event, full coverage would
+        // bloat the log. Sampling rate documented in the design doc.
+        if sampledTelemetry, Int.random(in: 0..<100) < 10 {
+            Logger.ui.info(
+                "xp.attributed type=\(type.rawValue, privacy: .public) level=\(self.sessionJLPTLevel.rawValue, privacy: .public) finalXP=\(xpAmount, privacy: .public)"
+            )
+        }
+
+        // Persist RPG state
+        await persistRPGState()
+
+        // Check for level-up
+        if result.didLevelUp {
+            levelUpLevel = result.newLevel
+        }
+
+        return xpAmount
     }
 
     /// Card-derived grade side-effects shared by the SRS deck path
     /// (`gradeAndAdvance`) and the `.kanjiStudy` drill path
-    /// (`completeCurrentExercise`). Both grade a real FSRS `CardDTO`, so both
-    /// must run identical detection/counting:
-    ///   1. mastery events (Phase 3) → forced loot drop at event rarity, taking
-    ///      priority over the RNG drop; else the RNG loot drop;
-    ///   2. first-review `newItemsLearned` counting (reps was 0), deduped so a
-    ///      same-day re-queued new card isn't double-counted;
-    ///   3. leech detection.
+    /// (`completeCurrentExercise`). Detection/persistence logic lives in
+    /// `SessionRPGPersistence.applyCardGradeSideEffects` (remediation 8.4
+    /// extraction); this wrapper applies the result onto `@Observable` state
+    /// exactly as the original inline implementation did — `lastLootDrop` is
+    /// unconditionally set to the result's drop (nil-or-drop), matching the
+    /// original's unconditional `lastLootDrop = nil` reset followed by a
+    /// conditional overwrite.
     ///
     /// Must be called AFTER the XP/RPG update (the RNG drop reads the post-award
     /// `currentLevel`) and BEFORE either index advances.
     ///
     /// NOTE: mistake tracking + same-day requeue (`missedCardIDs` /
-    /// `requeueFailedCard`) are deliberately NOT here. `requeueFailedCard`
-    /// re-inserts an `.srsReview(card)` into `sessionQueue`, which holds SRS
-    /// payloads only; a `.kanjiStudy` card is intentionally never in that queue
-    /// (the §4.1 index-decoupling invariant), so requeuing it would silently
-    /// convert a handwriting drill into a deck review. That stays in the
+    /// `requeueFailedCard`) are deliberately NOT here — that stays in the
     /// `.srsReview` deck path (`gradeAndAdvance`).
     private func applyCardGradeSideEffects(preGradeCard card: CardDTO, grade: Grade) async {
-        // Mastery events: pre-grade card state → forced drops at event rarity.
-        // Detected BEFORE RNG drop so they always take priority when both would
-        // fire. Named mastery drops (e.g. "First Steps") are once-per-profile —
-        // if the inventory already contains the drop, skip it. Otherwise the
-        // same badge would re-appear every time a new card is graded Good/Easy.
-        lastLootDrop = nil
-        let masteryEvents = MasteryEventDetector.detect(preGradeCard: card, grade: grade)
-        if let event = masteryEvents.first {
-            let drop = LootDropService.generateMasteryDrop(for: event, learnerLevel: sessionJLPTLevel)
-            let alreadyOwned = await inventoryContains(name: drop.name)
-            if !alreadyOwned {
-                lastLootDrop = drop
-                sessionLootCount += 1
-                sessionMasteryEvents.append(event)
-                await persistLootDrop(drop)
-                Logger.rpg.info("Mastery drop: \(event.displayName) → \(drop.name) (\(drop.rarity.displayName))")
-            } else {
-                Logger.rpg.info("Mastery drop skipped (\(drop.name) already in inventory)")
-            }
-        } else if LootDropService.shouldDropLoot(
+        let effects = await rpgPersistence.applyCardGradeSideEffects(
+            preGradeCard: card,
             grade: grade,
-            sessionLootCount: sessionLootCount
-        ) {
-            let drop = LootDropService.generateDrop(level: currentLevel)
-            lastLootDrop = drop
-            sessionLootCount += 1
-            await persistLootDrop(drop)
+            sessionJLPTLevel: sessionJLPTLevel,
+            currentLevel: currentLevel,
+            sessionLootCount: sessionLootCount,
+            alreadyCountedNewItem: newItemCountedIDs.contains(card.id)
+        )
+        lastLootDrop = effects.lootDrop
+        sessionLootCount += effects.sessionLootCountDelta
+        if let event = effects.masteryEvent {
+            sessionMasteryEvents.append(event)
         }
-
-        // Track new items learned (first review = reps was 0). The set guard
-        // keeps a same-day re-queued new card from counting twice.
-        if card.fsrsState.reps == 0 && !newItemCountedIDs.contains(card.id) {
+        if effects.isNewItem {
             newItemCountedIDs.insert(card.id)
             newItemsLearned += 1
         }
-
-        // Check for leech detection after grading.
-        if let leechEvent = LeechDetectionService.checkForLeech(
-            card: card,
-            grade: grade,
-            threshold: CardRepository.leechThreshold
-        ) {
+        if let leechEvent = effects.leechEvent {
             lastLeechEvent = leechEvent
         }
     }
@@ -922,66 +851,17 @@ public final class SessionViewModel {
         }
         if let card = gradeableCard {
             nonSRSGradedCardIDs.insert(card.id)
-            Logger.srs.debug(
-                "Grading card \(card.front): grade=\(grade.rawValue), responseTime=\(responseTimeMs)ms"
-            )
-            await cardRepository.gradeCard(
-                cardId: card.id,
-                grade: grade,
-                responseTimeMs: responseTimeMs
-            )
-            if cardRepository.saveErrorMonitor.lastSaveError != nil {
-                cardRepository.saveErrorMonitor.clear()
-                gradeSaveFailureCount += 1
-            }
+            await gradeCardAndCheckSaveErrors(card: card, grade: grade, responseTimeMs: responseTimeMs)
         }
 
         // Award XP for the exercise kind (per-type × JLPT-level multiplier).
         // `grade` is forwarded for `.perGrade` kinds (e.g. kanjiStudy) and
         // ignored by the rule table for `.perCompletion` kinds.
-        let resolvedType = exerciseType(for: exercise)
-        let xpAmount = ExerciseXP.award(
-            type: resolvedType,
-            level: sessionJLPTLevel,
-            grade: grade
-        )
-        let result = RPGService.awardXP(
-            amount: xpAmount,
-            currentXP: totalXP,
-            currentLevel: currentLevel,
-            totalReviews: reviewedCount
-        )
-        totalXP = result.newXP
-        currentLevel = result.newLevel
-        xpEarned += result.xpAwarded
-        lastXPGained = result.xpAwarded
-
-        // Record per-skill attribution into the session ledger; surfaces on
-        // SessionSummaryView's four-winds row.
-        let recordedType = resolvedType
-        let recordedAmount = xpAmount
-        Task { [ledger] in
-            await ledger.record(xp: recordedAmount, exerciseType: recordedType)
-            let snap = await ledger.snapshot()
-            await MainActor.run { self.skillContribution = snap }
-        }
-
-        // Persist RPG state.
-        await persistRPGState()
-
-        // Check for level-up.
-        if result.didLevelUp {
-            levelUpLevel = result.newLevel
-        }
+        let resolvedType = SessionExerciseSupport.exerciseType(for: exercise)
+        await awardExerciseXP(type: resolvedType, grade: grade, sampledTelemetry: false)
 
         // Track consecutive / total correct (display only).
-        let isCorrect = grade == .good || grade == .easy
-        if isCorrect {
-            consecutiveCorrect += 1
-            correctCount += 1
-        } else {
-            consecutiveCorrect = 0
-        }
+        trackCorrectness(isCorrect: grade == .good || grade == .easy)
 
         // The card-backed kinds (`.kanjiStudy`, `.writingPractice`) run the
         // shared card-grade side-effects: mastery / leech detection and
@@ -1016,25 +896,13 @@ public final class SessionViewModel {
 
         // Update Live Activity with current progress (label = the just-completed
         // exercise, mirroring gradeAndAdvance's ordering).
-        let exerciseLabel = currentExercise.map { exerciseDisplayName($0) } ?? "Review"
-        await liveActivityManager.updateActivity(
-            elapsedSeconds: Int(elapsedTime),
-            exerciseType: exerciseLabel,
-            completedCount: reviewedCount,
-            totalCount: sessionExercises.count,
-            xpEarned: xpEarned,
-            streakCount: consecutiveCorrect
-        )
+        await reportLiveActivityProgress()
 
         // Advance the exercise pointer (never the SRS queue pointer here).
         advanceToNextExercise()
 
         // Check for lootbox milestone (every 25 completions in session).
-        if LootBoxService.shouldAwardLootBox(reviewsInSession: reviewedCount) {
-            let box = LootBoxService.generateLootBox(level: currentLevel)
-            earnedLootBox = box
-            await persistLootBox(box)
-        }
+        await checkLootBoxMilestone()
 
         await finishSessionIfNeeded()
     }
@@ -1042,70 +910,33 @@ public final class SessionViewModel {
     // MARK: - Session Finalization
 
     /// Applies end-of-session effects: daily/streak bonus and pity-drop check.
-    /// Runs once when the session's last card has been graded.
+    /// Runs once when the session's last card has been graded. Persistence +
+    /// pity/bonus computation live in `SessionRPGPersistence.finalize`
+    /// (remediation 8.4 extraction); this wrapper applies the result onto
+    /// `@Observable` state with the exact same conditionals as the original
+    /// inline implementation (e.g. `totalXP`/`currentLevel`/`levelUpLevel`
+    /// only change when `bonusXPAwarded > 0`, matching the original's
+    /// `if bonus.bonusXP > 0` gate).
     private func finalizeSession() async {
-        let now = Date()
-        let context = modelContainer.mainContext
-        guard let state = ActiveProfileResolver.fetchActiveRPGState(in: context) else { return }
+        guard let result = await rpgPersistence.finalize(
+            currentXP: totalXP,
+            currentLevel: currentLevel,
+            sessionLootCount: sessionLootCount
+        ) else { return }
 
-        // Pity timer — if no drop this session, bump counter and force a drop at threshold.
-        if sessionLootCount == 0 {
-            state.sessionsSinceLastDrop += 1
-            if LootDropService.shouldForcePityDrop(sessionsSinceLastDrop: state.sessionsSinceLastDrop) {
-                let drop = LootDropService.generateDrop(level: currentLevel)
-                state.addLootItem(drop)
-                lastLootDrop = drop
-                sessionLootCount += 1
-                state.sessionsSinceLastDrop = 0
-                Logger.rpg.info("Pity drop awarded: \(drop.name) (\(drop.rarity.displayName))")
+        lastLootDrop = result.lootDrop ?? lastLootDrop
+        sessionLootCount = result.updatedSessionLootCount
+
+        if result.bonusXPAwarded > 0 {
+            totalXP = result.updatedTotalXP
+            xpEarned += result.bonusXPAwarded
+            if result.didLevelUp {
+                levelUpLevel = result.updatedLevel
+                currentLevel = result.updatedLevel
             }
-        } else {
-            state.sessionsSinceLastDrop = 0
         }
 
-        // Session bonus (daily / streak).
-        let bonus = SessionBonusService.evaluate(
-            now: now,
-            lastSessionDate: state.lastSessionDate,
-            currentStreak: state.currentDailyStreak,
-            longestStreak: state.longestDailyStreak
-        )
-
-        if bonus.bonusXP > 0 {
-            totalXP += bonus.bonusXP
-            xpEarned += bonus.bonusXP
-            let newLevel = RPGConstants.levelForXP(totalXP)
-            if newLevel > currentLevel {
-                levelUpLevel = newLevel
-                currentLevel = newLevel
-            }
-            state.xp = totalXP
-            state.level = currentLevel
-            Logger.rpg.info("Session bonus: +\(bonus.bonusXP) XP (streak=\(bonus.newDailyStreak), newDay=\(bonus.isNewDay))")
-        }
-
-        state.currentDailyStreak = bonus.newDailyStreak
-        state.longestDailyStreak = bonus.newLongestStreak
-        state.lastSessionDate = now
-        state.totalSessionsCompleted += 1
-        // `isNewDay` is true on any calendar-day change vs. the last session,
-        // streak-continuity aside — exactly "a distinct active day". Feeds
-        // DisplayModeAdvancedThresholdMonitor's `OR active days ≥ 30` path.
-        if bonus.isNewDay {
-            state.activeDaysCount += 1
-        }
-
-        do {
-            try context.save()
-        } catch {
-            Logger.rpg.error("Failed to persist session finalization: \(error.localizedDescription)")
-        }
-
-        lastSessionBonus = bonus
-
-        // Refresh the home-screen widgets' data channel now that this
-        // session's due count / level / last-study date are final.
-        await WidgetSnapshotRefresher.refresh(modelContainer: modelContainer, force: true)
+        lastSessionBonus = result.bonus
     }
 
     /// Grade from a swipe direction.
@@ -1138,11 +969,10 @@ public final class SessionViewModel {
         isPaused = true
         // Fold the current active interval before stopping so background
         // time is not counted if the user leaves the app while paused.
-        if isTimerRunning {
-            baseElapsedTime += Date().timeIntervalSince(timerResumeTime)
-            elapsedTime = baseElapsedTime
-        }
-        stopTimer()
+        // `timerCoordinator.suspend()` is a no-op guarded on `isTimerRunning`
+        // internally, then folds + stops — identical net effect to the
+        // original inline fold followed by an unconditional `stopTimer()`.
+        timerCoordinator.suspend()
         Logger.ui.debug("Session paused at card \(self.currentIndex + 1)/\(self.sessionQueue.count)")
     }
 
@@ -1197,27 +1027,12 @@ public final class SessionViewModel {
 
     /// After the session ends, compute the new `LearnerSnapshot` and grant
     /// a one-time `Loot.NewExerciseUnlocked` badge for each `ExerciseType`
-    /// that crossed its unlock threshold during the session.
+    /// that crossed its unlock threshold during the session. Delegates to
+    /// `SessionRPGPersistence.processNewlyUnlocked` (remediation 8.4).
     private func processNewlyUnlocked() async {
         let cards = await cardRepository.allCards()
-        let snapshot = await buildSnapshot(cards: cards)
-        let context = modelContainer.mainContext
-        guard let state = ActiveProfileResolver.fetchActiveRPGState(in: context) else { return }
-        let previous = state.acknowledgedUnlocks
-        let delta = unlockService.newlyUnlocked(profile: snapshot, previous: previous)
-        guard !delta.isEmpty else { return }
-        for type in delta {
-            let drop = LootItem(
-                category: .badge,
-                rarity: .rare,
-                name: String(localized: "Loot.NewExerciseUnlocked"),
-                iconName: "leaf.fill"
-            )
-            state.addLootItem(drop)
-            Logger.rpg.info("unlock.granted type=\(type.rawValue, privacy: .public)")
-        }
-        state.acknowledgedUnlocks = previous.union(delta)
-        try? context.save()
+        let snapshot = await sessionComposer.buildSnapshot(cards: cards)
+        await rpgPersistence.processNewlyUnlocked(snapshot: snapshot, unlockService: unlockService)
     }
 
     /// Dismisses the session completely (called after summary).
@@ -1274,240 +1089,58 @@ public final class SessionViewModel {
 
     // MARK: - Timer
 
-    /// Drives `elapsedTime` counting only active foreground time.
-    ///
-    /// Each timer run accumulates seconds from `timerResumeTime` (set when
-    /// the interval starts) on top of `baseElapsedTime` (the sum of all
-    /// previous completed intervals). When `suspendTimer()` is called (scene
-    /// goes background or is paused), the delta is folded into `baseElapsedTime`
-    /// and the task is cancelled. When `startTimer()` is called again,
-    /// `timerResumeTime` is reset so only the new foreground interval counts.
+    /// Starts (or resumes) the foreground elapsed-time timer via
+    /// `timerCoordinator`, first refreshing the one-minute-remaining
+    /// threshold from the current `endPolicy`. `durationBudgetMinutes` never
+    /// changes mid-session (only `queueLength` grows, on requeue), so
+    /// recomputing here is equivalent to the original's per-tick `endPolicy`
+    /// read inside `checkOneMinuteRemaining`.
     private func startTimer() {
-        guard !isTimerRunning else { return }
-        isTimerRunning = true
-        timerResumeTime = Date()
-        timerTask = Task { @MainActor in
-            let clock = ContinuousClock()
-            while !Task.isCancelled {
-                try? await clock.sleep(for: .seconds(1))
-                guard !Task.isCancelled else { break }
-                self.elapsedTime = self.baseElapsedTime
-                    + Date().timeIntervalSince(self.timerResumeTime)
-                self.checkOneMinuteRemaining()
-            }
+        if let policy = endPolicy {
+            timerCoordinator.oneMinuteThresholdSeconds = policy.durationBudgetMinutes * 60 - 60
         }
+        timerCoordinator.start()
     }
 
-    /// Pauses the timer and folds the current interval into `baseElapsedTime`
-    /// so background time is never counted. Called from scenePhase onChange
-    /// in the session view when the scene becomes inactive or background.
+    /// Pauses the timer and folds the current interval so background time is
+    /// never counted. Called from scenePhase onChange in the session view
+    /// when the scene becomes inactive or background.
     public func suspendTimer() {
-        guard isTimerRunning else { return }
-        baseElapsedTime += Date().timeIntervalSince(timerResumeTime)
-        elapsedTime = baseElapsedTime
-        stopTimer()
+        timerCoordinator.suspend()
     }
 
     /// Resumes the timer from where it was suspended. Called from scenePhase
     /// onChange when the scene becomes active again.
     public func resumeTimer() {
-        guard !isTimerRunning, isActive, !isPaused else { return }
-        startTimer()
-    }
-
-    /// Maps the SRS card currently being graded to the matching
-    /// `ExerciseType` Spec A enumerated. The session queue is built from
-    /// FSRS cards, so we route by `CardType`. Kana cards live in a
-    /// separate drill surface, so they are never observed here — the
-    /// fallback returns `.kanaStudy` defensively to keep XP attribution
-    /// reading-aligned in any unexpected case.
-    private func exerciseTypeForCurrentReview(card: CardDTO) -> ExerciseType {
-        switch card.type {
-        case .kanji:      return .kanjiStudy
-        case .vocabulary: return .vocabularyStudy
-        case .grammar:    return .fillInBlank
-        case .listening:  return .listeningSubtitled
-        }
-    }
-
-    /// Maps ANY `ExerciseItem` kind to the matching `ExerciseType` for XP
-    /// attribution via `ExerciseXP.award`. `.srsReview` routes by its card's
-    /// `CardType` (same rule as `exerciseTypeForCurrentReview`); the non-SRS
-    /// kinds map to their capability identifier. Used by
-    /// `completeCurrentExercise` so drill exercises award XP for the right skill.
-    private func exerciseType(for exercise: ExerciseItem) -> ExerciseType {
-        switch exercise {
-        case .srsReview(let card):  return exerciseTypeForCurrentReview(card: card)
-        case .kanjiStudy:           return .kanjiStudy
-        case .grammarExercise:      return .grammarExercise
-        case .vocabularyStudy:      return .vocabularyStudy
-        case .fillInBlank:          return .fillInBlank
-        case .readingPassage:       return .readingPassage
-        case .writingPractice:      return .writingPractice
-        case .listeningExercise:    return .listeningSubtitled
-        case .speakingExercise:     return .speakingPractice
-        case .sentenceConstruction: return .sentenceConstruction
-        }
-    }
-
-    /// Sets `oneMinuteRemainingFired` once when elapsed crosses the
-    /// (budget − 60s) threshold. Idempotent — drives a single toast.
-    private func checkOneMinuteRemaining() {
-        guard !oneMinuteRemainingFired,
-              let policy = endPolicy else { return }
-        let threshold = policy.durationBudgetMinutes * 60 - 60
-        if Int(elapsedTime) >= threshold {
-            oneMinuteRemainingFired = true
-        }
+        timerCoordinator.resumeIfEligible(isActive: isActive, isPaused: isPaused)
     }
 
     /// Stops the timer completely.
     private func stopTimer() {
-        timerTask?.cancel()
-        timerTask = nil
-        isTimerRunning = false
-    }
-
-    /// Formats a time interval as "M:SS".
-    private func formatTime(_ interval: TimeInterval) -> String {
-        let total = Int(interval)
-        let minutes = total / 60
-        let seconds = total % 60
-        return String(format: "%d:%02d", minutes, seconds)
-    }
-
-    // MARK: - Exercise Display Name
-
-    /// Returns a user-facing label for the given exercise type.
-    private func exerciseDisplayName(_ exercise: ExerciseItem) -> String {
-        switch exercise {
-        case .srsReview: "Review"
-        case .kanjiStudy: "Kanji"
-        case .grammarExercise: "Grammar"
-        case .vocabularyStudy: "Vocabulary"
-        case .fillInBlank: "Fill in Blank"
-        case .readingPassage: "Reading"
-        case .writingPractice: "Writing"
-        case .listeningExercise: "Listening"
-        case .speakingExercise: "Speaking"
-        case .sentenceConstruction: "Sentence"
-        }
+        timerCoordinator.stop()
     }
 
     // MARK: - RPG State Persistence
 
-    /// Fetches the active profile's RPGState, applies the given mutation, and saves.
-    /// Use this for all mutations on the current-profile RPGState.
-    private func withRPGState(_ body: (RPGState) throws -> Void) async {
-        let context = modelContainer.mainContext
-        guard let state = ActiveProfileResolver.fetchActiveRPGState(in: context) else {
-            Logger.rpg.error("No active profile when mutating RPG state")
-            return
-        }
-        do {
-            try body(state)
-            try context.save()
-        } catch {
-            Logger.rpg.error("RPG state operation failed: \(error.localizedDescription)")
-        }
-    }
-
     /// Loads the active profile's RPG state, creating one if the profile lacks it.
     private func loadRPGState() async {
-        let context = modelContainer.mainContext
-        if let state = ActiveProfileResolver.fetchActiveRPGState(in: context) {
+        if let state = await rpgPersistence.loadState() {
             totalXP = state.xp
             currentLevel = state.level
-            Logger.rpg.debug("Loaded RPG state: xp=\(state.xp), level=\(state.level)")
         } else {
             totalXP = 0
             currentLevel = 1
-            Logger.rpg.warning("No active profile — session starts with zero XP")
         }
     }
 
     /// Persists current RPG state to SwiftData.
     private func persistRPGState() async {
-        await withRPGState { state in
-            state.xp = totalXP
-            state.level = currentLevel
-            state.totalReviewsCompleted += 1
-        }
-    }
-
-    /// Persists a loot drop to the RPG state inventory.
-    private func persistLootDrop(_ item: LootItem) async {
-        await withRPGState { state in
-            state.addLootItem(item)
-            Logger.rpg.info("Loot drop persisted: \(item.name) (\(item.rarity.displayName))")
-        }
-    }
-
-    /// Returns true if the active profile's RPG inventory already contains a
-    /// loot item with the given name. Used to dedup once-per-profile named
-    /// mastery rewards like "First Steps" so they aren't re-awarded on every
-    /// new card graded Good/Easy.
-    private func inventoryContains(name: String) async -> Bool {
-        let context = modelContainer.mainContext
-        guard let state = ActiveProfileResolver.fetchActiveRPGState(in: context) else {
-            return false
-        }
-        return state.lootInventory.contains { $0.name == name }
+        await rpgPersistence.persistState(xp: totalXP, level: currentLevel)
     }
 
     /// Persists a lootbox to the RPG state.
     private func persistLootBox(_ box: LootBox) async {
-        await withRPGState { state in
-            state.addLootBox(box)
-            Logger.rpg.info("Lootbox persisted: \(box.challengeType.displayName)")
-        }
-    }
-
-    // MARK: - Learner Snapshot
-
-    /// Builds a `LearnerSnapshot` from the current card pool + active
-    /// profile state. Pure delegation to `LearnerSnapshotBuilder.build(...)`
-    /// — no side effects beyond reading the active RPG state for the
-    /// `lastSessionAt` timestamp.
-    ///
-    /// Feeds real skill balances (from `ProgressService`), grammar mastery
-    /// (derived by the builder from `.grammar` cards) and listening accuracy /
-    /// recall (from persisted `ExerciseOutcomeLog`s) into the snapshot — the last
-    /// two unlock `.listeningUnsubtitled` / `.speakingPractice` (remediation 4.4).
-    private func buildSnapshot(cards: [CardDTO]) async -> LearnerSnapshot {
-        let now = Date()
-        let progressService = ProgressService(cardRepository: cardRepository)
-        let progress = await progressService.loadDashboardData(now: now)
-        let jlptLevel = JLPTLevel(rawValue: progress.jlptEstimate.level.lowercased()) ?? .n5
-        let lastSession = ActiveProfileResolver
-            .fetchActiveRPGState(in: modelContainer.mainContext)?
-            .lastSessionDate
-        let listeningAccuracy = await cardRepository.listeningAccuracyLast30()
-        let listeningRecall = await cardRepository.listeningRecallLast30Days(now: now)
-        return LearnerSnapshotBuilder.build(
-            cards: cards,
-            jlptLevel: jlptLevel,
-            listeningAccuracyLast30: listeningAccuracy,
-            listeningRecallLast30Days: listeningRecall,
-            skillBalances: progress.skillBalance.asSkillBalances,
-            hasNewContentQueued: cards.contains(where: { $0.fsrsState.reps == 0 }),
-            lastSessionAt: lastSession,
-            now: now
-        )
-    }
-
-    // MARK: - Effective Unlocks
-
-    /// Effective unlocked set for session planning: the live threshold
-    /// evaluation UNION the profile's already-acknowledged unlocks. Unlocks are
-    /// one-way — once granted (recorded in `RPGState.acknowledgedUnlocks`), a
-    /// stricter later mastery definition must never silently re-lock them.
-    private func effectiveUnlockedTypes(profile snapshot: LearnerSnapshot) -> Set<ExerciseType> {
-        let live = unlockService.unlockedTypes(profile: snapshot)
-        let acknowledged = ActiveProfileResolver
-            .fetchActiveRPGState(in: modelContainer.mainContext)?
-            .acknowledgedUnlocks ?? []
-        return live.union(acknowledged)
+        await rpgPersistence.persistLootBox(box)
     }
 
     // MARK: - Same-Day Re-Queue
@@ -1518,44 +1151,24 @@ public final class SessionViewModel {
     /// re-insert 3-5 positions later. Capped at `maxRetriesPerCard`.
     private func requeueFailedCard(_ card: CardDTO) {
         let retries = retryCounts[card.id, default: 0]
-        guard retries < Self.maxRetriesPerCard else { return }
-        retryCounts[card.id] = retries + 1
-        if sessionMode == .reviewMistakes {
-            // Append to both ends — the appended `.srsReview` is the last
-            // card-backed exercise, so its queue slot is simply the current
-            // queue length; correspondence is preserved.
-            sessionQueue.append(card)
-            sessionExercises.append(.srsReview(card))
-        } else {
-            let offset = Int.random(in: 3...5)
-            let exerciseSlot = min(currentExerciseIndex + 1 + offset, sessionExercises.count)
-            // Derive the SRS-queue slot FROM the exercise slot so the two arrays
-            // stay in lockstep when non-SRS exercises interleave: `sessionQueue`
-            // holds only `.srsReview` payloads, so the requeued card's queue
-            // position is the number of `.srsReview` items preceding its
-            // exercise-list slot. Computing an independent `currentIndex + offset`
-            // (the old behavior) desyncs the two the moment a non-SRS item sits
-            // between the pointers, making the deck grade the wrong card. In a
-            // pure-SRS session every preceding item is `.srsReview`, so this
-            // equals the old `currentIndex + 1 + offset` exactly.
-            let queueSlot = sessionExercises[..<exerciseSlot].reduce(into: 0) { count, item in
-                if case .srsReview = item { count += 1 }
-            }
-            sessionExercises.insert(.srsReview(card), at: exerciseSlot)
-            sessionQueue.insert(card, at: queueSlot)
-        }
-        // The end policy captured the queue length at session start; grow it in
-        // lockstep so the queue-exhaustion check doesn't fire before the
-        // re-queued card is shown.
-        if let policy = endPolicy {
-            endPolicy = SessionEndPolicy(
-                durationBudgetMinutes: policy.durationBudgetMinutes,
-                queueLength: policy.queueLength + 1,
-                graceWindowSeconds: policy.graceWindowSeconds
-            )
-        }
+        guard let result = SessionRequeuePlanner.requeue(
+            card: card,
+            currentRetryCount: retries,
+            maxRetries: Self.maxRetriesPerCard,
+            sessionMode: sessionMode,
+            currentExerciseIndex: currentExerciseIndex,
+            sessionQueue: sessionQueue,
+            sessionExercises: sessionExercises,
+            endPolicy: endPolicy
+        ) else { return }
+
+        retryCounts[card.id] = result.retryCount
+        sessionQueue = result.sessionQueue
+        sessionExercises = result.sessionExercises
+        endPolicy = result.endPolicy
+
         Logger.srs.info(
-            "Same-day requeue: \(card.front, privacy: .public) (retry \(retries + 1)/\(Self.maxRetriesPerCard, privacy: .public))"
+            "Same-day requeue: \(card.front, privacy: .public) (retry \(result.retryCount)/\(Self.maxRetriesPerCard, privacy: .public))"
         )
     }
 
