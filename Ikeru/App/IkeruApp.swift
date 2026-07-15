@@ -111,13 +111,37 @@ struct IkeruApp: App {
                     WatchConnectivityManager.shared.activate(modelContainer: modelContainer)
                     await scheduleNotificationsFromSettings()
                     schedulePreWarmTask()
+                    await WidgetSnapshotRefresher.refresh(modelContainer: modelContainer)
+                }
+                .onOpenURL { url in
+                    handleDeepLink(url)
                 }
         }
         .modelContainer(modelContainer)
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .background {
                 schedulePreWarmTask()
+            } else if newPhase == .active {
+                Task { @MainActor in
+                    await WidgetSnapshotRefresher.refresh(modelContainer: modelContainer)
+                }
             }
+        }
+    }
+
+    // MARK: - Deep Links
+
+    /// Handles `ikeru://…` URLs — currently only the home-screen widget's
+    /// `.widgetURL`, which routes into a review session via the same
+    /// notification the "Review Japanese" Siri Shortcut already posts
+    /// (see `ShortcutsManager.swift`).
+    private func handleDeepLink(_ url: URL) {
+        guard url.scheme == "ikeru" else { return }
+        switch url.host {
+        case "review":
+            NotificationCenter.default.post(name: .startReviewFromShortcut, object: nil)
+        default:
+            Logger.ui.info("Unhandled deep link host: \(url.host ?? "nil", privacy: .public)")
         }
     }
 
