@@ -1102,6 +1102,10 @@ public final class SessionViewModel {
         }
 
         lastSessionBonus = bonus
+
+        // Refresh the home-screen widgets' data channel now that this
+        // session's due count / level / last-study date are final.
+        await WidgetSnapshotRefresher.refresh(modelContainer: modelContainer, force: true)
     }
 
     /// Grade from a swipe direction.

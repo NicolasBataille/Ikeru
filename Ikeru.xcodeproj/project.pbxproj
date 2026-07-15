@@ -10,6 +10,11 @@
 		00C45E3806F4F41DF942E46A /* WatchConnectivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6DF718512A3E4A694744447 /* WatchConnectivityManager.swift */; };
 		A95406495EFFFCC424EB90C6 /* IkeruPlatformTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5E4550783515A4C00B4F420 /* IkeruPlatformTheme.swift */; };
 		C53BD84DE873400AE9DEA38E /* IkeruPlatformTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5E4550783515A4C00B4F420 /* IkeruPlatformTheme.swift */; };
+		2E7BEA1CF1869BC7DED6158B /* WidgetSnapshotStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25A7130171295376EED78A07 /* WidgetSnapshotStore.swift */; };
+		1D49980FCB6299CCF998D5F4 /* WidgetSnapshotStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25A7130171295376EED78A07 /* WidgetSnapshotStore.swift */; };
+		606B578980D413E9E951ED2B /* WidgetSnapshotRefresher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E47B92BCD0BF85A100174BB /* WidgetSnapshotRefresher.swift */; };
+		88F3336D470E07CB8575027C /* WidgetDeepLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2324815C58F87A181CE08E7 /* WidgetDeepLink.swift */; };
+		5DB1F1D625EFFA31A5669DB5 /* WidgetDeepLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2324815C58F87A181CE08E7 /* WidgetDeepLink.swift */; };
 		0140648B5E3FFD4029D23F8E /* BilingualLabel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69C7077A729B04B8A3E50617 /* BilingualLabel.swift */; };
 		024CE65C4F899FACD02F82AB /* IkeruLogo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CE66823D49245E40B9FB5AE /* IkeruLogo.swift */; };
 		02CD127A519AC0865600390C /* EtudeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 641C149490C9056EFCD19CBC /* EtudeView.swift */; };
@@ -451,6 +456,9 @@
 		F0B25FD2BC64C88BF9B170AC /* OnboardingTourView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingTourView.swift; sourceTree = "<group>"; };
 		F1DF2E350075F0F6C4CFE5D5 /* HomeViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewModel.swift; sourceTree = "<group>"; };
 		F5E4550783515A4C00B4F420 /* IkeruPlatformTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IkeruPlatformTheme.swift; sourceTree = "<group>"; };
+		25A7130171295376EED78A07 /* WidgetSnapshotStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetSnapshotStore.swift; sourceTree = "<group>"; };
+		3E47B92BCD0BF85A100174BB /* WidgetSnapshotRefresher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetSnapshotRefresher.swift; sourceTree = "<group>"; };
+		A2324815C58F87A181CE08E7 /* WidgetDeepLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetDeepLink.swift; sourceTree = "<group>"; };
 		F75C1AD94292B42125242E1C /* StandByFlashcardWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StandByFlashcardWidget.swift; sourceTree = "<group>"; };
 		F8175DFE1144779F7DC87BB4 /* AppLocale.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppLocale.swift; sourceTree = "<group>"; };
 		F8BD1F07D5A033139C8C8A83 /* SessionSummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionSummaryView.swift; sourceTree = "<group>"; };
@@ -857,6 +865,7 @@
 				F00C65E3B1046C3448638D50 /* NotificationManager.swift */,
 				2DFC0A4678F7D8B667D36783 /* ShortcutsManager.swift */,
 				C6DF718512A3E4A694744447 /* WatchConnectivityManager.swift */,
+				3E47B92BCD0BF85A100174BB /* WidgetSnapshotRefresher.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -1029,6 +1038,8 @@
 			isa = PBXGroup;
 			children = (
 				F5E4550783515A4C00B4F420 /* IkeruPlatformTheme.swift */,
+				25A7130171295376EED78A07 /* WidgetSnapshotStore.swift */,
+				A2324815C58F87A181CE08E7 /* WidgetDeepLink.swift */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -1222,6 +1233,8 @@
 				484D405C4211881A67889AB9 /* SessionLiveActivity.swift in Sources */,
 				85204B34AEE5C56B01857C3C /* StandByFlashcardWidget.swift in Sources */,
 				C53BD84DE873400AE9DEA38E /* IkeruPlatformTheme.swift in Sources */,
+				1D49980FCB6299CCF998D5F4 /* WidgetSnapshotStore.swift in Sources */,
+				5DB1F1D625EFFA31A5669DB5 /* WidgetDeepLink.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1426,6 +1439,9 @@
 				FCCD64A5882BBE00824541F2 /* PagedLearningStack.swift in Sources */,
 				0A53BBFFB15FC953A5B00198 /* TatamiToggle.swift in Sources */,
 				02CD127A519AC0865600390C /* EtudeView.swift in Sources */,
+				2E7BEA1CF1869BC7DED6158B /* WidgetSnapshotStore.swift in Sources */,
+				606B578980D413E9E951ED2B /* WidgetSnapshotRefresher.swift in Sources */,
+				88F3336D470E07CB8575027C /* WidgetDeepLink.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
