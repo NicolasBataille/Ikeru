@@ -1172,8 +1172,6 @@ private struct DevToolsSettingsView: View {
     @State private var devSeedLevel: Double = 15
     @State private var devSeedDue: Double = 20
     @State private var devSeedMastered: Double = 120
-    @State private var devSeedLootboxes: Double = 3
-    @State private var devSeedInventory: Double = 8
     @State private var devShowResetConfirm = false
     @State private var devLastAction: String = ""
 
@@ -1220,10 +1218,6 @@ private struct DevToolsSettingsView: View {
                 devSeedRow
                 Rectangle().fill(TatamiTokens.goldDim.opacity(0.2)).frame(height: 1)
                 devActionRow(jp: "削除", label: "Wipe profile",    value: "destructive") { devShowResetConfirm = true }
-                devActionRow(jp: "宝箱", label: "Grant lootbox",   value: "add") {
-                    TestFixtures.addLootbox(context: modelContext)
-                    devLastAction = "✓ Lootbox granted — open Rang to see it"
-                }
                 devActionRow(jp: "昇段", label: "Force level-up",  value: "next") {
                     TestFixtures.grantLevelUp(context: modelContext)
                     devLastAction = "✓ XP bumped past next grade"
@@ -1292,9 +1286,7 @@ private struct DevToolsSettingsView: View {
                         profileVM: vm,
                         level: Int(devSeedLevel),
                         dueCount: Int(devSeedDue),
-                        masteredCount: Int(devSeedMastered),
-                        lootboxCount: Int(devSeedLootboxes),
-                        inventoryCount: Int(devSeedInventory)
+                        masteredCount: Int(devSeedMastered)
                     )
                     devLastAction = "✓ Seeded: lvl \(Int(devSeedLevel)), \(Int(devSeedDue)) due, \(Int(devSeedMastered)) mastered"
                 } label: {
@@ -1314,8 +1306,6 @@ private struct DevToolsSettingsView: View {
             devSlider(label: "Level",     value: $devSeedLevel,     range: 1...30,   step: 1)
             devSlider(label: "Due",       value: $devSeedDue,       range: 0...50,   step: 5)
             devSlider(label: "Mastered",  value: $devSeedMastered,  range: 0...200,  step: 10)
-            devSlider(label: "Lootboxes", value: $devSeedLootboxes, range: 0...5,    step: 1)
-            devSlider(label: "Inventory", value: $devSeedInventory, range: 0...20,   step: 1)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)

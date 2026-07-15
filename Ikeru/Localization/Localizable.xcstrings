@@ -2359,22 +2359,6 @@
         }
       }
     },
-    "Complete sessions to earn loot." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Complete sessions to earn loot."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Termine des séances pour gagner des récompenses."
-          }
-        }
-      }
-    },
     "Configure rig first in AI Providers" : {
       "comment" : "Placeholder shown in rig jobs view when no rig is configured",
       "localizations" : {
@@ -4216,39 +4200,6 @@
         }
       }
     },
-    "Loot.NewExerciseUnlocked" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "New practice unlocked"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nouvelle pratique débloquée"
-          }
-        }
-      }
-    },
-    "Lootbox Challenge!" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lootbox Challenge!"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Défi du coffre !"
-          }
-        }
-      }
-    },
     "Mark" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -4674,22 +4625,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "No words yet"
-          }
-        }
-      }
-    },
-    "No worries — try again!" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No worries — try again!"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pas de souci — réessaie !"
           }
         }
       }
@@ -6906,22 +6841,6 @@
         }
       }
     },
-    "Time's Up!" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Time's Up!"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Temps écoulé !"
-          }
-        }
-      }
-    },
     "To chat with Sakura, set up an AI provider in Settings." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -7876,57 +7795,6 @@
         }
       }
     },
-    "Begin Challenge" : {
-      "comment" : "LootBox challenge ready-state CTA button",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Begin Challenge"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Commencer le défi"
-          }
-        }
-      }
-    },
-    "Tap the correct reading!" : {
-      "comment" : "LootBox challenge — instruction above the question prompt",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tap the correct reading!"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Touche la bonne lecture !"
-          }
-        }
-      }
-    },
-    "Score %lld to open" : {
-      "comment" : "LootBox — required score caption (e.g. 'Score 5 to open')",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Score %lld to open"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Score de %lld pour ouvrir"
-          }
-        }
-      }
-    },
     "Try Again" : {
       "comment" : "LootBox challenge failed-state retry button",
       "localizations" : {
@@ -7957,23 +7825,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Plus tard"
-          }
-        }
-      }
-    },
-    "Lootboxes" : {
-      "comment" : "RPG profile section header — unopened loot boxes",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lootboxes"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Coffres"
           }
         }
       }
@@ -8233,150 +8084,6 @@
         }
       }
     },
-    "Kanji Speed" : {
-      "comment" : "LootBox ChallengeType displayName — kanji reading timed challenge",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Kanji Speed"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Vitesse kanji"
-          }
-        }
-      }
-    },
-    "Vocab Match" : {
-      "comment" : "LootBox ChallengeType displayName — vocabulary matching challenge",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Vocab Match"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Paires de mots"
-          }
-        }
-      }
-    },
-    "Kana Blitz" : {
-      "comment" : "LootBox ChallengeType displayName — rapid kana identification challenge",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Kana Blitz"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Blitz kana"
-          }
-        }
-      }
-    },
-    "Grammar Rush" : {
-      "comment" : "LootBox ChallengeType displayName — grammar questions timed challenge",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Grammar Rush"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sprint grammaire"
-          }
-        }
-      }
-    },
-    "Read kanji correctly as fast as you can!" : {
-      "comment" : "LootBox ChallengeType description — kanjiSpeed",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Read kanji correctly as fast as you can!"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lis les kanji correctement le plus vite possible !"
-          }
-        }
-      }
-    },
-    "Match vocabulary to their meanings!" : {
-      "comment" : "LootBox ChallengeType description — vocabMatch",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Match vocabulary to their meanings!"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Associe chaque mot à sa signification !"
-          }
-        }
-      }
-    },
-    "Identify kana in rapid succession!" : {
-      "comment" : "LootBox ChallengeType description — kanaBlitz",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Identify kana in rapid succession!"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Identifie les kana à toute vitesse !"
-          }
-        }
-      }
-    },
-    "Answer grammar questions correctly!" : {
-      "comment" : "LootBox ChallengeType description — grammarRush",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Answer grammar questions correctly!"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Réponds correctement aux questions de grammaire !"
-          }
-        }
-      }
-    },
     "New rank achieved" : {
       "comment" : "LevelUpView subtitle — shown beneath the 段 kanji when levelling up",
       "extractionState" : "manual",
@@ -8409,42 +8116,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Rang"
-          }
-        }
-      }
-    },
-    "Tap for next item" : {
-      "comment" : "LootRevealView hint — more items remain to be revealed",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tap for next item"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Touche pour l'objet suivant"
-          }
-        }
-      }
-    },
-    "Tap to close" : {
-      "comment" : "LootRevealView hint — last item shown, tap dismisses the overlay",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tap to close"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Touche pour fermer"
           }
         }
       }
@@ -11477,38 +11148,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "L'audio de prononciation pour les kana, le vocabulaire et les phrases d'exemple est pré-généré avec le moteur vocal gratuit VOICEVOX (voix : 四国めたん) et embarqué pour une lecture hors ligne — aucune configuration requise."
-          }
-        }
-      }
-    },
-    "Start Challenge" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Start Challenge"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Commencer le défi"
-          }
-        }
-      }
-    },
-    "Which kana matches this reading?" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Which kana matches this reading?"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Quel kana correspond à cette lecture ?"
           }
         }
       }
