@@ -119,6 +119,11 @@ public final class ProfileViewModel {
             for outcome in outcomes { modelContext.delete(outcome) }
         }
 
+        // Same reasoning for the per-profile UserDefaults onboarding flags
+        // (swipe tutorial, first-session daily-term prompt) — they're keyed by
+        // profile id and would otherwise linger forever.
+        OnboardingFlags.clearAll(profileID: deletedID)
+
         modelContext.delete(profile)
         do {
             try modelContext.save()
