@@ -18,7 +18,7 @@ dev        →  PR  →  master   (CI + TestFlight deploy)
 
 ## Build & tests
 
-- `cd IkeruCore && swift test --filter "..."` pour les suites Core (le full `swift test` SIGSEGV sur des suites legacy, voir le `--filter` du workflow pour le subset vert).
+- `cd IkeruCore && swift test --no-parallel --filter "..."` pour les suites Core (le full `swift test` SIGSEGV sur des suites legacy, voir le `--filter` du workflow pour le subset vert). `--no-parallel` reste requis pour les suites SwiftData. ⚠️ `LegacyStoreMigrationTests` (le round-trip V1→V2) doit tourner dans **son propre process** : `swift test --no-parallel --filter "LegacyStoreMigration"` séparément — ouvrir un container avec les snapshots V1 figés empoisonne le cache global entité↔classe de CoreData pour `RPGState`, et tout fetch V2 ultérieur dans le même process peut matérialiser la mauvaise classe (« Failed to cast model … »). Ni `.serialized` ni `--no-parallel` ne suffisent (l'empoisonnement survit à la fin de la suite). Le filtre CI principal ne matche volontairement pas ce nom.
 - `xcodebuild build -project Ikeru.xcodeproj -scheme Ikeru -destination "generic/platform=iOS" -skipPackagePluginValidation CODE_SIGNING_ALLOWED=NO` pour valider la compile iOS sans signing.
 - Schemes : `Ikeru` (app), `IkeruWatch` (watchOS), `IkeruWidget` (widget extension).
 - watchOS est restreint : pas de `Vision` ni `AVAudioUnitTimePitch` — wrap les imports/usages dans `#if canImport(Vision)` ou `#if !os(watchOS)`.
