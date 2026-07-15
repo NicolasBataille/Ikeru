@@ -140,21 +140,21 @@ struct ExerciseOutcomeLogAggregationTests {
     @Test("Aggregation is scoped to the active profile")
     func profileIsolation() async throws {
         let container = try makeContainer()
-        let a = try seedProfile(container, active: true)
-        let b = try seedProfile(container, active: false)
+        let profileA = try seedProfile(container, active: true)
+        let profileB = try seedProfile(container, active: false)
         defer { clearActiveKey() }
         let repo = CardRepository(modelContainer: container)
 
-        setActive(a)
+        setActive(profileA)
         await repo.recordExerciseOutcome(skill: .listening, accuracy: 1.0)
-        setActive(b)
+        setActive(profileB)
         await repo.recordExerciseOutcome(skill: .listening, accuracy: 0.0)
 
         // Active = A sees only A's perfect outcome.
-        setActive(a)
+        setActive(profileA)
         #expect(await repo.listeningAccuracyLast30() == 1.0)
         // Active = B sees only B's failing outcome.
-        setActive(b)
+        setActive(profileB)
         #expect(await repo.listeningAccuracyLast30() == 0.0)
     }
 
@@ -190,8 +190,15 @@ struct ExerciseOutcomeLogAggregationTests {
 
 // MARK: - V1 → V2 migration
 
-@Suite("IkeruSchema V1→V2 migration")
-struct IkeruSchemaMigrationTests {
+// Runs in its OWN CI step / own `swift test` process: opening a V1-shaped
+// container poisons CoreData's process-global entity↔class cache, so any
+// later V2 fetch of RPGState in the same process can materialize the wrong
+// class ("Failed to cast model ... to RPGState"). Process isolation — not
+// .serialized, not --no-parallel — is the only reliable containment.
+// The suite name deliberately avoids the "IkeruSchema" substring the main
+// CI filter matches.
+@Suite("LegacyStoreMigration V1→V2", .serialized)
+struct LegacyStoreMigrationTests {
 
     @Test("Existing V1 data survives the lightweight V1→V2 stage; ExerciseOutcomeLog becomes usable")
     func v1ToV2AdditiveMigration() throws {
@@ -206,14 +213,31 @@ struct IkeruSchemaMigrationTests {
             }
         }
 
-        // 1. Create a genuine V1-versioned store and insert V1 data.
+        // 1. Create a genuine V1-versioned store, mimicking the released app
+        //    exactly: a plain `Schema(versionedSchema: IkeruSchemaV1.self)`
+        //    container with NO migration plan attached. Insert data using the
+        //    FROZEN V1 model types (`IkeruSchemaV1.UserProfile`, `.Card`,
+        //    `.RPGState`, `.ReviewLog`) — not the live top-level types, which
+        //    now describe V2's shape. See IkeruSchema.swift.
         do {
             let schema = Schema(versionedSchema: IkeruSchemaV1.self)
             let config = ModelConfiguration(schema: schema, url: url)
             let container = try ModelContainer(for: schema, configurations: [config])
             let ctx = ModelContext(container)
-            ctx.insert(UserProfile(displayName: "Migrator"))
-            ctx.insert(Card(front: "\u{4E00}", back: "one", type: .kanji, dueDate: Date()))
+
+            let profile = IkeruSchemaV1.UserProfile(displayName: "Migrator")
+            let rpg = try #require(profile.rpgState)
+            rpg.xp = 4_200
+            rpg.level = 7
+            rpg.currentDailyStreak = 12
+            rpg.longestDailyStreak = 30
+            ctx.insert(profile)
+
+            let card = IkeruSchemaV1.Card(front: "\u{4E00}", back: "one", type: .kanji, dueDate: Date())
+            card.profile = profile
+            ctx.insert(card)
+            ctx.insert(IkeruSchemaV1.ReviewLog(card: card, grade: .good, responseTimeMs: 1_500))
+
             try ctx.save()
         }
 
@@ -227,11 +251,24 @@ struct IkeruSchemaMigrationTests {
         )
         let ctx = ModelContext(containerV2)
 
-        // V1 data survived intact.
+        // V1 data survived intact — now readable through the LIVE (V2) types.
         let profiles = try ctx.fetch(FetchDescriptor<UserProfile>())
         #expect(profiles.count == 1)
         #expect(profiles.first?.displayName == "Migrator")
         #expect(try ctx.fetch(FetchDescriptor<Card>()).count == 1)
+        #expect(try ctx.fetch(FetchDescriptor<ReviewLog>()).count == 1)
+
+        // RPGState's pre-existing values survived the migration untouched...
+        let rpgStates = try ctx.fetch(FetchDescriptor<RPGState>())
+        #expect(rpgStates.count == 1)
+        let rpg = try #require(rpgStates.first)
+        #expect(rpg.xp == 4_200)
+        #expect(rpg.level == 7)
+        #expect(rpg.currentDailyStreak == 12)
+        #expect(rpg.longestDailyStreak == 30)
+        // ...and the new V2-only property backfills to its documented
+        // default for rows that predate it.
+        #expect(rpg.activeDaysCount == 0)
 
         // The newly-added entity is usable in the migrated store.
         let profileID = try #require(profiles.first?.id)

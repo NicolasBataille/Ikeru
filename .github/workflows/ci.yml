@@ -173,9 +173,29 @@ jobs:
         # allowlist of suites verified to pass on CI. Newly-fixed suites are
         # added here after CI confirms they don't reintroduce the crash.
         # Un-filtering fully is blocked on the runner toolchain, not our tests.
+        #
+        # `--no-parallel` + a SEPARATE step for LegacyStoreMigration (below):
+        # opening a container with the frozen V1 shapes (IkeruSchema.swift)
+        # poisons CoreData's process-global entity↔class cache for the
+        # "RPGState" entity — after that, V2 fetches in the SAME process can
+        # materialize the wrong class and crash ("Failed to cast model ...").
+        # Serializing isn't enough (the poisoning persists after the suite
+        # finishes), so the migration suite runs in its own `swift test`
+        # process in the next step, and is deliberately named so this step's
+        # "IkeruSchema" token does not match it. `--no-parallel` here still
+        # guards the residual concurrent-model-loading race. Test-harness-only:
+        # production builds exactly one container.
         run: |
           cd IkeruCore
-          swift test --filter "JLPTReadinessFormula|JLPTBackfill|ProgressServiceJLPTRebuild|SkillXPLedger|SessionEnd|ExerciseXP|ExerciseOutcome|DailyTerm|DefaultSessionPlanner|ExerciseUnlockService|LearnerSnapshot|CardDTOJLPTLevel|BackupServiceJLPTLevel|(^|[^a])CardRepository|ProgressService|MasteryLevel|DisplayModeAdvancedThresholdMonitor|IkeruSchema|PlannerService|KanaCardRepository|ContentSeedService|ReviewForecastService|KanaProgress|VocabularyItemMapper|VocabularyRecallOptionsBuilder|MultiTurnConversation|ChatMarkerParsing|ConversationService|AIRouter|Gemini|OpenAICompatible|ClaudeProvider|AIProvider|RetryAfterParsing|ReadingValidator|ContentRepository|FSRSService|VocabularyRepository|ThemePaletteService|LeechIntervention"
+          swift test --no-parallel --filter "JLPTReadinessFormula|JLPTBackfill|ProgressServiceJLPTRebuild|SkillXPLedger|SessionEnd|ExerciseXP|ExerciseOutcome|DailyTerm|DefaultSessionPlanner|ExerciseUnlockService|LearnerSnapshot|CardDTOJLPTLevel|BackupServiceJLPTLevel|(^|[^a])CardRepository|ProgressService|MasteryLevel|DisplayModeAdvancedThresholdMonitor|IkeruSchema|PlannerService|KanaCardRepository|ContentSeedService|ReviewForecastService|KanaProgress|VocabularyItemMapper|VocabularyRecallOptionsBuilder|MultiTurnConversation|ChatMarkerParsing|ConversationService|AIRouter|Gemini|OpenAICompatible|ClaudeProvider|AIProvider|RetryAfterParsing|ReadingValidator|ContentRepository|FSRSService|VocabularyRepository|ThemePaletteService|LeechIntervention"
+
+      - name: Run Legacy-Store Migration Tests (own process)
+        # See the previous step's comment: this suite must never share a
+        # process with other SwiftData suites. It is the regression guard for
+        # the release-blocking a7371a3-store migration bug.
+        run: |
+          cd IkeruCore
+          swift test --no-parallel --filter "LegacyStoreMigration"
 
       - name: Run App Tests (green subset)
         # Same — scoped to suites known to pass. KanaDrillViewModel covers
