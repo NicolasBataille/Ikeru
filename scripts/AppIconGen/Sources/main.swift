@@ -64,11 +64,13 @@ struct IkebanaHikaeShape: Shape {
         func p(_ x: CGFloat, _ y: CGFloat) -> CGPoint {
             CGPoint(x: rect.minX + w * x, y: rect.minY + h * y)
         }
+        // Redesigned 2026-07-18 (owner decision) — rises front-right from the
+        // pivot to a defined tip instead of the old sagging swoosh.
         path.move(to: p(Ikebana.pivot.x, Ikebana.pivot.y))
         path.addCurve(
-            to: p(0.82, 0.74),
-            control1: p(0.56, 0.94),
-            control2: p(0.74, 0.86)
+            to: p(151.0 / 220.0, 167.5 / 220.0),
+            control1: p(114.0 / 220.0, 191.5 / 220.0),
+            control2: p(137.0 / 220.0, 181.0 / 220.0)
         )
         return path
     }
@@ -157,13 +159,13 @@ private struct PetalSpec {
     let width: CGFloat
 }
 
+// Variant B · Calligraphic Taper — 5 petals (down from 6), hero petal at top.
 private let petalSpecs: [PetalSpec] = [
-    PetalSpec(angle: -.pi * 0.95, length: 0.18, width: 0.55),
-    PetalSpec(angle: -.pi * 0.70, length: 0.22, width: 0.60),
-    PetalSpec(angle: -.pi * 0.48, length: 0.24, width: 0.62),
-    PetalSpec(angle: -.pi * 0.25, length: 0.21, width: 0.58),
-    PetalSpec(angle: -.pi * 0.02, length: 0.18, width: 0.54),
-    PetalSpec(angle:  .pi * 0.25, length: 0.15, width: 0.50)
+    PetalSpec(angle: -.pi * 0.95, length: 0.19, width: 0.50),  // far left
+    PetalSpec(angle: -.pi * 0.70, length: 0.24, width: 0.54),  // upper-left
+    PetalSpec(angle: -.pi * 0.48, length: 0.27, width: 0.56),  // top · hero petal
+    PetalSpec(angle: -.pi * 0.25, length: 0.22, width: 0.52),  // upper-right
+    PetalSpec(angle: -.pi * 0.02, length: 0.19, width: 0.48)   // right
 ]
 
 private let leafSpecs: [IkebanaLeafShape] = [
@@ -176,6 +178,12 @@ private let leafSpecs: [IkebanaLeafShape] = [
         center: CGPoint(x: 0.22, y: 0.55),
         length: 0.17,
         rotation: -Double.pi * 0.62
+    ),
+    // Leaf #3 — NEW 2026-07-18 (owner decision), at the redesigned hikae's tip.
+    IkebanaLeafShape(
+        center: CGPoint(x: 157.0 / 220.0, y: 162.0 / 220.0),
+        length: 26.0 / 220.0,
+        rotation: -42.0 * Double.pi / 180.0
     )
 ]
 
@@ -201,7 +209,8 @@ private let heroWarm = LinearGradient(
 // MARK: - Logo view (vendored, tuned for icon — fully drawn, no animation)
 
 struct IkeruLogoView: View {
-    var strokeScale: CGFloat = 0.060
+    // Variant B · Calligraphic Taper — strokeScale 0.060 → 0.068 (matches IkeruLogo.swift).
+    var strokeScale: CGFloat = 0.068
     var tint: Color = goldAccent
 
     var body: some View {
@@ -219,6 +228,7 @@ struct IkeruLogoView: View {
                 strokes(baseWidth: baseWidth, bleed: true)
                     .blur(radius: baseWidth * 1.4)
                     .opacity(0.4)
+                    .blendMode(.plusLighter)
                 strokes(baseWidth: baseWidth, bleed: false)
             }
             .frame(width: side, height: side)
@@ -229,9 +239,11 @@ struct IkeruLogoView: View {
 
     @ViewBuilder
     private func strokes(baseWidth: CGFloat, bleed: Bool) -> some View {
-        let shinWidth  = baseWidth * 0.95
-        let soeWidth   = baseWidth * 0.72
-        let hikaeWidth = baseWidth * 0.55
+        // Variant B · Calligraphic Taper — shin thickens, soe thins, hikae
+        // bumped so the shortest stem isn't the faintest (matches IkeruLogo.swift).
+        let shinWidth  = baseWidth * 1.10
+        let soeWidth   = baseWidth * 0.55
+        let hikaeWidth = baseWidth * 0.401
         let widthMul: CGFloat = bleed ? 1.6 : 1.0
 
         ZStack {
