@@ -7,9 +7,12 @@ import SwiftUI
 //
 //   • Shin   (主, heaven) — tallest curving branch, thickest stroke, drawn first.
 //   • Soe    (副, man)    — medium counter-curving branch, drawn second.
-//   • Hikae  (控, earth)  — short low accent grounding the base, drawn third.
-//   • Leaves — 2 small filled almond shapes along shin, drawn fourth.
-//   • Bloom  — 6 filled teardrop petals that scale-pop in sequence, then a
+//   • Hikae  (控, earth)  — short accent grounding the base, drawn third.
+//     Redesigned 2026-07-18 (owner decision, launch-animation-rebuild-spec.md):
+//     the original swoosh sagged 17pt below the pivot with no clear
+//     terminal; the new path rises to a defined tip with its own leaf.
+//   • Leaves — 3 small filled almond shapes (shin, soe, hikae), drawn fourth.
+//   • Bloom  — filled teardrop petals that scale-pop in sequence, then a
 //              small darker center dot punches in at the very end.
 //
 // Asymmetric, off-center, wabi-sabi. Energy rises upward.
@@ -18,14 +21,53 @@ import SwiftUI
 //
 // Everything is defined against a unit square (rect of width/height) so the
 // mark stays crisp at any size. The bloom center is the anchor point for the
-// petal animation and is referenced by several shapes.
+// petal animation and is referenced by several shapes. Internal (not
+// private) — `LaunchAnimationView` drives its own per-element progress over
+// this same geometry for the launch animation's master clock.
 
-private enum Ikebana {
+enum Ikebana {
     // Unified pivot — all 3 branches emerge from this single "vase mouth".
     static let pivot = CGPoint(x: 0.42, y: 0.86)
     // Top of shin — where the bloom sits.
     static let bloomCenter = CGPoint(x: 0.60, y: 0.20)
     static let bloomRadius: CGFloat = 0.13   // was 0.11 — slightly larger so it reads
+}
+
+// MARK: - Shared easing
+//
+// Used by both the static composition below and the launch animation's
+// master clock (`LaunchAnimationView`) so the two stay visually consistent.
+enum IkebanaEasing {
+    /// Gentle overshoot — c1 = 1.40, matches the design's `backOut`.
+    static func backOut(_ progress: Double) -> Double {
+        guard progress > 0 else { return 0 }
+        guard progress < 1 else { return 1 }
+        let c1 = 1.40
+        let c3 = c1 + 1.0
+        let x = progress - 1.0
+        return 1.0 + c3 * x * x * x + c1 * x * x
+    }
+
+    static func easeInCubic(_ progress: Double) -> Double {
+        let x = min(max(progress, 0), 1)
+        return x * x * x
+    }
+
+    static func easeOutCubic(_ progress: Double) -> Double {
+        let x = min(max(progress, 0), 1)
+        return 1 - pow(1 - x, 3)
+    }
+
+    static func easeInOutCubic(_ progress: Double) -> Double {
+        let x = min(max(progress, 0), 1)
+        return x < 0.5 ? 4 * x * x * x : 1 - pow(-2 * x + 2, 3) / 2
+    }
+
+    /// Smoothstep: x²(3−2x).
+    static func smooth(_ progress: Double) -> Double {
+        let x = min(max(progress, 0), 1)
+        return x * x * (3 - 2 * x)
+    }
 }
 
 // MARK: - Shin (heaven) — main branch
@@ -84,13 +126,26 @@ struct IkebanaHikaeShape: Shape {
         func p(_ x: CGFloat, _ y: CGFloat) -> CGPoint {
             CGPoint(x: rect.minX + w * x, y: rect.minY + h * y)
         }
-        // Curvy low accent: arcs out to the right, dipping just barely
-        // before lifting back up to anchor the right side of the composition.
+
+        // Retired 2026-07-18 (owner decision) — sagged 17pt below the pivot,
+        // no defined terminal. Kept for a one-line revert if ever needed:
+        // path.move(to: p(Ikebana.pivot.x, Ikebana.pivot.y))
+        // path.addCurve(
+        //     to: p(0.82, 0.74),
+        //     control1: p(0.56, 0.94),
+        //     control2: p(0.74, 0.86)
+        // )
+
+        // Redesigned path — `M 92.4 189.2 C 114 191.5, 137 181, 151 167.5`
+        // on the 220pt reference canvas (÷220 for unit-square coordinates).
+        // Leaves the pivot with a small root-dip (brush flick, control1 sits
+        // slightly BELOW the pivot), then rises front-right to a defined
+        // tip — roughly half the length of soe (shin > soe > hikae).
         path.move(to: p(Ikebana.pivot.x, Ikebana.pivot.y))
         path.addCurve(
-            to: p(0.82, 0.74),
-            control1: p(0.56, 0.94),
-            control2: p(0.74, 0.86)
+            to: p(151.0 / 220.0, 167.5 / 220.0),
+            control1: p(114.0 / 220.0, 191.5 / 220.0),
+            control2: p(137.0 / 220.0, 181.0 / 220.0)
         )
         return path
     }
@@ -210,7 +265,7 @@ private enum LogoTiming {
 // 6 petals fanning asymmetrically around the bloom center.
 // Upper hemisphere biased — the flower opens upward/outward.
 
-private struct PetalSpec {
+struct PetalSpec {
     let angle: Double
     let length: CGFloat
     let width: CGFloat
@@ -220,7 +275,7 @@ private struct PetalSpec {
 // petal extended to length 0.27 (was 0.24). Widths trimmed to sit closer to
 // the stem so the bloom reads as a real open sakura rather than a rosette.
 // Paired with branch-ratio + strokeScale changes in `composition(...)`.
-private let petalSpecs: [PetalSpec] = [
+let petalSpecs: [PetalSpec] = [
     PetalSpec(angle: -.pi * 0.95, length: 0.19, width: 0.50),  // far left
     PetalSpec(angle: -.pi * 0.70, length: 0.24, width: 0.54),  // upper-left
     PetalSpec(angle: -.pi * 0.48, length: 0.27, width: 0.56),  // top · hero petal
@@ -230,7 +285,7 @@ private let petalSpecs: [PetalSpec] = [
     // outward, aligning with wabi-sabi intentional incompletion.
 ]
 
-private let leafSpecs: [IkebanaLeafShape] = [
+let leafSpecs: [IkebanaLeafShape] = [
     // Leaf along shin (mid-height), oriented along shin's tangent (~45° up-right)
     IkebanaLeafShape(
         center: CGPoint(x: 0.51, y: 0.58),
@@ -242,6 +297,14 @@ private let leafSpecs: [IkebanaLeafShape] = [
         center: CGPoint(x: 0.22, y: 0.55),
         length: 0.17,
         rotation: -Double.pi * 0.62
+    ),
+    // Leaf #3 — NEW 2026-07-18 (owner decision), at the redesigned hikae's
+    // tip: center (157, 162), length 26, angle −42° on the 220pt reference
+    // canvas, oriented along the tip tangent.
+    IkebanaLeafShape(
+        center: CGPoint(x: 157.0 / 220.0, y: 162.0 / 220.0),
+        length: 26.0 / 220.0,
+        rotation: -42.0 * Double.pi / 180.0
     )
 ]
 
@@ -303,12 +366,14 @@ public struct IkeruLogoView: View {
     @ViewBuilder
     private func composition(baseWidth: CGFloat, bleed: Bool) -> some View {
         // Variant B · Calligraphic Taper — shin thickens (0.95 → 1.10) and
-        // the two branches thin (soe 0.72 → 0.55, hikae 0.55 → 0.35) so the
-        // composition reads as a single confident gesture with secondary
-        // tapers, not three equal-weight strokes.
+        // soe thins (0.72 → 0.55) so the composition reads as a single
+        // confident gesture with secondary tapers, not three equal-weight
+        // strokes. Hikae was redesigned 2026-07-18 (owner decision): the
+        // shortest stem shouldn't be the faintest, so its weight bumped
+        // 0.35 → 0.401 (≈6.0pt at the 220pt reference canvas, was ≈5.2pt).
         let shinWidth  = baseWidth * 1.10
         let soeWidth   = baseWidth * 0.55
-        let hikaeWidth = baseWidth * 0.35
+        let hikaeWidth = baseWidth * 0.401
         let widthMul: CGFloat = bleed ? 1.6 : 1.0
 
         ZStack {
@@ -336,14 +401,20 @@ public struct IkeruLogoView: View {
                     lineCap: .round, lineJoin: .round
                 ))
 
-            // Leaves — filled almond shapes, fade+scale in.
+            // Leaves — filled almond shapes, fade+scale in about their OWN
+            // center — not the canvas center. `leaf.center` is already
+            // expressed in canvas-fraction coordinates, so it doubles
+            // directly as the scale anchor's UnitPoint.
             ForEach(Array(leafSpecs.enumerated()), id: \.offset) { idx, leaf in
                 let local = LogoTiming.leaves.localProgress(
                     progress - Double(idx) * 0.03
                 )
                 leaf
                     .fill(tint)
-                    .scaleEffect(CGFloat(local), anchor: .center)
+                    .scaleEffect(
+                        CGFloat(local),
+                        anchor: UnitPoint(x: leaf.center.x, y: leaf.center.y)
+                    )
                     .opacity(local)
             }
 
@@ -359,7 +430,7 @@ public struct IkeruLogoView: View {
                 )
                 .fill(tint)
                 .scaleEffect(
-                    CGFloat(easeOutBack(local)),
+                    CGFloat(IkebanaEasing.backOut(local)),
                     anchor: bloomAnchor
                 )
                 .opacity(local)
@@ -381,21 +452,15 @@ public struct IkeruLogoView: View {
     private var bloomAnchor: UnitPoint {
         UnitPoint(x: Ikebana.bloomCenter.x, y: Ikebana.bloomCenter.y)
     }
-
-    /// A gentle overshoot to give the petals a lively pop.
-    private func easeOutBack(_ t: Double) -> Double {
-        guard t > 0 else { return 0 }
-        guard t < 1 else { return 1 }
-        let c1 = 1.40
-        let c3 = c1 + 1.0
-        let x = t - 1.0
-        return 1.0 + c3 * x * x * x + c1 * x * x
-    }
 }
 
 // MARK: - Bloom center dot
+//
+// Internal (not private) — `LaunchAnimationView` reuses this exact shape for
+// the "drop becomes the dot" impact element, so the animation's final frame
+// matches this static composition's dot pixel-for-pixel.
 
-private struct BloomCenter: Shape {
+struct BloomCenter: Shape {
     func path(in rect: CGRect) -> Path {
         let w = rect.width, h = rect.height
         let side = min(w, h)
