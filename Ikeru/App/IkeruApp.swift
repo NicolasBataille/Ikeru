@@ -111,25 +111,28 @@ struct IkeruApp: App {
             ZStack {
                 if hasFinishedLaunch {
                     mainContent
-                        .transition(.opacity)
                 } else {
+                    // LaunchAnimationView's own exit fade (its master
+                    // clock's final 0.30s phase) is now the single fade for
+                    // the launch → main transition — see
+                    // launch-animation-rebuild-spec.md bug #5. By the time
+                    // `onFinished` fires the launch layer has already faded
+                    // to invisible, so this switch is an instant no-op
+                    // visually; a second cross-fade here would just double
+                    // up on it.
                     LaunchAnimationView {
                         IkeruApp.hasPlayedLaunchAnimation = true
-                        withAnimation(.easeInOut(duration: 0.4)) {
-                            hasFinishedLaunch = true
-                        }
+                        hasFinishedLaunch = true
                     }
-                    .transition(.opacity)
                 }
             }
-            .animation(.easeInOut(duration: 0.4), value: hasFinishedLaunch)
-                .preferredColorScheme(.dark)
-                .environment(\.toastManager, toastManager)
-                .environment(\.profileViewModel, profileViewModel)
-                .environment(\.aiRouterService, aiRouterService)
-                .environment(\.assetCache, assetCache)
-                .toastOverlay()
-                .task {
+            .preferredColorScheme(.dark)
+            .environment(\.toastManager, toastManager)
+            .environment(\.profileViewModel, profileViewModel)
+            .environment(\.aiRouterService, aiRouterService)
+            .environment(\.assetCache, assetCache)
+            .toastOverlay()
+            .task {
                     initializeProfileViewModel()
                     NotificationManager.shared.registerAsDelegate()
                     WatchConnectivityManager.shared.activate(modelContainer: modelContainer)
