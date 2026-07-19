@@ -472,25 +472,53 @@ struct DefaultSessionPlannerFoundationTests {
         #expect(introduced == ["か", "き", "く", "け", "こ"])
     }
 
-    @Test("Past the studied threshold the 40/30/20/10 mix resumes")
-    func pastThresholdResumesNormalMix() async {
-        // 10 begun cards (== threshold) → foundation no longer applies even
-        // though unseen kana remain.
-        let studied = (0..<DefaultSessionPlanner.foundationStudiedThreshold).map { i in
-            fixtureKanaCard(front: "x\(i)", reps: 3, dueDate: Date(timeIntervalSince1970: 1_700_000_000))
+    @Test("Foundation holds as long as ANY chosen kana is unseen — begun count is irrelevant")
+    func foundationHoldsWhileUnseenKanaRemain() async {
+        // 10 begun kana (two full sessions' worth) + 10 still unseen: the
+        // first cut's begun-card threshold expired here and re-served vocab
+        // audio drills mid-syllabary (Nico's session 3). Foundation must hold.
+        let begun = ["あ", "い", "う", "え", "お", "か", "き", "く", "け", "こ"].map {
+            fixtureKanaCard(front: $0, reps: 3, dueDate: Date(timeIntervalSince1970: 1_800_000_000))
         }
-        let unseen = ["ら", "り", "る"].map { fixtureKanaCard(front: $0) }
+        let unseen = ["さ", "し", "す", "せ", "そ", "た", "ち", "つ", "て", "と"].map { fixtureKanaCard(front: $0) }
         let inputs = SessionPlannerInputs(
             source: .homeRecommendation,
             durationMinutes: 15,
             profile: .empty,
             unlockedTypes: Set(ExerciseType.allCases),
-            availableCards: studied + unseen
+            availableCards: begun + unseen
         )
         let plan = await planner.compose(inputs: inputs)
 
-        // Normal mix: booster/variety kinds may appear again, and the new
-        // drip is back to a single card.
+        let allSRS = plan.exercises.allSatisfy { item in
+            if case .srsReview = item { return true }
+            return false
+        }
+        #expect(allSRS, "foundation sessions are SRS-only: \(plan.exercises)")
+        let newFronts = plan.exercises.compactMap { item -> String? in
+            if case .srsReview(let card) = item, card.fsrsState.reps == 0 { return card.front }
+            return nil
+        }
+        #expect(newFronts == ["さ", "し", "す", "せ", "そ"])
+    }
+
+    @Test("Once every chosen kana is begun, the 40/30/20/10 mix resumes")
+    func allKanaBegunResumesNormalMix() async {
+        let begunKana = ["あ", "い", "う", "え", "お", "か", "き", "く", "け", "こ"].map {
+            fixtureKanaCard(front: $0, reps: 3, dueDate: Date(timeIntervalSince1970: 1_700_000_000))
+        }
+        // An unseen NON-kana card must not re-trigger foundation.
+        let unseenVocab = fixtureKanaCard(front: "食べる", reps: 0)
+        let inputs = SessionPlannerInputs(
+            source: .homeRecommendation,
+            durationMinutes: 15,
+            profile: .empty,
+            unlockedTypes: Set(ExerciseType.allCases),
+            availableCards: begunKana + [unseenVocab]
+        )
+        let plan = await planner.compose(inputs: inputs)
+
+        // Normal mix: booster/variety kinds return, new drip back to 1 card.
         let newFronts = plan.exercises.compactMap { item -> String? in
             if case .srsReview(let card) = item, card.fsrsState.reps == 0 { return card.front }
             return nil

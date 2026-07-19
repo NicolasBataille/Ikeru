@@ -28,10 +28,6 @@ public struct DefaultSessionPlanner: SessionPlanner {
     public static let homeVarietyTileFraction: Double = 0.20
     public static let homeNewContentFraction: Double = 0.10
 
-    /// Foundation mode: below this many begun cards (`reps > 0`), a learner
-    /// who still has unseen kana ahead is building the syllabary — the home
-    /// session teaches kana rows instead of the 40/30/20/10 mix.
-    public static let foundationStudiedThreshold = 10
     /// New kana introduced per foundation session — one gojūon row.
     public static let foundationRowSize = 5
 
@@ -56,17 +52,19 @@ public struct DefaultSessionPlanner: SessionPlanner {
     private func composeHome(inputs: SessionPlannerInputs) -> SessionPlan {
         let totalSec = inputs.durationMinutes * 60
 
-        // Foundation mode (owner decision, 2026-07-19 device pass): a learner
-        // who has essentially studied nothing yet and still has unseen kana
-        // ahead is building the syllabary. For them the 40/30/20/10 mix is
-        // wrong twice over — the booster/variety pools schedule listening /
+        // Foundation mode (owner decision, 2026-07-19 device pass): while the
+        // learner's chosen study set still contains kana they have never
+        // begun, they are building the syllabary — and the 40/30/20/10 mix is
+        // wrong twice over: the booster/variety pools schedule listening /
         // speaking / vocab-recall drills about words they've never met, and
-        // the single-card drip would stretch 46 kana over 46 days. Until the
-        // foundation exists, the session is honest and compact: the due
-        // reviews (of kana already begun) + one curriculum row of new kana.
-        let studiedCount = inputs.availableCards.filter { $0.fsrsState.reps > 0 }.count
+        // the single-card drip would stretch 46 kana over 46 days. Until
+        // every chosen kana is begun, the session is honest and compact: the
+        // due reviews + one curriculum row of new kana. (A first cut gated
+        // this on a begun-card count — it expired after two sessions with
+        // half the chosen set still unseen; the unseen-kana predicate IS the
+        // definition of the foundation phase.)
         let unseenKana = inputs.availableCards.filter { $0.fsrsState.reps == 0 && $0.isKana }
-        if studiedCount < Self.foundationStudiedThreshold, !unseenKana.isEmpty {
+        if !unseenKana.isEmpty {
             return composeFoundation(inputs: inputs, unseenKana: unseenKana, totalSec: totalSec)
         }
 
