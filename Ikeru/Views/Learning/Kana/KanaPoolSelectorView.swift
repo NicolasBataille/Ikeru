@@ -142,9 +142,21 @@ struct KanaPoolSelectorView: View {
     private func scriptSection(_ vm: KanaPoolViewModel, script: KanaScript, title: String) -> some View {
         VStack(alignment: .leading, spacing: IkeruTheme.Spacing.md) {
             IkeruSectionHeader(title: title, eyebrow: scriptEyebrow(script))
-            subSection(vm, script: script, section: .base, title: "Base (gojūon)")
-            subSection(vm, script: script, section: .dakuten, title: "Dakuten (voiced)")
-            subSection(vm, script: script, section: .combined, title: "Combined (yōon)")
+            subSection(
+                vm, script: script, section: .base,
+                title: "Base (gojūon)",
+                description: "The 46 core sounds in the classic table: five vowels, then consonant + vowel rows."
+            )
+            subSection(
+                vm, script: script, section: .dakuten,
+                title: "Dakuten (voiced)",
+                description: "Same signs, softened by a mark: ゛voices the consonant (か ka → が ga), ゜turns h into p (は ha → ぱ pa)."
+            )
+            subSection(
+                vm, script: script, section: .combined,
+                title: "Combined (yōon)",
+                description: "A consonant kana + small ゃ・ゅ・ょ merge into one syllable: き + ゃ = きゃ kya."
+            )
         }
     }
 
@@ -159,7 +171,8 @@ struct KanaPoolSelectorView: View {
         _ vm: KanaPoolViewModel,
         script: KanaScript,
         section: KanaSection,
-        title: LocalizedStringKey
+        title: LocalizedStringKey,
+        description: LocalizedStringKey
     ) -> some View {
         let groups = KanaGroup.allCases.filter { $0.script == script && $0.section == section }
         if !groups.isEmpty {
@@ -182,6 +195,15 @@ struct KanaPoolSelectorView: View {
                     }
                     .buttonStyle(.plain)
                 }
+
+                // One-line primer on what this slice of the syllabary IS —
+                // gojūon/dakuten/yōon are jargon to the beginners this screen
+                // exists for (owner request, 2026-07-19).
+                Text(description)
+                    .font(.ikeruMicro)
+                    .foregroundStyle(Color.ikeruTextTertiary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.top, -4)
 
                 LazyVGrid(columns: columns, spacing: IkeruTheme.Spacing.sm) {
                     ForEach(groups) { group in
@@ -226,7 +248,12 @@ struct KanaPoolSelectorView: View {
         }
         .padding(.horizontal, IkeruTheme.Spacing.lg)
         .padding(.top, IkeruTheme.Spacing.md)
-        .padding(.bottom, Self.floatingTabBarClearance)
+        // The 120pt clearance exists for the floating tab bar in the Étude
+        // context only. As a sheet (first-run chooser from Home) there is no
+        // tab bar — the full clearance left a huge dead band under the CTA.
+        .padding(.bottom, onStudySetConfirmed != nil
+                 ? IkeruTheme.Spacing.md
+                 : Self.floatingTabBarClearance)
         .frame(maxWidth: .infinity)
         .background {
             Rectangle()

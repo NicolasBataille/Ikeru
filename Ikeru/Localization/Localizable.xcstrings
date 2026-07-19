@@ -1429,6 +1429,23 @@
         }
       }
     },
+    "A consonant kana + small ゃ・ゅ・ょ merge into one syllable: き + ゃ = きゃ kya." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A consonant kana + small ゃ・ゅ・ょ merge into one syllable: き + ゃ = きゃ kya."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un kana consonne + petit ゃ・ゅ・ょ fusionnent en une seule syllabe : き + ゃ = きゃ kya."
+          }
+        }
+      }
+    },
     "A guide by your side" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -5576,6 +5593,23 @@
         }
       }
     },
+    "Same signs, softened by a mark: ゛voices the consonant (か ka → が ga), ゜turns h into p (は ha → ぱ pa)." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Same signs, softened by a mark: ゛voices the consonant (か ka → が ga), ゜turns h into p (は ha → ぱ pa)."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les mêmes signes, adoucis d'un accent : ゛voise la consonne (か ka → が ga), ゜transforme le h en p (は ha → ぱ pa)."
+          }
+        }
+      }
+    },
     "Save" : {
       "localizations" : {
         "fr" : {
@@ -6724,6 +6758,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Test connection"
+          }
+        }
+      }
+    },
+    "The 46 core sounds in the classic table: five vowels, then consonant + vowel rows." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The 46 core sounds in the classic table: five vowels, then consonant + vowel rows."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les 46 sons de base dans la table classique : cinq voyelles, puis des rangées consonne + voyelle."
           }
         }
       }
