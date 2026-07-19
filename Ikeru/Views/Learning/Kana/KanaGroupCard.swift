@@ -73,7 +73,14 @@ struct KanaGroupCard: View {
                     Text(kana.character)
                         .font(.system(size: 22, weight: .regular, design: .serif))
                         .foregroundStyle(Color.ikeruTextPrimary)
-                    MasteryBadge(level: charMastery[kana.character] ?? .new)
+                    // Romaji reading, tinted by per-char mastery. The prior
+                    // MasteryBadge kanji glyph (初/学/…) read as a rendering
+                    // bug to the exact audience of this screen — beginners
+                    // who can't read kanji yet. The reading is the useful
+                    // info; progress lives in the tint (quiet → gold → green).
+                    Text(kana.romaji)
+                        .font(.ikeruMicro)
+                        .foregroundStyle(masteryTint(charMastery[kana.character] ?? .new))
                 }
                 .frame(maxWidth: .infinity)
             }
@@ -101,6 +108,18 @@ struct KanaGroupCard: View {
                 .ikeruTracking(.micro)
                 .foregroundStyle(Color.ikeruTextTertiary)
                 .lineLimit(1)
+        }
+    }
+
+    /// Mastery encoded as tint on the romaji: neutral while untouched, warming
+    /// toward gold as it's learned, settling green once anchored.
+    private func masteryTint(_ level: MasteryLevel) -> Color {
+        switch level {
+        case .new:       return Color.ikeruTextTertiary
+        case .learning:  return Color.ikeruTextSecondary
+        case .familiar:  return Color.ikeruPrimaryAccent.opacity(0.75)
+        case .mastered:  return Color.ikeruPrimaryAccent
+        case .anchored:  return Color.ikeruSuccess
         }
     }
 
