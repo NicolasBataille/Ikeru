@@ -79,7 +79,6 @@
 		58BECF1D8B55499034C3F5AA /* IkeruButtonStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 631CDAB692FF8F02FB5E77FD /* IkeruButtonStyle.swift */; };
 		590241F0210BFF8E0D27403B /* IkeruTabBar+Rail.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01AF19EF339E6EF510BEBC0A /* IkeruTabBar+Rail.swift */; };
 		5B188F1ABB8FDAC523D264FD /* StrokeOrderViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 605EB123E5636067D0104242 /* StrokeOrderViewModel.swift */; };
-		5D6DB2EC7FDC91D838A51BF6 /* AISetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20F7294FBF874E97C93D7639 /* AISetupView.swift */; };
 		5D874F7760089A5C335464FD /* DiffHighlightView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6340F44EB5D85320D1D1B58D /* DiffHighlightView.swift */; };
 		5EC80A870F68AC6CFA91C0BF /* VocabularyDetailSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B04C74F735B5D471036C7A40 /* VocabularyDetailSheet.swift */; };
 		61B02BAEB2D22074A962FBBE /* DeleteProfileSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E10FA2BDC5455704DB5EDE7 /* DeleteProfileSheet.swift */; };
@@ -287,7 +286,6 @@
 		93B90305ABF7428A9758AD5C /* WidgetSnapshotStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetSnapshotStoreTests.swift; sourceTree = "<group>"; };
 		A286728212D0470A8C7F229A /* StoreRecoveryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreRecoveryTests.swift; sourceTree = "<group>"; };
 		1E4D340B0F01E28B73402EFC /* StrokeOrderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StrokeOrderView.swift; sourceTree = "<group>"; };
-		20F7294FBF874E97C93D7639 /* AISetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AISetupView.swift; sourceTree = "<group>"; };
 		2435124626D304119CA77076 /* HandwritingCanvasView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HandwritingCanvasView.swift; sourceTree = "<group>"; };
 		24AB1AB1DDE2D5EE0D52DA0C /* IkeruCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IkeruCard.swift; sourceTree = "<group>"; };
 		25A2EBFE2B6872980172B207 /* WatchHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchHomeView.swift; sourceTree = "<group>"; };
@@ -626,7 +624,6 @@
 		3B0777DDC4C5BB5F000D91D7 /* Onboarding */ = {
 			isa = PBXGroup;
 			children = (
-				20F7294FBF874E97C93D7639 /* AISetupView.swift */,
 				457B840A63725833DFB68E38 /* NameEntryView.swift */,
 				F0B25FD2BC64C88BF9B170AC /* OnboardingTourView.swift */,
 				621A01579FA1BE11317A3604 /* Tour */,
@@ -1321,7 +1318,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				78EBAB8487F09970D54B4F08 /* AISettingsView.swift in Sources */,
-				5D6DB2EC7FDC91D838A51BF6 /* AISetupView.swift in Sources */,
 				09A567494E1C0017CD0F2625 /* ActiveProfileResolver.swift in Sources */,
 				ABA74ED79DF7BC71F7543DBF /* ActiveSessionView.swift in Sources */,
 				524D3563E401A4FCE430B8DC /* LevelUpView.swift in Sources */,
