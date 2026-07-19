@@ -30,7 +30,13 @@ struct TatamiEligibilityRow: View {
     }
 
     var body: some View {
-        Group {
+        // VStack, not Group: a Group forwards modifiers to its CHILDREN, and
+        // before `load()` completes the `if` renders no child — so the
+        // `.task` never fired and `signals` never loaded. The row was
+        // deadlocked invisible for everyone (found by Nico, device pass
+        // 2026-07-19). A VStack is a real container: its `.task` runs on
+        // appear even while empty.
+        VStack(spacing: 0) {
             if displayMode == .beginner, !isSuppressedByCooldown, let signals {
                 content(signals)
             }
