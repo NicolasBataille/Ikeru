@@ -261,6 +261,13 @@ struct HomeView: View {
                 .sumiCorners(color: Color.ikeruBackground.opacity(0.6), size: 6, weight: 1.2, inset: -1)
             }
             .buttonStyle(.plain)
+            // Share the feature-tour anchor with BEGIN PRACTICE: exactly one of
+            // the two CTAs renders at a time, so the tour's session step always
+            // spotlights whichever is on screen. A brand-new profile sees this
+            // "choose your kana" gate (no cards yet), not BEGIN PRACTICE — the
+            // tour fires the instant onboarding finishes, so without this the
+            // step would point at a button that isn't there.
+            .tourAnchor(.sessionCTA)
         }
     }
 
