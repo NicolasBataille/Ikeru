@@ -20,7 +20,11 @@ struct NameEntryView: View {
 
     @State private var step: Step = .name
 
-    private enum Step: Hashable { case name, placement, tour, aiSetup }
+    // AI setup was removed from onboarding (owner decision, 2026-07-19): asking
+    // for a Gemini key before the user has even seen the app was premature.
+    // The BYO-key CTA inside Sakura's chat (ConversationView) now carries that
+    // moment — it appears exactly when the user first needs AI.
+    private enum Step: Hashable { case name, placement, tour }
 
     var body: some View {
         ZStack {
@@ -42,10 +46,7 @@ struct NameEntryView: View {
             PlacementStep(onContinue: { advance(to: .tour) })
                 .transition(.opacity)
         case .tour:
-            OnboardingTourView(onFinish: { advance(to: .aiSetup) })
-                .transition(.opacity)
-        case .aiSetup:
-            AISetupView(onFinish: { dismiss() })
+            OnboardingTourView(onFinish: { dismiss() })
                 .transition(.opacity)
         }
     }
