@@ -483,13 +483,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "That's the essentials! Start your first session whenever you're ready — I'm never far. 頑張って (ganbatte) means \"good luck\"."
+            "value" : "That's the essentials! Pick your kana and dive in whenever you're ready — I'm never far. 頑張って (ganbatte) means \"good luck\"."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Voilà l'essentiel ! Lance ta première session quand tu te sens prêt — je ne suis jamais loin. 頑張って (ganbatte) veut dire « bon courage »."
+            "value" : "Voilà l'essentiel ! Choisis tes kana et lance-toi quand tu te sens prêt — je ne suis jamais loin. 頑張って (ganbatte) veut dire « bon courage »."
           }
         }
       }
@@ -585,13 +585,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "This button starts your practice. You'll ease in with hiragana — the first Japanese alphabet, about 46 basic sounds."
+            "value" : "It all starts here. First pick your kana (仮名を選ぶ), then your daily session launches from this button. You'll ease in with hiragana — about 46 basic sounds."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ce bouton démarre ta pratique. Tu commences en douceur par les hiragana — le premier alphabet japonais, environ 46 sons de base."
+            "value" : "Tout commence ici. Choisis d'abord tes kana (仮名を選ぶ), puis ta session quotidienne se lance depuis ce bouton. On débute en douceur avec les hiragana — environ 46 sons de base."
           }
         }
       }
@@ -602,13 +602,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Start a session"
+            "value" : "Start practising"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Lancer une session"
+            "value" : "Commencer à pratiquer"
           }
         }
       }
@@ -8605,13 +8605,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Your dashboard. At a glance: today's session (your short daily review) and how far you've come."
+            "value" : "Your home base. Your daily session and your progress will show up here, day after day."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ton tableau de bord. D'un coup d'œil : ta session du jour (ta petite révision quotidienne) et ta progression."
+            "value" : "Ton point de départ. Ta session du jour et ta progression apparaîtront ici, jour après jour."
           }
         }
       }
