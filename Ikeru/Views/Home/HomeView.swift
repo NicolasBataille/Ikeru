@@ -97,7 +97,17 @@ struct HomeView: View {
             NavigationStack {
                 KanaPoolSelectorView(onStudySetConfirmed: {
                     showStudySetChooser = false
-                    Task { await viewModel?.loadData() }
+                    // "Commencer ces kana" keeps its promise: confirm flows
+                    // straight into the first session instead of dropping the
+                    // learner back on Home (owner feedback, device pass). The
+                    // short pause lets the sheet finish dismissing before the
+                    // session cover presents — presenting mid-dismissal gets
+                    // silently dropped by UIKit.
+                    Task {
+                        await viewModel?.loadData()
+                        try? await Task.sleep(for: .milliseconds(500))
+                        startSession()
+                    }
                 })
             }
             .presentationDragIndicator(.visible)
@@ -247,20 +257,16 @@ struct HomeView: View {
                 HStack {
                     Spacer()
                     Text("\u{4EEE}\u{540D}\u{3092}\u{9078}\u{3076} \u{00B7} ") // 仮名を選ぶ
-                        .ikeruScaledFont(13, weight: .regular, design: .serif, relativeTo: .body)
+                        .ikeruScaledFont(15, weight: .regular, design: .serif, relativeTo: .body)
                     Text("CHOOSE YOUR KANA", comment: "Home CTA: pick a kana study set first")
-                        .ikeruScaledFont(13, weight: .bold, relativeTo: .body)
+                        .ikeruScaledFont(15, weight: .bold, relativeTo: .body)
                         .tracking(1.4)
                         .lineLimit(1)
                         .minimumScaleFactor(0.7)
                     Spacer()
                 }
-                .foregroundStyle(Color.ikeruBackground)
-                .padding(.vertical, 14)
-                .background(Color.ikeruPrimaryAccent)
-                .sumiCorners(color: Color.ikeruBackground.opacity(0.6), size: 6, weight: 1.2, inset: -1)
             }
-            .buttonStyle(.plain)
+            .ikeruButtonStyle(.primary)
             // Share the feature-tour anchor with BEGIN PRACTICE: exactly one of
             // the two CTAs renders at a time, so the tour's session step always
             // spotlights whichever is on screen. A brand-new profile sees this
@@ -425,26 +431,26 @@ struct HomeView: View {
             } else if vm.todayKind == .empty {
                 quietState
             } else {
+                // Hero CTA — speaks the shared .primary ink-block language
+                // (owner feedback: every gold action should look like ONE
+                // family). Inner texts keep their own fonts; the style
+                // supplies the block, brackets, glow and press feel.
                 Button {
                     startSession()
                 } label: {
                     HStack {
                         Spacer()
                         Text("稽古を始める · ")
-                            .ikeruScaledFont(13, weight: .regular, design: .serif, relativeTo: .body)
+                            .ikeruScaledFont(15, weight: .regular, design: .serif, relativeTo: .body)
                         Text("BEGIN PRACTICE", comment: "Hero CTA on Home")
-                            .ikeruScaledFont(13, weight: .bold, relativeTo: .body)
+                            .ikeruScaledFont(15, weight: .bold, relativeTo: .body)
                             .tracking(1.6)
                             .lineLimit(1)
                             .minimumScaleFactor(0.7)
                         Spacer()
                     }
-                    .foregroundStyle(Color.ikeruBackground)
-                    .padding(.vertical, 14)
-                    .background(Color.ikeruPrimaryAccent)
-                    .sumiCorners(color: Color.ikeruBackground.opacity(0.6), size: 6, weight: 1.2, inset: -1)
                 }
-                .buttonStyle(.plain)
+                .ikeruButtonStyle(.primary)
                 .tourAnchor(.sessionCTA)
             }
 
