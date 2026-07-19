@@ -28,6 +28,13 @@ public struct DefaultSessionPlanner: SessionPlanner {
     public static let homeVarietyTileFraction: Double = 0.20
     public static let homeNewContentFraction: Double = 0.10
 
+    /// Foundation mode: below this many begun cards (`reps > 0`), a learner
+    /// who still has unseen kana ahead is building the syllabary — the home
+    /// session teaches kana rows instead of the 40/30/20/10 mix.
+    public static let foundationStudiedThreshold = 10
+    /// New kana introduced per foundation session — one gojūon row.
+    public static let foundationRowSize = 5
+
     public init() {}
 
     public func compose(inputs: SessionPlannerInputs) async -> SessionPlan {
@@ -48,6 +55,20 @@ public struct DefaultSessionPlanner: SessionPlanner {
 
     private func composeHome(inputs: SessionPlannerInputs) -> SessionPlan {
         let totalSec = inputs.durationMinutes * 60
+
+        // Foundation mode (owner decision, 2026-07-19 device pass): a learner
+        // who has essentially studied nothing yet and still has unseen kana
+        // ahead is building the syllabary. For them the 40/30/20/10 mix is
+        // wrong twice over — the booster/variety pools schedule listening /
+        // speaking / vocab-recall drills about words they've never met, and
+        // the single-card drip would stretch 46 kana over 46 days. Until the
+        // foundation exists, the session is honest and compact: the due
+        // reviews (of kana already begun) + one curriculum row of new kana.
+        let studiedCount = inputs.availableCards.filter { $0.fsrsState.reps > 0 }.count
+        let unseenKana = inputs.availableCards.filter { $0.fsrsState.reps == 0 && $0.isKana }
+        if studiedCount < Self.foundationStudiedThreshold, !unseenKana.isEmpty {
+            return composeFoundation(inputs: inputs, unseenKana: unseenKana, totalSec: totalSec)
+        }
 
         // Segment 1: Review wave (40 %)
         let reviewBudget = Int(Double(totalSec) * Self.homeReviewFraction)
@@ -98,6 +119,44 @@ public struct DefaultSessionPlanner: SessionPlanner {
             (items: newItems, weight: Self.homeNewContentFraction)
         ])
 
+        return finalize(exercises: exercises)
+    }
+
+    /// Foundation session: due reviews (kana already begun) interleaved with
+    /// one curriculum-ordered row of new kana (up to `foundationRowSize`).
+    /// The row is introduced regardless of the proportional new-content
+    /// budget — a foundation session is intentionally compact, and rows of
+    /// five are how the syllabary is actually learned. No booster, no
+    /// variety: nothing here draws on content the learner hasn't met.
+    private func composeFoundation(
+        inputs: SessionPlannerInputs,
+        unseenKana: [CardDTO],
+        totalSec: Int
+    ) -> SessionPlan {
+        let reviewItems = pickReviews(
+            from: inputs.availableCards,
+            secondsBudget: totalSec / 2
+        )
+        let introItems = unseenKana
+            .enumerated()
+            .sorted { lhs, rhs in
+                let li = Self.kanaCurriculumIndex[lhs.element.front] ?? Int.max
+                let ri = Self.kanaCurriculumIndex[rhs.element.front] ?? Int.max
+                if li != ri { return li < ri }
+                // Stable, deterministic order for kana outside the base
+                // curriculum (dakuten): input order, then front.
+                if lhs.element.front != rhs.element.front { return lhs.element.front < rhs.element.front }
+                return lhs.offset < rhs.offset
+            }
+            .prefix(Self.foundationRowSize)
+            .map { ExerciseItem.srsReview($0.element) }
+        let exercises = interleave(streams: [
+            (items: reviewItems, weight: 0.5),
+            (items: Array(introItems), weight: 0.5)
+        ])
+        Logger.learningLoop.info(
+            "session.foundationMode reviews=\(reviewItems.count) introduced=\(introItems.count)"
+        )
         return finalize(exercises: exercises)
     }
 

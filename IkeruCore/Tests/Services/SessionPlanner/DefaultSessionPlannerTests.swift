@@ -412,3 +412,119 @@ extension LearnerSnapshot {
         )
     }
 }
+
+// MARK: - Foundation mode
+
+@Suite("DefaultSessionPlanner — Foundation mode")
+struct DefaultSessionPlannerFoundationTests {
+
+    private let planner = DefaultSessionPlanner()
+
+    @Test("Fresh kana learner gets one curriculum row — never audio/vocab drills about unknown words")
+    func freshLearnerGetsFoundationRow() async {
+        // 20 unseen kana, input deliberately in reverse curriculum order.
+        let kana = ["あ", "い", "う", "え", "お", "か", "き", "く", "け", "こ",
+                    "さ", "し", "す", "せ", "そ", "た", "ち", "つ", "て", "と"]
+        let cards = kana.reversed().map { fixtureKanaCard(front: $0) }
+        let inputs = SessionPlannerInputs(
+            source: .homeRecommendation,
+            durationMinutes: 15,
+            profile: .empty,
+            unlockedTypes: Set(ExerciseType.allCases),
+            availableCards: cards
+        )
+        let plan = await planner.compose(inputs: inputs)
+
+        // Exactly one gojūon row, in curriculum order, all SRS — no booster
+        // or variety kinds (they draw on content the learner has never met).
+        let fronts = plan.exercises.compactMap { item -> String? in
+            if case .srsReview(let card) = item { return card.front }
+            return nil
+        }
+        #expect(fronts == ["あ", "い", "う", "え", "お"])
+        #expect(plan.exercises.count == DefaultSessionPlanner.foundationRowSize)
+    }
+
+    @Test("Foundation interleaves due reviews of begun kana with the new row")
+    func foundationKeepsDueReviews() async {
+        let begun = ["あ", "い", "う"].map {
+            fixtureKanaCard(front: $0, reps: 2, dueDate: Date(timeIntervalSince1970: 1_700_000_000))
+        }
+        let unseen = ["か", "き", "く", "け", "こ", "さ", "し"].map { fixtureKanaCard(front: $0) }
+        let inputs = SessionPlannerInputs(
+            source: .homeRecommendation,
+            durationMinutes: 15,
+            profile: .empty,
+            unlockedTypes: Set(ExerciseType.allCases),
+            availableCards: begun + unseen
+        )
+        let plan = await planner.compose(inputs: inputs)
+
+        let fronts = plan.exercises.compactMap { item -> String? in
+            if case .srsReview(let card) = item { return card.front }
+            return nil
+        }
+        // 3 due reviews + one 5-kana row, nothing else.
+        #expect(plan.exercises.count == 8)
+        #expect(Set(fronts) == Set(["あ", "い", "う", "か", "き", "く", "け", "こ"]))
+        // The row itself is introduced in curriculum order.
+        let introduced = fronts.filter { ["か", "き", "く", "け", "こ"].contains($0) }
+        #expect(introduced == ["か", "き", "く", "け", "こ"])
+    }
+
+    @Test("Past the studied threshold the 40/30/20/10 mix resumes")
+    func pastThresholdResumesNormalMix() async {
+        // 10 begun cards (== threshold) → foundation no longer applies even
+        // though unseen kana remain.
+        let studied = (0..<DefaultSessionPlanner.foundationStudiedThreshold).map { i in
+            fixtureKanaCard(front: "x\(i)", reps: 3, dueDate: Date(timeIntervalSince1970: 1_700_000_000))
+        }
+        let unseen = ["ら", "り", "る"].map { fixtureKanaCard(front: $0) }
+        let inputs = SessionPlannerInputs(
+            source: .homeRecommendation,
+            durationMinutes: 15,
+            profile: .empty,
+            unlockedTypes: Set(ExerciseType.allCases),
+            availableCards: studied + unseen
+        )
+        let plan = await planner.compose(inputs: inputs)
+
+        // Normal mix: booster/variety kinds may appear again, and the new
+        // drip is back to a single card.
+        let newFronts = plan.exercises.compactMap { item -> String? in
+            if case .srsReview(let card) = item, card.fsrsState.reps == 0 { return card.front }
+            return nil
+        }
+        #expect(newFronts.count <= 1)
+        let hasNonReview = plan.exercises.contains { item in
+            if case .srsReview = item { return false }
+            return true
+        }
+        #expect(hasNonReview, "expected booster/variety kinds once foundation is over")
+    }
+
+    private func fixtureKanaCard(
+        front: String,
+        reps: Int = 0,
+        dueDate: Date = Date(timeIntervalSince1970: 1_700_000_000)
+    ) -> CardDTO {
+        CardDTO(
+            id: UUID(),
+            front: front,
+            back: "reading",
+            type: .vocabulary,
+            fsrsState: FSRSState(
+                difficulty: 5,
+                stability: 5,
+                reps: reps,
+                lapses: 0,
+                lastReview: reps > 0 ? dueDate : nil
+            ),
+            easeFactor: 2.5,
+            interval: 1,
+            dueDate: dueDate,
+            lapseCount: 0,
+            leechFlag: false
+        )
+    }
+}
