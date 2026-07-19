@@ -31,6 +31,19 @@ public struct DefaultSessionPlanner: SessionPlanner {
     /// New kana introduced per foundation session — one gojūon row.
     public static let foundationRowSize = 5
 
+    /// Exercise types whose content the app never TEACHES anywhere yet: they
+    /// quiz raw N5 content-DB entries (words, sentences) with no connection to
+    /// what the learner has actually met — guessing, not learning. Excluded
+    /// from the HOME booster/variety pools until the vocab-dictionary feature
+    /// provides a real "already encountered" source (owner decision,
+    /// 2026-07-19 device pass). Étude custom sessions keep every type — there
+    /// the learner opts in explicitly.
+    public static let untaughtContentTypes: Set<ExerciseType> = [
+        .listeningSubtitled, .listeningUnsubtitled,
+        .speakingPractice, .sakuraConversation,
+        .vocabularyStudy, .sentenceConstruction
+    ]
+
     public init() {}
 
     public func compose(inputs: SessionPlannerInputs) async -> SessionPlan {
@@ -81,7 +94,7 @@ public struct DefaultSessionPlanner: SessionPlanner {
         let boosterPool = VarietyPoolResolver.effectivePool(
             for: inputs.profile.jlptLevel,
             unlockedTypes: inputs.unlockedTypes
-        )
+        ).subtracting(Self.untaughtContentTypes)
         let boosterItems = fillSegment(
             forSkill: lowestSkill,
             inPool: boosterPool,
