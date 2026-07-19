@@ -40,6 +40,10 @@ struct ExerciseTransitionContainer: View {
     /// no content bundle was available; the hosts then show a skip affordance.
     let vocabularyPool: [VocabularyItem]
 
+    /// Profile retention snapshotted by the session — powers the per-card
+    /// predicted intervals under the grade buttons.
+    var desiredRetention: Double = 0.9
+
     @Namespace private var exerciseAnimation
     @State private var isRevealed = false
 
@@ -176,9 +180,16 @@ struct ExerciseTransitionContainer: View {
                 Spacer()
 
                 if isRevealed {
-                    GradeButtonsView { grade in
-                        onButtonGrade(grade)
-                    }
+                    GradeButtonsView(
+                        onGrade: { grade in
+                            onButtonGrade(grade)
+                        },
+                        predictedIntervals: computePredictedIntervals(
+                            fsrsState: card.fsrsState,
+                            now: Date(),
+                            desiredRetention: desiredRetention
+                        )
+                    )
                     .padding(.horizontal, IkeruTheme.Spacing.md)
                     .padding(.bottom, IkeruTheme.Spacing.md)
                     .transition(.move(edge: .bottom).combined(with: .opacity))

@@ -211,6 +211,11 @@ public final class SessionViewModel {
     /// vocabulary; the container degrades gracefully in that case.
     public private(set) var vocabularyPool: [VocabularyItem] = []
 
+    /// The profile's desired retention, snapshotted at session start — feeds
+    /// the per-card predicted intervals under the grade buttons so they match
+    /// what `gradeCard` will actually schedule.
+    public private(set) var desiredRetention: Double = 0.9
+
     /// Index of the current exercise in the sessionExercises array.
     public private(set) var currentExerciseIndex: Int = 0
 
@@ -1051,6 +1056,10 @@ public final class SessionViewModel {
             totalXP = 0
             currentLevel = 1
         }
+        // Piggybacks on the one await every session-start path shares:
+        // snapshot the profile's retention so the grade buttons can show
+        // per-card predicted intervals matching what grading will schedule.
+        desiredRetention = await cardRepository.activeDesiredRetention()
     }
 
     /// Persists current RPG state to SwiftData.

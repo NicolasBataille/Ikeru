@@ -3889,6 +3889,74 @@
         }
       }
     },
+    "KanaDrill.Modes.Free" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Free Practice — your whole selection, no pressure. Answers still count toward the schedule."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pratique libre — toute ta sélection, sans pression. Tes réponses comptent quand même pour le planning."
+          }
+        }
+      }
+    },
+    "KanaDrill.Modes.Review" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Review Due — today's due cards, the ones your memory is about to let go."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réviser — les cartes dues aujourd'hui, celles que ta mémoire s'apprête à lâcher."
+          }
+        }
+      }
+    },
+    "KanaDrill.Modes.Title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Three ways to practise"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trois façons de pratiquer"
+          }
+        }
+      }
+    },
+    "KanaDrill.Modes.Weak" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weak Spots — targets your least-mastered kana first."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Points faibles — cible d'abord tes kana les moins maîtrisés."
+          }
+        }
+      }
+    },
     "Kanji" : {
       "comment" : "Bilingual chrome label paired with 漢字 on SRS kanji cards",
       "extractionState" : "stale",

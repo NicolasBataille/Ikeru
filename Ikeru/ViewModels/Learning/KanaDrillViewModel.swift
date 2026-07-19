@@ -87,10 +87,32 @@ public final class KanaDrillViewModel {
 
     // MARK: - Flashcard actions
 
+    /// Active profile's desired retention, fetched once — predictions must
+    /// match what `gradeCard` will actually schedule (it reads the same
+    /// setting). Before the first fetch lands we render with the 0.9 default
+    /// and immediately recompute when the real value arrives.
+    private var cachedDesiredRetention: Double?
+
     public func reveal() {
         guard let card = currentCard, !isRevealed else { return }
         isRevealed = true
-        predictedIntervals = computePredictedIntervals(fsrsState: card.fsrsState, now: now())
+        predictedIntervals = computePredictedIntervals(
+            fsrsState: card.fsrsState,
+            now: now(),
+            desiredRetention: cachedDesiredRetention ?? 0.9
+        )
+        if cachedDesiredRetention == nil {
+            Task {
+                cachedDesiredRetention = await cardRepository.activeDesiredRetention()
+                if let current = currentCard, isRevealed {
+                    predictedIntervals = computePredictedIntervals(
+                        fsrsState: current.fsrsState,
+                        now: now(),
+                        desiredRetention: cachedDesiredRetention ?? 0.9
+                    )
+                }
+            }
+        }
     }
 
     public func grade(_ grade: Grade) async {

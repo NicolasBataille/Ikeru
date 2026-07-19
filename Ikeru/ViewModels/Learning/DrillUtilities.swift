@@ -43,11 +43,19 @@ func mapQuizResultToGrade(correct: Bool, responseTimeMs: Int) -> Grade {
 
 /// Run FSRS scheduling once per grade to estimate intervals shown on flashcard
 /// reveal buttons. Returns a dictionary mapping each grade to a formatted string.
-func computePredictedIntervals(fsrsState: FSRSState, now: Date) -> [Grade: String] {
+/// `desiredRetention` MUST be the active profile's setting
+/// (`CardRepository.activeDesiredRetention()`) so the prediction matches what
+/// grading will actually schedule — the earlier default-0.9 predictions
+/// silently contradicted a learner's 0.80/0.95 target.
+func computePredictedIntervals(
+    fsrsState: FSRSState,
+    now: Date,
+    desiredRetention: Double = 0.9
+) -> [Grade: String] {
     var result: [Grade: String] = [:]
     for grade in Grade.allCases {
         let newState = FSRSService.schedule(state: fsrsState, grade: grade, now: now)
-        let due = FSRSService.dueDate(for: newState, now: now)
+        let due = FSRSService.dueDate(for: newState, desiredRetention: desiredRetention, now: now)
         result[grade] = formatFSRSInterval(from: now, to: due)
     }
     return result

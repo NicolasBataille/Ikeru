@@ -14,6 +14,7 @@ struct KanaPoolSelectorView: View {
     @State private var pendingCards: [CardDTO] = []
     @State private var pendingGroups: Set<KanaGroup> = []
     @State private var showDrill = false
+    @State private var showDrillModesExplainer = false
 
     /// When set, the selector runs as the first-run "study-set chooser" presented
     /// from Home: the bottom bar shows a single "Start learning these" button
@@ -35,16 +36,102 @@ struct KanaPoolSelectorView: View {
                 content(vm)
                 bottomBar(vm)
             }
+
+            // One-time Sakura explainer for the three drill modes — the
+            // bottom-bar buttons are three unexplained labels to a first-time
+            // visitor (owner request, device pass 2026-07-19). Étude context
+            // only: the first-run chooser sheet has a single confirm button.
+            if showDrillModesExplainer {
+                drillModesExplainerOverlay
+                    .zIndex(10)
+                    .transition(.opacity)
+            }
         }
         .toolbar(.hidden, for: .navigationBar)
         .task {
             initializeIfNeeded()
             await viewModel?.loadMasteries()
+            evaluateDrillModesExplainer()
         }
         .navigationDestination(isPresented: $showDrill) {
             if let mode = pendingMode {
                 KanaDrillModeSelector(mode: mode, groups: pendingGroups, cards: pendingCards)
             }
+        }
+    }
+
+    // MARK: Drill-modes explainer (Sakura, one-time)
+
+    private func evaluateDrillModesExplainer() {
+        guard onStudySetConfirmed == nil,   // Étude context only
+              let profileID = ActiveProfileResolver.activeProfileID(),
+              !OnboardingFlags.hasSeenKanaDrillModesExplainer(profileID: profileID)
+        else { return }
+        withAnimation(.easeInOut(duration: 0.3)) {
+            showDrillModesExplainer = true
+        }
+    }
+
+    private func dismissDrillModesExplainer() {
+        if let profileID = ActiveProfileResolver.activeProfileID() {
+            OnboardingFlags.markKanaDrillModesExplainerSeen(profileID: profileID)
+        }
+        withAnimation(.easeInOut(duration: 0.25)) {
+            showDrillModesExplainer = false
+        }
+    }
+
+    private var drillModesExplainerOverlay: some View {
+        ZStack {
+            Color.black.opacity(0.72)
+                .ignoresSafeArea()
+                .contentShape(Rectangle())
+                .onTapGesture { dismissDrillModesExplainer() }
+
+            VStack(alignment: .leading, spacing: 14) {
+                HStack(alignment: .center, spacing: 10) {
+                    SakuraMark(size: 30)
+                    Text(verbatim: "Sakura")
+                        .ikeruScaledFont(12, weight: .bold, relativeTo: .caption2)
+                        .tracking(1.5)
+                        .foregroundStyle(Color.ikeruPrimaryAccent)
+                    Spacer()
+                }
+
+                Text("KanaDrill.Modes.Title")
+                    .ikeruScaledFont(20, weight: .semibold, relativeTo: .title3)
+                    .foregroundStyle(Color.ikeruTextPrimary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("KanaDrill.Modes.Review")
+                    Text("KanaDrill.Modes.Free")
+                    Text("KanaDrill.Modes.Weak")
+                }
+                .ikeruScaledFont(15, relativeTo: .body)
+                .foregroundStyle(Color.ikeruTextSecondary)
+                .lineSpacing(3)
+                .fixedSize(horizontal: false, vertical: true)
+
+                Button {
+                    dismissDrillModesExplainer()
+                } label: {
+                    Text("Sakura.CaughtUp.Dismiss")
+                        .frame(maxWidth: .infinity)
+                }
+                .ikeruButtonStyle(.primary)
+            }
+            .padding(20)
+            .background(
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .fill(.ultraThinMaterial)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .strokeBorder(Color.ikeruPrimaryAccent.opacity(0.35), lineWidth: 1)
+            )
+            .shadow(color: .black.opacity(0.45), radius: 24, y: 8)
+            .padding(.horizontal, 28)
         }
     }
 

@@ -15,6 +15,7 @@ enum OnboardingFlags {
     private static let swipeTutorial = "swipeTutorial"
     private static let firstSessionDailyTermPrompt = "firstSessionDailyTermPrompt"
     private static let caughtUpExplainer = "caughtUpExplainer"
+    private static let kanaDrillModesExplainer = "kanaDrillModesExplainer"
 
     static func hasSeenSwipeTutorial(profileID: UUID) -> Bool {
         UserDefaults.standard.bool(forKey: key(swipeTutorial, profileID))
@@ -46,12 +47,22 @@ enum OnboardingFlags {
         UserDefaults.standard.set(true, forKey: key(caughtUpExplainer, profileID))
     }
 
+    /// Whether Sakura's one-time explainer for the kana drill modes (Review
+    /// Due / Free Practice / Weak Spots) has been shown for this profile.
+    static func hasSeenKanaDrillModesExplainer(profileID: UUID) -> Bool {
+        UserDefaults.standard.bool(forKey: key(kanaDrillModesExplainer, profileID))
+    }
+
+    static func markKanaDrillModesExplainerSeen(profileID: UUID) {
+        UserDefaults.standard.set(true, forKey: key(kanaDrillModesExplainer, profileID))
+    }
+
     /// Removes every per-profile flag for a deleted profile so its UserDefaults
     /// entries don't accumulate forever (mirrors the ExerciseOutcomeLog cleanup
     /// in `ProfileViewModel.deleteProfile`). Keep in sync with the flag list
     /// above.
     static func clearAll(profileID: UUID) {
-        for name in [swipeTutorial, firstSessionDailyTermPrompt, caughtUpExplainer] {
+        for name in [swipeTutorial, firstSessionDailyTermPrompt, caughtUpExplainer, kanaDrillModesExplainer] {
             UserDefaults.standard.removeObject(forKey: key(name, profileID))
         }
     }
