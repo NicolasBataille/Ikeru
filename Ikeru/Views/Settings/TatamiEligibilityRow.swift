@@ -80,15 +80,21 @@ struct TatamiEligibilityRow: View {
                 total: DisplayModeAdvancedThresholdMonitor.activeDaysThreshold
             )
 
-            Button {
-                dismissForCooldown()
-            } label: {
-                Text("Settings.TatamiEligibility.Later")
-                    .ikeruScaledFont(12, relativeTo: .caption2)
-                    .foregroundStyle(Color.ikeruTextSecondary)
+            // "Later" only makes sense as the answer to an actual OFFER —
+            // while the learner is still short of the thresholds this row is
+            // a progress tracker, and a postpone button under it reads as a
+            // non-sequitur (Nico's question, device pass 2026-07-19).
+            if signals.eligibility == .eligible {
+                Button {
+                    dismissForCooldown()
+                } label: {
+                    Text("Settings.TatamiEligibility.Later")
+                        .ikeruScaledFont(12, relativeTo: .caption2)
+                        .foregroundStyle(Color.ikeruTextSecondary)
+                }
+                .buttonStyle(.plain)
+                .padding(.top, 2)
             }
-            .buttonStyle(.plain)
-            .padding(.top, 2)
         }
         .padding(.horizontal, 16).padding(.vertical, 12)
         .overlay(alignment: .bottom) {
