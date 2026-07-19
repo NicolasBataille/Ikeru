@@ -55,6 +55,7 @@ struct HomeView: View {
     /// one-time daily-term prompt fires exactly once, right after it.
     @State private var reviewsBeforeSession = 0
     @State private var showFirstSessionDailyTermPrompt = false
+    @State private var showCaughtUpExplainer = false
 
     var body: some View {
         ZStack {
@@ -62,6 +63,16 @@ struct HomeView: View {
 
             if let vm = viewModel {
                 homeContent(vm)
+            }
+
+            // Sakura's one-time "all caught up — what now?" explainer. The
+            // first time Home lands on the quiet state (every chosen kana
+            // begun, nothing due), a fresh learner is otherwise staring at a
+            // silent dead-end (owner request, device pass 2026-07-19).
+            if showCaughtUpExplainer {
+                caughtUpExplainerOverlay
+                    .zIndex(10)
+                    .transition(.opacity)
             }
         }
         .toolbar(.hidden, for: .navigationBar)
@@ -74,6 +85,7 @@ struct HomeView: View {
                             Task {
                                 await viewModel?.refreshAfterSession()
                                 evaluateFirstSessionDailyTermPrompt()
+                                evaluateCaughtUpExplainer()
                             }
                         }
                     }
@@ -120,6 +132,9 @@ struct HomeView: View {
             withAnimation(.spring(response: 0.55, dampingFraction: 0.86).delay(0.05)) {
                 heroAppeared = true
             }
+            // Also covers opening the app already caught-up (the state can be
+            // reached without a session ending this launch).
+            evaluateCaughtUpExplainer()
             if CommandLine.arguments.contains("-autoStartSession") {
                 startSession()
             }
@@ -700,6 +715,90 @@ struct HomeView: View {
     /// (`OnboardingFlags`), while the daily-term toggle itself is app-level
     /// (`@AppStorage`) — the daily term is a device-level habit shared across
     /// profiles, so enabling it once answers the question for everyone.
+    // MARK: - Caught-up explainer (Sakura, one-time)
+
+    /// Shows Sakura's explainer the FIRST time Home lands on the quiet
+    /// "all caught up" state: every chosen kana begun, nothing due right now.
+    /// Without it, a fresh learner who just powered through their study set
+    /// faces a silent dead-end — no hint that spaced repetition will bring
+    /// the kana back, or that more rows await in Explore → Kana.
+    private func evaluateCaughtUpExplainer() {
+        guard let vm = viewModel,
+              vm.todayKind == .empty,
+              !vm.restDayActive,
+              !vm.needsStudySetChoice,
+              vm.totalReviewsCompleted > 0,
+              !showFirstSessionDailyTermPrompt,   // never stack on the daily-term alert
+              let profileID = ActiveProfileResolver.activeProfileID(),
+              !OnboardingFlags.hasSeenCaughtUpExplainer(profileID: profileID)
+        else { return }
+
+        withAnimation(.easeInOut(duration: 0.3)) {
+            showCaughtUpExplainer = true
+        }
+    }
+
+    private func dismissCaughtUpExplainer() {
+        if let profileID = ActiveProfileResolver.activeProfileID() {
+            OnboardingFlags.markCaughtUpExplainerSeen(profileID: profileID)
+        }
+        withAnimation(.easeInOut(duration: 0.25)) {
+            showCaughtUpExplainer = false
+        }
+    }
+
+    /// Dim scrim + Sakura callout card — same visual language as the feature
+    /// tour's bubble (SakuraMark header, material card, gold hairline).
+    private var caughtUpExplainerOverlay: some View {
+        ZStack {
+            Color.black.opacity(0.72)
+                .ignoresSafeArea()
+                .contentShape(Rectangle())
+                .onTapGesture { dismissCaughtUpExplainer() }
+
+            VStack(alignment: .leading, spacing: 14) {
+                HStack(alignment: .center, spacing: 10) {
+                    SakuraMark(size: 30)
+                    Text(verbatim: "Sakura")
+                        .ikeruScaledFont(12, weight: .bold, relativeTo: .caption2)
+                        .tracking(1.5)
+                        .foregroundStyle(Color.ikeruPrimaryAccent)
+                    Spacer()
+                }
+
+                Text("Sakura.CaughtUp.Title")
+                    .ikeruScaledFont(20, weight: .semibold, relativeTo: .title3)
+                    .foregroundStyle(Color.ikeruTextPrimary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Text("Sakura.CaughtUp.Message")
+                    .ikeruScaledFont(15, relativeTo: .body)
+                    .foregroundStyle(Color.ikeruTextSecondary)
+                    .lineSpacing(3)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Button {
+                    dismissCaughtUpExplainer()
+                } label: {
+                    Text("Sakura.CaughtUp.Dismiss")
+                        .frame(maxWidth: .infinity)
+                }
+                .ikeruButtonStyle(.primary)
+            }
+            .padding(20)
+            .background(
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .fill(.ultraThinMaterial)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .strokeBorder(Color.ikeruPrimaryAccent.opacity(0.35), lineWidth: 1)
+            )
+            .shadow(color: .black.opacity(0.45), radius: 24, y: 8)
+            .padding(.horizontal, 28)
+        }
+    }
+
     private func evaluateFirstSessionDailyTermPrompt() {
         guard reviewsBeforeSession == 0,
               let vm = viewModel,

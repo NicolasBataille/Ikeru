@@ -10213,6 +10213,57 @@
         }
       }
     },
+    "Sakura.CaughtUp.Dismiss" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Got it"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "C'est noté"
+          }
+        }
+      }
+    },
+    "Sakura.CaughtUp.Message" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You've begun every kana you picked — nicely done. I'll bring them back for review exactly when your memory needs a nudge: those growing gaps are how remembering gets built. Until then, add a new kana row in Explore → Kana, or meet today's word below."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu as entamé tous les kana que tu avais choisis — beau travail. Je te les ramènerai en révision exactement quand ta mémoire en aura besoin : ces écarts qui grandissent, c'est comme ça qu'on retient. D'ici là, ajoute une nouvelle rangée de kana dans Étude → Kana, ou découvre le mot du jour juste en dessous."
+          }
+        }
+      }
+    },
+    "Sakura.CaughtUp.Title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All caught up — what now?"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tout est à jour — et maintenant ?"
+          }
+        }
+      }
+    },
     "Sakura.Error.AllProvidersFailed" : {
       "extractionState" : "manual",
       "localizations" : {
