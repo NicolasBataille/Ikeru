@@ -92,6 +92,8 @@ private struct IkeruButtonContent: View {
         switch variant {
         case .glassPill, .ghost:
             return IkeruTheme.Typography.Size.body
+        case .primary:
+            return 19   // the block's label carries it — bodyLarge read lost in the width
         default:
             return IkeruTheme.Typography.Size.bodyLarge
         }
@@ -254,11 +256,15 @@ private struct SumiCornerAccent: ViewModifier {
 
     func body(content: Content) -> some View {
         if case .primary = variant {
+            // Positive inset draws the brackets INSIDE the gold block — a
+            // seal stamped into the ink. The first cut used a negative inset,
+            // which floated them on the dark background outside the button
+            // and read as a broken hitbox (owner feedback).
             content.sumiCorners(
-                color: Color(hex: 0x1A1218).opacity(0.55),
-                size: 6,
-                weight: 1.2,
-                inset: -1
+                color: Color(hex: 0x1A1218).opacity(0.5),
+                size: 7,
+                weight: 1.3,
+                inset: 7
             )
         } else {
             content
