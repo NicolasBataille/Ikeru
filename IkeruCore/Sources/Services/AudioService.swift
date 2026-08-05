@@ -59,9 +59,8 @@ public final class AudioService {
 
     private let synthesizer = AVSpeechSynthesizer()
     private var speechDelegate: SpeechDelegate?
-    private var audioEngine: AVAudioEngine?
-    private var audioPlayerNode: AVAudioPlayerNode?
-    private var timePitchNode: AVAudioUnitTimePitch?
+    private var cachedAudioPlayer: AVAudioPlayer?
+    private var cachedAudioDelegate: CachedAudioDelegate?
     private nonisolated(unsafe) var interruptionObserver: (any NSObjectProtocol)?
 
     /// Continuation for awaiting speech completion.
@@ -87,6 +86,11 @@ public final class AudioService {
         )
         self.speechDelegate = delegate
         synthesizer.delegate = delegate
+        self.cachedAudioDelegate = CachedAudioDelegate { [weak self] in
+            Task { @MainActor [weak self] in
+                self?.handleCachedAudioFinished()
+            }
+        }
         configureAudioSession()
         observeInterruptions()
     }
@@ -216,48 +220,66 @@ public final class AudioService {
 
         let effectiveRate = rate ?? currentRate
 
+        // The shared session is mutated by the recording paths
+        // (`SpeechRecognitionService`, the pitch-accent exercise). They each
+        // restore `.playback` on the happy path, but a cancelled or crashed
+        // recording leaves the category on `.playAndRecord`/`.measurement`,
+        // where this playback is inaudible. Re-asserting costs nothing and
+        // makes playback independent of whatever ran before it.
+        configureAudioSession()
+
         do {
-            let audioFile = try AVAudioFile(forReading: url)
+            // AVAudioPlayer rather than an AVAudioEngine graph: the engine was
+            // only ever there to host AVAudioUnitTimePitch for the rate
+            // control, which AVAudioPlayer does natively via `enableRate`.
+            // The graph also had to negotiate formats — the bundled VOICEVOX
+            // clips are 24 kHz mono while device output runs at 48 kHz, and it
+            // pinned the mixer connection to the *file's* format. That whole
+            // class of failure (format negotiation, node graph, engine
+            // lifetime) is silent when it goes wrong: the engine starts, no
+            // error is thrown, and nothing is ever rendered — which is exactly
+            // what a device pass showed (2026-08-05: no audio at all on an
+            // iPhone 14 Pro, healthy `.playback` session, headphones no help).
+            let player = try AVAudioPlayer(contentsOf: url)
+            player.enableRate = true
+            player.rate = Float(effectiveRate.rawValue)
+            player.delegate = cachedAudioDelegate
+            guard player.prepareToPlay() else {
+                Logger.audio.error("Cached audio: prepareToPlay() failed for \(url.lastPathComponent)")
+                isPlaying = false
+                return
+            }
 
-            let engine = AVAudioEngine()
-            let playerNode = AVAudioPlayerNode()
-            let timePitch = AVAudioUnitTimePitch()
+            self.cachedAudioPlayer = player
 
-            timePitch.rate = Float(effectiveRate.rawValue)
+            guard player.play() else {
+                Logger.audio.error("Cached audio: play() returned false for \(url.lastPathComponent)")
+                self.cachedAudioPlayer = nil
+                isPlaying = false
+                return
+            }
 
-            engine.attach(playerNode)
-            engine.attach(timePitch)
-
-            engine.connect(playerNode, to: timePitch, format: audioFile.processingFormat)
-            engine.connect(timePitch, to: engine.mainMixerNode, format: audioFile.processingFormat)
-
-            self.audioEngine = engine
-            self.audioPlayerNode = playerNode
-            self.timePitchNode = timePitch
-
-            try engine.start()
             isPlaying = true
-
             Logger.audio.debug(
-                "Cached audio started: url=\(url.lastPathComponent), rate=\(effectiveRate.displayLabel)"
+                "Cached audio started: url=\(url.lastPathComponent), rate=\(effectiveRate.displayLabel), duration=\(player.duration)s"
             )
 
             await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
                 self.cachedAudioContinuation = continuation
-                playerNode.scheduleFile(audioFile, at: nil) {
-                    Task { @MainActor [weak self] in
-                        guard let self, self.cachedAudioContinuation != nil else { return }
-                        self.cachedAudioContinuation = nil
-                        self.isPlaying = false
-                        self.cleanupAudioEngine()
-                        continuation.resume()
-                    }
-                }
-                playerNode.play()
             }
         } catch {
             Logger.audio.error("Failed to play cached audio: \(error.localizedDescription)")
             isPlaying = false
+        }
+    }
+
+    /// Called by the player delegate when a cached clip finishes on its own.
+    fileprivate func handleCachedAudioFinished() {
+        cachedAudioPlayer = nil
+        isPlaying = false
+        if let continuation = cachedAudioContinuation {
+            cachedAudioContinuation = nil
+            continuation.resume()
         }
     }
 
@@ -269,9 +291,8 @@ public final class AudioService {
             synthesizer.stopSpeaking(at: .immediate)
         }
 
-        audioPlayerNode?.stop()
-        audioEngine?.stop()
-        cleanupAudioEngine()
+        cachedAudioPlayer?.stop()
+        cachedAudioPlayer = nil
 
         isPlaying = false
 
@@ -297,12 +318,6 @@ public final class AudioService {
     // already implemented and tested) rather than resurrecting this check.
 
     // MARK: - Cleanup
-
-    private func cleanupAudioEngine() {
-        audioPlayerNode = nil
-        timePitchNode = nil
-        audioEngine = nil
-    }
 
     /// Removes the interruption observer. Call when the service is no longer needed.
     public func tearDown() {
@@ -337,6 +352,26 @@ private final class SpeechDelegate: NSObject, AVSpeechSynthesizerDelegate, @unch
         didCancel utterance: AVSpeechUtterance
     ) {
         onDidCancel()
+    }
+}
+
+/// Bridges `AVAudioPlayer`'s completion callback back to the service.
+/// Only natural completion resumes the continuation — an interrupted or
+/// explicitly stopped clip goes through `stop()`, which resumes it itself.
+private final class CachedAudioDelegate: NSObject, AVAudioPlayerDelegate, @unchecked Sendable {
+    let onDidFinish: () -> Void
+
+    init(onDidFinish: @escaping () -> Void) {
+        self.onDidFinish = onDidFinish
+    }
+
+    func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
+        onDidFinish()
+    }
+
+    func audioPlayerDecodeErrorDidOccur(_ player: AVAudioPlayer, error: (any Error)?) {
+        Logger.audio.error("Cached audio decode error: \(error?.localizedDescription ?? "unknown")")
+        onDidFinish()
     }
 }
 
