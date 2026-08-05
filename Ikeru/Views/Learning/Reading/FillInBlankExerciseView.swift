@@ -75,12 +75,13 @@ struct FillInBlankExerciseView: View {
         Text(type.displayLabel)
             .font(.ikeruCaption)
             .fontWeight(.semibold)
-            .foregroundStyle(.white)
+            .tracking(1.2)
+            .foregroundStyle(Color.ikeruPrimaryAccent)
             .padding(.horizontal, IkeruTheme.Spacing.sm)
             .padding(.vertical, IkeruTheme.Spacing.xs)
-            .background(
-                Capsule()
-                    .fill(type.badgeColor.opacity(0.8))
+            .overlay(
+                Rectangle()
+                    .strokeBorder(TatamiTokens.goldDim, lineWidth: 1)
             )
     }
 
@@ -110,10 +111,9 @@ struct FillInBlankExerciseView: View {
                     ))
                     .foregroundStyle(blankColor)
                     .padding(.horizontal, IkeruTheme.Spacing.xs)
-                    .background(
-                        RoundedRectangle(cornerRadius: IkeruTheme.Radius.sm)
+                    .overlay(
+                        Rectangle()
                             .strokeBorder(blankColor.opacity(0.5), lineWidth: 1)
-                            .padding(.horizontal, -IkeruTheme.Spacing.xs)
                     )
 
                 if parts.count > 1 {
@@ -129,13 +129,12 @@ struct FillInBlankExerciseView: View {
             if viewModel.isAnswered && !viewModel.isCorrect {
                 Text("Correct: \(exercise.correctAnswer)")
                     .font(.ikeruBody)
-                    .foregroundStyle(Color.ikeruSuccess)
+                    .foregroundStyle(Color.ikeruPrimaryAccent)
                     .transition(.opacity)
             }
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, IkeruTheme.Spacing.xl)
-        .ikeruCard(.elevated)
+        .tatamiRoom(.standard, padding: IkeruTheme.Spacing.xl)
         .overlay {
             feedbackOverlay
         }
@@ -145,7 +144,7 @@ struct FillInBlankExerciseView: View {
         guard viewModel.isAnswered else {
             return Color.ikeruPrimaryAccent
         }
-        return viewModel.isCorrect ? Color.ikeruSuccess : Color.ikeruSecondaryAccent
+        return viewModel.isCorrect ? Color.ikeruPrimaryAccent : Color.ikeruDanger
     }
 
     // MARK: - Feedback Overlay
@@ -153,7 +152,7 @@ struct FillInBlankExerciseView: View {
     @ViewBuilder
     private var feedbackOverlay: some View {
         if let feedback = viewModel.feedbackState {
-            RoundedRectangle(cornerRadius: IkeruTheme.Radius.md)
+            Rectangle()
                 .strokeBorder(feedback.color, lineWidth: 3)
                 .transition(.opacity)
                 .animation(.easeOut(duration: 0.3), value: viewModel.feedbackState)
@@ -238,7 +237,7 @@ struct FillInBlankExerciseView: View {
         VStack(spacing: IkeruTheme.Spacing.lg) {
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 60))
-                .foregroundStyle(Color.ikeruSuccess)
+                .foregroundStyle(Color.ikeruPrimaryAccent)
 
             Text("Exercises Complete!")
                 .font(.ikeruHeading1)
@@ -280,12 +279,8 @@ private struct OptionButton: View {
                 .foregroundStyle(foregroundColor)
                 .frame(maxWidth: .infinity)
                 .frame(minHeight: 56)
-                .background(backgroundColor)
-                .clipShape(RoundedRectangle(cornerRadius: IkeruTheme.Radius.md))
-                .overlay(
-                    RoundedRectangle(cornerRadius: IkeruTheme.Radius.md)
-                        .strokeBorder(borderColor, lineWidth: borderWidth)
-                )
+                .background(tileBackground)
+                .sumiCorners(color: cornerColor, size: 8, weight: 1.2)
         }
         .buttonStyle(.plain)
         .disabled(isAnswered)
@@ -293,29 +288,37 @@ private struct OptionButton: View {
 
     private var foregroundColor: Color {
         guard isAnswered else { return .white }
-        if isCorrectAnswer { return Color.ikeruSuccess }
-        if isSelected { return Color.ikeruSecondaryAccent }
-        return .white.opacity(0.4)
+        if isCorrectAnswer { return Color(red: 0.102, green: 0.078, blue: 0.055) } // dark ink on gold
+        if isSelected { return .white }
+        return Color.white.opacity(0.4)
     }
 
-    private var backgroundColor: Color {
-        guard isAnswered else { return Color.ikeruSurface }
-        if isCorrectAnswer { return Color.ikeruSuccess.opacity(0.15) }
-        if isSelected { return Color.ikeruSecondaryAccent.opacity(0.15) }
-        return Color.ikeruSurface.opacity(0.5)
+    @ViewBuilder
+    private var tileBackground: some View {
+        if isAnswered {
+            if isCorrectAnswer {
+                LinearGradient.ikeruGold
+            } else if isSelected {
+                ZStack {
+                    Rectangle().fill(.ultraThinMaterial)
+                    Rectangle().fill(Color.ikeruDanger.opacity(0.22))
+                }
+            } else {
+                Color(red: 0.102, green: 0.102, blue: 0.133).opacity(0.45)
+            }
+        } else {
+            ZStack {
+                Rectangle().fill(.ultraThinMaterial)
+                Rectangle().fill(Color(red: 0.102, green: 0.102, blue: 0.133).opacity(0.6))
+            }
+        }
     }
 
-    private var borderColor: Color {
-        guard isAnswered else { return Color.ikeruSurface }
-        if isCorrectAnswer { return Color.ikeruSuccess }
-        if isSelected { return Color.ikeruSecondaryAccent }
-        return Color.clear
-    }
-
-    private var borderWidth: CGFloat {
-        guard isAnswered else { return 0 }
-        if isCorrectAnswer || isSelected { return 2 }
-        return 0
+    private var cornerColor: Color {
+        guard isAnswered else { return TatamiTokens.goldDim }
+        if isCorrectAnswer { return Color.ikeruPrimaryAccent }
+        if isSelected { return Color.ikeruDanger.opacity(0.7) }
+        return TatamiTokens.goldDim.opacity(0.3)
     }
 }
 
@@ -327,14 +330,6 @@ extension FillInBlankType {
         case .particle: "Particle"
         case .conjugation: "Conjugation"
         case .vocabulary: "Vocabulary"
-        }
-    }
-
-    var badgeColor: Color {
-        switch self {
-        case .particle: Color(hex: IkeruTheme.Colors.Skills.reading)
-        case .conjugation: Color(hex: IkeruTheme.Colors.Skills.writing)
-        case .vocabulary: Color(hex: IkeruTheme.Colors.Skills.listening)
         }
     }
 }

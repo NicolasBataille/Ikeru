@@ -11,14 +11,14 @@ import os
 struct ActiveSessionView: View {
 
     @Bindable var viewModel: SessionViewModel
+    @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.toastManager) private var toastManager
     @State private var showPauseOverlay = false
     @State private var hapticTriggerCorrect = false
     @State private var hapticTriggerIncorrect = false
-    @State private var xpGained: Int?
-    @State private var levelUpLevel: Int?
-    @State private var lootDrop: LootItem?
     @State private var dragOffset: CGFloat = 0
     @State private var showOneMinuteToast = false
+    @State private var showSwipeTutorial = false
 
     var body: some View {
         ZStack {
@@ -42,44 +42,80 @@ struct ActiveSessionView: View {
             if viewModel.showAbandonConfirmation {
                 abandonConfirmationOverlay
             }
+
+            // First-run coach-mark teaching the four card swipe directions.
+            if showSwipeTutorial {
+                SwipeTutorialView(onDismiss: dismissSwipeTutorial)
+                    .transition(.opacity)
+                    .zIndex(20)
+            }
+
+            // Level-up celebration — sits above everything else in this
+            // ZStack (drawn last), including the pause/abandon overlays.
+            if let level = viewModel.levelUpLevel {
+                LevelUpView(level: level) {
+                    viewModel.clearLevelUp()
+                }
+                .transition(.opacity)
+                .zIndex(30)
+            }
         }
         .toolbar(.hidden, for: .tabBar)
         .statusBarHidden(true)
         .persistentSystemOverlays(.hidden)
-        .xpGainOverlay(xpGained: $xpGained)
-        .levelUpOverlay(level: $levelUpLevel)
-        .lootDropOverlay(item: $lootDrop)
+        .onAppear { maybeShowSwipeTutorial() }
+        .onChange(of: viewModel.currentCard?.id) { _, _ in maybeShowSwipeTutorial() }
+        .animation(.easeInOut(duration: 0.3), value: showSwipeTutorial)
+        .animation(.easeInOut(duration: 0.25), value: viewModel.levelUpLevel)
         .sensoryFeedback(.success, trigger: hapticTriggerCorrect)
         .sensoryFeedback(.warning, trigger: hapticTriggerIncorrect)
         .animation(
             .spring(response: 0.38, dampingFraction: 0.82),
             value: viewModel.showAbandonConfirmation
         )
-        .onChange(of: viewModel.lastXPGained) { _, newValue in
-            if let xp = newValue {
-                xpGained = xp
-                viewModel.clearXPGain()
+        // XP-gain is otherwise silent to VoiceOver (no dedicated visual
+        // toast exists yet) — announce it directly, following ToastView's
+        // pattern. Cleared right after so the next identical award (same
+        // XP amount twice in a row) still triggers a fresh announcement.
+        // On a level-up rep both lastXPGained and levelUpLevel are set in the
+        // same grading call — skip the XP announcement then so it doesn't
+        // collide with LevelUpView's own (more important) announcement.
+        .onChange(of: viewModel.lastXPGained) { _, xp in
+            guard let xp else { return }
+            defer { viewModel.clearXPGain() }
+            guard viewModel.levelUpLevel == nil else { return }
+            let format = String(localized: "+%@ XP")
+            AccessibilityNotification.Announcement(String(format: format, "\(xp)")).post()
+        }
+        // Pause the session timer when the app moves to background or becomes
+        // inactive so background time is not counted toward session duration.
+        .onChange(of: scenePhase) { _, newPhase in
+            switch newPhase {
+            case .background, .inactive:
+                viewModel.suspendTimer()
+            case .active:
+                viewModel.resumeTimer()
+            @unknown default:
+                break
             }
         }
-        .onChange(of: viewModel.levelUpLevel) { _, newValue in
-            if let level = newValue {
-                levelUpLevel = level
-                viewModel.clearLevelUp()
-            }
+        // Persistence-failure warning: a grade whose save failed may not count
+        // toward scheduling. Local `.toastOverlay()` is required — the root
+        // overlay in IkeruApp sits below this fullScreenCover.
+        .onChange(of: viewModel.gradeSaveFailureCount) { _, count in
+            guard count > 0 else { return }
+            toastManager.showError(
+                String(localized: "Couldn't save your review — it may not count.")
+            )
         }
-        .onChange(of: viewModel.lastLootDrop?.id) { _, newValue in
-            if newValue != nil, let drop = viewModel.lastLootDrop {
-                lootDrop = drop
-                viewModel.clearLootDrop()
-            }
-        }
+        .toastOverlay()
         .overlay(alignment: .top) {
             if showOneMinuteToast {
                 Text(
                     "Session.OneMinuteRemaining",
                     comment: "Toast shown 60s before time budget ends the session"
                 )
-                .font(.system(size: 12, weight: .medium))
+                .ikeruScaledFont(12, weight: .medium, relativeTo: .caption2)
                 .foregroundStyle(Color.ikeruTextPrimary)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 10)
@@ -128,7 +164,7 @@ struct ActiveSessionView: View {
                         .foregroundStyle(Color.ikeruTextTertiary)
 
                     Text("Leave this session?")
-                        .font(.system(size: 22, weight: .regular, design: .serif))
+                        .ikeruScaledFont(22, weight: .regular, design: .serif, relativeTo: .title2)
                         .foregroundStyle(Color.ikeruTextPrimary)
                         .multilineTextAlignment(.center)
 
@@ -205,15 +241,6 @@ struct ActiveSessionView: View {
             )
             .padding(.top, IkeruTheme.Spacing.xs)
 
-            // Compact XP bar below progress
-            XPBarView(
-                totalXP: viewModel.totalXP,
-                level: viewModel.currentLevel,
-                variant: .compact
-            )
-            .padding(.horizontal, IkeruTheme.Spacing.md)
-            .padding(.top, IkeruTheme.Spacing.xs)
-
             // Exercise transition container
             ExerciseTransitionContainer(
                 exercise: viewModel.currentExercise,
@@ -229,9 +256,17 @@ struct ActiveSessionView: View {
                         await viewModel.gradeAndAdvance(grade: grade)
                     }
                 },
+                onExerciseComplete: { grade in
+                    Task {
+                        triggerHaptic(for: grade)
+                        await viewModel.completeCurrentExercise(grade: grade)
+                    }
+                },
                 currentCard: viewModel.currentCard,
                 upcomingCards: viewModel.upcomingCards,
-                feedbackState: viewModel.feedbackState
+                feedbackState: viewModel.feedbackState,
+                vocabularyPool: viewModel.vocabularyPool,
+                desiredRetention: viewModel.desiredRetention
             )
             .frame(maxHeight: .infinity)
         }
@@ -282,7 +317,7 @@ struct ActiveSessionView: View {
                     }
                 }
                 .padding(IkeruTheme.Spacing.xl)
-                .ikeruCard(.elevated)
+                .tatamiRoom(.glass, padding: 0)
                 .padding(.horizontal, IkeruTheme.Spacing.lg)
 
                 Spacer()
@@ -338,7 +373,7 @@ struct ActiveSessionView: View {
             .padding(.top, IkeruTheme.Spacing.md)
         }
         .padding(IkeruTheme.Spacing.xl)
-        .ikeruCard(.elevated)
+        .tatamiRoom(.glass, padding: 0)
         .padding(.horizontal, IkeruTheme.Spacing.lg)
     }
 
@@ -387,6 +422,24 @@ struct ActiveSessionView: View {
             hapticTriggerIncorrect.toggle()
         }
     }
+
+    // MARK: - Swipe Tutorial
+
+    /// Shows the swipe coach-mark the first time this profile reaches a real
+    /// SRS card (sessions are SRS-only after the rework).
+    private func maybeShowSwipeTutorial() {
+        guard !showSwipeTutorial, viewModel.currentCard != nil else { return }
+        guard let id = ActiveProfileResolver.activeProfileID() else { return }
+        guard !OnboardingFlags.hasSeenSwipeTutorial(profileID: id) else { return }
+        showSwipeTutorial = true
+    }
+
+    private func dismissSwipeTutorial() {
+        if let id = ActiveProfileResolver.activeProfileID() {
+            OnboardingFlags.markSwipeTutorialSeen(profileID: id)
+        }
+        showSwipeTutorial = false
+    }
 }
 
 // MARK: - Preview
@@ -394,18 +447,22 @@ struct ActiveSessionView: View {
 #Preview("ActiveSessionView") {
     let schema = Schema([UserProfile.self, Card.self, ReviewLog.self, RPGState.self])
     let config = ModelConfiguration(isStoredInMemoryOnly: true)
-    let container = try! ModelContainer(for: schema, configurations: [config])
-    let repo = CardRepository(modelContainer: container)
-    let planner = PlannerService(cardRepository: repo)
-    let viewModel = SessionViewModel(
-        plannerService: planner,
-        cardRepository: repo,
-        modelContainer: container
-    )
 
-    ActiveSessionView(viewModel: viewModel)
-        .preferredColorScheme(.dark)
-        .task {
-            await viewModel.startSession()
-        }
+    if let container = try? ModelContainer(for: schema, configurations: [config]) {
+        let repo = CardRepository(modelContainer: container)
+        let planner = PlannerService(cardRepository: repo)
+        let viewModel = SessionViewModel(
+            plannerService: planner,
+            cardRepository: repo,
+            modelContainer: container
+        )
+
+        ActiveSessionView(viewModel: viewModel)
+            .preferredColorScheme(.dark)
+            .task {
+                await viewModel.startSession()
+            }
+    } else {
+        Text(verbatim: "Preview container unavailable")
+    }
 }

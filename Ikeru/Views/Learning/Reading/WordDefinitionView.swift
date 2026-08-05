@@ -15,9 +15,9 @@ struct WordDefinitionView: View {
             // Word with furigana
             wordDisplay
 
-            // Divider
+            // Divider — gold sumi rail
             Rectangle()
-                .fill(Color.white.opacity(0.1))
+                .fill(TatamiTokens.goldDim.opacity(0.18))
                 .frame(height: 1)
 
             // Meaning
@@ -31,9 +31,8 @@ struct WordDefinitionView: View {
                 knownBadge
             }
         }
-        .padding(IkeruTheme.Spacing.md)
         .frame(maxWidth: 280)
-        .ikeruCard(.elevated)
+        .tatamiRoom(.standard)
     }
 
     // MARK: - Word Display
@@ -68,20 +67,13 @@ struct WordDefinitionView: View {
             Text(word.isKnown ? "Known" : "New")
                 .font(.ikeruCaption)
         }
-        .foregroundStyle(
-            word.isKnown
-                ? Color.ikeruSuccess
-                : Color.ikeruPrimaryAccent
-        )
+        .foregroundStyle(Color.ikeruPrimaryAccent)
         .padding(.horizontal, IkeruTheme.Spacing.sm)
         .padding(.vertical, IkeruTheme.Spacing.xs)
-        .background {
-            Capsule()
-                .fill(
-                    (word.isKnown ? Color.ikeruSuccess : Color.ikeruPrimaryAccent)
-                        .opacity(0.15)
-                )
-        }
+        .overlay(
+            Rectangle()
+                .strokeBorder(TatamiTokens.goldDim, lineWidth: 1)
+        )
     }
 }
 

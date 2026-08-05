@@ -1,43 +1,41 @@
 import SwiftUI
 import IkeruCore
 import SwiftData
+import os
 
-// MARK: - EtudeView
+// MARK: - ExploreView
 //
-// Practice library (Étude tab). Combines the JLPT-estimate hero on
-// `tatamiRoom(.glass)`, the 11-tile `EtudeBrowseGrid`, and a Compose row
-// that opens `CustomPlannerSheet` to feed the session planner.
+// The "Explore" tab (学習). Replaces the old Étude practice-ground grid (11
+// tiles, 9 of which led to placeholder exercises) with a short, honest list of
+// the surfaces that actually work today: the kana drill, the N5 vocabulary
+// dictionary, and the Sakura AI conversation partner. No grid, no locked tiles,
+// no JLPT hero that reads 0% on day one.
+//
+// (File is still named EtudeView.swift for pbxproj continuity; the struct is
+// ExploreView. A pure file rename can follow later.)
 
-struct EtudeView: View {
+struct ExploreView: View {
 
     @Environment(\.modelContext) private var modelContext
-    @State private var viewModel: EtudeViewModel?
-    @State private var showCompose = false
-    @State private var snapshot: LearnerSnapshot = .empty
-    @State private var unlockedTypes: Set<ExerciseType> = []
-    @State private var sessionViewModel: SessionViewModel?
-    @State private var showSession = false
-    /// Compose params buffered while the sheet dismisses. SwiftUI can't
-    /// present a `fullScreenCover` while a `sheet` is still mid-dismiss
-    /// (the previous attempt deadlocked the UI). The sheet's `onDismiss`
-    /// reads this and drives the session launch once dismissal completes.
-    @State private var pendingCompose: (Set<ExerciseType>, Set<JLPTLevel>, Int)?
-    private let unlockService: any ExerciseUnlockService = DefaultExerciseUnlockService()
+    @Environment(\.aiRouterService) private var aiRouterService
+
+    /// Presenting this (non-nil) drives the chat cover via `.fullScreenCover(item:)`.
+    @State private var conversationViewModel: ConversationViewModel?
+
+    // Calm progress signals (replace the old gamified XP chrome): how much
+    // kana is learned, and how many words you've collected. Nil until loaded.
+    @State private var kanaProgress: KanaProgress?
+    @State private var vocabSavedCount: Int?
 
     var body: some View {
         ZStack {
             IkeruScreenBackground()
             ScrollView {
-                VStack(alignment: .leading, spacing: 22) {
+                VStack(alignment: .leading, spacing: 14) {
                     header
-                    if let vm = viewModel { jlptHero(vm) }
-                    BilingualLabel(japanese: "\u{7A3D}\u{53E4}\u{5834}", chrome: "Practice ground", mon: .asanoha)
-                    EtudeBrowseGrid(
-                        snapshot: snapshot,
-                        unlockService: unlockService,
-                        onTap: { type in viewModel?.startSingleSurface(type: type) }
-                    )
-                    composeRow
+                    kanaRow
+                    vocabularyRow
+                    sakuraRow
                 }
                 .padding(.horizontal, 22)
                 .padding(.top, 14)
@@ -45,114 +43,156 @@ struct EtudeView: View {
             }
         }
         .toolbar(.hidden, for: .navigationBar)
-        .task { await initialize() }
-        .sheet(isPresented: $showCompose, onDismiss: drainPendingCompose) {
-            CustomPlannerSheet(unlockedTypes: unlockedTypes) { types, levels, duration in
-                pendingCompose = (types, levels, duration)
-                // Sheet self-dismisses; `drainPendingCompose` runs after.
-            }
-        }
-        .fullScreenCover(isPresented: $showSession) {
-            if let svm = sessionViewModel {
-                ActiveSessionView(viewModel: svm)
-                    .onChange(of: svm.isActive) { _, isActive in
-                        if !isActive { showSession = false }
-                    }
+        .task { await loadProgress() }
+        .fullScreenCover(item: $conversationViewModel) { cvm in
+            ZStack(alignment: .topLeading) {
+                // `item:` guarantees `cvm` is non-nil here (the old isPresented +
+                // optional `if let` raced and presented an empty black screen).
+                // NavigationStack so the in-view "Configure AI" link works.
+                NavigationStack {
+                    ConversationView(viewModel: cvm)
+                }
+
+                // Explicit close button — an overlay that does NOT depend on the
+                // navigation bar rendering, so there is always a visible way out.
+                Button {
+                    conversationViewModel = nil
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundStyle(Color.ikeruTextPrimary)
+                        .frame(width: 38, height: 38)
+                        .background(.ultraThinMaterial, in: Circle())
+                        .overlay(
+                            Circle().strokeBorder(TatamiTokens.goldDim.opacity(0.5), lineWidth: 1)
+                        )
+                }
+                .accessibilityLabel("Close")
+                .padding(.leading, 16)
+                .padding(.top, 10)
             }
         }
     }
 
-    /// Reads the buffered compose params (set while the sheet was up)
-    /// after the sheet has fully dismissed and triggers the session
-    /// launch. Avoids the SwiftUI deadlock that happens when a
-    /// fullScreenCover is presented while a sheet is still mid-dismiss.
-    private func drainPendingCompose() {
-        guard let params = pendingCompose else { return }
-        pendingCompose = nil
-        launchCustomSession(types: params.0, levels: params.1, duration: params.2)
-    }
-
-    /// Composes a session via `SessionViewModel` from the Compose sheet's
-    /// chosen types / levels / duration, then presents `ActiveSessionView`
-    /// full-screen. Replaces the previous behaviour where Compose-submit
-    /// only stored `lastComposedPlan` and never navigated.
-    private func launchCustomSession(
-        types: Set<ExerciseType>,
-        levels: Set<JLPTLevel>,
-        duration: Int
-    ) {
-        let container = modelContext.container
-        if sessionViewModel == nil {
-            let repo = CardRepository(modelContainer: container)
-            let planner = PlannerService(cardRepository: repo)
-            sessionViewModel = SessionViewModel(
-                plannerService: planner,
-                cardRepository: repo,
-                modelContainer: container
-            )
-        }
-        guard let svm = sessionViewModel else { return }
-        Task {
-            await svm.startStudyCustomSession(
-                types: types,
-                levels: levels,
-                duration: duration
-            )
-            showSession = true
-        }
-    }
+    // MARK: - Header
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 4) {
-            BilingualLabel(japanese: "\u{5B66}\u{7FD2}", chrome: "Study")
-            Text("Etude.Title")
-                .font(.system(size: 28, weight: .light, design: .serif))
+            BilingualLabel(japanese: "\u{5B66}\u{7FD2}", chrome: "Explore")
+            Text("Choose what to practice")
+                .ikeruScaledFont(24, weight: .light, design: .serif, relativeTo: .title)
                 .foregroundStyle(Color.ikeruTextPrimary)
         }
+        .padding(.bottom, 4)
     }
 
-    @ViewBuilder
-    private func jlptHero(_ vm: EtudeViewModel) -> some View {
-        let level = vm.jlptEstimate.level
-        let percent = Int(vm.jlptEstimate.masteryFraction * 100)
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .top) {
-                BilingualLabel(japanese: "\u{63A8}\u{5B9A}", chrome: "JLPT estimate")
-                Spacer()
-                HankoStamp(kanji: level, size: 36)
-            }
-            HStack(alignment: .firstTextBaseline) {
-                SerifNumeral(percent, size: 40)
-                Text("%").foregroundStyle(TatamiTokens.paperGhost).tracking(1.4)
-            }
-        }
-        .tatamiRoom(.glass, padding: 20)
-    }
+    // MARK: - Rows
 
-    private var composeRow: some View {
-        Button { showCompose = true } label: {
-            HStack {
-                Text("\u{7DE8}\u{6210}") // 編成
-                    .font(.system(size: 14, design: .serif))
-                    .foregroundStyle(TatamiTokens.paperGhost)
-                Text("Etude.Compose.Row")
-                    .font(.system(size: 14))
-                    .foregroundStyle(Color.ikeruTextPrimary)
-                Spacer()
-                Text("\u{203A}").foregroundStyle(TatamiTokens.goldDim)
-            }
-            .padding(14)
-            .overlay(Rectangle().strokeBorder(TatamiTokens.goldDim, lineWidth: 0.6))
+    private var kanaRow: some View {
+        NavigationLink {
+            KanaPoolSelectorView()
+        } label: {
+            exploreRow(kanji: "\u{304B}\u{306A}", title: "Kana",
+                       subtitle: "Hiragana & katakana",
+                       stat: kanaProgress.map { "\($0.total)/\(KanaProgress.grandTotal)" })
         }
         .buttonStyle(.plain)
     }
 
-    private func initialize() async {
-        if viewModel == nil {
-            viewModel = EtudeViewModel(modelContainer: modelContext.container)
+    private var vocabularyRow: some View {
+        NavigationLink {
+            VocabularyDictionaryView()
+        } label: {
+            exploreRow(kanji: "\u{8A9E}\u{5F59}", title: "Vocabulary",
+                       subtitle: "Your saved words",
+                       stat: vocabSavedCount.flatMap { $0 > 0 ? "\($0)" : nil })
         }
-        await viewModel?.loadData()
-        snapshot = await viewModel?.buildSnapshot() ?? .empty
-        unlockedTypes = unlockService.unlockedTypes(profile: snapshot)
+        .buttonStyle(.plain)
+    }
+
+    private var sakuraRow: some View {
+        Button {
+            presentConversation()
+        } label: {
+            exploreRow(kanji: "\u{5BFE}\u{8A71}", title: "Talk with Sakura",
+                       subtitle: "AI conversation partner")
+        }
+        .buttonStyle(.plain)
+    }
+
+    /// Shared row chrome: serif kanji eyebrow, bilingual title, subtitle,
+    /// an optional progress stat (e.g. "46/92"), and a chevron.
+    private func exploreRow(kanji: String, title: LocalizedStringKey,
+                            subtitle: LocalizedStringKey,
+                            stat: String? = nil) -> some View {
+        HStack(spacing: IkeruTheme.Spacing.md) {
+            Text(kanji)
+                .font(.system(size: 24, weight: .light, design: .serif))
+                .foregroundStyle(Color.ikeruPrimaryAccent)
+                .frame(width: 44)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .ikeruScaledFont(16, weight: .regular, relativeTo: .body)
+                    .foregroundStyle(Color.ikeruTextPrimary)
+                Text(subtitle)
+                    .ikeruScaledFont(12, relativeTo: .caption2)
+                    .foregroundStyle(Color.ikeruTextSecondary)
+            }
+            Spacer()
+            if let stat {
+                Text(stat)
+                    .ikeruScaledFont(13, design: .serif, relativeTo: .caption)
+                    .monospacedDigit()
+                    .foregroundStyle(Color.ikeruPrimaryAccent)
+            }
+            Image(systemName: "chevron.right")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(TatamiTokens.goldDim)
+        }
+        .padding(.vertical, IkeruTheme.Spacing.sm)
+        .contentShape(Rectangle())
+        .tatamiRoom(.standard, padding: 16)
+    }
+
+    // MARK: - Progress
+
+    /// Loads calm progress counts from the card + vocabulary stores. Kana
+    /// mastery powers "X/92"; the vocabulary collection size powers the saved-
+    /// words stat. Both stay nil (no stat shown) until the first load lands.
+    private func loadProgress() async {
+        let container = modelContext.container
+        let cards = await CardRepository(modelContainer: container).allCards()
+        let vocab = await VocabularyRepository(modelContainer: container).allEntries()
+        kanaProgress = KanaProgress.from(cards: cards)
+        vocabSavedCount = vocab.count
+    }
+
+    // MARK: - Conversation
+
+    private func presentConversation() {
+        // Build the view model and assign it — with `.fullScreenCover(item:)`
+        // that assignment IS what presents the cover, so the content can never
+        // be handed a nil model.
+        let router = aiRouterService ?? AIRouterService()
+        let service = ConversationService(aiRouter: router)
+        let vocabRepo = VocabularyRepository(modelContainer: modelContext.container)
+        conversationViewModel = ConversationViewModel(
+            conversationService: service,
+            jlptLevel: .n5,
+            vocabularyRepository: vocabRepo,
+            contentRepository: Self.makeContentRepository()
+        )
+    }
+
+    /// Resolves the bundled `n5-content.sqlite` and builds a read-only
+    /// `ContentRepository` so Sakura can validate the furigana she suggests
+    /// against curated readings (remediation 6.7). Fail-safe: a missing
+    /// resource logs and returns nil, and reading-validation simply no-ops.
+    private static func makeContentRepository() -> ContentRepository? {
+        guard let url = Bundle.main.url(forResource: "n5-content", withExtension: "sqlite") else {
+            Logger.ui.error("n5-content.sqlite not found in bundle — Sakura reading validation disabled")
+            return nil
+        }
+        return ContentRepository(bundleURL: url)
     }
 }

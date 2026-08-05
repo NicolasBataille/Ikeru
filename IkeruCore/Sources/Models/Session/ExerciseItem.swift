@@ -14,8 +14,9 @@ public typealias ReadingPassageID = UUID
 public enum ExerciseItem: Sendable, Equatable {
     /// An SRS flashcard review.
     case srsReview(CardDTO)
-    /// A kanji study exercise (character to learn).
-    case kanjiStudy(String)
+    /// A kanji study exercise, backed by the kanji card being reviewed
+    /// (so the drill can grade the real FSRS card, not a bare character).
+    case kanjiStudy(CardDTO)
     /// A grammar point exercise.
     case grammarExercise(GrammarPointID)
     /// A vocabulary study exercise.
@@ -24,8 +25,8 @@ public enum ExerciseItem: Sendable, Equatable {
     case fillInBlank(FillInBlankExerciseID)
     /// A comprehensible input reading passage.
     case readingPassage(ReadingPassageID)
-    /// A writing practice exercise.
-    case writingPractice(String)
+    /// A writing practice exercise, backed by the kanji card being practiced.
+    case writingPractice(CardDTO)
     /// A listening comprehension exercise.
     case listeningExercise(ListeningExerciseID)
     /// A speaking practice exercise.

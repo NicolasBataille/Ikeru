@@ -9,6 +9,12 @@ struct HandwritingExerciseView: View {
 
     @Bindable var viewModel: HandwritingViewModel
 
+    /// Invoked when the learner accepts the current recognition result and
+    /// advances the session. The feedback tier is mapped to an FSRS `Grade`
+    /// via `DrillGradeMapping.handwriting` (blueprint §3). Defaults to a no-op
+    /// so the standalone `#Preview` (and any non-session use) still compiles.
+    var onComplete: (Grade) -> Void = { _ in }
+
     var body: some View {
         VStack(spacing: IkeruTheme.Spacing.md) {
             // Header with target character
@@ -22,7 +28,7 @@ struct HandwritingExerciseView: View {
                     viewModel.addStroke(points: points)
                 }
             )
-            .ikeruCard(.interactive)
+            .tatamiRoom(.standard, padding: 0)
 
             // Control toolbar
             controlBar
@@ -32,7 +38,14 @@ struct HandwritingExerciseView: View {
                 recognizingIndicator
             }
 
-            if viewModel.recognitionResult != nil {
+            // When the recogniser couldn't read the scribble (error, no
+            // candidates, or below the confidence threshold) we show an honest
+            // self-grade panel instead of an automatic verdict — even when
+            // there is no `recognitionResult` (e.g. Vision threw). Otherwise, a
+            // real recognition result drives the normal feedback + candidates.
+            if viewModel.feedbackState == .unavailable {
+                selfGradeSection
+            } else if viewModel.recognitionResult != nil {
                 resultsSection
             }
         }
@@ -56,7 +69,7 @@ struct HandwritingExerciseView: View {
                 .foregroundStyle(Color(hex: IkeruTheme.Colors.kanjiText))
 
             Text("Write the character freehand")
-                .font(.system(size: IkeruTheme.Typography.Size.body))
+                .ikeruScaledFont(IkeruTheme.Typography.Size.body, relativeTo: .body)
                 .foregroundStyle(.ikeruTextSecondary)
         }
     }
@@ -70,7 +83,7 @@ struct HandwritingExerciseView: View {
                 viewModel.undoLastStroke()
             } label: {
                 Label("Undo", systemImage: "arrow.uturn.backward")
-                    .font(.system(size: IkeruTheme.Typography.Size.body))
+                    .ikeruScaledFont(IkeruTheme.Typography.Size.body, relativeTo: .body)
             }
             .buttonStyle(.bordered)
             .disabled(viewModel.strokes.isEmpty)
@@ -80,7 +93,7 @@ struct HandwritingExerciseView: View {
                 viewModel.clearCanvas()
             } label: {
                 Label("Clear", systemImage: "trash")
-                    .font(.system(size: IkeruTheme.Typography.Size.body))
+                    .ikeruScaledFont(IkeruTheme.Typography.Size.body, relativeTo: .body)
             }
             .buttonStyle(.bordered)
             .disabled(viewModel.strokes.isEmpty)
@@ -94,7 +107,7 @@ struct HandwritingExerciseView: View {
                 }
             } label: {
                 Label("Check", systemImage: "checkmark.circle")
-                    .font(.system(size: IkeruTheme.Typography.Size.body))
+                    .ikeruScaledFont(IkeruTheme.Typography.Size.body, relativeTo: .body)
             }
             .buttonStyle(.borderedProminent)
             .disabled(viewModel.strokes.isEmpty || viewModel.recognitionState.isLoading)
@@ -107,7 +120,7 @@ struct HandwritingExerciseView: View {
         HStack(spacing: IkeruTheme.Spacing.sm) {
             ProgressView()
             Text("Recognizing...")
-                .font(.system(size: IkeruTheme.Typography.Size.caption))
+                .ikeruScaledFont(IkeruTheme.Typography.Size.caption, relativeTo: .caption)
                 .foregroundStyle(.ikeruTextSecondary)
         }
     }
@@ -126,24 +139,99 @@ struct HandwritingExerciseView: View {
 
                 // Recognition duration
                 Text("Recognized in \(result.formattedDuration)")
-                    .font(.system(size: IkeruTheme.Typography.Size.caption))
+                    .ikeruScaledFont(IkeruTheme.Typography.Size.caption, relativeTo: .caption)
                     .foregroundStyle(.ikeruTextSecondary)
 
-                // Retry button
+                // Retry button — only when the result wasn't a clean match, so
+                // the learner can improve their grade before continuing.
                 if viewModel.feedbackState != .correct {
                     Button {
                         viewModel.retry()
                     } label: {
                         Label("Try Again", systemImage: "arrow.counterclockwise")
-                            .font(.system(size: IkeruTheme.Typography.Size.body))
+                            .ikeruScaledFont(IkeruTheme.Typography.Size.body, relativeTo: .body)
                     }
-                    .buttonStyle(.borderedProminent)
-                    .tint(Color(hex: IkeruTheme.Colors.primaryAccent))
+                    .buttonStyle(.bordered)
+                    .tint(Color.ikeruPrimaryAccent)
                 }
+
+                // Continue — accept the current result and advance the session.
+                // Maps the feedback tier → FSRS Grade (DrillGradeMapping).
+                Button {
+                    onComplete(DrillGradeMapping.handwriting(
+                        feedback: viewModel.feedbackState,
+                        topConfidence: viewModel.recognitionResult?.candidates.first?.confidence
+                    ))
+                } label: {
+                    Label("Continue", systemImage: "arrow.right")
+                        .ikeruScaledFont(IkeruTheme.Typography.Size.body, relativeTo: .body)
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(Color.ikeruPrimaryAccent)
             }
-            .padding(IkeruTheme.Spacing.md)
-            .ikeruCard(.standard)
+            .tatamiRoom(.standard)
         }
+    }
+
+    // MARK: - Self-Grade Section
+
+    /// Shown when recognition is unavailable/inconclusive (remediation 7.8).
+    /// Rather than auto-passing (or silently failing) a scribble the recogniser
+    /// couldn't read, the learner compares the target (in the header) against
+    /// their own drawing (still on the canvas above) and grades themselves
+    /// honestly. Both verdicts advance the session via the same `onComplete`
+    /// contract: "I got it" → `.good`, "Missed it" → `.again`.
+    private var selfGradeSection: some View {
+        VStack(spacing: IkeruTheme.Spacing.sm) {
+            HStack(spacing: IkeruTheme.Spacing.sm) {
+                Image(systemName: "questionmark.circle")
+                    .font(.system(size: IkeruTheme.Typography.Size.heading2))
+                Text("Recognition unavailable — grade yourself")
+                    .ikeruScaledFont(IkeruTheme.Typography.Size.body, weight: .medium, relativeTo: .body)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .foregroundStyle(.ikeruTextSecondary)
+
+            Text("Compare your writing above with the target. Did you get it right?")
+                .ikeruScaledFont(IkeruTheme.Typography.Size.caption, relativeTo: .caption)
+                .foregroundStyle(.ikeruTextSecondary)
+                .multilineTextAlignment(.center)
+
+            // Redraw without grading.
+            Button {
+                viewModel.retry()
+            } label: {
+                Label("Try Again", systemImage: "arrow.counterclockwise")
+                    .ikeruScaledFont(IkeruTheme.Typography.Size.body, relativeTo: .body)
+            }
+            .buttonStyle(.bordered)
+            .tint(Color.ikeruPrimaryAccent)
+
+            // Honest self-verdict. Both advance the session via `onComplete`.
+            HStack(spacing: IkeruTheme.Spacing.md) {
+                Button {
+                    onComplete(.again)
+                } label: {
+                    Label("Missed it", systemImage: "xmark")
+                        .ikeruScaledFont(IkeruTheme.Typography.Size.body, relativeTo: .body)
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+                .tint(Color.ikeruDanger)
+
+                Button {
+                    onComplete(.good)
+                } label: {
+                    Label("I got it", systemImage: "checkmark")
+                        .ikeruScaledFont(IkeruTheme.Typography.Size.body, relativeTo: .body)
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(Color.ikeruPrimaryAccent)
+            }
+        }
+        .tatamiRoom(.standard)
     }
 
     // MARK: - Feedback Banner
@@ -153,7 +241,7 @@ struct HandwritingExerciseView: View {
             Image(systemName: feedbackIcon)
                 .font(.system(size: IkeruTheme.Typography.Size.heading2))
             Text(feedbackText)
-                .font(.system(size: IkeruTheme.Typography.Size.body, weight: .medium))
+                .ikeruScaledFont(IkeruTheme.Typography.Size.body, weight: .medium, relativeTo: .body)
         }
         .foregroundStyle(feedbackColor)
     }
@@ -166,7 +254,7 @@ struct HandwritingExerciseView: View {
             "exclamationmark.circle.fill"
         case .incorrect:
             "xmark.circle.fill"
-        case .idle:
+        case .idle, .unavailable:
             "questionmark.circle"
         }
     }
@@ -179,7 +267,7 @@ struct HandwritingExerciseView: View {
             "Close! Your character was recognized but not as the top match."
         case .incorrect:
             "Not quite. Try again!"
-        case .idle:
+        case .idle, .unavailable:
             ""
         }
     }
@@ -187,12 +275,12 @@ struct HandwritingExerciseView: View {
     private var feedbackColor: Color {
         switch viewModel.feedbackState {
         case .correct:
-            Color(hex: IkeruTheme.Colors.success)
+            Color.ikeruPrimaryAccent
         case .partial:
-            Color(hex: IkeruTheme.Colors.primaryAccent)
+            Color.ikeruPrimaryAccent
         case .incorrect:
-            Color(hex: IkeruTheme.Colors.secondaryAccent)
-        case .idle:
+            Color.ikeruDanger
+        case .idle, .unavailable:
             .ikeruTextSecondary
         }
     }
@@ -202,7 +290,7 @@ struct HandwritingExerciseView: View {
     private func candidateList(result: RecognitionResult) -> some View {
         VStack(alignment: .leading, spacing: IkeruTheme.Spacing.xs) {
             Text("Candidates")
-                .font(.system(size: IkeruTheme.Typography.Size.caption, weight: .semibold))
+                .ikeruScaledFont(IkeruTheme.Typography.Size.caption, weight: .semibold, relativeTo: .caption)
                 .foregroundStyle(.ikeruTextSecondary)
 
             ForEach(Array(result.candidates.enumerated()), id: \.offset) { index, candidate in
@@ -211,7 +299,7 @@ struct HandwritingExerciseView: View {
 
             if result.candidates.isEmpty {
                 Text("No characters recognized")
-                    .font(.system(size: IkeruTheme.Typography.Size.caption))
+                    .ikeruScaledFont(IkeruTheme.Typography.Size.caption, relativeTo: .caption)
                     .foregroundStyle(.ikeruTextSecondary)
             }
         }
@@ -222,7 +310,7 @@ struct HandwritingExerciseView: View {
 
         return HStack(spacing: IkeruTheme.Spacing.sm) {
             Text("\(rank).")
-                .font(.system(size: IkeruTheme.Typography.Size.caption, design: .monospaced))
+                .ikeruScaledFont(IkeruTheme.Typography.Size.caption, design: .monospaced, relativeTo: .caption)
                 .foregroundStyle(.ikeruTextSecondary)
                 .frame(width: 24, alignment: .trailing)
 
@@ -233,27 +321,26 @@ struct HandwritingExerciseView: View {
                 ))
                 .foregroundStyle(
                     isTarget
-                        ? Color(hex: IkeruTheme.Colors.success)
+                        ? Color.ikeruPrimaryAccent
                         : Color(hex: IkeruTheme.Colors.kanjiText)
                 )
 
             Spacer()
 
             Text("\(Int(candidate.confidence * 100))%")
-                .font(.system(size: IkeruTheme.Typography.Size.caption, design: .monospaced))
+                .ikeruScaledFont(IkeruTheme.Typography.Size.caption, design: .monospaced, relativeTo: .caption)
                 .foregroundStyle(
                     isTarget
-                        ? Color(hex: IkeruTheme.Colors.success)
+                        ? Color.ikeruPrimaryAccent
                         : .ikeruTextSecondary
                 )
         }
         .padding(.vertical, IkeruTheme.Spacing.xs)
         .background(
             isTarget
-                ? Color(hex: IkeruTheme.Colors.success, opacity: 0.1)
+                ? Color.ikeruPrimaryAccent.opacity(0.1)
                 : Color.clear
         )
-        .clipShape(RoundedRectangle(cornerRadius: IkeruTheme.Radius.sm))
     }
 }
 

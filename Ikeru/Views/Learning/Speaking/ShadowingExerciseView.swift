@@ -8,21 +8,52 @@ struct ShadowingExerciseView: View {
 
     @Bindable var viewModel: ShadowingViewModel
 
+    /// Invoked when the learner accepts their attempt and advances the session.
+    /// The pronunciation accuracy is mapped to an FSRS `Grade` via
+    /// `DrillGradeMapping.shadowing` (blueprint §3); shadowing is XP-only
+    /// downstream (`speakingPractice` is `.perCompletion`), so the grade shapes
+    /// only the completion signal, never an FSRS write. Defaults to a no-op so
+    /// the standalone `#Preview` still compiles.
+    var onComplete: (Grade) -> Void = { _ in }
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     @State private var hapticRecord = false
     @State private var recordingPulse = false
 
     var body: some View {
         Group {
-            if viewModel.permissionStatus == .denied
-                || viewModel.permissionStatus == .restricted {
-                permissionDeniedView
-            } else {
+            if canRecord {
                 exerciseContent
+            } else {
+                // .denied / .restricted / .unavailable — recording can never
+                // start, so show the Skip affordance rather than stranding the
+                // learner on a record phase whose mic button silently no-ops.
+                permissionDeniedView
             }
         }
         .task {
-            viewModel.checkPermissions()
+            // Resolve OS mic/speech permission on first appearance. `.notDetermined`
+            // is the default state for every user, and this drill is the app's
+            // only entry point that requests speech authorization — without the
+            // prompt, `startRecording()` silently no-ops and the record phase
+            // dead-ends the whole session. Requesting flips it to `.authorized`
+            // (recording enabled) or `.denied` (permissionDeniedView's Skip keeps
+            // the session moving).
+            if viewModel.permissionStatus == .notDetermined {
+                _ = await viewModel.requestPermissions()
+            } else {
+                viewModel.checkPermissions()
+            }
         }
+    }
+
+    /// Whether the record phase can function. `.notDetermined` counts as
+    /// recordable because `.task` requests authorization on appear — it resolves
+    /// to `.authorized` or `.denied` before the learner reaches the mic button.
+    private var canRecord: Bool {
+        viewModel.permissionStatus == .authorized
+            || viewModel.permissionStatus == .notDetermined
     }
 
     // MARK: - Exercise Content
@@ -36,7 +67,7 @@ struct ShadowingExerciseView: View {
                 actionArea
                 feedbackSection
             }
-            .ikeruCard(.interactive)
+            .tatamiRoom(.standard)
             .padding(.horizontal, IkeruTheme.Spacing.md)
             .sensoryFeedback(.impact, trigger: hapticRecord)
         } else if viewModel.loadingState.isLoading {
@@ -212,18 +243,18 @@ struct ShadowingExerciseView: View {
 
     private var recordButton: some View {
         ZStack {
-            // Pulsing ring animation
+            // Pulsing ring animation (Reduce Motion: static ring, no pulse loop)
             if viewModel.isRecording {
                 Circle()
-                    .stroke(Color.ikeruSecondaryAccent.opacity(0.3), lineWidth: 3)
+                    .stroke(Color.ikeruSecondaryAccent.opacity(reduceMotion ? 0.6 : 0.3), lineWidth: 3)
                     .frame(width: 72, height: 72)
-                    .scaleEffect(recordingPulse ? 1.3 : 1.0)
-                    .opacity(recordingPulse ? 0.0 : 1.0)
+                    .scaleEffect(reduceMotion ? 1.0 : (recordingPulse ? 1.3 : 1.0))
+                    .opacity(reduceMotion ? 1.0 : (recordingPulse ? 0.0 : 1.0))
                     .animation(
-                        .easeInOut(duration: 1.0).repeatForever(autoreverses: false),
+                        reduceMotion ? nil : .easeInOut(duration: 1.0).repeatForever(autoreverses: false),
                         value: recordingPulse
                     )
-                    .onAppear { recordingPulse = true }
+                    .onAppear { if !reduceMotion { recordingPulse = true } }
                     .onDisappear { recordingPulse = false }
             }
 
@@ -253,11 +284,22 @@ struct ShadowingExerciseView: View {
             }
             .ikeruButtonStyle(.secondary)
 
-            // Retry
+            // Retry — a fresh attempt at the same phrase; does not advance.
             Button {
                 viewModel.retryExercise()
             } label: {
                 Label("Try Again", systemImage: "arrow.clockwise")
+            }
+            .ikeruButtonStyle(.secondary)
+
+            // Continue — accept this attempt and advance the session. Maps the
+            // pronunciation accuracy → FSRS Grade (DrillGradeMapping.shadowing).
+            Button {
+                onComplete(DrillGradeMapping.shadowing(
+                    accuracy: viewModel.shadowingResult?.accuracy ?? 0
+                ))
+            } label: {
+                Label("Continue", systemImage: "arrow.right")
             }
             .ikeruButtonStyle(.primary)
         }
@@ -306,9 +348,20 @@ struct ShadowingExerciseView: View {
                 Label("Open Settings", systemImage: "gear")
             }
             .ikeruButtonStyle(.primary)
+
+            // Skip — mic access is required to score shadowing, so when it's
+            // denied let the learner advance the session rather than dead-ending
+            // on this drill. Graded `.again` (skipped); speaking is XP-only
+            // downstream so the grade only shapes the completion signal.
+            Button {
+                onComplete(.again)
+            } label: {
+                Label("Skip", systemImage: "arrow.right")
+            }
+            .ikeruButtonStyle(.secondary)
         }
         .padding(IkeruTheme.Spacing.lg)
-        .ikeruCard(.elevated)
+        .tatamiRoom(.standard)
         .padding(.horizontal, IkeruTheme.Spacing.md)
     }
 
@@ -325,10 +378,16 @@ private struct WaveformBar: View {
     let index: Int
     let isAnimating: Bool
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     @State private var height: CGFloat = 4
 
+    /// Reduce Motion: freeze at a fixed, per-bar height instead of animating —
+    /// still reads as a waveform glyph, just static.
+    private static let staticHeights: [CGFloat] = [10, 18, 24, 16, 12]
+
     var body: some View {
-        RoundedRectangle(cornerRadius: 2)
+        Rectangle()
             .fill(Color.ikeruPrimaryAccent)
             .frame(width: 3, height: height)
             .onAppear {
@@ -346,6 +405,10 @@ private struct WaveformBar: View {
     }
 
     private func startAnimation() {
+        guard !reduceMotion else {
+            height = Self.staticHeights[index % Self.staticHeights.count]
+            return
+        }
         let delay = Double(index) * 0.1
         withAnimation(
             .easeInOut(duration: 0.4)

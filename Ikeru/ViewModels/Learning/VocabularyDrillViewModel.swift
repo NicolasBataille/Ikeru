@@ -77,10 +77,30 @@ public final class VocabularyDrillViewModel {
 
     // MARK: - Flashcard Actions
 
+    /// Active profile's desired retention, fetched once — predictions must
+    /// match what `gradeEntry` will actually schedule. See KanaDrillViewModel.
+    private var cachedDesiredRetention: Double?
+
     public func reveal() {
         guard let entry = currentEntry, !isRevealed else { return }
         isRevealed = true
-        predictedIntervals = computePredictedIntervals(fsrsState: entry.fsrsState, now: now())
+        predictedIntervals = computePredictedIntervals(
+            fsrsState: entry.fsrsState,
+            now: now(),
+            desiredRetention: cachedDesiredRetention ?? 0.9
+        )
+        if cachedDesiredRetention == nil {
+            Task {
+                cachedDesiredRetention = await vocabularyRepository.activeDesiredRetention()
+                if let current = currentEntry, isRevealed {
+                    predictedIntervals = computePredictedIntervals(
+                        fsrsState: current.fsrsState,
+                        now: now(),
+                        desiredRetention: cachedDesiredRetention ?? 0.9
+                    )
+                }
+            }
+        }
     }
 
     public func grade(_ grade: Grade) async {

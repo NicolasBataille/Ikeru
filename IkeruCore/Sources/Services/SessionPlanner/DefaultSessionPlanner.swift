@@ -12,6 +12,11 @@ import os
 ///   - 20 % variety tile (rotating, drawn from level-tied variety pool,
 ///     excluding the booster's skill so the same skill isn't doubled up)
 ///   - 10 % new-content drip (one unseen card)
+/// The four segments are built independently (each keeps its own internal
+/// order — e.g. review stays most-overdue-first) and then merged into a
+/// single deterministic interleave (`interleave(streams:)`) proportional to
+/// their 40/30/20/10 weights, so a session reads as a mix of kinds rather
+/// than four contiguous blocks.
 ///
 /// Étude/Study composition is round-robin across the user's selected
 /// types, intersected with the unlocked set, ordered by pedagogical
@@ -22,6 +27,22 @@ public struct DefaultSessionPlanner: SessionPlanner {
     public static let homeSkillBalanceBoosterFraction: Double = 0.30
     public static let homeVarietyTileFraction: Double = 0.20
     public static let homeNewContentFraction: Double = 0.10
+
+    /// New kana introduced per foundation session — one gojūon row.
+    public static let foundationRowSize = 5
+
+    /// Exercise types whose content the app never TEACHES anywhere yet: they
+    /// quiz raw N5 content-DB entries (words, sentences) with no connection to
+    /// what the learner has actually met — guessing, not learning. Excluded
+    /// from the HOME booster/variety pools until the vocab-dictionary feature
+    /// provides a real "already encountered" source (owner decision,
+    /// 2026-07-19 device pass). Étude custom sessions keep every type — there
+    /// the learner opts in explicitly.
+    public static let untaughtContentTypes: Set<ExerciseType> = [
+        .listeningSubtitled, .listeningUnsubtitled,
+        .speakingPractice, .sakuraConversation,
+        .vocabularyStudy, .sentenceConstruction
+    ]
 
     public init() {}
 
@@ -43,14 +64,29 @@ public struct DefaultSessionPlanner: SessionPlanner {
 
     private func composeHome(inputs: SessionPlannerInputs) -> SessionPlan {
         let totalSec = inputs.durationMinutes * 60
-        var exercises: [ExerciseItem] = []
+
+        // Foundation mode (owner decision, 2026-07-19 device pass): while the
+        // learner's chosen study set still contains kana they have never
+        // begun, they are building the syllabary — and the 40/30/20/10 mix is
+        // wrong twice over: the booster/variety pools schedule listening /
+        // speaking / vocab-recall drills about words they've never met, and
+        // the single-card drip would stretch 46 kana over 46 days. Until
+        // every chosen kana is begun, the session is honest and compact: the
+        // due reviews + one curriculum row of new kana. (A first cut gated
+        // this on a begun-card count — it expired after two sessions with
+        // half the chosen set still unseen; the unseen-kana predicate IS the
+        // definition of the foundation phase.)
+        let unseenKana = inputs.availableCards.filter { $0.fsrsState.reps == 0 && $0.isKana }
+        if !unseenKana.isEmpty {
+            return composeFoundation(inputs: inputs, unseenKana: unseenKana, totalSec: totalSec)
+        }
 
         // Segment 1: Review wave (40 %)
         let reviewBudget = Int(Double(totalSec) * Self.homeReviewFraction)
-        exercises.append(contentsOf: pickReviews(
+        let reviewItems = pickReviews(
             from: inputs.availableCards,
             secondsBudget: reviewBudget
-        ))
+        )
 
         // Segment 2: Skill-balance booster (30 %)
         let skillBoosterBudget = Int(Double(totalSec) * Self.homeSkillBalanceBoosterFraction)
@@ -58,34 +94,122 @@ public struct DefaultSessionPlanner: SessionPlanner {
         let boosterPool = VarietyPoolResolver.effectivePool(
             for: inputs.profile.jlptLevel,
             unlockedTypes: inputs.unlockedTypes
-        )
-        exercises.append(contentsOf: fillSegment(
+        ).subtracting(Self.untaughtContentTypes)
+        let boosterItems = fillSegment(
             forSkill: lowestSkill,
             inPool: boosterPool,
             secondsBudget: skillBoosterBudget,
             availableCards: inputs.availableCards
-        ))
+        )
 
         // Segment 3: Variety tile (20 %) — different skill from booster.
         let varietyBudget = Int(Double(totalSec) * Self.homeVarietyTileFraction)
         let varietyPool = boosterPool.filter { $0.skill != lowestSkill }
-        exercises.append(contentsOf: fillRotating(
+        let varietyItems = fillRotating(
             inPool: varietyPool,
             secondsBudget: varietyBudget,
             day: dayOfYear(),
             availableCards: inputs.availableCards
-        ))
+        )
 
         // Segment 4: New content drip (10 %)
         let newContentBudget = Int(Double(totalSec) * Self.homeNewContentFraction)
-        if let item = pickNewContent(
+        let newItems: [ExerciseItem] = pickNewContent(
             secondsBudget: newContentBudget,
             availableCards: inputs.availableCards
-        ) {
-            exercises.append(item)
-        }
+        ).map { [$0] } ?? []
+
+        // Merge the four segment streams into one interleaved order,
+        // proportional to their 40/30/20/10 weights, instead of four
+        // contiguous blocks. Same exercise SET and per-segment counts as
+        // before — only the cross-segment ORDER changes.
+        let exercises = interleave(streams: [
+            (items: reviewItems, weight: Self.homeReviewFraction),
+            (items: boosterItems, weight: Self.homeSkillBalanceBoosterFraction),
+            (items: varietyItems, weight: Self.homeVarietyTileFraction),
+            (items: newItems, weight: Self.homeNewContentFraction)
+        ])
 
         return finalize(exercises: exercises)
+    }
+
+    /// Foundation session: due reviews (kana already begun) interleaved with
+    /// one curriculum-ordered row of new kana (up to `foundationRowSize`).
+    /// The row is introduced regardless of the proportional new-content
+    /// budget — a foundation session is intentionally compact, and rows of
+    /// five are how the syllabary is actually learned. No booster, no
+    /// variety: nothing here draws on content the learner hasn't met.
+    private func composeFoundation(
+        inputs: SessionPlannerInputs,
+        unseenKana: [CardDTO],
+        totalSec: Int
+    ) -> SessionPlan {
+        let reviewItems = pickReviews(
+            from: inputs.availableCards,
+            secondsBudget: totalSec / 2
+        )
+        let introItems = unseenKana
+            .enumerated()
+            .sorted { lhs, rhs in
+                let li = Self.kanaCurriculumIndex[lhs.element.front] ?? Int.max
+                let ri = Self.kanaCurriculumIndex[rhs.element.front] ?? Int.max
+                if li != ri { return li < ri }
+                // Stable, deterministic order for kana outside the base
+                // curriculum (dakuten): input order, then front.
+                if lhs.element.front != rhs.element.front { return lhs.element.front < rhs.element.front }
+                return lhs.offset < rhs.offset
+            }
+            .prefix(Self.foundationRowSize)
+            .map { ExerciseItem.srsReview($0.element) }
+        let exercises = interleave(streams: [
+            (items: reviewItems, weight: 0.5),
+            (items: Array(introItems), weight: 0.5)
+        ])
+        Logger.learningLoop.info(
+            "session.foundationMode reviews=\(reviewItems.count) introduced=\(introItems.count)"
+        )
+        return finalize(exercises: exercises)
+    }
+
+    /// Deterministically interleaves multiple ordered streams proportional to
+    /// their weights, using the "smooth weighted round-robin" scheduling
+    /// algorithm (as used by nginx's upstream load balancer): every tick, each
+    /// stream's credit accrues by its own weight; the stream with the highest
+    /// credit is drained by exactly one item and its credit is reduced by the
+    /// total weight. Ties break by stream order (first-declared wins), which
+    /// keeps the result a pure function of the inputs — no randomness, so
+    /// identical inputs always produce an identical merge.
+    ///
+    /// Each stream's own internal order is preserved: items are always popped
+    /// front-to-back, never reordered within a stream (e.g. the review
+    /// stream's most-overdue-first ordering from `pickReviews` survives).
+    /// A stream that runs dry (or was empty) is simply skipped for the rest
+    /// of the merge — its remaining weight is not redistributed, matching
+    /// standard smooth-WRR behaviour.
+    private func interleave(streams: [(items: [ExerciseItem], weight: Double)]) -> [ExerciseItem] {
+        var queues = streams.map(\.items)
+        let weights = streams.map(\.weight)
+        let totalWeight = weights.reduce(0, +)
+        let totalItems = queues.reduce(0) { $0 + $1.count }
+        guard totalWeight > 0, totalItems > 0 else { return queues.flatMap { $0 } }
+
+        var currentWeights = [Double](repeating: 0, count: streams.count)
+        var result: [ExerciseItem] = []
+        result.reserveCapacity(totalItems)
+
+        while result.count < totalItems {
+            var bestIndex: Int?
+            for index in queues.indices where !queues[index].isEmpty {
+                currentWeights[index] += weights[index]
+                if bestIndex == nil || currentWeights[index] > currentWeights[bestIndex!] {
+                    bestIndex = index
+                }
+            }
+            guard let selected = bestIndex else { break }
+            result.append(queues[selected].removeFirst())
+            currentWeights[selected] -= totalWeight
+        }
+        return result
     }
 
     // MARK: - Study custom
@@ -108,7 +232,11 @@ public struct DefaultSessionPlanner: SessionPlanner {
         var safety = 0
         while spent < totalSec, safety < 100 {
             let type = ordered[idx % ordered.count]
-            let item = synthesise(type: type, availableCards: inputs.availableCards)
+            guard let item = synthesise(type: type, availableCards: inputs.availableCards) else {
+                idx += 1
+                safety += 1
+                continue
+            }
             if spent + item.estimatedDurationSeconds > totalSec, !exercises.isEmpty { break }
             exercises.append(item)
             spent += item.estimatedDurationSeconds
@@ -131,10 +259,31 @@ public struct DefaultSessionPlanner: SessionPlanner {
     // MARK: - Helpers
 
     /// Fills a budget by appending SRS reviews until the next would overflow.
-    private func pickReviews(from cards: [CardDTO], secondsBudget: Int) -> [ExerciseItem] {
+    /// Only cards whose `dueDate <= now` AND that the learner has actually
+    /// begun (`reps > 0`) enter the review wave. The `reps > 0` gate is what
+    /// keeps never-started characters — e.g. the full katakana set that gets
+    /// materialised as immediately-due cards the moment the kana grid is
+    /// opened — out of "Practice", which is meant to *review* what you've
+    /// started. Brand-new characters reach the session only through the
+    /// curriculum-ordered new-content drip (`pickNewContent`), never as reviews.
+    /// (`dueDate <= now` alone previously re-served a just-graded card; the
+    /// reps gate additionally stops the unlearned-katakana leak.)
+    private func pickReviews(from cards: [CardDTO], secondsBudget: Int, now: Date = Date()) -> [ExerciseItem] {
+        // Most-overdue first: sort the eligible cards by dueDate ascending
+        // (stable tiebreak on input order) so budget truncation always keeps
+        // the most urgent reviews when not everything fits.
+        let ordered = cards
+            .filter { $0.dueDate <= now && $0.fsrsState.reps > 0 }
+            .enumerated()
+            .sorted { lhs, rhs in
+                lhs.element.dueDate != rhs.element.dueDate
+                    ? lhs.element.dueDate < rhs.element.dueDate
+                    : lhs.offset < rhs.offset
+            }
+            .map(\.element)
         var items: [ExerciseItem] = []
         var spent = 0
-        for card in cards {
+        for card in ordered {
             let exercise = ExerciseItem.srsReview(card)
             if spent + exercise.estimatedDurationSeconds > secondsBudget { break }
             items.append(exercise)
@@ -163,7 +312,11 @@ public struct DefaultSessionPlanner: SessionPlanner {
         var safety = 0
         while spent < secondsBudget, safety < 100 {
             let type = candidates[idx % candidates.count]
-            let item = synthesise(type: type, availableCards: availableCards)
+            guard let item = synthesise(type: type, availableCards: availableCards) else {
+                idx += 1
+                safety += 1
+                continue
+            }
             if spent + item.estimatedDurationSeconds > secondsBudget { break }
             items.append(item)
             spent += item.estimatedDurationSeconds
@@ -189,7 +342,11 @@ public struct DefaultSessionPlanner: SessionPlanner {
         var safety = 0
         while spent < secondsBudget, safety < 100 {
             let type = sorted[(day + idx) % sorted.count]
-            let item = synthesise(type: type, availableCards: availableCards)
+            guard let item = synthesise(type: type, availableCards: availableCards) else {
+                idx += 1
+                safety += 1
+                continue
+            }
             if spent + item.estimatedDurationSeconds > secondsBudget { break }
             items.append(item)
             spent += item.estimatedDurationSeconds
@@ -199,30 +356,66 @@ public struct DefaultSessionPlanner: SessionPlanner {
         return items
     }
 
-    private func pickNewContent(secondsBudget: Int, availableCards: [CardDTO]) -> ExerciseItem? {
-        if let card = availableCards.first(where: { $0.fsrsState.reps == 0 }) {
-            let exercise = ExerciseItem.srsReview(card)
-            return exercise.estimatedDurationSeconds <= secondsBudget ? exercise : nil
+    /// Curriculum index for every base kana (hiragana あいうえお… first, then
+    /// katakana), built once from the canonical group order. Used to introduce
+    /// new characters in pedagogical order rather than whatever order
+    /// `allCards()` happens to return — so day one always teaches あ, and
+    /// hiragana is always offered before katakana.
+    private static let kanaCurriculumIndex: [String: Int] = {
+        var map: [String: Int] = [:]
+        for (index, kana) in KanaGroup.allBaseCharacters.enumerated() {
+            map[kana.character] = index
         }
-        return nil
+        return map
+    }()
+
+    /// Picks the single "new" (never-reviewed) card to drip into the session.
+    /// Candidates are ordered by the kana curriculum so the introduction order
+    /// is stable and pedagogical (hiragana before katakana); non-kana new
+    /// content sorts after all kana. Without this ordering the drip grabbed an
+    /// arbitrary unseen card from `allCards()` ordering — which could be a
+    /// katakana the learner never chose.
+    private func pickNewContent(secondsBudget: Int, availableCards: [CardDTO]) -> ExerciseItem? {
+        let unseen = availableCards.filter { $0.fsrsState.reps == 0 }
+        guard !unseen.isEmpty else { return nil }
+        let ordered = unseen.sorted { lhs, rhs in
+            let li = Self.kanaCurriculumIndex[lhs.front] ?? Int.max
+            let ri = Self.kanaCurriculumIndex[rhs.front] ?? Int.max
+            if li != ri { return li < ri }
+            return lhs.front < rhs.front
+        }
+        guard let card = ordered.first else { return nil }
+        let exercise = ExerciseItem.srsReview(card)
+        return exercise.estimatedDurationSeconds <= secondsBudget ? exercise : nil
     }
 
     /// Maps an `ExerciseType` to a concrete `ExerciseItem` payload.
-    /// Where content isn't available yet (e.g., reading passages), uses
-    /// a placeholder UUID so the planner can return a structurally valid
-    /// plan; downstream UI may show a "content coming soon" notice.
-    private func synthesise(type: ExerciseType, availableCards: [CardDTO]) -> ExerciseItem {
+    ///
+    /// Returns `nil` when the type requires a real backing card that isn't
+    /// available (kanji study / writing practice with no kanji card in the
+    /// pool): we never fabricate a card, because a synthetic card can't be
+    /// honestly FSRS-graded. Callers skip `nil` results. Content-backed kinds
+    /// that don't have a real content source yet (reading passages, listening,
+    /// etc.) still use a placeholder UUID so the planner can return a
+    /// structurally valid plan; those are filtered by `finalize` until wired.
+    private func synthesise(type: ExerciseType, availableCards: [CardDTO]) -> ExerciseItem? {
         switch type {
-        case .kanaStudy, .kanjiStudy:
-            // KNOWN ISSUE: kanaStudy synthesises an .kanjiStudy ExerciseItem
-            // payload because ExerciseItem has no .kanaStudy case yet. This
-            // means a kana drill is reported as 60s (kanjiStudy duration)
-            // instead of the 25s the type-level estimate uses, slightly
-            // inflating the plan's reported duration. Tracked as a
-            // model-level follow-up: add `case kanaStudy(String)` to
-            // ExerciseItem and route here.
+        case .kanjiStudy:
             let kanjiCards = availableCards.filter { $0.type == .kanji }
-            return .kanjiStudy(kanjiCards.randomElement()?.front ?? "\u{4E00}")
+            guard let card = kanjiCards.randomElement() else { return nil }
+            return .kanjiStudy(card)
+        case .kanaStudy:
+            // Kana is NOT an SRS `Card`: it lives in the separate KanaCharacter /
+            // KanaData model, drilled by the standalone KanaDrillViewModel. There
+            // is therefore no `CardDTO` to back a kana study exercise, no
+            // `.kanaStudy` case on `ExerciseItem`, and no single-kana in-session
+            // drill unit. Synthesise nothing rather than fabricating a wrong-type
+            // kanji drill from a kanji card (the prior bug: `.kanaStudy` shared
+            // this branch with `.kanjiStudy` and returned `.kanjiStudy(card)`,
+            // showing a kanji handwriting drill for a kana request). A real
+            // kana-in-mixed-session unit — a dedicated `ExerciseItem` case + view
+            // sourcing KanaCharacters — is future work for the Compose/Étude sheet.
+            return nil
         case .vocabularyStudy:
             return .vocabularyStudy(UUID())
         case .listeningSubtitled, .listeningUnsubtitled:
@@ -237,9 +430,49 @@ public struct DefaultSessionPlanner: SessionPlanner {
             return .readingPassage(UUID())
         case .writingPractice:
             let kanjiCards = availableCards.filter { $0.type == .kanji }
-            return .writingPractice(kanjiCards.randomElement()?.front ?? "\u{4E00}")
+            guard let card = kanjiCards.randomElement() else { return nil }
+            return .writingPractice(card)
         case .speakingPractice, .sakuraConversation:
             return .speakingExercise(UUID())
+        }
+    }
+
+    /// Whether an exercise kind is "live" — i.e. backed by a real, wired
+    /// in-session drill view that can present and honestly grade it. Used by
+    /// `finalize` as an allowlist so the planner never schedules a placeholder.
+    ///
+    /// Exhaustive on `ExerciseItem` on purpose: adding a new kind forces an
+    /// explicit live/filtered decision here rather than silently defaulting.
+    ///
+    ///   LIVE (wired drill views):
+    ///     Tier 1:
+    ///       .srsReview            — SRS flashcard deck
+    ///       .kanjiStudy           — HandwritingExerciseView, writes a real FSRS grade
+    ///       .writingPractice      — HandwritingExerciseView, writes a real FSRS grade
+    ///       .sentenceConstruction — SentenceConstructionView, XP-only
+    ///     Tier 2 (XP-only drills):
+    ///       .listeningExercise    — ListeningExerciseView (word/meaning subtypes)
+    ///       .speakingExercise     — ShadowingExerciseView
+    ///       .vocabularyStudy      — VocabularyRecallView (multiple-choice recall)
+    ///
+    ///   STILL FILTERED (no wired view / no real content source yet):
+    ///     Tier 3 (deferred):  .fillInBlank, .readingPassage, .grammarExercise
+    ///     (listening PASSAGE comprehension also stays out — no passages table.)
+    ///
+    /// NOTE (`.vocabularyStudy` XP-only): vocabulary has NO backing SwiftData
+    /// `Card` (it lives only in the read-only content DB), so its completion is
+    /// XP-only — it never writes an FSRS grade or `ReviewLog`. See
+    /// `SessionViewModel.completeCurrentExercise`, where only the card-backed
+    /// kinds (`.kanjiStudy`, `.writingPractice`) reach `gradeCard`. FSRS
+    /// scheduling for vocabulary is deferred until the vocab-dictionary feature
+    /// makes vocab cards gradeable.
+    static func isLive(_ item: ExerciseItem) -> Bool {
+        switch item {
+        case .srsReview, .kanjiStudy, .writingPractice, .sentenceConstruction,
+             .listeningExercise, .speakingExercise, .vocabularyStudy:
+            return true
+        case .fillInBlank, .readingPassage, .grammarExercise:
+            return false
         }
     }
 
@@ -252,7 +485,12 @@ public struct DefaultSessionPlanner: SessionPlanner {
         Calendar(identifier: .gregorian).ordinality(of: .day, in: .year, for: now) ?? 0
     }
 
-    private func finalize(exercises: [ExerciseItem]) -> SessionPlan {
+    private func finalize(exercises rawExercises: [ExerciseItem]) -> SessionPlan {
+        // Allowlist of exercise kinds that have a real, fully-wired in-session
+        // drill view TODAY. Everything else still renders a placeholder, so the
+        // planner filters it out rather than scheduling something the UI cannot
+        // honestly present or grade. This replaces the previous SRS-only filter.
+        let exercises = rawExercises.filter { Self.isLive($0) }
         let secs = exercises.map(\.estimatedDurationSeconds).reduce(0, +)
         var breakdown: [SkillType: Int] = [:]
         for ex in exercises { breakdown[ex.skill, default: 0] += 1 }

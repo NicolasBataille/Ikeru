@@ -33,7 +33,10 @@ public final class PlannerService: @unchecked Sendable {
         let startTime = CFAbsoluteTimeGetCurrent()
 
         let now = Date()
-        let dueCards = await cardRepository.dueCards(before: now)
+        // Most-overdue-first: this queue is user-facing order, and any future
+        // caller truncating it (e.g. to a max size) must keep the most urgent
+        // reviews, not an arbitrary storage-order prefix.
+        let dueCards = await cardRepository.dueCardsSortedByDueDate(before: now)
         let allCards = await cardRepository.allCards()
 
         let dueCardIds = Set(dueCards.map(\.id))
@@ -63,7 +66,11 @@ public final class PlannerService: @unchecked Sendable {
         let startTime = CFAbsoluteTimeGetCurrent()
 
         let now = Date()
-        let dueCards = await cardRepository.dueCards(before: now)
+        // Most-overdue-first: `selectSRSCards` below prefix-truncates to
+        // `duration.maxSRSCards`, so an unsorted feed would silently drop
+        // whichever due cards happened to sort last in storage rather than
+        // the least urgent ones.
+        let dueCards = await cardRepository.dueCardsSortedByDueDate(before: now)
         let allCards = await cardRepository.allCards()
 
         let duration = SessionDuration.from(minutes: config.availableTimeMinutes)
@@ -179,7 +186,7 @@ public final class PlannerService: @unchecked Sendable {
         allCards: [CardDTO]
     ) -> [ExerciseItem] {
         // Determine which skills are available given context
-        let availableSkills = availableSkills(for: config)
+        let availableSkills = availableSkills()
 
         // Compute deficit-based weights for skill selection
         let currentBalances = config.currentSkillBalances.isEmpty
@@ -241,14 +248,15 @@ public final class PlannerService: @unchecked Sendable {
         return exercises.sorted { $0.skill.pedagogicalOrder < $1.skill.pedagogicalOrder }
     }
 
-    /// Returns the set of skills available given the session config.
-    /// Excludes audio-requiring skills in silent mode.
-    private func availableSkills(for config: SessionConfig) -> [SkillType] {
-        if config.isSilentMode {
-            Logger.planner.info("Silent mode: excluding listening and speaking exercises")
-            return SkillType.allCases.filter { !$0.requiresAudio }
-        }
-        return SkillType.allCases.map { $0 }
+    /// Returns the set of skills available for supplementary exercise selection.
+    ///
+    /// Used to exclude audio-requiring skills when `SessionConfig.isSilentMode`
+    /// was set (remediation 7.9: removed — it detected `outputVolume == 0.0`,
+    /// which is the volume slider, not the physical mute switch, and TTS
+    /// playback in `.playback` category ignores the mute switch anyway). All
+    /// skills are available unconditionally now.
+    private func availableSkills() -> [SkillType] {
+        SkillType.allCases.map { $0 }
     }
 
     /// Normalizes weights to only include the given skills, re-summing to 1.0.
@@ -284,14 +292,15 @@ public final class PlannerService: @unchecked Sendable {
     private func generateExercise(for skill: SkillType, allCards: [CardDTO]) -> ExerciseItem {
         switch skill {
         case .reading:
-            // Try kanji study from available kanji cards
+            // Kanji study needs a real card to grade; fall back to a
+            // card-free reading exercise when no kanji card is available.
             let kanjiCards = allCards.filter { $0.type == .kanji }
-            let character = kanjiCards.randomElement()?.front ?? "\u{4e00}" // default: 一
-            return .kanjiStudy(character)
+            guard let card = kanjiCards.randomElement() else { return .grammarExercise(UUID()) }
+            return .kanjiStudy(card)
         case .writing:
             let kanjiCards = allCards.filter { $0.type == .kanji }
-            let character = kanjiCards.randomElement()?.front ?? "\u{4e00}"
-            return .writingPractice(character)
+            guard let card = kanjiCards.randomElement() else { return .sentenceConstruction(UUID()) }
+            return .writingPractice(card)
         case .listening:
             return .listeningExercise(UUID())
         case .speaking:

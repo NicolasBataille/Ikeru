@@ -9,6 +9,13 @@ struct ListeningExerciseView: View {
 
     @Bindable var viewModel: ListeningViewModel
 
+    /// Invoked when the learner accepts their answer and advances the session.
+    /// Correctness is mapped to an FSRS `Grade` via `DrillGradeMapping.listening`
+    /// (blueprint §3); listening is XP-only downstream (`listeningSubtitled` is
+    /// `.perCompletion`), so the grade shapes only the completion signal, never
+    /// an FSRS write. Defaults to a no-op so the standalone `#Preview` compiles.
+    var onComplete: (Grade) -> Void = { _ in }
+
     @State private var hapticCorrect = false
     @State private var hapticIncorrect = false
 
@@ -17,7 +24,7 @@ struct ListeningExerciseView: View {
             audioControls
             exerciseContent
         }
-        .ikeruCard(.interactive)
+        .tatamiRoom(.standard)
         .padding(.horizontal, IkeruTheme.Spacing.md)
         .sensoryFeedback(.success, trigger: hapticCorrect)
         .sensoryFeedback(.warning, trigger: hapticIncorrect)
@@ -90,7 +97,7 @@ struct ListeningExerciseView: View {
                     }
                 }
 
-                // Play Again button (visible after answering)
+                // Play Again + Continue (visible after answering)
                 if viewModel.exerciseResult != nil {
                     Button {
                         Task {
@@ -100,6 +107,17 @@ struct ListeningExerciseView: View {
                         Label("Play Again", systemImage: "arrow.clockwise")
                     }
                     .ikeruButtonStyle(.secondary)
+
+                    // Continue — accept the answer and advance the session. Maps
+                    // correctness → FSRS Grade (DrillGradeMapping.listening).
+                    Button {
+                        onComplete(DrillGradeMapping.listening(
+                            isCorrect: viewModel.exerciseResult == .correct
+                        ))
+                    } label: {
+                        Label("Continue", systemImage: "arrow.right")
+                    }
+                    .ikeruButtonStyle(.primary)
                 }
             }
         } else if viewModel.loadingState.isLoading {
@@ -127,77 +145,83 @@ struct ListeningExerciseView: View {
             HStack {
                 Text(choice)
                     .font(.ikeruBody)
-                    .foregroundStyle(.white)
+                    .foregroundStyle(answerForeground(isSelected: isSelected, isAnswered: isAnswered, isCorrectChoice: isCorrectChoice))
 
                 Spacer()
 
                 if isAnswered && isCorrectChoice {
                     Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(Color.ikeruSuccess)
+                        .foregroundStyle(Color(red: 0.102, green: 0.078, blue: 0.055))
                 } else if isAnswered && isSelected && !isCorrectChoice {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundStyle(Color.ikeruSecondaryAccent)
+                        .foregroundStyle(Color.ikeruError)
                 }
             }
             .padding(IkeruTheme.Spacing.md)
             .background {
-                RoundedRectangle(cornerRadius: IkeruTheme.Radius.sm)
-                    .fill(answerBackgroundColor(
-                        isSelected: isSelected,
-                        isAnswered: isAnswered,
-                        isCorrectChoice: isCorrectChoice
-                    ))
+                answerBackgroundView(
+                    isSelected: isSelected,
+                    isAnswered: isAnswered,
+                    isCorrectChoice: isCorrectChoice
+                )
             }
-            .overlay {
-                RoundedRectangle(cornerRadius: IkeruTheme.Radius.sm)
-                    .strokeBorder(
-                        answerBorderColor(
-                            isSelected: isSelected,
-                            isAnswered: isAnswered,
-                            isCorrectChoice: isCorrectChoice
-                        ),
-                        lineWidth: isSelected ? 2 : 1
-                    )
-            }
+            .sumiCorners(
+                color: answerCornerColor(
+                    isSelected: isSelected,
+                    isAnswered: isAnswered,
+                    isCorrectChoice: isCorrectChoice
+                ),
+                size: 8,
+                weight: 1.2
+            )
         }
         .buttonStyle(.plain)
         .disabled(isAnswered)
     }
 
-    // MARK: - Answer Colors
+    // MARK: - Answer Appearance
 
-    private func answerBackgroundColor(
-        isSelected: Bool,
-        isAnswered: Bool,
-        isCorrectChoice: Bool
-    ) -> Color {
-        guard isAnswered else {
-            return Color.ikeruSurface.opacity(0.5)
-        }
-        if isCorrectChoice {
-            return Color.ikeruSuccess.opacity(0.15)
-        }
-        if isSelected {
-            return Color.ikeruSecondaryAccent.opacity(0.15)
-        }
-        return Color.ikeruSurface.opacity(0.3)
+    private func answerForeground(isSelected: Bool, isAnswered: Bool, isCorrectChoice: Bool) -> Color {
+        guard isAnswered else { return .white }
+        if isCorrectChoice { return Color(red: 0.102, green: 0.078, blue: 0.055) }
+        if isSelected { return .white }
+        return Color.white.opacity(0.35)
     }
 
-    private func answerBorderColor(
+    @ViewBuilder
+    private func answerBackgroundView(
+        isSelected: Bool,
+        isAnswered: Bool,
+        isCorrectChoice: Bool
+    ) -> some View {
+        if isAnswered {
+            if isCorrectChoice {
+                LinearGradient.ikeruGold
+            } else if isSelected {
+                ZStack {
+                    Rectangle().fill(.ultraThinMaterial)
+                    Rectangle().fill(Color.ikeruError.opacity(0.22))
+                }
+            } else {
+                Color(red: 0.102, green: 0.102, blue: 0.133).opacity(0.45)
+            }
+        } else {
+            ZStack {
+                Rectangle().fill(.ultraThinMaterial)
+                Rectangle().fill(Color(red: 0.102, green: 0.102, blue: 0.133).opacity(0.6))
+            }
+        }
+    }
+
+    private func answerCornerColor(
         isSelected: Bool,
         isAnswered: Bool,
         isCorrectChoice: Bool
     ) -> Color {
-        guard isAnswered else {
-            return Color.white.opacity(0.1)
-        }
-        if isCorrectChoice {
-            return Color.ikeruSuccess
-        }
-        if isSelected {
-            return Color.ikeruSecondaryAccent
-        }
-        return Color.white.opacity(0.05)
+        guard isAnswered else { return TatamiTokens.goldDim }
+        if isCorrectChoice { return .ikeruPrimaryAccent }
+        if isSelected { return Color.ikeruError.opacity(0.7) }
+        return TatamiTokens.goldDim.opacity(0.3)
     }
 }
 
@@ -208,10 +232,16 @@ private struct WaveformBar: View {
     let index: Int
     let isAnimating: Bool
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     @State private var height: CGFloat = 4
 
+    /// Reduce Motion: freeze at a fixed, per-bar height instead of animating —
+    /// still reads as a waveform glyph, just static.
+    private static let staticHeights: [CGFloat] = [10, 18, 24, 16, 12]
+
     var body: some View {
-        RoundedRectangle(cornerRadius: 2)
+        Rectangle()
             .fill(Color.ikeruPrimaryAccent)
             .frame(width: 3, height: height)
             .onAppear {
@@ -229,6 +259,10 @@ private struct WaveformBar: View {
     }
 
     private func startAnimation() {
+        guard !reduceMotion else {
+            height = Self.staticHeights[index % Self.staticHeights.count]
+            return
+        }
         let delay = Double(index) * 0.1
         withAnimation(
             .easeInOut(duration: 0.4)

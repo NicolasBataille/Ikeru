@@ -39,38 +39,59 @@ struct IkeruApp: App {
     @State private var showOnboarding = false
     @State private var hasCheckedProfile = false
     @State private var hasFinishedLaunch: Bool = IkeruApp.hasPlayedLaunchAnimation
+    /// Set by `LaunchAnimationView.onReadyForContent` so the real UI is built
+    /// and settled underneath before the launch layer's exit fade runs.
+    @State private var isMainContentMounted: Bool = IkeruApp.hasPlayedLaunchAnimation
     @State private var aiRouterService = AIRouterService()
     @State private var assetCache: AssetCache?
+    @State private var showStoreRecoveryNotice = false
     @Environment(\.scenePhase) private var scenePhase
 
     let modelContainer: ModelContainer
 
     init() {
+        // Current versioned schema (IkeruSchemaV2) + migration plan so
+        // @Model changes migrate explicitly instead of relying on implicit
+        // lightweight migration. The plan carries the V1→V2 stage that adds
+        // ExerciseOutcomeLog. See IkeruSchema.swift in IkeruCore.
+        let schema = Schema(versionedSchema: IkeruSchemaV2.self)
+
         do {
-            let schema = Schema([
-                UserProfile.self,
-                Card.self,
-                ReviewLog.self,
-                RPGState.self,
-                MnemonicCache.self,
-                CompanionChatMessage.self,
-                AssetManifest.self,
-                VocabularyEntry.self,
-                VocabularyEncounter.self,
-                DailyTerm.self,
-            ])
-            let config = ModelConfiguration(
-                "Ikeru",
-                schema: schema,
-                cloudKitDatabase: .none  // Manual backup via CloudBackupManager, not auto-sync
-            )
-            modelContainer = try ModelContainer(
-                for: schema,
-                configurations: [config]
-            )
+            modelContainer = try Self.makeModelContainer(schema: schema)
         } catch {
             Logger.srs.critical("Failed to create ModelContainer: \(error)")
+
+            #if DEBUG
+            // Developers should see a broken store immediately, not have it
+            // silently swept aside — a real V1→V2 migration bug should fail
+            // loudly in development.
             fatalError("Failed to create ModelContainer: \(error)")
+            #else
+            // TestFlight/production: this is now a real risk surface (the
+            // V1→V2 migration ships to users with existing stores). Move the
+            // store directory aside — NEVER deleting anything — and retry
+            // once with a fresh, empty store rather than crash-looping the
+            // app on every launch.
+            Logger.srs.critical("Attempting conservative store recovery (move-aside + retry)…")
+            do {
+                // The store's REAL on-disk location, from the same
+                // ModelConfiguration the container opens — never a guessed
+                // path (a named configuration's files live directly in
+                // Application Support, not a per-bundle subdirectory).
+                let storeURL = Self.storeConfiguration(schema: schema).url
+                if let recoveryDestination = try StoreRecovery.moveStoreAside(storeURL: storeURL) {
+                    Logger.srs.critical(
+                        "Store moved aside to \(recoveryDestination.path, privacy: .public) — retrying with a fresh store"
+                    )
+                    StoreRecoveryNotice.markPending(recoveryDirectory: recoveryDestination)
+                }
+                modelContainer = try Self.makeModelContainer(schema: schema)
+                Logger.srs.critical("Store recovery succeeded — app launching with a fresh store")
+            } catch {
+                Logger.srs.critical("Store recovery ALSO failed: \(error) — nothing left to try")
+                fatalError("Failed to create ModelContainer even after store recovery: \(error)")
+            }
+            #endif
         }
 
         // Initialise the AssetCache synchronously so the first body evaluation
@@ -91,39 +112,119 @@ struct IkeruApp: App {
     var body: some Scene {
         WindowGroup {
             ZStack {
-                if hasFinishedLaunch {
+                // `mainContent` is mounted UNDER the launch layer as soon as
+                // the animation signals `onReadyForContent` (breathe phase,
+                // ~0.45s before its exit fade), so that fade — the master
+                // clock's final 0.30s phase — cross-fades onto the real UI.
+                // That is the single fade for the launch → main transition,
+                // per launch-animation-rebuild-spec.md bug #5.
+                //
+                // It used to mount only at `onFinished`, so the exit fade
+                // revealed an empty (black) window and the first screen then
+                // ran a second fade-in of its own: a ~0.6s hard black hold
+                // between the bloom and the first screen (measured on device
+                // 2026-08-05) — exactly the double fade bug #5 targeted.
+                // Mounting it at t=0 instead is NOT the fix: building the
+                // view hierarchy blocks the first frames and, since the
+                // launch clock is honest wall-clock time, that silently ate
+                // the animation's whole intro.
+                if hasFinishedLaunch || isMainContentMounted {
                     mainContent
-                        .transition(.opacity)
-                } else {
-                    LaunchAnimationView {
-                        IkeruApp.hasPlayedLaunchAnimation = true
-                        withAnimation(.easeInOut(duration: 0.4)) {
+                }
+
+                if !hasFinishedLaunch {
+                    LaunchAnimationView(
+                        onFinished: {
+                            IkeruApp.hasPlayedLaunchAnimation = true
                             hasFinishedLaunch = true
-                        }
-                    }
-                    .transition(.opacity)
+                        },
+                        onReadyForContent: { isMainContentMounted = true }
+                    )
                 }
             }
-            .animation(.easeInOut(duration: 0.4), value: hasFinishedLaunch)
-                .preferredColorScheme(.dark)
-                .environment(\.toastManager, toastManager)
-                .environment(\.profileViewModel, profileViewModel)
-                .environment(\.aiRouterService, aiRouterService)
-                .environment(\.assetCache, assetCache)
-                .toastOverlay()
-                .task {
+            .preferredColorScheme(.dark)
+            .environment(\.toastManager, toastManager)
+            .environment(\.profileViewModel, profileViewModel)
+            .environment(\.aiRouterService, aiRouterService)
+            .environment(\.assetCache, assetCache)
+            .toastOverlay()
+            .task {
                     initializeProfileViewModel()
                     NotificationManager.shared.registerAsDelegate()
                     WatchConnectivityManager.shared.activate(modelContainer: modelContainer)
                     await scheduleNotificationsFromSettings()
                     schedulePreWarmTask()
+                    await WidgetSnapshotRefresher.refresh(modelContainer: modelContainer)
+                    if StoreRecoveryNotice.isPending() {
+                        showStoreRecoveryNotice = true
+                    }
+                }
+                .onOpenURL { url in
+                    handleDeepLink(url)
+                }
+                .alert(
+                    "Your data was recovered",
+                    isPresented: $showStoreRecoveryNotice
+                ) {
+                    Button("Dismiss") {
+                        StoreRecoveryNotice.acknowledge()
+                    }
+                } message: {
+                    Text(
+                        "A migration issue was detected at launch. Your data was preserved on this device, not lost. Export it from Settings or contact support if you need help."
+                    )
                 }
         }
         .modelContainer(modelContainer)
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .background {
                 schedulePreWarmTask()
+            } else if newPhase == .active {
+                Task { @MainActor in
+                    await WidgetSnapshotRefresher.refresh(modelContainer: modelContainer)
+                }
             }
+        }
+    }
+
+    // MARK: - ModelContainer
+
+    /// Builds the app's `ModelContainer` against the current versioned schema
+    /// + migration plan. Factored out of `init` so the container-creation
+    /// call can be retried identically after a store-recovery move-aside.
+    /// The single source of truth for the store's configuration — and hence
+    /// its on-disk `url`, which the store-recovery path relies on. Keep any
+    /// future configuration change here so recovery can never target a stale
+    /// location.
+    private static func storeConfiguration(schema: Schema) -> ModelConfiguration {
+        ModelConfiguration(
+            "Ikeru",
+            schema: schema,
+            cloudKitDatabase: .none  // Manual backup via CloudBackupManager, not auto-sync
+        )
+    }
+
+    private static func makeModelContainer(schema: Schema) throws -> ModelContainer {
+        try ModelContainer(
+            for: schema,
+            migrationPlan: IkeruMigrationPlan.self,
+            configurations: [storeConfiguration(schema: schema)]
+        )
+    }
+
+    // MARK: - Deep Links
+
+    /// Handles `ikeru://…` URLs — currently only the home-screen widget's
+    /// `.widgetURL`, which routes into a review session via the same
+    /// notification the "Review Japanese" Siri Shortcut already posts
+    /// (see `ShortcutsManager.swift`).
+    private func handleDeepLink(_ url: URL) {
+        guard url.scheme == "ikeru" else { return }
+        switch url.host {
+        case "review":
+            NotificationCenter.default.post(name: .startReviewFromShortcut, object: nil)
+        default:
+            Logger.ui.info("Unhandled deep link host: \(url.host ?? "nil", privacy: .public)")
         }
     }
 
@@ -132,7 +233,7 @@ struct IkeruApp: App {
     @ViewBuilder
     private var mainContent: some View {
         if hasCheckedProfile {
-            MainTabView()
+            MainTabView(isNewUserOnboarding: showOnboarding)
                 .fullScreenCover(isPresented: $showOnboarding) {
                     NameEntryView()
                         .environment(\.profileViewModel, profileViewModel)
@@ -140,6 +241,13 @@ struct IkeruApp: App {
                             // Reload profile after onboarding dismisses
                             profileViewModel?.loadProfile()
                         }
+                }
+                .onChange(of: showOnboarding) { wasShowing, isShowing in
+                    // Sign-up onboarding just finished — kick off the in-app
+                    // feature tour for this brand-new profile.
+                    if wasShowing && !isShowing {
+                        NotificationCenter.default.post(name: .requestFeatureTour, object: nil)
+                    }
                 }
         } else {
             // Brief loading state while checking profile
@@ -212,10 +320,14 @@ struct IkeruApp: App {
                     leechFlag: card.leechFlag
                 )
             }
+            // Grammar familiar+ is now derived from `cards` by the builder, so
+            // the grammar unlock gate backfills correctly. `skillBalances` is
+            // left empty here on purpose: the unlock service keys off mastery /
+            // listening thresholds, never skill balances, so loading dashboard
+            // data at launch just to fill this would be wasted I/O.
             let snapshot = LearnerSnapshotBuilder.build(
                 cards: cards,
                 jlptLevel: .n5,
-                grammarPointsFamiliarPlus: 0,
                 listeningAccuracyLast30: 0,
                 listeningRecallLast30Days: 0,
                 skillBalances: [:],

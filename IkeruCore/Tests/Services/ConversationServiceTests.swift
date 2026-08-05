@@ -41,6 +41,26 @@ private final class MockConversationAIProvider: AIProvider, @unchecked Sendable 
     }
 }
 
+/// Records the last prompt it was handed so tests can assert on the assembled
+/// system prompt. Tests drive it serially on the MainActor.
+private final class CapturingAIProvider: AIProvider, @unchecked Sendable {
+    let name = "CapturingProvider"
+    let tier: AITier = .onDevice
+    private let lock = NSLock()
+    private var _lastPrompt: AIPrompt?
+
+    var lastPrompt: AIPrompt? {
+        lock.withLock { _lastPrompt }
+    }
+
+    var isAvailable: Bool { get async { true } }
+
+    func generate(prompt: AIPrompt) async throws -> AIResponse {
+        lock.withLock { _lastPrompt = prompt }
+        return AIResponse(content: "はい！", tier: tier, latencyMs: 10)
+    }
+}
+
 // MARK: - ConversationService Tests
 
 @Suite("ConversationService")
@@ -192,5 +212,139 @@ struct ConversationServiceTests {
         await #expect(throws: AIError.self) {
             try await service.sendMessage("hello", history: [], jlptLevel: JLPTLevel.n5)
         }
+    }
+
+    @Test("Known vocabulary is injected as a soft preference")
+    func injectsKnownVocabulary() async throws {
+        let provider = CapturingAIProvider()
+        let router = AIRouterService(
+            onDeviceProvider: provider,
+            geminiProvider: provider,
+            claudeProvider: provider,
+            localGPUProvider: provider
+        )
+        let service = ConversationService(aiRouter: router)
+
+        _ = try await service.sendMessage(
+            "こんにちは",
+            history: [],
+            jlptLevel: JLPTLevel.n5,
+            knownVocabulary: ["猫(ねこ)", "犬(いぬ)"]
+        )
+
+        let prompt = try #require(provider.lastPrompt?.systemPrompt)
+        #expect(prompt.contains("WORDS THE LEARNER ALREADY KNOWS"))
+        #expect(prompt.contains("猫(ねこ)"))
+        #expect(prompt.contains("犬(いぬ)"))
+        // The soft-preference framing must be present so Sakura never forces words.
+        #expect(prompt.contains("SOFT preference"))
+        #expect(prompt.contains("do NOT force"))
+    }
+
+    @Test("No known-vocabulary section when the list is empty")
+    func omitsKnownVocabularyWhenEmpty() async throws {
+        let provider = CapturingAIProvider()
+        let router = AIRouterService(
+            onDeviceProvider: provider,
+            geminiProvider: provider,
+            claudeProvider: provider,
+            localGPUProvider: provider
+        )
+        let service = ConversationService(aiRouter: router)
+
+        _ = try await service.sendMessage(
+            "こんにちは",
+            history: [],
+            jlptLevel: JLPTLevel.n5
+        )
+
+        let prompt = try #require(provider.lastPrompt?.systemPrompt)
+        #expect(!prompt.contains("WORDS THE LEARNER ALREADY KNOWS"))
+    }
+
+    // MARK: - Reading Reconciliation
+
+    @Test("A wrong AI reading is corrected against the bundle reading")
+    func correctsWrongReadingAgainstBundle() async throws {
+        let responseText = """
+        こんにちは！
+        [VOCAB: 日本(にっぽん) = Japan]
+        """
+        let provider = MockConversationAIProvider(responseContent: responseText)
+        let router = AIRouterService(
+            onDeviceProvider: provider,
+            geminiProvider: provider,
+            claudeProvider: provider,
+            localGPUProvider: provider
+        )
+        let service = ConversationService(aiRouter: router)
+
+        let response = try await service.sendMessage(
+            "日本は好きですか？",
+            history: [],
+            jlptLevel: JLPTLevel.n5,
+            bundleReadings: ["日本": "にほん"]
+        )
+
+        #expect(response.vocabularyHints.count == 1)
+        #expect(response.vocabularyHints[0].word == "日本")
+        #expect(response.vocabularyHints[0].reading == "にほん")
+        #expect(response.vocabularyHints[0].meaning == "Japan")
+    }
+
+    @Test("An unknown word's AI reading passes through untouched")
+    func unknownWordPassesThrough() async throws {
+        let responseText = """
+        散歩しましょう！
+        [VOCAB: 散歩(さんぽ) = walk]
+        """
+        let provider = MockConversationAIProvider(responseContent: responseText)
+        let router = AIRouterService(
+            onDeviceProvider: provider,
+            geminiProvider: provider,
+            claudeProvider: provider,
+            localGPUProvider: provider
+        )
+        let service = ConversationService(aiRouter: router)
+
+        let response = try await service.sendMessage(
+            "外に行きたいです",
+            history: [],
+            jlptLevel: JLPTLevel.n5,
+            bundleReadings: ["日本": "にほん"]
+        )
+
+        #expect(response.vocabularyHints.count == 1)
+        #expect(response.vocabularyHints[0].word == "散歩")
+        #expect(response.vocabularyHints[0].reading == "さんぽ")
+    }
+
+    @Test("Empty bundleReadings default leaves existing hint behavior unchanged")
+    func emptyBundleReadingsDefaultIsNoOp() async throws {
+        let responseText = """
+        散歩しましょう！
+        [VOCAB: 散歩(さんぽ) = walk]
+        [VOCAB: 公園(こうえん) = park]
+        """
+        let provider = MockConversationAIProvider(responseContent: responseText)
+        let router = AIRouterService(
+            onDeviceProvider: provider,
+            geminiProvider: provider,
+            claudeProvider: provider,
+            localGPUProvider: provider
+        )
+        let service = ConversationService(aiRouter: router)
+
+        let response = try await service.sendMessage(
+            "外に行きたいです",
+            history: [],
+            jlptLevel: JLPTLevel.n5
+        )
+
+        #expect(response.vocabularyHints.count == 2)
+        #expect(response.vocabularyHints[0].word == "散歩")
+        #expect(response.vocabularyHints[0].reading == "さんぽ")
+        #expect(response.vocabularyHints[1].word == "公園")
+        #expect(response.vocabularyHints[1].reading == "こうえん")
     }
 }

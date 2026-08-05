@@ -51,7 +51,8 @@ struct ConversationViewModelTests {
         responseText: String = "はい！",
         shouldThrow: Error? = nil,
         jlptLevel: JLPTLevel = .n5,
-        speechDelegate: SpeechRecognitionDelegate? = nil
+        speechDelegate: SpeechRecognitionDelegate? = nil,
+        online: Bool = true
     ) -> (ConversationViewModel, MockAIProvider) {
         let provider = MockAIProvider()
         provider.available = available
@@ -63,7 +64,8 @@ struct ConversationViewModelTests {
         let vm = ConversationViewModel(
             conversationService: service,
             jlptLevel: jlptLevel,
-            speechDelegate: speechDelegate
+            speechDelegate: speechDelegate,
+            networkChecker: MockNetworkChecker(online: online)
         )
         return (vm, provider)
     }
@@ -172,7 +174,7 @@ struct ConversationViewModelTests {
 
     @Test("Handles rate limit error")
     func handlesRateLimit() async {
-        let (vm, _) = makeViewModel(shouldThrow: AIError.rateLimited(.onDevice))
+        let (vm, _) = makeViewModel(shouldThrow: AIError.rateLimited(.onDevice, retryAfter: nil))
         vm.inputText = "hello"
 
         await vm.sendMessage()
@@ -217,6 +219,24 @@ struct ConversationViewModelTests {
         await vm.onAppear()
 
         #expect(vm.isAIAvailable == false)
+    }
+
+    @Test("onAppear reports offline when the network checker is offline")
+    func onAppearOffline() async {
+        let (vm, _) = makeViewModel(available: false, online: false)
+
+        await vm.onAppear()
+
+        #expect(vm.isOffline == true)
+    }
+
+    @Test("onAppear reports online when the network checker is online")
+    func onAppearOnline() async {
+        let (vm, _) = makeViewModel(available: false, online: true)
+
+        await vm.onAppear()
+
+        #expect(vm.isOffline == false)
     }
 
     @Test("Voice toggle without delegate shows error")

@@ -10,6 +10,13 @@ struct SentenceConstructionView: View {
     @Bindable var viewModel: SentenceConstructionViewModel
     @Namespace private var tokenAnimation
 
+    /// Invoked when the learner accepts the feedback and advances the session.
+    /// `validationResult.isCorrect` is mapped to an FSRS `Grade` via
+    /// `DrillGradeMapping.sentenceConstruction` (blueprint §3). Defaults to a
+    /// no-op so the standalone `#Preview` still compiles; the preview overrides
+    /// it to cycle the built-in templates instead.
+    var onComplete: (Grade) -> Void = { _ in }
+
     var body: some View {
         VStack(spacing: IkeruTheme.Spacing.lg) {
             // Translation prompt
@@ -84,7 +91,7 @@ struct SentenceConstructionView: View {
             .frame(minHeight: 50)
             .frame(maxWidth: .infinity)
             .padding(IkeruTheme.Spacing.md)
-            .ikeruCard(.elevated)
+            .tatamiRoom(.standard, padding: 0)
         }
     }
 
@@ -142,9 +149,12 @@ struct SentenceConstructionView: View {
 
         case .feedback:
             Button {
-                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                    viewModel.nextExercise()
-                }
+                // Completing this exercise advances the SESSION (not the view
+                // model's internal template cursor). The grade is derived from
+                // whether the arrangement was correct.
+                onComplete(DrillGradeMapping.sentenceConstruction(
+                    isCorrect: viewModel.validationResult?.isCorrect ?? false
+                ))
             } label: {
                 Label("Next", systemImage: "arrow.right")
             }
@@ -170,8 +180,8 @@ struct SentenceConstructionView: View {
                 }
                 .foregroundStyle(
                     result.isCorrect
-                        ? Color(hex: IkeruTheme.Colors.success)
-                        : Color(hex: IkeruTheme.Colors.secondaryAccent)
+                        ? Color.ikeruPrimaryAccent
+                        : Color.ikeruDanger
                 )
 
                 if !result.isCorrect {
@@ -186,8 +196,7 @@ struct SentenceConstructionView: View {
                     }
                 }
             }
-            .padding(IkeruTheme.Spacing.md)
-            .ikeruCard(.standard)
+            .tatamiRoom(.standard)
             .transition(.move(edge: .bottom).combined(with: .opacity))
         }
     }
@@ -206,28 +215,26 @@ struct SentenceConstructionView: View {
             .foregroundStyle(tokenForegroundColor(token: token, highlight: highlight))
             .padding(.horizontal, IkeruTheme.Spacing.md)
             .padding(.vertical, IkeruTheme.Spacing.sm)
-            .background(
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(tokenBackgroundColor(highlight: highlight))
-            )
+            .background(Rectangle().fill(tokenBackgroundColor(highlight: highlight)))
             .overlay(
-                RoundedRectangle(cornerRadius: 8)
+                Rectangle()
                     .strokeBorder(
                         tokenBorderColor(token: token, highlight: highlight),
                         lineWidth: 1.5
                     )
             )
+            .sumiCorners(color: tokenCornerColor(token: token, highlight: highlight), size: 6, weight: 1.2)
     }
 
     private func tokenForegroundColor(token: SentenceToken, highlight: TileHighlight) -> Color {
         switch highlight {
         case .correct:
-            Color(hex: IkeruTheme.Colors.success)
+            Color.ikeruPrimaryAccent
         case .incorrect:
-            Color(hex: IkeruTheme.Colors.secondaryAccent)
+            Color.ikeruDanger
         case .none:
             token.isParticle
-                ? Color(hex: IkeruTheme.Colors.primaryAccent)
+                ? Color.ikeruPrimaryAccent
                 : .white
         }
     }
@@ -235,24 +242,32 @@ struct SentenceConstructionView: View {
     private func tokenBackgroundColor(highlight: TileHighlight) -> Color {
         switch highlight {
         case .correct:
-            Color(hex: IkeruTheme.Colors.success).opacity(0.15)
+            Color.ikeruPrimaryAccent.opacity(0.15)
         case .incorrect:
-            Color(hex: IkeruTheme.Colors.secondaryAccent).opacity(0.15)
+            Color.ikeruDanger.opacity(0.15)
         case .none:
-            Color(hex: IkeruTheme.Colors.surface)
+            Color.ikeruSurface
         }
     }
 
     private func tokenBorderColor(token: SentenceToken, highlight: TileHighlight) -> Color {
         switch highlight {
         case .correct:
-            Color(hex: IkeruTheme.Colors.success).opacity(0.5)
+            Color.ikeruPrimaryAccent.opacity(0.5)
         case .incorrect:
-            Color(hex: IkeruTheme.Colors.secondaryAccent).opacity(0.5)
+            Color.ikeruDanger.opacity(0.5)
         case .none:
             token.isParticle
-                ? Color(hex: IkeruTheme.Colors.primaryAccent).opacity(0.4)
-                : Color.white.opacity(0.15)
+                ? Color.ikeruPrimaryAccent.opacity(0.4)
+                : TatamiTokens.goldDim.opacity(0.4)
+        }
+    }
+
+    private func tokenCornerColor(token: SentenceToken, highlight: TileHighlight) -> Color {
+        switch highlight {
+        case .correct: return Color.ikeruPrimaryAccent
+        case .incorrect: return Color.ikeruDanger
+        case .none: return token.isParticle ? Color.ikeruPrimaryAccent : TatamiTokens.goldDim
         }
     }
 
@@ -354,10 +369,14 @@ private struct HeightPreferenceKey: PreferenceKey {
 #Preview {
     let viewModel = SentenceConstructionViewModel()
 
-    SentenceConstructionView(viewModel: viewModel)
-        .background(Color.ikeruBackground)
-        .preferredColorScheme(.dark)
-        .onAppear {
-            viewModel.loadExercise(difficulty: .beginner)
-        }
+    // Standalone preview cycles the built-in templates on completion; inside a
+    // real session the container routes `onComplete` to the session view model.
+    SentenceConstructionView(viewModel: viewModel) { _ in
+        viewModel.nextExercise()
+    }
+    .background(Color.ikeruBackground)
+    .preferredColorScheme(.dark)
+    .onAppear {
+        viewModel.loadExercise(difficulty: .beginner)
+    }
 }

@@ -12,9 +12,10 @@ public struct ToastView: View {
         HStack(spacing: IkeruTheme.Spacing.sm) {
             Image(systemName: iconName)
                 .font(.system(size: IkeruTheme.Typography.Size.body, weight: .semibold))
+                .accessibilityHidden(true)
 
             Text(item.message)
-                .font(.system(size: IkeruTheme.Typography.Size.body))
+                .ikeruScaledFont(IkeruTheme.Typography.Size.body, relativeTo: .body)
                 .lineLimit(3)
 
             Spacer()
@@ -27,6 +28,7 @@ public struct ToastView: View {
                         .font(.system(size: IkeruTheme.Typography.Size.caption, weight: .bold))
                         .foregroundStyle(.white.opacity(0.7))
                 }
+                .accessibilityLabel("Dismiss")
             }
         }
         .foregroundStyle(.white)
@@ -35,6 +37,12 @@ public struct ToastView: View {
         .background(backgroundColor)
         .clipShape(RoundedRectangle(cornerRadius: IkeruTheme.Radius.md))
         .padding(.horizontal, IkeruTheme.Spacing.md)
+        .onAppear {
+            // Error toasts are otherwise silent to VoiceOver — announce them.
+            if item.type == .error {
+                AccessibilityNotification.Announcement(item.message).post()
+            }
+        }
     }
 
     private var iconName: String {
@@ -51,7 +59,7 @@ public struct ToastView: View {
         case .info:
             return Color(hex: IkeruTheme.Colors.primaryAccent)
         case .error:
-            return Color(hex: IkeruTheme.Colors.secondaryAccent)
+            return Color(hex: IkeruTheme.Colors.danger)
         }
     }
 }

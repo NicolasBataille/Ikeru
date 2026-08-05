@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ikeru rig — Session</title>
+<link rel="stylesheet" href="../css/tokens.css">
+<link rel="stylesheet" href="../css/device.css">
+<link rel="stylesheet" href="../css/components.css">
+<script defer src="../js/rig.js"></script>
+<style>
+  /* ActiveSessionView.swift — immersive, statusBarHidden(true) */
+  .session-col {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 18px 0 0;
+  }
+
+  /* drag pill + close X row (ActiveSessionView immersiveSessionContent) */
+  .session-top { position: relative; display: flex; justify-content: center; padding: 10px 16px 0; }
+  .drag-pill { width: 42px; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.18); margin-top: 6px; }
+  .close-btn {
+    position: absolute; left: 16px; top: 0;
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255,255,255,0.07);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    color: var(--text-secondary);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+  }
+
+  .session-progress { margin-top: 10px; }
+  .xp-compact-wrap { padding: 0 16px; margin-top: 8px; }
+
+  /* SRS card (SRSCardView.swift — tatamiRoom .glass, padding 28, minHeight 360) */
+  .card-zone {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    padding: 24px 20px calc(var(--safe-bottom) + 8px);
+    flex-direction: column;
+    justify-content: center;
+    gap: 18px;
+  }
+  .deck { position: relative; width: 100%; }
+  /* peek layer behind (deck depth 1: offset 18px, scale .94, opacity .78) */
+  .deck .peek {
+    position: absolute;
+    inset: 0;
+    transform: translateY(18px) scale(0.94);
+    opacity: 0.78;
+    z-index: 0;
+  }
+  .srs-card {
+    position: relative;
+    min-height: 360px;
+    padding: 28px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 1;
+  }
+  .srs-card .bilingual { justify-content: center; padding-top: 6px; }
+  .srs-card .glyph {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font: 500 200px/1 var(--font-serif);
+    color: var(--text-primary);
+    /* warm gold shadow (SRSCardView.swift:306-310) */
+    text-shadow: 0 4px 32px rgba(212, 165, 116, 0.45);
+  }
+  .srs-card .chips { display: flex; gap: 8px; padding-bottom: 6px; }
+
+  .grade-zone { width: 100%; }
+</style>
+</head>
+<body data-screen="session" data-marble="2" data-statusbar="hidden">
+<main class="screen">
+  <div class="session-col">
+
+    <div class="session-top">
+      <button class="close-btn" aria-label="End session">
+        <svg width="12" height="12" viewBox="0 0 12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1.5 1.5 L10.5 10.5 M10.5 1.5 L1.5 10.5"/></svg>
+      </button>
+      <div class="drag-pill"></div>
+    </div>
+
+    <!-- SessionProgressBar: times + 5-segment fusuma scroll line -->
+    <div class="session-progress">
+      <div class="times"><span class="elapsed">3:24</span><span class="remaining">-8:12</span></div>
+      <div class="segments">
+        <i class="filled"></i><i class="filled"></i><i class="active"></i><i></i><i></i>
+      </div>
+    </div>
+
+    <!-- Compact XP bar (XPBarView .compact — 4px) -->
+    <div class="xp-compact-wrap">
+      <div class="xp-bar xp-bar--compact"><span class="fill" style="width:44%;"></span></div>
+    </div>
+
+    <!-- Card + grade buttons -->
+    <div class="card-zone">
+      <div class="deck">
+        <div class="peek"><div class="room srs-card" style="min-height:360px;"></div></div>
+        <div class="room room--glass srs-card">
+          <div class="bilingual">
+            <span class="jp">漢字</span><span class="dot">·</span><span class="chrome">Kanji</span>
+          </div>
+          <div class="glyph">食</div>
+          <div class="chips">
+            <span class="hint-chip">
+              <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"><path d="M3 4.5 a3 3 0 1 1 6 0 c0 2-2 2.4-2 4 a1.6 1.6 0 0 1 -3.2 .2"/></svg>
+              Listen
+            </span>
+            <span class="hint-chip">
+              <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"><path d="M1 6 C2.5 3.3 4.2 2 6 2 s3.5 1.3 5 4 C9.5 8.7 7.8 10 6 10 S2.5 8.7 1 6 Z"/><circle cx="6" cy="6" r="1.8"/></svg>
+              Hint
+            </span>
+            <span class="hint-chip">
+              <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"><path d="M6 1.2 L7.4 4.3 10.8 4.7 8.3 7 9 10.4 6 8.7 3 10.4 3.7 7 1.2 4.7 4.6 4.3 Z"/></svg>
+              Mark
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- GradeButtonsView.swift — 再/難/良/易 with predicted intervals -->
+      <div class="grade-zone">
+        <div class="grade-row">
+          <button class="grade-btn grade-btn--again">
+            <span class="kanji">再</span><span class="label">Again</span><span class="due">&lt;10m</span>
+          </button>
+          <button class="grade-btn grade-btn--hard">
+            <span class="kanji">難</span><span class="label">Hard</span><span class="due">1d</span>
+          </button>
+          <button class="grade-btn grade-btn--good">
+            <span class="kanji">良</span><span class="label">Good</span><span class="due">3d</span>
+          </button>
+          <button class="grade-btn grade-btn--easy">
+            <span class="kanji">易</span><span class="label">Easy</span><span class="due">7d</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+</body>
+</html>

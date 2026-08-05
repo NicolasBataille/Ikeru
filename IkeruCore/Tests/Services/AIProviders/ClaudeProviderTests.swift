@@ -23,7 +23,7 @@ struct ClaudeProviderTests {
 
     // MARK: - Availability
 
-    @Test("Provider is unavailable without session token")
+    @Test("Provider is unavailable without API key")
     func unavailableWithoutToken() async {
         let keychain = MockKeychainStore()
         let provider = ClaudeProvider(
@@ -37,7 +37,7 @@ struct ClaudeProviderTests {
     @Test("Provider is unavailable when offline")
     func unavailableWhenOffline() async {
         let keychain = MockKeychainStore(
-            initialValues: [KeychainKeys.claudeSessionToken: "test-token"]
+            initialValues: [KeychainKeys.claudeAPIKey: "test-token"]
         )
         let provider = ClaudeProvider(
             keychainStore: keychain,
@@ -50,7 +50,7 @@ struct ClaudeProviderTests {
     @Test("Provider is available with token and network")
     func availableWithTokenAndNetwork() async {
         let keychain = MockKeychainStore(
-            initialValues: [KeychainKeys.claudeSessionToken: "test-token"]
+            initialValues: [KeychainKeys.claudeAPIKey: "test-token"]
         )
         let provider = ClaudeProvider(
             keychainStore: keychain,
@@ -60,12 +60,56 @@ struct ClaudeProviderTests {
         #expect(available == true)
     }
 
+    @Test("Legacy session token migrates to API key on first read")
+    func legacyTokenMigration() async throws {
+        let keychain = MockKeychainStore(
+            initialValues: [KeychainKeys.claudeSessionToken: "legacy-token"]
+        )
+        let provider = ClaudeProvider(
+            keychainStore: keychain,
+            networkChecker: MockNetworkChecker(online: true)
+        )
+
+        // Legacy value makes the provider available...
+        let available = await provider.isAvailable
+        #expect(available == true)
+
+        // ...and gets migrated: new key written, legacy key deleted.
+        let migrated = try keychain.load(key: KeychainKeys.claudeAPIKey)
+        #expect(migrated == "legacy-token")
+        let legacy = try keychain.load(key: KeychainKeys.claudeSessionToken)
+        #expect(legacy == nil)
+    }
+
+    @Test("New API key wins over legacy token when both exist")
+    func newKeyWinsOverLegacy() async throws {
+        let keychain = MockKeychainStore(
+            initialValues: [
+                KeychainKeys.claudeAPIKey: "new-key",
+                KeychainKeys.claudeSessionToken: "legacy-token",
+            ]
+        )
+        let provider = ClaudeProvider(
+            keychainStore: keychain,
+            networkChecker: MockNetworkChecker(online: true)
+        )
+
+        let available = await provider.isAvailable
+        #expect(available == true)
+
+        // No migration happens when the new key is already set.
+        let newKey = try keychain.load(key: KeychainKeys.claudeAPIKey)
+        #expect(newKey == "new-key")
+        let legacy = try keychain.load(key: KeychainKeys.claudeSessionToken)
+        #expect(legacy == "legacy-token")
+    }
+
     // MARK: - Generation with mock session
 
     @Test("Successful generation returns response")
     func successfulGeneration() async throws {
         let keychain = MockKeychainStore(
-            initialValues: [KeychainKeys.claudeSessionToken: "test-token"]
+            initialValues: [KeychainKeys.claudeAPIKey: "test-token"]
         )
         let mockSession = MockURLSessionProvider(
             responseData: claudeSuccessJSON,
@@ -89,7 +133,7 @@ struct ClaudeProviderTests {
     @Test("Rate limited response throws rateLimited error")
     func rateLimited() async {
         let keychain = MockKeychainStore(
-            initialValues: [KeychainKeys.claudeSessionToken: "test-token"]
+            initialValues: [KeychainKeys.claudeAPIKey: "test-token"]
         )
         let mockSession = MockURLSessionProvider(
             responseData: Data("{}".utf8),
@@ -108,8 +152,9 @@ struct ClaudeProviderTests {
             _ = try await provider.generate(prompt: prompt)
             Issue.record("Expected rateLimited error")
         } catch let error as AIError {
-            if case .rateLimited(let tier) = error {
+            if case .rateLimited(let tier, let retryAfter) = error {
                 #expect(tier == .claude)
+                #expect(retryAfter == nil)
             } else {
                 Issue.record("Expected rateLimited, got \(error)")
             }
@@ -118,7 +163,38 @@ struct ClaudeProviderTests {
         }
     }
 
-    @Test("Missing session token throws keyNotFound error")
+    @Test("Rate limited response with Retry-After header carries retryAfter")
+    func rateLimitedWithRetryAfterHeader() async {
+        let keychain = MockKeychainStore(
+            initialValues: [KeychainKeys.claudeAPIKey: "test-token"]
+        )
+        let mockSession = MockURLSessionProvider(
+            responseData: Data("{}".utf8),
+            statusCode: 429,
+            headerFields: ["Retry-After": "45"]
+        )
+        let provider = ClaudeProvider(
+            keychainStore: keychain,
+            networkChecker: MockNetworkChecker(online: true),
+            urlSession: mockSession
+        )
+        let prompt = AIPrompt(systemPrompt: "Tutor", userMessage: "Hello")
+        do {
+            _ = try await provider.generate(prompt: prompt)
+            Issue.record("Expected rateLimited error")
+        } catch let error as AIError {
+            if case .rateLimited(let tier, let retryAfter) = error {
+                #expect(tier == .claude)
+                #expect(retryAfter == 45)
+            } else {
+                Issue.record("Expected rateLimited, got \(error)")
+            }
+        } catch {
+            Issue.record("Unexpected error: \(error)")
+        }
+    }
+
+    @Test("Missing API key throws keyNotFound error")
     func missingToken() async {
         let keychain = MockKeychainStore()
         let provider = ClaudeProvider(
@@ -134,7 +210,7 @@ struct ClaudeProviderTests {
             Issue.record("Expected keyNotFound error")
         } catch let error as AIError {
             if case .keyNotFound(let key) = error {
-                #expect(key == KeychainKeys.claudeSessionToken)
+                #expect(key == KeychainKeys.claudeAPIKey)
             } else {
                 Issue.record("Expected keyNotFound, got \(error)")
             }
@@ -146,7 +222,7 @@ struct ClaudeProviderTests {
     @Test("Invalid JSON response throws invalidResponse error")
     func invalidJSON() async {
         let keychain = MockKeychainStore(
-            initialValues: [KeychainKeys.claudeSessionToken: "test-token"]
+            initialValues: [KeychainKeys.claudeAPIKey: "test-token"]
         )
         let mockSession = MockURLSessionProvider(
             responseData: Data("not json".utf8),
@@ -178,7 +254,7 @@ struct ClaudeProviderTests {
     @Test("Server error (500) throws invalidResponse error")
     func serverError() async {
         let keychain = MockKeychainStore(
-            initialValues: [KeychainKeys.claudeSessionToken: "test-token"]
+            initialValues: [KeychainKeys.claudeAPIKey: "test-token"]
         )
         let mockSession = MockURLSessionProvider(
             responseData: Data("{}".utf8),

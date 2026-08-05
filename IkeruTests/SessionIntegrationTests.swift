@@ -63,6 +63,25 @@ struct SessionIntegrationTests {
         try context.save()
     }
 
+    /// Inserts `count` overdue cards attached to the active profile.
+    /// Due dates are staggered (most overdue first) so ordering
+    /// assertions are deterministic.
+    private func seedDueCards(container: ModelContainer, count: Int) throws {
+        let context = container.mainContext
+        let profile = activeProfile(container)
+        for i in 0..<count {
+            let card = Card(
+                front: "Card \(i)",
+                back: "Back \(i)",
+                type: .kanji,
+                dueDate: Date().addingTimeInterval(-3600 + Double(i))
+            )
+            card.profile = profile
+            context.insert(card)
+        }
+        try context.save()
+    }
+
     // MARK: - Full Flow Tests
 
     @Test("Full flow: seed content -> compose session -> review cards -> complete -> summary data correct")
@@ -129,7 +148,19 @@ struct SessionIntegrationTests {
         )
 
         let planner = PlannerService(cardRepository: repo)
-        let vm = SessionViewModel(plannerService: planner, cardRepository: repo, modelContainer: container)
+        // Inject a planner that returns exactly the seeded cards as SRS
+        // reviews. With the real `DefaultSessionPlanner`'s 40/30/20/10
+        // budget composition, the interleaved review segment for 5
+        // brand-new cards can be much shorter than 5 — this test needs a
+        // queue deep enough to grade three cards across the pause/resume
+        // boundary, independent of that budget shape.
+        let mockPlanner = await plannerWithSeededCards(repo: repo)
+        let vm = SessionViewModel(
+            plannerService: planner,
+            cardRepository: repo,
+            modelContainer: container,
+            sessionPlanner: mockPlanner
+        )
 
         await vm.startSession()
 
@@ -160,18 +191,21 @@ struct SessionIntegrationTests {
         #expect(vm.reviewedCount == reviewedBeforePause + 1)
     }
 
-    @Test("Empty queue shows All caught up state")
+    @Test("Empty queue never activates the session")
     func emptyQueueAllCaughtUp() async throws {
         let container = try makeContainer()
         let repo = CardRepository(modelContainer: container)
         let planner = PlannerService(cardRepository: repo)
         let vm = SessionViewModel(plannerService: planner, cardRepository: repo, modelContainer: container)
 
-        // Start session with no cards
+        // Start session with no cards. `startSession` guards against an
+        // empty composed plan so no timer / Live Activity spins up for a
+        // hollow session — it returns early with `isActive` left `false`
+        // rather than entering an active-but-already-complete state.
         await vm.startSession()
 
-        #expect(vm.isActive == true)
-        #expect(vm.isSessionComplete == true)
+        #expect(vm.isActive == false)
+        #expect(vm.isSessionComplete == false)
         #expect(vm.sessionQueue.isEmpty)
         #expect(vm.currentCard == nil)
         #expect(vm.reviewedCount == 0)
@@ -260,10 +294,14 @@ struct SessionIntegrationTests {
         await vm.gradeAndAdvance(grade: .hard)
         await vm.gradeAndAdvance(grade: .again)
 
-        let expected = RPGConstants.xpForGrade(.easy)
-            + RPGConstants.xpForGrade(.good)
-            + RPGConstants.xpForGrade(.hard)
-            + RPGConstants.xpForGrade(.again)
+        // Cards are `.kanji`-typed, which route to `.kanjiStudy` in
+        // `ExerciseXP.rule(for:grade:)` (+2 bonus over the flat
+        // `RPGConstants.xpForGrade`), at the `.n5` multiplier (1.0x) a
+        // brand-new profile resolves to.
+        let expected = ExerciseXP.award(type: .kanjiStudy, level: .n5, grade: .easy)
+            + ExerciseXP.award(type: .kanjiStudy, level: .n5, grade: .good)
+            + ExerciseXP.award(type: .kanjiStudy, level: .n5, grade: .hard)
+            + ExerciseXP.award(type: .kanjiStudy, level: .n5, grade: .again)
         #expect(vm.xpEarned == expected)
         #expect(vm.reviewedCount == 4)
     }
@@ -290,5 +328,176 @@ struct SessionIntegrationTests {
         #expect(vm.isActive == false)
         #expect(vm.sessionQueue.isEmpty)
         #expect(vm.currentIndex == 0)
+    }
+
+    // MARK: - Planner Input Ordering
+
+    @Test("startSession passes the full card pool to the planner, overdue and not-yet-due alike")
+    func plannerReceivesDueSortedCards() async throws {
+        let container = try makeContainer()
+        let context = container.mainContext
+        let profile = activeProfile(container)
+
+        // Deliberately shuffled due dates: tomorrow, 2h overdue, 1h overdue.
+        let offsets: [TimeInterval] = [86_400, -7_200, -3_600]
+        for (i, offset) in offsets.enumerated() {
+            let card = Card(
+                front: "Card \(i)",
+                back: "Back \(i)",
+                type: .kanji,
+                dueDate: Date().addingTimeInterval(offset)
+            )
+            card.profile = profile
+            context.insert(card)
+        }
+        try context.save()
+
+        let repo = CardRepository(modelContainer: container)
+        let planner = PlannerService(cardRepository: repo)
+        let recorder = RecordingSessionPlanner()
+        let vm = SessionViewModel(
+            plannerService: planner,
+            cardRepository: repo,
+            modelContainer: container,
+            sessionPlanner: recorder
+        )
+
+        await vm.startSession()
+
+        // `SessionViewModel` no longer pre-sorts the pool before invoking the
+        // planner — that was a redundant "double sort" dropped when the
+        // review-wave sort moved (and stayed) inside
+        // `DefaultSessionPlanner.pickReviews`, which is due-sort-order-agnostic
+        // on its input (see `DefaultSessionPlannerTests`'s "Review wave drills
+        // most-overdue cards first, whatever the input order"). What
+        // `SessionViewModel` must still guarantee is that the *entire* pool —
+        // overdue, not-yet-due, all of it — reaches the planner unfiltered, so
+        // segments like new-content/booster/variety (which draw from
+        // not-yet-due or unseen cards) have the full set to choose from.
+        #expect(recorder.capturedCards.count == 3)
+        let capturedFronts = Set(recorder.capturedCards.map(\.front))
+        #expect(capturedFronts == Set(["Card 0", "Card 1", "Card 2"]))
+    }
+
+    // MARK: - Mistake Tracking & Same-Day Re-Queue
+
+    @Test("Hard grade is not a mistake; only again feeds missedCardIDs")
+    func hardGradeIsNotAMistake() async throws {
+        let container = try makeContainer()
+        try seedDueCards(container: container, count: 4)
+
+        let repo = CardRepository(modelContainer: container)
+        let planner = PlannerService(cardRepository: repo)
+        let mockPlanner = await plannerWithSeededCards(repo: repo)
+        let vm = SessionViewModel(
+            plannerService: planner,
+            cardRepository: repo,
+            modelContainer: container,
+            sessionPlanner: mockPlanner
+        )
+
+        await vm.startSession()
+        #expect(vm.sessionQueue.count == 4)
+
+        // Slow-but-correct: no mistake tracked, no re-queue.
+        await vm.gradeAndAdvance(grade: .hard)
+        #expect(vm.missedCardIDs.isEmpty)
+        #expect(vm.sessionQueue.count == 4)
+
+        // Failed: tracked as a mistake and re-queued for same-day retry.
+        let failedID = vm.currentCard?.id
+        await vm.gradeAndAdvance(grade: .again)
+        #expect(failedID != nil)
+        if let failedID {
+            #expect(vm.missedCardIDs == [failedID])
+        }
+        #expect(vm.sessionQueue.count == 5)
+    }
+
+    @Test("Again re-queues the card 3-5 positions later in a normal session")
+    func againRequeuesLaterInNormalSession() async throws {
+        let container = try makeContainer()
+        try seedDueCards(container: container, count: 6)
+
+        let repo = CardRepository(modelContainer: container)
+        let planner = PlannerService(cardRepository: repo)
+        let mockPlanner = await plannerWithSeededCards(repo: repo)
+        let vm = SessionViewModel(
+            plannerService: planner,
+            cardRepository: repo,
+            modelContainer: container,
+            sessionPlanner: mockPlanner
+        )
+
+        await vm.startSession()
+        #expect(vm.sessionQueue.count == 6)
+
+        let failedID = vm.currentCard?.id
+        await vm.gradeAndAdvance(grade: .again)
+
+        #expect(vm.sessionQueue.count == 7)
+        // Graded at index 0 → the retry copy lands at index 4, 5, or 6
+        // (3-5 positions after the next card, clamped to the queue end).
+        let retryIndex = vm.sessionQueue.dropFirst().firstIndex { $0.id == failedID }
+        #expect(retryIndex != nil)
+        if let retryIndex {
+            #expect((4...6).contains(retryIndex))
+        }
+        // Session must stay open so the retry is actually reachable.
+        #expect(vm.isSessionComplete == false)
+    }
+
+    @Test("Same-day re-queue is capped at 2 retries per card")
+    func requeueCapAndCompletion() async throws {
+        let container = try makeContainer()
+        try seedDueCards(container: container, count: 1)
+
+        let repo = CardRepository(modelContainer: container)
+        let planner = PlannerService(cardRepository: repo)
+        let mockPlanner = await plannerWithSeededCards(repo: repo)
+        let vm = SessionViewModel(
+            plannerService: planner,
+            cardRepository: repo,
+            modelContainer: container,
+            sessionPlanner: mockPlanner
+        )
+
+        await vm.startSession()
+        #expect(vm.sessionQueue.count == 1)
+
+        // First failure — retry 1 queued, session stays open.
+        await vm.gradeAndAdvance(grade: .again)
+        #expect(vm.sessionQueue.count == 2)
+        #expect(vm.isSessionComplete == false)
+        #expect(vm.currentCard != nil)
+
+        // Second failure — retry 2 queued.
+        await vm.gradeAndAdvance(grade: .again)
+        #expect(vm.sessionQueue.count == 3)
+
+        // Third failure — cap reached, no further re-queue; session ends.
+        await vm.gradeAndAdvance(grade: .again)
+        #expect(vm.sessionQueue.count == 3)
+        #expect(vm.isSessionComplete == true)
+        #expect(vm.reviewedCount == 3)
+        // The brand-new card counts once despite three passes.
+        #expect(vm.newItemsLearned == 1)
+    }
+}
+
+// MARK: - Test Doubles
+
+/// Test-only `SessionPlanner` that records the inputs it was composed with
+/// and returns an empty plan. Used to assert what `SessionViewModel` feeds
+/// the planner (e.g. due-sorted card pool) without depending on
+/// `DefaultSessionPlanner` composition.
+final class RecordingSessionPlanner: SessionPlanner, @unchecked Sendable {
+
+    /// The `availableCards` from the most recent `compose(...)` call.
+    var capturedCards: [CardDTO] = []
+
+    func compose(inputs: SessionPlannerInputs) async -> SessionPlan {
+        capturedCards = inputs.availableCards
+        return .empty
     }
 }

@@ -24,34 +24,26 @@ struct SessionProgressBar: View {
     /// keeps the bar calm even when a session has 20+ exercises.
     private let visibleSegmentCount = 5
 
-    var body: some View {
-        VStack(spacing: IkeruTheme.Spacing.sm) {
-            // Time labels
-            timeLabelsRow
+    /// Mirrors `RPGState.equippedTheme` (synced by `EquippedCosmeticsBridge`)
+    /// so the filled-segment gradient recolors with the player's cosmetic
+    /// theme — the single source of truth for that mapping is
+    /// `ThemePaletteService`, shared with every other progress/XP bar.
+    @AppStorage(EquippedCosmeticsBridge.Keys.themeName) private var equippedThemeName: String = ""
 
-            // Segmented progress bar (5-segment scroll line, with collapse
-            // for longer sessions). Replaces the earlier book/pencil/ear
-            // SF-Symbol row, which read as gamey clutter against the
-            // wabi-sabi direction.
-            segmentedBar
-        }
-        .padding(.horizontal, IkeruTheme.Spacing.md)
+    /// The filled-segment (completed progress) gradient, themed via
+    /// `ThemePaletteService`. Falls back to the original gold gradient when
+    /// no cosmetic theme is equipped.
+    private var filledPalette: ThemePaletteService.Palette {
+        ThemePaletteService.palette(forThemeName: equippedThemeName.isEmpty ? nil : equippedThemeName)
     }
 
-    // MARK: - Time Labels
-
-    private var timeLabelsRow: some View {
-        HStack {
-            Text(formatTime(elapsedTime))
-                .font(.ikeruStats)
-                .foregroundStyle(Color.ikeruTextSecondary)
-
-            Spacer()
-
-            Text("-" + formatTime(max(0, estimatedTotalTime - elapsedTime)))
-                .font(.ikeruStats)
-                .foregroundStyle(Color.ikeruTextTertiary)
-        }
+    var body: some View {
+        // Calm segmented rail only. The live count-up stopwatch + "~Xm" estimate
+        // were removed: a visible clock reads as time pressure, against the "at
+        // your own rhythm" pitch. The session's time budget, one-minute warning
+        // and auto-end still run in SessionViewModel — they're just not shown.
+        segmentedBar
+            .padding(.horizontal, IkeruTheme.Spacing.md)
     }
 
     // MARK: - Segmented Bar
@@ -69,7 +61,7 @@ struct SessionProgressBar: View {
         }
         .frame(height: 6)
         .padding(.vertical, 4)
-        .overlay(alignment: .top)    { FusumaRail(opacity: 0.6) }
+        .overlay(alignment: .top) { FusumaRail(opacity: 0.6) }
         .overlay(alignment: .bottom) { FusumaRail(opacity: 0.6, inverted: true) }
     }
 
@@ -92,7 +84,7 @@ struct SessionProgressBar: View {
             if isFilled {
                 Rectangle().fill(
                     LinearGradient(
-                        colors: [Color(hex: 0xE5BC8A), Color(hex: 0xD4A574)],
+                        colors: [Color(hex: filledPalette.startHex), Color(hex: filledPalette.endHex)],
                         startPoint: .leading,
                         endPoint: .trailing
                     )
@@ -100,7 +92,10 @@ struct SessionProgressBar: View {
             } else if isActive {
                 Rectangle().fill(
                     LinearGradient(
-                        colors: [Color(hex: 0xF5F2EC), Color(hex: 0xE0DDD7)],
+                        colors: [
+                            Color(hex: IkeruTheme.Colors.ProgressBar.activeStart),
+                            Color(hex: IkeruTheme.Colors.ProgressBar.activeEnd),
+                        ],
                         startPoint: .top,
                         endPoint: .bottom
                     )
@@ -116,14 +111,6 @@ struct SessionProgressBar: View {
         )
     }
 
-    // MARK: - Helpers
-
-    private func formatTime(_ interval: TimeInterval) -> String {
-        let total = Int(interval)
-        let minutes = total / 60
-        let seconds = total % 60
-        return String(format: "%d:%02d", minutes, seconds)
-    }
 }
 
 // MARK: - SkillType SF Symbol Mapping
@@ -156,12 +143,12 @@ func sfSymbol(for skill: SkillType) -> String {
     let sampleExercises: [ExerciseItem] = [
         .srsReview(previewCard),
         .srsReview(previewCard),
-        .writingPractice("kanji"),
+        .writingPractice(previewCard),
         .listeningExercise(UUID()),
         .speakingExercise(UUID()),
         .srsReview(previewCard),
         .grammarExercise(UUID()),
-        .kanjiStudy("test"),
+        .kanjiStudy(previewCard),
     ]
 
     ZStack {

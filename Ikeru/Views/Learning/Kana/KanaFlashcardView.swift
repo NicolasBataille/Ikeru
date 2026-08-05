@@ -46,25 +46,74 @@ struct KanaFlashcardView: View {
     }
 
     // MARK: - Content
+    //
+    // Same card experience as the Practice session (owner request, device
+    // pass 2026-07-19): the SRSCardView deck (tap-to-reveal, swipe-to-grade,
+    // audio, peeks) + the shared GradeButtonsView with real per-card FSRS
+    // predictions. One principle, one UI — Étude flashcards and session
+    // reviews are the same gesture language.
 
     @ViewBuilder
     private var content: some View {
         VStack(spacing: 0) {
             topBar
             Spacer(minLength: 0)
-            cardArea
+            if let card = viewModel.currentCard {
+                SRSCardView(
+                    card: card,
+                    upcomingCards: upcomingCards,
+                    isRevealed: revealBinding
+                ) { direction in
+                    gradeAndAdvance(direction.grade)
+                }
+            }
             Spacer(minLength: 0)
             if viewModel.isRevealed {
-                gradeButtons
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                GradeButtonsView(
+                    onGrade: { grade in gradeAndAdvance(grade) },
+                    predictedIntervals: viewModel.predictedIntervals
+                )
+                .transition(.move(edge: .bottom).combined(with: .opacity))
             } else {
-                revealCallToAction
+                Text("Tap card to reveal", comment: "Hint below the flashcard before reveal — mirrors the session's hint")
+                    .ikeruScaledFont(11, weight: .semibold, relativeTo: .caption2)
+                    .tracking(2)
+                    .textCase(.uppercase)
+                    .foregroundStyle(TatamiTokens.paperGhost)
+                    .frame(maxWidth: .infinity)
                     .transition(.opacity)
             }
             sessionFooter
         }
         .padding(.horizontal, IkeruTheme.Spacing.lg)
         .padding(.bottom, 88) // Floating tab bar clearance
+    }
+
+    /// SRSCardView owns reveal via a Binding, but the drill VM computes
+    /// predicted intervals inside `reveal()` — route sets through it and
+    /// ignore the deck's post-swipe resets (the VM's `advance()` handles
+    /// those itself).
+    private var revealBinding: Binding<Bool> {
+        Binding(
+            get: { viewModel.isRevealed },
+            set: { newValue in if newValue { viewModel.reveal() } }
+        )
+    }
+
+    /// Up to two peeks behind the current card, matching the session deck.
+    private var upcomingCards: [CardDTO] {
+        Array(viewModel.queue.dropFirst(viewModel.currentIndex + 1).prefix(2))
+    }
+
+    private func gradeAndAdvance(_ grade: Grade) {
+        Task {
+            if grade == .again {
+                errorTrigger &+= 1
+            } else {
+                feedbackTrigger &+= 1
+            }
+            await viewModel.grade(grade)
+        }
     }
 
     // MARK: Top bar
@@ -76,124 +125,22 @@ struct KanaFlashcardView: View {
                 .foregroundStyle(Color.ikeruTextSecondary)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
-                .background {
-                    Capsule().fill(.ultraThinMaterial)
-                }
+                .background(Color.ikeruSurface.opacity(0.6))
+                .overlay(Rectangle().strokeBorder(TatamiTokens.goldDim.opacity(0.5), lineWidth: 1))
+                .sumiCorners(color: TatamiTokens.goldDim, size: 5, weight: 1.0)
             Spacer()
-            Text(viewModel.mode.displayName.uppercased())
+            Text(LocalizedStringKey(viewModel.mode.displayName))
+                .textCase(.uppercase)
                 .font(.ikeruMicro)
                 .ikeruTracking(.micro)
                 .foregroundStyle(Color.ikeruPrimaryAccent)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
-                .background {
-                    Capsule().fill(Color.ikeruPrimaryAccent.opacity(0.10))
-                }
+                .background(Color.ikeruPrimaryAccent.opacity(0.10))
+                .overlay(Rectangle().strokeBorder(TatamiTokens.goldDim.opacity(0.5), lineWidth: 1))
+                .sumiCorners(color: TatamiTokens.goldDim, size: 5, weight: 1.0)
         }
         .padding(.top, IkeruTheme.Spacing.sm)
-    }
-
-    // MARK: Card area
-
-    @ViewBuilder
-    private var cardArea: some View {
-        if let card = viewModel.currentCard {
-            VStack(spacing: IkeruTheme.Spacing.lg) {
-                Text(card.front)
-                    .font(.system(
-                        size: viewModel.isRevealed ? 96 : 144,
-                        weight: .regular,
-                        design: .serif
-                    ))
-                    .foregroundStyle(Color.ikeruTextPrimary)
-                    .contentTransition(.numericText())
-
-                if viewModel.isRevealed {
-                    Text(romaji(for: card))
-                        .font(.system(size: 40, weight: .semibold, design: .rounded))
-                        .foregroundStyle(Color.ikeruPrimaryAccent)
-                        .transition(.opacity.combined(with: .scale))
-                }
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, IkeruTheme.Spacing.xl)
-            .contentShape(Rectangle())
-            .onTapGesture {
-                if !viewModel.isRevealed {
-                    viewModel.reveal()
-                }
-            }
-        }
-    }
-
-    private func romaji(for card: CardDTO) -> String {
-        if let group = card.kanaGroup,
-           let match = group.characters.first(where: { $0.character == card.front }) {
-            return match.romaji
-        }
-        return card.back
-    }
-
-    // MARK: Reveal CTA
-
-    private var revealCallToAction: some View {
-        VStack(spacing: IkeruTheme.Spacing.sm) {
-            Text("Tap to reveal")
-                .font(.ikeruCaption)
-                .foregroundStyle(Color.ikeruTextTertiary)
-            Button {
-                viewModel.reveal()
-            } label: {
-                Text("Show answer")
-                    .frame(maxWidth: .infinity)
-            }
-            .ikeruButtonStyle(.primary)
-        }
-    }
-
-    // MARK: Grade buttons
-
-    private var gradeButtons: some View {
-        HStack(spacing: 8) {
-            gradeButton(.again, label: "Again", color: Color(red: 0.85, green: 0.30, blue: 0.30))
-            gradeButton(.hard, label: "Hard", color: Color(red: 0.90, green: 0.55, blue: 0.20))
-            gradeButton(.good, label: "Good", color: Color(red: 0.30, green: 0.55, blue: 0.85))
-            gradeButton(.easy, label: "Easy", color: Color(red: 0.30, green: 0.70, blue: 0.45))
-        }
-        .padding(.top, IkeruTheme.Spacing.md)
-    }
-
-    @ViewBuilder
-    private func gradeButton(_ grade: Grade, label: String, color: Color) -> some View {
-        Button {
-            Task {
-                if grade == .again {
-                    errorTrigger &+= 1
-                } else {
-                    feedbackTrigger &+= 1
-                }
-                await viewModel.grade(grade)
-            }
-        } label: {
-            VStack(spacing: 4) {
-                Text(label)
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(Color.ikeruTextPrimary)
-                Text(viewModel.predictedIntervals[grade] ?? "—")
-                    .font(.system(size: 11, weight: .regular))
-                    .foregroundStyle(Color.ikeruTextSecondary)
-            }
-            .frame(maxWidth: .infinity, minHeight: 64)
-            .background {
-                RoundedRectangle(cornerRadius: IkeruTheme.Radius.md, style: .continuous)
-                    .fill(color.opacity(0.18))
-            }
-            .overlay {
-                RoundedRectangle(cornerRadius: IkeruTheme.Radius.md, style: .continuous)
-                    .strokeBorder(color.opacity(0.55), lineWidth: 0.8)
-            }
-        }
-        .buttonStyle(.plain)
     }
 
     // MARK: Session footer

@@ -18,15 +18,25 @@ struct GradeButtonsView: View {
 
     let onGrade: (Grade) -> Void
 
+    /// Real per-card FSRS predictions (grade → formatted interval), computed
+    /// with the profile's desired retention. When provided they replace the
+    /// static representative hints — the learner sees exactly what each
+    /// grade will schedule (owner request, device pass 2026-07-19).
+    var predictedIntervals: [Grade: String]? = nil
+
     /// Indicative due windows — tuned to "what a typical early-review card
-    /// would see after this grade". Kept terse to fit on a mobile row and
-    /// surfaced as a serif numeral under each button.
+    /// would see after this grade". Fallback when no per-card prediction is
+    /// supplied. Kept terse to fit on a mobile row.
     private let dueHints: [Grade: String] = [
         .again: "<1m",
         .hard:  "~6m",
-        .good:  "1d",
-        .easy:  "4d"
+        .good:  String(localized: "1d"),
+        .easy:  String(localized: "4d")
     ]
+
+    private func hint(for grade: Grade) -> String {
+        predictedIntervals?[grade] ?? dueHints[grade] ?? ""
+    }
 
     private struct GradeSpec {
         let grade: Grade
@@ -64,12 +74,14 @@ struct GradeButtonsView: View {
                             .foregroundStyle(spec.color)
                             .padding(.bottom, 2)
                         Text(spec.label)
-                            .font(.system(size: 11, weight: .bold))
+                            .ikeruScaledFont(11, weight: .bold, relativeTo: .caption2)
                             .tracking(1)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
                             .foregroundStyle(Color.ikeruTextPrimary)
                             .textCase(.uppercase)
                         SerifNumeral(
-                            dueHints[spec.grade] ?? "",
+                            hint(for: spec.grade),
                             size: 10,
                             weight: .regular,
                             color: TatamiTokens.paperGhost

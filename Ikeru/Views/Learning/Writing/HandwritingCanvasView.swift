@@ -26,8 +26,8 @@ struct HandwritingCanvasView: View {
 
             ZStack {
                 // Canvas background
-                RoundedRectangle(cornerRadius: IkeruTheme.Radius.md)
-                    .fill(Color(hex: IkeruTheme.Colors.surface))
+                Rectangle()
+                    .fill(Color.ikeruSurface)
 
                 // Grid lines for writing guidance
                 gridOverlay(size: canvasSize)

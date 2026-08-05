@@ -10,11 +10,11 @@ import os
 /// Launch-args usage (Debug builds):
 /// ```bash
 /// xcrun simctl launch booted com.ikeru.app \
-///   -mockProfile -mockLevel=15 -mockDue=25 -mockMastered=120 -mockLootboxes=3
+///   -mockProfile -mockLevel=15 -mockDue=25 -mockMastered=120
 /// ```
 ///
 /// In-app usage (Debug + TestFlight): the `Outils développeur` section in Réglages
-/// exposes the same controls (`wipeAndSeed`, `wipeAll`, `addLootbox`, `grantLevelUp`).
+/// exposes the same controls (`wipeAndSeed`, `wipeAll`, `grantLevelUp`).
 ///
 /// The whole file is gated behind `#if IKERU_DEV_TOOLS` so the App Store build,
 /// which strips the flag, cannot ship fixture code. See CLAUDE.md "Removing
@@ -40,15 +40,13 @@ public enum TestFixtures {
         let level = AppEnvironment.intArg("mockLevel") ?? 5
         let dueCount = AppEnvironment.intArg("mockDue") ?? 12
         let masteredCount = AppEnvironment.intArg("mockMastered") ?? 40
-        let lootboxCount = AppEnvironment.intArg("mockLootboxes") ?? 1
-        let inventoryCount = AppEnvironment.intArg("mockInventory") ?? 4
 
-        logger.info("Seeding fixture profile: level=\(level) due=\(dueCount) mastered=\(masteredCount) lootboxes=\(lootboxCount) inventory=\(inventoryCount)")
+        logger.info("Seeding fixture profile: level=\(level) due=\(dueCount) mastered=\(masteredCount)")
 
         let profile = UserProfile(displayName: "Nico")
         context.insert(profile)
 
-        let state = seedRPGState(profile: profile, level: level, lootboxCount: lootboxCount, inventoryCount: inventoryCount)
+        let state = seedRPGState(profile: profile, level: level)
         context.insert(state)
         seedCards(context: context, profile: profile, due: dueCount, mastered: masteredCount)
 
@@ -68,9 +66,7 @@ public enum TestFixtures {
     @discardableResult
     private static func seedRPGState(
         profile: UserProfile,
-        level: Int,
-        lootboxCount: Int,
-        inventoryCount: Int
+        level: Int
     ) -> RPGState {
         let xpForLevel = xpRequired(forLevel: level)
         let xpForNext = xpRequired(forLevel: level + 1)
@@ -87,51 +83,18 @@ public enum TestFixtures {
         }
         state.setAttributes(scaled)
 
-        // Inventory
-        if inventoryCount > 0 {
-            let rarities: [LootRarity] = [.common, .rare, .epic, .legendary]
-            let categories: [LootItem.Category] = [.theme, .title, .badge, .scroll]
-            let items = (0..<inventoryCount).map { idx -> LootItem in
-                let rarity = rarities[idx % rarities.count]
-                let category = categories[idx % categories.count]
-                return LootItem(
-                    category: category,
-                    rarity: rarity,
-                    name: "\(rarity.rawValue.capitalized) \(category.displayName)",
-                    iconName: category.iconName
-                )
-            }
-            state.setLootInventory(items)
-        }
-
-        // Lootboxes
-        if lootboxCount > 0 {
-            let placeholderReward = LootItem(
-                category: .scroll,
-                rarity: .rare,
-                name: "Mystery Scroll",
-                iconName: "scroll.fill"
-            )
-            let boxes = (0..<lootboxCount).map { _ in
-                LootBox(
-                    challengeType: .kanjiSpeed,
-                    requiredScore: 5,
-                    rewards: [placeholderReward]
-                )
-            }
-            state.setLootBoxes(boxes)
-        }
-
         state.profile = profile
         profile.rpgState = state
         return state
     }
 
-    /// XP curve mirrors the production formula closely enough for visual smoke tests.
-    /// 102, 230, 384, ... — quadratic-ish growth.
+    /// Total XP required to reach `level`, using the *exact* production formula
+    /// from RPGConstants so the seeded profile is internally consistent.
+    /// Previously this used a hand-rolled quadratic that diverged from the real
+    /// curve at level ≥ 4, causing Home / Rang to display a stale seeded rank
+    /// while the session summary showed the real rank derived from the XP.
     private static func xpRequired(forLevel level: Int) -> Int {
-        guard level > 1 else { return 0 }
-        return (1...(level - 1)).reduce(0) { acc, lv in acc + 100 + lv * 2 }
+        RPGConstants.totalXPForLevel(level)
     }
 
     // MARK: - In-app helpers (Outils développeur menu)
@@ -145,21 +108,14 @@ public enum TestFixtures {
         profileVM: ProfileViewModel,
         level: Int,
         dueCount: Int,
-        masteredCount: Int,
-        lootboxCount: Int,
-        inventoryCount: Int
+        masteredCount: Int
     ) {
         wipeAll(context: context, profileVM: profileVM)
 
         let profile = UserProfile(displayName: "Nico")
         context.insert(profile)
 
-        let state = seedRPGState(
-            profile: profile,
-            level: level,
-            lootboxCount: lootboxCount,
-            inventoryCount: inventoryCount
-        )
+        let state = seedRPGState(profile: profile, level: level)
         context.insert(state)
         seedCards(context: context, profile: profile, due: dueCount, mastered: masteredCount)
 
@@ -171,7 +127,7 @@ public enum TestFixtures {
         }
 
         profileVM.loadProfile()
-        logger.info("wipeAndSeed: level=\(level) due=\(dueCount) mastered=\(masteredCount) loot=\(lootboxCount) inv=\(inventoryCount)")
+        logger.info("wipeAndSeed: level=\(level) due=\(dueCount) mastered=\(masteredCount)")
     }
 
     /// Deletes every UserProfile + RPGState + Card so the next launch returns
@@ -187,6 +143,7 @@ public enum TestFixtures {
             CompanionChatMessage.self,
             VocabularyEncounter.self,
             VocabularyEntry.self,
+            ExerciseOutcomeLog.self,
         ]
         for entity in entities {
             do {
@@ -203,35 +160,6 @@ public enum TestFixtures {
         UserDefaults.standard.removeObject(forKey: ActiveProfileResolver.activeProfileIDKey)
         profileVM.loadProfile()
         logger.info("wipeAll: cleared all persisted state")
-    }
-
-    /// Appends a mock LootBox to the active profile's RPG state so a tester can
-    /// open it from the Rang tab and capture the open-modal flow.
-    @MainActor
-    public static func addLootbox(context: ModelContext) {
-        guard let state = ActiveProfileResolver.fetchActiveRPGState(in: context) else {
-            logger.warning("addLootbox skipped — no active profile")
-            return
-        }
-        let reward = LootItem(
-            category: .scroll,
-            rarity: .rare,
-            name: "Outils dev — Scroll de test",
-            iconName: "scroll.fill"
-        )
-        var boxes = state.lootBoxes
-        boxes.append(LootBox(
-            challengeType: .kanjiSpeed,
-            requiredScore: 5,
-            rewards: [reward]
-        ))
-        state.setLootBoxes(boxes)
-        do {
-            try context.save()
-            logger.info("addLootbox: now \(boxes.count) box(es)")
-        } catch {
-            logger.error("addLootbox save failed: \(error.localizedDescription)")
-        }
     }
 
     /// Bumps the active profile's XP past the next-level threshold so the Home
@@ -264,12 +192,23 @@ public enum TestFixtures {
         let kanjiPool = ["人", "日", "月", "火", "水", "木", "金", "土", "山", "川",
                          "口", "目", "耳", "手", "足", "心", "本", "車", "雨", "電"]
 
+        // Due cards: reps=2 (been seen before, now overdue) so they are
+        // classified as "review" items, not "new". Previously reps defaulted
+        // to 0, making every due card look like a brand-new card in the
+        // Home breakdown and inflating the NEW counter.
         for index in 0..<due {
             let glyph = kanjiPool[index % kanjiPool.count]
             let card = Card(
                 front: glyph,
                 back: "reading-\(index)",
                 type: .kanji,
+                fsrsState: FSRSState(
+                    difficulty: 5,
+                    stability: 1,
+                    reps: 2,
+                    lapses: 0,
+                    lastReview: now.addingTimeInterval(-60 * 60 * 24 * 2)
+                ),
                 interval: 1,
                 dueDate: now.addingTimeInterval(-Double(index) * 60)
             )
@@ -277,12 +216,20 @@ public enum TestFixtures {
             context.insert(card)
         }
 
+        // Mastered cards: reps=10 and due far in the future.
         for index in 0..<mastered {
             let glyph = kanjiPool[index % kanjiPool.count]
             let card = Card(
                 front: "\(glyph)\(index)",
                 back: "mastered-\(index)",
                 type: .kanji,
+                fsrsState: FSRSState(
+                    difficulty: 4,
+                    stability: 30,
+                    reps: 10,
+                    lapses: 0,
+                    lastReview: now.addingTimeInterval(-60 * 60 * 24 * 5)
+                ),
                 interval: 365,
                 dueDate: now.addingTimeInterval(60 * 60 * 24 * 30)
             )

@@ -20,3 +20,11 @@ extension EnvironmentValues {
         set { self[DisplayModeRepositoryKey.self] = newValue }
     }
 }
+
+extension Notification.Name {
+    /// Posted when the active profile's `DisplayMode` is changed from outside
+    /// the shared repository instance (e.g. the onboarding placement step,
+    /// which writes through a freshly-built repository). `MainTabView` observes
+    /// this to re-read its live `displayMode` without waiting for a relaunch.
+    static let displayModeDidChange = Notification.Name("ikeru.displayMode.didChange")
+}

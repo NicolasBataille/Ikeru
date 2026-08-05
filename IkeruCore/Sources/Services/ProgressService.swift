@@ -9,6 +9,11 @@ public struct SkillBalanceSnapshot: Sendable, Equatable {
     public let reading: Double
     public let writing: Double
     public let listening: Double
+    /// Speaking currently has no real signal (no `.speaking` card type and
+    /// no persisted speaking-exercise results reachable from
+    /// `CardRepository`), so `ProgressService` always reports 0 here — an
+    /// honest "no data yet" rather than the previous fake ease-factor
+    /// constant. See `ProgressService.computeSkillBalance`.
     public let speaking: Double
 
     public init(
@@ -21,6 +26,19 @@ public struct SkillBalanceSnapshot: Sendable, Equatable {
         self.writing = writing
         self.listening = listening
         self.speaking = speaking
+    }
+
+    /// Projects the four axes onto the `[SkillType: Double]` shape the
+    /// `LearnerSnapshot` (and thus the planner's skill-balance booster +
+    /// `skillImbalance`) consumes. Single source of truth for the mapping so
+    /// every snapshot construction site stays consistent.
+    public var asSkillBalances: [SkillType: Double] {
+        [
+            .reading: reading,
+            .writing: writing,
+            .listening: listening,
+            .speaking: speaking,
+        ]
     }
 }
 
@@ -127,11 +145,33 @@ public final class ProgressService: Sendable {
         let allCards = await cardRepository.allCards()
         let dueNow = await cardRepository.dueCards(before: now)
 
-        let skillBalance = computeSkillBalance(allCards: allCards)
+        // Review logs covering the 6-month snapshot window. Accuracy is
+        // derived from actual review grades — NOT from card `easeFactor`,
+        // which `gradeCard` never mutates (it stays at the 2.5 default and
+        // used to render as a constant ~0.71).
+        let calendar = Calendar.current
+        var windowStart = now
+        if let oldestMonth = calendar.date(byAdding: .month, value: -5, to: now),
+           let monthStart = calendar.date(
+               from: calendar.dateComponents([.year, .month], from: oldestMonth)
+           ) {
+            windowStart = monthStart
+        }
+        let reviewLogs = await cardRepository.allReviewLogs(from: windowStart, to: now)
+        let speakingAccuracy = await cardRepository.speakingAccuracyLast30()
+
+        let skillBalance = computeSkillBalance(
+            allCards: allCards,
+            speakingAccuracy: speakingAccuracy
+        )
         let jlptEstimate = computeJLPTReadinessEstimate(allCards: allCards, now: now)
         let dueTodayCount = computeDueTodayCount(allCards: allCards, now: now)
         let forecast = computeForecast(allCards: allCards, now: now)
-        let snapshots = computeMonthlySnapshots(allCards: allCards, now: now)
+        let snapshots = computeMonthlySnapshots(
+            allCards: allCards,
+            reviewLogs: reviewLogs,
+            now: now
+        )
 
         let elapsed = (CFAbsoluteTimeGetCurrent() - startTime) * 1000
         Logger.planner.info(
@@ -150,8 +190,13 @@ public final class ProgressService: Sendable {
 
     // MARK: - Skill Balance
 
-    /// Computes skill balance as fraction of mastered cards per type.
-    private func computeSkillBalance(allCards: [CardDTO]) -> SkillBalanceSnapshot {
+    /// Computes skill balance as fraction of mastered cards per type. The
+    /// speaking axis is not derivable from cards (no `.speaking` card type), so
+    /// the caller supplies `speakingAccuracy` from persisted shadowing outcomes.
+    private func computeSkillBalance(
+        allCards: [CardDTO],
+        speakingAccuracy: Double
+    ) -> SkillBalanceSnapshot {
         let masteredByType = Dictionary(grouping: allCards) { $0.type }
 
         func masteryRatio(for type: CardType) -> Double {
@@ -177,19 +222,12 @@ public final class ProgressService: Sendable {
             reading: readingRatio,
             writing: masteryRatio(for: .grammar),
             listening: masteryRatio(for: .listening),
-            speaking: estimateSpeakingScore(allCards: allCards)
+            // Speaking has no `.speaking` card type, so its signal comes from
+            // persisted shadowing outcomes (`ExerciseOutcomeLog`), aggregated by
+            // `CardRepository.speakingAccuracyLast30()` and passed in here. Still
+            // 0 ("no data yet") until the learner has completed shadowing drills.
+            speaking: speakingAccuracy
         )
-    }
-
-    /// Speaking is estimated from overall accuracy across all card types
-    /// (proxy for output ability until dedicated speaking exercises exist).
-    private func estimateSpeakingScore(allCards: [CardDTO]) -> Double {
-        let reviewed = allCards.filter { $0.fsrsState.reps > 0 }
-        guard !reviewed.isEmpty else { return 0 }
-        // Use average ease factor as a rough proxy (higher ease → better recall → better output)
-        let avgEase = reviewed.reduce(0.0) { $0 + $1.easeFactor } / Double(reviewed.count)
-        // Normalize: ease typically ranges 1.3..3.0, map to 0..1
-        return min(1.0, max(0, (avgEase - 1.3) / 1.7))
     }
 
     // MARK: - JLPT Estimate
@@ -210,10 +248,16 @@ public final class ProgressService: Sendable {
         allCards: [CardDTO],
         now: Date
     ) -> JLPTEstimate {
+        // Readiness-only placeholder snapshot: `JLPTReadinessFormula.compute`
+        // reads only the per-level mastery buckets (vocab/kanji/grammar counts,
+        // all derived from `allCards` by the builder) plus the listening axes.
+        // It never reads `skillBalances`, so this stays `[:]` — feeding real
+        // balances here would need `computeSkillBalance` and risk a cycle within
+        // the same service. Listening accuracy has no source here (dashboard
+        // load path), so 0 caps the listening axis honestly.
         let snapshot = LearnerSnapshotBuilder.build(
             cards: allCards,
             jlptLevel: .n5,
-            grammarPointsFamiliarPlus: 0,
             listeningAccuracyLast30: 0,
             listeningRecallLast30Days: 0,
             skillBalances: [:],
@@ -282,8 +326,11 @@ public final class ProgressService: Sendable {
     // MARK: - Monthly Snapshots
 
     /// Computes monthly snapshots for the last 6 months.
+    /// Accuracy is the share of successful grades (anything but `.again`)
+    /// among the review logs recorded in each month.
     private func computeMonthlySnapshots(
         allCards: [CardDTO],
+        reviewLogs: [ReviewLogDTO],
         now: Date
     ) -> [MonthlySnapshot] {
         let calendar = Calendar.current
@@ -308,20 +355,13 @@ public final class ProgressService: Sendable {
                 return lastReview < monthEnd && card.fsrsState.reps > 0
             }.count
 
-            // Accuracy proxy: average ease factor of cards reviewed in this month
-            let reviewedInMonth = allCards.filter { card in
-                guard let lastReview = card.fsrsState.lastReview else { return false }
-                return lastReview >= monthStart && lastReview < monthEnd
+            // Accuracy: share of good/easy grades among reviews logged in
+            // this month. Grades come from ReviewLog — the ease-factor
+            // proxy used before was constant (easeFactor is never mutated).
+            let logsInMonth = reviewLogs.filter { log in
+                log.timestamp >= monthStart && log.timestamp < monthEnd
             }
-
-            let accuracy: Double
-            if reviewedInMonth.isEmpty {
-                accuracy = 0
-            } else {
-                let avgEase = reviewedInMonth.reduce(0.0) { $0 + $1.easeFactor }
-                    / Double(reviewedInMonth.count)
-                accuracy = min(1.0, max(0, (avgEase - 1.3) / 1.7))
-            }
+            let accuracy = gradeAccuracy(of: logsInMonth)
 
             return MonthlySnapshot(
                 monthLabel: formatter.string(from: monthDate),
@@ -329,5 +369,15 @@ public final class ProgressService: Sendable {
                 accuracy: accuracy
             )
         }
+    }
+
+    /// Share of successful grades among the given logs. `.hard` counts as
+    /// a success — it means "slow but correct"; only `.again` is a mistake
+    /// (matching SessionViewModel's mistake tracking). Returns 0 when there
+    /// are no logs (no data yet).
+    private func gradeAccuracy(of logs: [ReviewLogDTO]) -> Double {
+        guard !logs.isEmpty else { return 0 }
+        let successes = logs.filter { $0.grade != .again }.count
+        return Double(successes) / Double(logs.count)
     }
 }

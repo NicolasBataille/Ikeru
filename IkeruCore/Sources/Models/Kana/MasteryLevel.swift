@@ -38,10 +38,15 @@ public enum MasteryLevel: Int, Sendable, CaseIterable, Codable {
     ///
     /// Rules:
     /// - `reps == 0` → `.new`
-    /// - `stability < 1.0` OR a recent lapse (within 2 days) → `.learning`
+    /// - `reps < 2` OR `stability < 1.0` OR a recent lapse (within 2 days) → `.learning`
     /// - `stability < 7.0` → `.familiar`
     /// - `stability < 60.0` → `.mastered`
     /// - `stability >= 60.0` → `.anchored`
+    ///
+    /// The `reps >= 2` gate keeps a single tap from promoting a card past
+    /// `.learning`: one 'Good' press yields stability ≈ 3.13 and one 'Easy'
+    /// ≈ 15.47, which would otherwise land at `.familiar` / `.mastered`
+    /// immediately and count toward exercise-unlock gates and JLPT readiness.
     public static func from(fsrsState state: FSRSState, now: Date = Date()) -> MasteryLevel {
         if state.reps == 0 {
             return .new
@@ -52,7 +57,7 @@ public enum MasteryLevel: Int, Sendable, CaseIterable, Codable {
             return now.timeIntervalSince(last) < 2 * 86_400
         }()
 
-        if state.stability < 1.0 || hasRecentLapse {
+        if state.reps < 2 || state.stability < 1.0 || hasRecentLapse {
             return .learning
         }
         if state.stability < 7.0 {

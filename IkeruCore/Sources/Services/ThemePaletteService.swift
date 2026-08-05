@@ -7,7 +7,7 @@ import Foundation
 public enum ThemePaletteService {
 
     /// Two-stop gradient palette expressed as RRGGBB UInt32s.
-    public struct Palette: Equatable, Sendable {
+    public struct Palette: Equatable, Hashable, Sendable {
         public let startHex: UInt32
         public let endHex: UInt32
 
@@ -17,10 +17,12 @@ public enum ThemePaletteService {
         }
     }
 
-    /// Default palette when no theme is equipped — matches the original gold XP bar.
+    /// Default palette when no theme is equipped — matches the original gold XP bar
+    /// (`IkeruTheme.Colors.ProgressBar`'s filled-segment gradient), unchanged in
+    /// appearance from before palette routing existed.
     public static let defaultPalette = Palette(
-        startHex: IkeruTheme.Colors.primaryAccent,
-        endHex: IkeruTheme.Colors.Rarity.legendary
+        startHex: IkeruTheme.Colors.ProgressBar.filledStart,
+        endHex: IkeruTheme.Colors.ProgressBar.filledEnd
     )
 
     /// Returns the palette for a given theme name, or the default if unknown/nil.

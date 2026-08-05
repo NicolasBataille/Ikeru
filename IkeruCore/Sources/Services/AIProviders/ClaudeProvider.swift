@@ -4,7 +4,7 @@ import os
 // MARK: - ClaudeProvider
 
 /// AI provider for Anthropic Claude via REST API.
-/// Session token is retrieved from iOS Keychain at runtime -- never hardcoded.
+/// API key is retrieved from iOS Keychain at runtime -- never hardcoded.
 public final class ClaudeProvider: AIProvider, @unchecked Sendable {
 
     public let name = "Claude"
@@ -36,22 +36,17 @@ public final class ClaudeProvider: AIProvider, @unchecked Sendable {
     public var isAvailable: Bool {
         get async {
             guard networkChecker.isOnline else { return false }
-            do {
-                let token = try keychainStore.load(key: KeychainKeys.claudeSessionToken)
-                return token != nil && !(token?.isEmpty ?? true)
-            } catch {
-                return false
-            }
+            let token = resolveAPIKey()
+            return token != nil && !(token?.isEmpty ?? true)
         }
     }
 
     public func generate(prompt: AIPrompt) async throws -> AIResponse {
         let start = ContinuousClock.now
 
-        // Retrieve session token
-        guard let token = try? keychainStore.load(key: KeychainKeys.claudeSessionToken),
-              !token.isEmpty else {
-            throw AIError.keyNotFound(KeychainKeys.claudeSessionToken)
+        // Retrieve API key
+        guard let token = resolveAPIKey(), !token.isEmpty else {
+            throw AIError.keyNotFound(KeychainKeys.claudeAPIKey)
         }
 
         // Build request
@@ -75,7 +70,10 @@ public final class ClaudeProvider: AIProvider, @unchecked Sendable {
 
         if httpResponse.statusCode == 429 {
             Logger.ai.warning("Claude rate limited")
-            throw AIError.rateLimited(.claude)
+            let retryAfter = RetryAfterParsing.parseRetryAfterHeader(
+                httpResponse.value(forHTTPHeaderField: "Retry-After")
+            )
+            throw AIError.rateLimited(.claude, retryAfter: retryAfter)
         }
 
         guard (200..<300).contains(httpResponse.statusCode) else {
@@ -102,6 +100,33 @@ public final class ClaudeProvider: AIProvider, @unchecked Sendable {
 
     // MARK: - Private Helpers
 
+    /// Load the Claude API key from the Keychain, with a one-time read-migration
+    /// from the legacy session-token key. If only the legacy key holds a value,
+    /// it is copied to `claudeAPIKey` and the legacy entry is deleted.
+    private func resolveAPIKey() -> String? {
+        if let key = try? keychainStore.load(key: KeychainKeys.claudeAPIKey),
+           !key.isEmpty {
+            return key
+        }
+
+        // One-time migration from the deprecated session-token key.
+        guard let legacy = try? keychainStore.load(key: KeychainKeys.claudeSessionToken),
+              !legacy.isEmpty else {
+            return nil
+        }
+
+        do {
+            try keychainStore.save(key: KeychainKeys.claudeAPIKey, value: legacy)
+            try keychainStore.delete(key: KeychainKeys.claudeSessionToken)
+            Logger.ai.info("Migrated legacy Claude session token to API key storage")
+        } catch {
+            // Migration failure is non-fatal -- the legacy value is still usable.
+            Logger.ai.warning("Claude key migration failed: \(error.localizedDescription)")
+        }
+
+        return legacy
+    }
+
     private func buildRequest(prompt: AIPrompt, token: String) throws -> URLRequest {
         guard let url = URL(string: Self.baseURL) else {
             throw AIError.invalidResponse
@@ -118,9 +143,12 @@ public final class ClaudeProvider: AIProvider, @unchecked Sendable {
             model: model,
             maxTokens: 1024,
             system: prompt.systemPrompt,
-            messages: [
-                ClaudeMessage(role: "user", content: prompt.userMessage)
-            ]
+            messages: prompt.messages.map { message in
+                ClaudeMessage(
+                    role: message.role == .user ? "user" : "assistant",
+                    content: message.text
+                )
+            }
         )
 
         request.httpBody = try JSONEncoder().encode(body)

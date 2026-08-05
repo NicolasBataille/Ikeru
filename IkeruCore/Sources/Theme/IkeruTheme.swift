@@ -66,6 +66,22 @@ public enum IkeruTheme {
             public static let epic: UInt32 = 0x9580B5
             public static let legendary: UInt32 = 0xD4A574
         }
+
+        // MARK: Progress Bar — session rail gradient stops (single source of
+        // truth for every XP/progress bar; see `ThemePaletteService`).
+        public enum ProgressBar {
+            /// Filled-segment gradient: completed progress. This is the
+            /// ungated default — `ThemePaletteService` swaps it per equipped
+            /// cosmetic theme, so this pair must stay in sync with the
+            /// visual a fresh install has always shown.
+            public static let filledStart: UInt32 = 0xE5BC8A
+            public static let filledEnd: UInt32 = IkeruTheme.Colors.primaryAccent
+            /// Active-segment gradient: the current in-progress step.
+            /// Neutral and NOT theme-routed — it signals cursor position,
+            /// not earned progress, so cosmetics shouldn't recolor it.
+            public static let activeStart: UInt32 = IkeruTheme.Colors.textPrimary
+            public static let activeEnd: UInt32 = 0xE0DDD7
+        }
     }
 
     // MARK: - Typography
@@ -78,6 +94,14 @@ public enum IkeruTheme {
             public static let mono = "SFMono"
         }
 
+        /// Base point sizes at the default Dynamic Type content size (Large).
+        ///
+        /// These are NOT fixed render sizes: the app-layer `Font` factories
+        /// (`FontExtensions.swift` in the app target) scale them with the
+        /// user's Dynamic Type setting — custom fonts via
+        /// `Font.custom(_:size:relativeTo:)` and system fonts via text-style
+        /// variants or `UIFontMetrics`. IkeruCore stays SwiftUI-free, so the
+        /// text-style anchors live at the app layer, next to the factories.
         public enum Size {
             // Display — for hero moments
             public static let displayLarge: CGFloat = 56

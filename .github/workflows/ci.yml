@@ -10,6 +10,17 @@ on:
     branches: [master, dev]
   pull_request:
     branches: [master, dev]
+  # Manual re-run — lets us re-trigger a TestFlight deploy (e.g. after a
+  # transient Apple-side upload failure) without pushing an empty commit
+  # to master. Run it from the Actions tab on the `master` ref with
+  # `deploy_testflight: true`; with the input left false it just re-runs
+  # lint/build/test/device-build.
+  workflow_dispatch:
+    inputs:
+      deploy_testflight:
+        description: "Also run the TestFlight deploy job"
+        type: boolean
+        default: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -21,11 +32,16 @@ jobs:
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Full history so the changed-files step below can diff against
+          # origin/<base-ref> — the default shallow (depth-1) clone only
+          # has HEAD and can't compute that merge-base.
+          fetch-depth: 0
 
       - name: Install SwiftLint
         run: brew install swiftlint
 
-      - name: Run SwiftLint
+      - name: Run SwiftLint (whole repo, non-strict)
         # `--strict` promotes warnings to errors — the legacy codebase has
         # ~200 stylistic warnings (identifier_name on short var names,
         # comma spacing, etc.). The gate stays informational for now: the
@@ -33,10 +49,50 @@ jobs:
         # unwraps, hard violations) still fail the job.
         run: swiftlint lint --reporter github-actions-logging
 
+      - name: SwiftLint --strict on changed lines (PRs only)
+        # Holds *new* code to the strict standard (warnings fail the job)
+        # without blocking on the legacy backlog above. Diff-HUNK aware:
+        # a violation only fails the job if it sits on a line this PR
+        # touched (whole-file linting false-blocked PR #54 on pre-existing
+        # size violations in a lightly-touched 1500-line legacy file).
+        # File-level rules (file_length/type_body_length) only count for
+        # files ADDED by the PR — see scripts/swiftlint-diff-filter.py.
+        # Only meaningful on a pull_request event; no-ops on push.
+        if: github.event_name == 'pull_request'
+        run: |
+          git fetch origin "${{ github.base_ref }}:refs/remotes/origin/${{ github.base_ref }}" --force
+          CHANGED_SWIFT_FILES=$(git diff --name-only --diff-filter=ACMR "origin/${{ github.base_ref }}...HEAD" -- '*.swift')
+          if [ -z "$CHANGED_SWIFT_FILES" ]; then
+            echo "No changed Swift files — skipping strict lint."
+            exit 0
+          fi
+          echo "Changed Swift files:"
+          echo "$CHANGED_SWIFT_FILES"
+          echo "$CHANGED_SWIFT_FILES" | xargs swiftlint lint --reporter json --quiet \
+            | python3 scripts/swiftlint-diff-filter.py "origin/${{ github.base_ref }}"
+
+  i18n-lint:
+    name: i18n Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run i18n lint
+        # Reconstructs the LocalizedStringKey SwiftUI generates for every
+        # Text(...) call site in the app target and checks it against
+        # Localizable.xcstrings (missing key, missing FR, or a %lld/%@
+        # specifier mismatch — see scripts/i18n-lint.py). Only fails on
+        # violations not already captured in the baseline, so today's
+        # backlog stays green and only *new* leaks block CI.
+        run: python3 scripts/i18n-lint.py --baseline scripts/i18n-lint-baseline.json
+
   build:
     name: Build (${{ matrix.scheme }})
     runs-on: macos-15
     needs: lint
+    permissions:
+      contents: read
+      pull-requests: write
     strategy:
       fail-fast: false
       matrix:
@@ -63,12 +119,39 @@ jobs:
 
       - name: Build ${{ matrix.scheme }}
         run: |
+          set -o pipefail
           xcodebuild build \
             -project Ikeru.xcodeproj \
             -scheme ${{ matrix.scheme }} \
             -destination "${{ matrix.destination }}" \
             -skipPackagePluginValidation \
-            CODE_SIGNING_ALLOWED=NO
+            CODE_SIGNING_ALLOWED=NO 2>&1 | tee "build-${{ matrix.scheme }}.log"
+
+      - name: Surface compiler errors on failure
+        if: failure() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let log = '';
+            try { log = fs.readFileSync(`build-${{ matrix.scheme }}.log`, 'utf8'); } catch (e) { return; }
+            const errs = [...new Set(
+              log.split('\n').filter(l => /(error:|fatal error:|: error)/.test(l))
+            )].slice(0, 40);
+            if (errs.length === 0) return;
+            const body = [
+              `**Build (${{ matrix.scheme }}) failed — compiler errors:**`,
+              '',
+              '```',
+              errs.join('\n'),
+              '```'
+            ].join('\n');
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body
+            });
 
   test:
     name: Test
@@ -80,14 +163,39 @@ jobs:
       - name: Select Xcode
         run: sudo xcode-select -s "$(ls -d /Applications/Xcode*.app | sort -V | tail -1)/Contents/Developer"
 
-      - name: Run IkeruCore Tests (green subset)
-        # Scoped to known-green Spec A/B/C suites + Daily Term. The full
-        # `swift test` currently SIGSEGVs in the legacy KanaCardRepository
-        # and PlannerService test suites — those need cleanup before this
-        # filter can be removed. TODO: drop --filter once stale tests fixed.
+      - name: Run IkeruCore Tests (CI-safe allowlist)
+        # We can't run the *whole* IkeruCore suite here: the macos-15 runner's
+        # Xcode ships Swift Testing library 1501, which SIGSEGVs mid-run on a
+        # legacy suite that never surfaces on newer toolchains (local Swift
+        # 6.3.3 / library 1902 runs the full suite clean, so it's unbisectable
+        # locally). `swift test --skip …` reproduces the crash; an allowlist
+        # avoids it by never *executing* the crasher. So this stays a `--filter`
+        # allowlist of suites verified to pass on CI. Newly-fixed suites are
+        # added here after CI confirms they don't reintroduce the crash.
+        # Un-filtering fully is blocked on the runner toolchain, not our tests.
+        #
+        # `--no-parallel` + a SEPARATE step for LegacyStoreMigration (below):
+        # opening a container with the frozen V1 shapes (IkeruSchema.swift)
+        # poisons CoreData's process-global entity↔class cache for the
+        # "RPGState" entity — after that, V2 fetches in the SAME process can
+        # materialize the wrong class and crash ("Failed to cast model ...").
+        # Serializing isn't enough (the poisoning persists after the suite
+        # finishes), so the migration suite runs in its own `swift test`
+        # process in the next step, and is deliberately named so this step's
+        # "IkeruSchema" token does not match it. `--no-parallel` here still
+        # guards the residual concurrent-model-loading race. Test-harness-only:
+        # production builds exactly one container.
         run: |
           cd IkeruCore
-          swift test --filter "JLPTReadinessFormula|JLPTBackfill|BadgeRamping|ProgressServiceJLPTRebuild|SkillXPLedger|LootDropService|SessionEnd|ExerciseXP|DailyTerm|SessionPlanner.DefaultSessionPlanner|ExerciseUnlockService|LearnerSnapshot|CardDTOJLPTLevel|BackupServiceJLPTLevel"
+          swift test --no-parallel --filter "JLPTReadinessFormula|JLPTBackfill|ProgressServiceJLPTRebuild|SkillXPLedger|SessionEnd|ExerciseXP|ExerciseOutcome|DailyTerm|DefaultSessionPlanner|ExerciseUnlockService|LearnerSnapshot|CardDTOJLPTLevel|BackupServiceJLPTLevel|(^|[^a])CardRepository|ProgressService|MasteryLevel|DisplayModeAdvancedThresholdMonitor|IkeruSchema|PlannerService|KanaCardRepository|ContentSeedService|ReviewForecastService|KanaProgress|VocabularyItemMapper|VocabularyRecallOptionsBuilder|MultiTurnConversation|ChatMarkerParsing|ConversationService|AIRouter|Gemini|OpenAICompatible|ClaudeProvider|AIProvider|RetryAfterParsing|ReadingValidator|ContentRepository|FSRSService|VocabularyRepository|ThemePaletteService|LeechIntervention"
+
+      - name: Run Legacy-Store Migration Tests (own process)
+        # See the previous step's comment: this suite must never share a
+        # process with other SwiftData suites. It is the regression guard for
+        # the release-blocking a7371a3-store migration bug.
+        run: |
+          cd IkeruCore
+          swift test --no-parallel --filter "LegacyStoreMigration"
 
       - name: Run App Tests (green subset)
         # Same — scoped to suites known to pass. KanaDrillViewModel covers
@@ -122,6 +230,17 @@ jobs:
             -destination "platform=iOS Simulator,id=$DEVICE_ID" \
             -skipPackagePluginValidation \
             -only-testing:IkeruTests/KanaDrillViewModelTests \
+            -only-testing:IkeruTests/SessionDecouplingTests \
+            -only-testing:IkeruTests/Tier1KanjiStudyBookkeepingTests \
+            -only-testing:IkeruTests/Tier2AudioDrillCompletionTests \
+            -only-testing:IkeruTests/Tier2VocabRecallTests \
+            -only-testing:IkeruTests/DrillGradeMappingTests \
+            -only-testing:IkeruTests/DataExportManagerTests \
+            -only-testing:IkeruTests/SessionViewModelTests \
+            -only-testing:IkeruTests/SessionIntegrationTests \
+            -only-testing:IkeruTests/WidgetSnapshotStoreTests \
+            -only-testing:IkeruTests/StoreRecoveryTests \
+            -only-testing:IkeruTests/StoreRecoveryNoticeTests \
             CODE_SIGNING_ALLOWED=NO
 
   device-build-check:
@@ -147,8 +266,12 @@ jobs:
   deploy-testflight:
     name: Deploy to TestFlight
     runs-on: macos-15
-    needs: [lint, build, test, device-build-check]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    needs: [lint, build, test, device-build-check, i18n-lint]
+    # Deploys on every push to master, or on a manual workflow_dispatch run
+    # with the `deploy_testflight` input checked (re-trigger a deploy
+    # without an empty commit). Dispatch deploys are pinned to master so a
+    # dev-ref dispatch can never ship a non-release build to TestFlight.
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/master') || (github.event_name == 'workflow_dispatch' && inputs.deploy_testflight == true && github.ref == 'refs/heads/master')
     environment:
       name: testflight
       url: https://appstoreconnect.apple.com/apps

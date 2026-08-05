@@ -4,9 +4,11 @@
 <dict>
 	<key>UIAppFonts</key>
 	<array>
-		<string>NotoSerifJP-Bold.otf</string>
-		<string>NotoSerifJP-Medium.otf</string>
+		<string>NotoSerifJP-Bold.ttf</string>
+		<string>NotoSerifJP-Medium.ttf</string>
 	</array>
+	<key>NSSupportsLiveActivities</key>
+	<true/>
 	<key>UIUserInterfaceStyle</key>
 	<string>Dark</string>
 	<key>NSMicrophoneUsageDescription</key>
@@ -20,6 +22,19 @@
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>fetch</string>
+	</array>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.ikeru.app</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>ikeru</string>
+			</array>
+		</dict>
 	</array>
 </dict>
 </plist>

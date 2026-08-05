@@ -28,15 +28,15 @@ struct IkeruWidget: Widget {
 
 struct IkeruTimelineProvider: TimelineProvider {
     func placeholder(in context: Context) -> IkeruWidgetEntry {
-        IkeruWidgetEntry(date: Date())
+        .placeholder
     }
 
     func getSnapshot(in context: Context, completion: @escaping @Sendable (IkeruWidgetEntry) -> Void) {
-        completion(IkeruWidgetEntry(date: Date()))
+        completion(IkeruWidgetEntry.current())
     }
 
     func getTimeline(in context: Context, completion: @escaping @Sendable (Timeline<IkeruWidgetEntry>) -> Void) {
-        let entry = IkeruWidgetEntry(date: Date())
+        let entry = IkeruWidgetEntry.current()
         let timeline = Timeline(entries: [entry], policy: .after(Date().addingTimeInterval(3600)))
         completion(timeline)
     }
@@ -46,6 +46,21 @@ struct IkeruTimelineProvider: TimelineProvider {
 
 struct IkeruWidgetEntry: TimelineEntry {
     let date: Date
+    let dueCount: Int
+    let level: Int
+
+    /// Shown before the app has ever written a snapshot (fresh install, or
+    /// the app-group container isn't reachable). Note: shows "Lv. 1" — the
+    /// pre-channel widget had no level line at all, so this is a neutral
+    /// default rather than a byte-identical recreation of the old look.
+    static let placeholder = IkeruWidgetEntry(date: Date(), dueCount: 0, level: 1)
+
+    /// Reads the app-group snapshot written by `WidgetSnapshotRefresher`,
+    /// falling back to `placeholder` when nothing has been written yet.
+    static func current() -> IkeruWidgetEntry {
+        guard let snapshot = WidgetSnapshotStore.read() else { return .placeholder }
+        return IkeruWidgetEntry(date: Date(), dueCount: snapshot.dueCount, level: snapshot.level)
+    }
 }
 
 // MARK: - Widget View
@@ -59,8 +74,17 @@ struct IkeruWidgetEntryView: View {
                 .font(.title)
             Text("Ikeru")
                 .font(.headline)
-            Text("Study time!")
-                .font(.caption)
+            if entry.dueCount > 0 {
+                Text("\(entry.dueCount) due")
+                    .font(.caption)
+            } else {
+                Text("Study time!")
+                    .font(.caption)
+            }
+            Text("Lv. \(entry.level)")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
         }
+        .widgetURL(WidgetDeepLink.review)
     }
 }

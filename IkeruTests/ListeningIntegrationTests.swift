@@ -202,20 +202,10 @@ struct ListeningIntegrationTests {
         #expect(audioService.currentRate == .fast)
     }
 
-    // MARK: - Silent Mode Integration
-
-    @Test("Silent mode detection is accessible from ViewModel")
-    func silentModeAccessible() {
-        let audioService = AudioService()
-        let vm = ListeningViewModel(
-            audioService: audioService,
-            vocabulary: makeSampleVocabulary(),
-            passages: makeSamplePassages()
-        )
-
-        // Property should be accessible (actual value depends on device state)
-        let _ = vm.shouldSkipAudioExercises
-    }
+    // Silent Mode Integration test removed (remediation 7.9):
+    // `ListeningViewModel.shouldSkipAudioExercises` / `AudioService.isSilentMode`
+    // detected `outputVolume == 0.0` — the volume slider, not the physical mute
+    // switch — and have been removed as an unreliable signal.
 
     // MARK: - AudioService TTS Playback Tests
 

@@ -21,16 +21,17 @@ struct HintChip: View {
                 Image(systemName: icon)
                     .font(.system(size: 10, weight: .medium))
                 Text(label)
-                    .font(.system(size: 11, weight: .medium))
+                    .ikeruScaledFont(11, weight: .medium, relativeTo: .caption2)
             }
             .foregroundStyle(Color.ikeruTextSecondary)
             .padding(.horizontal, 10)
             .padding(.vertical, 5)
             .background {
-                Capsule()
+                Rectangle()
                     .fill(Color.white.opacity(0.04))
-                    .overlay(Capsule().strokeBorder(Color.white.opacity(0.08), lineWidth: 0.6))
+                    .overlay(Rectangle().strokeBorder(TatamiTokens.goldDim.opacity(0.5), lineWidth: 0.6))
             }
+            .sumiCorners(color: TatamiTokens.goldDim, size: 5, weight: 0.9)
         }
         .buttonStyle(.plain)
     }

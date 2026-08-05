@@ -23,12 +23,20 @@ public final class RPGState {
     public var attributesData: Data?
 
     /// JSON-encoded LootItem array. Use `lootInventory`/`setLootInventory(_:)` accessors.
+    /// Dormant since loot retirement 2026-07-15 — no new items are ever added
+    /// (the drop/lootbox pipeline was removed); kept verbatim, along with
+    /// `LootItem`'s exact stored shape, so existing profiles' inventories
+    /// still decode without a SwiftData migration.
     public var lootInventoryData: Data?
 
     /// JSON-encoded LootBox array. Use `lootBoxes`/`setLootBoxes(_:)` accessors.
+    /// Dormant since loot retirement 2026-07-15 — same rationale as
+    /// `lootInventoryData` above.
     public var lootBoxesData: Data?
 
     /// Total sessions completed (used for lootbox milestone detection).
+    /// The milestone detection itself was removed with the loot pipeline
+    /// (2026-07-15); the counter is still written for streak/XP bookkeeping.
     public var totalSessionsCompleted: Int
 
     /// Currently equipped title item id (category == .title). Nil if none.
@@ -45,8 +53,10 @@ public final class RPGState {
     /// the unlock service doesn't re-award them.
     public var acknowledgedUnlocksData: Data?
 
-    /// Count of consecutive sessions that ended with zero drops.
-    /// Resets to 0 on any drop. Drives the pity timer in LootDropService.
+    /// Count of consecutive sessions that ended with zero drops. Dormant
+    /// since loot retirement 2026-07-15 — the pity-timer behavior that used
+    /// to read/increment this (`LootDropService`) was removed; the field is
+    /// left frozen at its last value to avoid a schema migration.
     public var sessionsSinceLastDrop: Int = 0
 
     /// Date of the most recent completed session (day-resolution matters).
@@ -58,6 +68,14 @@ public final class RPGState {
 
     /// Highest daily streak reached, for posterity.
     public var longestDailyStreak: Int = 0
+
+    /// Lifetime count of distinct calendar days with at least one completed
+    /// session (not a streak — a gap doesn't reset it). Feeds the
+    /// `OR active days ≥ 30` path of `DisplayModeAdvancedThresholdMonitor`.
+    /// Existing rows decode as `0` (conservative: pre-existing profiles start
+    /// this count fresh rather than backfilling an approximation from
+    /// `totalSessionsCompleted`, which would overcount multi-session days).
+    public var activeDaysCount: Int = 0
 
     /// One-shot JLPT backfill schema version. `0` means the backfill has not
     /// run yet; `1` means it has completed. Existing rows decode as `0` so

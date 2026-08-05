@@ -1,0 +1,538 @@
+/* ============================================================
+   components.css — HTML/CSS mirrors of the Tatami / Ikeru
+   SwiftUI components. Each block cites the Swift source it
+   transcribes. Class names ≈ Swift type names.
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   TatamiRoom (TatamiRoom.swift)
+   Solid fill, 0px corner radius, paired fusuma rails top+bottom,
+   four sumi corner marks (injected by rig.js as <i class="sumi">).
+   ------------------------------------------------------------ */
+.room {
+  position: relative;
+  background: var(--room-standard-fill);           /* .standard fill (TatamiRoom.swift:48) */
+  padding: 18px;                                    /* default padding (TatamiRoom.swift:100) */
+  --room-rail: rgba(138, 109, 74, 0.7);             /* goldDim @ railOpacity .7 (L74-86) */
+  --room-corner: var(--gold-dim);
+  --sumi-size: 10px;
+  --sumi-weight: 1.5px;
+}
+.room--accent {
+  background: linear-gradient(to bottom, var(--room-accent-top), var(--room-accent-bottom)); /* L50-58 */
+  --room-rail: var(--gold);
+  --room-corner: var(--gold);
+}
+.room--glass {
+  /* .glass = warm gradient over ultraThinMaterial (TatamiRoom.swift:60-69) */
+  background: linear-gradient(to bottom, var(--room-glass-top), var(--room-glass-bottom));
+  backdrop-filter: blur(22px) saturate(1.15);
+  -webkit-backdrop-filter: blur(22px) saturate(1.15);
+  --room-rail: var(--gold);
+  --room-corner: var(--gold);
+}
+/* Fusuma rails: 1px rail line / 1px gap / 1px ink shadow (FusumaRail.swift).
+   Top rail = gold above, ink below. Bottom rail inverted. */
+.room::before, .room::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0;
+  height: 3px;
+  pointer-events: none;
+}
+.room::before {
+  top: 0;
+  background: linear-gradient(to bottom,
+    var(--room-rail) 0 1px, transparent 1px 2px, rgba(0,0,0,0.7) 2px 3px);
+}
+.room::after {
+  bottom: 0;
+  background: linear-gradient(to bottom,
+    rgba(0,0,0,0.7) 0 1px, transparent 1px 2px, var(--room-rail) 2px 3px);
+}
+
+/* ------------------------------------------------------------
+   SumiCornerFrame (SumiCornerFrame.swift) — four L-marks sitting
+   2px outside the host rect (inset -2). Injected by rig.js into
+   .room and .has-sumi elements.
+   ------------------------------------------------------------ */
+.sumi {
+  position: absolute;
+  inset: calc(-1 * var(--sumi-inset, 2px));
+  pointer-events: none;
+  color: var(--room-corner, var(--gold-dim));
+  background:
+    linear-gradient(currentColor, currentColor) left top    / var(--sumi-size, 10px) var(--sumi-weight, 1.5px) no-repeat,
+    linear-gradient(currentColor, currentColor) left top    / var(--sumi-weight, 1.5px) var(--sumi-size, 10px) no-repeat,
+    linear-gradient(currentColor, currentColor) right top   / var(--sumi-size, 10px) var(--sumi-weight, 1.5px) no-repeat,
+    linear-gradient(currentColor, currentColor) right top   / var(--sumi-weight, 1.5px) var(--sumi-size, 10px) no-repeat,
+    linear-gradient(currentColor, currentColor) left bottom / var(--sumi-size, 10px) var(--sumi-weight, 1.5px) no-repeat,
+    linear-gradient(currentColor, currentColor) left bottom / var(--sumi-weight, 1.5px) var(--sumi-size, 10px) no-repeat,
+    linear-gradient(currentColor, currentColor) right bottom/ var(--sumi-size, 10px) var(--sumi-weight, 1.5px) no-repeat,
+    linear-gradient(currentColor, currentColor) right bottom/ var(--sumi-weight, 1.5px) var(--sumi-size, 10px) no-repeat;
+}
+
+/* ------------------------------------------------------------
+   KintsugiHairline (KintsugiHairline.swift) — gold seam fading
+   at both ends. maxOpacity default 0.85.
+   ------------------------------------------------------------ */
+.kintsugi-hairline {
+  height: 1px;
+  background: linear-gradient(to right,
+    transparent, rgba(212, 165, 116, 0.85), transparent);
+}
+
+/* Standalone fusuma rail (FusumaRail.swift) */
+.fusuma-rail {
+  height: 3px;
+  background: linear-gradient(to bottom,
+    var(--gold) 0 1px, transparent 1px 2px, rgba(0,0,0,0.7) 2px 3px);
+}
+.fusuma-rail--inverted {
+  background: linear-gradient(to bottom,
+    rgba(0,0,0,0.7) 0 1px, transparent 1px 2px, var(--gold) 2px 3px);
+}
+
+/* ------------------------------------------------------------
+   HankoStamp (HankoStamp.swift) — vermilion irregular seal,
+   serif kanji in paper white. The ONLY red allowed per screen.
+   ------------------------------------------------------------ */
+.hanko {
+  --hanko-size: 32px;
+  width: var(--hanko-size);
+  height: var(--hanko-size);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--vermilion);
+  opacity: 0.95;
+  /* HankoMaskShape corner offsets (HankoStamp.swift:38-45) */
+  clip-path: polygon(2% 0%, 98% 1%, 100% 97%, 1% 99%);
+  color: #F5F2EC;
+  font-family: var(--font-serif);
+  font-weight: 700;
+  font-size: calc(var(--hanko-size) * 0.55); /* size * 0.55 (L28) */
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+/* ------------------------------------------------------------
+   MonCrest (MonCrest.swift) — geometric crest, injected as inline
+   SVG by rig.js. <span class="mon" data-kind="asanoha"></span>
+   Sized by --mon-size, stroked in currentColor.
+   ------------------------------------------------------------ */
+.mon {
+  display: inline-flex;
+  width: var(--mon-size, 14px);
+  height: var(--mon-size, 14px);
+  color: var(--gold);
+  flex-shrink: 0;
+}
+.mon svg { width: 100%; height: 100%; display: block; }
+
+/* ------------------------------------------------------------
+   BilingualLabel (BilingualLabel.swift, tatami mode) —
+   [mon] serif JP 12px tracking 1.5 · CHROME 10px tracking 2.4
+   ------------------------------------------------------------ */
+.bilingual {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.bilingual .mon { --mon-size: 11px; color: var(--gold-dim); }
+.bilingual .jp {
+  font: 500 12px/1 var(--font-serif);
+  color: var(--text-secondary);
+  letter-spacing: 1.5px;
+}
+.bilingual .dot { color: var(--paper-ghost); font-size: 12px; line-height: 1; }
+.bilingual .chrome {
+  font: 600 10px/1 var(--font-system);
+  color: var(--paper-ghost);
+  letter-spacing: 2.4px;
+  text-transform: uppercase;
+}
+
+/* ------------------------------------------------------------
+   SerifNumeral (SerifNumeral.swift) — all numerals in serif.
+   ------------------------------------------------------------ */
+.serif-num {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  color: var(--text-primary);
+  line-height: 1;
+  font-variant-numeric: proportional-nums;
+}
+
+/* ------------------------------------------------------------
+   IkeruCard glass panel (IkeruCard.swift / IkeruGlass.swift) —
+   rounded glass surface used by pre-Tatami surfaces (daily-term
+   banner, toast host, chat).
+   ------------------------------------------------------------ */
+.glass-panel {
+  position: relative;
+  background:
+    linear-gradient(to bottom, rgba(255,255,255,0.10), rgba(255,255,255,0.0) 55%),
+    var(--glass-fill);
+  backdrop-filter: blur(24px) saturate(1.2);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
+  border: 0.6px solid rgba(255,255,255,0.14); /* stroke gradient .18→.04 approximated */
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-card);
+}
+
+/* ------------------------------------------------------------
+   IkeruButtonStyle (IkeruButtonStyle.swift)
+   ------------------------------------------------------------ */
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 54px;                 /* default minHeight (L66) */
+  padding: 0 24px;                  /* Spacing.lg horizontal (L74) */
+  border: none;
+  font: 600 17px/1 var(--font-system); /* bodyLarge semibold (L92) */
+  letter-spacing: -0.2px;
+  cursor: pointer;
+}
+.btn--primary {
+  background:
+    linear-gradient(to bottom, rgba(255,255,255,0.13), rgba(255,255,255,0.02) 60%),
+    var(--grad-gold);               /* ikeruGold + glass edge sheen (L113-119) */
+  color: #1A1218;                   /* foreground (L100) */
+  border-radius: var(--r-lg);       /* Radius.lg (L82) */
+  border-top: 0.8px solid rgba(255,255,255,0.45);
+  box-shadow: 0 8px 24px rgba(212,165,116,0.35); /* gold shadow (L225) */
+}
+.btn--secondary {
+  background: var(--glass-fill);
+  color: var(--gold);
+  border-radius: var(--r-md);
+  border: 1px solid rgba(212,165,116,0.45); /* gold stroke .6→.25 approx (L152-163) */
+}
+.btn--danger {
+  background: var(--glass-fill);
+  color: var(--danger);
+  border-radius: var(--r-md);
+  border: 1px solid rgba(201,112,100,0.55); /* (L175-180) */
+}
+.btn--ghost {
+  background: none;
+  color: var(--text-secondary);
+  min-height: 40px;
+  font: 500 15px/1 var(--font-system);
+}
+
+/* Tatami CTA — sharp gold bar with serif JP + tracked Latin
+   (HomeView.swift:414-432 / SessionSummaryView actions / CompanionTabView).
+   No radius; sumi corners in ink @ 60%. */
+.cta-tatami {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 0;
+  background: var(--gold);
+  color: var(--bg);
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  --room-corner: rgba(10, 10, 15, 0.6);
+  --sumi-size: 6px;
+  --sumi-weight: 1.2px;
+  --sumi-inset: 1px;
+}
+.cta-tatami .jp { font: 500 13px/1 var(--font-serif); }
+.cta-tatami .latin { font: 700 13px/1 var(--font-system); letter-spacing: 1.6px; }
+
+/* ------------------------------------------------------------
+   XPBarView (XPBarView.swift) — full (8px) and compact (4px).
+   ------------------------------------------------------------ */
+.xp-bar {
+  position: relative;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--surface);        /* track (L107) */
+  overflow: hidden;
+}
+.xp-bar--compact { height: 4px; border-radius: 2px; }
+.xp-bar .fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: inherit;
+  background: var(--grad-xp-rail);   /* amber→gold (ThemePalette default) */
+}
+
+/* SegmentedXPBarView (SegmentedXPBarView.swift) — 12 ticks, 3px gaps,
+   8px tall, radius 2, "carved not drawn". */
+.xp-segmented {
+  display: flex;
+  gap: 3px;
+  height: 8px;
+}
+.xp-segmented i {
+  flex: 1;
+  border-radius: 2px;
+  background: rgba(255,255,255,0.06); /* empty tick (L41) */
+}
+.xp-segmented i.on {
+  background: var(--grad-xp-segment);
+  box-shadow: 0 0 3px rgba(212,165,116,0.35); /* (L58) */
+}
+.xp-segmented i.half {
+  background: linear-gradient(to right, #D4A574 50%, rgba(255,255,255,0.06) 50%);
+}
+
+/* ------------------------------------------------------------
+   SessionProgressBar (SessionProgressBar.swift) — time labels +
+   5-segment fusuma scroll line framed by paired rails.
+   ------------------------------------------------------------ */
+.session-progress { padding: 0 16px; }
+.session-progress .times {
+  display: flex;
+  justify-content: space-between;
+  font: 500 14px/1 var(--font-mono);
+  margin-bottom: 10px;
+}
+.session-progress .times .elapsed { color: var(--text-secondary); }
+.session-progress .times .remaining { color: var(--text-tertiary); }
+.session-progress .segments {
+  position: relative;
+  display: flex;
+  gap: 4px;
+  height: 6px;
+  padding: 4px 0;
+  box-sizing: content-box;
+}
+.session-progress .segments::before,
+.session-progress .segments::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; height: 3px;
+  pointer-events: none;
+}
+.session-progress .segments::before {
+  top: 0;
+  background: linear-gradient(to bottom,
+    rgba(212,165,116,0.6) 0 1px, transparent 1px 2px, rgba(0,0,0,0.42) 2px 3px);
+}
+.session-progress .segments::after {
+  bottom: 0;
+  background: linear-gradient(to bottom,
+    rgba(0,0,0,0.42) 0 1px, transparent 1px 2px, rgba(212,165,116,0.6) 2px 3px);
+}
+.session-progress .segments i {
+  flex: 1;
+  background: rgba(255,255,255,0.08);
+  border: 0.5px solid rgba(255,255,255,0.06);
+}
+.session-progress .segments i.filled {
+  background: linear-gradient(to right, #E5BC8A, #D4A574); /* (L104) */
+}
+.session-progress .segments i.active {
+  background: linear-gradient(to bottom, #F5F2EC, #E0DDD7); /* (L112) */
+}
+
+/* ------------------------------------------------------------
+   IkeruTabBar (IkeruTabBar.swift + Beginner/Rail variants).
+   Blur strip pinned to device bottom, fusuma rail on top,
+   kintsugi gold rail under the active cell.
+   ------------------------------------------------------------ */
+.tab-bar {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  z-index: 50;
+  display: flex;
+  padding: 12px 22px 26px;       /* (IkeruTabBar.swift:47-49) */
+  background: rgba(12, 12, 18, 0.6);
+  backdrop-filter: blur(28px) saturate(1.2);
+  -webkit-backdrop-filter: blur(28px) saturate(1.2);
+}
+.tab-bar::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(to bottom,
+    rgba(212,165,116,0.7) 0 1px, transparent 1px 2px, rgba(0,0,0,0.49) 2px 3px);
+}
+.tab-cell {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: var(--paper-ghost);
+  text-decoration: none;
+}
+.tab-cell svg { width: 22px; height: 22px; display: block; }
+.tab-cell .label { font: 600 11px/1 var(--font-system); } /* BeginnerTabCell (L24) */
+.tab-cell.active { color: var(--gold); }
+/* KintsugiTabRail (IkeruTabBar+Rail.swift): 28×3 capsule, gold fading ends, glow */
+.tab-cell .rail {
+  width: 28px; height: 3px;
+  border-radius: 2px;
+  background: transparent;
+}
+.tab-cell.active .rail {
+  background: linear-gradient(to right, transparent, var(--gold), transparent);
+  box-shadow: 0 0 8px rgba(212,165,116,0.55);
+}
+/* Tatami (dense rail) variant — kanji-only cells (TatamiTabCell) */
+.tab-bar--tatami .tab-cell .jp {
+  font: 500 17px/1.2 var(--font-serif);   /* serif 17 (IkeruTabBar.swift:88) */
+}
+.tab-bar--tatami .tab-cell .mon-slot { height: 10px; display: flex; align-items: center; }
+.tab-bar--tatami .tab-cell .mon-slot .mon { --mon-size: 10px; color: var(--gold); }
+
+/* ------------------------------------------------------------
+   ToastView (ToastView.swift) — info = gold fill, white text.
+   ------------------------------------------------------------ */
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px;                    /* h md, v sm+xs (L33-34) */
+  padding-top: 13px; padding-bottom: 13px;
+  background: var(--gold);          /* info bg = primaryAccent (L56) */
+  color: #fff;
+  border-radius: var(--r-md);
+  font: 400 15px/1.3 var(--font-system);
+}
+.toast--error { background: var(--sakura); } /* error bg = secondaryAccent (L58) */
+
+/* ------------------------------------------------------------
+   HintChip (HintChip.swift) — tiny icon+label capsule.
+   ------------------------------------------------------------ */
+.hint-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: var(--r-full);
+  background: rgba(255,255,255,0.04);
+  border: 0.6px solid rgba(255,255,255,0.08);
+  color: var(--text-secondary);
+  font: 500 11px/1 var(--font-system);
+}
+.hint-chip svg { width: 10px; height: 10px; }
+
+/* ------------------------------------------------------------
+   EnsoRankView (EnsoRankView.swift) — brushed ink circle, open at
+   upper-right, dry-brush tail wisp. Injected as inline SVG by
+   rig.js (<span class="enso" data-level="5" data-size="48">).
+   ------------------------------------------------------------ */
+.enso { display: inline-flex; position: relative; flex-shrink: 0; }
+.enso svg { display: block; overflow: visible; }
+.enso .enso-num {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-serif);
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+/* ------------------------------------------------------------
+   GradeButtonsView (GradeButtonsView.swift) — four sharp tatami
+   grade buttons: kanji header, chrome label, serif interval,
+   1px top bar + sumi corners in the grade color.
+   ------------------------------------------------------------ */
+.grade-row { display: flex; gap: 8px; }
+.grade-btn {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 14px 0;
+  background: #1A1A22;               /* (L86) */
+  border: none;
+  border-top: 1px solid var(--grade-color);
+  cursor: pointer;
+  --room-corner: var(--grade-color);
+  --sumi-size: 8px;
+  --sumi-weight: 1.2px;
+  --sumi-inset: 1px;
+}
+.grade-btn .kanji {
+  font: 500 18px/1 var(--font-serif);
+  color: var(--grade-color);
+  padding-bottom: 2px;
+}
+.grade-btn .label {
+  font: 700 11px/1 var(--font-system);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-primary);
+}
+.grade-btn .due {
+  font: 500 10px/1 var(--font-serif);
+  color: var(--paper-ghost);
+}
+.grade-btn--again { --grade-color: var(--grade-again); }
+.grade-btn--hard  { --grade-color: var(--grade-hard); }
+.grade-btn--good  { --grade-color: var(--grade-good); }
+.grade-btn--easy  { --grade-color: var(--grade-easy); }
+
+/* ------------------------------------------------------------
+   ToriiFrame / RPGRankCrest (ToriiFrame.swift, RPGRankCrest.swift)
+   Injected as inline SVG by rig.js:
+   <span class="torii" data-kanji="五" data-size="96"></span>
+   ------------------------------------------------------------ */
+.torii { display: inline-flex; position: relative; color: var(--gold); flex-shrink: 0; }
+.torii svg { display: block; }
+.torii .torii-kanji {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 12%;
+  font-family: var(--font-serif);
+  font-weight: 500;
+  color: currentColor;
+}
+.torii--dashed { color: var(--gold-dim); opacity: 0.5; }
+
+/* ------------------------------------------------------------
+   ChatBubbleView (ChatBubbleView.swift) — companion = gold 15%
+   tint left; user = glass right. Radius.lg = 24.
+   ------------------------------------------------------------ */
+.chat-row { display: flex; }
+.chat-row--user { justify-content: flex-end; padding-left: 48px; }
+.chat-row--companion { padding-right: 48px; }
+.bubble {
+  padding: 12px 16px;
+  border-radius: var(--r-lg);
+  font: 400 15px/1.55 var(--font-system);
+  max-width: 100%;
+}
+.bubble--companion {
+  background: rgba(212, 165, 116, 0.15);  /* primaryAccent 0.15 (L?) */
+  color: var(--text-primary);              /* kanjiText */
+}
+.bubble--user {
+  background:
+    linear-gradient(to bottom, rgba(255,255,255,0.08), rgba(255,255,255,0.04)),
+    rgba(24, 24, 31, 0.6);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  color: #fff;
+}
+.bubble ruby rt {
+  font-size: 9px;
+  color: var(--text-secondary);
+  font-family: var(--font-serif);
+}
+.bubble .jp-line { font-family: var(--font-serif); font-weight: 500; font-size: 16px; }
+
+/* ------------------------------------------------------------
+   Rig-only helpers (layout glue, not app components)
+   ------------------------------------------------------------ */
+.row { display: flex; align-items: center; }
+.col { display: flex; flex-direction: column; }
+.spacer { flex: 1; }
+.ghost-italic { font-style: italic; color: var(--paper-ghost); }

@@ -71,27 +71,27 @@ struct ReadingPassageView: View {
 
     private func passageHeader(_ passage: ReadingPassage) -> some View {
         VStack(alignment: .leading, spacing: IkeruTheme.Spacing.sm) {
-            // JLPT level badge
+            // JLPT level badge — encre rectangle, no capsule
             Text(passage.jlptLevel.displayLabel)
                 .font(.ikeruCaption)
                 .foregroundStyle(Color.ikeruPrimaryAccent)
+                .tracking(1.2)
                 .padding(.horizontal, IkeruTheme.Spacing.sm)
                 .padding(.vertical, IkeruTheme.Spacing.xs)
-                .background {
-                    Capsule()
-                        .fill(Color.ikeruPrimaryAccent.opacity(0.15))
-                }
+                .overlay(
+                    Rectangle()
+                        .strokeBorder(TatamiTokens.goldDim, lineWidth: 1)
+                )
 
             // Title
             Text(passage.title)
                 .font(.ikeruHeading1)
                 .foregroundStyle(.white)
 
-            // Reading skill color bar
+            // Reading skill color bar — 2pt gold rail, Tatami style
             Rectangle()
-                .fill(Color(hex: IkeruTheme.Colors.Skills.reading))
-                .frame(height: 3)
-                .clipShape(Capsule())
+                .fill(Color.ikeruPrimaryAccent)
+                .frame(height: 2)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -107,7 +107,7 @@ struct ReadingPassageView: View {
 
             // Japanese text with furigana
             WrappingHStack(sentence: sentence, viewModel: viewModel)
-                .ikeruCard(.standard)
+                .tatamiRoom(.standard)
 
             // Translation toggle
             translationButton(sentence: sentence, index: index)
@@ -150,7 +150,7 @@ struct ReadingPassageView: View {
 
             HStack(spacing: IkeruTheme.Spacing.md) {
                 legendItem(
-                    color: Color.ikeruSuccess,
+                    color: TatamiTokens.goldDim,
                     label: "Known kanji (no furigana)"
                 )
                 legendItem(
@@ -164,11 +164,11 @@ struct ReadingPassageView: View {
 
     private func legendItem(color: Color, label: String) -> some View {
         HStack(spacing: IkeruTheme.Spacing.xs) {
-            Circle()
+            Rectangle()
                 .fill(color)
                 .frame(width: 8, height: 8)
             Text(label)
-                .font(.system(size: 11))
+                .ikeruScaledFont(11, relativeTo: .caption2)
                 .foregroundStyle(.ikeruTextSecondary)
         }
     }
@@ -238,26 +238,28 @@ private struct FuriganaWordView: View {
             // Furigana reading above
             if showFurigana, let reading = word.reading {
                 Text(reading)
-                    .font(.system(size: 9))
+                    .ikeruScaledFont(9, relativeTo: .caption2)
                     .foregroundStyle(Color.ikeruPrimaryAccent.opacity(0.8))
             } else {
                 // Reserve space for alignment consistency
                 Text(" ")
-                    .font(.system(size: 9))
+                    .ikeruScaledFont(9, relativeTo: .caption2)
                     .hidden()
             }
 
             // Main word text
-            Text(word.text)
-                .font(
-                    word.containsKanji
-                        ? .custom(
-                            IkeruTheme.Typography.FontFamily.kanjiSerifMedium,
-                            size: IkeruTheme.Typography.Size.heading3
-                        )
-                        : .system(size: IkeruTheme.Typography.Size.heading3)
-                )
-                .foregroundStyle(wordColor)
+            if word.containsKanji {
+                Text(word.text)
+                    .font(.custom(
+                        IkeruTheme.Typography.FontFamily.kanjiSerifMedium,
+                        size: IkeruTheme.Typography.Size.heading3
+                    ))
+                    .foregroundStyle(wordColor)
+            } else {
+                Text(word.text)
+                    .ikeruScaledFont(IkeruTheme.Typography.Size.heading3, relativeTo: .title3)
+                    .foregroundStyle(wordColor)
+            }
         }
     }
 
@@ -293,7 +295,7 @@ private struct FuriganaWordView: View {
                         )
                     }
                 }
-                .ikeruCard(.standard)
+                .tatamiRoom(.standard)
             }
         }
         .padding(IkeruTheme.Spacing.md)

@@ -32,6 +32,7 @@ struct KanaRubyText: View {
     let content: String
     let textColor: Color
     let showFurigana: Bool
+    let showTranslations: Bool
     let baseFont: Font
     let rubyFont: Font
     let rubyColor: Color
@@ -41,33 +42,43 @@ struct KanaRubyText: View {
         _ content: String,
         textColor: Color,
         showFurigana: Bool = true,
+        showTranslations: Bool = true,
         maxWidth: CGFloat? = nil,
         baseFont: Font = .ikeruBody,
-        rubyFont: Font = .system(size: 9, weight: .medium, design: .rounded),
+        rubyFont: Font = .system(size: 10.5, weight: .medium, design: .rounded),
         rubyColor: Color? = nil
     ) {
         self.content = content
         self.textColor = textColor
         self.showFurigana = showFurigana
+        self.showTranslations = showTranslations
         self.maxWidth = maxWidth
         self.baseFont = baseFont
         self.rubyFont = rubyFont
         self.rubyColor = rubyColor ?? textColor.opacity(0.55)
     }
 
+    /// The text to actually render: with translations hidden, the learner-language
+    /// parentheticals are stripped (furigana readings are kept).
+    private var effectiveContent: String {
+        showTranslations ? content : Self.stripTranslations(content)
+    }
+
     var body: some View {
         if showFurigana {
-            let tokens = Self.tokenize(content)
-            IkeruFlowLayout(
-                spacing: 0,
-                maxWidth: maxWidth ?? (UIScreen.main.bounds.width - 120)
-            ) {
+            let tokens = Self.tokenize(effectiveContent)
+            // Pass maxWidth straight through (nil unless the caller overrides):
+            // IkeruFlowLayout then wraps at the REAL proposed width from its
+            // container. The previous `UIScreen.main.bounds.width - 120` hardcode
+            // assumed a full-width bubble and overflowed the narrower bubble in
+            // CompanionChatSheet, clipping the leading character of each line.
+            IkeruFlowLayout(spacing: 0, maxWidth: maxWidth) {
                 ForEach(Array(tokens.enumerated()), id: \.offset) { _, token in
                     tokenView(token)
                 }
             }
         } else {
-            Text(Self.stripReadings(content))
+            Text(Self.stripReadings(effectiveContent))
                 .font(baseFont)
                 .foregroundStyle(textColor)
         }
@@ -76,24 +87,27 @@ struct KanaRubyText: View {
     @ViewBuilder
     private func tokenView(_ token: Token) -> some View {
         switch token {
-        case .kana(let character, let romaji):
+        case .kana(let character, _):
+            // Kana render as clean characters — NO romaji on top. Stacking romaji
+            // above every hiragana/katakana made sentences noisy and broke the
+            // reading flow; the learner reads the kana directly (furigana stays
+            // on kanji only). The hidden spacer matches the ruby row height so
+            // kana baseline-align with furigana'd kanji on the same line.
             VStack(spacing: 0) {
-                Text(romaji)
+                Text(" ")
                     .font(rubyFont)
-                    .foregroundStyle(rubyColor)
                     .lineLimit(1)
-                    .fixedSize()
+                    .hidden()
                 Text(character)
                     .font(baseFont)
                     .foregroundStyle(textColor)
             }
-            .padding(.horizontal, 0.5)
 
         case .kanji(let base, let reading):
-            VStack(spacing: 0) {
+            VStack(spacing: 1) {
                 Text(reading)
                     .font(rubyFont)
-                    .foregroundStyle(Color.ikeruPrimaryAccent.opacity(0.7))
+                    .foregroundStyle(Color.ikeruPrimaryAccent.opacity(0.92))
                     .lineLimit(1)
                     .fixedSize()
                 Text(base)
@@ -136,7 +150,20 @@ struct KanaRubyText: View {
 
         func flushBuffer() {
             guard !buffer.isEmpty else { return }
-            tokens.append(.other(buffer))
+            // Break Latin/punctuation runs into word-sized tokens (each keeps its
+            // trailing space) so the flow can wrap BETWEEN words. A single long
+            // .other token is unbreakable, so it would exceed the flow width and
+            // force the whole flow oversized — which SwiftUI then centres, pushing
+            // the leading character off the bubble's edge (the chat-bubble clip).
+            var word = ""
+            for ch in buffer {
+                word.append(ch)
+                if ch == " " {
+                    tokens.append(.other(word))
+                    word = ""
+                }
+            }
+            if !word.isEmpty { tokens.append(.other(word)) }
             buffer = ""
         }
 
@@ -214,6 +241,57 @@ struct KanaRubyText: View {
             i += 1
         }
         return result
+    }
+
+    // MARK: - Strip / Detect Translations
+
+    /// Remove learner-language translation parentheticals (e.g. `(Today I went…)`)
+    /// while KEEPING furigana readings (`漢字(かんじ)`). A parenthetical is treated
+    /// as a translation when its contents are NOT pure hiragana/katakana. Drops a
+    /// single space immediately before the parenthetical so the Japanese reads
+    /// cleanly once the translation is gone.
+    static func stripTranslations(_ input: String) -> String {
+        var result = ""
+        let chars = Array(input)
+        var i = 0
+        while i < chars.count {
+            if chars[i] == "(",
+               let closeIdx = findMatchingParen(chars, from: i),
+               !isJapaneseReading(chars, from: i + 1, to: closeIdx) {
+                if result.last == " " { result.removeLast() }
+                i = closeIdx + 1
+                continue
+            }
+            result.append(chars[i])
+            i += 1
+        }
+        return result
+    }
+
+    /// Whether the text carries a learner-language translation that can be hidden.
+    static func containsTranslation(_ input: String) -> Bool {
+        stripTranslations(input) != input
+    }
+
+    /// Pull out the learner-language translation text (the contents of the
+    /// non-kana parentheticals, without the parentheses) so it can be rendered on
+    /// its own line under the Japanese. Returns "" when there is no translation.
+    static func extractTranslations(_ input: String) -> String {
+        var parts: [String] = []
+        let chars = Array(input)
+        var i = 0
+        while i < chars.count {
+            if chars[i] == "(",
+               let closeIdx = findMatchingParen(chars, from: i),
+               !isJapaneseReading(chars, from: i + 1, to: closeIdx) {
+                let inner = String(chars[(i + 1)..<closeIdx]).trimmingCharacters(in: .whitespaces)
+                if !inner.isEmpty { parts.append(inner) }
+                i = closeIdx + 1
+                continue
+            }
+            i += 1
+        }
+        return parts.joined(separator: " ")
     }
 
     // MARK: - Helpers

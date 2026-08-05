@@ -43,12 +43,19 @@ struct HomeView: View {
     @State private var viewModel: HomeViewModel?
     @State private var sessionViewModel: SessionViewModel?
     @State private var dailyTermViewModel: DailyTermViewModel?
-    @State private var suggestionController: DisplayModeSuggestionCardController?
     @State private var showSession = false
     @State private var heroAppeared = false
     @State private var dailyTermSheet: DailyTermSheet?
+    @State private var showStudySetChooser = false
     @AppStorage(DailyTermSettings.enabledKey) private var dailyTermEnabled: Bool = false
-    @AppStorage("ikeru.equippedTitleName") private var equippedTitleName: String = ""
+
+    /// Lifetime review count captured right before `startSession()` launches
+    /// the session sheet — compared against the post-session count to detect
+    /// the learner's first-ever completed session (0 → >0 crossing) so the
+    /// one-time daily-term prompt fires exactly once, right after it.
+    @State private var reviewsBeforeSession = 0
+    @State private var showFirstSessionDailyTermPrompt = false
+    @State private var showCaughtUpExplainer = false
 
     var body: some View {
         ZStack {
@@ -56,6 +63,16 @@ struct HomeView: View {
 
             if let vm = viewModel {
                 homeContent(vm)
+            }
+
+            // Sakura's one-time "all caught up — what now?" explainer. The
+            // first time Home lands on the quiet state (every chosen kana
+            // begun, nothing due), a fresh learner is otherwise staring at a
+            // silent dead-end (owner request, device pass 2026-07-19).
+            if showCaughtUpExplainer {
+                caughtUpExplainerOverlay
+                    .zIndex(10)
+                    .transition(.opacity)
             }
         }
         .toolbar(.hidden, for: .navigationBar)
@@ -65,28 +82,62 @@ struct HomeView: View {
                     .onChange(of: svm.isActive) { _, isActive in
                         if !isActive {
                             showSession = false
+                            Task {
+                                await viewModel?.refreshAfterSession()
+                                evaluateFirstSessionDailyTermPrompt()
+                                evaluateCaughtUpExplainer()
+                            }
                         }
                     }
             }
         }
+        .alert(
+            "Home.DailyTermPrompt.Title",
+            isPresented: $showFirstSessionDailyTermPrompt
+        ) {
+            Button("Home.DailyTermPrompt.Enable") {
+                enableDailyTermFromPrompt()
+            }
+            Button("Home.DailyTermPrompt.NotNow", role: .cancel) {}
+        } message: {
+            Text("Home.DailyTermPrompt.Message")
+        }
         .sheet(item: $dailyTermSheet) { sheet in
             dailyTermSheetContent(sheet)
+        }
+        .sheet(isPresented: $showStudySetChooser) {
+            NavigationStack {
+                KanaPoolSelectorView(onStudySetConfirmed: {
+                    showStudySetChooser = false
+                    // "Commencer ces kana" keeps its promise: confirm flows
+                    // straight into the first session instead of dropping the
+                    // learner back on Home (owner feedback, device pass). The
+                    // short pause lets the sheet finish dismissing before the
+                    // session cover presents — presenting mid-dismissal gets
+                    // silently dropped by UIKit.
+                    Task {
+                        await viewModel?.loadData()
+                        try? await Task.sleep(for: .milliseconds(500))
+                        startSession()
+                    }
+                })
+            }
+            .presentationDragIndicator(.visible)
         }
         .task {
             initializeViewModels()
             await viewModel?.loadData()
             await dailyTermViewModel?.load()
             await viewModel?.refreshRestDay()
-            await refreshSuggestionController()
             withAnimation(.spring(response: 0.55, dampingFraction: 0.86).delay(0.05)) {
                 heroAppeared = true
             }
+            // Also covers opening the app already caught-up (the state can be
+            // reached without a session ending this launch).
+            evaluateCaughtUpExplainer()
             if CommandLine.arguments.contains("-autoStartSession") {
                 startSession()
             }
-        }
-        .onChange(of: displayMode) { _, new in
-            suggestionController?.setMode(new)
         }
         .onAppear {
             if viewModel != nil {
@@ -121,7 +172,6 @@ struct HomeView: View {
         .onReceive(NotificationCenter.default.publisher(for: .ikeruActiveProfileDidChange)) { _ in
             Task {
                 await viewModel?.loadData()
-                await refreshSuggestionController()
             }
         }
         #if canImport(UIKit)
@@ -164,48 +214,17 @@ struct HomeView: View {
 
     // MARK: - Suggestion Card Controller
 
-    private func refreshSuggestionController() async {
-        guard let profileID = ActiveProfileResolver.activeProfileID(),
-              let vm = viewModel
-        else { return }
-
-        let controller = suggestionController ?? DisplayModeSuggestionCardController(
-            profileID: profileID,
-            currentMode: displayMode
-        )
-        controller.setMode(displayMode)
-        let signals = await vm.advancedThresholdSignals()
-        controller.onSignalsChanged(
-            streak: signals.streak,
-            reviews: signals.reviews,
-            mastery: signals.mastery
-        )
-        suggestionController = controller
-    }
-
     // MARK: - Home Content
 
     @ViewBuilder
     private func homeContent(_ vm: HomeViewModel) -> some View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: IkeruTheme.Spacing.lg) {
-                if let controller = suggestionController, controller.shouldShow {
-                    DisplayModeSuggestionCard(
-                        onAccept: {
-                            displayModeRepo?.set(.tatami)
-                            controller.dismiss()
-                        },
-                        onDismiss: { controller.dismiss() }
-                    )
-                }
                 topBar(vm)
                 proverbHero(vm)
                 dailyTermSection
-                statsRow(vm)
                 sessionBreakdown(vm)
-                if vm.hasLoaded && vm.dueCardCount == 0 {
-                    quietState
-                }
+                nextStepSection(vm)
             }
             .padding(.horizontal, IkeruTheme.Spacing.lg)
             .padding(.top, IkeruTheme.Spacing.md)
@@ -229,11 +248,48 @@ struct HomeView: View {
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
         .background {
-            Capsule().fill(.ultraThinMaterial)
+            Rectangle().fill(.ultraThinMaterial)
+                .overlay(Rectangle().strokeBorder(TatamiTokens.goldDim.opacity(0.5), lineWidth: 0.6))
         }
-        .overlay(
-            Capsule().strokeBorder(Color.white.opacity(0.10), lineWidth: 0.6)
-        )
+        .sumiCorners(color: TatamiTokens.goldDim, size: 5, weight: 0.9)
+    }
+
+    // MARK: - Choose-your-kana CTA (soft study-set gate)
+
+    /// Shown when the learner hasn't yet chosen a study set. A calm invitation
+    /// to pick their kana first — no urgency, no locked wall — so Practice
+    /// always matches what they actually started learning.
+    private var chooseKanaCTA: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Home.ChooseKana.Hint")
+                .ikeruScaledFont(12, relativeTo: .caption)
+                .italic()
+                .foregroundStyle(Color.ikeruTextSecondary)
+
+            Button {
+                showStudySetChooser = true
+            } label: {
+                HStack {
+                    Spacer()
+                    Text("\u{4EEE}\u{540D}\u{3092}\u{9078}\u{3076} \u{00B7} ") // 仮名を選ぶ
+                        .ikeruScaledFont(15, weight: .regular, design: .serif, relativeTo: .body)
+                    Text("CHOOSE YOUR KANA", comment: "Home CTA: pick a kana study set first")
+                        .ikeruScaledFont(15, weight: .bold, relativeTo: .body)
+                        .tracking(1.4)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                    Spacer()
+                }
+            }
+            .ikeruButtonStyle(.primary)
+            // Share the feature-tour anchor with BEGIN PRACTICE: exactly one of
+            // the two CTAs renders at a time, so the tour's session step always
+            // spotlights whichever is on screen. A brand-new profile sees this
+            // "choose your kana" gate (no cards yet), not BEGIN PRACTICE — the
+            // tour fires the instant onboarding finishes, so without this the
+            // step would point at a button that isn't there.
+            .tourAnchor(.sessionCTA)
+        }
     }
 
     // MARK: - Top Bar
@@ -245,7 +301,7 @@ struct HomeView: View {
             HStack {
                 Spacer()
                 Text(serifJapaneseDate())
-                    .font(.system(size: 11, weight: .regular, design: .serif))
+                    .ikeruScaledFont(11, weight: .regular, design: .serif, relativeTo: .caption2)
                     .foregroundStyle(TatamiTokens.paperGhost)
                     .tracking(1)
             }
@@ -253,31 +309,25 @@ struct HomeView: View {
             HStack(alignment: .bottom) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(timeOfDayGreetingJP())
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(Color.ikeruPrimaryAccent)
+                        .ikeruScaledFont(11, weight: .semibold, relativeTo: .caption2)
                         .tracking(2.4)
                         .textCase(.uppercase)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                        .foregroundStyle(Color.ikeruPrimaryAccent)
 
                     HStack(spacing: 0) {
                         Text(vm.displayName.isEmpty
                              ? String(localized: "Welcome")
                              : vm.displayName)
-                            .font(.system(size: 22, weight: .semibold))
+                            .ikeruScaledFont(22, weight: .semibold, relativeTo: .title2)
                             .foregroundStyle(Color.ikeruTextPrimary)
                         Text("。")
-                            .font(.system(size: 22, weight: .semibold, design: .serif))
+                            .ikeruScaledFont(22, weight: .semibold, design: .serif, relativeTo: .title2)
                             .foregroundStyle(TatamiTokens.paperGhost)
-                    }
-
-                    if !equippedTitleName.isEmpty {
-                        Text(equippedTitleName.uppercased())
-                            .font(.ikeruMicro)
-                            .ikeruTracking(.micro)
-                            .foregroundStyle(Color.ikeruPrimaryAccent)
                     }
                 }
                 Spacer()
-                levelPill(level: vm.level)
             }
         }
         .padding(.top, IkeruTheme.Spacing.xs)
@@ -324,27 +374,6 @@ struct HomeView: View {
         }
     }
 
-    // Level pill (top-right) per the design brief — replaces the earlier streak
-    // pill, which contradicted the product brief's anti-gamification stance
-    // ("no streaks, no gems, no daily login pressure").
-    @ViewBuilder
-    private func levelPill(level: Int) -> some View {
-        HStack(spacing: 7) {
-            EnsoRankView(level: level, size: 16)
-            Text("\u{7B2C}\(level)\u{6BB5}") // 第N段
-                .font(.system(size: 12, weight: .medium, design: .serif))
-                .foregroundStyle(Color.ikeruTextPrimary)
-                .tracking(1.4)
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 7)
-        .background {
-            Capsule()
-                .fill(Color.white.opacity(0.05))
-                .overlay(Capsule().strokeBorder(Color.white.opacity(0.10), lineWidth: 0.6))
-        }
-    }
-
     // MARK: - Rest Day Block
 
     private var restDayBlock: some View {
@@ -353,13 +382,13 @@ struct HomeView: View {
                 .font(.system(size: 26, design: .serif))
                 .foregroundStyle(Color.ikeruPrimaryAccent)
             Text("Home.RestDay.Title", comment: "Rest day chrome label")
-                .font(.system(size: 11, weight: .semibold))
+                .ikeruScaledFont(11, weight: .semibold, relativeTo: .caption2)
                 .tracking(1.6)
                 .foregroundStyle(Color.ikeruTextSecondary)
             Text("Home.RestDay.Body", comment: "Rest day body copy")
-                .font(.system(size: 11))
+                .ikeruScaledFont(11, relativeTo: .caption2)
                 .italic()
-                .foregroundStyle(TatamiTokens.paperGhost)
+                .foregroundStyle(Color.ikeruTextSecondary)
                 .multilineTextAlignment(.center)
                 .padding(.top, 4)
         }
@@ -372,103 +401,109 @@ struct HomeView: View {
 
     @ViewBuilder
     private func proverbHero(_ vm: HomeViewModel) -> some View {
-        let proverb = HomeProverb.dailyProverb(level: vm.level)
-        let progress = Double(vm.xpInCurrentLevel) / Double(max(1, vm.xpRequiredForLevel))
+        // Rotate the proverb by day of year (was keyed to RPG level, now removed).
+        let dayIndex = Calendar.current.ordinality(of: .day, in: .year, for: Date()) ?? 1
+        let proverb = HomeProverb.dailyProverb(level: dayIndex)
 
         VStack(alignment: .leading, spacing: 14) {
-            // Top row — bilingual "本日 · TODAY" + Hanko stamp when work is due
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 8) {
-                    BilingualLabel(japanese: "本日", chrome: "Today", mon: nil)
-                    Text(proverb.kanji)
-                        .font(.system(size: 19, weight: .regular, design: .serif))
-                        .foregroundStyle(Color.ikeruTextPrimary)
-                        .lineLimit(1)
-                        .tracking(2)
-                    Text(proverb.translation)
-                        .font(.system(size: 11))
-                        .italic()
-                        .foregroundStyle(TatamiTokens.paperGhost)
-                }
-                Spacer()
-                if vm.dueCardCount > 0 {
-                    HankoStamp(kanji: "急", size: 36)
-                }
-            }
-
-            // Due count — large serif numeral
-            HStack(alignment: .firstTextBaseline, spacing: 10) {
-                SerifNumeral(vm.dueCardCount, size: 56, color: .ikeruTextPrimary)
-                Text("CARDS DUE", comment: "Hero stat label on Home")
-                    .font(.system(size: 12, weight: .semibold))
+            // Proverb header — calm by design, no urgency stamp.
+            VStack(alignment: .leading, spacing: 8) {
+                BilingualLabel(japanese: "本日", chrome: "Today", mon: nil)
+                Text(proverb.kanji)
+                    .ikeruScaledFont(19, weight: .regular, design: .serif, relativeTo: .title3)
+                    .foregroundStyle(Color.ikeruTextPrimary)
+                    .lineLimit(1)
+                    .tracking(2)
+                Text(proverb.translation)
+                    .ikeruScaledFont(11, relativeTo: .caption2)
+                    .italic()
                     .foregroundStyle(Color.ikeruTextSecondary)
-                    .tracking(1.4)
-                    .textCase(.uppercase)
             }
 
-            // Practice CTA — sharp gold, bilingual, sumi corners.
-            // Replaced by the rest-day surface when conditions hold.
+            // Today's count — the *composed-session* size with an honest label
+            // that always matches the new/review breakdown below it.
+            if vm.todayKind != .empty {
+                HStack(alignment: .firstTextBaseline, spacing: 10) {
+                    SerifNumeral(vm.todayCount, size: 56, color: .ikeruTextPrimary)
+                    Text(heroCountLabel(for: vm.todayKind))
+                        .ikeruScaledFont(12, weight: .semibold, relativeTo: .caption2)
+                        .tracking(1.4)
+                        .textCase(.uppercase)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                        .foregroundStyle(Color.ikeruTextSecondary)
+                }
+            }
+
+            // CTA / rest-day / all-caught-up — the CTA only exists when there is
+            // actually something composable, so it can never launch an empty session.
             if vm.restDayActive {
                 restDayBlock
+            } else if vm.needsStudySetChoice {
+                // Soft gate: invite the learner to pick their kana before any
+                // practice, so the session always matches what they chose.
+                chooseKanaCTA
+            } else if vm.todayKind == .empty {
+                quietState
             } else {
+                // Hero CTA — speaks the shared .primary ink-block language
+                // (owner feedback: every gold action should look like ONE
+                // family). Inner texts keep their own fonts; the style
+                // supplies the block, brackets, glow and press feel.
                 Button {
                     startSession()
                 } label: {
                     HStack {
                         Spacer()
                         Text("稽古を始める · ")
-                            .font(.system(size: 13, weight: .regular, design: .serif))
+                            .ikeruScaledFont(15, weight: .regular, design: .serif, relativeTo: .body)
                         Text("BEGIN PRACTICE", comment: "Hero CTA on Home")
-                            .font(.system(size: 13, weight: .bold))
+                            .ikeruScaledFont(15, weight: .bold, relativeTo: .body)
                             .tracking(1.6)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
                         Spacer()
                     }
-                    .foregroundStyle(Color.ikeruBackground)
-                    .padding(.vertical, 14)
-                    .background(Color.ikeruPrimaryAccent)
-                    .sumiCorners(color: Color.ikeruBackground.opacity(0.6), size: 6, weight: 1.2, inset: -1)
                 }
-                .buttonStyle(.plain)
+                .ikeruButtonStyle(.primary)
+                .tourAnchor(.sessionCTA)
             }
 
-            // XP progress — fusuma rail with serif numerals
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(alignment: .firstTextBaseline) {
-                    BilingualLabel(japanese: "経験", chrome: "Experience", mon: nil)
-                    Spacer()
-                    HStack(spacing: 0) {
-                        SerifNumeral(vm.xpInCurrentLevel, size: 12,
-                                     weight: .regular, color: .ikeruPrimaryAccent)
-                        Text(" / ")
-                            .font(.system(size: 12, design: .serif))
-                            .foregroundStyle(TatamiTokens.paperGhost)
-                        SerifNumeral(vm.xpRequiredForLevel, size: 12,
-                                     weight: .regular, color: TatamiTokens.paperGhost)
-                    }
-                }
-
-                // Hairline fusuma progress
-                ZStack(alignment: .leading) {
-                    Rectangle()
-                        .fill(TatamiTokens.goldDim.opacity(0.3))
-                        .frame(height: 1)
-                    GeometryReader { geo in
-                        Rectangle()
-                            .fill(Color.ikeruPrimaryAccent)
-                            .frame(width: geo.size.width * progress, height: 1)
-                            .shadow(color: .ikeruPrimaryAccent.opacity(0.6), radius: 3)
-                    }
-                    .frame(height: 1)
-                }
-
-                Text("\(vm.xpToNextLevel) XP to next rank",
-                     comment: "Subtle XP-remaining label on the Home hero")
-                    .font(.system(size: 11))
-                    .foregroundStyle(TatamiTokens.paperGhost)
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-            }
+            // Beginner's compass — kana mastery, always visible (the honest
+            // progress number that replaces XP/streak chrome).
+            kanaProgressLine(vm)
         }
         .tatamiRoom(.glass, padding: 20)
+    }
+
+    /// Honest hero label keyed to the composed session's mix.
+    private func heroCountLabel(for kind: HomeViewModel.TodayKind) -> LocalizedStringKey {
+        switch kind {
+        case .allNew:    return "Home.Hero.ToLearn"
+        case .allReview: return "Home.Hero.ToReview"
+        case .mixed:     return "Home.Hero.Today"
+        case .empty:     return ""
+        }
+    }
+
+    /// "かな X/92 learned" — the calm progress signal for beginners.
+    private func kanaProgressLine(_ vm: HomeViewModel) -> some View {
+        HStack(spacing: 8) {
+            Text("\u{304B}\u{306A}") // かな
+                .ikeruScaledFont(12, design: .serif, relativeTo: .caption)
+                .foregroundStyle(Color.ikeruPrimaryAccent)
+            Text("\(vm.kanaProgress.total)/\(KanaProgress.grandTotal)")
+                .ikeruScaledFont(12, design: .serif, relativeTo: .caption)
+                .monospacedDigit()
+                .foregroundStyle(Color.ikeruTextSecondary)
+            Text("Home.KanaLearned")
+                .ikeruScaledFont(10, relativeTo: .caption2)
+                .textCase(.uppercase)
+                .tracking(1.0)
+                .foregroundStyle(Color.ikeruTextTertiary)
+            Spacer()
+        }
+        .padding(.top, 2)
     }
 
     // MARK: - Session breakdown
@@ -524,12 +559,15 @@ struct HomeView: View {
                 .foregroundStyle(tint)
             VStack(alignment: .leading, spacing: 1) {
                 label
-                    .font(.system(size: 9, weight: .heavy))
-                    .tracking(1.6)
-                    .foregroundStyle(Color.ikeruTextTertiary)
+                    .ikeruScaledFont(10, weight: .heavy, relativeTo: .caption2)
+                    .tracking(1.2)
                     .textCase(.uppercase)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                    .foregroundStyle(Color.ikeruTextTertiary)
                 Text(valueText ?? "\(count ?? 0)")
                     .font(.system(size: 14, weight: .medium, design: .monospaced))
+                    .minimumScaleFactor(0.6)
                     .foregroundStyle(Color.ikeruTextPrimary)
             }
         }
@@ -537,130 +575,88 @@ struct HomeView: View {
         .padding(.horizontal, 10)
     }
 
-    // MARK: - Stats Row
+    // MARK: - Next-step suggestion (calm progression nudge)
     //
-    // Two Tatami rooms — Learned (kanji) and Streak (days) — each with a mon
-    // crest and a serif numeral. Due Now lives in the proverb hero now.
-    //
-    // Note: HomeViewModel does not currently expose a streak property; the
-    // anti-gamification stance keeps the home shell streak-free. The card is
-    // rendered with 0 days as a structural placeholder so layout matches the
-    // spec without functional change to the VM.
+    // One gentle "do this next" card derived from the learner's progress (the
+    // first unmet rung of the ladder). Shown only once the learner has started
+    // (not while the choose-your-kana gate is up) and hidden when fully caught
+    // up. Kana rungs are tappable (open the chooser to add the next groups);
+    // later rungs are calm, informational — never dead taps.
 
     @ViewBuilder
-    private func statsRow(_ vm: HomeViewModel) -> some View {
-        // Equal-width split: each tile gets exactly half of the row. Earlier
-        // versions used `.layoutPriority(1.4)` on the Learned tile to favor it,
-        // but that caused the Streak tile to collapse to a ~6pt sliver because
-        // the priority delta let Learned consume nearly all available width.
-        HStack(alignment: .top, spacing: 12) {
-            // Learned
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(spacing: 6) {
-                    MonCrest(kind: .asanoha, size: 11, color: .ikeruPrimaryAccent)
-                    Text("LEARNED", comment: "Stat card label")
-                        .font(.system(size: 9, weight: .bold))
-                        .foregroundStyle(TatamiTokens.paperGhost)
-                        .tracking(1.4)
-                        .lineLimit(1)
-                }
-                HStack(alignment: .firstTextBaseline, spacing: 4) {
-                    SerifNumeral(vm.kanjiLearnedCount, size: 32)
-                    Text("kanji", comment: "Tiny suffix after the LEARNED count")
-                        .font(.system(size: 11, design: .serif))
-                        .foregroundStyle(TatamiTokens.paperGhost)
-                        .lineLimit(1)
-                }
+    private func nextStepSection(_ vm: HomeViewModel) -> some View {
+        if !vm.needsStudySetChoice,
+           let step = vm.nextStep,
+           step.stage != .allCaughtUp {
+            if isKanaStage(step.stage) {
+                Button { showStudySetChooser = true } label: { nextStepCard(step) }
+                    .buttonStyle(.plain)
+            } else {
+                nextStepCard(step)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .tatamiRoom(.standard, padding: 14)
-
-            // Streak — placeholder 0 (no streak surfaced on Home shell yet)
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(spacing: 6) {
-                    MonCrest(kind: .genji, size: 11, color: .ikeruPrimaryAccent)
-                    Text("STREAK", comment: "Stat card label")
-                        .font(.system(size: 9, weight: .bold))
-                        .foregroundStyle(TatamiTokens.paperGhost)
-                        .tracking(1.4)
-                        .lineLimit(1)
-                }
-                HStack(alignment: .firstTextBaseline, spacing: 4) {
-                    SerifNumeral(0, size: 32)
-                    Text("days", comment: "Tiny suffix after the STREAK count")
-                        .font(.system(size: 11, design: .serif))
-                        .foregroundStyle(TatamiTokens.paperGhost)
-                        .lineLimit(1)
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .tatamiRoom(.standard, padding: 14)
         }
     }
 
-    // MARK: - Primary action
+    private func isKanaStage(_ stage: NextStep.Stage) -> Bool {
+        stage == .learnHiragana || stage == .learnKatakana
+    }
 
     @ViewBuilder
-    private func primaryAction(_ vm: HomeViewModel) -> some View {
-        Button {
-            startSession()
-        } label: {
-            HStack(alignment: .center) {
-                HStack(spacing: 10) {
-                    Image(systemName: "play.fill")
-                        .font(.system(size: 13, weight: .semibold))
-                    Text("Begin Session")
-                        .font(.system(size: 17, weight: .semibold))
-                }
+    private func nextStepCard(_ step: NextStep) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 8) {
+                Text("Home.NextStep.Eyebrow")
+                    .ikeruScaledFont(10, weight: .semibold, relativeTo: .caption2)
+                    .tracking(1.6)
+                    .textCase(.uppercase)
+                    .foregroundStyle(Color.ikeruPrimaryAccent)
                 Spacer()
-                Text(sessionDurationEstimate(vm))
-                    .font(.system(size: 12, weight: .medium, design: .monospaced))
-                    .foregroundStyle(Color(red: 0.16, green: 0.11, blue: 0.05).opacity(0.7))
+                if step.required > 0 {
+                    Text("\(step.current)/\(step.required)")
+                        .ikeruScaledFont(11, design: .serif, relativeTo: .caption)
+                        .monospacedDigit()
+                        .foregroundStyle(Color.ikeruTextTertiary)
+                }
             }
-            .frame(maxWidth: .infinity)
+            Text(nextStepTitle(step.stage))
+                .ikeruScaledFont(15, weight: .regular, design: .serif, relativeTo: .body)
+                .foregroundStyle(Color.ikeruTextPrimary)
+            Text(nextStepBody(step.stage))
+                .ikeruScaledFont(11, relativeTo: .caption2)
+                .foregroundStyle(Color.ikeruTextSecondary)
+                .fixedSize(horizontal: false, vertical: true)
         }
-        .ikeruButtonStyle(.primary)
-        .padding(.top, IkeruTheme.Spacing.xs)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .tatamiRoom(.standard, padding: 14)
     }
 
-    private func sessionDurationEstimate(_ vm: HomeViewModel) -> String {
-        if vm.sessionPreviewCardCount > 0 {
-            return "~\(max(1, vm.sessionPreviewMinutes)) min"
+    private func nextStepTitle(_ stage: NextStep.Stage) -> LocalizedStringKey {
+        switch stage {
+        case .learnHiragana:      return "Home.NextStep.Hiragana.Title"
+        case .learnKatakana:      return "Home.NextStep.Katakana.Title"
+        case .buildVocabulary:    return "Home.NextStep.Vocabulary.Title"
+        case .learnKanji:         return "Home.NextStep.Kanji.Title"
+        case .studyGrammar:       return "Home.NextStep.Grammar.Title"
+        case .readingListening:   return "Home.NextStep.Reading.Title"
+        case .converseWithSakura: return "Home.NextStep.Sakura.Title"
+        case .allCaughtUp:        return "Home.NextStep.CaughtUp.Title"
         }
-        return "ready"
     }
 
-    // MARK: - Rank labels
-
-    private func rankLabel(level: Int) -> String {
-        "第\(level)段"
-    }
-
-    private func rankTitle(level: Int) -> String {
-        switch level {
-        case ..<3:  return "Novice"
-        case 3..<7: return "Apprentice"
-        case 7..<15: return "Student"
-        case 15..<25: return "Adept"
-        case 25..<40: return "Master"
-        default: return "Sage"
+    private func nextStepBody(_ stage: NextStep.Stage) -> LocalizedStringKey {
+        switch stage {
+        case .learnHiragana:      return "Home.NextStep.Hiragana.Body"
+        case .learnKatakana:      return "Home.NextStep.Katakana.Body"
+        case .buildVocabulary:    return "Home.NextStep.Vocabulary.Body"
+        case .learnKanji:         return "Home.NextStep.Kanji.Body"
+        case .studyGrammar:       return "Home.NextStep.Grammar.Body"
+        case .readingListening:   return "Home.NextStep.Reading.Body"
+        case .converseWithSakura: return "Home.NextStep.Sakura.Body"
+        case .allCaughtUp:        return "Home.NextStep.CaughtUp.Body"
         }
     }
 
     // MARK: - Helpers
-
-    private func timeOfDayGreeting() -> String {
-        if let override = AppEnvironment.greetingOverride {
-            return override.phrase
-        }
-        let hour = Calendar.current.component(.hour, from: Date())
-        switch hour {
-        case 5..<12:  return "Good morning"
-        case 12..<17: return "Good afternoon"
-        case 17..<22: return "Good evening"
-        default:      return "Good night"
-        }
-    }
 
     private func initializeViewModels() {
         guard viewModel == nil else { return }
@@ -677,22 +673,162 @@ struct HomeView: View {
         sessionViewModel = SessionViewModel(
             plannerService: planner,
             cardRepository: repo,
-            modelContainer: container
+            modelContainer: container,
+            contentRepository: Self.makeContentRepository()
         )
+    }
+
+    /// Resolves the bundled `n5-content.sqlite` and builds a read-only
+    /// `ContentRepository` for the session (blueprint 4.1 Step 0 — the app has
+    /// never stood one up before). Fail-safe: a missing resource logs and
+    /// returns nil so the session still starts; the audio drills just get an
+    /// empty vocabulary pool rather than crashing.
+    private static func makeContentRepository() -> ContentRepository? {
+        guard let url = Bundle.main.url(forResource: "n5-content", withExtension: "sqlite") else {
+            Logger.ui.error("n5-content.sqlite not found in bundle — audio drills will have no content")
+            return nil
+        }
+        return ContentRepository(bundleURL: url)
     }
 
     private func startSession() {
         guard let svm = sessionViewModel else { return }
+        reviewsBeforeSession = viewModel?.totalReviewsCompleted ?? 0
         Task {
-            let container = modelContext.container
-            let repo = CardRepository(modelContainer: container)
-            let allCards = await repo.allCards()
-            await ContentSeedService.seedBeginnerKanaIfNeeded(
-                repository: repo,
-                existingCardCount: allCards.count
+            // Beginner content is seeded in HomeViewModel.loadData() before the
+            // preview is composed, so cards already exist by the time this CTA
+            // is reachable. Only present the session if one actually started —
+            // an empty plan must never show a hollow "0 cards / 0% recall" summary.
+            let started = await svm.startSession()
+            showSession = started
+        }
+    }
+
+    // MARK: - First-session daily-term prompt
+
+    /// Fires once, right after the learner's first-ever completed session
+    /// (lifetime review count crossing 0 → >0). Never re-prompts once shown
+    /// (accepted or declined — the flag is set unconditionally before the
+    /// alert is shown), and never prompts if the feature is already on.
+    ///
+    /// Scoping note (deliberate asymmetry): the seen-flag is per-profile
+    /// (`OnboardingFlags`), while the daily-term toggle itself is app-level
+    /// (`@AppStorage`) — the daily term is a device-level habit shared across
+    /// profiles, so enabling it once answers the question for everyone.
+    // MARK: - Caught-up explainer (Sakura, one-time)
+
+    /// Shows Sakura's explainer the FIRST time Home lands on the quiet
+    /// "all caught up" state: every chosen kana begun, nothing due right now.
+    /// Without it, a fresh learner who just powered through their study set
+    /// faces a silent dead-end — no hint that spaced repetition will bring
+    /// the kana back, or that more rows await in Explore → Kana.
+    private func evaluateCaughtUpExplainer() {
+        guard let vm = viewModel,
+              vm.todayKind == .empty,
+              !vm.restDayActive,
+              !vm.needsStudySetChoice,
+              vm.totalReviewsCompleted > 0,
+              !showFirstSessionDailyTermPrompt,   // never stack on the daily-term alert
+              let profileID = ActiveProfileResolver.activeProfileID(),
+              !OnboardingFlags.hasSeenCaughtUpExplainer(profileID: profileID)
+        else { return }
+
+        withAnimation(.easeInOut(duration: 0.3)) {
+            showCaughtUpExplainer = true
+        }
+    }
+
+    private func dismissCaughtUpExplainer() {
+        if let profileID = ActiveProfileResolver.activeProfileID() {
+            OnboardingFlags.markCaughtUpExplainerSeen(profileID: profileID)
+        }
+        withAnimation(.easeInOut(duration: 0.25)) {
+            showCaughtUpExplainer = false
+        }
+    }
+
+    /// Dim scrim + Sakura callout card — same visual language as the feature
+    /// tour's bubble (SakuraMark header, material card, gold hairline).
+    private var caughtUpExplainerOverlay: some View {
+        ZStack {
+            Color.black.opacity(0.72)
+                .ignoresSafeArea()
+                .contentShape(Rectangle())
+                .onTapGesture { dismissCaughtUpExplainer() }
+
+            VStack(alignment: .leading, spacing: 14) {
+                HStack(alignment: .center, spacing: 10) {
+                    SakuraMark(size: 30)
+                    Text(verbatim: "Sakura")
+                        .ikeruScaledFont(12, weight: .bold, relativeTo: .caption2)
+                        .tracking(1.5)
+                        .foregroundStyle(Color.ikeruPrimaryAccent)
+                    Spacer()
+                }
+
+                Text("Sakura.CaughtUp.Title")
+                    .ikeruScaledFont(20, weight: .semibold, relativeTo: .title3)
+                    .foregroundStyle(Color.ikeruTextPrimary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Text("Sakura.CaughtUp.Message")
+                    .ikeruScaledFont(15, relativeTo: .body)
+                    .foregroundStyle(Color.ikeruTextSecondary)
+                    .lineSpacing(3)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Button {
+                    dismissCaughtUpExplainer()
+                } label: {
+                    Text("Sakura.CaughtUp.Dismiss")
+                        .frame(maxWidth: .infinity)
+                }
+                .ikeruButtonStyle(.primary)
+            }
+            .padding(20)
+            .background(
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .fill(.ultraThinMaterial)
             )
-            await svm.startSession()
-            showSession = true
+            .overlay(
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .strokeBorder(Color.ikeruPrimaryAccent.opacity(0.35), lineWidth: 1)
+            )
+            .shadow(color: .black.opacity(0.45), radius: 24, y: 8)
+            .padding(.horizontal, 28)
+        }
+    }
+
+    private func evaluateFirstSessionDailyTermPrompt() {
+        guard reviewsBeforeSession == 0,
+              let vm = viewModel,
+              vm.totalReviewsCompleted > 0,
+              !dailyTermEnabled,
+              let profileID = ActiveProfileResolver.activeProfileID(),
+              !OnboardingFlags.hasSeenFirstSessionDailyTermPrompt(profileID: profileID)
+        else { return }
+
+        OnboardingFlags.markFirstSessionDailyTermPromptSeen(profileID: profileID)
+        showFirstSessionDailyTermPrompt = true
+    }
+
+    /// Enables the daily-term feature equivalently to Settings: request
+    /// notification authorization, schedule the reminder at the default time
+    /// on success, then flip the on/off flag. (Settings flips its bound
+    /// toggle optimistically FIRST and reverts on denial; here the flag flips
+    /// last — same end state on every path, slightly different ordering, so
+    /// any observer of the transient `true` behaves the same either way.)
+    /// Declining the system permission leaves the feature off, matching
+    /// Settings' behavior.
+    private func enableDailyTermFromPrompt() {
+        Task {
+            let authorized = await NotificationManager.shared.requestAuthorization()
+            guard authorized else { return }
+            await NotificationManager.shared.scheduleDailyTermReminder(
+                hour: DailyTermSettings.defaultHour,
+                minute: DailyTermSettings.defaultMinute
+            )
+            dailyTermEnabled = true
         }
     }
 }
@@ -707,9 +843,13 @@ struct HomeView: View {
 struct HomeProverb {
     let kanji: String
     let romaji: String
-    let translation: String
+    /// Localizable: each English meaning is also a catalogue key, so the line
+    /// renders in FR via `Localizable.xcstrings` (the proverb itself stays JP).
+    let translation: LocalizedStringKey
 
-    static let pool: [HomeProverb] = [
+    // Computed (not a stored static) so it isn't a non-Sendable shared global —
+    // LocalizedStringKey isn't Sendable, which a `static let` array would flag.
+    static var pool: [HomeProverb] { [
         HomeProverb(
             kanji: "七転八起",
             romaji: "nana korobi ya oki",
@@ -740,7 +880,7 @@ struct HomeProverb {
             romaji: "yūgen jikkō",
             translation: "Words become deeds."
         )
-    ]
+    ] }
 
     static func dailyProverb(level: Int) -> HomeProverb {
         // Seed by day + level so it changes daily but stays stable across

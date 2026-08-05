@@ -23,7 +23,7 @@ struct KanjiDisplayView: View {
         }
         .frame(height: 160)
         .frame(maxWidth: .infinity)
-        .ikeruCard(.elevated)
+        .tatamiRoom(.glass)
         .contentShape(Rectangle())
         .onTapGesture {
             handleTap()
@@ -49,7 +49,7 @@ struct KanjiDisplayView: View {
 
             if !kanji.meanings.isEmpty {
                 Text(kanji.meanings.joined(separator: ", "))
-                    .font(.system(size: IkeruTheme.Typography.Size.caption))
+                    .ikeruScaledFont(IkeruTheme.Typography.Size.caption, relativeTo: .caption2)
                     .foregroundStyle(
                         Color(hex: IkeruTheme.Colors.textPrimary)
                             .opacity(IkeruTheme.Colors.textSecondaryOpacity)
@@ -74,7 +74,7 @@ struct KanjiDisplayView: View {
                 .frame(width: 120, height: 120)
 
                 Text("Tap to dismiss")
-                    .font(.system(size: IkeruTheme.Typography.Size.caption))
+                    .ikeruScaledFont(IkeruTheme.Typography.Size.caption, relativeTo: .caption2)
                     .foregroundStyle(
                         Color(hex: IkeruTheme.Colors.textPrimary)
                             .opacity(IkeruTheme.Colors.textSecondaryOpacity)

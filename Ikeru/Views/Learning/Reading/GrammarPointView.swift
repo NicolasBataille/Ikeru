@@ -32,12 +32,13 @@ struct GrammarPointView: View {
             Text(grammarPoint.jlptLevel.displayName)
                 .font(.ikeruCaption)
                 .fontWeight(.semibold)
-                .foregroundStyle(.white)
+                .tracking(1.2)
+                .foregroundStyle(Color.ikeruPrimaryAccent)
                 .padding(.horizontal, IkeruTheme.Spacing.sm)
                 .padding(.vertical, IkeruTheme.Spacing.xs)
-                .background(
-                    Capsule()
-                        .fill(Color(hex: IkeruTheme.Colors.Skills.reading).opacity(0.8))
+                .overlay(
+                    Rectangle()
+                        .strokeBorder(TatamiTokens.goldDim, lineWidth: 1)
                 )
 
             Text(grammarPoint.title)
@@ -46,8 +47,7 @@ struct GrammarPointView: View {
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, IkeruTheme.Spacing.lg)
-        .ikeruCard(.elevated)
+        .tatamiRoom(.standard, padding: IkeruTheme.Spacing.lg)
     }
 
     // MARK: - Explanation
@@ -64,7 +64,7 @@ struct GrammarPointView: View {
                 .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .ikeruCard(.standard)
+        .tatamiRoom(.standard)
     }
 
     // MARK: - Examples
@@ -84,13 +84,15 @@ struct GrammarPointView: View {
                     .foregroundStyle(Color.ikeruKanjiText)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(IkeruTheme.Spacing.sm)
-                    .background(
-                        RoundedRectangle(cornerRadius: IkeruTheme.Radius.sm)
-                            .fill(Color.ikeruSurface.opacity(0.5))
+                    .background(Rectangle().fill(Color.ikeruSurface.opacity(0.35)))
+                    .overlay(
+                        Rectangle()
+                            .strokeBorder(TatamiTokens.goldDim.opacity(0.3), lineWidth: 1)
                     )
+                    .sumiCorners(color: TatamiTokens.goldDim, size: 5, weight: 0.9)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .ikeruCard(.standard)
+        .tatamiRoom(.standard)
     }
 }

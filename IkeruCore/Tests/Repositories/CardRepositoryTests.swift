@@ -10,6 +10,22 @@ private func makeTestContainer() throws -> ModelContainer {
     return try ModelContainer(for: schema, configurations: [config])
 }
 
+/// Seeds a UserProfile so `CardModelActor.activeProfileCards()` resolves the
+/// inserted cards (same pattern as `ProgressServiceTests.seedActiveProfile`).
+/// Without a profile, `fetchActiveProfile()` returns nil and every
+/// profile-scoped query (`allCards`, `dueCards`, `cards(byType:)`,
+/// `leechCards`) comes back empty. No UserDefaults key is written: when the
+/// persisted active-profile id is missing or stale, the model actor falls
+/// back to the oldest profile in the store, so each in-memory container
+/// resolves its own seeded profile without cross-test pollution (and there
+/// is nothing to clean up afterwards).
+@MainActor
+private func seedActiveProfile(in container: ModelContainer) throws {
+    let context = container.mainContext
+    context.insert(UserProfile(displayName: "Test"))
+    try context.save()
+}
+
 @Suite("CardRepository")
 struct CardRepositoryTests {
 
@@ -36,6 +52,7 @@ struct CardRepositoryTests {
     @Test("Create multiple cards and list all")
     func createMultipleAndListAll() async throws {
         let container = try makeTestContainer()
+        try await seedActiveProfile(in: container)
         let repository = CardRepository(modelContainer: container)
 
         _ = await repository.createCard(front: "日", back: "day", type: .kanji)
@@ -65,6 +82,7 @@ struct CardRepositoryTests {
     @Test("Query due cards returns only cards due before given date")
     func dueCards() async throws {
         let container = try makeTestContainer()
+        try await seedActiveProfile(in: container)
         let repository = CardRepository(modelContainer: container)
 
         let now = Date()
@@ -79,9 +97,37 @@ struct CardRepositoryTests {
         #expect(dueCards.first?.front == "過去")
     }
 
+    @Test("Sorted due cards are ordered by dueDate ascending (most overdue first)")
+    func dueCardsSortedByDueDate() async throws {
+        let container = try makeTestContainer()
+        try await seedActiveProfile(in: container)
+        let repository = CardRepository(modelContainer: container)
+
+        let now = Date()
+        let oneDayAgo = now.addingTimeInterval(-86400)
+        let threeDaysAgo = now.addingTimeInterval(-3 * 86400)
+        let twoDaysAgo = now.addingTimeInterval(-2 * 86400)
+        let tomorrow = now.addingTimeInterval(86400)
+
+        // Insert in shuffled order to make the sort observable
+        _ = await repository.createCard(front: "一", back: "one", type: .kanji, dueDate: oneDayAgo)
+        _ = await repository.createCard(front: "三", back: "three", type: .kanji, dueDate: threeDaysAgo)
+        _ = await repository.createCard(front: "二", back: "two", type: .kanji, dueDate: twoDaysAgo)
+        _ = await repository.createCard(front: "未来", back: "future", type: .kanji, dueDate: tomorrow)
+
+        let sorted = await repository.dueCardsSortedByDueDate(before: now)
+        #expect(sorted.count == 3)
+        #expect(sorted.map(\.front) == ["三", "二", "一"])
+
+        // Sanity: same set as the unsorted variant
+        let unsorted = await repository.dueCards(before: now)
+        #expect(Set(unsorted.map(\.id)) == Set(sorted.map(\.id)))
+    }
+
     @Test("Query cards by type returns correct subset")
     func cardsByType() async throws {
         let container = try makeTestContainer()
+        try await seedActiveProfile(in: container)
         let repository = CardRepository(modelContainer: container)
 
         _ = await repository.createCard(front: "日", back: "day", type: .kanji)
@@ -105,6 +151,7 @@ struct CardRepositoryTests {
     @Test("Query leech cards returns only flagged cards")
     func leechCards() async throws {
         let container = try makeTestContainer()
+        try await seedActiveProfile(in: container)
         let repository = CardRepository(modelContainer: container)
 
         _ = await repository.createCard(front: "日", back: "day", type: .kanji)
@@ -227,5 +274,244 @@ struct CardRepositoryTests {
 
         let fetched = await repository.card(by: card.id)
         #expect(fetched?.jlptLevel == nil)
+    }
+
+    // MARK: - desiredRetention Plumbing
+
+    /// Seeds a UserProfile with a specific `desiredRetention` — like
+    /// `seedActiveProfile` but lets the test control the FSRS retention
+    /// target read by `CardModelActor.gradeCard`.
+    @MainActor
+    private func seedActiveProfileWithRetention(in container: ModelContainer, desiredRetention: Double) throws {
+        let context = container.mainContext
+        context.insert(UserProfile(
+            displayName: "Test",
+            settings: ProfileSettings(desiredRetention: desiredRetention)
+        ))
+        try context.save()
+    }
+
+    @Test("gradeCard reads the active profile's desiredRetention: 0.95 due date is sooner than 0.8's")
+    func gradeCardUsesActiveProfileDesiredRetention() async throws {
+        let lowRetentionContainer = try makeTestContainer()
+        try await seedActiveProfileWithRetention(in: lowRetentionContainer, desiredRetention: 0.8)
+        let lowRetentionRepository = CardRepository(modelContainer: lowRetentionContainer)
+
+        let highRetentionContainer = try makeTestContainer()
+        try await seedActiveProfileWithRetention(in: highRetentionContainer, desiredRetention: 0.95)
+        let highRetentionRepository = CardRepository(modelContainer: highRetentionContainer)
+
+        // Same card, same grade, same (approximate) instant — the only
+        // difference between the two containers is the active profile's
+        // desiredRetention.
+        let lowCard = await lowRetentionRepository.createCard(front: "日", back: "day", type: .kanji)
+        let highCard = await highRetentionRepository.createCard(front: "日", back: "day", type: .kanji)
+
+        await lowRetentionRepository.gradeCard(cardId: lowCard.id, grade: .good, responseTimeMs: 1000)
+        await highRetentionRepository.gradeCard(cardId: highCard.id, grade: .good, responseTimeMs: 1000)
+
+        let lowResult = await lowRetentionRepository.card(by: lowCard.id)
+        let highResult = await highRetentionRepository.card(by: highCard.id)
+
+        // Higher desired retention => shorter interval => sooner due date.
+        #expect(highResult?.dueDate != nil)
+        #expect(lowResult?.dueDate != nil)
+        #expect(highResult!.dueDate < lowResult!.dueDate)
+    }
+
+    @Test("gradeCard clamps an out-of-band desiredRetention to the 0.8...0.95 range")
+    func gradeCardClampsDesiredRetention() async throws {
+        // A profile persisted (or migrated) with an out-of-range value
+        // (e.g. from a future/older settings surface) must not push the
+        // scheduler outside the supported band.
+        let extremeContainer = try makeTestContainer()
+        try await seedActiveProfileWithRetention(in: extremeContainer, desiredRetention: 0.5)
+        let extremeRepository = CardRepository(modelContainer: extremeContainer)
+
+        let clampedContainer = try makeTestContainer()
+        try await seedActiveProfileWithRetention(in: clampedContainer, desiredRetention: 0.8)
+        let clampedRepository = CardRepository(modelContainer: clampedContainer)
+
+        let extremeCard = await extremeRepository.createCard(front: "日", back: "day", type: .kanji)
+        let clampedCard = await clampedRepository.createCard(front: "日", back: "day", type: .kanji)
+
+        await extremeRepository.gradeCard(cardId: extremeCard.id, grade: .good, responseTimeMs: 1000)
+        await clampedRepository.gradeCard(cardId: clampedCard.id, grade: .good, responseTimeMs: 1000)
+
+        let extremeResult = await extremeRepository.card(by: extremeCard.id)
+        let clampedResult = await clampedRepository.card(by: clampedCard.id)
+
+        // 0.5 should clamp to the same effective 0.8 floor, producing the
+        // same due date as a profile explicitly set to 0.8 (within a
+        // one-second tolerance for wall-clock skew between the two grades).
+        #expect(extremeResult?.dueDate != nil)
+        #expect(clampedResult?.dueDate != nil)
+        #expect(abs(extremeResult!.dueDate.timeIntervalSince(clampedResult!.dueDate)) < 2.0)
+    }
+
+    // MARK: - Save Error Surfacing
+
+    @Test("Successful writes leave lastSaveError nil")
+    func lastSaveErrorNilAfterSuccessfulWrites() async throws {
+        let container = try makeTestContainer()
+        let repository = CardRepository(modelContainer: container)
+
+        let card = await repository.createCard(front: "日", back: "day", type: .kanji)
+        await repository.gradeCard(cardId: card.id, grade: .good, responseTimeMs: 1000)
+        await repository.setJLPTLevel(.n5, for: card.id)
+        await repository.deleteCard(by: card.id)
+
+        let error = await repository.saveErrorMonitor.lastSaveError
+        #expect(error == nil)
+    }
+
+    @Test("Grading a nonexistent card does not record a save error")
+    func gradeMissingCardRecordsNoSaveError() async throws {
+        let container = try makeTestContainer()
+        let repository = CardRepository(modelContainer: container)
+
+        // Card-not-found is logged but is not a persistence failure
+        await repository.gradeCard(cardId: UUID(), grade: .good, responseTimeMs: 1000)
+
+        let error = await repository.saveErrorMonitor.lastSaveError
+        #expect(error == nil)
+    }
+
+    @Test("CardSaveErrorMonitor records and clears errors")
+    @MainActor
+    func saveErrorMonitorRecordsAndClears() async throws {
+        let monitor = CardSaveErrorMonitor()
+        #expect(monitor.lastSaveError == nil)
+
+        let saveError = CardRepositorySaveError(
+            operation: "gradeCard",
+            message: "disk full",
+            timestamp: Date()
+        )
+        monitor.record(saveError)
+        #expect(monitor.lastSaveError == saveError)
+        #expect(monitor.lastSaveError?.operation == "gradeCard")
+
+        monitor.clear()
+        #expect(monitor.lastSaveError == nil)
+    }
+}
+
+// MARK: - Multi-Profile Scoping (remediation item 8.3)
+
+/// Verifies `dueCards(before:)`, `dueCardsSortedByDueDate(before:)`,
+/// `leechCards()` and `cards(byType:)` stay scoped to exactly the resolved
+/// active profile — excluding both the *other* profile's cards and orphan
+/// cards (`profile == nil`) — after item 8.3 swapped their in-memory
+/// fetch-all-then-filter implementation for `#Predicate`-based
+/// `FetchDescriptor`s.
+///
+/// Deliberately does NOT write `UserProfile.activeProfileIDDefaultsKey`:
+/// that's a process-global UserDefaults key also mutated (under its own
+/// `.serialized` suite) by `ExerciseOutcomeLogAggregationTests`, and two
+/// `.serialized` suites don't serialize against *each other* — writing it
+/// here raced with that suite under the parallel test runner. Instead, each
+/// scenario gets its own in-memory container with exactly two profiles and
+/// controls which one resolves active via `fetchActiveProfile()`'s
+/// documented fallback (oldest `createdAt` wins when no key is set) —
+/// same no-UserDefaults-writes rationale as `seedActiveProfile` above.
+@Suite("CardRepository — multi-profile scoping")
+struct CardRepositoryMultiProfileScopingTests {
+
+    private func makeTestContainer() throws -> ModelContainer {
+        let schema = Schema([UserProfile.self, Card.self, ReviewLog.self, RPGState.self])
+        let config = ModelConfiguration(isStoredInMemoryOnly: true)
+        return try ModelContainer(for: schema, configurations: [config])
+    }
+
+    /// Seeds a store with two profiles — `olderName` is created with the
+    /// earlier `createdAt` so it resolves as the active profile via the
+    /// oldest-profile fallback — plus cards for both and one orphan card,
+    /// then returns a repository over that store.
+    ///
+    /// Fixture per profile: a due+leech kanji card and a not-due vocabulary
+    /// card for the older (active) profile; a due (non-leech) kanji card
+    /// for the newer (other) profile; a due+leech kanji orphan card
+    /// (`profile == nil`) that must never surface for either profile.
+    @MainActor
+    private func seedTwoProfileStore(
+        olderName: String,
+        newerName: String
+    ) throws -> CardRepository {
+        let container = try makeTestContainer()
+        let context = container.mainContext
+
+        let older = UserProfile(displayName: olderName)
+        older.createdAt = Date(timeIntervalSince1970: 0)
+        let newer = UserProfile(displayName: newerName)
+        newer.createdAt = Date(timeIntervalSince1970: 3600)
+        context.insert(older)
+        context.insert(newer)
+
+        let now = Date()
+        let yesterday = now.addingTimeInterval(-86400)
+        let tomorrow = now.addingTimeInterval(86400)
+
+        let olderDueLeech = Card(front: "\(olderName)-due-leech", back: "1", type: .kanji, dueDate: yesterday, leechFlag: true)
+        olderDueLeech.profile = older
+        let olderNotDue = Card(front: "\(olderName)-not-due", back: "2", type: .vocabulary, dueDate: tomorrow)
+        olderNotDue.profile = older
+
+        let newerDue = Card(front: "\(newerName)-due", back: "3", type: .kanji, dueDate: yesterday)
+        newerDue.profile = newer
+
+        // Orphan: due + leech + kanji — must never surface for either
+        // profile (matches pre-8.3 `activeProfileCards()` behavior, which
+        // only traverses `profile.cards`).
+        let orphan = Card(front: "Orphan-due-leech", back: "4", type: .kanji, dueDate: yesterday, leechFlag: true)
+
+        context.insert(olderDueLeech)
+        context.insert(olderNotDue)
+        context.insert(newerDue)
+        context.insert(orphan)
+        try context.save()
+
+        return CardRepository(modelContainer: container)
+    }
+
+    @Test("dueCards/leechCards/cards(byType:) return only the resolved-active (oldest) profile's cards, excluding the other profile's and orphans")
+    func queriesScopedToOldestResolvedProfile() async throws {
+        let repository = try await seedTwoProfileStore(olderName: "Active", newerName: "Other")
+        let now = Date()
+
+        let due = await repository.dueCards(before: now)
+        #expect(due.map(\.front) == ["Active-due-leech"])
+
+        let sorted = await repository.dueCardsSortedByDueDate(before: now)
+        #expect(sorted.map(\.front) == ["Active-due-leech"])
+
+        let leeches = await repository.leechCards()
+        #expect(leeches.map(\.front) == ["Active-due-leech"])
+
+        let kanji = await repository.cards(byType: .kanji)
+        #expect(kanji.map(\.front) == ["Active-due-leech"])
+
+        let vocab = await repository.cards(byType: .vocabulary)
+        #expect(vocab.map(\.front) == ["Active-not-due"])
+    }
+
+    @Test("Swapping which profile is oldest flips which profile's cards the same queries return — proves scoping follows the resolved active profile, not a hardcoded one")
+    func queriesFollowWhicheverProfileResolvesActive() async throws {
+        // Same fixture as above, but this time "Other" is the older
+        // (hence resolved-active) profile.
+        let repository = try await seedTwoProfileStore(olderName: "Other", newerName: "Active")
+        let now = Date()
+
+        let due = await repository.dueCards(before: now)
+        #expect(due.map(\.front) == ["Other-due-leech"])
+
+        let leeches = await repository.leechCards()
+        #expect(leeches.map(\.front) == ["Other-due-leech"])
+
+        let kanji = await repository.cards(byType: .kanji)
+        #expect(kanji.map(\.front) == ["Other-due-leech"])
+
+        let vocab = await repository.cards(byType: .vocabulary)
+        #expect(vocab.map(\.front) == ["Other-not-due"])
     }
 }

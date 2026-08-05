@@ -14,24 +14,31 @@ struct DisplayModeToggleRow: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Settings.InterfaceTatami.Title")
-                        .font(.ikeruHeading3)
-                        .foregroundStyle(Color.ikeruTextPrimary)
-                    Text("Settings.InterfaceTatami.Subtitle")
-                        .font(.ikeruCaption)
-                        .foregroundStyle(Color.ikeruTextSecondary)
-                }
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(spacing: 16) {
+                Text("畳")
+                    .ikeruScaledFont(13, design: .serif, relativeTo: .caption)
+                    .foregroundStyle(TatamiTokens.paperGhost)
+                Text("Settings.InterfaceTatami.Title")
+                    .ikeruScaledFont(13, relativeTo: .caption)
+                    .foregroundStyle(Color.ikeruTextPrimary)
                 Spacer()
                 TatamiToggle(isOn: $isTatamiOn) { _ in }
             }
+            .padding(.horizontal, 16).padding(.vertical, 12)
+            .overlay(alignment: .bottom) {
+                Rectangle().fill(TatamiTokens.goldDim.opacity(0.2))
+                    .frame(height: 1).padding(.horizontal, 16)
+            }
+
             Text(isTatamiOn
                  ? "Settings.InterfaceTatami.HelpOn"
                  : "Settings.InterfaceTatami.HelpOff")
                 .font(.ikeruCaption)
-                .foregroundStyle(TatamiTokens.paperGhost)
+                .foregroundStyle(Color.ikeruTextSecondary)
+                .padding(.horizontal, 16)
+                .padding(.top, 8)
+                .padding(.bottom, 12)
         }
         .onChange(of: isTatamiOn) { _, new in
             repository.set(new ? .tatami : .beginner)

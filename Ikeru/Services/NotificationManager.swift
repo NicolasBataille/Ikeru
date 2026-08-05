@@ -96,8 +96,8 @@ final class NotificationManager: NSObject, @preconcurrency UNUserNotificationCen
         center.removePendingNotificationRequests(withIdentifiers: ["ikeru.review.daily"])
 
         let content = UNMutableNotificationContent()
-        content.title = "Ready to study?"
-        content.body = "Keep your streak going — your cards are waiting!"
+        content.title = String(localized: "Ready to study?")
+        content.body = String(localized: "Keep your streak going — your cards are waiting!")
         content.sound = .default
         content.categoryIdentifier = "REVIEW_REMINDER"
 
@@ -136,8 +136,8 @@ final class NotificationManager: NSObject, @preconcurrency UNUserNotificationCen
         center.removePendingNotificationRequests(withIdentifiers: ["ikeru.checkin.weekly"])
 
         let content = UNMutableNotificationContent()
-        content.title = "Weekly Check-In"
-        content.body = "How's your Japanese journey going? Take a moment to reflect."
+        content.title = String(localized: "Weekly Check-In")
+        content.body = String(localized: "How's your Japanese journey going? Take a moment to reflect.")
         content.sound = .default
         content.categoryIdentifier = "WEEKLY_CHECKIN"
 
@@ -175,8 +175,8 @@ final class NotificationManager: NSObject, @preconcurrency UNUserNotificationCen
         center.removePendingNotificationRequests(withIdentifiers: [Self.dailyTermIdentifier])
 
         let content = UNMutableNotificationContent()
-        content.title = "A new word is waiting"
-        content.body = "Today's term is ready to discover — tap to reveal it."
+        content.title = String(localized: "A new word is waiting")
+        content.body = String(localized: "Today's term is ready to discover — tap to reveal it.")
         content.sound = .default
         content.categoryIdentifier = Self.dailyTermCategory
         // Carry a routing hint so the delegate can deep-link without

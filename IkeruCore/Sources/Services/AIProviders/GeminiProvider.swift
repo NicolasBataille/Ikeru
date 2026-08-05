@@ -15,7 +15,12 @@ public final class GeminiProvider: AIProvider, @unchecked Sendable {
     private let urlSession: any URLSessionProvider
     private let timeoutSeconds: Double
 
-    private static let baseURL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
+    /// Model used for conversation. `gemini-2.5-flash` is Google's current
+    /// default free-tier flash model; older IDs like `gemini-2.0-flash` can have
+    /// a free-tier quota of 0 on some projects. Bump this when the model is
+    /// retired (see ListModels: generativelanguage.googleapis.com/v1beta/models).
+    private static let model = "gemini-2.5-flash"
+    private static let baseURL = "https://generativelanguage.googleapis.com/v1beta/models/\(model):generateContent"
 
     public init(
         keychainStore: any KeychainStore = KeychainHelper(),
@@ -71,7 +76,21 @@ public final class GeminiProvider: AIProvider, @unchecked Sendable {
 
         if httpResponse.statusCode == 429 {
             Logger.ai.warning("Gemini rate limited")
-            throw AIError.rateLimited(.gemini)
+            // Prefer the standard Retry-After header; Google's 429s usually omit
+            // it and instead carry the delay in the JSON body's RetryInfo detail.
+            let retryAfter = RetryAfterParsing.parseRetryAfterHeader(
+                httpResponse.value(forHTTPHeaderField: "Retry-After")
+            ) ?? RetryAfterParsing.parseGeminiRetryDelay(fromBody: data)
+            throw AIError.rateLimited(.gemini, retryAfter: retryAfter)
+        }
+
+        // A configured-but-rejected key surfaces as 401/403, or as 400 with an
+        // API_KEY_INVALID body. Map these to `invalidKey` so the UI can tell the
+        // user to fix their key instead of showing a generic failure.
+        if httpResponse.statusCode == 401 || httpResponse.statusCode == 403
+            || (httpResponse.statusCode == 400 && Self.bodyIndicatesInvalidKey(data)) {
+            Logger.ai.error("Gemini rejected the API key (HTTP \(httpResponse.statusCode))")
+            throw AIError.invalidKey(.gemini)
         }
 
         guard (200..<300).contains(httpResponse.statusCode) else {
@@ -97,6 +116,13 @@ public final class GeminiProvider: AIProvider, @unchecked Sendable {
 
     // MARK: - Private Helpers
 
+    /// True when a 400 response body is Google's "API key not valid" error, so
+    /// we can distinguish a bad key from a genuinely malformed request.
+    private static func bodyIndicatesInvalidKey(_ data: Data) -> Bool {
+        guard let text = String(data: data, encoding: .utf8) else { return false }
+        return text.contains("API_KEY_INVALID") || text.contains("API key not valid")
+    }
+
     private func buildRequest(prompt: AIPrompt, apiKey: String) throws -> URLRequest {
         guard let url = URL(string: Self.baseURL) else {
             throw AIError.invalidResponse
@@ -108,19 +134,32 @@ public final class GeminiProvider: AIProvider, @unchecked Sendable {
         request.addValue(apiKey, forHTTPHeaderField: "x-goog-api-key")
         request.timeoutInterval = timeoutSeconds
 
+        request.httpBody = try Self.encodeRequestBody(
+            systemPrompt: prompt.systemPrompt,
+            messages: prompt.messages
+        )
+        return request
+    }
+
+    /// Builds Gemini's `generateContent` JSON body from a system prompt and an
+    /// ordered multi-turn conversation. The system prompt goes into
+    /// `system_instruction`; every turn maps to a `contents` entry with Gemini's
+    /// role vocabulary (`user`, and `model` for the assistant). Pure and
+    /// `static` so the multi-turn shape can be unit-tested without the network.
+    static func encodeRequestBody(systemPrompt: String, messages: [AIMessage]) throws -> Data {
         let body = GeminiRequestBody(
             systemInstruction: GeminiContent(
-                parts: [GeminiPart(text: prompt.systemPrompt)]
+                role: nil,
+                parts: [GeminiPart(text: systemPrompt)]
             ),
-            contents: [
+            contents: messages.map { message in
                 GeminiContent(
-                    parts: [GeminiPart(text: prompt.userMessage)]
+                    role: message.role == .user ? "user" : "model",
+                    parts: [GeminiPart(text: message.text)]
                 )
-            ]
+            }
         )
-
-        request.httpBody = try JSONEncoder().encode(body)
-        return request
+        return try JSONEncoder().encode(body)
     }
 
     private func parseResponse(data: Data) throws -> String {
@@ -154,6 +193,9 @@ private struct GeminiRequestBody: Encodable {
 }
 
 private struct GeminiContent: Codable {
+    /// Gemini's role for a turn: `user` or `model`. Omitted (nil) for
+    /// `system_instruction`, which is roleless.
+    let role: String?
     let parts: [GeminiPart]?
 }
 

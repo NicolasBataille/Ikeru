@@ -100,10 +100,11 @@ struct AIRouterIntegrationTests {
                 tier: .gemini,
                 content: "",
                 available: true,
-                error: .rateLimited(.gemini)
+                error: .rateLimited(.gemini, retryAfter: nil)
             ),
             claudeProvider: makeConfigurableMock(tier: .claude, content: "claude"),
-            localGPUProvider: makeConfigurableMock(tier: .localGPU, content: "gpu"),
+            // No rig discovered — must not be prepended ahead of Gemini for this .medium test.
+            localGPUProvider: makeConfigurableMock(tier: .localGPU, content: "gpu", available: false),
             networkChecker: MockNetworkChecker(online: true)
         )
 
@@ -151,7 +152,8 @@ struct AIRouterIntegrationTests {
             onDeviceProvider: MockFoundationModelsProvider(available: true, responseContent: "on-device fallback"),
             geminiProvider: makeConfigurableMock(tier: .gemini, content: "gemini answer"),
             claudeProvider: makeConfigurableMock(tier: .claude, content: "claude"),
-            localGPUProvider: makeConfigurableMock(tier: .localGPU, content: "gpu"),
+            // No rig discovered — must not be prepended ahead of Gemini for this .medium test.
+            localGPUProvider: makeConfigurableMock(tier: .localGPU, content: "gpu", available: false),
             networkChecker: networkChecker
         )
 
@@ -189,6 +191,122 @@ struct AIRouterIntegrationTests {
         // Now available
         let available = await provider.isAvailable
         #expect(available == true)
+    }
+
+    // MARK: - LocalGPU Chain Composition (Item 2.11)
+
+    @Test("Medium chain prepends LocalGPU when a rig is discovered")
+    func mediumChainPrefersLocalGPUWhenAvailable() async throws {
+        let router = AIRouterService(
+            providers: [
+                .onDevice: MockFoundationModelsProvider(available: true, responseContent: "on-device"),
+                .cerebras: makeConfigurableMock(tier: .cerebras, content: "cerebras"),
+                .groq: makeConfigurableMock(tier: .groq, content: "groq"),
+                .openRouter: makeConfigurableMock(tier: .openRouter, content: "openRouter"),
+                .gemini: makeConfigurableMock(tier: .gemini, content: "gemini"),
+                .githubModels: makeConfigurableMock(tier: .githubModels, content: "githubModels"),
+                .localGPU: makeConfigurableMock(tier: .localGPU, content: "rig", available: true),
+            ],
+            networkChecker: MockNetworkChecker(online: true)
+        )
+
+        let prompt = AIPrompt(systemPrompt: "System", userMessage: "Test", complexity: .medium)
+        let response = try await router.generate(prompt: prompt)
+
+        #expect(response.tier == .localGPU)
+        #expect(response.content == "rig")
+    }
+
+    @Test("Medium chain is byte-identical to the pre-existing order when no rig is discovered")
+    func mediumChainUnchangedWhenUnavailable() async throws {
+        // Same registered providers as the "prefers LocalGPU" test above, except
+        // LocalGPU is unavailable — matching production's "no rig discovered"
+        // state. The chain must fall back to Cerebras exactly as it did before
+        // LocalGPU was wired into chain composition.
+        let router = AIRouterService(
+            providers: [
+                .onDevice: MockFoundationModelsProvider(available: true, responseContent: "on-device"),
+                .cerebras: makeConfigurableMock(tier: .cerebras, content: "cerebras"),
+                .groq: makeConfigurableMock(tier: .groq, content: "groq"),
+                .openRouter: makeConfigurableMock(tier: .openRouter, content: "openRouter"),
+                .gemini: makeConfigurableMock(tier: .gemini, content: "gemini"),
+                .githubModels: makeConfigurableMock(tier: .githubModels, content: "githubModels"),
+                .localGPU: makeConfigurableMock(tier: .localGPU, content: "rig", available: false),
+            ],
+            networkChecker: MockNetworkChecker(online: true)
+        )
+
+        let prompt = AIPrompt(systemPrompt: "System", userMessage: "Test", complexity: .medium)
+        let response = try await router.generate(prompt: prompt)
+
+        #expect(response.tier == .cerebras)
+        #expect(response.content == "cerebras")
+    }
+
+    @Test("Medium chain is unchanged when no LocalGPU provider is registered at all")
+    func mediumChainUnchangedWhenNoLocalGPUProvider() async throws {
+        let router = AIRouterService(
+            providers: [
+                .onDevice: MockFoundationModelsProvider(available: true, responseContent: "on-device"),
+                .cerebras: makeConfigurableMock(tier: .cerebras, content: "cerebras"),
+                .groq: makeConfigurableMock(tier: .groq, content: "groq"),
+                .openRouter: makeConfigurableMock(tier: .openRouter, content: "openRouter"),
+                .gemini: makeConfigurableMock(tier: .gemini, content: "gemini"),
+                .githubModels: makeConfigurableMock(tier: .githubModels, content: "githubModels"),
+            ],
+            networkChecker: MockNetworkChecker(online: true)
+        )
+
+        let prompt = AIPrompt(systemPrompt: "System", userMessage: "Test", complexity: .medium)
+        let response = try await router.generate(prompt: prompt)
+
+        #expect(response.tier == .cerebras)
+    }
+
+    // MARK: - LocalGPU Discovery Wiring (Item 2.11)
+
+    @Test("startLocalGPUDiscovery starts browsing when a LocalGPUProvider is registered")
+    func startLocalGPUDiscoveryStartsBrowsing() async throws {
+        let discovery = MockBonjourDiscovery(endpoint: nil)
+        let localGPUProvider = LocalGPUProvider(bonjourDiscovery: discovery)
+        let router = AIRouterService(
+            providers: [
+                .onDevice: MockFoundationModelsProvider(available: true, responseContent: "on-device"),
+                .localGPU: localGPUProvider,
+            ],
+            networkChecker: MockNetworkChecker(online: true)
+        )
+
+        router.startLocalGPUDiscovery()
+
+        #expect(discovery.startBrowsingCallCount == 1)
+    }
+
+    @Test("startLocalGPUDiscovery is a no-op when no .localGPU provider is registered")
+    func startLocalGPUDiscoveryNoOpWithoutProvider() async throws {
+        let router = AIRouterService(
+            providers: [
+                .onDevice: MockFoundationModelsProvider(available: true, responseContent: "on-device"),
+            ],
+            networkChecker: MockNetworkChecker(online: true)
+        )
+
+        // Must not crash — there is nothing else to assert beyond safe completion.
+        router.startLocalGPUDiscovery()
+    }
+
+    @Test("startLocalGPUDiscovery is a no-op when the .localGPU slot holds a non-LocalGPUProvider")
+    func startLocalGPUDiscoveryNoOpWithMockProvider() async throws {
+        let router = AIRouterService(
+            providers: [
+                .onDevice: MockFoundationModelsProvider(available: true, responseContent: "on-device"),
+                .localGPU: makeConfigurableMock(tier: .localGPU, content: "mock", available: true),
+            ],
+            networkChecker: MockNetworkChecker(online: true)
+        )
+
+        // The mock is not a LocalGPUProvider, so the cast fails and this is a safe no-op.
+        router.startLocalGPUDiscovery()
     }
 
     // MARK: - Keychain Integration

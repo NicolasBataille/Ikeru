@@ -31,12 +31,20 @@ public enum ContentSeedService {
 
         Logger.content.info("Seeding \(beginnerHiragana.count) beginner hiragana cards")
 
+        // Skip any vowel that already exists so a second (racing) seed can't
+        // create a duplicate — defends the unique-front invariant the kana
+        // mastery aggregation relies on.
+        let existingFronts = Set(await repository.allCards().map { $0.front })
         var seededCards: [CardDTO] = []
-        for kana in beginnerHiragana {
+        for kana in beginnerHiragana where !existingFronts.contains(kana.character) {
+            // Kana cards are seeded as `.vocabulary`, matching the production
+            // seeder (`KanaCardRepository`) — kana is not `.kanji`, and the
+            // mismatch previously meant this (test-only-reachable) path
+            // tagged its cards differently from the live seeding path.
             let card = await repository.createCard(
                 front: kana.character,
                 back: kana.romanization,
-                type: .kanji,
+                type: .vocabulary,
                 dueDate: Date()
             )
             seededCards.append(card)

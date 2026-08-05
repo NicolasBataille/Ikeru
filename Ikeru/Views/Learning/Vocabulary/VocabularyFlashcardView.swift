@@ -70,7 +70,12 @@ struct VocabularyFlashcardView: View {
                 .foregroundStyle(Color.ikeruTextSecondary)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
-                .background { Capsule().fill(.ultraThinMaterial) }
+                .background {
+                    Rectangle()
+                        .fill(.ultraThinMaterial)
+                        .overlay { Rectangle().strokeBorder(TatamiTokens.goldDim.opacity(0.5), lineWidth: 0.5) }
+                }
+                .sumiCorners(color: TatamiTokens.goldDim, size: 6, weight: 1.1)
             Spacer()
             Text("VOCABULARY")
                 .font(.ikeruMicro)
@@ -78,7 +83,12 @@ struct VocabularyFlashcardView: View {
                 .foregroundStyle(Color.ikeruPrimaryAccent)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
-                .background { Capsule().fill(Color.ikeruPrimaryAccent.opacity(0.10)) }
+                .background {
+                    Rectangle()
+                        .fill(Color.ikeruPrimaryAccent.opacity(0.10))
+                        .overlay { Rectangle().strokeBorder(TatamiTokens.goldDim.opacity(0.4), lineWidth: 0.5) }
+                }
+                .sumiCorners(color: TatamiTokens.goldDim, size: 6, weight: 1.1)
         }
         .padding(.top, IkeruTheme.Spacing.sm)
     }
@@ -101,7 +111,7 @@ struct VocabularyFlashcardView: View {
                 if viewModel.isRevealed {
                     VStack(spacing: IkeruTheme.Spacing.sm) {
                         Text(entry.reading)
-                            .font(.system(size: 28, weight: .medium, design: .rounded))
+                            .ikeruScaledFont(28, weight: .medium, design: .rounded, relativeTo: .title2)
                             .foregroundStyle(Color.ikeruPrimaryAccent)
 
                         Text(entry.meaning)
@@ -143,16 +153,16 @@ struct VocabularyFlashcardView: View {
 
     private var gradeButtons: some View {
         HStack(spacing: 8) {
-            gradeButton(.again, label: "Again", color: Color(red: 0.85, green: 0.30, blue: 0.30))
-            gradeButton(.hard, label: "Hard", color: Color(red: 0.90, green: 0.55, blue: 0.20))
-            gradeButton(.good, label: "Good", color: Color(red: 0.30, green: 0.55, blue: 0.85))
-            gradeButton(.easy, label: "Easy", color: Color(red: 0.30, green: 0.70, blue: 0.45))
+            gradeButton(.again, label: "Again", tint: Color.ikeruDanger)
+            gradeButton(.hard, label: "Hard", tint: TatamiTokens.goldDim)
+            gradeButton(.good, label: "Good", tint: Color.ikeruPrimaryAccent)
+            gradeButton(.easy, label: "Easy", tint: Color.ikeruPrimaryAccent)
         }
         .padding(.top, IkeruTheme.Spacing.md)
     }
 
     @ViewBuilder
-    private func gradeButton(_ grade: Grade, label: String, color: Color) -> some View {
+    private func gradeButton(_ grade: Grade, label: String, tint: Color) -> some View {
         Button {
             Task {
                 if grade == .again {
@@ -165,21 +175,23 @@ struct VocabularyFlashcardView: View {
         } label: {
             VStack(spacing: 4) {
                 Text(label)
-                    .font(.system(size: 13, weight: .semibold))
+                    .ikeruScaledFont(13, weight: .semibold, relativeTo: .caption)
                     .foregroundStyle(Color.ikeruTextPrimary)
                 Text(viewModel.predictedIntervals[grade] ?? "—")
-                    .font(.system(size: 11, weight: .regular))
+                    .ikeruScaledFont(11, weight: .regular, relativeTo: .caption2)
                     .foregroundStyle(Color.ikeruTextSecondary)
             }
             .frame(maxWidth: .infinity, minHeight: 64)
             .background {
-                RoundedRectangle(cornerRadius: IkeruTheme.Radius.md, style: .continuous)
-                    .fill(color.opacity(0.18))
+                ZStack {
+                    Rectangle().fill(.ultraThinMaterial)
+                    Rectangle().fill(tint.opacity(0.14))
+                }
             }
             .overlay {
-                RoundedRectangle(cornerRadius: IkeruTheme.Radius.md, style: .continuous)
-                    .strokeBorder(color.opacity(0.55), lineWidth: 0.8)
+                Rectangle().strokeBorder(tint.opacity(0.5), lineWidth: 0.8)
             }
+            .sumiCorners(color: tint.opacity(0.8), size: 8, weight: 1.2)
         }
         .buttonStyle(.plain)
     }

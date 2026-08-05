@@ -1,0 +1,40 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "NSMicrophoneUsageDescription" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ikeru needs microphone access for shadowing exercises where you practice speaking Japanese."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ikeru a besoin d'accéder au micro pour les exercices de shadowing où tu t'entraînes à parler japonais."
+          }
+        }
+      }
+    },
+    "NSSpeechRecognitionUsageDescription" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ikeru uses speech recognition to evaluate your Japanese pronunciation during shadowing exercises."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ikeru utilise la reconnaissance vocale pour évaluer ta prononciation du japonais pendant les exercices de shadowing."
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

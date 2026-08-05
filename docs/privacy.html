@@ -20,32 +20,49 @@
 <p class="lang-toggle"><a href="#english">English ↓</a></p>
 
 <h1 id="francais">Politique de confidentialité — Ikeru</h1>
-<p class="muted">Dernière mise à jour : 13 mai 2026</p>
+<p class="muted">Dernière mise à jour : 14 juillet 2026</p>
 
 <h2>Résumé</h2>
-<p>Ikeru est une application personnelle d'apprentissage du japonais. Toutes les données d'apprentissage (progression, deck de cartes, statistiques) sont stockées <strong>localement sur votre appareil</strong>. Aucune donnée n'est envoyée à un serveur tiers.</p>
+<p>Ikeru est une application personnelle d'apprentissage du japonais. Toutes les données d'apprentissage (progression, deck de cartes, statistiques) sont stockées <strong>localement sur votre appareil</strong>. Il n'y a pas de compte, pas de tracking, pas d'analytics et pas de publicité. Deux fonctionnalités optionnelles — décrites ci-dessous — peuvent envoyer des données hors de l'appareil, uniquement si vous les activez.</p>
 
 <h2>Données collectées</h2>
-<p>Ikeru stocke localement, sur votre iPhone uniquement :</p>
+<p>Ikeru stocke localement, sur votre iPhone :</p>
 <ul>
   <li>Votre progression d'apprentissage (cartes, niveaux, statistiques)</li>
   <li>Votre prénom (utilisé pour personnaliser l'écran d'accueil)</li>
   <li>Les notes et préférences que vous configurez dans l'app</li>
 </ul>
-<p>Ces données ne quittent jamais votre appareil, sauf si vous activez explicitement la sauvegarde iCloud — auquel cas elles sont chiffrées de bout en bout et stockées dans votre compte iCloud Apple personnel (Apple n'y a pas accès).</p>
+<p>Par défaut, ces données ne quittent pas votre appareil. Deux fonctionnalités optionnelles peuvent envoyer des données hors de l'appareil : les fonctions d'IA (si vous configurez une clé API) et la reconnaissance vocale (selon l'appareil). Une sauvegarde iCloud est prévue à terme, mais <strong>n'est pas encore activée dans cette build</strong> : voir la section dédiée ci-dessous.</p>
+
+<h2>Fonctions d'IA optionnelles</h2>
+<p>Les modes conversation et génération de moyens mnémotechniques peuvent utiliser des services d'IA tiers, <strong>uniquement si vous configurez vous-même une clé API</strong> dans les réglages de l'app. Sans clé configurée, aucune donnée n'est envoyée à ces services.</p>
+<ul>
+  <li>Fournisseurs pris en charge : Google Gemini, Groq, Cerebras, OpenRouter, GitHub Models, et éventuellement Anthropic Claude si vous ajoutez une clé dédiée.</li>
+  <li>Ce qui est envoyé : <strong>uniquement le texte de vos conversations ou les termes pour lesquels un moyen mnémotechnique est généré</strong> — jamais votre profil complet, votre prénom ni votre historique de révision.</li>
+  <li>Vos clés API sont stockées dans le Trousseau (Keychain) iOS et ne sont jamais transmises ailleurs qu'au fournisseur concerné.</li>
+  <li>Le texte envoyé est traité selon la politique de confidentialité du fournisseur que vous avez choisi.</li>
+  <li>Option avancée : vous pouvez pointer l'app vers votre propre serveur d'IA auto-hébergé sur votre réseau local ; dans ce cas, le texte est envoyé à ce serveur qui vous appartient.</li>
+</ul>
+
+<h2>Reconnaissance vocale</h2>
+<p>Pour les exercices de prononciation, Ikeru utilise la reconnaissance vocale d'Apple. Lorsque votre appareil prend en charge la reconnaissance <strong>sur l'appareil</strong>, l'app l'exige et l'audio ne quitte pas votre iPhone. Si la reconnaissance sur l'appareil n'est pas disponible, l'audio est traité par les serveurs de reconnaissance vocale d'Apple, conformément à la <a href="https://www.apple.com/legal/privacy/" rel="noopener">politique de confidentialité d'Apple</a>.</p>
+
+<h2>Sauvegarde iCloud (pas encore disponible)</h2>
+<p>Ikeru contient l'infrastructure d'une future sauvegarde iCloud optionnelle, mais elle est <strong>désactivée dans la version actuelle</strong> le temps que le compte développeur Apple soit pleinement activé : il n'y a aujourd'hui aucun réglage pour l'activer dans l'app, et aucune donnée n'est envoyée à iCloud. Quand cette fonctionnalité sera livrée, vos données d'apprentissage seraient stockées dans la base de données privée CloudKit de votre compte iCloud personnel, chiffrées en transit et au repos, mais <strong>pas chiffrées de bout en bout par défaut</strong> : Apple détiendrait les clés de chiffrement, sauf si vous avez activé la <a href="https://support.apple.com/fr-fr/108756" rel="noopener">Protection avancée des données</a> sur votre compte iCloud. Le développeur d'Ikeru n'aurait en aucun cas accès à ces données. Cette section sera mise à jour dès que la fonctionnalité sera active.</p>
 
 <h2>Services tiers</h2>
-<p>Ikeru n'utilise <strong>aucun service tiers de tracking, d'analytics ou de publicité</strong>. Les seules informations qu'Apple collecte sont celles décrites dans la <a href="https://www.apple.com/legal/privacy/" rel="noopener">politique de confidentialité d'Apple</a> dans le cadre du fonctionnement de TestFlight (rapports de crash, statistiques d'utilisation anonymes destinées au développeur).</p>
+<p>Ikeru n'utilise <strong>aucun service tiers de tracking, d'analytics ou de publicité</strong>. En dehors des fonctions optionnelles décrites ci-dessus, les seules informations qu'Apple collecte sont celles décrites dans la <a href="https://www.apple.com/legal/privacy/" rel="noopener">politique de confidentialité d'Apple</a> dans le cadre du fonctionnement de TestFlight (rapports de crash, statistiques d'utilisation anonymes destinées au développeur).</p>
 
 <h2>Permissions demandées</h2>
 <ul>
-  <li><strong>Notifications</strong> (optionnel) : pour le rappel quotidien du « Terme du jour »</li>
-  <li><strong>Microphone</strong> (le cas échéant) : pour les exercices de prononciation</li>
+  <li><strong>Notifications</strong> (optionnel) : pour le rappel quotidien du « Terme du jour », les rappels de révision et le bilan hebdomadaire</li>
+  <li><strong>Microphone</strong> (optionnel) : pour les exercices de prononciation</li>
+  <li><strong>Reconnaissance vocale</strong> (optionnel) : pour transcrire votre voix pendant les exercices de prononciation</li>
 </ul>
 <p>Toutes les permissions peuvent être révoquées à tout moment depuis les Réglages iOS.</p>
 
 <h2>Vos droits</h2>
-<p>Pour effacer toutes les données stockées par Ikeru : désinstallez simplement l'application depuis votre iPhone. Aucune donnée résiduelle n'est conservée — il n'y a pas de serveur.</p>
+<p>Pour effacer toutes les données stockées localement par Ikeru : désinstallez simplement l'application depuis votre iPhone. Ikeru n'opère aucun serveur qui conserverait vos données. Pour les données envoyées à un fournisseur d'IA que vous avez configuré, référez-vous à la politique de confidentialité de ce fournisseur.</p>
 
 <h2>Contact</h2>
 <p>Pour toute question : <a href="mailto:nicolas.bataille84@gmail.com">nicolas.bataille84@gmail.com</a></p>
@@ -53,32 +70,49 @@
 <hr>
 
 <h1 id="english">Privacy Policy — Ikeru</h1>
-<p class="muted">Last updated: May 13, 2026</p>
+<p class="muted">Last updated: July 14, 2026</p>
 
 <h2>Summary</h2>
-<p>Ikeru is a personal Japanese-learning app. All learning data (progress, card deck, statistics) is stored <strong>locally on your device</strong>. No data is sent to any third-party server.</p>
+<p>Ikeru is a personal Japanese-learning app. All learning data (progress, card deck, statistics) is stored <strong>locally on your device</strong>. There are no accounts, no tracking, no analytics and no ads. Two optional features — described below — can send data off the device, and only if you enable them.</p>
 
 <h2>Data collected</h2>
-<p>Ikeru stores locally, on your iPhone only:</p>
+<p>Ikeru stores locally, on your iPhone:</p>
 <ul>
   <li>Your learning progress (cards, levels, statistics)</li>
   <li>Your first name (used to personalise the home screen)</li>
   <li>Notes and preferences you configure inside the app</li>
 </ul>
-<p>This data never leaves your device unless you explicitly enable iCloud backup — in which case it is end-to-end encrypted and stored in your personal Apple iCloud account (Apple has no access to its contents).</p>
+<p>By default, this data does not leave your device. Two optional features can send data off the device: the AI features (if you configure an API key) and speech recognition (depending on your device). A third feature, iCloud backup, is planned but <strong>not yet enabled in this build</strong> — see the dedicated section below.</p>
+
+<h2>Optional AI features</h2>
+<p>The conversation and mnemonic-generation features can use third-party AI services, <strong>but only if you configure an API key yourself</strong> in the app's settings. Without a configured key, no data is sent to these services.</p>
+<ul>
+  <li>Supported providers: Google Gemini, Groq, Cerebras, OpenRouter, GitHub Models, and optionally Anthropic Claude if you add a dedicated key.</li>
+  <li>What is sent: <strong>only the text of your conversations or the terms a mnemonic is being generated for</strong> — never your full profile, your first name, or your review history.</li>
+  <li>Your API keys are stored in the iOS Keychain and are only ever transmitted to the corresponding provider.</li>
+  <li>Submitted text is processed under the privacy policy of the provider you chose.</li>
+  <li>Advanced option: you can point the app at your own self-hosted AI server on your local network; in that case the text is sent to that server, which you own.</li>
+</ul>
+
+<h2>Speech recognition</h2>
+<p>For pronunciation exercises, Ikeru uses Apple's speech recognition. When your device supports <strong>on-device</strong> recognition, the app requires it and your audio never leaves your iPhone. If on-device recognition is not available, audio is processed by Apple's speech-recognition servers, as described in <a href="https://www.apple.com/legal/privacy/" rel="noopener">Apple's privacy policy</a>.</p>
+
+<h2>iCloud backup (not yet available)</h2>
+<p>Ikeru includes the groundwork for a future optional iCloud backup feature, but it is <strong>disabled in the current build</strong> while the developer's Apple Developer account setup is finalized: there is no setting to enable it today, and no data is sent to iCloud. Once shipped, your learning data would be stored in the private CloudKit database of your personal iCloud account, encrypted in transit and at rest, but <strong>not end-to-end encrypted by default</strong>: Apple would hold the encryption keys, unless you have enabled <a href="https://support.apple.com/en-us/108756" rel="noopener">Advanced Data Protection</a> on your iCloud account. The developer of Ikeru would have no access to this data in any case. This section will be updated once the feature is active.</p>
 
 <h2>Third parties</h2>
-<p>Ikeru does <strong>not use any third-party tracking, analytics, or advertising service</strong>. The only information Apple collects is described in <a href="https://www.apple.com/legal/privacy/" rel="noopener">Apple's privacy policy</a> as part of TestFlight (crash reports, anonymous usage statistics for the developer).</p>
+<p>Ikeru does <strong>not use any third-party tracking, analytics, or advertising service</strong>. Apart from the optional features described above, the only information Apple collects is described in <a href="https://www.apple.com/legal/privacy/" rel="noopener">Apple's privacy policy</a> as part of TestFlight (crash reports, anonymous usage statistics for the developer).</p>
 
 <h2>Permissions requested</h2>
 <ul>
-  <li><strong>Notifications</strong> (optional): for the daily "Term of the Day" reminder</li>
-  <li><strong>Microphone</strong> (where applicable): for pronunciation exercises</li>
+  <li><strong>Notifications</strong> (optional): for the daily "Term of the Day" reminder, review reminders, and the weekly check-in</li>
+  <li><strong>Microphone</strong> (optional): for pronunciation exercises</li>
+  <li><strong>Speech recognition</strong> (optional): to transcribe your voice during pronunciation exercises</li>
 </ul>
 <p>All permissions can be revoked at any time from iOS Settings.</p>
 
 <h2>Your rights</h2>
-<p>To erase all data stored by Ikeru: simply uninstall the app from your iPhone. No residual data is retained — there is no server.</p>
+<p>To erase all data stored locally by Ikeru: simply uninstall the app from your iPhone. Ikeru operates no server that retains your data. For data sent to an AI provider you configured, please refer to that provider's privacy policy.</p>
 
 <h2>Contact</h2>
 <p>For any question: <a href="mailto:nicolas.bataille84@gmail.com">nicolas.bataille84@gmail.com</a></p>

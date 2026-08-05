@@ -1,0 +1,342 @@
+import Testing
+import SwiftUI
+import SwiftData
+@testable import Ikeru
+@testable import IkeruCore
+
+/// Phase 4.1 Steps 3+4 coverage for the LIVE Tier-1 drill path.
+///
+/// Focus: the `.kanjiStudy` completion path in `SessionViewModel`
+/// (`completeCurrentExercise`) must now run the SAME card-grade bookkeeping the
+/// SRS deck runs (`applyCardGradeSideEffects`) — a real FSRS write, first-review
+/// counting, and leech detection — while `.writingPractice` stays XP-only.
+/// The mocked-planner injection mirrors `SessionDecouplingTests`.
+@Suite("Tier-1 kanjiStudy bookkeeping (4.1)")
+@MainActor
+struct Tier1KanjiStudyBookkeepingTests {
+
+    // MARK: - Helpers (mirrors SessionDecouplingTests' seam)
+
+    private func makeContainer() throws -> ModelContainer {
+        let schema = Schema([UserProfile.self, Card.self, ReviewLog.self, RPGState.self])
+        let config = ModelConfiguration(isStoredInMemoryOnly: true)
+        ActiveProfileResolver.setActiveProfileID(nil)
+        return try ModelContainer(for: schema, configurations: [config])
+    }
+
+    @discardableResult
+    private func ensureProfile(container: ModelContainer) throws -> UserProfile {
+        let context = container.mainContext
+        if let existing = ActiveProfileResolver.fetchActiveProfile(in: context) {
+            return existing
+        }
+        let profile = UserProfile(displayName: "Test")
+        context.insert(profile)
+        try context.save()
+        ActiveProfileResolver.setActiveProfileID(profile.id)
+        return profile
+    }
+
+    /// Seeds one `.kanji` card per front string (all overdue, brand-new so
+    /// `reps == 0`), attached to the active profile.
+    private func seedCards(container: ModelContainer, fronts: [String]) throws {
+        let context = container.mainContext
+        let profile = try ensureProfile(container: container)
+        for (i, front) in fronts.enumerated() {
+            let card = Card(
+                front: front,
+                back: "Back \(front)",
+                type: .kanji,
+                dueDate: Date().addingTimeInterval(-3600 + Double(i))
+            )
+            card.profile = profile
+            context.insert(card)
+        }
+        try context.save()
+    }
+
+    private func makeVM(container: ModelContainer, planner: any SessionPlanner) -> SessionViewModel {
+        let repo = CardRepository(modelContainer: container)
+        let plannerService = PlannerService(cardRepository: repo)
+        return SessionViewModel(
+            plannerService: plannerService,
+            cardRepository: repo,
+            modelContainer: container,
+            sessionPlanner: planner
+        )
+    }
+
+    private func buildPlan(_ exercises: [ExerciseItem]) -> SessionPlan {
+        SessionPlan(
+            exercises: exercises,
+            estimatedDurationMinutes: max(1, exercises.count / 3),
+            exerciseBreakdown: [.reading: exercises.count]
+        )
+    }
+
+    private func dto(_ front: String, in dtos: [CardDTO]) throws -> CardDTO {
+        try #require(dtos.first { $0.front == front })
+    }
+
+    /// A kanji `CardDTO` that becomes a leech on the next `.again`
+    /// (`lapseCount + 1 == leechThreshold`). Built directly (not seeded) since
+    /// leech detection reads the DTO, not the DB.
+    private func leechEligibleKanji(front: String) -> CardDTO {
+        CardDTO(
+            id: UUID(),
+            front: front,
+            back: "leech",
+            type: .kanji,
+            fsrsState: FSRSState(difficulty: 7, stability: 2, reps: 4, lapses: 2, lastReview: nil),
+            easeFactor: 2.5,
+            interval: 1,
+            dueDate: Date(),
+            lapseCount: CardRepository.leechThreshold - 1,
+            leechFlag: false
+        )
+    }
+
+    // MARK: - Tests
+
+    @Test("kanjiStudy completion writes a real FSRS grade AND counts the first review")
+    func kanjiStudyWritesGradeAndCountsNewItem() async throws {
+        let container = try makeContainer()
+        let repo = CardRepository(modelContainer: container)
+        // K is the studied kanji; A is a trailing SRS card so the session starts
+        // (startSession refuses an all-non-SRS plan).
+        try seedCards(container: container, fronts: ["K", "A"])
+        let dtos = await repo.allCards()
+        let k = try dto("K", in: dtos)
+        let a = try dto("A", in: dtos)
+        // Precondition the bookkeeping depends on: K is brand-new.
+        #expect(k.fsrsState.reps == 0)
+
+        let planner = MockSessionPlanner()
+        planner.plan = buildPlan([.kanjiStudy(k), .srsReview(a)])
+        let vm = makeVM(container: container, planner: planner)
+
+        await vm.startSession()
+        #expect(vm.currentExercise == .kanjiStudy(k))
+
+        await vm.completeCurrentExercise(grade: .good)
+
+        // 4.4 hook: a real ReviewLog was written for K.
+        let kLogs = await repo.reviewLogs(for: k.id)
+        #expect(kLogs.count == 1)
+        // Card bookkeeping ran: first review counted.
+        #expect(vm.newItemsLearned == 1)
+        #expect(vm.reviewedCount == 1)
+        // SRS queue pointer untouched; exercise pointer advanced.
+        #expect(vm.currentIndex == 0)
+        #expect(vm.currentExerciseIndex == 1)
+        #expect(vm.currentExercise == .srsReview(a))
+    }
+
+    @Test("kanjiStudy graded .again flags a leech-eligible card (bookkeeping parity)")
+    func kanjiStudyDetectsLeech() async throws {
+        let container = try makeContainer()
+        let repo = CardRepository(modelContainer: container)
+        try seedCards(container: container, fronts: ["A"])
+        let dtos = await repo.allCards()
+        let a = try dto("A", in: dtos)
+        let leechKanji = leechEligibleKanji(front: "難")
+
+        let planner = MockSessionPlanner()
+        planner.plan = buildPlan([.kanjiStudy(leechKanji), .srsReview(a)])
+        let vm = makeVM(container: container, planner: planner)
+
+        await vm.startSession()
+        #expect(vm.currentExercise == .kanjiStudy(leechKanji))
+        #expect(vm.lastLeechEvent == nil)
+
+        await vm.completeCurrentExercise(grade: .again)
+
+        // Leech detection ran on the kanjiStudy path exactly as it would on the deck.
+        let leech = try #require(vm.lastLeechEvent)
+        #expect(leech.lapseCount == CardRepository.leechThreshold)
+        #expect(leech.isNewLeech == true)
+        // Companion intervention was generated for the leech (no ContentRepository
+        // injected here, so it falls back to the sync overload's hand-written
+        // distractor pools — real-bundle sampling via the async overload is
+        // covered in IkeruCore's LeechInterventionServiceTests
+        // ("Async contentRepository overload samples real bundle distractors").
+        let intervention = try #require(vm.lastLeechIntervention)
+        #expect(intervention.message.contains(leechKanji.front))
+        // A failed kanjiStudy must NOT move the SRS queue pointer.
+        #expect(vm.currentIndex == 0)
+        #expect(vm.currentExerciseIndex == 1)
+    }
+
+    @Test("writingPractice completion writes a real FSRS grade AND awards XP (remediation 4.4)")
+    func writingPracticeWritesGradeAndAwardsXP() async throws {
+        let container = try makeContainer()
+        let repo = CardRepository(modelContainer: container)
+        try seedCards(container: container, fronts: ["W", "A"])
+        let dtos = await repo.allCards()
+        let w = try dto("W", in: dtos)
+        let a = try dto("A", in: dtos)
+        // Precondition the first-review bookkeeping depends on: W is brand-new.
+        #expect(w.fsrsState.reps == 0)
+
+        let planner = MockSessionPlanner()
+        planner.plan = buildPlan([.writingPractice(w), .srsReview(a)])
+        let vm = makeVM(container: container, planner: planner)
+
+        await vm.startSession()
+        #expect(vm.currentExercise == .writingPractice(w))
+
+        await vm.completeCurrentExercise(grade: .good)
+
+        // 4.4: writingPractice now writes a real FSRS grade for its backing card,
+        // like kanjiStudy (it carries a real CardDTO).
+        let wLogs = await repo.reviewLogs(for: w.id)
+        #expect(wLogs.count == 1)
+        // XP is still awarded for the completion (.perCompletion, grade-independent).
+        #expect(vm.xpEarned > 0)
+        // Brand-new card → the shared card-grade side-effects count its first review.
+        #expect(vm.newItemsLearned == 1)
+        // SRS queue pointer untouched; exercise pointer advanced.
+        #expect(vm.currentIndex == 0)
+        #expect(vm.currentExerciseIndex == 1)
+        #expect(vm.reviewedCount == 1)
+    }
+}
+
+/// Unit tests for the pure drill result → `Grade` mapping (blueprint §3).
+@Suite("DrillGradeMapping")
+struct DrillGradeMappingTests {
+
+    @Test("Handwriting: correct with very high confidence → .easy")
+    func handwritingCorrectHighConfidence() {
+        #expect(DrillGradeMapping.handwriting(feedback: .correct, topConfidence: 0.99) == .easy)
+        #expect(DrillGradeMapping.handwriting(feedback: .correct, topConfidence: 0.95) == .easy)
+    }
+
+    @Test("Handwriting: correct with ordinary/unknown confidence → .good")
+    func handwritingCorrectOrdinaryConfidence() {
+        #expect(DrillGradeMapping.handwriting(feedback: .correct, topConfidence: 0.80) == .good)
+        #expect(DrillGradeMapping.handwriting(feedback: .correct, topConfidence: nil) == .good)
+    }
+
+    @Test("Handwriting: partial → .hard, incorrect/idle → .again")
+    func handwritingLowerTiers() {
+        #expect(DrillGradeMapping.handwriting(feedback: .partial, topConfidence: 0.99) == .hard)
+        #expect(DrillGradeMapping.handwriting(feedback: .incorrect, topConfidence: nil) == .again)
+        #expect(DrillGradeMapping.handwriting(feedback: .idle, topConfidence: nil) == .again)
+    }
+
+    // MARK: - Honest self-grade (remediation 7.8)
+
+    @Test("Handwriting: .unavailable never fabricates a pass — maps to .again even at high confidence")
+    func handwritingUnavailableNeverPasses() {
+        // The self-grade path uses explicit onComplete(.good/.again); this
+        // mapping is only a safety net. It must never yield a passing grade,
+        // regardless of any leftover confidence value.
+        #expect(DrillGradeMapping.handwriting(feedback: .unavailable, topConfidence: nil) == .again)
+        #expect(DrillGradeMapping.handwriting(feedback: .unavailable, topConfidence: 0.99) == .again)
+    }
+
+    @Test("Handwriting decision: no usable read routes to .unavailable, not an auto-pass")
+    func handwritingDecisionUnavailable() {
+        let target = "\u{5c71}" // 山
+        // No candidates at all → recogniser gave no verdict → self-grade.
+        #expect(HandwritingViewModel.evaluateFeedback(
+            candidates: [],
+            target: target,
+            correctThreshold: 0.7,
+            partialThreshold: 0.3
+        ) == .unavailable)
+        // Top candidate is the target but below the partial threshold → the
+        // recogniser wasn't confident about anything → self-grade, NOT .correct.
+        #expect(HandwritingViewModel.evaluateFeedback(
+            candidates: [RecognitionCandidate(character: target, confidence: 0.2)],
+            target: target,
+            correctThreshold: 0.7,
+            partialThreshold: 0.3
+        ) == .unavailable)
+    }
+
+    @Test("Handwriting decision: confident reads still grade honestly (correct/partial/incorrect)")
+    func handwritingDecisionConfidentTiers() {
+        let target = "\u{5c71}" // 山
+        let other = "\u{5ddd}"  // 川
+        // Confident target → .correct.
+        #expect(HandwritingViewModel.evaluateFeedback(
+            candidates: [RecognitionCandidate(character: target, confidence: 0.9)],
+            target: target,
+            correctThreshold: 0.7,
+            partialThreshold: 0.3
+        ) == .correct)
+        // Target present but not the top, ≥ partial → .partial.
+        #expect(HandwritingViewModel.evaluateFeedback(
+            candidates: [
+                RecognitionCandidate(character: other, confidence: 0.8),
+                RecognitionCandidate(character: target, confidence: 0.5),
+            ],
+            target: target,
+            correctThreshold: 0.7,
+            partialThreshold: 0.3
+        ) == .partial)
+        // Recogniser confident about something else, target absent → honest .incorrect.
+        #expect(HandwritingViewModel.evaluateFeedback(
+            candidates: [RecognitionCandidate(character: other, confidence: 0.9)],
+            target: target,
+            correctThreshold: 0.7,
+            partialThreshold: 0.3
+        ) == .incorrect)
+    }
+
+    @Test("Handwriting decision: verdict is independent of candidate array order")
+    func handwritingDecisionOrderIndependent() {
+        let target = "\u{5c71}" // 山
+        let other = "\u{5ddd}"  // 川
+        // A high-confidence target that is NOT first in the array must still be
+        // read as .correct — the honesty verdict cannot depend on the provider
+        // happening to sort its candidates (regression guard for the .first bug).
+        #expect(HandwritingViewModel.evaluateFeedback(
+            candidates: [
+                RecognitionCandidate(character: other, confidence: 0.2),
+                RecognitionCandidate(character: target, confidence: 0.9),
+            ],
+            target: target,
+            correctThreshold: 0.7,
+            partialThreshold: 0.3
+        ) == .correct)
+    }
+
+    @Test("SentenceConstruction: correct → .good, incorrect → .again")
+    func sentenceConstructionMapping() {
+        #expect(DrillGradeMapping.sentenceConstruction(isCorrect: true) == .good)
+        #expect(DrillGradeMapping.sentenceConstruction(isCorrect: false) == .again)
+    }
+
+    // MARK: - Tier-2 mappings (blueprint §3)
+
+    @Test("Shadowing accuracy maps to the four grade bands with correct boundaries")
+    func shadowingAccuracyBands() {
+        // ≥0.9 → .easy (inclusive at the boundary)
+        #expect(DrillGradeMapping.shadowing(accuracy: 1.0) == .easy)
+        #expect(DrillGradeMapping.shadowing(accuracy: 0.9) == .easy)
+        // [0.7, 0.9) → .good
+        #expect(DrillGradeMapping.shadowing(accuracy: 0.89) == .good)
+        #expect(DrillGradeMapping.shadowing(accuracy: 0.7) == .good)
+        // [0.4, 0.7) → .hard
+        #expect(DrillGradeMapping.shadowing(accuracy: 0.69) == .hard)
+        #expect(DrillGradeMapping.shadowing(accuracy: 0.4) == .hard)
+        // <0.4 → .again
+        #expect(DrillGradeMapping.shadowing(accuracy: 0.39) == .again)
+        #expect(DrillGradeMapping.shadowing(accuracy: 0.0) == .again)
+    }
+
+    @Test("Listening: correct → .good, incorrect → .again")
+    func listeningMapping() {
+        #expect(DrillGradeMapping.listening(isCorrect: true) == .good)
+        #expect(DrillGradeMapping.listening(isCorrect: false) == .again)
+    }
+
+    @Test("VocabularyRecall: correct → .good, incorrect → .again")
+    func vocabularyRecallMapping() {
+        #expect(DrillGradeMapping.vocabularyRecall(isCorrect: true) == .good)
+        #expect(DrillGradeMapping.vocabularyRecall(isCorrect: false) == .again)
+    }
+}

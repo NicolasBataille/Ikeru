@@ -19,7 +19,7 @@ struct SessionLiveActivity: Widget {
                     HStack(spacing: 4) {
                         Image(systemName: "timer")
                             .font(.caption2)
-                        Text(formatTime(context.state.elapsedSeconds))
+                        Text(startDate(for: context.state), style: .timer)
                             .font(.system(.caption, design: .monospaced))
                             .fontWeight(.semibold)
                     }
@@ -34,7 +34,7 @@ struct SessionLiveActivity: Widget {
                             .font(.caption)
                             .fontWeight(.semibold)
                     }
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(IkeruPlatformTheme.gold)
                 }
 
                 DynamicIslandExpandedRegion(.center) {
@@ -49,7 +49,7 @@ struct SessionLiveActivity: Widget {
                                 RoundedRectangle(cornerRadius: 3)
                                     .fill(.gray.opacity(0.3))
                                 RoundedRectangle(cornerRadius: 3)
-                                    .fill(.orange)
+                                    .fill(IkeruPlatformTheme.gold)
                                     .frame(width: geo.size.width * context.state.progressFraction)
                             }
                         }
@@ -65,7 +65,7 @@ struct SessionLiveActivity: Widget {
                     if context.state.streakCount > 2 {
                         Text("🔥 \(context.state.streakCount) streak")
                             .font(.caption2)
-                            .foregroundStyle(.orange)
+                            .foregroundStyle(IkeruPlatformTheme.gold)
                     }
                 }
             } compactLeading: {
@@ -73,7 +73,7 @@ struct SessionLiveActivity: Widget {
                 HStack(spacing: 2) {
                     Image(systemName: "timer")
                         .font(.system(size: 10))
-                    Text(formatTime(context.state.elapsedSeconds))
+                    Text(startDate(for: context.state), style: .timer)
                         .font(.system(size: 12, design: .monospaced))
                 }
                 .foregroundStyle(.white)
@@ -84,7 +84,7 @@ struct SessionLiveActivity: Widget {
             } minimal: {
                 Image(systemName: "book.fill")
                     .font(.system(size: 12))
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(IkeruPlatformTheme.gold)
             }
         }
     }
@@ -106,14 +106,14 @@ struct SessionLiveActivity: Widget {
             Spacer()
 
             VStack(alignment: .trailing, spacing: 4) {
-                Text(formatTime(context.state.elapsedSeconds))
+                Text(startDate(for: context.state), style: .timer)
                     .font(.system(.body, design: .monospaced))
                     .fontWeight(.semibold)
                     .foregroundStyle(.white)
 
                 Text("\(context.state.completedCount)/\(context.state.totalCount)")
                     .font(.caption)
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(IkeruPlatformTheme.gold)
             }
         }
         .padding()
@@ -122,9 +122,9 @@ struct SessionLiveActivity: Widget {
 
     // MARK: - Helpers
 
-    private func formatTime(_ seconds: Int) -> String {
-        let m = seconds / 60
-        let s = seconds % 60
-        return String(format: "%d:%02d", m, s)
+    /// Derives the session start date from the elapsed-seconds snapshot so the
+    /// timer keeps ticking between content-state updates.
+    private func startDate(for state: SessionActivityAttributes.ContentState) -> Date {
+        Date(timeIntervalSinceNow: -TimeInterval(state.elapsedSeconds))
     }
 }

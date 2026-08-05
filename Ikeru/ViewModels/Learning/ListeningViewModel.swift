@@ -37,11 +37,6 @@ public final class ListeningViewModel {
     /// The result of the last answer submission.
     public private(set) var exerciseResult: ExerciseResult?
 
-    /// Whether audio exercises should be skipped (silent mode).
-    public var shouldSkipAudioExercises: Bool {
-        audioService.shouldSkipAudioExercises
-    }
-
     /// Whether the transcript is revealed (passage exercises).
     public private(set) var isTranscriptRevealed: Bool = false
 

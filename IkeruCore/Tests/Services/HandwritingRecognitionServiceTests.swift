@@ -286,28 +286,10 @@ struct HandwritingRecognitionErrorTests {
     }
 }
 
-// MARK: - ShapeMatchingProvider Tests
-
-@Suite("ShapeMatchingProvider")
-struct ShapeMatchingProviderTests {
-
-    @Test("Returns target character with low confidence")
-    func returnsTargetCharacter() async throws {
-        let provider = ShapeMatchingProvider(targetCharacter: "\u{5c71}")
-
-        let image = ImagePreprocessor.renderStrokes(
-            [[CGPoint(x: 10, y: 10), CGPoint(x: 90, y: 90)]],
-            canvasSize: 100
-        )!
-
-        let candidates = try await provider.recognize(image: image)
-
-        #expect(candidates.count == 1)
-        #expect(candidates[0].character == "\u{5c71}")
-        #expect(candidates[0].confidence > 0)
-        #expect(candidates[0].confidence <= 0.5)
-    }
-}
+// ShapeMatchingProviderTests removed with the provider (remediation 7.8): the
+// provider dishonestly reported the target as recognised for any inked scribble.
+// The honest "recognition unavailable → self-grade" path is covered by the app
+// target's HandwritingViewModel / DrillGradeMapping tests.
 
 #endif
 

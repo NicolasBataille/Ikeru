@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ikeru rig — Étude</title>
+<link rel="stylesheet" href="../css/tokens.css">
+<link rel="stylesheet" href="../css/device.css">
+<link rel="stylesheet" href="../css/components.css">
+<script defer src="../js/rig.js"></script>
+<style>
+  /* EtudeView.swift — spacing 22, padding h22 */
+  .etude-col { gap: 22px; }
+
+  .etude-header .title {
+    font: 500 28px/1.2 var(--font-serif);
+    color: var(--text-primary);
+    margin-top: 4px;
+  }
+
+  /* JLPT hero */
+  .jlpt-hero .pct-row { display: flex; align-items: baseline; margin-top: 12px; }
+  .jlpt-hero .pct { font-size: 40px; }
+  .jlpt-hero .pct-sign { color: var(--paper-ghost); letter-spacing: 1.4px; font: 400 15px/1 var(--font-system); }
+
+  /* practice ground grid (EtudeBrowseGrid.swift — 2 flexible columns, spacing 12) */
+  .tile-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  /* ExerciseTypeTile.swift */
+  .tile {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 14px;
+    background: rgba(255,255,255,0.04);
+    border: 0.6px solid var(--gold-dim);
+  }
+  .tile .glyph { font: 500 32px/1 var(--font-serif); color: var(--gold); }
+  .tile .name { font: 500 12px/1.2 var(--font-system); color: var(--text-primary); }
+  .tile.locked { background: rgba(255,255,255,0.02); border-color: rgba(138,109,74,0.3); }
+  .tile.locked .glyph { color: var(--paper-ghost); }
+  .tile.locked .name { color: var(--text-secondary); }
+  .tile .lock-hint {
+    font: italic 400 10px/1.35 var(--font-system);
+    color: var(--paper-ghost);
+  }
+
+  /* compose row */
+  .compose {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px;
+    border: 0.6px solid var(--gold-dim);
+    background: none;
+    cursor: pointer;
+    width: 100%;
+  }
+  .compose .jp { font: 500 14px/1 var(--font-serif); color: var(--paper-ghost); }
+  .compose .txt { font: 400 14px/1 var(--font-system); color: var(--text-primary); }
+  .compose .chev { margin-left: auto; color: var(--gold-dim); font-size: 16px; }
+</style>
+</head>
+<body data-screen="etude" data-marble="5">
+<main class="screen">
+  <div class="screen-inner etude-col">
+
+    <!-- Header -->
+    <header class="etude-header">
+      <div class="bilingual">
+        <span class="jp">学習</span><span class="dot">·</span><span class="chrome">Study</span>
+      </div>
+      <div class="title">Étude</div>
+    </header>
+
+    <!-- JLPT estimate hero (glass room + hanko level stamp) -->
+    <section class="room room--glass jlpt-hero" style="padding:20px;">
+      <div class="row" style="align-items:flex-start;">
+        <div class="bilingual">
+          <span class="jp">推定</span><span class="dot">·</span><span class="chrome">JLPT estimate</span>
+        </div>
+        <span class="spacer"></span>
+        <!-- vermilion budget: the N5 level stamp -->
+        <div class="hanko" style="--hanko-size:36px; font-size:15px;">N5</div>
+      </div>
+      <div class="pct-row">
+        <span class="serif-num pct">78</span>
+        <span class="pct-sign">%</span>
+      </div>
+    </section>
+
+    <!-- Practice ground -->
+    <div class="bilingual">
+      <span class="mon" data-kind="asanoha"></span>
+      <span class="jp">稽古場</span><span class="dot">·</span><span class="chrome">Practice ground</span>
+    </div>
+
+    <section class="tile-grid">
+      <button class="tile"><span class="glyph">ア</span><span class="name">Kana drill</span></button>
+      <button class="tile"><span class="glyph">漢</span><span class="name">Kanji study</span></button>
+      <button class="tile"><span class="glyph">語</span><span class="name">Vocabulary</span></button>
+      <button class="tile"><span class="glyph">耳</span><span class="name">Listening · subtitled</span></button>
+      <button class="tile"><span class="glyph">空</span><span class="name">Fill in the blank</span></button>
+      <button class="tile"><span class="glyph">文</span><span class="name">Grammar</span></button>
+      <button class="tile"><span class="glyph">組</span><span class="name">Sentence building</span></button>
+      <button class="tile locked">
+        <span class="glyph">読</span><span class="name">Reading passages</span>
+        <span class="lock-hint">12 / 20 kanji mastered to unlock</span>
+      </button>
+      <button class="tile locked">
+        <span class="glyph">書</span><span class="name">Writing practice</span>
+        <span class="lock-hint">Master hiragana to unlock</span>
+      </button>
+      <button class="tile locked">
+        <span class="glyph">音</span><span class="name">Listening · raw</span>
+        <span class="lock-hint">80% listening accuracy over 20 tries</span>
+      </button>
+      <button class="tile locked">
+        <span class="glyph">口</span><span class="name">Speaking</span>
+        <span class="lock-hint">Reach JLPT N4 to unlock</span>
+      </button>
+    </section>
+
+    <!-- Compose row -->
+    <button class="compose">
+      <span class="jp">編成</span>
+      <span class="txt">Compose a custom session</span>
+      <span class="chev">›</span>
+    </button>
+
+  </div>
+
+  <!-- Tatami tab bar (kanji-only rail cells, IkeruTabBar.swift TatamiTabCell) -->
+  <nav class="tab-bar tab-bar--tatami">
+    <a class="tab-cell" href="companion.html">
+      <span class="mon-slot"></span><span class="jp">対話</span><span class="rail"></span>
+    </a>
+    <a class="tab-cell active" href="etude.html">
+      <span class="mon-slot"><span class="mon" data-kind="kikkou"></span></span><span class="jp" style="color:var(--gold);">辞書</span><span class="rail"></span>
+    </a>
+    <a class="tab-cell" href="home.html">
+      <span class="mon-slot"></span><span class="jp">稽古</span><span class="rail"></span>
+    </a>
+    <a class="tab-cell" href="rpg.html">
+      <span class="mon-slot"></span><span class="jp">段位</span><span class="rail"></span>
+    </a>
+    <a class="tab-cell" href="#">
+      <span class="mon-slot"></span><span class="jp">設定</span><span class="rail"></span>
+    </a>
+  </nav>
+</main>
+</body>
+</html>
