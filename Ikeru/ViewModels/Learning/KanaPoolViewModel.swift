@@ -102,7 +102,17 @@ public final class KanaPoolViewModel {
         // grid no longer materialises the entire katakana set as immediately-due
         // cards — that was the source of katakana leaking into Home Practice.
         // Un-selected groups still render (0%) from KanaGroup metadata.
-        await repository.seed(groups: selectedGroups)
+        //
+        // And only seed at all once the learner has actually confirmed a study
+        // set: a fresh user peeking at the chooser (then backing out) must not
+        // create cards — those phantom cards flipped Home's `hasKanaCards`
+        // check and silently dismissed the "choose your kana" gate. Before the
+        // first confirmation, mastery renders 0% from metadata, which is
+        // exactly right; real seeding happens in `confirmStudySet()` and when
+        // launching a drill (`cards(for:)`).
+        if StudySetStore.hasChosenStudySet {
+            await repository.seed(groups: selectedGroups)
+        }
         let allGroups = Set(KanaGroup.allCases)
         let result = await repository.mastery(for: allGroups)
         let allCards = await repository.cardsForGroups(allGroups)

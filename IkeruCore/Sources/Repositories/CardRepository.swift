@@ -130,6 +130,13 @@ public final class CardRepository: Sendable {
         await backgroundActor.allCards()
     }
 
+    /// The active profile's desired retention (clamped) — exposed so drill
+    /// and session view-models can compute predicted intervals with the SAME
+    /// retention `gradeCard` will use.
+    public func activeDesiredRetention() async -> Double {
+        await backgroundActor.activeDesiredRetention()
+    }
+
     /// Attaches any orphan cards (profile == nil) to the active profile.
     /// One-shot migration for users created before per-profile card scoping.
     public func attachOrphanCards() async {
@@ -393,7 +400,10 @@ actor CardModelActor {
     /// `FSRSService.desiredRetentionRange` (0.8...0.95). Falls back to the
     /// FSRSService default (0.9) when no profile resolves — e.g. in tests
     /// that grade a card without seeding a `UserProfile`.
-    private func activeDesiredRetention() -> Double {
+    /// Public so drill view-models can compute predicted intervals with the
+    /// SAME retention the actual grading will use (they showed default-0.9
+    /// predictions that contradicted the real scheduling).
+    public func activeDesiredRetention() -> Double {
         guard let profile = fetchActiveProfile() else { return 0.9 }
         return min(
             max(profile.settings.desiredRetention, FSRSService.desiredRetentionRange.lowerBound),

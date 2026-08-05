@@ -265,7 +265,8 @@ struct ActiveSessionView: View {
                 currentCard: viewModel.currentCard,
                 upcomingCards: viewModel.upcomingCards,
                 feedbackState: viewModel.feedbackState,
-                vocabularyPool: viewModel.vocabularyPool
+                vocabularyPool: viewModel.vocabularyPool,
+                desiredRetention: viewModel.desiredRetention
             )
             .frame(maxHeight: .infinity)
         }

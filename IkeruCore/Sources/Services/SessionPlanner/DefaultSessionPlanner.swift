@@ -28,6 +28,22 @@ public struct DefaultSessionPlanner: SessionPlanner {
     public static let homeVarietyTileFraction: Double = 0.20
     public static let homeNewContentFraction: Double = 0.10
 
+    /// New kana introduced per foundation session — one gojūon row.
+    public static let foundationRowSize = 5
+
+    /// Exercise types whose content the app never TEACHES anywhere yet: they
+    /// quiz raw N5 content-DB entries (words, sentences) with no connection to
+    /// what the learner has actually met — guessing, not learning. Excluded
+    /// from the HOME booster/variety pools until the vocab-dictionary feature
+    /// provides a real "already encountered" source (owner decision,
+    /// 2026-07-19 device pass). Étude custom sessions keep every type — there
+    /// the learner opts in explicitly.
+    public static let untaughtContentTypes: Set<ExerciseType> = [
+        .listeningSubtitled, .listeningUnsubtitled,
+        .speakingPractice, .sakuraConversation,
+        .vocabularyStudy, .sentenceConstruction
+    ]
+
     public init() {}
 
     public func compose(inputs: SessionPlannerInputs) async -> SessionPlan {
@@ -49,6 +65,22 @@ public struct DefaultSessionPlanner: SessionPlanner {
     private func composeHome(inputs: SessionPlannerInputs) -> SessionPlan {
         let totalSec = inputs.durationMinutes * 60
 
+        // Foundation mode (owner decision, 2026-07-19 device pass): while the
+        // learner's chosen study set still contains kana they have never
+        // begun, they are building the syllabary — and the 40/30/20/10 mix is
+        // wrong twice over: the booster/variety pools schedule listening /
+        // speaking / vocab-recall drills about words they've never met, and
+        // the single-card drip would stretch 46 kana over 46 days. Until
+        // every chosen kana is begun, the session is honest and compact: the
+        // due reviews + one curriculum row of new kana. (A first cut gated
+        // this on a begun-card count — it expired after two sessions with
+        // half the chosen set still unseen; the unseen-kana predicate IS the
+        // definition of the foundation phase.)
+        let unseenKana = inputs.availableCards.filter { $0.fsrsState.reps == 0 && $0.isKana }
+        if !unseenKana.isEmpty {
+            return composeFoundation(inputs: inputs, unseenKana: unseenKana, totalSec: totalSec)
+        }
+
         // Segment 1: Review wave (40 %)
         let reviewBudget = Int(Double(totalSec) * Self.homeReviewFraction)
         let reviewItems = pickReviews(
@@ -62,7 +94,7 @@ public struct DefaultSessionPlanner: SessionPlanner {
         let boosterPool = VarietyPoolResolver.effectivePool(
             for: inputs.profile.jlptLevel,
             unlockedTypes: inputs.unlockedTypes
-        )
+        ).subtracting(Self.untaughtContentTypes)
         let boosterItems = fillSegment(
             forSkill: lowestSkill,
             inPool: boosterPool,
@@ -98,6 +130,44 @@ public struct DefaultSessionPlanner: SessionPlanner {
             (items: newItems, weight: Self.homeNewContentFraction)
         ])
 
+        return finalize(exercises: exercises)
+    }
+
+    /// Foundation session: due reviews (kana already begun) interleaved with
+    /// one curriculum-ordered row of new kana (up to `foundationRowSize`).
+    /// The row is introduced regardless of the proportional new-content
+    /// budget — a foundation session is intentionally compact, and rows of
+    /// five are how the syllabary is actually learned. No booster, no
+    /// variety: nothing here draws on content the learner hasn't met.
+    private func composeFoundation(
+        inputs: SessionPlannerInputs,
+        unseenKana: [CardDTO],
+        totalSec: Int
+    ) -> SessionPlan {
+        let reviewItems = pickReviews(
+            from: inputs.availableCards,
+            secondsBudget: totalSec / 2
+        )
+        let introItems = unseenKana
+            .enumerated()
+            .sorted { lhs, rhs in
+                let li = Self.kanaCurriculumIndex[lhs.element.front] ?? Int.max
+                let ri = Self.kanaCurriculumIndex[rhs.element.front] ?? Int.max
+                if li != ri { return li < ri }
+                // Stable, deterministic order for kana outside the base
+                // curriculum (dakuten): input order, then front.
+                if lhs.element.front != rhs.element.front { return lhs.element.front < rhs.element.front }
+                return lhs.offset < rhs.offset
+            }
+            .prefix(Self.foundationRowSize)
+            .map { ExerciseItem.srsReview($0.element) }
+        let exercises = interleave(streams: [
+            (items: reviewItems, weight: 0.5),
+            (items: Array(introItems), weight: 0.5)
+        ])
+        Logger.learningLoop.info(
+            "session.foundationMode reviews=\(reviewItems.count) introduced=\(introItems.count)"
+        )
         return finalize(exercises: exercises)
     }
 

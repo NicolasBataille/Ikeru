@@ -53,12 +53,28 @@ import SwiftUI
 
 struct LaunchAnimationView: View {
     let onFinished: () -> Void
+    /// Fired once, shortly BEFORE the exit fade begins, so the host can mount
+    /// the real UI underneath while the mark is still fully opaque. Without
+    /// it the exit fade reveals an empty black window and the first screen
+    /// has to run a second fade-in of its own (the ~0.6s black hold observed
+    /// on device, 2026-08-05). Deliberately not fired at t=0: building the
+    /// main view hierarchy blocks the first frames, and because the master
+    /// clock is honest wall-clock time that silently swallowed the whole
+    /// intro (bead, fall, impact, bloom). Firing it during `breathe` leaves
+    /// ~0.45s of slack before the fade, and a hitch there is hidden by a
+    /// slow 1.00→1.02 scale rather than eating the animation's opening.
+    var onReadyForContent: () -> Void = {}
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var startDate = Date()
     @State private var isPaused = false
     @State private var didFinish = false
+    @State private var didRequestContent = false
     @State private var reducedMotionOpacity: Double = 0
+
+    /// Start of the breathe phase — the last quiet stretch before the
+    /// 3.00s exit fade.
+    private static let contentPrepareAt: Double = 2.55
 
     /// A point late enough that every draw/pop phase has settled but the
     /// exit fade (3.00s) hasn't started yet.
@@ -82,6 +98,10 @@ struct LaunchAnimationView: View {
             GeometryReader { geo in
                 let elapsed = min(max(context.date.timeIntervalSince(startDate), 0), LaunchClock.total)
                 LaunchScene(elapsed: elapsed, geo: geo)
+                    .onChange(of: elapsed >= Self.contentPrepareAt) { _, ready in
+                        guard ready else { return }
+                        prepareContent()
+                    }
                     .onChange(of: elapsed >= LaunchClock.total) { _, reachedEnd in
                         guard reachedEnd else { return }
                         isPaused = true
@@ -102,12 +122,21 @@ struct LaunchAnimationView: View {
         .ignoresSafeArea()
         .opacity(reducedMotionOpacity)
         .onAppear {
+            // No exit fade on this path, so the host can build the real UI
+            // straight away — it is covered by the static frame regardless.
+            prepareContent()
             withAnimation(.easeInOut(duration: 0.4)) {
                 reducedMotionOpacity = 1.0
             } completion: {
                 finish()
             }
         }
+    }
+
+    private func prepareContent() {
+        guard !didRequestContent else { return }
+        didRequestContent = true
+        onReadyForContent()
     }
 
     private func finish() {

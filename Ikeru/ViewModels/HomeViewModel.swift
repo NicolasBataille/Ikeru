@@ -316,17 +316,22 @@ public final class HomeViewModel {
 
     /// Decides whether Home should show the soft "choose your kana" gate.
     /// True only for a fresh learner: one who has neither confirmed a study set
-    /// nor accumulated any kana cards. Existing users (who already have cards)
-    /// are grandfathered straight into Practice, so this change is invisible to
-    /// them. Once the learner confirms a set in the chooser, `hasChosenStudySet`
-    /// flips and this returns false.
+    /// nor actually STUDIED any kana. The card check demands review evidence
+    /// (`lastReview`/`reps`), not mere existence — merely opening the chooser
+    /// used to seed the default selection's cards, and those phantom, never-
+    /// reviewed cards silently dismissed this gate. Existing users are still
+    /// grandfathered straight into Practice: their kana cards carry real
+    /// review history. Once the learner confirms a set in the chooser,
+    /// `hasChosenStudySet` flips and this returns false.
     private func refreshStudySetGate() async {
         if StudySetStore.hasChosenStudySet {
             needsStudySetChoice = false
             return
         }
-        let hasKanaCards = (await cardRepository.allCards()).contains { $0.isKana }
-        needsStudySetChoice = !hasKanaCards
+        let hasStudiedKana = (await cardRepository.allCards()).contains {
+            $0.isKana && ($0.fsrsState.lastReview != nil || $0.fsrsState.reps > 0)
+        }
+        needsStudySetChoice = !hasStudiedKana
     }
 
     private func loadRPGState() async {

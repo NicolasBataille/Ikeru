@@ -30,12 +30,29 @@ struct TatamiEligibilityRow: View {
     }
 
     var body: some View {
-        Group {
-            if displayMode == .beginner, !isSuppressedByCooldown, let signals {
+        // VStack, not Group: a Group forwards modifiers to its CHILDREN, and
+        // before `load()` completes the `if` renders no child — so the
+        // `.task` never fired and `signals` never loaded. The row was
+        // deadlocked invisible for everyone (found by Nico, device pass
+        // 2026-07-19). A VStack is a real container: its `.task` runs on
+        // appear even while empty.
+        //
+        // The cooldown deliberately does NOT gate the whole row anymore: it
+        // suppresses the OFFER (Ready badge + "Later"), never the progress
+        // tracker — dismissing must not hide the learner's own progress for
+        // 14 days (second find of the same pass).
+        VStack(spacing: 0) {
+            if displayMode == .beginner, let signals {
                 content(signals)
             }
         }
         .task { await load() }
+    }
+
+    /// The offer surface (Ready badge + Later) shows only when eligibility is
+    /// reached AND the learner hasn't recently declined.
+    private func isOffering(_ signals: Signals) -> Bool {
+        signals.eligibility == .eligible && !isSuppressedByCooldown
     }
 
     // MARK: - Content
@@ -51,7 +68,7 @@ struct TatamiEligibilityRow: View {
                     .ikeruScaledFont(13, relativeTo: .caption)
                     .foregroundStyle(Color.ikeruTextPrimary)
                 Spacer()
-                if signals.eligibility == .eligible {
+                if isOffering(signals) {
                     Text("Settings.TatamiEligibility.Ready")
                         .ikeruScaledFont(11, relativeTo: .caption2)
                         .foregroundStyle(Color.ikeruPrimaryAccent)
@@ -74,15 +91,21 @@ struct TatamiEligibilityRow: View {
                 total: DisplayModeAdvancedThresholdMonitor.activeDaysThreshold
             )
 
-            Button {
-                dismissForCooldown()
-            } label: {
-                Text("Settings.TatamiEligibility.Later")
-                    .ikeruScaledFont(12, relativeTo: .caption2)
-                    .foregroundStyle(Color.ikeruTextSecondary)
+            // "Later" only makes sense as the answer to an actual OFFER —
+            // while the learner is still short of the thresholds this row is
+            // a progress tracker, and a postpone button under it reads as a
+            // non-sequitur (Nico's question, device pass 2026-07-19).
+            if isOffering(signals) {
+                Button {
+                    dismissForCooldown()
+                } label: {
+                    Text("Settings.TatamiEligibility.Later")
+                        .ikeruScaledFont(12, relativeTo: .caption2)
+                        .foregroundStyle(Color.ikeruTextSecondary)
+                }
+                .buttonStyle(.plain)
+                .padding(.top, 2)
             }
-            .buttonStyle(.plain)
-            .padding(.top, 2)
         }
         .padding(.horizontal, 16).padding(.vertical, 12)
         .overlay(alignment: .bottom) {
@@ -123,10 +146,11 @@ struct TatamiEligibilityRow: View {
     // MARK: - Data
 
     private func load() async {
-        guard TatamiSuggestionCooldown.shouldOffer(lastDismissedAt: dismissalRepository.lastDismissedAt()) else {
-            isSuppressedByCooldown = true
-            return
-        }
+        // Cooldown only mutes the OFFER — signals still load so the progress
+        // tracker stays visible after a "Later".
+        isSuppressedByCooldown = !TatamiSuggestionCooldown.shouldOffer(
+            lastDismissedAt: dismissalRepository.lastDismissedAt()
+        )
 
         let context = modelContainer.mainContext
         let rpg = fetchActiveRPGState(in: context)

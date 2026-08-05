@@ -44,6 +44,12 @@ public final class VocabularyRepository: Sendable {
         await backgroundActor.allEntries()
     }
 
+    /// The active profile's desired retention (clamped) — exposed so the
+    /// vocab drill's predicted intervals match what `gradeEntry` schedules.
+    public func activeDesiredRetention() async -> Double {
+        await backgroundActor.activeDesiredRetention()
+    }
+
     /// Delete an entry by its ID.
     public func deleteEntry(by id: UUID) async {
         await backgroundActor.deleteEntry(by: id)
@@ -183,7 +189,9 @@ actor VocabularyModelActor {
 
     /// The active profile's desired retention, clamped to the scheduler's
     /// supported band. Mirrors `CardModelActor.activeDesiredRetention()`.
-    private func activeDesiredRetention() -> Double {
+    /// Public so the vocab drill view-model's predicted intervals use the
+    /// same retention the actual grading will.
+    public func activeDesiredRetention() -> Double {
         guard let profile = fetchActiveProfile() else { return 0.9 }
         return min(
             max(profile.settings.desiredRetention, FSRSService.desiredRetentionRange.lowerBound),

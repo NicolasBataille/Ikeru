@@ -14,6 +14,7 @@ struct KanaPoolSelectorView: View {
     @State private var pendingCards: [CardDTO] = []
     @State private var pendingGroups: Set<KanaGroup> = []
     @State private var showDrill = false
+    @State private var showDrillModesExplainer = false
 
     /// When set, the selector runs as the first-run "study-set chooser" presented
     /// from Home: the bottom bar shows a single "Start learning these" button
@@ -35,16 +36,102 @@ struct KanaPoolSelectorView: View {
                 content(vm)
                 bottomBar(vm)
             }
+
+            // One-time Sakura explainer for the three drill modes — the
+            // bottom-bar buttons are three unexplained labels to a first-time
+            // visitor (owner request, device pass 2026-07-19). Étude context
+            // only: the first-run chooser sheet has a single confirm button.
+            if showDrillModesExplainer {
+                drillModesExplainerOverlay
+                    .zIndex(10)
+                    .transition(.opacity)
+            }
         }
         .toolbar(.hidden, for: .navigationBar)
         .task {
             initializeIfNeeded()
             await viewModel?.loadMasteries()
+            evaluateDrillModesExplainer()
         }
         .navigationDestination(isPresented: $showDrill) {
             if let mode = pendingMode {
                 KanaDrillModeSelector(mode: mode, groups: pendingGroups, cards: pendingCards)
             }
+        }
+    }
+
+    // MARK: Drill-modes explainer (Sakura, one-time)
+
+    private func evaluateDrillModesExplainer() {
+        guard onStudySetConfirmed == nil,   // Étude context only
+              let profileID = ActiveProfileResolver.activeProfileID(),
+              !OnboardingFlags.hasSeenKanaDrillModesExplainer(profileID: profileID)
+        else { return }
+        withAnimation(.easeInOut(duration: 0.3)) {
+            showDrillModesExplainer = true
+        }
+    }
+
+    private func dismissDrillModesExplainer() {
+        if let profileID = ActiveProfileResolver.activeProfileID() {
+            OnboardingFlags.markKanaDrillModesExplainerSeen(profileID: profileID)
+        }
+        withAnimation(.easeInOut(duration: 0.25)) {
+            showDrillModesExplainer = false
+        }
+    }
+
+    private var drillModesExplainerOverlay: some View {
+        ZStack {
+            Color.black.opacity(0.72)
+                .ignoresSafeArea()
+                .contentShape(Rectangle())
+                .onTapGesture { dismissDrillModesExplainer() }
+
+            VStack(alignment: .leading, spacing: 14) {
+                HStack(alignment: .center, spacing: 10) {
+                    SakuraMark(size: 30)
+                    Text(verbatim: "Sakura")
+                        .ikeruScaledFont(12, weight: .bold, relativeTo: .caption2)
+                        .tracking(1.5)
+                        .foregroundStyle(Color.ikeruPrimaryAccent)
+                    Spacer()
+                }
+
+                Text("KanaDrill.Modes.Title")
+                    .ikeruScaledFont(20, weight: .semibold, relativeTo: .title3)
+                    .foregroundStyle(Color.ikeruTextPrimary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("KanaDrill.Modes.Review")
+                    Text("KanaDrill.Modes.Free")
+                    Text("KanaDrill.Modes.Weak")
+                }
+                .ikeruScaledFont(15, relativeTo: .body)
+                .foregroundStyle(Color.ikeruTextSecondary)
+                .lineSpacing(3)
+                .fixedSize(horizontal: false, vertical: true)
+
+                Button {
+                    dismissDrillModesExplainer()
+                } label: {
+                    Text("Sakura.CaughtUp.Dismiss")
+                        .frame(maxWidth: .infinity)
+                }
+                .ikeruButtonStyle(.primary)
+            }
+            .padding(20)
+            .background(
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .fill(.ultraThinMaterial)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .strokeBorder(Color.ikeruPrimaryAccent.opacity(0.35), lineWidth: 1)
+            )
+            .shadow(color: .black.opacity(0.45), radius: 24, y: 8)
+            .padding(.horizontal, 28)
         }
     }
 
@@ -142,9 +229,21 @@ struct KanaPoolSelectorView: View {
     private func scriptSection(_ vm: KanaPoolViewModel, script: KanaScript, title: String) -> some View {
         VStack(alignment: .leading, spacing: IkeruTheme.Spacing.md) {
             IkeruSectionHeader(title: title, eyebrow: scriptEyebrow(script))
-            subSection(vm, script: script, section: .base, title: "Base (gojūon)")
-            subSection(vm, script: script, section: .dakuten, title: "Dakuten (voiced)")
-            subSection(vm, script: script, section: .combined, title: "Combined (yōon)")
+            subSection(
+                vm, script: script, section: .base,
+                title: "Base (gojūon)",
+                description: "The 46 core sounds in the classic table: five vowels, then consonant + vowel rows."
+            )
+            subSection(
+                vm, script: script, section: .dakuten,
+                title: "Dakuten (voiced)",
+                description: "Same signs, softened by a mark: ゛voices the consonant (か ka → が ga), ゜turns h into p (は ha → ぱ pa)."
+            )
+            subSection(
+                vm, script: script, section: .combined,
+                title: "Combined (yōon)",
+                description: "A consonant kana + small ゃ・ゅ・ょ merge into one syllable: き + ゃ = きゃ kya."
+            )
         }
     }
 
@@ -159,7 +258,8 @@ struct KanaPoolSelectorView: View {
         _ vm: KanaPoolViewModel,
         script: KanaScript,
         section: KanaSection,
-        title: LocalizedStringKey
+        title: LocalizedStringKey,
+        description: LocalizedStringKey
     ) -> some View {
         let groups = KanaGroup.allCases.filter { $0.script == script && $0.section == section }
         if !groups.isEmpty {
@@ -182,6 +282,15 @@ struct KanaPoolSelectorView: View {
                     }
                     .buttonStyle(.plain)
                 }
+
+                // One-line primer on what this slice of the syllabary IS —
+                // gojūon/dakuten/yōon are jargon to the beginners this screen
+                // exists for (owner request, 2026-07-19).
+                Text(description)
+                    .font(.ikeruMicro)
+                    .foregroundStyle(Color.ikeruTextTertiary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.top, -4)
 
                 LazyVGrid(columns: columns, spacing: IkeruTheme.Spacing.sm) {
                     ForEach(groups) { group in
@@ -226,7 +335,12 @@ struct KanaPoolSelectorView: View {
         }
         .padding(.horizontal, IkeruTheme.Spacing.lg)
         .padding(.top, IkeruTheme.Spacing.md)
-        .padding(.bottom, Self.floatingTabBarClearance)
+        // The 120pt clearance exists for the floating tab bar in the Étude
+        // context only. As a sheet (first-run chooser from Home) there is no
+        // tab bar — the full clearance left a huge dead band under the CTA.
+        .padding(.bottom, onStudySetConfirmed != nil
+                 ? IkeruTheme.Spacing.md
+                 : Self.floatingTabBarClearance)
         .frame(maxWidth: .infinity)
         .background {
             Rectangle()

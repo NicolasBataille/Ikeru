@@ -39,6 +39,9 @@ struct IkeruApp: App {
     @State private var showOnboarding = false
     @State private var hasCheckedProfile = false
     @State private var hasFinishedLaunch: Bool = IkeruApp.hasPlayedLaunchAnimation
+    /// Set by `LaunchAnimationView.onReadyForContent` so the real UI is built
+    /// and settled underneath before the launch layer's exit fade runs.
+    @State private var isMainContentMounted: Bool = IkeruApp.hasPlayedLaunchAnimation
     @State private var aiRouterService = AIRouterService()
     @State private var assetCache: AssetCache?
     @State private var showStoreRecoveryNotice = false
@@ -109,21 +112,34 @@ struct IkeruApp: App {
     var body: some Scene {
         WindowGroup {
             ZStack {
-                if hasFinishedLaunch {
+                // `mainContent` is mounted UNDER the launch layer as soon as
+                // the animation signals `onReadyForContent` (breathe phase,
+                // ~0.45s before its exit fade), so that fade — the master
+                // clock's final 0.30s phase — cross-fades onto the real UI.
+                // That is the single fade for the launch → main transition,
+                // per launch-animation-rebuild-spec.md bug #5.
+                //
+                // It used to mount only at `onFinished`, so the exit fade
+                // revealed an empty (black) window and the first screen then
+                // ran a second fade-in of its own: a ~0.6s hard black hold
+                // between the bloom and the first screen (measured on device
+                // 2026-08-05) — exactly the double fade bug #5 targeted.
+                // Mounting it at t=0 instead is NOT the fix: building the
+                // view hierarchy blocks the first frames and, since the
+                // launch clock is honest wall-clock time, that silently ate
+                // the animation's whole intro.
+                if hasFinishedLaunch || isMainContentMounted {
                     mainContent
-                } else {
-                    // LaunchAnimationView's own exit fade (its master
-                    // clock's final 0.30s phase) is now the single fade for
-                    // the launch → main transition — see
-                    // launch-animation-rebuild-spec.md bug #5. By the time
-                    // `onFinished` fires the launch layer has already faded
-                    // to invisible, so this switch is an instant no-op
-                    // visually; a second cross-fade here would just double
-                    // up on it.
-                    LaunchAnimationView {
-                        IkeruApp.hasPlayedLaunchAnimation = true
-                        hasFinishedLaunch = true
-                    }
+                }
+
+                if !hasFinishedLaunch {
+                    LaunchAnimationView(
+                        onFinished: {
+                            IkeruApp.hasPlayedLaunchAnimation = true
+                            hasFinishedLaunch = true
+                        },
+                        onReadyForContent: { isMainContentMounted = true }
+                    )
                 }
             }
             .preferredColorScheme(.dark)
