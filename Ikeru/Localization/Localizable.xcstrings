@@ -11233,6 +11233,23 @@
         }
       }
     },
+    "Submit" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Submit"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valider"
+          }
+        }
+      }
+    },
     "Added" : {
       "extractionState" : "manual",
       "localizations" : {
