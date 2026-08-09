@@ -2,6 +2,26 @@
 
 Petit guide pour rester aligné avec le flow du repo.
 
+## Journal de bord : toujours tracer ce qu'on a fait (`JOURNAL.md`)
+
+**À chaque session de travail sur l'app, ajouter une entrée en haut de
+[`JOURNAL.md`](JOURNAL.md)** — avant de clore la session, pas « plus tard ».
+
+Git dit *ce qui a changé*. Le journal dit *ce qu'on a essayé, ce qu'on a
+vérifié, et pourquoi on a tranché comme ça*. Quatre rubriques :
+
+- **Fait** — les changements livrés, avec le SHA du commit.
+- **Testé** — ce qui a été vérifié et **comment** (device / simulateur / CI /
+  test unitaire), et surtout ce qui n'a **pas** pu l'être, avec la raison. Une
+  vérification manquante qu'on croit faite est pire que pas de vérification.
+- **Écarté** — les pistes explorées puis abandonnées, avec le pourquoi. C'est la
+  rubrique la plus utile : elle évite de refaire deux fois la même impasse.
+- **Ouvert** — ce qui reste en suspens et ce qui le débloque.
+
+Ne pas recopier le contenu des commits : renvoyer au SHA, et garder ici le
+raisonnement, les mesures chiffrées et les décisions. Un bug qui a coûté cher à
+diagnostiquer mérite que ses fausses pistes soient écrites noir sur blanc.
+
 ## Branches : par défaut, partir de `dev`, pas de `master`
 
 Le repo utilise un flow à deux étages :
