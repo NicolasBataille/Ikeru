@@ -297,9 +297,24 @@ jobs:
       - name: Bump build number
         id: bump
         run: |
+          # CFBundleVersion — unique per upload; Apple only requires it to grow.
           BUILD_NUM=$(date -u +"%Y%m%d%H%M")
+
+          # CFBundleShortVersionString — this is what TestFlight shows next to
+          # the build. It used to be the hardcoded MARKETING_VERSION (1.0.0),
+          # so every single build read "1.0.0" and testers could not tell one
+          # release from another. MAJOR.MINOR stay hand-owned in the project
+          # (bump them for a real release); PATCH is the commit count on this
+          # branch, which is monotonic and needs no state, so each deploy ships
+          # a distinct, honest version. `fetch-depth: 0` above is what makes
+          # the count real — a shallow clone would always report 1.
+          BASE=$(sed -n 's/.*MARKETING_VERSION = \([0-9]*\.[0-9]*\).*/\1/p' Ikeru.xcodeproj/project.pbxproj | head -1)
+          PATCH=$(git rev-list --count HEAD)
+          VERSION="${BASE}.${PATCH}"
+
           echo "build_number=${BUILD_NUM}" >> "$GITHUB_OUTPUT"
-          echo "Setting CFBundleVersion=${BUILD_NUM}"
+          echo "marketing_version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Shipping version ${VERSION} (build ${BUILD_NUM})"
 
       - name: Decode ASC API Key
         run: |
@@ -316,6 +331,7 @@ jobs:
             -archivePath build/Ikeru.xcarchive \
             -skipPackagePluginValidation \
             CURRENT_PROJECT_VERSION=${{ steps.bump.outputs.build_number }} \
+            MARKETING_VERSION=${{ steps.bump.outputs.marketing_version }} \
             DEVELOPMENT_TEAM=${{ secrets.APPLE_TEAM_ID }} \
             -allowProvisioningUpdates \
             -authenticationKeyID ${{ secrets.ASC_API_KEY_ID }} \
