@@ -23,6 +23,40 @@ raisonnement, les mesures, et les décisions.
 
 ---
 
+## Pass de test device (artifact `bb08a30e`) — état au 2026-08-09
+
+~40 items sur 13 étapes. **31 faits, 9 restants.** Le relevé détaillé vivait
+dans un scratchpad temporaire et a été perdu avec la session : d'où ce résumé
+ici, qui est désormais la source de vérité.
+
+### Restants et pourquoi
+| Item | Blocage |
+|---|---|
+| `s7-key`, `s7-multiturn`, `s7-chips`, `s7-furigana`, `s7-mnemonics` | Exigent la clé Gemini. Claude ne saisit pas de clés API → à faire par Nico. |
+| `s12-silent` | Switch muet : pas de commutateur matériel en simulateur. |
+| `s11-voiceover` | VoiceOver n'existe pas en simulateur. |
+| `s9-liveactivity` | Partiel : s'affiche et **n'est pas figée** (< 1 min → 1 min → 2 min), mais rendu par paliers d'une minute au lieu du mm:ss du code. Probable limite du simulateur sur l'écran verrouillé → à confirmer sur device. |
+| `s5-levelup` | **Structurellement inobservable via l'outil dev** : `TestFixtures.grantLevelUp` bump `state.xp` sans toucher `state.level`, et `HomeViewModel` normalise `state.level = levelForXP(state.xp)`. Le passage par Home absorbe le bump avant d'atteindre une session. Il faut un level-up gagné en session, ou corriger l'outil dev. |
+
+### Correction d'un vert abusif
+`s12-offline` avait été coché **vert à tort**. La vérification portait sur la
+présence des fichiers (447 clips, clés résolues, 92/92 kana) — pas sur le
+comportement. L'audio ne sortait en réalité **aucun son** sur device. Item
+réellement vert seulement après le fix `282f41f`, confirmé à l'oreille.
+
+Leçon : distinguer *vérifié* de *supposé*. Une présence de fichier n'est pas
+une lecture.
+
+### Nits relevés, non corrigés
+- `s2-slides` — « Un chemin de curieux à courant » est un calque de *from
+  curious to fluent* ; « courant » ne s'emploie pas ainsi pour une personne.
+- `s6-replay` — au rejeu, l'ancre suit bien le bon bouton (COMMENCER), mais la
+  copy dit encore « Choisis d'abord tes kana » alors qu'ils le sont déjà.
+- `s11-dyntype` — le numéral hero ne tronque jamais ✅, mais le CTA bilingue
+  casse aux tailles accessibilité (`稽古を始...` sur 2 lignes, `COMM…` tronqué).
+
+---
+
 ## 2026-08-09 — Déblocage TestFlight, versioning, audio
 
 ### Fait
