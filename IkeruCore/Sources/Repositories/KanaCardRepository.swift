@@ -26,10 +26,10 @@ public struct GroupMastery: Sendable, Equatable {
 
 /// Kana-specific queries layered on top of `CardRepository`.
 ///
-/// Kana cards are detected via `CardDTO.isKana` (single char in the
-/// hiragana/katakana Unicode blocks). This removes any need for a schema
-/// migration — kana just reuses the existing Card model with type
-/// `.vocabulary`.
+/// Kana cards are detected via `CardDTO.isKana` (front is a member of the
+/// `KanaGroup` catalog: a single base character or a combined yōon digraph).
+/// This removes any need for a schema migration — kana just reuses the
+/// existing Card model with type `.vocabulary`.
 public actor KanaCardRepository {
 
     private let cardRepository: CardRepository
@@ -68,24 +68,50 @@ public actor KanaCardRepository {
     /// production path now — only the kana the learner actually chose become
     /// cards, so un-chosen scripts (e.g. katakana) never enter the practice
     /// pool. `seedIfNeeded()` (bulk, all 92) is retained for tests only.
+    ///
+    /// Due dates within a single call are staggered by `staggeredDueDates` so a
+    /// large batch (a "select everything" preset, or — pre-migration — a stale
+    /// persisted selection that silently gained content once dakuten/yōon were
+    /// populated) doesn't land as a wall of cards all due the same second. A
+    /// learner who ticks one or two groups is unaffected: small batches stay
+    /// entirely due today.
     public func seed(groups: Set<KanaGroup>) async {
         guard !groups.isEmpty else { return }
         let existingFronts = Set(await allKanaCards().map { $0.front })
         let wanted = groups.flatMap { $0.characters }
+        let toCreate = wanted.filter { !existingFronts.contains($0.character) }
+        guard !toCreate.isEmpty else { return }
 
-        var created = 0
-        for kana in wanted where !existingFronts.contains(kana.character) {
+        let dueDates = Self.staggeredDueDates(count: toCreate.count, from: Date())
+        for (kana, dueDate) in zip(toCreate, dueDates) {
             _ = await cardRepository.createCard(
                 front: kana.character,
                 back: kana.romaji,
                 type: .vocabulary,
-                dueDate: Date()
+                dueDate: dueDate
             )
-            created += 1
         }
 
-        if created > 0 {
-            Logger.srs.info("KanaCardRepository seeded \(created) kana cards for \(groups.count) chosen groups")
+        Logger.srs.info("KanaCardRepository seeded \(toCreate.count) kana cards for \(groups.count) chosen groups")
+    }
+
+    /// Cards created within a single `seed` batch beyond this count are pushed
+    /// to later days instead of all landing due today. Chosen well above the
+    /// biggest single deliberate pick a learner makes in the chooser (a full
+    /// base script is 46 characters) so ordinary onboarding is never delayed —
+    /// only genuinely large one-shot batches (100+ characters) get smoothed.
+    static let dailyNewCardCap = 50
+
+    /// Spreads `count` due dates starting at `now`: the first `dailyNewCardCap`
+    /// are due immediately, the next `dailyNewCardCap` are due a day later, and
+    /// so on. Pure and deterministic so it's trivially testable without a
+    /// repository.
+    static func staggeredDueDates(count: Int, from now: Date, calendar: Calendar = .current) -> [Date] {
+        guard count > 0 else { return [] }
+        return (0..<count).map { index in
+            let dayOffset = index / dailyNewCardCap
+            guard dayOffset > 0 else { return now }
+            return calendar.date(byAdding: .day, value: dayOffset, to: now) ?? now
         }
     }
 

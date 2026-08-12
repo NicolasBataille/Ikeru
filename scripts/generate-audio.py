@@ -17,10 +17,17 @@ Docker Desktop, via Apple's native container runtime (macOS 26+):
     echo <container-ip> > /tmp/voicevox_ip.txt
     python3 scripts/generate-audio.py            # idempotent; skips existing
 
-Texts: the 92 base kana + every N5 vocabulary reading + every example sentence
-from Ikeru/Resources/ContentBundles/n5-content.sqlite, PLUS every "term of the
-day" reading parsed straight from IkeruCore's DailyTermCatalog.swift (so the set
-stays in lock-step with the catalog) (~450 clips, ~8 MB).
+Run this same command again whenever this file changes (e.g. new kana added
+to KanaGroup.swift, or new vocab/sentences in the content bundle) — already
+generated clips are skipped, so only the new texts get synthesized.
+
+Texts: all 208 drillable kana (92 base + 50 dakuten + 66 yōon, hiragana +
+katakana — see IkeruCore/Sources/Models/Kana/KanaGroup.swift's `characterTable`,
+the source of truth this list is matched against) + every N5 vocabulary
+reading + every example sentence from Ikeru/Resources/ContentBundles/
+n5-content.sqlite, PLUS every "term of the day" reading parsed straight from
+IkeruCore's DailyTermCatalog.swift (so the set stays in lock-step with the
+catalog) (~560 clips, ~10 MB).
 """
 import hashlib, os, re, sqlite3, subprocess, tempfile, urllib.parse, urllib.request
 
@@ -30,8 +37,30 @@ SPEAKER = 2  # 四国めたん ノーマル — clear, neutral
 OUT = "Ikeru/Resources/Audio"
 os.makedirs(OUT, exist_ok=True)
 
+# Base kana (92): unchanged since the pipeline's first version.
 HIRAGANA = "あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん"
 KATAKANA = "アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン"
+
+# Dakuten (voiced) kana (50): single code points, safe to iterate char-by-char
+# like the base sets above.
+HIRAGANA_DAKUTEN = "がぎぐげございずぜぞだぢづでどばびぶべぼぱぴぷぺぽ"
+KATAKANA_DAKUTEN = "ガギグゲゴザジズゼゾダヂヅデドバビブベボパピプペポ"
+
+# Yōon (combined digraphs, e.g. きゃ) (66): each entry is TWO code points, so
+# these are lists of complete strings, never a string to iterate char-by-char
+# — doing so would split each digraph into two orphan kana with no clip.
+HIRAGANA_YOON = [
+    "きゃ", "きゅ", "きょ", "しゃ", "しゅ", "しょ", "ちゃ", "ちゅ", "ちょ",
+    "にゃ", "にゅ", "にょ", "ひゃ", "ひゅ", "ひょ", "みゃ", "みゅ", "みょ",
+    "りゃ", "りゅ", "りょ", "ぎゃ", "ぎゅ", "ぎょ", "じゃ", "じゅ", "じょ",
+    "びゃ", "びゅ", "びょ", "ぴゃ", "ぴゅ", "ぴょ",
+]
+KATAKANA_YOON = [
+    "キャ", "キュ", "キョ", "シャ", "シュ", "ショ", "チャ", "チュ", "チョ",
+    "ニャ", "ニュ", "ニョ", "ヒャ", "ヒュ", "ヒョ", "ミャ", "ミュ", "ミョ",
+    "リャ", "リュ", "リョ", "ギャ", "ギュ", "ギョ", "ジャ", "ジュ", "ジョ",
+    "ビャ", "ビュ", "ビョ", "ピャ", "ピュ", "ピョ",
+]
 
 def key_for(text):
     return hashlib.sha256(text.encode("utf-8")).hexdigest()[:16]
@@ -51,8 +80,10 @@ def collect_daily_term_readings():
 
 def collect_texts():
     texts = []
-    for ch in HIRAGANA + KATAKANA:
+    for ch in HIRAGANA + KATAKANA + HIRAGANA_DAKUTEN + KATAKANA_DAKUTEN:
         texts.append(ch)
+    texts.extend(HIRAGANA_YOON)
+    texts.extend(KATAKANA_YOON)
     con = sqlite3.connect("Ikeru/Resources/ContentBundles/n5-content.sqlite")
     for (r,) in con.execute("SELECT DISTINCT reading FROM vocabulary WHERE reading IS NOT NULL AND TRIM(reading)!=''"):
         texts.append(r.strip())

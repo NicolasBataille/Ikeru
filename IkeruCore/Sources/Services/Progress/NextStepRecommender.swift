@@ -10,6 +10,10 @@ import Foundation
 ///
 ///   Hiragana → Katakana → Vocabulary → Kanji → Grammar → Reading/Listening → Sakura
 ///
+/// Sakura is no longer gated on a JLPT bar (see `recommend` step 7): the
+/// unlock service opened it to N5 beginners, and N5 is the floor of
+/// `JLPTLevel`, so a JLPT comparison can never fire.
+///
 /// `current`/`required` expose the rung's progress (e.g. hiragana 12 / 46) so
 /// the UI can show a quiet fraction. Localization lives in the app target: the
 /// view maps `stage` to `LocalizedStringKey`s (Core's `String(localized:)`
@@ -62,7 +66,9 @@ public enum NextStepRecommender {
     public static let readingVocabularyMilestone = DefaultExerciseUnlockService.readingPassageVocabRequired
 
     /// Returns the first unmet rung of the ladder. `allCaughtUp` only when every
-    /// rung is satisfied (including reaching the Sakura JLPT bar).
+    /// rung is satisfied, including having reached the vocabulary depth that
+    /// makes Sakura worthwhile (see step 7's comment — there is no "already
+    /// conversed with Sakura" signal to check instead, today).
     public static func recommend(kana: KanaProgress, snapshot: LearnerSnapshot) -> NextStep {
         // 1 — Hiragana (per-character familiar+, out of 46).
         if kana.hiraganaMastered < KanaProgress.hiraganaTotal {
@@ -100,8 +106,24 @@ public enum NextStepRecommender {
                             current: snapshot.vocabularyMasteredFamiliarPlus,
                             required: readingVocabularyMilestone)
         }
-        // 7 — Sakura conversation, gated on reaching the JLPT bar (N4).
-        if snapshot.jlptLevel < DefaultExerciseUnlockService.sakuraConversationMinJLPT {
+        // 7 — Sakura conversation. Previously gated on reaching a JLPT bar
+        // (N4), but `DefaultExerciseUnlockService.sakuraConversationMinJLPT`
+        // is now N5 — the floor of `JLPTLevel` — so that comparison could
+        // never fire again and silently made this rung unreachable
+        // (recommend() always fell straight to `.allCaughtUp`), the exact
+        // opposite of the intent behind opening Sakura to beginners.
+        //
+        // `LearnerSnapshot` has no "already tried Sakura" signal to gate on
+        // instead (checked `skillBalances`: `.speaking` is shared with
+        // `speakingPractice`, so a nonzero value doesn't mean "conversed
+        // with Sakura specifically" — a contaminated proxy, not a real one).
+        // So this rung stands on the same vocabulary depth already required
+        // to reach it (step 6's `readingVocabularyMilestone`): once a
+        // learner is here, they always have enough vocabulary to make a
+        // conversation worthwhile, so Sakura is the standing suggestion.
+        // `.allCaughtUp` is reserved for once a genuine "has conversed"
+        // signal exists to retire this rung.
+        if snapshot.vocabularyMasteredFamiliarPlus >= readingVocabularyMilestone {
             return NextStep(stage: .converseWithSakura, current: 0, required: 0)
         }
         return NextStep(stage: .allCaughtUp, current: 0, required: 0)

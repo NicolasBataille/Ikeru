@@ -104,4 +104,62 @@ struct KanaCardRepositoryTests {
         #expect(result[.hVowels]?.totalCards == 5)
         #expect(result[.hK]?.totalCards == 5)
     }
+
+    // MARK: - seed(groups:) staggering
+
+    /// All dakuten + yōon groups across both scripts: 116 characters, matching
+    /// the exact figure that alarmed the pedagogical review (an existing
+    /// tester's stale persisted selection of these groups, once they went from
+    /// empty placeholders to real content, would seed 116 cards all due at
+    /// once).
+    private static let allExtendedGroups: Set<KanaGroup> = Set(
+        KanaGroup.allCases.filter { $0.section != .base }
+    )
+
+    @Test("seed(groups:) for a small selection stays entirely due today")
+    func seedSmallSelectionIsNotStaggered() async throws {
+        let (repo, _) = try await makeRepo()
+        await repo.seed(groups: [.hVowels, .hK])
+        let due = await repo.dueCardsForGroups([.hVowels, .hK], now: Date())
+        #expect(due.count == 10)
+    }
+
+    @Test("seed(groups:) for all dakuten/yōon groups does not create a wall of 116 same-second due cards")
+    func seedLargeSelectionIsStaggeredNotAWall() async throws {
+        let (repo, _) = try await makeRepo()
+        #expect(Self.allExtendedGroups.reduce(0) { $0 + $1.characters.count } == 116)
+
+        await repo.seed(groups: Self.allExtendedGroups)
+        let all = await repo.cardsForGroups(Self.allExtendedGroups)
+        #expect(all.count == 116)
+
+        let dueNow = await repo.dueCardsForGroups(Self.allExtendedGroups, now: Date())
+        #expect(dueNow.count < all.count)
+        #expect(dueNow.count > 0)
+
+        // Everything still becomes due eventually — nothing is lost, only delayed.
+        let farFuture = Calendar.current.date(byAdding: .day, value: 30, to: Date())!
+        let dueEventually = await repo.dueCardsForGroups(Self.allExtendedGroups, now: farFuture)
+        #expect(dueEventually.count == 116)
+    }
+
+    @Test("staggeredDueDates keeps small batches entirely at 'now'")
+    func staggeredDueDatesSmallBatchIsImmediate() {
+        let now = Date()
+        let dates = KanaCardRepository.staggeredDueDates(count: 10, from: now)
+        #expect(dates.count == 10)
+        #expect(dates.allSatisfy { $0 == now })
+    }
+
+    @Test("staggeredDueDates spreads a 116-card batch across multiple days")
+    func staggeredDueDatesLargeBatchSpreadsAcrossDays() {
+        let now = Date()
+        let dates = KanaCardRepository.staggeredDueDates(count: 116, from: now)
+        #expect(dates.count == 116)
+
+        let distinctDays = Set(dates.map { Calendar.current.startOfDay(for: $0) })
+        // 116 cards with a cap of 50/day spans 3 distinct days (50 + 50 + 16).
+        #expect(distinctDays.count == 3)
+        #expect(dates.filter { $0 == now }.count == 50)
+    }
 }

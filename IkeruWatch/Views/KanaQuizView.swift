@@ -48,6 +48,10 @@ struct KanaQuizView: View {
                 }
             }
 
+            // Correct-answer feedback (shown briefly after a wrong tap, before
+            // advancing — a wrong answer without this teaches nothing).
+            feedbackLine
+
             // Progress dots
             HStack(spacing: 3) {
                 ForEach(0..<viewModel.totalQuestions, id: \.self) { index in
@@ -82,6 +86,21 @@ struct KanaQuizView: View {
             }
             .buttonStyle(.bordered)
             .tint(IkeruPlatformTheme.gold)
+        }
+    }
+
+    // MARK: - Feedback
+
+    @ViewBuilder
+    private var feedbackLine: some View {
+        if let feedback = viewModel.correctAnswerFeedback {
+            Text("The character for \(feedback.romaji) is \(feedback.kana)")
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(.green)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+        } else {
+            Color.clear.frame(height: 12)
         }
     }
 

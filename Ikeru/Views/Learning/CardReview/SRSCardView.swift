@@ -75,11 +75,10 @@ struct SRSCardView: View {
     @State private var audioService = AudioService()
 
     /// Auto-plays pronunciation the moment a card flips to its answer face.
-    /// Opt-out flag: the Settings row that writes this key is wired by a
-    /// separate change — this reads the key so behaviour is correct the
-    /// moment that row lands, defaulting to on in the meantime. For a
-    /// syllabary especially, seeing the glyph without hearing it is only
-    /// half the lesson.
+    /// Opt-out flag: toggled by the "自動再生 / Audio autoplay" row in
+    /// Settings → Practice (`SettingsView.practiceSection`), which writes
+    /// this same key. Defaults to on — for a syllabary especially, seeing
+    /// the glyph without hearing it is only half the lesson.
     @AppStorage("ikeru.audio.autoplay") private var isAudioAutoplayEnabled: Bool = true
 
     @Namespace private var deckNamespace
@@ -179,9 +178,12 @@ struct SRSCardView: View {
         }
         // Trigger on the false→true transition only — never in `body`, and
         // never on every re-render (SwiftUI re-evaluates `body` far more
-        // often than the answer face actually flips).
+        // often than the answer face actually flips). Gated on `card.isKana`
+        // to match the manual listen button (kanaListenButton): a `.grammar`
+        // front is a multi-word pattern and a `.listening` front is already
+        // an audio prompt, so autoplaying either would talk over the card.
         .onChange(of: isRevealed) { wasRevealed, nowRevealed in
-            guard nowRevealed, !wasRevealed, isAudioAutoplayEnabled else { return }
+            guard nowRevealed, !wasRevealed, isAudioAutoplayEnabled, card.isKana else { return }
             let text = card.front
             Task { await audioService.playTTS(text: text) }
         }

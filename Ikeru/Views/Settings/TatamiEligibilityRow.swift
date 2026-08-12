@@ -3,8 +3,12 @@ import SwiftData
 import IkeruCore
 
 /// Settings row showing progress toward the Tatami-mode suggestion
-/// (`DisplayModeAdvancedThresholdMonitor`): reviews, mastery, and active-days
-/// counters against their thresholds, plus which path (if any) is met.
+/// (`DisplayModeAdvancedThresholdMonitor`): two independent eligibility
+/// paths — cumulative competence (reviews AND mastery) OR longevity
+/// (active days) — rendered as two separate groups joined by "ou", each
+/// marked once ITS OWN criteria are met. Never flattened into one list of
+/// three counters: that reads as a checklist (AND), when the real rule is
+/// an OR between two routes (P1 fix, adversarial re-review of 353ac3e).
 ///
 /// Hidden once the active profile is already in `.tatami` mode (nothing left
 /// to work toward) and, after "Later" is tapped, hidden again until the
@@ -23,6 +27,21 @@ struct TatamiEligibilityRow: View {
         let mastery: Int
         let activeDays: Int
         let eligibility: DisplayModeThresholdResult
+
+        /// Mirrors `DisplayModeAdvancedThresholdMonitor`'s competence path
+        /// (reviews AND mastery). Computed here rather than sourced from
+        /// `evaluate()` because the monitor only returns the combined
+        /// eligible/not-eligible verdict, not which of the two OR'd paths
+        /// produced it — the row needs the per-path breakdown to avoid
+        /// presenting an OR as an AND.
+        var competencePathMet: Bool {
+            reviews >= DisplayModeAdvancedThresholdMonitor.reviewsThreshold
+                && mastery >= DisplayModeAdvancedThresholdMonitor.masteryThreshold
+        }
+
+        var activeDaysPathMet: Bool {
+            activeDays >= DisplayModeAdvancedThresholdMonitor.activeDaysThreshold
+        }
     }
 
     private var dismissalRepository: UserDefaultsTatamiSuggestionDismissalRepository {
@@ -75,21 +94,45 @@ struct TatamiEligibilityRow: View {
                 }
             }
 
-            progressLine(
-                label: "Settings.TatamiEligibility.Reviews",
-                current: signals.reviews,
-                total: DisplayModeAdvancedThresholdMonitor.reviewsThreshold
-            )
-            progressLine(
-                label: "Settings.TatamiEligibility.Mastery",
-                current: signals.mastery,
-                total: DisplayModeAdvancedThresholdMonitor.masteryThreshold
-            )
-            progressLine(
-                label: "Settings.TatamiEligibility.ActiveDays",
-                current: signals.activeDays,
-                total: DisplayModeAdvancedThresholdMonitor.activeDaysThreshold
-            )
+            // Two independent paths, either one sufficient — NOT a checklist
+            // of three cumulative criteria. Showing all three flat, with
+            // "Ready" sitting next to an untouched "Active days 0/30", read
+            // as the display lying (the badge was true because of the OTHER
+            // path). Explicit path groups + "ou" make the OR legible.
+            pathSection(
+                titleKey: "Settings.TatamiEligibility.PathCompetence",
+                isMet: signals.competencePathMet
+            ) {
+                progressLine(
+                    label: "Settings.TatamiEligibility.Reviews",
+                    current: signals.reviews,
+                    total: DisplayModeAdvancedThresholdMonitor.reviewsThreshold
+                )
+                progressLine(
+                    label: "Settings.TatamiEligibility.Mastery",
+                    current: signals.mastery,
+                    total: DisplayModeAdvancedThresholdMonitor.masteryThreshold
+                )
+            }
+
+            HStack {
+                Spacer()
+                Text("Settings.TatamiEligibility.Or")
+                    .ikeruScaledFont(9, relativeTo: .caption2)
+                    .foregroundStyle(Color.ikeruTextTertiary)
+                Spacer()
+            }
+
+            pathSection(
+                titleKey: "Settings.TatamiEligibility.PathActiveDays",
+                isMet: signals.activeDaysPathMet
+            ) {
+                progressLine(
+                    label: "Settings.TatamiEligibility.ActiveDays",
+                    current: signals.activeDays,
+                    total: DisplayModeAdvancedThresholdMonitor.activeDaysThreshold
+                )
+            }
 
             // "Later" only makes sense as the answer to an actual OFFER —
             // while the learner is still short of the thresholds this row is
@@ -114,6 +157,35 @@ struct TatamiEligibilityRow: View {
         }
     }
 
+    /// One eligibility path: a small header (title + a checkmark once THIS
+    /// path's own criteria are met) followed by its progress lines. `isMet`
+    /// is independent of the top "Ready" badge, which additionally accounts
+    /// for the dismissal cooldown — a path can be met while "Ready" is
+    /// suppressed, and that's not a contradiction to surface here.
+    @ViewBuilder
+    private func pathSection<Lines: View>(
+        titleKey: LocalizedStringKey,
+        isMet: Bool,
+        @ViewBuilder lines: () -> Lines
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 4) {
+                Text(titleKey)
+                    .ikeruScaledFont(10, relativeTo: .caption2)
+                    .foregroundStyle(Color.ikeruTextTertiary)
+                    .textCase(.uppercase)
+                if isMet {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 10))
+                        .foregroundStyle(Color.ikeruPrimaryAccent)
+                        .accessibilityLabel(Text("Settings.TatamiEligibility.PathMet"))
+                }
+                Spacer()
+            }
+            lines()
+        }
+    }
+
     private func progressLine(label: LocalizedStringKey, current: Int, total: Int) -> some View {
         VStack(alignment: .leading, spacing: 3) {
             HStack {
@@ -124,7 +196,13 @@ struct TatamiEligibilityRow: View {
                 // Plain numeric fragment — not a translatable phrase, mirrors
                 // the non-localized `value:` slot pattern used throughout
                 // SettingsView's rowChrome (verbatim `Text(String)`).
-                Text("\(current)/\(total)")
+                //
+                // Capped at `total`: once a learner blows past a threshold
+                // (e.g. 250 cards mastered against a 75 threshold), showing
+                // the raw count reads as a broken counter, not progress — the
+                // bar below already clamps its fill the same way, so the
+                // number and the bar now agree on the same effective state.
+                Text("\(min(current, total))/\(total)")
                     .ikeruScaledFont(11, design: .serif, relativeTo: .caption2)
                     .foregroundStyle(Color.ikeruPrimaryAccent)
             }

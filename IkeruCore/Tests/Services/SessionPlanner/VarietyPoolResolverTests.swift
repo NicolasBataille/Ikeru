@@ -4,10 +4,10 @@ import Testing
 @Suite("VarietyPoolResolver")
 struct VarietyPoolResolverTests {
 
-    @Test("N5 pool: subtitled listening + fill-in-blank")
+    @Test("N5 pool: subtitled listening + fill-in-blank + Sakura (unlock gate is N5, the floor)")
     func n5() {
         let pool = VarietyPoolResolver.pool(for: .n5)
-        #expect(pool == [.listeningSubtitled, .fillInBlank])
+        #expect(pool == [.listeningSubtitled, .fillInBlank, .sakuraConversation])
     }
 
     @Test("N4 adds grammar + sentence construction")

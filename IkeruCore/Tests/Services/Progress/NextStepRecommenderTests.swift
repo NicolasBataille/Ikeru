@@ -125,17 +125,24 @@ struct NextStepRecommenderTests {
         #expect(step.stage == .converseWithSakura)
     }
 
-    @Test("Everything satisfied and past the JLPT bar is all caught up")
-    func allCaughtUp() {
+    @Test("JLPT level no longer gates Sakura: even at N1, rung 6 completion suggests Sakura")
+    func jlptLevelDoesNotGateSakura() {
+        // Regression guard for the P0 fix that dropped
+        // `sakuraConversationMinJLPT` to N5 (the floor of `JLPTLevel`): a
+        // comparison against it can never be true again, so rung 7 must not
+        // depend on `jlptLevel` at all. `.allCaughtUp` is presently
+        // unreachable through `recommend()` — there is no "already conversed
+        // with Sakura" signal in `LearnerSnapshot` to retire the rung with
+        // yet (see the comment on rung 7 in `NextStepRecommender`).
         let step = NextStepRecommender.recommend(
             kana: KanaProgress(hiraganaMastered: hiraganaTotal, katakanaMastered: katakanaTotal),
             snapshot: snapshot(
-                jlptLevel: .n4,
+                jlptLevel: .n1,
                 vocab: NextStepRecommender.readingVocabularyMilestone,
                 kanji: NextStepRecommender.kanjiMilestone,
                 grammar: NextStepRecommender.grammarMilestone
             )
         )
-        #expect(step.stage == .allCaughtUp)
+        #expect(step.stage == .converseWithSakura)
     }
 }

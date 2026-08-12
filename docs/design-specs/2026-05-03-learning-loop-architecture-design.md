@@ -146,7 +146,7 @@ recalibrate once we have real usage data, not as a settled result.
 | `writingPractice` | Both kana scripts mastered + 50 vocab | Product default: writing gated behind more foundation than reading since we don't yet measure output quality. Not derived from the output hypothesis (Swain 1985) — that work describes functions of output (noticing, hypothesis-testing), not thresholds |
 | `listeningUnsubtitled` | ≥ 60 % accuracy on last 30 subtitled exercises | Product default: sustained receptive proficiency, chosen to avoid one-time fluke unlocks |
 | `speakingPractice` | ≥ 60 % listening recall over last 30 days | Product default, same caveat as `writingPractice` — no numeric threshold to derive from output-hypothesis or input-primacy research |
-| `sakuraConversation` | JLPT estimate ≥ N4 (≥ 300 vocab + 30 N5 grammar familiar+) | Product default: real conversation needs a grammar foundation, sized to our own JLPT estimate formula |
+| `sakuraConversation` | JLPT estimate ≥ N5 (the floor — effectively open from the start) | Lowered from an original N4 bar: the only shipped content is N5 (`n5-content.sqlite`), so N4 was structurally unreachable through the nominal onboarding path. Also redundant as a safety rail — `ConversationService.buildSystemPrompt` already constrains Sakura to the learner's JLPT level — and a real-conditions test showed an N5 conversation with a beginner works well |
 
 "@ familiar+" = `MasteryLevel.familiar` or higher in the existing scale (familiar / mastered / anchored). Excludes `.new` and `.learning`.
 

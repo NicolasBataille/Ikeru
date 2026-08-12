@@ -74,6 +74,10 @@ struct SettingsView: View {
     @AppStorage("ikeru.furigana.enabled") private var furiganaEnabled = true
     @AppStorage("ikeru.furigana.userTouched") private var furiganaUserTouched = false
 
+    // MARK: Audio autoplay (SRSCardView reads the same key)
+
+    @AppStorage("ikeru.audio.autoplay") private var isAudioAutoplayEnabled = true
+
     // MARK: Language picker
 
     @State private var showingLanguagePicker = false
@@ -363,6 +367,17 @@ struct SettingsView: View {
                 }
             }
 
+            settingRow(
+                jp: "自動再生",
+                label: "Audio autoplay",
+                value: isAudioAutoplayEnabled ? String(localized: "On") : String(localized: "Off"),
+                showChevron: false
+            ) {
+                withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) {
+                    isAudioAutoplayEnabled.toggle()
+                }
+            }
+
             retentionRow
         }
     }
@@ -424,10 +439,10 @@ struct SettingsView: View {
         }
     }
 
-    // MARK: - Section: 勘定 / Account
+    // MARK: - Section: アカウント / Account
 
     private var accountSection: some View {
-        section(label: ("勘定", "Account"), mon: .genji) {
+        section(label: ("アカウント", "Account"), mon: .genji) {
             settingRow(
                 jp: "プロフィール",
                 label: "Profile",
@@ -646,10 +661,10 @@ struct SettingsView: View {
         }
     }
 
-    // MARK: - Section link: 倉庫 / Data & Storage (sub-page)
+    // MARK: - Section link: データ / Data & Storage (sub-page)
 
     private var dataStorageLinkSection: some View {
-        section(label: ("倉庫", "Data & Storage"), mon: .maru) {
+        section(label: ("データ", "Data & Storage"), mon: .maru) {
             NavigationLink {
                 DataStorageSettingsView(
                     cacheStats: cacheStats,
@@ -702,10 +717,10 @@ struct SettingsView: View {
         return String(format: "%.0f / %.0f MB", usedMB, cacheQuotaMB)
     }
 
-    // MARK: - Section: 関連 / About
+    // MARK: - Section: 情報 / About
 
     private var aboutSection: some View {
-        section(label: ("関連", "About"), mon: .maru) {
+        section(label: ("情報", "About"), mon: .maru) {
             settingRow(jp: "バージョン", label: "Version", value: appVersionValue)
 
             settingRow(jp: "案内", label: "Tour.Settings.Replay", value: "") {
@@ -1049,7 +1064,7 @@ private struct DataStorageSettingsView: View {
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 24) {
                     VStack(alignment: .leading, spacing: 6) {
-                        BilingualLabel(japanese: "倉庫", chrome: "Data & Storage")
+                        BilingualLabel(japanese: "データ", chrome: "Data & Storage")
                         Text("Cache & Pre-warm", comment: "Data & Storage subpage heading")
                             .ikeruScaledFont(28, weight: .light, design: .serif, relativeTo: .title)
                             .foregroundStyle(Color.ikeruTextPrimary)
@@ -1087,7 +1102,7 @@ private struct DataStorageSettingsView: View {
 
     private var storageContentSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            BilingualLabel(japanese: "倉庫", chrome: "Storage", mon: .maru)
+            BilingualLabel(japanese: "データ", chrome: "Storage", mon: .maru)
             VStack(spacing: 0) {
                 storageRow(
                     jp: "資産キャッシュ",

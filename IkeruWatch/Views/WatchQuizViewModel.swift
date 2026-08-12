@@ -47,10 +47,24 @@ final class WatchQuizViewModel {
     /// Kana pool for this session.
     private var pool: [KanaData.Entry] = []
 
+    /// Remaining targets for this session, drawn without replacement so the
+    /// same kana never repeats as the answer across questions.
+    private var targetQueue: [KanaData.Entry] = []
+
+    /// The correct choice for the current question, once answered incorrectly.
+    /// Used to surface a brief "correct answer" feedback before advancing —
+    /// otherwise a wrong tap teaches nothing (see task #9).
+    var correctAnswerFeedback: (romaji: String, kana: String)? {
+        guard lastAnswerResult == false,
+              let correct = choices.first(where: { $0.id == correctId }) else { return nil }
+        return (romaji: correct.romanization, kana: correct.character)
+    }
+
     // MARK: - Session Control
 
     func startSession() {
         pool = KanaData.hiragana
+        targetQueue = pool.shuffled()
         currentQuestion = 0
         correctCount = 0
         questionResults = []
@@ -75,9 +89,12 @@ final class WatchQuizViewModel {
             WKInterfaceDevice.current().play(.failure)
         }
 
-        // Auto-advance after brief delay
+        // Auto-advance after a brief delay. Wrong answers pause longer so the
+        // correct-answer feedback (see `correctAnswerFeedback`) is readable.
+        let pauseDuration: Duration = isCorrect ? .milliseconds(600) : .milliseconds(1700)
+
         Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(600))
+            try? await Task.sleep(for: pauseDuration)
             currentQuestion += 1
             lastAnswerResult = nil
             lastAnsweredId = nil
@@ -99,9 +116,61 @@ final class WatchQuizViewModel {
     // MARK: - Private
 
     private func loadNextQuestion() {
-        guard let question = KanaData.generateQuizQuestion(from: pool) else { return }
-        targetCharacter = question.target.character
-        correctId = question.target.id
-        choices = question.choices
+        guard pool.count >= 4 else { return }
+        if targetQueue.isEmpty {
+            // Exhausted the pool without repeating within the session — reshuffle
+            // for any remaining questions (only reachable if totalQuestions ever
+            // exceeds the pool size).
+            targetQueue = pool.shuffled()
+        }
+        let target = targetQueue.removeFirst()
+        targetCharacter = target.character
+        correctId = target.id
+        choices = buildChoices(for: target)
+    }
+
+    /// Builds the 4-choice answer set for `target`, preferring distractors that
+    /// are visually similar to it (e.g. る/ろ, き/さ) over purely random ones —
+    /// random distractors waste the questions that would otherwise drill the
+    /// pairs learners actually confuse.
+    private func buildChoices(for target: KanaData.Entry) -> [KanaData.Entry] {
+        let confusable = Self.confusableCharacters(for: target.character)
+        let remainingPool = pool.filter { $0.id != target.id }
+
+        var selected = Array(
+            remainingPool
+                .filter { confusable.contains($0.character) }
+                .shuffled()
+                .prefix(3)
+        )
+
+        if selected.count < 3 {
+            let usedIds = Set(selected.map(\.id))
+            let filler = remainingPool
+                .filter { !usedIds.contains($0.id) }
+                .shuffled()
+            selected.append(contentsOf: filler.prefix(3 - selected.count))
+        }
+
+        var choices = selected + [target]
+        choices.shuffle()
+        return choices
+    }
+
+    /// Groups of kana that are commonly confused by shape, used to bias
+    /// distractor selection toward realistic mistakes.
+    private static let confusableGroups: [Set<String>] = [
+        ["る", "ろ"],
+        ["シ", "ツ"],
+        ["ソ", "ン"],
+        ["き", "さ"],
+        ["ね", "れ", "わ"],
+        ["は", "ほ"],
+        ["あ", "お"],
+        ["ま", "も"],
+    ]
+
+    private static func confusableCharacters(for character: String) -> Set<String> {
+        confusableGroups.first { $0.contains(character) }?.subtracting([character]) ?? []
     }
 }
