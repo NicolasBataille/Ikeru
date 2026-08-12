@@ -1,0 +1,35 @@
+# Questions au développeur
+
+Liste des questions posées au développeur au fil de la review, avec leur
+statut et un résumé de la réponse obtenue.
+
+| ID | Question | Statut | Résumé de la réponse |
+|---|---|---|---|
+| Q1 | Que représente le logo kanji de l'écran d'accueil (中 stylisé ?) et quel est le sens du nom « Ikeru » ? | posée | en attente |
+| Q2 | L'audio d'un kana joue-t-il automatiquement à la révélation de la carte, ou uniquement au tap sur le haut-parleur ? (invérifiable au simulateur) | répondue | Non, aucun déclenchement automatique, c'est un bouton uniquement. Les 447 clips audio sont de vraies voix pré-générées embarquées (VOICEVOX), pas du TTS système : le contenu existe, seul le déclenchement manque. Le dev accepte la critique (« pour un syllabaire, enseigner le glyphe sans le son est une amputation »). |
+| Q3 | Quel est le seuil exact de « APPRIS » (かな 0/92) et de « Cartes maîtrisées » / « Maîtrise % » ? Pourquoi un utilisateur qui vient d'étudier 5 kana voit-il encore 0 partout ? | répondue | « Appris » = état `.familiar` ou mieux, qui exige reps ≥ 2 ET stabilité ≥ 1.0 ET aucune rechute < 2 jours. Une 1re session donne reps = 1 → le compteur ne peut mathématiquement pas bouger le jour 1. Garde-fou délibéré et documenté (éviter qu'un tap « Facile » promeuve une carte en `.mastered` et gonfle les portes de déverrouillage et l'estimation JLPT). Le dev reconnaît : « le garde-fou est juste, c'est la communication qui est fausse » — il manque un palier « en cours d'apprentissage » entre 0 et « appris ». |
+| Q4 | Le « 67% RAPPEL » compte Difficile comme échec — choix assumé ou accident ? | répondue | Accident confirmé. Deux compteurs divergent dans le même fichier : le rejeu des erreurs ne compte que « Encore » comme erreur (commentaire explicite : Difficile = « rappel lent mais au final correct »), mais le % de rappel fait isCorrect = good\|\|easy. L'intention écrite est « hard = réussite » ; le calcul n'a pas suivi. |
+| Q5 | Les intervalles 1j/2j/4j/16j de première réponse correspondent-ils aux stabilités initiales FSRS par défaut ? Pas de learning steps intra-jour (hors re-queue du Encore) — choix délibéré ? | répondue | FSRS-5 réel (paramètres de stabilité same-day w17/w18 actifs), mais AUCUN learning step intra-journée : intervalles bornés à ≥ 1 jour, seul rattrapage intra-séance = re-queue des « Encore ». Le dev demande notre avis d'expert sur la défendabilité de ce choix pour l'acquisition des kana (question ouverte Round 1e). |
+| Q6 | Pourquoi les groupes dakuten/yōon n'affichent-ils pas leurs caractères (OBS-001) — bug ou masquage volontaire ? | répondue | Pas un bug d'affichage : CONTENU ABSENT. La table de caractères déclare ces groupes en tableaux vides avec un TODO explicite (« populate dakuten (g/z/d/b/p) and yōon »). Le dénominateur « 92 » = 46 hiragana + 46 katakana de base uniquement. Une vingtaine de groupes du sélecteur sont définitivement vides et inapprenables. Aggravant relevé par le dev : les micro-textes pédagogiques (excellents) décrivent un contenu que l'app ne possède pas. |
+| Q7 | L'étape « setup IA » de l'onboarding a-t-elle été retirée (OBS-009) ? | répondue | Erreur du dev-relais, pas de l'app : son brief venait d'une review de juillet antérieure au passage à 3 onglets. Le parcours réel n'a pas d'étape IA. |
+| Q8 | Le système de niveaux (« Lv. 4 » widget) : où est-il visible dans l'app, et quelle est sa fonction pédagogique ? | répondue | Système orphelin. Aucune surface RPG dans l'app (3 onglets, pas d'onglet RPG ; commentaire dans HomeView : « was keyed to RPG level, now removed »). Le niveau ne survit que sur le widget (d'où « Lv. 4 »). XP, loot, rangs tournent en arrière-plan sans destination visible. Décision produit à trancher : réexposer ou retirer. |
+| Q9 | Contenu du « Terme du jour » : quelle est la ligne éditoriale (audience dev assumée ?) et y a-t-il un tri par niveau de l'apprenant ? | répondue | 57 candidats. Le modèle porte un champ jlptLevel que le service de sélection ne consulte jamais (score = saison/jour de semaine/tags uniquement). Le filtrage par niveau est possible dans le modèle, absent de l'algorithme. ポカヨケ vient d'un lot de vocabulaire industriel/lean : diagnostic « écrit pour des développeurs » confirmé. |
+| Q10 | « Pratique libre : tes réponses comptent quand même pour le planning » — comment les revues hors échéance sont-elles intégrées à FSRS (same-day reviews) ? | répondue | Via Q5 : pas de steps intra-jour, FSRS-5 avec w17/w18 same-day actifs. |
+| Q11 | Interface Tatami : la promesse « Kanji d'abord, traductions masquées » est-elle vraiment tenue quelque part dans l'app, au-delà de la tab bar et des préfixes de sections (OBS-015) ? | répondue | Rien ne change : confirmé par le code, 11 fichiers consomment displayMode et seules les deux bulles de chat Sakura en tiennent compte — aucune vue d'apprentissage (flashcards, sélecteur kana, vocabulaire) n'est affectée. Le commentaire de l'enum promet « reading aids minimal » que rien n'implémente. Audit des labels kanji : 3/8 faux (勘定, 倉庫, 関連). |
+| Q12 | Le libellé du gros chiffre du dashboard change (« À RÉVISER » / « AUJOURD'HUI ») sans légende visible (OBS-011) — bug ou choix assumé ? | répondue | Design intentionnel : libellé « honnête » selon la composition de séance (allNew → À APPRENDRE, allReview → À RÉVISER, mixed → AUJOURD'HUI). Intention bonne, découvrabilité nulle — classé « design juste, communication à refaire ». |
+| Q13 | Audit des labels kanji Tatami (勘定, 倉庫, 関連, 知能, 稽古, 表示, 開発, 学習, 練習, 設定) : combien sont des choix lexicaux corrects vs. erronés ? | répondue | 3/8 faux : 勘定 (Account, = l'addition au restaurant), 倉庫 (Data & Storage, = entrepôt physique, attendu データ/ストレージ), 関連 (About, = « en rapport avec », attendu 情報/このアプリについて). 知能 (AI) non standard mais toléré. 稽古/表示/開発/学習/練習/設定 corrects. |
+
+## Questions du dev à l'expert — Round 2
+
+Matériel d'architecture (portes de déverrouillage, routeur Sakura, planificateur)
+fourni par le dev-relais avec ses propres questions pour l'expert :
+
+- La plausibilité du claim Tadoku : 100 mots ≈ 95 % de couverture, est-ce défendable ?
+- Swain peut-elle justifier des seuils numériques précis (nombre de mots, de points de grammaire) ?
+- La politique « réceptif avant productif » (kana/kanji/vocab/écoute ouverts, tout le reste fermé) est-elle défendable telle quelle ?
+- Le BYO-clé API pour Sakura (seul Gemini utilisable en pratique sur un iPhone sans modèle on-device) est-il défendable, ou faut-il descoper la fonctionnalité tant que ce n'est pas résolu ?
+- Un LLM généraliste corrige-t-il utilement un débutant, ou risque-t-il de renforcer de mauvais patterns ?
+- Préférence souple (vocabulaire connu, ≤ 40 mots) vs. contrainte stricte i+1 — laquelle est la bonne approche pour Sakura ?
+- Les ratios du planificateur (40 % révisions / 30 % point faible / 20 % variété / 10 % neuf) doivent-ils être fixes ou varier par stade de progression ?
+- Entrelacement (round-robin pondéré) vs. blocage (blocs contigus par compétence) — quelle est la meilleure pratique pédagogique ?
+- 10 % de contenu neuf par séance est-il suffisant pour progresser à un rythme raisonnable ?
