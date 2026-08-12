@@ -144,7 +144,7 @@ struct VocabularyDetailSheet: View {
             HStack(spacing: IkeruTheme.Spacing.lg) {
                 statTile(
                     value: entry.mastery.emoji,
-                    label: entry.mastery.label
+                    labelKey: LocalizedStringKey(entry.mastery.label)
                 )
                 statTile(
                     value: "\(entry.encounterCount)",
@@ -166,6 +166,24 @@ struct VocabularyDetailSheet: View {
                 .font(.ikeruStatsLarge)
                 .foregroundStyle(Color.ikeruPrimaryAccent)
             Text(label.uppercased())
+                .font(.ikeruMicro)
+                .ikeruTracking(.micro)
+                .foregroundStyle(Color.ikeruTextTertiary)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    /// Variant for values whose label is a localization-catalog **key**
+    /// (e.g. `MasteryLevel.label`) rather than plain text — `.uppercased()`
+    /// can't run on a `LocalizedStringKey`, so `.textCase(.uppercase)` gets
+    /// the same visual effect after the catalog lookup resolves it.
+    private func statTile(value: String, labelKey: LocalizedStringKey) -> some View {
+        VStack(spacing: 4) {
+            Text(value)
+                .font(.ikeruStatsLarge)
+                .foregroundStyle(Color.ikeruPrimaryAccent)
+            Text(labelKey)
+                .textCase(.uppercase)
                 .font(.ikeruMicro)
                 .ikeruTracking(.micro)
                 .foregroundStyle(Color.ikeruTextTertiary)

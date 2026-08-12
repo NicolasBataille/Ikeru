@@ -30,6 +30,11 @@ public struct GroupMastery: Sendable, Equatable {
 /// `KanaGroup` catalog: a single base character or a combined yōon digraph).
 /// This removes any need for a schema migration — kana just reuses the
 /// existing Card model with type `.vocabulary`.
+///
+/// One exception: `purgeUnstartedCards`, which deletes cards, uses the
+/// stricter `CardDTO.purgeableKanaGroup` instead of plain `isKana`/
+/// `kanaGroup` — see that property's doc comment for why a destructive
+/// operation can't rely on `front`-catalog membership alone.
 public actor KanaCardRepository {
 
     private let cardRepository: CardRepository
@@ -151,8 +156,12 @@ public actor KanaCardRepository {
     ///  - a card with `reps > 0` is NEVER deleted, no matter its group — the
     ///    learner has invested review effort in it, and removing it would be
     ///    a silent progress loss;
-    ///  - only cards that resolve to a `KanaGroup` (`isKana`, essentially)
-    ///    are considered — other card types are untouched;
+    ///  - only cards that resolve to a `KanaGroup` via
+    ///    `CardDTO.purgeableKanaGroup` — `.vocabulary`-typed AND whose `back`
+    ///    matches the catalog romaji exactly, not just a kana-shaped `front`
+    ///    — are considered; see that property's doc comment for why a plain
+    ///    `front`-catalog or `CardType` check alone isn't enough to keep a
+    ///    same-shaped vocabulary card (e.g. え "image") safe from deletion;
     ///  - idempotent: a card already purged (or one that was never created)
     ///    is simply absent from `allKanaCards()`, so calling this repeatedly
     ///    — e.g. once per `loadMasteries()` — is a safe no-op once the store
@@ -166,11 +175,14 @@ public actor KanaCardRepository {
     /// no longer offered), still counted as due by `CardRepository.dueCards`,
     /// and still keeping the foundation session mode locked in
     /// `DefaultSessionPlanner` (which only unlocks once every `reps == 0 &&
-    /// isKana` card is gone). See the 2nd-pass pedagogical review, item 35.
+    /// isKana` card is gone — that gate still uses the loose `isKana`, so a
+    /// future kana-shaped vocabulary card correctly survives this purge but
+    /// can still keep the gate locked; pre-existing looseness, unrelated to
+    /// this purge's safety). See the 2nd-pass pedagogical review, item 35.
     @discardableResult
     public func purgeUnstartedCards(notIn keepGroups: Set<KanaGroup>) async -> Int {
         let orphaned = await allKanaCards().filter { card in
-            guard card.fsrsState.reps == 0, let group = card.kanaGroup else { return false }
+            guard card.fsrsState.reps == 0, let group = card.purgeableKanaGroup else { return false }
             return !keepGroups.contains(group)
         }
         for card in orphaned {

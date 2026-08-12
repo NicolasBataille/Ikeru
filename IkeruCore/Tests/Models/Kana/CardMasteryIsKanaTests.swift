@@ -89,12 +89,12 @@ struct CardMasteryIsKanaTests {
         #expect(!fixtureCard(front: vu).isKana)
     }
 
-    private func fixtureCard(front: String) -> CardDTO {
+    private func fixtureCard(front: String, back: String = "x", type: CardType = .vocabulary) -> CardDTO {
         CardDTO(
             id: UUID(),
             front: front,
-            back: "x",
-            type: .vocabulary,
+            back: back,
+            type: type,
             fsrsState: FSRSState(
                 difficulty: 5,
                 stability: 1,
@@ -108,5 +108,78 @@ struct CardMasteryIsKanaTests {
             lapseCount: 0,
             leechFlag: false
         )
+    }
+}
+
+/// Direct coverage for `CardDTO.purgeableKanaGroup`, the stricter
+/// purge-eligibility check `KanaCardRepository.purgeUnstartedCards` uses
+/// instead of the looser `kanaGroup` (front-catalog-only). See the doc
+/// comment on `purgeableKanaGroup` in `Card+Mastery.swift` for the full
+/// rationale: neither `front`-catalog membership alone, nor `CardType`
+/// alone, can tell a real kana card apart from a same-shaped vocabulary
+/// card, because every known kana-seeding site tags its cards
+/// `.vocabulary` — the exact type a personal-vocabulary card would use.
+/// Only an exact `back == romaji` match closes that gap.
+@Suite("CardDTO.purgeableKanaGroup")
+struct CardMasteryPurgeableKanaGroupTests {
+
+    private func fixtureCard(front: String, back: String, type: CardType = .vocabulary) -> CardDTO {
+        CardDTO(
+            id: UUID(),
+            front: front,
+            back: back,
+            type: type,
+            fsrsState: FSRSState(
+                difficulty: 5,
+                stability: 1,
+                reps: 0,
+                lapses: 0,
+                lastReview: nil
+            ),
+            easeFactor: 2.5,
+            interval: 1,
+            dueDate: Date(timeIntervalSince1970: 1_700_000_000),
+            lapseCount: 0,
+            leechFlag: false
+        )
+    }
+
+    @Test("A real kana card — .vocabulary type, back == catalog romaji — resolves to its group")
+    func realKanaCardResolves() {
+        let card = fixtureCard(front: "え", back: "e")
+        #expect(card.purgeableKanaGroup == .hVowels)
+    }
+
+    @Test(
+        "A .vocabulary card whose front is a kana-shaped real word (え/\"image\") but whose back is a meaning, not romaji, does NOT resolve — this is the exact collision KanaCardRepository.purgeUnstartedCards must not delete"
+    )
+    func kanaShapedVocabWordDoesNotResolve() {
+        // え is a real Japanese word ("picture/image"). A future
+        // personal-vocabulary card for it would be `.vocabulary`-typed with
+        // front "え" — identical to the real kana card on both `front` and
+        // `type` — but its `back` would carry the meaning, not the romaji
+        // "e". `kanaGroup` (front-catalog-only) resolves this to `.hVowels`
+        // and would make it purge-eligible; `purgeableKanaGroup` must not.
+        let card = fixtureCard(front: "え", back: "image")
+        #expect(card.kanaGroup == .hVowels, "sanity: the looser front-only check DOES resolve this front")
+        #expect(card.purgeableKanaGroup == nil)
+    }
+
+    @Test("A card with the correct front and back but a non-.vocabulary type does not resolve")
+    func nonVocabularyTypeDoesNotResolve() {
+        let card = fixtureCard(front: "え", back: "e", type: .kanji)
+        #expect(card.purgeableKanaGroup == nil)
+    }
+
+    @Test("A card whose front is not in the kana catalog never resolves, regardless of back or type")
+    func nonKanaFrontDoesNotResolve() {
+        #expect(fixtureCard(front: "犬", back: "dog").purgeableKanaGroup == nil)
+    }
+
+    @Test("Back must match romaji exactly — a near-miss (wrong case, extra whitespace) does not resolve")
+    func backMustMatchExactly() {
+        #expect(fixtureCard(front: "え", back: "E").purgeableKanaGroup == nil)
+        #expect(fixtureCard(front: "え", back: " e").purgeableKanaGroup == nil)
+        #expect(fixtureCard(front: "え", back: "e ").purgeableKanaGroup == nil)
     }
 }

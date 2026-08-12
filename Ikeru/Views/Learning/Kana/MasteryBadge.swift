@@ -13,7 +13,10 @@ struct MasteryBadge: View {
                 .font(.system(size: 12, design: .serif))
                 .foregroundStyle(Color.ikeruPrimaryAccent)
             if showLabel {
-                Text(level.label)
+                // `level.label` is a catalog KEY (see MasteryLevel.label doc
+                // comment), not display text — wrap it so the lookup runs
+                // against the app's own localized bundle.
+                Text(LocalizedStringKey(level.label))
                     .font(.ikeruMicro)
                     .ikeruTracking(.micro)
                     .foregroundStyle(Color.ikeruTextSecondary)

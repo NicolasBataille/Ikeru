@@ -419,11 +419,16 @@ struct SettingsView: View {
     // MARK: - Section: 表示 / Display
 
     @Environment(\.displayModeRepository) private var displayModeRepo
-    /// Reactive mirror of the repository's mode so TatamiEligibilityRow
-    /// hides/shows immediately when DisplayModeToggleRow flips the mode
-    /// (a one-time `repo.current()` snapshot went stale until re-render).
-    @State private var currentDisplayMode: DisplayMode?
 
+    /// `displayMode` (declared above, `@Environment(\.displayMode)`) is the
+    /// single source of truth here — it is kept live by `MainTabView`, which
+    /// re-reads the repository both on an explicit toggle (`repo.publisher`)
+    /// *and* on a profile switch/create/delete (`.displayModeDidChange`,
+    /// posted by `ProfileViewModel`). A previous revision mirrored
+    /// `repo.publisher` into a local `@State` here instead; that mirror only
+    /// caught the toggle case and went stale across a profile change inside
+    /// this very screen (the Tatami-leak bug) — removed in favour of the
+    /// environment value, which both call sites keep fresh.
     private var displaySection: some View {
         section(label: ("表示", "Display"), mon: .kikkou) {
             if let repo = displayModeRepo {
@@ -431,10 +436,8 @@ struct SettingsView: View {
                 TatamiEligibilityRow(
                     modelContainer: modelContext.container,
                     activeProfileID: { ActiveProfileResolver.activeProfileID() },
-                    displayMode: currentDisplayMode ?? repo.current()
+                    displayMode: displayMode
                 )
-                .onAppear { currentDisplayMode = repo.current() }
-                .onReceive(repo.publisher) { currentDisplayMode = $0 }
             }
         }
     }
@@ -565,54 +568,75 @@ struct SettingsView: View {
         }
     }
 
+    /// One row per profile in the switcher list. Tapping the name/label area
+    /// switches to that profile (no-op when it's already current); the trash
+    /// icon opens `DeleteProfileSheet` for that profile — including the
+    /// *active* one, which `ProfileViewModel.deleteProfile` handles by
+    /// switching to whichever profile remains.
+    ///
+    /// This used to be a single row-wide `Button` with `.swipeActions` for
+    /// delete. `.swipeActions` only does anything inside a `List` row — this
+    /// screen builds its rows in a plain `VStack` inside a `ScrollView`, so
+    /// the modifier was silently inert: no swipe gesture was ever attached,
+    /// which is exactly the "no way to delete a profile" gap the review
+    /// flagged. Replaced with an always-visible, always-functional icon
+    /// button (two sibling tap targets, not nested — nesting a `Button`
+    /// inside a `Button`'s label doesn't work in SwiftUI).
     @ViewBuilder
     private func profileSwitchRow(_ profile: UserProfile) -> some View {
         let isCurrent = profile.id == profileViewModel?.currentProfile?.id
-        Button {
-            withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) {
-                profileViewModel?.switchProfile(to: profile)
-            }
-        } label: {
-            HStack(spacing: 16) {
-                Text("︙")
-                    .ikeruScaledFont(13, design: .serif, relativeTo: .caption)
-                    .foregroundStyle(TatamiTokens.paperGhost)
-                Text(profile.displayName)
-                    .ikeruScaledFont(13, relativeTo: .caption)
-                    .foregroundStyle(Color.ikeruTextPrimary)
-                Spacer()
-                if isCurrent {
-                    Text("Active", comment: "Active profile indicator")
+        HStack(spacing: 12) {
+            Button {
+                guard !isCurrent else { return }
+                withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) {
+                    profileViewModel?.switchProfile(to: profile)
+                }
+            } label: {
+                HStack(spacing: 16) {
+                    Text("︙")
                         .ikeruScaledFont(13, design: .serif, relativeTo: .caption)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.7)
-                        .foregroundStyle(Color.ikeruPrimaryAccent)
-                } else {
-                    Text("Switch", comment: "Switch profile action")
-                        .ikeruScaledFont(13, design: .serif, relativeTo: .caption)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.7)
-                        .foregroundStyle(Color.ikeruPrimaryAccent)
-                    Text("›")
-                        .font(.system(size: 14))
-                        .foregroundStyle(TatamiTokens.goldDim)
+                        .foregroundStyle(TatamiTokens.paperGhost)
+                    Text(profile.displayName)
+                        .ikeruScaledFont(13, relativeTo: .caption)
+                        .foregroundStyle(Color.ikeruTextPrimary)
+                    Spacer()
+                    if isCurrent {
+                        Text("Active", comment: "Active profile indicator")
+                            .ikeruScaledFont(13, design: .serif, relativeTo: .caption)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
+                            .foregroundStyle(Color.ikeruPrimaryAccent)
+                    } else {
+                        Text("Switch", comment: "Switch profile action")
+                            .ikeruScaledFont(13, design: .serif, relativeTo: .caption)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
+                            .foregroundStyle(Color.ikeruPrimaryAccent)
+                        Text("›")
+                            .font(.system(size: 14))
+                            .foregroundStyle(TatamiTokens.goldDim)
+                    }
                 }
             }
-            .padding(.horizontal, 16).padding(.vertical, 14)
-            .overlay(alignment: .bottom) {
-                Rectangle().fill(TatamiTokens.goldDim.opacity(0.2))
-                    .frame(height: 1).padding(.horizontal, 16)
+            .buttonStyle(.plain)
+            .disabled(isCurrent)
+
+            Button {
+                profileToDelete = profile
+            } label: {
+                Image(systemName: "trash")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(Color.ikeruDanger)
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
+            .accessibilityLabel(Text("Delete profile", comment: "Accessibility label for the per-profile delete icon button in Settings"))
         }
-        .buttonStyle(.plain)
-        .swipeActions(edge: .trailing) {
-            if !isCurrent {
-                Button(role: .destructive) {
-                    profileToDelete = profile
-                } label: {
-                    Label("Delete", systemImage: "trash")
-                }
-            }
+        .padding(.horizontal, 16).padding(.vertical, 14)
+        .overlay(alignment: .bottom) {
+            Rectangle().fill(TatamiTokens.goldDim.opacity(0.2))
+                .frame(height: 1).padding(.horizontal, 16)
         }
     }
 

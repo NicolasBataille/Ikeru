@@ -68,6 +68,12 @@ struct IkeruWidgetEntry: TimelineEntry {
 struct IkeruWidgetEntryView: View {
     let entry: IkeruWidgetEntry
 
+    /// The "%lld due" / "Study time!" / "Lv. %lld" text below resolve
+    /// against Localizable.xcstrings exactly like the rest of the app, but
+    /// the IkeruWidget target currently has NO Resources build phase at all
+    /// (see CLAUDE.md and JOURNAL.md), so the catalog isn't embedded in the
+    /// extension yet and this stays English-only until that pbxproj
+    /// membership is added.
     var body: some View {
         VStack {
             Image(systemName: "book.fill")

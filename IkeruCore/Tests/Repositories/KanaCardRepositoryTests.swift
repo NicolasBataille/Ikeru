@@ -237,6 +237,53 @@ struct KanaCardRepositoryTests {
         #expect(dueTodayA == dueTodayB)
     }
 
+    // MARK: - Fresh-user purge safety invariant
+
+    /// Pins the Core-visible half of the "fresh user" purge-safety invariant
+    /// task #42 calls out: a brand-new install seeds `ContentSeedService.
+    /// beginnerHiragana` (5 vowels) before the learner has ever opened the
+    /// kana selector, and `KanaPoolViewModel`'s default `selectedGroups`
+    /// (`[.hVowels]`, app target — see
+    /// `Ikeru/ViewModels/Learning/KanaPoolViewModel.swift`) must cover those
+    /// 5 characters, or the very first `loadMasteries()` call would purge a
+    /// new user's amorçage cards as "outside the selection" before they've
+    /// touched anything.
+    ///
+    /// This test can only pin the `ContentSeedService` side of that
+    /// relationship — `beginnerHiragana`'s characters are exactly
+    /// `KanaGroup.hVowels`'s characters — because it lives in `IkeruCore`.
+    /// The other half (`KanaPoolViewModel`'s default `selectedGroups`
+    /// literally being `[.hVowels]`) lives in the `Ikeru` app target, is out
+    /// of this task's perimeter, and — per the app-target test gotchas
+    /// (`IkeruTests` needs explicit pbxproj registration) — isn't something
+    /// this pass can add a test for either. Verified by reading that file
+    /// instead: `self.selectedGroups = Self.loadPersistedSelection() ??
+    /// [.hVowels]` (line 91 at the time of writing). If that literal or
+    /// `beginnerHiragana`'s character set ever drifts from `.hVowels`, this
+    /// test catches the `ContentSeedService` side, but a drift on the
+    /// `KanaPoolViewModel` side would go undetected by IkeruCore's test
+    /// suite.
+    @Test("Fresh-user safety: beginnerHiragana's characters are exactly the .hVowels group")
+    func beginnerHiraganaMatchesDefaultSelectedGroup() {
+        let beginnerCharacters = Set(ContentSeedService.beginnerHiragana.map(\.character))
+        let hVowelsCharacters = Set(KanaGroup.hVowels.characters.map(\.character))
+        #expect(beginnerCharacters == hVowelsCharacters)
+
+        // Romaji must agree too — ContentSeedService writes `back` as
+        // `kana.romanization`, and `CardDTO.purgeableKanaGroup` requires an
+        // exact match against the catalog's romaji. If these ever diverged,
+        // ContentSeedService-seeded cards would stop resolving via
+        // `purgeableKanaGroup` (a safe direction — they'd become
+        // unpurgeable rather than wrongly purged — but it would silently
+        // defeat item 35's orphan cleanup for beginner cards).
+        let beginnerRomaji = Dictionary(
+            uniqueKeysWithValues: ContentSeedService.beginnerHiragana.map { ($0.character, $0.romanization) }
+        )
+        for character in KanaGroup.hVowels.characters {
+            #expect(beginnerRomaji[character.character] == character.romaji)
+        }
+    }
+
     // MARK: - purgeUnstartedCards(notIn:)
 
     @Test("purgeUnstartedCards removes reps == 0 cards outside the kept groups")
@@ -299,5 +346,46 @@ struct KanaCardRepositoryTests {
 
         let remainingAll = await cardRepo.allCards()
         #expect(remainingAll.contains { $0.front == "犬" })
+    }
+
+    @Test(
+        "purgeUnstartedCards never deletes a .vocabulary card whose front happens to be a kana-shaped real word — a genuine kana card at the same front is still purged"
+    )
+    func purgeDiscriminatesKanaShapedVocabWordFromRealKanaCard() async throws {
+        // え is both a KanaGroup base vowel AND a real Japanese word
+        // ("picture/image"). Before this fix, KanaCardRepository.
+        // purgeUnstartedCards resolved purge-eligibility via `kanaGroup`,
+        // which matches on `front` alone — so this vocabulary card (type
+        // .vocabulary, front "え", back the meaning "image", never
+        // reviewed) would misclassify as an orphaned kana card and be
+        // deleted the moment .hVowels is not in `keepGroups`. That is
+        // exactly the collision task #42 flags: this test fails against
+        // that implementation (it deleted the vocab card) and must pass
+        // against the fix, which additionally requires an exact
+        // `back == romaji` match (`CardDTO.purgeableKanaGroup`) before a
+        // card is purge-eligible.
+        let (repo, cardRepo) = try await makeRepo()
+        let vocabCard = await cardRepo.createCard(front: "え", back: "image", type: .vocabulary, dueDate: Date())
+
+        // Keep NO groups — the strongest possible pressure to purge: if the
+        // vocab word's front-catalog match alone were enough, it would be
+        // removed here.
+        let removed = await repo.purgeUnstartedCards(notIn: [])
+        #expect(removed == 0)
+
+        let remaining = await cardRepo.allCards()
+        #expect(remaining.contains { $0.id == vocabCard.id }, "the kana-shaped vocabulary card must survive")
+
+        // Positive control: a genuine kana card at the SAME front, seeded
+        // the normal way (back == romaji), is still purged when its group
+        // is dropped — proving the fix didn't just make everything
+        // unpurgeable. Uses a fresh repository so the two "え" fronts never
+        // collide as duplicates within one store.
+        let (controlRepo, controlCardRepo) = try await makeRepo()
+        await controlRepo.seed(groups: [.hVowels])
+        let controlRemoved = await controlRepo.purgeUnstartedCards(notIn: [])
+        #expect(controlRemoved == 5)
+        let controlRemaining = await controlCardRepo.allCards()
+        #expect(!controlRemaining.contains { $0.front == "え" })
     }
 }

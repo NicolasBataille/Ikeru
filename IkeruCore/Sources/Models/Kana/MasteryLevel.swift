@@ -24,13 +24,21 @@ public enum MasteryLevel: Int, Sendable, CaseIterable, Codable {
     @available(*, deprecated, renamed: "glyph", message: "Tatami direction replaces plant emojis with kanji glyphs.")
     public var emoji: String { glyph }
 
+    /// Localization-catalog **key** for the mastery level, not display text.
+    ///
+    /// `String(localized:)` inside IkeruCore resolves the wrong bundle and
+    /// ignores the app's `AppLocale` override (see CLAUDE.md ›
+    /// Localisation), so this deliberately does not return translated text.
+    /// Callers in the app layer must render it as
+    /// `Text(LocalizedStringKey(level.label))` so the lookup happens against
+    /// the app's `Localizable.xcstrings` with the correct locale.
     public var label: String {
         switch self {
-        case .new: return "Nouveau"
-        case .learning: return "En apprentissage"
-        case .familiar: return "Familier"
-        case .mastered: return "Maîtrisé"
-        case .anchored: return "Ancré"
+        case .new: return "Mastery.New"
+        case .learning: return "Mastery.Learning"
+        case .familiar: return "Mastery.Familiar"
+        case .mastered: return "Mastery.Mastered"
+        case .anchored: return "Mastery.Anchored"
         }
     }
 

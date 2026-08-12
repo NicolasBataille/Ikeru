@@ -48,4 +48,43 @@ extension CardDTO {
         }
         return nil
     }
+
+    /// The `KanaGroup` this card resolves to for **purge eligibility** —
+    /// deliberately stricter than `kanaGroup`, and the one that
+    /// `KanaCardRepository.purgeUnstartedCards` must use.
+    ///
+    /// `kanaGroup` (and the `isKana` catalog check it's built on) matches on
+    /// `front` alone. That's exactly what a card for a real word that
+    /// happens to be spelled with a single kana would also match: え
+    /// ("image"), き ("tree"), て ("hand"), ち ("blood") are all genuine
+    /// Japanese words, not just kana. `CardType` alone can't break that tie
+    /// either — every kana-seeding site in this codebase
+    /// (`KanaCardRepository.seedIfNeeded`, `KanaCardRepository.seed(groups:)`,
+    /// `ContentSeedService.seedBeginnerKanaIfNeeded`) tags its cards
+    /// `.vocabulary`, the same type a personal-vocabulary card would carry.
+    /// There is no dedicated `.kana` `CardType` case today.
+    ///
+    /// The one structural fact a real kana card has that a same-shaped
+    /// vocabulary card doesn't: every seed site above writes `back` as the
+    /// character's **romaji**, never a translation. So purge eligibility
+    /// additionally requires `back` to match the catalog's romaji for that
+    /// `front` exactly. Any mismatch — wrong type, wrong back, front absent
+    /// from the catalog — resolves to `nil`, so a doubtful card is never
+    /// purged by construction rather than by a caller remembering to guard
+    /// it.
+    ///
+    /// Kept separate from `kanaGroup` on purpose: other call sites
+    /// (`cardsForGroups`, `dueCardsForGroups`, mastery aggregation, and —
+    /// per `purgeUnstartedCards`'s own doc comment — the
+    /// `DefaultSessionPlanner` foundation-unlock gate) rely on `kanaGroup`
+    /// matching by `front` alone, and tightening it here would risk those
+    /// paths silently dropping legitimate kana cards.
+    public var purgeableKanaGroup: KanaGroup? {
+        guard type == .vocabulary else { return nil }
+        for group in KanaGroup.allCases {
+            guard let match = group.characters.first(where: { $0.character == front }) else { continue }
+            return back == match.romaji ? group : nil
+        }
+        return nil
+    }
 }

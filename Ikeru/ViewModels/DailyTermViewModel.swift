@@ -86,15 +86,34 @@ public final class DailyTermViewModel {
             return
         }
 
+        let normalisedToday = Calendar.current.startOfDay(for: now)
         let dictionaryWords = Set((await vocabularyRepository.allEntries()).map(\.word))
-        let learnerLevel = await currentLearnerLevel(now: now)
+
+        // `service.termForDay` only consults `learnerLevel` the very first
+        // time a day's row is generated (see its doc comment) — once
+        // today's row exists, the value is ignored. `currentLearnerLevel`
+        // runs a full `ProgressService.loadDashboardData()` (all cards +
+        // six months of review logs), the same load `HomeViewModel`
+        // already performs — and `load()` is called on every Home
+        // appearance (`HomeView`'s `.task`), not just once a day. Skip
+        // that computation whenever today's row is already persisted —
+        // the common case, true every appearance except the first of a
+        // new calendar day — so Home's most-visited screen doesn't pay
+        // for a redundant dashboard load on every open.
+        let learnerLevel: JLPTLevel?
+        if await dailyTermRepository.term(on: normalisedToday) != nil {
+            learnerLevel = nil
+        } else {
+            learnerLevel = await currentLearnerLevel(now: now)
+        }
+
         let todayDTO = await service.termForDay(
             now,
             existingDictionaryWords: dictionaryWords,
             learnerLevel: learnerLevel
         )
         today = todayDTO
-        currentDay = Calendar.current.startOfDay(for: now)
+        currentDay = normalisedToday
 
         yesterday = await service.previousDayTerm(before: now)
         recent = await service.recentTerms(before: now, limit: 30)
@@ -110,9 +129,11 @@ public final class DailyTermViewModel {
     /// (`ProgressService.loadDashboardData().jlptEstimate`), so the daily
     /// term selection (`DailyTermService.termForDay(learnerLevel:)`) can
     /// filter out words clearly above the learner's reach. Only consulted
-    /// on a day's *first* generation — see `termForDay`'s doc comment —
-    /// so this recomputes the estimate on every `load()` call but only
-    /// ever influences selection once per calendar day.
+    /// on a day's *first* generation — see `termForDay`'s doc comment — and
+    /// `load()` only calls this once that first generation is actually
+    /// detected (no persisted row for today yet), so the expensive
+    /// dashboard load underneath happens once per calendar day, not once
+    /// per `load()` call.
     private func currentLearnerLevel(now: Date) async -> JLPTLevel {
         let estimate = await progressService.loadDashboardData(now: now).jlptEstimate
         return JLPTLevel(rawValue: estimate.level.lowercased()) ?? .n5
