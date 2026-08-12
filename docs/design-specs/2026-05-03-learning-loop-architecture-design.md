@@ -207,12 +207,14 @@ The "skill-balance booster" and "variety tile" segments draw from level-appropri
 
 | JLPT estimate | Variety pool |
 |---|---|
-| **N5** | listening-subtitled, fill-in-blank |
+| **N5** | listening-subtitled, fill-in-blank, sakura-conversation |
 | **N4** | + grammar-exercise, sentence-construction |
 | **N3** | + reading-passage, writing-practice, listening-unsubtitled |
-| **N2 / N1** | + speaking-practice, sakura-conversation, immersive-listening |
+| **N2 / N1** | + speaking-practice, immersive-listening |
 
-The pool intersects with `unlockedTypes` — if the learner is rated N3 but hasn't unlocked `speakingPractice`, it stays out of the pool.
+`sakura-conversation` doesn't stack on a hardcoded rung like the rest of this table — `VarietyPoolResolver` reads `DefaultExerciseUnlockService.sakuraConversationMinJLPT` (currently N5, the floor) directly, matching the "Earned via threshold" table above, so it's listed at N5 rather than N2/N1 here.
+
+The pool intersects with `unlockedTypes` — if the learner is rated N3 but hasn't unlocked `speakingPractice`, it stays out of the pool. Note this table describes `VarietyPoolResolver`'s *raw* pool: `DefaultSessionPlanner.composeHome` additionally subtracts `untaughtContentTypes` (which still lists `sakura-conversation`, alongside `listening-subtitled`/`listening-unsubtitled`/`speaking-practice`/`vocabulary-study`/`sentence-construction`) from both the skill-balance booster and variety-tile segments, so those five types don't actually reach HOME sessions yet regardless of level or unlock state — see `DefaultSessionPlanner.untaughtContentTypes`.
 
 ### Rest day
 

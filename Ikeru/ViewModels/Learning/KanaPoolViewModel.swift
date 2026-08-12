@@ -100,6 +100,17 @@ public final class KanaPoolViewModel {
         // (which later trap `mastery(for:)`'s unique-keyed Dictionary).
         if case .loading = loadingState { return }
         loadingState = .loading
+        // Purge kana cards that were already created for a group no longer in
+        // the current selection but never studied (reps == 0). Most
+        // concretely: a build predating `migrateLegacyExtendedSelectionIfNeeded()`
+        // may have let the learner select (and therefore seed) a dakuten/yōon
+        // group; that migration strips such groups from the persisted
+        // selection, but on its own leaves their cards behind as an invisible,
+        // non-deselectable pile — still counted due, still blocking the
+        // foundation session mode. Safe to run on every load: it never
+        // touches a card with reps > 0, and is a no-op once the store is
+        // clean (see `KanaCardRepository.purgeUnstartedCards`).
+        await repository.purgeUnstartedCards(notIn: selectedGroups)
         // Seed ONLY the currently-selected groups, not all 92 kana. Opening the
         // grid no longer materialises the entire katakana set as immediately-due
         // cards — that was the source of katakana leaking into Home Practice.

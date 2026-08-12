@@ -78,8 +78,13 @@ public actor KanaCardRepository {
     public func seed(groups: Set<KanaGroup>) async {
         guard !groups.isEmpty else { return }
         let existingFronts = Set(await allKanaCards().map { $0.front })
+        // `groups` is a Set, so its iteration order is process-hash-seeded and
+        // arbitrary — flatMap-ing it directly would make "which kana get
+        // created (and staggered to which day) first" vary from launch to
+        // launch. Route through `curriculumSorted` so creation order is
+        // deterministic and pedagogically ordered instead.
         let wanted = groups.flatMap { $0.characters }
-        let toCreate = wanted.filter { !existingFronts.contains($0.character) }
+        let toCreate = Self.curriculumSorted(wanted.filter { !existingFronts.contains($0.character) })
         guard !toCreate.isEmpty else { return }
 
         let dueDates = Self.staggeredDueDates(count: toCreate.count, from: Date())
@@ -93,6 +98,90 @@ public actor KanaCardRepository {
         }
 
         Logger.srs.info("KanaCardRepository seeded \(toCreate.count) kana cards for \(groups.count) chosen groups")
+    }
+
+    /// Deterministic curriculum index over every catalogued kana character
+    /// (base, dakuten, yōon; both scripts): base section first, then
+    /// dakuten, then yōon — and within each tier, `KanaGroup.allCases`'
+    /// declared order (already hiragana-before-katakana, gojūon order — see
+    /// `KanaGroup.allBaseCharacters`). Built once from an explicit
+    /// (section-priority, original-index) sort key rather than relying on
+    /// `Array.sorted`'s incidental stability, so the result is reproducible
+    /// regardless of the underlying sort algorithm.
+    private static let curriculumIndex: [String: Int] = {
+        let sectionPriority: [KanaSection: Int] = [.base: 0, .dakuten: 1, .combined: 2]
+        let orderedGroups = KanaGroup.allCases
+            .enumerated()
+            .sorted { lhs, rhs in
+                let lp = sectionPriority[lhs.element.section] ?? .max
+                let rp = sectionPriority[rhs.element.section] ?? .max
+                if lp != rp { return lp < rp }
+                return lhs.offset < rhs.offset
+            }
+            .map(\.element)
+
+        var index: [String: Int] = [:]
+        for character in orderedGroups.flatMap(\.characters) {
+            index[character.character] = index.count
+        }
+        return index
+    }()
+
+    /// Sorts `characters` into curriculum order (see `curriculumIndex`),
+    /// regardless of their input order. Pure and deterministic so it's
+    /// trivially testable without a repository, and so two calls with the
+    /// same input always produce the same output.
+    static func curriculumSorted(_ characters: [KanaCharacter]) -> [KanaCharacter] {
+        characters.sorted { lhs, rhs in
+            let li = curriculumIndex[lhs.character] ?? Int.max
+            let ri = curriculumIndex[rhs.character] ?? Int.max
+            if li != ri { return li < ri }
+            // Every catalogued character has a curriculumIndex entry, so this
+            // tiebreak only fires for characters absent from the catalog —
+            // kept for a fully deterministic total order regardless.
+            return lhs.character < rhs.character
+        }
+    }
+
+    // MARK: - Purging orphaned cards
+
+    /// Deletes kana cards that were never studied (`fsrsState.reps == 0`)
+    /// whose group is not among `keepGroups`. Safety guarantees the caller
+    /// can rely on:
+    ///  - a card with `reps > 0` is NEVER deleted, no matter its group — the
+    ///    learner has invested review effort in it, and removing it would be
+    ///    a silent progress loss;
+    ///  - only cards that resolve to a `KanaGroup` (`isKana`, essentially)
+    ///    are considered — other card types are untouched;
+    ///  - idempotent: a card already purged (or one that was never created)
+    ///    is simply absent from `allKanaCards()`, so calling this repeatedly
+    ///    — e.g. once per `loadMasteries()` — is a safe no-op once the store
+    ///    is clean.
+    ///
+    /// Exists to clean up cards seeded for a group the learner has since
+    /// deselected. Concretely: `KanaPoolViewModel`'s legacy-extended-groups
+    /// migration strips non-base groups from a stale persisted selection,
+    /// but any cards those groups had already seeded on a previous build
+    /// stay behind in the store — invisible in the selector (their group is
+    /// no longer offered), still counted as due by `CardRepository.dueCards`,
+    /// and still keeping the foundation session mode locked in
+    /// `DefaultSessionPlanner` (which only unlocks once every `reps == 0 &&
+    /// isKana` card is gone). See the 2nd-pass pedagogical review, item 35.
+    @discardableResult
+    public func purgeUnstartedCards(notIn keepGroups: Set<KanaGroup>) async -> Int {
+        let orphaned = await allKanaCards().filter { card in
+            guard card.fsrsState.reps == 0, let group = card.kanaGroup else { return false }
+            return !keepGroups.contains(group)
+        }
+        for card in orphaned {
+            await cardRepository.deleteCard(by: card.id)
+        }
+        if !orphaned.isEmpty {
+            Logger.srs.info(
+                "KanaCardRepository purged \(orphaned.count) unstarted kana card(s) outside the current selection"
+            )
+        }
+        return orphaned.count
     }
 
     /// Cards created within a single `seed` batch beyond this count are pushed

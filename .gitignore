@@ -66,3 +66,7 @@ docs/design-specs/qa-shots/
 
 # Personal Obsidian wiki vault (local notes, not source)
 wiki-vault/
+
+# Python bytecode (scripts/)
+__pycache__/
+*.pyc

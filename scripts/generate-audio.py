@@ -43,7 +43,7 @@ KATAKANA = "アイウエオカキクケコサシスセソタチツテトナニ�
 
 # Dakuten (voiced) kana (50): single code points, safe to iterate char-by-char
 # like the base sets above.
-HIRAGANA_DAKUTEN = "がぎぐげございずぜぞだぢづでどばびぶべぼぱぴぷぺぽ"
+HIRAGANA_DAKUTEN = "がぎぐげござじずぜぞだぢづでどばびぶべぼぱぴぷぺぽ"
 KATAKANA_DAKUTEN = "ガギグゲゴザジズゼゾダヂヅデドバビブベボパピプペポ"
 
 # Yōon (combined digraphs, e.g. きゃ) (66): each entry is TWO code points, so
@@ -64,6 +64,49 @@ KATAKANA_YOON = [
 
 def key_for(text):
     return hashlib.sha256(text.encode("utf-8")).hexdigest()[:16]
+
+KANA_GROUP_SWIFT = "IkeruCore/Sources/Models/Kana/KanaGroup.swift"
+
+def script_kana_set():
+    """Every kana this script knows about (base + dakuten single code points,
+    plus yōon digraphs kept as whole strings)."""
+    chars = set(HIRAGANA) | set(KATAKANA) | set(HIRAGANA_DAKUTEN) | set(KATAKANA_DAKUTEN)
+    chars |= set(HIRAGANA_YOON) | set(KATAKANA_YOON)
+    return chars
+
+def swift_kana_set():
+    """Best-effort regex parse of KanaGroup.swift's characterTable — matches
+    every `character: "X"` literal. Not a Swift parser, just enough to catch
+    a drifted or mistyped kana list before it silently ships broken."""
+    try:
+        src = open(KANA_GROUP_SWIFT, encoding="utf-8").read()
+    except FileNotFoundError:
+        print(f"WARN: {KANA_GROUP_SWIFT} not found — skipping kana cross-check", flush=True)
+        return None
+    return set(re.findall(r'character:\s*"([^"]+)"', src))
+
+def verify_kana_against_catalog():
+    """Cross-check this script's kana lists against KanaGroup.characterTable,
+    the source of truth. This is exactly the guard that would have caught the
+    い/じ typo in HIRAGANA_DAKUTEN: the script is idempotent and silent, so a
+    missing kana never fails a run — it just never gets a clip, forever.
+    Fails loudly (non-zero exit) on any divergence instead of generating a
+    partial, silently-broken audio set."""
+    swift_set = swift_kana_set()
+    if swift_set is None:
+        return  # can't verify without the Swift source; don't block on it
+    script_set = script_kana_set()
+    missing_from_script = swift_set - script_set
+    extra_in_script = script_set - swift_set
+    if missing_from_script or extra_in_script:
+        if missing_from_script:
+            print(f"ERROR: kana in {KANA_GROUP_SWIFT} but missing from this script "
+                  f"(would never get a bundled clip): {sorted(missing_from_script)}", flush=True)
+        if extra_in_script:
+            print(f"ERROR: kana in this script but not in {KANA_GROUP_SWIFT} "
+                  f"(dead/stale entry): {sorted(extra_in_script)}", flush=True)
+        raise SystemExit(1)
+    print(f"OK: kana cross-check passed ({len(swift_set)} kana match {KANA_GROUP_SWIFT})", flush=True)
 
 DAILY_TERM_CATALOG = "IkeruCore/Sources/Models/DailyTerm/DailyTermCatalog.swift"
 
@@ -109,6 +152,7 @@ def synth(text):
         return r.read()  # WAV bytes
 
 def main():
+    verify_kana_against_catalog()
     texts = collect_texts()
     print(f"to generate: {len(texts)} unique texts (speaker={SPEAKER})", flush=True)
     done = skipped = failed = 0

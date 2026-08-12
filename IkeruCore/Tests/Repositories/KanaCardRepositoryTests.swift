@@ -162,4 +162,142 @@ struct KanaCardRepositoryTests {
         #expect(distinctDays.count == 3)
         #expect(dates.filter { $0 == now }.count == 50)
     }
+
+    // MARK: - seed(groups:) deterministic ordering
+
+    @Test("curriculumSorted orders base before dakuten before yōon")
+    func curriculumSortedOrdersBySectionTier() {
+        // Deliberately fed out of curriculum order (a yōon character first,
+        // then a dakuten one, then a base one) to prove the sort — not the
+        // input order — decides the result.
+        let hJa = KanaGroup.hJ.characters.first { $0.character == "じゃ" }!
+        let hGa = KanaGroup.hG.characters.first { $0.character == "が" }!
+        let hA = KanaGroup.hVowels.characters.first { $0.character == "あ" }!
+
+        let sorted = KanaCardRepository.curriculumSorted([hJa, hGa, hA])
+        #expect(sorted.map(\.character) == ["あ", "が", "じゃ"])
+    }
+
+    @Test("curriculumSorted keeps hiragana before katakana within a tier")
+    func curriculumSortedKeepsHiraganaBeforeKatakanaWithinTier() {
+        let kA = KanaGroup.kVowels.characters.first { $0.character == "ア" }!
+        let hA = KanaGroup.hVowels.characters.first { $0.character == "あ" }!
+
+        let sorted = KanaCardRepository.curriculumSorted([kA, hA])
+        #expect(sorted.map(\.character) == ["あ", "ア"])
+    }
+
+    @Test("curriculumSorted is deterministic across repeated calls on a shuffled input")
+    func curriculumSortedIsDeterministic() {
+        let all = KanaGroup.allCases.flatMap { $0.characters }
+        let shuffled = all.shuffled()
+
+        let first = KanaCardRepository.curriculumSorted(shuffled).map(\.character)
+        let second = KanaCardRepository.curriculumSorted(shuffled.shuffled()).map(\.character)
+
+        #expect(first == second)
+    }
+
+    @Test("seed(groups:) staggering follows curriculum order deterministically across two repositories")
+    func seedStaggeringOrderIsDeterministic() async throws {
+        // Seed with EVERY group (208 characters, well above the 50/day
+        // stagger cap) so which characters land due "today" vs. later
+        // directly exposes creation order. Two independent repositories
+        // seeded with the SAME Set<KanaGroup> — whose iteration order is
+        // process-hash-seeded and therefore not under test control — must
+        // still land the same characters in the "due today" batch.
+        let allGroups = Set(KanaGroup.allCases)
+        let allCharacters = allGroups.flatMap { $0.characters }
+        let firstFifty = KanaCardRepository.curriculumSorted(allCharacters).prefix(50)
+        let expectedFirstBatch = Set(firstFifty.map(\.character))
+        // Sanity: the expected first batch is entirely base-section kana. 92
+        // base characters (46 hiragana + 46 katakana) is MORE than 50, so
+        // the batch never reaches dakuten — it's the first 50 of the 92,
+        // i.e. all 46 hiragana base plus the first 4 katakana base (ア..エ).
+        #expect(expectedFirstBatch.count == 50)
+        #expect(firstFifty.allSatisfy { $0.group.section == .base })
+        #expect(expectedFirstBatch.contains("あ"))
+        #expect(expectedFirstBatch.contains("ア"))
+        #expect(!expectedFirstBatch.contains("が"))
+
+        let (repoA, _) = try await makeRepo()
+        await repoA.seed(groups: allGroups)
+        let dueTodayA = Set(
+            (await repoA.dueCardsForGroups(allGroups, now: Date())).map(\.front)
+        )
+
+        let (repoB, _) = try await makeRepo()
+        await repoB.seed(groups: allGroups)
+        let dueTodayB = Set(
+            (await repoB.dueCardsForGroups(allGroups, now: Date())).map(\.front)
+        )
+
+        #expect(dueTodayA == expectedFirstBatch)
+        #expect(dueTodayB == expectedFirstBatch)
+        #expect(dueTodayA == dueTodayB)
+    }
+
+    // MARK: - purgeUnstartedCards(notIn:)
+
+    @Test("purgeUnstartedCards removes reps == 0 cards outside the kept groups")
+    func purgeRemovesOrphanedUnstartedCards() async throws {
+        let (repo, _) = try await makeRepo()
+        await repo.seed(groups: [.hVowels, .hG])
+
+        let removed = await repo.purgeUnstartedCards(notIn: [.hVowels])
+        #expect(removed == 5) // .hG's 5 cards
+
+        let remaining = await repo.allKanaCards()
+        #expect(remaining.count == 5)
+        #expect(Set(remaining.map(\.front)) == Set(["あ", "い", "う", "え", "お"]))
+    }
+
+    @Test("purgeUnstartedCards never removes a card with reps > 0, even outside the kept groups")
+    func purgeNeverTouchesStartedCards() async throws {
+        let (repo, cardRepo) = try await makeRepo()
+        await repo.seed(groups: [.hVowels, .hG])
+
+        // Simulate the learner having reviewed one of the now-deselected
+        // .hG cards before it was dropped from the selection.
+        let hGCards = await repo.cardsForGroups([.hG])
+        let reviewed = try #require(hGCards.first { $0.front == "が" })
+        await cardRepo.gradeCard(cardId: reviewed.id, grade: .good, responseTimeMs: 1000)
+
+        let removed = await repo.purgeUnstartedCards(notIn: [.hVowels])
+        #expect(removed == 4) // the other 4 .hG cards, not the reviewed one
+
+        let remaining = await repo.allKanaCards()
+        #expect(remaining.contains { $0.front == "が" })
+        #expect(remaining.count == 5 + 1) // .hVowels (5) + the reviewed が
+    }
+
+    @Test("purgeUnstartedCards is idempotent — a second call is a no-op")
+    func purgeIsIdempotent() async throws {
+        let (repo, _) = try await makeRepo()
+        await repo.seed(groups: [.hVowels, .hG])
+
+        let firstPass = await repo.purgeUnstartedCards(notIn: [.hVowels])
+        #expect(firstPass == 5)
+
+        let secondPass = await repo.purgeUnstartedCards(notIn: [.hVowels])
+        #expect(secondPass == 0)
+
+        let remaining = await repo.allKanaCards()
+        #expect(remaining.count == 5)
+    }
+
+    @Test("purgeUnstartedCards only considers kana cards")
+    func purgeIgnoresNonKanaCards() async throws {
+        let (repo, cardRepo) = try await makeRepo()
+        await repo.seed(groups: [.hVowels])
+        _ = await cardRepo.createCard(front: "犬", back: "dog", type: .vocabulary, dueDate: Date())
+
+        // Keep no groups at all — if non-kana cards were considered, this
+        // would try (and fail) to classify "犬" as orphaned kana.
+        let removed = await repo.purgeUnstartedCards(notIn: [])
+        #expect(removed == 5)
+
+        let remainingAll = await cardRepo.allCards()
+        #expect(remainingAll.contains { $0.front == "犬" })
+    }
 }

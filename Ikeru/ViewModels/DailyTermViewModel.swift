@@ -48,6 +48,12 @@ public final class DailyTermViewModel {
     private let service: DailyTermService
     private let dailyTermRepository: DailyTermRepository
     private let vocabularyRepository: VocabularyRepository
+    /// Used solely to read the learner's current JLPT readiness estimate
+    /// (`progressService.loadDashboardData().jlptEstimate`) so the daily
+    /// term can be filtered to the learner's level. Same construction
+    /// pattern as `SessionComposer.buildSnapshot` / `HomeViewModel` — this
+    /// view model does not otherwise touch card data.
+    private let progressService: ProgressService
 
     /// Calendar day represented by the currently-loaded `today`. Used to
     /// detect when a midnight rollover should re-load.
@@ -60,6 +66,7 @@ public final class DailyTermViewModel {
         let vocabRepo = VocabularyRepository(modelContainer: modelContainer)
         self.dailyTermRepository = dailyTermRepo
         self.vocabularyRepository = vocabRepo
+        self.progressService = ProgressService(cardRepository: CardRepository(modelContainer: modelContainer))
         // Pass the app-resolved locale so the service renders FR text
         // when the user has chosen French (independently of the OS locale).
         self.service = DailyTermService(repository: dailyTermRepo, locale: locale)
@@ -80,7 +87,12 @@ public final class DailyTermViewModel {
         }
 
         let dictionaryWords = Set((await vocabularyRepository.allEntries()).map(\.word))
-        let todayDTO = await service.termForDay(now, existingDictionaryWords: dictionaryWords)
+        let learnerLevel = await currentLearnerLevel(now: now)
+        let todayDTO = await service.termForDay(
+            now,
+            existingDictionaryWords: dictionaryWords,
+            learnerLevel: learnerLevel
+        )
         today = todayDTO
         currentDay = Calendar.current.startOfDay(for: now)
 
@@ -91,6 +103,19 @@ public final class DailyTermViewModel {
         Logger.dailyTerm.debug(
             "Daily term loaded: today=\(todayDTO.word, privacy: .public) revealed=\(todayDTO.revealedAt != nil)"
         )
+    }
+
+    /// Resolves the learner's current JLPT level from the same readiness
+    /// estimate the Progress dashboard and session composer use
+    /// (`ProgressService.loadDashboardData().jlptEstimate`), so the daily
+    /// term selection (`DailyTermService.termForDay(learnerLevel:)`) can
+    /// filter out words clearly above the learner's reach. Only consulted
+    /// on a day's *first* generation — see `termForDay`'s doc comment —
+    /// so this recomputes the estimate on every `load()` call but only
+    /// ever influences selection once per calendar day.
+    private func currentLearnerLevel(now: Date) async -> JLPTLevel {
+        let estimate = await progressService.loadDashboardData(now: now).jlptEstimate
+        return JLPTLevel(rawValue: estimate.level.lowercased()) ?? .n5
     }
 
     /// Re-loads only if the calendar day has changed since the last load.

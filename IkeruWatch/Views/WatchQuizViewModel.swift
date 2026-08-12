@@ -159,15 +159,34 @@ final class WatchQuizViewModel {
 
     /// Groups of kana that are commonly confused by shape, used to bias
     /// distractor selection toward realistic mistakes.
+    ///
+    /// Hiragana only: `startSession()` draws its pool exclusively from
+    /// `KanaData.hiragana` (see above), so a katakana-only group here would
+    /// never surface as a distractor — dead weight that looks like coverage
+    /// but isn't. The previous revision carried `["シ", "ツ"]` and `["ソ",
+    /// "ン"]` for exactly that reason; they were removed rather than left
+    /// inert. If the quiz ever gains a katakana mode, reintroduce katakana
+    /// groups alongside a katakana pool, not before.
     private static let confusableGroups: [Set<String>] = [
-        ["る", "ろ"],
-        ["シ", "ツ"],
-        ["ソ", "ン"],
-        ["き", "さ"],
+        // る/ろ/そ: all end in a similar curved hook stroke.
+        ["る", "ろ", "そ"],
+        // き/さ/ち: share the diagonal hook off the vertical stroke that
+        // trips up beginners reading small furigana.
+        ["き", "さ", "ち"],
         ["ね", "れ", "わ"],
         ["は", "ほ"],
         ["あ", "お"],
         ["ま", "も"],
+        // い/り: both are two short strokes with near-identical proportions.
+        ["い", "り"],
+        // う/つ: same single curved stroke, differing mainly in curvature.
+        ["う", "つ"],
+        // ぬ/め: identical loop-and-tail shape, differ only in the tail curl.
+        ["ぬ", "め"],
+        // す/む: both built from a loop closing back on a vertical stroke.
+        ["す", "む"],
+        // こ/に: both read as two short parallel-ish strokes at small sizes.
+        ["こ", "に"],
     ]
 
     private static func confusableCharacters(for character: String) -> Set<String> {

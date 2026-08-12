@@ -11,11 +11,13 @@ struct DailyTermViewModelTests {
     // MARK: - Helpers
 
     private func makeContainer() throws -> ModelContainer {
-        let schema = Schema([
-            DailyTerm.self,
-            VocabularyEntry.self,
-            VocabularyEncounter.self
-        ])
+        // Full app schema (not just the daily-term models): `load()` now
+        // also resolves the learner's JLPT level via `ProgressService` /
+        // `CardRepository`, which fetch `Card`, `ReviewLog`, `UserProfile`
+        // and `ExerciseOutcomeLog`. A container scoped to only the
+        // daily-term models crashes the moment that fetch runs against a
+        // schema that doesn't know those entities.
+        let schema = Schema(IkeruSchemaV2.models)
         let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
         return try ModelContainer(for: schema, configurations: [config])
     }
