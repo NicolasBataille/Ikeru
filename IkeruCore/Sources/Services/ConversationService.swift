@@ -9,6 +9,15 @@ import os
 public final class ConversationService: @unchecked Sendable {
 
     public let aiRouter: AIRouterService
+
+    /// Time budget used to decide whether the single silent network retry
+    /// (see `generateWithSingleNetworkRetry`) is worth attempting at all: if
+    /// the first attempt alone already used up this much time, the retry is
+    /// skipped outright instead of doubling a slow failure into a slower
+    /// one. Without this, a first attempt that burns `AIRouterService`'s own
+    /// ~10s fallback budget on timeouts, followed by an unbounded second
+    /// attempt doing the same, could leave a learner waiting ~20s in
+    /// silence before seeing an error.
     private let timeoutSeconds: TimeInterval
 
     /// Source of "now" for the system prompt's time-of-day context (greeting
@@ -98,11 +107,42 @@ public final class ConversationService: @unchecked Sendable {
     /// (`invalidKey`/`keyNotFound`) or a rate limit (`rateLimited`) —
     /// `AIRouterService` already owns cooldown/`Retry-After` handling for
     /// those (`rateLimitCooldowns`), and retrying here would contradict it.
+    ///
+    /// Gated by `timeoutSeconds`, because `.allProvidersExhausted` — the
+    /// retryable case, see `isRetryableNetworkFailure` — covers both a fast
+    /// "nothing is configured/reachable" failure (~400ms:
+    /// `GeminiProvider.isAvailable` returns `false` without touching the
+    /// network) AND a slow one where `AIRouterService`'s own ~10s fallback
+    /// budget was burned entirely on provider timeouts. Retrying
+    /// unconditionally in the slow case would silently double a ~10s
+    /// failure into a ~20s one with no feedback but the typing indicator —
+    /// worse than surfacing the error and letting the learner use the
+    /// manual "Reessayer" button (`retryLastMessage`) that already exists
+    /// for this slower case. Note this only bounds the DECISION to retry,
+    /// not the retry attempt itself: in the one realistic case where the
+    /// first attempt genuinely fails fast (nothing configured/reachable —
+    /// a state that can't flip in the ~400ms before the retry fires), the
+    /// retry re-hits the exact same fast-failing state and stays fast too.
     private func generateWithSingleNetworkRetry(prompt: AIPrompt) async throws -> AIResponse {
+        let attemptStart = ContinuousClock.now
         do {
             return try await aiRouter.generate(prompt: prompt)
         } catch let error as AIError {
             guard Self.isRetryableNetworkFailure(error) else { throw error }
+
+            let elapsed = ContinuousClock.now - attemptStart
+            let remainingBudget = Duration.seconds(timeoutSeconds) - elapsed
+
+            // The first attempt alone already ate (most of) the total
+            // budget — retrying would only stretch a slow failure out
+            // further. Surface the first attempt's error immediately
+            // instead; requires a floor beyond the retry delay itself so a
+            // retry that's doomed to add pure overhead never fires at all.
+            guard remainingBudget > Self.networkRetryDelay + Self.minimumRetryWindow else {
+                Logger.ai.info("Conversation retry skipped — first attempt already used the time budget")
+                throw error
+            }
+
             Logger.ai.info("Conversation request hit a network failure on the first attempt — retrying once")
             try? await Task.sleep(for: Self.networkRetryDelay)
             return try await aiRouter.generate(prompt: prompt)
@@ -131,6 +171,13 @@ public final class ConversationService: @unchecked Sendable {
     /// Short and silent — long enough to clear a transient blip, short
     /// enough that a genuinely offline learner isn't kept waiting twice.
     private static let networkRetryDelay: Duration = .milliseconds(400)
+
+    /// Minimum leftover window (beyond `networkRetryDelay` itself) required
+    /// before the retry is even attempted. Without this floor, a retry could
+    /// fire with almost no time left in the budget — pure overhead with
+    /// essentially no chance of the story actually changing before the next
+    /// failure.
+    private static let minimumRetryWindow: Duration = .seconds(1)
 
     /// Reconciles each parsed vocabulary hint's reading against the content
     /// bundle via `ReadingValidator`, logging once per correction so

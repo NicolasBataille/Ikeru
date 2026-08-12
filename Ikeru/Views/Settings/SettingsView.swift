@@ -182,8 +182,16 @@ struct SettingsView: View {
             DeleteProfileSheet(
                 profile: profile,
                 onConfirm: {
-                    profileViewModel?.deleteProfile(profile)
+                    // Clear the sheet's item BEFORE deleting: `deleteProfile` posts
+                    // notifications synchronously as part of the save, and if
+                    // `profileToDelete` were still non-nil when those land, `.sheet(item:)`
+                    // could re-invoke this closure and rebuild `DeleteProfileSheet` against
+                    // a profile already deleted from the model context. DeleteProfileSheet
+                    // also no longer reads `profile.displayName` live (see its `displayName`
+                    // capture) as a second layer of defense for re-renders during the
+                    // dismiss animation.
                     profileToDelete = nil
+                    profileViewModel?.deleteProfile(profile)
                 },
                 onCancel: { profileToDelete = nil }
             )
@@ -359,7 +367,7 @@ struct SettingsView: View {
                     }
                 }
                 if !furiganaUserTouched {
-                    Text("Follows display mode", comment: "Furigana setting subtitle shown when the user never explicitly toggled it — the on/off value above is derived from the current display mode (Tatami/Beginner), not from a stored preference")
+                    Text("Follows display mode", comment: "Furigana subtitle shown only when the toggle above isn't user-set — its value follows the current display mode, not a stored preference.")
                         .ikeruScaledFont(11, relativeTo: .caption2)
                         .foregroundStyle(TatamiTokens.paperGhost)
                         .padding(.horizontal, 16)
@@ -617,6 +625,7 @@ struct SettingsView: View {
                             .foregroundStyle(TatamiTokens.goldDim)
                     }
                 }
+                .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .disabled(isCurrent)
@@ -1237,6 +1246,7 @@ private struct DevToolsSettingsView: View {
     @State private var devSeedDue: Double = 20
     @State private var devSeedMastered: Double = 120
     @State private var devShowResetConfirm = false
+    @State private var devShowSeedConfirm = false
     @State private var devLastAction: String = ""
 
     var body: some View {
@@ -1344,15 +1354,7 @@ private struct DevToolsSettingsView: View {
                     .foregroundStyle(Color.ikeruTextPrimary)
                 Spacer()
                 Button {
-                    guard let vm = profileViewModel else { return }
-                    TestFixtures.wipeAndSeed(
-                        context: modelContext,
-                        profileVM: vm,
-                        level: Int(devSeedLevel),
-                        dueCount: Int(devSeedDue),
-                        masteredCount: Int(devSeedMastered)
-                    )
-                    devLastAction = "✓ Seeded: lvl \(Int(devSeedLevel)), \(Int(devSeedDue)) due, \(Int(devSeedMastered)) mastered"
+                    devShowSeedConfirm = true
                 } label: {
                     Text("Seed")
                         .ikeruScaledFont(12, weight: .semibold, relativeTo: .caption2)
@@ -1365,6 +1367,27 @@ private struct DevToolsSettingsView: View {
                         )
                 }
                 .buttonStyle(.plain)
+                // Same destructive-confirmation motif as "Wipe profile"
+                // (`devShowResetConfirm` above): this used to replace every
+                // card, the RPG state, and the chat log for the current
+                // profile with no confirmation — a real risk since
+                // IKERU_DEV_TOOLS ships in Release/TestFlight builds.
+                .alert("Reseed profile?", isPresented: $devShowSeedConfirm) {
+                    Button("Cancel", role: .cancel) {}
+                    Button("Seed", role: .destructive) {
+                        guard let vm = profileViewModel else { return }
+                        TestFixtures.wipeAndSeed(
+                            context: modelContext,
+                            profileVM: vm,
+                            level: Int(devSeedLevel),
+                            dueCount: Int(devSeedDue),
+                            masteredCount: Int(devSeedMastered)
+                        )
+                        devLastAction = "✓ Seeded: lvl \(Int(devSeedLevel)), \(Int(devSeedDue)) due, \(Int(devSeedMastered)) mastered"
+                    }
+                } message: {
+                    Text("Deletes every card, the RPG state, and the chat log for the current profile, then replaces them with fixture data.")
+                }
             }
 
             devSlider(label: "Level",     value: $devSeedLevel,     range: 1...30,   step: 1)

@@ -44,13 +44,25 @@ import os
 /// changing that UI is outside this file's perimeter. Roughly:
 /// débutant = low level / low due / low mastered; kana en cours = mid
 /// level with a modest due backlog; backlog = high due regardless of
-/// level; avancé = high level and high mastered. `level` alone drives how
-/// much of the 92-kana pool reads as mastered vs. learning vs. untouched
-/// (`seedKana`); `dueCount`/`masteredCount` drive the kanji/vocabulary
-/// overdue vs. comfortably-ahead split (`seedContentCards`). Roughly every
-/// 4th due card gets a rougher trajectory so leeches — and the confusion
-/// pairs `LeechDetectionService` derives from real fronts like 日/目 —
-/// show up without every due card being one.
+/// level; avancé = high level and high mastered. `level` drives how much of
+/// the 92-kana pool reads as mastered vs. learning vs. untouched
+/// (`seedKana`) — from nothing mastered at `level == 1` up to only the
+/// fixed 10-card learning band left unmastered at `level == 30`, so neither
+/// end of the range saturates or under-shoots the persona it's supposed to
+/// produce. `dueCount`/`masteredCount` drive the kanji/vocabulary overdue
+/// vs. comfortably-ahead split (`seedContentCards`), capped in combination
+/// to `contentPool.count` (40 real N5 items) so no word is ever seeded
+/// twice. Roughly every 4th due card gets a rougher trajectory so leeches —
+/// and the confusion pairs `LeechDetectionService` derives from real fronts
+/// like 日/目 — show up without every due card being one.
+///
+/// The RPG state's `xp`/`level` are *not* the slider `level` restated —
+/// they're derived from the sum of `RPGConstants.xpForGrade` over every
+/// simulated `ReviewLog` this run actually produced, run through
+/// `RPGConstants.levelForXP` (see `seedRPGState`), so a fixture profile's
+/// displayed level always agrees with its logged review history. The
+/// slider `level` only steers how much *content* gets simulated; the
+/// resulting displayed level is a consequence of that, not a mirror of it.
 ///
 /// Launch-args usage (Debug builds):
 /// ```bash
@@ -230,12 +242,19 @@ public enum TestFixtures {
 
     // MARK: - Shared population core
 
-    /// Seeds RPG state + kana + kanji/vocabulary cards for `profile`, all
-    /// derived from a simulated review history (see the type-level doc).
-    /// `totalReviewsCompleted` is set to the *actual* number of ReviewLog
-    /// rows generated, not an arbitrary `level`-derived formula, so the RPG
-    /// counters stay consistent with what the review-history simulation
-    /// actually produced.
+    /// Seeds kana + kanji/vocabulary cards for `profile` from a simulated
+    /// review history (see the type-level doc), then derives the RPG state
+    /// — `xp`, `level`, `totalReviewsCompleted` — from what that simulation
+    /// actually produced, instead of setting them by hand from `level`
+    /// alone. This is the step that closes the loop: every `ReviewLog` row
+    /// generated below contributes its real `RPGConstants.xpForGrade` to
+    /// the total, and the resulting level comes from
+    /// `RPGConstants.levelForXP` on that total — so a fixture profile's
+    /// level is never numerically incoherent with the log history that
+    /// backs it. The requested `level` still drives *content generation*
+    /// (how many kana/content cards land in the mastered vs. learning vs.
+    /// fresh bands) — it just no longer double as the RPG state's `level`
+    /// directly.
     @MainActor
     private static func populate(
         context: ModelContext,
@@ -245,13 +264,10 @@ public enum TestFixtures {
         masteredCount: Int,
         now: Date
     ) {
-        let state = seedRPGState(profile: profile, level: level)
-        context.insert(state)
-
         var rng = SeededGenerator(seed: fixtureSeed(level: level, due: dueCount, mastered: masteredCount))
-        var totalReviews = 0
-        totalReviews += seedKana(context: context, profile: profile, level: level, now: now, rng: &rng)
-        totalReviews += seedContentCards(
+
+        let kanaTally = seedKana(context: context, profile: profile, level: level, now: now, rng: &rng)
+        let contentTally = seedContentCards(
             context: context,
             profile: profile,
             due: dueCount,
@@ -259,7 +275,12 @@ public enum TestFixtures {
             now: now,
             rng: &rng
         )
-        state.totalReviewsCompleted = totalReviews
+
+        let totalReviews = kanaTally.reviewCount + contentTally.reviewCount
+        let totalXP = kanaTally.xp + contentTally.xp
+
+        let state = seedRPGState(profile: profile, xp: totalXP, totalReviews: totalReviews)
+        context.insert(state)
     }
 
     /// Clears everything a reseed regenerates for `profile` — its cards
@@ -307,17 +328,25 @@ public enum TestFixtures {
 
     // MARK: - RPG seeding
 
+    /// Builds the RPG state from `xp`/`totalReviews` actually produced by
+    /// the simulated review history — `level` is `RPGConstants.levelForXP(xp)`,
+    /// never a value handed in separately, so it can't drift out of sync
+    /// with the XP total that backs it.
     @discardableResult
     private static func seedRPGState(
         profile: UserProfile,
-        level: Int
+        xp: Int,
+        totalReviews: Int
     ) -> RPGState {
-        let xpForLevel = xpRequired(forLevel: level)
-        let xpForNext = xpRequired(forLevel: level + 1)
-        let midXP = xpForLevel + (xpForNext - xpForLevel) / 2
+        let level = RPGConstants.levelForXP(xp)
 
-        let state = RPGState(xp: midXP, level: level, totalReviewsCompleted: 0)
-        state.totalSessionsCompleted = max(1, level / 2)
+        let state = RPGState(xp: xp, level: level, totalReviewsCompleted: totalReviews)
+        // No per-session log is simulated, only per-review ones, so this is
+        // a rough estimate (real sessions mix kana + content and run
+        // roughly this many reviews) rather than an exact count — good
+        // enough to keep the counter in the right ballpark for a value
+        // nothing in the UI treats as precise.
+        state.totalSessionsCompleted = max(1, totalReviews / averageReviewsPerSession)
 
         // Attributes scaled to level
         let scaled = RPGAttribute.allPredefined.map { attr in
@@ -334,23 +363,42 @@ public enum TestFixtures {
 
     /// Total XP required to reach `level`, using the *exact* production formula
     /// from RPGConstants so the seeded profile is internally consistent.
+    /// Only used by `grantLevelUp`, which bumps an *existing* profile past
+    /// its next threshold — the fixture seeder itself derives `level` from
+    /// simulated XP instead (`seedRPGState`).
     private static func xpRequired(forLevel level: Int) -> Int {
         RPGConstants.totalXPForLevel(level)
     }
+
+    /// Rough average reviews-per-session used only to give
+    /// `totalSessionsCompleted` a plausible order of magnitude from the
+    /// total simulated review count — no per-session boundary is actually
+    /// simulated (see `simulateHistory`).
+    private static let averageReviewsPerSession = 15
 
     // MARK: - Kana seeding
 
     /// Seeds all 92 base kana (idempotent with what
     /// `KanaCardRepository.seedIfNeeded()` would create), split into three
-    /// bands driven by `level`:
+    /// bands driven by `level` (1–30):
     /// - the first `masteredCount` (curriculum order — vowels through W/N,
     ///   hiragana then katakana) get a long, mostly-successful review
     ///   history landing comfortably in the future ("mastered");
-    /// - the next up-to-10 get a short, shakier history landing overdue
-    ///   ("learning" / still in progress);
+    /// - a fixed band of 10 more get a short, shakier history landing
+    ///   overdue ("learning" / still in progress) — kept at exactly 10
+    ///   across the whole level range (not just while there happens to be
+    ///   room) so the "kana en cours" persona stays reachable at every
+    ///   level, not just below some cutoff;
     /// - the remainder are left as freshly-seeded, never-reviewed cards
     ///   (`reps == 0`, due today) — exactly what a real first-time kana
     ///   seed produces.
+    ///
+    /// `masteredCount` scales from 0 at `level == 1` (a true "débutant" —
+    /// nothing mastered yet) up to `allKana.count - 10` at `level == 30`
+    /// (leaving the fixed learning band as the only non-mastered cards) —
+    /// so the かな counter never saturates to 92/92 before the top of the
+    /// level range, and a level-1 profile never reads as having already
+    /// anchored kana.
     @MainActor
     private static func seedKana(
         context: ModelContext,
@@ -358,18 +406,22 @@ public enum TestFixtures {
         level: Int,
         now: Date,
         rng: inout SeededGenerator
-    ) -> Int {
+    ) -> (reviewCount: Int, xp: Int) {
         let allKana = KanaGroup.allBaseCharacters
+        let learningBandSize = min(10, allKana.count)
+        let maxMastered = allKana.count - learningBandSize
+        let levelFraction = Double(max(1, min(level, 30)) - 1) / 29.0
         let masteredCount = min(
-            allKana.count,
-            max(0, Int((Double(allKana.count) * Double(level) / 12.0).rounded()))
+            maxMastered,
+            max(0, Int((Double(maxMastered) * levelFraction).rounded()))
         )
-        let learningCount = min(allKana.count - masteredCount, 10)
+        let learningCount = min(allKana.count - masteredCount, learningBandSize)
 
         var totalReviews = 0
+        var totalXP = 0
         for (index, kana) in allKana.enumerated() {
             if index < masteredCount {
-                totalReviews += makeCard(
+                let tally = makeCard(
                     front: kana.character,
                     back: kana.romaji,
                     type: .vocabulary,
@@ -383,8 +435,10 @@ public enum TestFixtures {
                     now: now,
                     rng: &rng
                 )
+                totalReviews += tally.reviewCount
+                totalXP += tally.xp
             } else if index < masteredCount + learningCount {
-                totalReviews += makeCard(
+                let tally = makeCard(
                     front: kana.character,
                     back: kana.romaji,
                     type: .vocabulary,
@@ -398,6 +452,8 @@ public enum TestFixtures {
                     now: now,
                     rng: &rng
                 )
+                totalReviews += tally.reviewCount
+                totalXP += tally.xp
             } else {
                 makeFreshCard(
                     front: kana.character,
@@ -409,19 +465,27 @@ public enum TestFixtures {
                 )
             }
         }
-        return totalReviews
+        return (totalReviews, totalXP)
     }
 
     // MARK: - Kanji / vocabulary seeding
 
-    /// Seeds `due` cards with an overdue history and `mastered` cards with
-    /// a comfortably-ahead history, cycling through `contentPool` (real N5
-    /// kanji + vocabulary — see its doc comment). Roughly every 4th due
-    /// card is given a rougher trajectory (higher failure rate, more
-    /// reviews) so lapses cross `CardRepository.leechThreshold` and the
-    /// card is flagged as a leech the same way production grading would —
-    /// which in turn lets `LeechDetectionService.analyzeConfusion` surface
-    /// real confusion pairs (e.g. 日/目) since the fronts are genuine kanji.
+    /// Seeds up to `due` cards with an overdue history and up to `mastered`
+    /// cards with a comfortably-ahead history, drawn from `contentPool`
+    /// (real N5 kanji + vocabulary — see its doc comment) *without*
+    /// repetition: the due bucket takes the pool's first `cappedDue` items
+    /// and the mastered bucket takes the next `cappedMastered`, so no front
+    /// is ever seeded twice across the two buckets. Both counts are capped
+    /// to `contentPool.count` (40 items) combined — at the slider maxima
+    /// (`due` 50, `mastered` 200) this means fewer cards are actually
+    /// created than requested, rather than cycling the pool with a modulo
+    /// and minting several duplicate cards for the same word. Roughly every
+    /// 4th due card is given a rougher trajectory (higher failure rate,
+    /// more reviews) so lapses cross `CardRepository.leechThreshold` and
+    /// the card is flagged as a leech the same way production grading
+    /// would — which in turn lets `LeechDetectionService.analyzeConfusion`
+    /// surface real confusion pairs (e.g. 日/目) since the fronts are
+    /// genuine kanji.
     @MainActor
     private static func seedContentCards(
         context: ModelContext,
@@ -430,17 +494,18 @@ public enum TestFixtures {
         mastered: Int,
         now: Date,
         rng: inout SeededGenerator
-    ) -> Int {
-        guard !contentPool.isEmpty else { return 0 }
-        let due = max(0, due)
-        let mastered = max(0, mastered)
+    ) -> (reviewCount: Int, xp: Int) {
+        guard !contentPool.isEmpty else { return (0, 0) }
+        let cappedDue = min(max(0, due), contentPool.count)
+        let cappedMastered = min(max(0, mastered), contentPool.count - cappedDue)
 
         var totalReviews = 0
+        var totalXP = 0
 
-        for i in 0..<due {
-            let item = contentPool[i % contentPool.count]
+        for i in 0..<cappedDue {
+            let item = contentPool[i]
             let isStrugglingTrajectory = i % 4 == 3
-            totalReviews += makeCard(
+            let tally = makeCard(
                 front: item.front,
                 back: item.back,
                 type: item.type,
@@ -458,14 +523,16 @@ public enum TestFixtures {
                 now: now,
                 rng: &rng
             )
+            totalReviews += tally.reviewCount
+            totalXP += tally.xp
         }
 
-        for i in 0..<mastered {
-            // Offset by `due` so the mastered bucket starts further along
-            // the pool rotation — less exact overlap with the due bucket's
-            // picks when both are small.
-            let item = contentPool[(i + due) % contentPool.count]
-            totalReviews += makeCard(
+        for i in 0..<cappedMastered {
+            // Offset by `cappedDue` so the mastered bucket picks up exactly
+            // where the due bucket's slice of the pool left off — no index
+            // is ever drawn by both buckets.
+            let item = contentPool[cappedDue + i]
+            let tally = makeCard(
                 front: item.front,
                 back: item.back,
                 type: item.type,
@@ -479,9 +546,11 @@ public enum TestFixtures {
                 now: now,
                 rng: &rng
             )
+            totalReviews += tally.reviewCount
+            totalXP += tally.xp
         }
 
-        return totalReviews
+        return (totalReviews, totalXP)
     }
 
     // MARK: - Card + history construction
@@ -489,7 +558,15 @@ public enum TestFixtures {
     /// Creates a `Card` whose `fsrsState`, `dueDate`, `lapseCount` and
     /// `leechFlag` are every one derived from a simulated review history
     /// (see `simulateHistory`), and inserts a real `ReviewLog` per
-    /// simulated event. Returns the number of review events created.
+    /// simulated event. Returns the number of review events created and the
+    /// XP those events are worth under `RPGConstants.xpForGrade` — the base
+    /// per-grade amount the production `ExerciseXP.award` builds on for a
+    /// completed review, before its type-specific bonus (e.g. +2 for
+    /// `.kanjiStudy`), session bonuses, and JLPT multiplier. Those extras
+    /// are deliberately not replayed here, so the seeded total is a slight
+    /// floor under what a real learner's history would have earned — good
+    /// enough to make the seeded `xp`/`level` internally consistent with
+    /// the logged history, without reimplementing the full award pipeline.
     @MainActor
     @discardableResult
     private static func makeCard(
@@ -505,7 +582,7 @@ public enum TestFixtures {
         anchor: HistoryAnchor,
         now: Date,
         rng: inout SeededGenerator
-    ) -> Int {
+    ) -> (reviewCount: Int, xp: Int) {
         let history = simulateHistory(
             reviewCount: reviewCount,
             failureRate: failureRate,
@@ -532,6 +609,7 @@ public enum TestFixtures {
         card.profile = profile
         context.insert(card)
 
+        var xp = 0
         for event in history.logs {
             let responseTimeMs = event.grade == .again
                 ? Int.random(in: 3_000...9_000, using: &rng)
@@ -543,9 +621,10 @@ public enum TestFixtures {
                 timestamp: event.date
             )
             context.insert(log)
+            xp += RPGConstants.xpForGrade(event.grade)
         }
 
-        return history.logs.count
+        return (history.logs.count, xp)
     }
 
     /// Creates a never-reviewed card (`reps == 0`, due today) — exactly

@@ -202,7 +202,12 @@ struct TatamiEligibilityRow: View {
                 // the raw count reads as a broken counter, not progress — the
                 // bar below already clamps its fill the same way, so the
                 // number and the bar now agree on the same effective state.
-                Text("\(min(current, total))/\(total)")
+                // Int() here is a no-op on an already-Int value — it keeps
+                // scripts/i18n-lint.py's type inference aligned (its
+                // heuristic doesn't recognize `min(...)` as Int-like, so it
+                // misclassifies the interpolation as %@ and flags a false
+                // specifier-mismatch against the catalog's %lld/%lld key).
+                Text("\(Int(min(current, total)))/\(total)")
                     .ikeruScaledFont(11, design: .serif, relativeTo: .caption2)
                     .foregroundStyle(Color.ikeruPrimaryAccent)
             }

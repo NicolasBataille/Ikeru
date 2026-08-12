@@ -12,9 +12,25 @@ struct DeleteProfileSheet: View {
     let onConfirm: () -> Void
     let onCancel: () -> Void
 
+    /// `profile.displayName` captured as a plain value the moment this sheet is built —
+    /// the header and the hold-to-confirm button title read this, never `profile` directly.
+    /// `onConfirm` deletes the underlying SwiftData model, and SwiftUI can still replay
+    /// `body` on this already-built view during the sheet's dismiss animation (or, in
+    /// principle, if some other path deletes this profile while the sheet is still up).
+    /// Reading a `String` captured up front can't crash or go blank the way a live
+    /// `profile.displayName` read against a deleted/faulted model could.
+    let displayName: String
+
     /// Summary loaded from the model container on appear.
     @State private var summary: Summary?
     @Environment(\.modelContext) private var modelContext
+
+    init(profile: UserProfile, onConfirm: @escaping () -> Void, onCancel: @escaping () -> Void) {
+        self.profile = profile
+        self.displayName = profile.displayName
+        self.onConfirm = onConfirm
+        self.onCancel = onCancel
+    }
 
     struct Summary: Equatable {
         let cardCount: Int
@@ -62,7 +78,7 @@ struct DeleteProfileSheet: View {
                 .font(.ikeruDisplaySmall)
                 .ikeruTracking(.display)
                 .foregroundStyle(Color.ikeruTextPrimary)
-            Text(profile.displayName)
+            Text(displayName)
                 .font(.ikeruHeading3)
                 .foregroundStyle(Color.ikeruTextSecondary)
         }
@@ -184,7 +200,7 @@ struct DeleteProfileSheet: View {
     private var actionButtons: some View {
         VStack(spacing: IkeruTheme.Spacing.sm) {
             HoldToConfirmButton(
-                title: "Hold to delete \(profile.displayName)",
+                title: "Hold to delete \(displayName)",
                 icon: "trash.fill",
                 duration: 1.6,
                 onConfirm: onConfirm

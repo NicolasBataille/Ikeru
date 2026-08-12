@@ -265,7 +265,7 @@ struct ProfileViewModelTests {
         let viewModel = ProfileViewModel(modelContext: context)
         viewModel.createProfile(name: "A")
         viewModel.createProfile(name: "B")
-        let a = try #require(viewModel.allProfiles.first { $0.displayName == "A" })
+        let profileA = try #require(viewModel.allProfiles.first { $0.displayName == "A" })
 
         // `addObserver(forName:object:queue:using:)`'s handler is `@Sendable`,
         // so a captured mutable local (`var received = false`) doesn't
@@ -278,7 +278,7 @@ struct ProfileViewModelTests {
         ) { _ in flag.value = true }
         defer { NotificationCenter.default.removeObserver(observer) }
 
-        viewModel.switchProfile(to: a)
+        viewModel.switchProfile(to: profileA)
 
         #expect(flag.value == true)
     }

@@ -348,3 +348,122 @@ struct ConversationServiceTests {
         #expect(response.vocabularyHints[1].reading == "こうえん")
     }
 }
+
+// MARK: - Bounded Network Retry
+
+/// Counts `generate()` invocations and can inject a controlled delay before
+/// throwing a fixed `AIError`, so retry tests can pin down exactly how many
+/// full `AIRouterService.generate` attempts `ConversationService` made — and
+/// roughly how long each one took — without depending on real network
+/// conditions.
+private final class RetryCountingAIProvider: AIProvider, @unchecked Sendable {
+    let name = "RetryCountingProvider"
+    let tier: AITier
+    private let delay: Duration
+    private let errorToThrow: AIError
+    private let lock = NSLock()
+    private var _callCount = 0
+
+    init(tier: AITier, delay: Duration = .zero, errorToThrow: AIError) {
+        self.tier = tier
+        self.delay = delay
+        self.errorToThrow = errorToThrow
+    }
+
+    var callCount: Int {
+        lock.withLock { _callCount }
+    }
+
+    var isAvailable: Bool { get async { true } }
+
+    func generate(prompt: AIPrompt) async throws -> AIResponse {
+        lock.withLock { _callCount += 1 }
+        if delay > .zero {
+            try? await Task.sleep(for: delay)
+        }
+        throw errorToThrow
+    }
+}
+
+/// Covers the `timeoutSeconds`-gated retry added to
+/// `ConversationService.generateWithSingleNetworkRetry`: a first attempt
+/// that already burned the retry budget must NOT trigger a second one — see
+/// CLAUDE.md-adjacent task notes on the ~20s worst case this closes.
+///
+/// The same `RetryCountingAIProvider` instance is wired as BOTH the
+/// on-device and Gemini provider (mirroring the positional
+/// `AIRouterService` test initializer used elsewhere in this file), so its
+/// `callCount` sums across the two-tier `.medium` fallback chain
+/// (`[gemini, onDevice]` once Cerebras/Groq/OpenRouter/GitHub Models are
+/// absent from the injected providers dict) — one full router attempt is 2
+/// calls, a retried attempt is 4. Both tests also inject
+/// `MockNetworkChecker(online: true)` explicitly — the positional
+/// initializer's real `NWPathNetworkChecker()` default reports offline
+/// until its monitor's first async callback lands, which can otherwise
+/// race the very first `generate()` call and collapse the chain to
+/// on-device-only, making these exact call counts flaky.
+@Suite("ConversationService — Bounded Network Retry")
+@MainActor
+struct ConversationServiceRetryTests {
+
+    @Test("A fast, non-actionable failure still gets one silent retry")
+    func fastFailureStillRetries() async {
+        let provider = RetryCountingAIProvider(tier: .gemini, errorToThrow: .invalidResponse)
+        let unavailable = MockConversationAIProvider(available: false)
+        let router = AIRouterService(
+            onDeviceProvider: provider,
+            geminiProvider: provider,
+            claudeProvider: unavailable,
+            localGPUProvider: unavailable,
+            // Deterministic in place of the real `NWPathNetworkChecker()`
+            // default: that monitor's first callback lands asynchronously,
+            // so `buildFallbackChain` can race it and see `isOnline ==
+            // false` on the very first call, collapsing the chain to
+            // on-device-only (1 call) instead of the `.medium` [gemini,
+            // onDevice] chain (2 calls) the callCount assertions below
+            // assume — flaky depending on how fast NWPathMonitor's queue
+            // schedules its first update relative to this test.
+            networkChecker: MockNetworkChecker(online: true)
+        )
+        // Generous budget relative to the near-instant provider failures
+        // below, so the retry gate is not the thing under test here.
+        let service = ConversationService(aiRouter: router, timeoutSeconds: 5.0)
+
+        await #expect(throws: AIError.self) {
+            try await service.sendMessage("hello", history: [], jlptLevel: JLPTLevel.n5)
+        }
+
+        #expect(provider.callCount == 4)
+    }
+
+    @Test("A first attempt that already used the time budget skips the retry")
+    func slowFirstAttemptSkipsRetry() async {
+        let provider = RetryCountingAIProvider(
+            tier: .gemini,
+            delay: .milliseconds(200),
+            errorToThrow: .timeout(.gemini)
+        )
+        let unavailable = MockConversationAIProvider(available: false)
+        let router = AIRouterService(
+            onDeviceProvider: provider,
+            geminiProvider: provider,
+            claudeProvider: unavailable,
+            localGPUProvider: unavailable,
+            // See the matching comment in `fastFailureStillRetries` above —
+            // without this, the real `NWPathNetworkChecker()` default can
+            // report offline on its first (pre-callback) read and collapse
+            // the fallback chain to on-device-only.
+            networkChecker: MockNetworkChecker(online: true)
+        )
+        // 50ms budget against ~400ms for the first attempt alone (two
+        // 200ms provider calls) -- comfortably exceeded, so the retry must
+        // be skipped rather than doubling the wait to ~800ms.
+        let service = ConversationService(aiRouter: router, timeoutSeconds: 0.05)
+
+        await #expect(throws: AIError.self) {
+            try await service.sendMessage("hello", history: [], jlptLevel: JLPTLevel.n5)
+        }
+
+        #expect(provider.callCount == 2)
+    }
+}

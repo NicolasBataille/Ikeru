@@ -23,6 +23,79 @@ raisonnement, les mesures, et les décisions.
 
 ---
 
+## 2026-08-12/13 — Review pédagogique experte, puis 5 itérations de remédiation
+
+### Fait
+
+Une review pédagogique en quatre rounds par une instance jouant l'expert de
+l'apprentissage du japonais (simulateur uniquement, sans accès au code), pendant
+que cette session vérifiait chaque critique **dans le code** pour trancher *choix
+de design* vs *accident*. Relevé complet :
+[`docs/reviews/2026-08-10-expert-japonais-echange.md`](docs/reviews/2026-08-10-expert-japonais-echange.md),
+30 observations dans `app-review-notes/`.
+
+Puis cinq itérations de correctifs orchestrées en workflow (agents Sonnet en
+parallèle par propriété de fichier disjointe, revue adversariale Opus à chaque
+tour) : `2cc95ed` (docs + 2 specs), `353ac3e` (8 P0), `0d5606d` (retours + P1),
+`3998a44` (retours), `49fd0e2` (P1), puis ce commit.
+
+Verdict de la review : **~17 défauts d'implémentation pour 6 erreurs de
+conception** — un produit à brancher, pas à repenser. Et les six erreurs de
+conception ont des correctifs qui *renforcent* l'identité du produit : aucune ne
+demande d'ajouter un streak.
+
+### Testé
+
+- **3 schemes verts** (iOS, watchOS, widget), **514 tests Core**, cible de test
+  compilée, **SwiftLint et i18n-lint en exit 0** (commandes exactes du CI
+  rejouées, pas approximées).
+- **Vérifié sur le produit, pas sur le log** : `IkeruWidget.appex/fr.lproj/` et
+  `IkeruWatch.app/fr.lproj/` existent — les deux extensions n'avaient aucune
+  phase Resources, donc **aucune de leurs chaînes ne pouvait être traduite**.
+- **Seeder mesuré** par un harnais rejouant la génération contre le vrai
+  `FSRSService` : le compteur かな donne 12/92 au niveau 1, 42/92 au 5, 89/92 au
+  15 — il restait cloué à **0** quels que soient les sliders.
+- **Non testable ici, à faire sur device** : suppression d'un profil actif puis
+  non actif (risque de crash sur un `@Model` supprimé, chemin jamais exercé
+  avant ce chantier) ; audio réel ; drill d'accent au poignet.
+
+### Écarté
+
+- **Discriminer la purge de cartes par `CardType`** : impossible tel quel —
+  `CardType` n'a **pas** de cas `.kana` et les trois sites de création taguent
+  les kana en `.vocabulary`. Le type seul ne discrimine rien. Retenu à la place :
+  le verso doit correspondre exactement au romaji du catalogue (vrai pour tout
+  kana semé, faux pour une traduction).
+- **Synchro cloud** ([spec écrite](docs/design-specs/2026-08-10-cloud-sync-design.md))
+  volontairement **non lancée** : elle touche `IkeruSchemaV3` comme la
+  journalisation des confusions, et dépend de la suppression de profil. Deux
+  migrations de schéma concurrentes = collision indébogable.
+- **Baseliner la violation i18n-lint** plutôt que la corriger : refusé par
+  l'agent concerné, qui a préféré signaler que la clé manquante venait d'un agent
+  voisin. Bonne décision — baseliner aurait masqué une vraie régression.
+
+### Ouvert
+
+- **Régénération audio VOICEVOX** des 116 nouveaux kana (dakuten + yōon) : le
+  script est corrigé et gardé, mais la génération exige le moteur via Apple
+  `container`. Sans ça, ces kana tombent sur la synthèse on-device — rendue
+  audible en permanence par l'autoplay désormais actif.
+- **Terme du jour : problème de CONTENU, pas d'algorithme.** Le filtrage par
+  niveau est branché et vivant, mais le catalogue compte 57 entrées dont
+  **0 en N5 et 1 seule en N4** (37 hors échelle). Un débutant obtient l'unique
+  mot N4 puis retombe sur du jargon. Travail éditorial à faire.
+- **`ProfileViewModelTests` : 18/18 crashent** (pré-existant, non lancé par la
+  CI) — donc l'isolation inter-profils et la bascule à la suppression ne sont
+  garanties que par lecture de code.
+- **Personas du seeder incohérentes** avec ce qu'il produit : le niveau 30 est
+  structurellement inatteignable (~10 400 révisions), et dès `due ≥ 40` le
+  bucket « mastered » tombe à zéro. Dev-tools uniquement, donc non bloquant.
+- **P2 non entamés** : dues prioritaires sur les quotas, profils de séance par
+  stade, phase de présentation + critère de sortie de séance, livret de
+  compétence, tracés kana, ponts katakana, arbitrage RPG, crash widget.
+
+---
+
 ## Pass de test device (artifact `bb08a30e`) — état au 2026-08-09
 
 ~40 items sur 13 étapes. **31 faits, 9 restants.** Le relevé détaillé vivait

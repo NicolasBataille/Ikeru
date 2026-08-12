@@ -258,9 +258,9 @@ struct DailyTermServiceTests {
     func levelWeightedPickIsDeterministic() throws {
         let (service, _) = try makeService(catalog: [beginnerCandidate, advancedCandidate, offScaleCandidate])
         let day = date(year: 2026, month: 5, day: 10)
-        let a = service.pickCandidate(for: day, excluding: [], learnerLevel: .n5)
-        let b = service.pickCandidate(for: day, excluding: [], learnerLevel: .n5)
-        #expect(a == b)
+        let firstPick = service.pickCandidate(for: day, excluding: [], learnerLevel: .n5)
+        let secondPick = service.pickCandidate(for: day, excluding: [], learnerLevel: .n5)
+        #expect(firstPick == secondPick)
     }
 
     @Test("A one-level-harder 'stretch' candidate is not hard-excluded")
