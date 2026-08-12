@@ -74,6 +74,14 @@ struct SRSCardView: View {
     /// either way, zero setup. Only the interactive (current) card shows it.
     @State private var audioService = AudioService()
 
+    /// Auto-plays pronunciation the moment a card flips to its answer face.
+    /// Opt-out flag: the Settings row that writes this key is wired by a
+    /// separate change — this reads the key so behaviour is correct the
+    /// moment that row lands, defaulting to on in the meantime. For a
+    /// syllabary especially, seeing the glyph without hearing it is only
+    /// half the lesson.
+    @AppStorage("ikeru.audio.autoplay") private var isAudioAutoplayEnabled: Bool = true
+
     @Namespace private var deckNamespace
 
     /// Distance (in points) at which the grade indicator starts appearing.
@@ -168,6 +176,14 @@ struct SRSCardView: View {
             dragOffset = .zero
             isFlyingOff = false
             thresholdCrossed = false
+        }
+        // Trigger on the false→true transition only — never in `body`, and
+        // never on every re-render (SwiftUI re-evaluates `body` far more
+        // often than the answer face actually flips).
+        .onChange(of: isRevealed) { wasRevealed, nowRevealed in
+            guard nowRevealed, !wasRevealed, isAudioAutoplayEnabled else { return }
+            let text = card.front
+            Task { await audioService.playTTS(text: text) }
         }
     }
 

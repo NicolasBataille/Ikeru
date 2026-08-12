@@ -414,6 +414,39 @@ struct SessionIntegrationTests {
         #expect(vm.sessionQueue.count == 5)
     }
 
+    @Test("Hard grade counts as a recall success, not a miss, toward correctCount")
+    func hardGradeCountsTowardRecallSuccess() async throws {
+        let container = try makeContainer()
+        try seedDueCards(container: container, count: 6)
+
+        let repo = CardRepository(modelContainer: container)
+        let planner = PlannerService(cardRepository: repo)
+        let mockPlanner = await plannerWithSeededCards(repo: repo)
+        let vm = SessionViewModel(
+            plannerService: planner,
+            cardRepository: repo,
+            modelContainer: container,
+            sessionPlanner: mockPlanner
+        )
+
+        await vm.startSession()
+        #expect(vm.sessionQueue.count == 6)
+
+        // 1 real miss (.again), 1 slow-but-correct (.hard), 4 clean passes.
+        await vm.gradeAndAdvance(grade: .again)
+        await vm.gradeAndAdvance(grade: .hard)
+        await vm.gradeAndAdvance(grade: .good)
+        await vm.gradeAndAdvance(grade: .good)
+        await vm.gradeAndAdvance(grade: .easy)
+        await vm.gradeAndAdvance(grade: .easy)
+
+        // Only `.again` is a miss (matches `missedCardIDs`'s semantics), so
+        // 5 of the 6 reviews count toward the summary's recall % — not the
+        // 4/6 (67%) you'd get if `.hard` were wrongly treated as a failure.
+        #expect(vm.correctCount == 5)
+        #expect(vm.missedCardIDs.count == 1)
+    }
+
     @Test("Again re-queues the card 3-5 positions later in a normal session")
     func againRequeuesLaterInNormalSession() async throws {
         let container = try makeContainer()

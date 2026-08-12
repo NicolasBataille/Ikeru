@@ -11474,6 +11474,23 @@
           }
         }
       }
+    },
+    "Follows display mode" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Follows display mode"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suit le mode d'affichage"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

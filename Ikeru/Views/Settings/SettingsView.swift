@@ -21,6 +21,7 @@ struct SettingsView: View {
     @Environment(\.assetCache) private var assetCache
     @Environment(\.toastManager) private var toastManager
     @Environment(AppLocale.self) private var appLocale
+    @Environment(\.displayMode) private var displayMode
 
     // MARK: Editing state
 
@@ -89,8 +90,21 @@ struct SettingsView: View {
         return "Off"
     }
 
+    /// Furigana's effective value — what conversations actually render, not
+    /// necessarily what's stored. When the user has never touched the toggle,
+    /// the effective value is derived from the display mode (ReadingAidResolver),
+    /// not from `furiganaEnabled`. Settings must always show the effective
+    /// value, or the row lies about what's on screen.
+    private var effectiveFuriganaEnabled: Bool {
+        ReadingAidResolver(
+            mode: displayMode,
+            userTouched: furiganaUserTouched,
+            storedValue: furiganaEnabled
+        ).effective
+    }
+
     private var furiganaStatusValue: LocalizedStringKey {
-        furiganaEnabled ? "On" : "Off"
+        effectiveFuriganaEnabled ? "On" : "Off"
     }
 
     private var preWarmStatusValue: LocalizedStringKey {
@@ -326,15 +340,26 @@ struct SettingsView: View {
                     }
                 }
             )
-            settingRow(
-                jp: "振り仮名",
-                label: "Furigana",
-                value: localizedString(furiganaStatusValue),
-                showChevron: false
-            ) {
-                withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) {
-                    furiganaEnabled.toggle()
-                    furiganaUserTouched = true
+            VStack(alignment: .leading, spacing: 4) {
+                settingRow(
+                    jp: "振り仮名",
+                    label: "Furigana",
+                    value: localizedString(furiganaStatusValue),
+                    showChevron: false
+                ) {
+                    withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) {
+                        // Tapping always fixes the setting explicitly — from
+                        // here on the stored value is the effective value.
+                        furiganaEnabled = !effectiveFuriganaEnabled
+                        furiganaUserTouched = true
+                    }
+                }
+                if !furiganaUserTouched {
+                    Text("Follows display mode", comment: "Furigana setting subtitle shown when the user never explicitly toggled it — the on/off value above is derived from the current display mode (Tatami/Beginner), not from a stored preference")
+                        .ikeruScaledFont(11, relativeTo: .caption2)
+                        .foregroundStyle(TatamiTokens.paperGhost)
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 12)
                 }
             }
 

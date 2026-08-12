@@ -208,7 +208,7 @@ struct ConversationBubbleView: View {
         if !message.corrections.isEmpty {
             VStack(alignment: .leading, spacing: IkeruTheme.Spacing.xs) {
                 ForEach(message.corrections) { correction in
-                    CorrectionItemView(correction: correction)
+                    CorrectionItemView(correction: correction, showFurigana: effectiveFurigana)
                 }
             }
         }
@@ -260,22 +260,57 @@ struct ConversationBubbleView: View {
 private struct CorrectionItemView: View {
 
     let correction: Correction
+    let showFurigana: Bool
+
+    /// Sakura writes corrections in the same machine format as the rest of her
+    /// Japanese — `漢字(かんじ)` — so both sides need the same ruby rendering
+    /// sentenceView() gives the message body, otherwise learners see the raw
+    /// parentheses on the app's flagship correction feature.
+    private var originalColor: Color {
+        Color(hex: IkeruTheme.Colors.secondaryAccent).opacity(0.8)
+    }
+
+    private var correctedColor: Color {
+        Color(hex: IkeruTheme.Colors.success)
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
-            HStack(spacing: IkeruTheme.Spacing.xs) {
-                Text(correction.original)
-                    .strikethrough()
-                    .foregroundStyle(Color(hex: IkeruTheme.Colors.secondaryAccent).opacity(0.8))
+            HStack(alignment: .top, spacing: IkeruTheme.Spacing.xs) {
+                // `Text.strikethrough()` isn't available here — KanaRubyText is a
+                // composed View (an IkeruFlowLayout of separate Text tokens for
+                // the ruby/base pairs), not a single Text, so the modifier
+                // doesn't propagate to it. A centered line overlay approximates
+                // the same "struck out" cue while keeping every kanji's furigana
+                // readable. Corrections are short phrases that render on one
+                // line in practice; if one ever wraps, the line only crosses
+                // the row it's centered on instead of every wrapped line.
+                KanaRubyText(
+                    correction.original,
+                    textColor: originalColor,
+                    showFurigana: showFurigana,
+                    showTranslations: false,
+                    baseFont: .ikeruCaption
+                )
+                .overlay {
+                    Rectangle()
+                        .fill(originalColor)
+                        .frame(height: 1)
+                }
 
                 Image(systemName: "arrow.right")
                     .font(.caption2)
                     .foregroundStyle(.ikeruTextSecondary)
+                    .padding(.top, 2)
 
-                Text(correction.corrected)
-                    .foregroundStyle(Color(hex: IkeruTheme.Colors.success))
+                KanaRubyText(
+                    correction.corrected,
+                    textColor: correctedColor,
+                    showFurigana: showFurigana,
+                    showTranslations: false,
+                    baseFont: .ikeruCaption
+                )
             }
-            .font(.ikeruCaption)
 
             if !correction.explanation.isEmpty {
                 Text(correction.explanation)

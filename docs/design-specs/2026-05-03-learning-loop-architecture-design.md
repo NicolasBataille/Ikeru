@@ -113,30 +113,53 @@ public protocol ExerciseUnlockService: Sendable {
 
 `ProfileSnapshot` aggregates the inputs the service needs (mastered card counts by type, kana/kanji breakdown, listening accuracy rolling window, JLPT estimate). Computed once per session-planning request, not on every call.
 
-### Unlock thresholds (research-grounded)
+### Unlock thresholds (product heuristics — not research citations)
+
+Every number below is a default we picked, not a value derived from a published
+study. The literature we skimmed while picking them (Laufer 1989, Hu & Nation
+2000, Nation 2006 on coverage thresholds; Swain 1985 on the output hypothesis;
+the i+1 input-primacy line of argument, critiqued for lacking an operational
+definition by Gregg 1984, via Lichtman & VanPatten 2021) supports *directions*
+— comprehension needs high lexical coverage, production may benefit from prior
+input, output can serve noticing/hypothesis-testing functions — but none of it
+hands us numbers like "100 words" or "60 % over 30 days". Those are ours.
+Guiding principle: **arbitrary-and-admitted is fine; arbitrary-dressed-as-science
+is not.** Treat every threshold in this section as a starting point to
+recalibrate once we have real usage data, not as a settled result.
 
 **Day 1 — always unlocked:**
 - `kanaStudy`
 - `kanjiStudy` (one card at a time, picks from the N5 list)
 - `vocabularyStudy` (picks from N5 vocab)
-- `listeningSubtitled` (receptive-first per SLA research)
+- `listeningSubtitled` (input-first is a defensible *direction* in SLA — but
+  i+1 has never been operationalized as a number, so treat "day 1" itself as
+  our product call, not a citation)
 
 **Earned via threshold:**
 
 | Type | Threshold | Rationale |
 |---|---|---|
-| `fillInBlank` | 50 vocab @ familiar+ | Minimum lexical building blocks |
-| `grammarExercise` | All 46 hiragana mastered | Particles & inflections need kana literacy |
-| `sentenceConstruction` | 5 N5 grammar points familiar+ | Need parts to assemble |
-| `readingPassage` | 100 vocab + 50 kanji @ familiar+ | ~95 % coverage of Tadoku L0 graded readers |
-| `writingPractice` | Both kana scripts mastered + 50 vocab | Output needs scaffolding (Swain) |
-| `listeningUnsubtitled` | ≥ 60 % accuracy on last 30 subtitled exercises | Sustained receptive proficiency |
-| `speakingPractice` | ≥ 60 % listening recall over last 30 days | Output prerequisite (Swain) |
-| `sakuraConversation` | JLPT estimate ≥ N4 (≥ 300 vocab + 30 N5 grammar familiar+) | Real conversation needs grammar foundation |
+| `fillInBlank` | 50 vocab @ familiar+ | Product default: minimum lexical building blocks to fill a blank meaningfully |
+| `grammarExercise` | All 46 hiragana mastered | Product default: particles & inflections need kana literacy to even read the exercise |
+| `sentenceConstruction` | 5 N5 grammar points familiar+ | Product default: need a few grammar parts on hand before assembling sentences |
+| `readingPassage` | 100 vocab + 50 kanji @ familiar+ | Product default, narrower claim than it looks: an L0-tier passage has roughly 20–50 *unique* words, so ~100 well-chosen known words can plausibly exhaust one. This is not a published coverage threshold (95%/98% comprehension thresholds per Laufer 1989 / Hu & Nation 2000 require thousands of word families, not 100) and tadoku.org publishes no numeric vocabulary definition for "L0" — see calibration note below |
+| `writingPractice` | Both kana scripts mastered + 50 vocab | Product default: writing gated behind more foundation than reading since we don't yet measure output quality. Not derived from the output hypothesis (Swain 1985) — that work describes functions of output (noticing, hypothesis-testing), not thresholds |
+| `listeningUnsubtitled` | ≥ 60 % accuracy on last 30 subtitled exercises | Product default: sustained receptive proficiency, chosen to avoid one-time fluke unlocks |
+| `speakingPractice` | ≥ 60 % listening recall over last 30 days | Product default, same caveat as `writingPractice` — no numeric threshold to derive from output-hypothesis or input-primacy research |
+| `sakuraConversation` | JLPT estimate ≥ N4 (≥ 300 vocab + 30 N5 grammar familiar+) | Product default: real conversation needs a grammar foundation, sized to our own JLPT estimate formula |
 
 "@ familiar+" = `MasteryLevel.familiar` or higher in the existing scale (familiar / mastered / anchored). Excludes `.new` and `.learning`.
 
-The 60 %/30-window thresholds avoid one-time fluke unlocks and require sustained competence.
+The 60 %/30-window thresholds avoid one-time fluke unlocks and require sustained competence — a design choice, not a value from the literature.
+
+**Calibration note for `readingPassage`:** the defensible version of this gate
+isn't "our 100 words cover 95% of an external corpus we've never measured" —
+it's "our 100 words cover X% of *our own* content." We ship 96 sentences in
+`n5-content.sqlite`; before shipping this threshold, compute actual coverage
+of our first-100-vocab-by-frequency against those 96 sentences and display
+*that* number here instead of the Tadoku claim. A gate calibrated against the
+content it gates is defensible; one draped in an external corpus we never
+measured is not.
 
 ### Each unlock fires once
 

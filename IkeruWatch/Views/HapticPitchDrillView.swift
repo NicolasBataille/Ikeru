@@ -121,19 +121,26 @@ final class HapticPitchViewModel {
     // MARK: - Sample Words
 
     /// Sample words with known pitch patterns for haptic training.
+    ///
+    /// Each word is filed under the section matching its TRUE pattern (verified against
+    /// NHK/OJAD accent dictionaries). See `HapticPitchDrillSampleWordsTests` in
+    /// `IkeruCore/Tests/Models/Content` for a regression guard that recomputes the pattern
+    /// from `(moraCount, accentPosition)` and checks it matches the declared section.
     private static let sampleWords: [(word: String, moraCount: Int, accentPosition: Int)] = [
         // 平板 (heiban) — flat
         ("さくら", 3, 0),    // sakura
         ("ともだち", 4, 0),  // tomodachi
         // 頭高 (atamadaka) — accent on first
-        ("いぬ", 2, 1),      // inu
+        ("ねこ", 2, 1),      // neko — cat
         ("カメラ", 3, 1),    // kamera
         // 中高 (nakadaka) — accent in middle
-        ("おとこ", 3, 2),    // otoko
         ("たまご", 3, 2),    // tamago
+        ("せんせい", 4, 3),  // sensei — teacher
         // 尾高 (odaka) — accent on last
         ("あたま", 3, 3),    // atama
         ("おとうと", 4, 4),  // otouto
+        ("いぬ", 2, 2),      // inu — dog (was mis-filed under atamadaka; true pattern is odaka)
+        ("おとこ", 3, 3),    // otoko — man (was mis-filed under nakadaka; true pattern is odaka)
     ]
 
     // MARK: - Session

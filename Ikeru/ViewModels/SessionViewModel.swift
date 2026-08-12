@@ -11,11 +11,16 @@ import os
 
 public enum FeedbackState: Sendable, Equatable {
     case correct
+    /// Recall succeeded but was slow (a `.hard` grade). Not a miss — `.hard`
+    /// counts toward the recall %, same as `.correct` — but a full green
+    /// "correct" flash would overstate how easy the recall actually was.
+    case partial
     case incorrect
 
     public var color: Color {
         switch self {
         case .correct: Color(hex: IkeruTheme.Colors.success)        // jade green
+        case .partial: Color(hex: IkeruTheme.Colors.warning)        // amber
         case .incorrect: Color(hex: IkeruTheme.Colors.secondaryAccent) // vermillion
         }
     }
@@ -58,11 +63,14 @@ public final class SessionViewModel {
     /// every session start (including when re-starting in mistakes mode).
     public private(set) var missedCardIDs: Set<UUID> = []
 
-    /// Total cards graded `.good` or `.easy` this session. Used by the
-    /// summary's recall % — *not* `consecutiveCorrect`, because that
-    /// resets on any miss and made recall always read 0% the moment the
-    /// user hit a single .hard or .again, even if every other card was
-    /// correct.
+    /// Total cards graded `.good`, `.easy`, or `.hard` this session — i.e.
+    /// every grade except `.again`, matching `missedCardIDs`' definition of
+    /// a miss. `.hard` means the recall was slow but ultimately correct, so
+    /// it counts as a pass here (see `gradeAndAdvance`); counting it as a
+    /// failure would conflate slow recall with an actual miss. Used by the
+    /// summary's recall % — *not* `consecutiveCorrect`, because that resets
+    /// on any miss and made recall always read 0% the moment the user hit a
+    /// single .hard or .again, even if every other card was correct.
     public private(set) var correctCount: Int = 0
 
     /// Whether this session was launched via the "Review mistakes" CTA.
@@ -542,9 +550,21 @@ public final class SessionViewModel {
 
         let responseTimeMs = Int(Date().timeIntervalSince(cardStartTime) * 1000)
 
-        // Show feedback
-        let isCorrect = grade == .good || grade == .easy
-        feedbackState = isCorrect ? .correct : .incorrect
+        // Recall succeeded whenever the grade wasn't `.again` — `.hard` means
+        // slow-but-correct, so it counts as a pass for the recall % (see
+        // `correctCount`), consistent with `missedCardIDs` below only
+        // treating `.again` as a miss.
+        let isRecallSuccess = grade != .again
+
+        // Show feedback. `.hard` gets its own `.partial` treatment: it's not
+        // the full "correct" green (the recall was slow), but it's not the
+        // "incorrect" red of an actual miss either.
+        let newFeedbackState: FeedbackState = switch grade {
+        case .again: .incorrect
+        case .hard: .partial
+        case .good, .easy: .correct
+        }
+        feedbackState = newFeedbackState
 
         // Track only .again grades as mistakes. A .hard grade means the recall
         // was slow but ultimately correct — counting it as a miss conflated
@@ -564,7 +584,7 @@ public final class SessionViewModel {
         await awardExerciseXP(type: exerciseType, grade: grade, sampledTelemetry: true)
 
         // Track consecutive correct (display / Live Activity streak only).
-        trackCorrectness(isCorrect: isCorrect)
+        trackCorrectness(isCorrect: isRecallSuccess)
 
         // Card-derived grade side-effects (first-review `newItemsLearned`
         // counting, leech detection). Extracted so the `.kanjiStudy` drill
@@ -801,8 +821,10 @@ public final class SessionViewModel {
         let resolvedType = SessionExerciseSupport.exerciseType(for: exercise)
         await awardExerciseXP(type: resolvedType, grade: grade, sampledTelemetry: false)
 
-        // Track consecutive / total correct (display only).
-        trackCorrectness(isCorrect: grade == .good || grade == .easy)
+        // Track consecutive / total correct (display only). `.hard` counts as
+        // a pass here too — see `correctCount`'s doc comment / `gradeAndAdvance`
+        // for why: it's slow-but-correct recall, not a miss.
+        trackCorrectness(isCorrect: grade != .again)
 
         // The card-backed kinds (`.kanjiStudy`, `.writingPractice`) run the
         // shared card-grade side-effects: leech detection and first-review
