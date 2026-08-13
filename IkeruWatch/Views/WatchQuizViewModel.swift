@@ -44,6 +44,20 @@ final class WatchQuizViewModel {
     /// Results per question (true = correct).
     private(set) var questionResults: [Bool] = []
 
+    /// Per-question graded events for this nano-session — sent as a
+    /// `WatchQuizReviewBatch` on completion so every wrist answer becomes a
+    /// real `ReviewLog` on the iPhone (chantier #46), the same way the
+    /// iPhone kana quiz's `submitQuizAnswer` does via `gradeCard`.
+    private var events: [WatchQuizReviewBatch.Event] = []
+
+    /// Stable id for this nano-session, used by the iPhone side to dedupe a
+    /// replayed `transferUserInfo` delivery so it's never graded twice.
+    private var sessionId = UUID()
+
+    /// When the current question was shown — start of the response-time
+    /// clock for `WatchQuizReviewBatch.Event.responseTimeMs`.
+    private var questionShownAt = Date()
+
     /// Kana pool for this session.
     private var pool: [KanaData.Entry] = []
 
@@ -68,6 +82,8 @@ final class WatchQuizViewModel {
         currentQuestion = 0
         correctCount = 0
         questionResults = []
+        events = []
+        sessionId = UUID()
         lastAnswerResult = nil
         lastAnsweredId = nil
         loadNextQuestion()
@@ -80,6 +96,17 @@ final class WatchQuizViewModel {
         lastAnswerResult = isCorrect
         lastAnsweredId = choice.id
         questionResults.append(isCorrect)
+
+        let responseTimeMs = max(0, Int(Date().timeIntervalSince(questionShownAt) * 1_000))
+        events.append(
+            WatchQuizReviewBatch.Event(
+                targetCharacter: targetCharacter,
+                answeredCharacter: choice.character,
+                isCorrect: isCorrect,
+                responseTimeMs: responseTimeMs,
+                answeredAt: Date()
+            )
+        )
 
         if isCorrect {
             correctCount += 1
@@ -102,13 +129,12 @@ final class WatchQuizViewModel {
                 loadNextQuestion()
             } else {
                 WKInterfaceDevice.current().play(.notification)
-                let result = WatchSessionResult(
-                    correctCount: correctCount,
-                    totalQuestions: totalQuestions,
-                    drillType: .kanaQuiz,
+                let batch = WatchQuizReviewBatch(
+                    sessionId: sessionId,
+                    events: events,
                     xpEarned: correctCount * 5
                 )
-                WatchSessionManager.shared.sendSessionResult(result)
+                WatchSessionManager.shared.sendQuizReviewBatch(batch)
             }
         }
     }
@@ -127,6 +153,7 @@ final class WatchQuizViewModel {
         targetCharacter = target.character
         correctId = target.id
         choices = buildChoices(for: target)
+        questionShownAt = Date()
     }
 
     /// Builds the 4-choice answer set for `target`, preferring distractors that

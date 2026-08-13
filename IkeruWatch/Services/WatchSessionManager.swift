@@ -26,6 +26,10 @@ final class WatchSessionManager: NSObject, ObservableObject {
     /// Pending session results to send when connectivity is restored.
     private var pendingResults: [WatchSessionResult] = []
 
+    /// Pending kana-quiz review batches to send when connectivity is
+    /// restored — same queued-while-offline treatment as `pendingResults`.
+    private var pendingReviewBatches: [WatchQuizReviewBatch] = []
+
     private override init() {
         super.init()
     }
@@ -55,14 +59,38 @@ final class WatchSessionManager: NSObject, ObservableObject {
         Logger.sync.info("Sent session result: \(result.drillType.rawValue), +\(result.xpEarned) XP")
     }
 
+    /// Sends a batch of individually-graded kana quiz answers to the iPhone,
+    /// so each answer is graded through `CardRepository.gradeCard` there —
+    /// see `WatchQuizReviewBatch`. Uses `transferUserInfo` for the same
+    /// guaranteed-delivery-while-offline reason as `sendSessionResult`.
+    func sendQuizReviewBatch(_ batch: WatchQuizReviewBatch) {
+        guard WCSession.default.activationState == .activated else {
+            pendingReviewBatches.append(batch)
+            Logger.sync.info("Queued quiz review batch (offline): \(batch.events.count) answers")
+            return
+        }
+
+        WCSession.default.transferUserInfo(batch.toDictionary())
+        Logger.sync.info("Sent quiz review batch: \(batch.events.count) answers, +\(batch.xpEarned) XP")
+    }
+
     /// Flushes any pending results when connectivity is restored.
     private func flushPendingResults() {
-        guard !pendingResults.isEmpty else { return }
-        Logger.sync.info("Flushing \(self.pendingResults.count) pending results")
-        for result in pendingResults {
-            WCSession.default.transferUserInfo(result.toDictionary())
+        if !pendingResults.isEmpty {
+            Logger.sync.info("Flushing \(self.pendingResults.count) pending results")
+            for result in pendingResults {
+                WCSession.default.transferUserInfo(result.toDictionary())
+            }
+            pendingResults.removeAll()
         }
-        pendingResults.removeAll()
+
+        if !pendingReviewBatches.isEmpty {
+            Logger.sync.info("Flushing \(self.pendingReviewBatches.count) pending review batches")
+            for batch in pendingReviewBatches {
+                WCSession.default.transferUserInfo(batch.toDictionary())
+            }
+            pendingReviewBatches.removeAll()
+        }
     }
 
     /// Apply state synced from the iPhone. Called only on the main actor —

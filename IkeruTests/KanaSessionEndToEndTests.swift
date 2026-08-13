@@ -27,10 +27,10 @@ struct KanaSessionEndToEndTests {
     // MARK: - Helpers
 
     private func makeContainer() throws -> ModelContainer {
-        // Full current (V3) schema — see `SessionDecouplingTests.makeContainer`'s
-        // identical doc comment for why V2 would silently bind the wrong
-        // entity identity.
-        let schema = Schema(versionedSchema: IkeruSchemaV3.self)
+        // Full current (V4) schema — see `SessionDecouplingTests.makeContainer`'s
+        // identical doc comment for why V3 would silently bind the wrong
+        // entity identity (V3 is now frozen: cloud-sync lot 0, 2026-08-13).
+        let schema = Schema(versionedSchema: IkeruSchemaV4.self)
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         ActiveProfileResolver.setActiveProfileID(nil)
         return try ModelContainer(for: schema, configurations: [config])

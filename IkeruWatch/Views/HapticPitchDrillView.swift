@@ -228,6 +228,20 @@ final class HapticPitchViewModel {
             loadCurrentWord()
         } else {
             WKInterfaceDevice.current().play(.notification)
+            // Deliberately NOT graded through `CardRepository.gradeCard`
+            // (chantier #46, arbitrage "b" scoped to this drill only — the
+            // kana quiz took arbitrage "a", see `WatchQuizViewModel`). This
+            // drill never asks the learner to answer anything: `nextWord()`
+            // only advances a haptic playback, so `correctCount` is always
+            // `totalWords` regardless of what the learner did or didn't do.
+            // There is no correctness signal to grade and no `Card` this
+            // maps to (pitch accent isn't a card type in the SRS deck), so
+            // producing a `ReviewLog` here would fabricate a review that
+            // never happened. It stays an XP-only exposure exercise via the
+            // legacy aggregate `WatchSessionResult` path — see
+            // `WatchConnectivityManager.processWatchResult`, which
+            // deliberately does NOT bump `RPGState.totalReviewsCompleted`
+            // for `.pitchAccent` for the same reason.
             let result = WatchSessionResult(
                 correctCount: totalWords,
                 totalQuestions: totalWords,

@@ -50,17 +50,20 @@ struct IkeruApp: App {
     let modelContainer: ModelContainer
 
     init() {
-        // Current versioned schema (IkeruSchemaV3) + migration plan so
+        // Current versioned schema (IkeruSchemaV4) + migration plan so
         // @Model changes migrate explicitly instead of relying on implicit
         // lightweight migration. The plan carries the V1→V2 stage that adds
-        // ExerciseOutcomeLog, then V2→V3 which adds the answer provenance
-        // fields on ReviewLog. See IkeruSchema.swift in IkeruCore.
+        // ExerciseOutcomeLog, V2→V3 which adds the answer provenance fields
+        // on ReviewLog, then V3→V4 which adds the cloud-sync columns
+        // (updatedAt/deletedAt/syncedAt) to the 8 synchronized entities —
+        // see docs/design-specs/2026-08-10-cloud-sync-design.md §5.1. See
+        // IkeruSchema.swift in IkeruCore.
         //
         // This MUST name the latest version. Declaring an older one opens the
         // container without error and then traps on the first insert
         // ("Failed to cast model IkeruCore.UserProfile"), which the store
         // recovery below cannot catch — it only wraps makeModelContainer.
-        let schema = Schema(versionedSchema: IkeruSchemaV3.self)
+        let schema = Schema(versionedSchema: IkeruSchemaV4.self)
 
         do {
             modelContainer = try Self.makeModelContainer(schema: schema)

@@ -10,6 +10,8 @@
 		00C45E3806F4F41DF942E46A /* WatchConnectivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6DF718512A3E4A694744447 /* WatchConnectivityManager.swift */; };
 		A95406495EFFFCC424EB90C6 /* IkeruPlatformTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5E4550783515A4C00B4F420 /* IkeruPlatformTheme.swift */; };
 		C53BD84DE873400AE9DEA38E /* IkeruPlatformTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5E4550783515A4C00B4F420 /* IkeruPlatformTheme.swift */; };
+		28B37E098311948228BF4E93 /* WatchQuizReviewBatch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CE0935138803421F534B3E2 /* WatchQuizReviewBatch.swift */; };
+		215B6B0C00D7158E959EEAEC /* WatchQuizReviewBatch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CE0935138803421F534B3E2 /* WatchQuizReviewBatch.swift */; };
 		2E7BEA1CF1869BC7DED6158B /* WidgetSnapshotStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25A7130171295376EED78A07 /* WidgetSnapshotStore.swift */; };
 		1D49980FCB6299CCF998D5F4 /* WidgetSnapshotStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25A7130171295376EED78A07 /* WidgetSnapshotStore.swift */; };
 		606B578980D413E9E951ED2B /* WidgetSnapshotRefresher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E47B92BCD0BF85A100174BB /* WidgetSnapshotRefresher.swift */; };
@@ -488,6 +490,7 @@
 		F0B25FD2BC64C88BF9B170AC /* OnboardingTourView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingTourView.swift; sourceTree = "<group>"; };
 		F1DF2E350075F0F6C4CFE5D5 /* HomeViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewModel.swift; sourceTree = "<group>"; };
 		F5E4550783515A4C00B4F420 /* IkeruPlatformTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IkeruPlatformTheme.swift; sourceTree = "<group>"; };
+		4CE0935138803421F534B3E2 /* WatchQuizReviewBatch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchQuizReviewBatch.swift; sourceTree = "<group>"; };
 		25A7130171295376EED78A07 /* WidgetSnapshotStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetSnapshotStore.swift; sourceTree = "<group>"; };
 		3E47B92BCD0BF85A100174BB /* WidgetSnapshotRefresher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetSnapshotRefresher.swift; sourceTree = "<group>"; };
 		A2324815C58F87A181CE08E7 /* WidgetDeepLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetDeepLink.swift; sourceTree = "<group>"; };
@@ -1087,6 +1090,7 @@
 				F5E4550783515A4C00B4F420 /* IkeruPlatformTheme.swift */,
 				25A7130171295376EED78A07 /* WidgetSnapshotStore.swift */,
 				A2324815C58F87A181CE08E7 /* WidgetDeepLink.swift */,
+				4CE0935138803421F534B3E2 /* WatchQuizReviewBatch.swift */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -1357,6 +1361,7 @@
 				6B447B08EC87253CC183BF68 /* WatchQuizViewModel.swift in Sources */,
 				115FC8D3C754A17975CF5886 /* WatchSessionManager.swift in Sources */,
 				A95406495EFFFCC424EB90C6 /* IkeruPlatformTheme.swift in Sources */,
+				215B6B0C00D7158E959EEAEC /* WatchQuizReviewBatch.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1496,6 +1501,7 @@
 				334374E0095383949D5C6B13 /* VocabularyRecallView.swift in Sources */,
 				96318E447330C86C4B8FF75B /* VocabularyStudyViewModel.swift in Sources */,
 				00C45E3806F4F41DF942E46A /* WatchConnectivityManager.swift in Sources */,
+				28B37E098311948228BF4E93 /* WatchQuizReviewBatch.swift in Sources */,
 				A00ED71AC785B8E955FF9A08 /* WordDefinitionView.swift in Sources */,
 				99E26C3CCDD74700B6074011 /* TatamiTokens.swift in Sources */,
 				1EB643DBDF51CC4C61434B2C /* SerifNumeral.swift in Sources */,
