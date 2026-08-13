@@ -574,13 +574,24 @@ public final class SessionViewModel {
             requeueFailedCard(card)
         }
 
-        await gradeCardAndCheckSaveErrors(card: card, grade: grade, responseTimeMs: responseTimeMs)
+        // Hoisted above the grade write (pure function of `card`, no side
+        // effects) so the SAME resolved type feeds both the persisted
+        // ReviewLog.exerciseType (provenance, learner-telemetry lot 1) and
+        // the XP award below — one source of truth, not two computations
+        // that could drift apart.
+        let exerciseType = SessionExerciseSupport.exerciseTypeForCurrentReview(card: card)
+
+        await gradeCardAndCheckSaveErrors(
+            card: card,
+            grade: grade,
+            responseTimeMs: responseTimeMs,
+            exerciseType: exerciseType
+        )
 
         // Award XP via ExerciseXP (per-type × JLPT-level multiplier),
         // delegating to RPGService for level-up bookkeeping. Flashcard
         // types still match `xpForGrade` totals (delegation in the rule
         // table), so kana-only N5 sessions award the same XP as before.
-        let exerciseType = SessionExerciseSupport.exerciseTypeForCurrentReview(card: card)
         await awardExerciseXP(type: exerciseType, grade: grade, sampledTelemetry: true)
 
         // Track consecutive correct (display / Live Activity streak only).
@@ -612,6 +623,12 @@ public final class SessionViewModel {
         await finishSessionIfNeeded()
     }
 
+    /// Where every `ReviewLog` written by this view model came from. The main
+    /// SRS session runs only on iPhone today — no Watch call site persists a
+    /// `ReviewLog` yet — so this is the one constant value for the whole file.
+    /// See `ReviewLog.surface`.
+    private static let reviewSurface = "iphone.session"
+
     /// Persists a card's FSRS grade and surfaces persistence failures. Shared
     /// by the SRS deck path (`gradeAndAdvance`, always grades `currentCard`)
     /// and the non-SRS drill path (`completeCurrentExercise`, conditionally
@@ -619,14 +636,28 @@ public final class SessionViewModel {
     /// save-error-monitor check. A grade whose save failed may not count
     /// toward scheduling; this checks once right after the write and clears
     /// the monitor so the same failure isn't re-surfaced on the next card.
-    private func gradeCardAndCheckSaveErrors(card: CardDTO, grade: Grade, responseTimeMs: Int) async {
+    ///
+    /// `answeredValue` is never passed here — every grade reaching this layer
+    /// came from a self-graded Again/Hard/Good/Easy button, not a choice-format
+    /// exercise, so there is no "chosen value" to log (stays `nil` on the
+    /// persisted `ReviewLog`). Choice-format session exercises exist elsewhere
+    /// (e.g. vocabulary recall options) but their chosen answers aren't
+    /// plumbed to this layer yet — out of this lot's scope, not an oversight.
+    private func gradeCardAndCheckSaveErrors(
+        card: CardDTO,
+        grade: Grade,
+        responseTimeMs: Int,
+        exerciseType: ExerciseType
+    ) async {
         Logger.srs.debug(
             "Grading card \(card.front): grade=\(grade.rawValue), responseTime=\(responseTimeMs)ms"
         )
         await cardRepository.gradeCard(
             cardId: card.id,
             grade: grade,
-            responseTimeMs: responseTimeMs
+            responseTimeMs: responseTimeMs,
+            exerciseType: exerciseType.rawValue,
+            surface: Self.reviewSurface
         )
         if cardRepository.saveErrorMonitor.lastSaveError != nil {
             cardRepository.saveErrorMonitor.clear()
@@ -810,15 +841,23 @@ public final class SessionViewModel {
         default:
             gradeableCard = nil
         }
+        // Hoisted above the grade write — see `gradeAndAdvance`'s identical
+        // reasoning for why the resolved type feeds both the persisted
+        // ReviewLog.exerciseType and the XP award below from one computation.
+        let resolvedType = SessionExerciseSupport.exerciseType(for: exercise)
         if let card = gradeableCard {
             nonSRSGradedCardIDs.insert(card.id)
-            await gradeCardAndCheckSaveErrors(card: card, grade: grade, responseTimeMs: responseTimeMs)
+            await gradeCardAndCheckSaveErrors(
+                card: card,
+                grade: grade,
+                responseTimeMs: responseTimeMs,
+                exerciseType: resolvedType
+            )
         }
 
         // Award XP for the exercise kind (per-type × JLPT-level multiplier).
         // `grade` is forwarded for `.perGrade` kinds (e.g. kanjiStudy) and
         // ignored by the rule table for `.perCompletion` kinds.
-        let resolvedType = SessionExerciseSupport.exerciseType(for: exercise)
         await awardExerciseXP(type: resolvedType, grade: grade, sampledTelemetry: false)
 
         // Track consecutive / total correct (display only). `.hard` counts as

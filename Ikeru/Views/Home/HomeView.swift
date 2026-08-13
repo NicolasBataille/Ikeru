@@ -224,6 +224,7 @@ struct HomeView: View {
                 proverbHero(vm)
                 dailyTermSection
                 sessionBreakdown(vm)
+                competencyBookSection(vm)
                 nextStepSection(vm)
             }
             .padding(.horizontal, IkeruTheme.Spacing.lg)
@@ -487,6 +488,13 @@ struct HomeView: View {
     }
 
     /// "かな X/92 learned" — the calm progress signal for beginners.
+    ///
+    /// Also carries the "in progress" count (`learningTotal`) whenever it's
+    /// nonzero. Without it, a beginner's first-ever session ends with this
+    /// line stuck at "0/92" — mathematically correct (mastery requires
+    /// `reps >= 2`, see `MasteryLevel`) but silent, exactly the "anti-burnout
+    /// without a mirror" gap the 2026-08-10 review names. The in-progress
+    /// count is the trace that makes session one visible.
     private func kanaProgressLine(_ vm: HomeViewModel) -> some View {
         HStack(spacing: 8) {
             Text("\u{304B}\u{306A}") // かな
@@ -501,6 +509,20 @@ struct HomeView: View {
                 .textCase(.uppercase)
                 .tracking(1.0)
                 .foregroundStyle(Color.ikeruTextTertiary)
+
+            if vm.kanaProgress.learningTotal > 0 {
+                Text("\u{00B7}")
+                    .foregroundStyle(Color.ikeruTextTertiary)
+                Text("\(vm.kanaProgress.learningTotal)")
+                    .ikeruScaledFont(12, design: .serif, relativeTo: .caption)
+                    .monospacedDigit()
+                    .foregroundStyle(Color.ikeruTextSecondary)
+                Text("Home.KanaInProgress")
+                    .ikeruScaledFont(10, relativeTo: .caption2)
+                    .textCase(.uppercase)
+                    .tracking(1.0)
+                    .foregroundStyle(Color.ikeruTextTertiary)
+            }
             Spacer()
         }
         .padding(.top, 2)
@@ -573,6 +595,22 @@ struct HomeView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 10)
+    }
+
+    // MARK: - Competency booklet (the "miroir" — see CompetencyBookCard)
+    //
+    // Only renders once there is something to mirror (at least one card or
+    // dictionary entry has been touched) — an untouched profile still gets
+    // the choose-your-kana gate or the hero CTA, never an empty booklet.
+
+    @ViewBuilder
+    private func competencyBookSection(_ vm: HomeViewModel) -> some View {
+        if vm.masteryBook.totalCount > 0 {
+            CompetencyBookCard(
+                masteryBook: vm.masteryBook,
+                weeklyDelta: vm.masteryBookWeeklyDelta
+            )
+        }
     }
 
     // MARK: - Next-step suggestion (calm progression nudge)

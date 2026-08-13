@@ -13,8 +13,18 @@ struct KanaPoolSelectorView: View {
     @State private var pendingMode: KanaDrillMode?
     @State private var pendingCards: [CardDTO] = []
     @State private var pendingGroups: Set<KanaGroup> = []
+    /// Set only by the confusion-pair drills (chantier #24b) — see
+    /// `launchConfusionCluster`. Reset to `nil` by the three main drill
+    /// buttons so a prior cluster launch never leaks into a normal session.
+    @State private var pendingCharacterFilter: Set<String>?
+    @State private var pendingSessionLabel: LocalizedStringKey?
     @State private var showDrill = false
     @State private var showDrillModesExplainer = false
+
+    // MARK: Sequencing guard (chantier #24c)
+
+    @State private var pendingSequencingPreset: KanaPreset?
+    @State private var showSequencingConfirmation = false
 
     /// When set, the selector runs as the first-run "study-set chooser" presented
     /// from Home: the bottom bar shows a single "Start learning these" button
@@ -55,8 +65,43 @@ struct KanaPoolSelectorView: View {
         }
         .navigationDestination(isPresented: $showDrill) {
             if let mode = pendingMode {
-                KanaDrillModeSelector(mode: mode, groups: pendingGroups, cards: pendingCards)
+                KanaDrillModeSelector(
+                    mode: mode,
+                    groups: pendingGroups,
+                    cards: pendingCards,
+                    characterFilter: pendingCharacterFilter,
+                    sessionLabel: pendingSessionLabel
+                )
             }
+        }
+        .confirmationDialog(
+            "Kana.Sequencing.Title",
+            isPresented: $showSequencingConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button {
+                if let vm = viewModel {
+                    withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+                        vm.applyPreset(.hiraganaBase)
+                    }
+                }
+                pendingSequencingPreset = nil
+            } label: {
+                Text("Kana.Sequencing.SwitchToHiragana")
+            }
+            Button {
+                if let vm = viewModel, let preset = pendingSequencingPreset {
+                    withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+                        vm.applyPreset(preset)
+                    }
+                }
+                pendingSequencingPreset = nil
+            } label: {
+                Text("Kana.Sequencing.ContinueAnyway")
+            }
+            Button("Cancel", role: .cancel) { pendingSequencingPreset = nil }
+        } message: {
+            Text("Kana.Sequencing.Message")
         }
     }
 
@@ -154,6 +199,7 @@ struct KanaPoolSelectorView: View {
                 presetBar(vm)
                 scriptSection(vm, script: .hiragana, title: "Hiragana")
                 scriptSection(vm, script: .katakana, title: "Katakana")
+                confusionPairsSection(vm)
                 Spacer(minLength: 200)
             }
             .padding(.horizontal, IkeruTheme.Spacing.lg)
@@ -180,16 +226,24 @@ struct KanaPoolSelectorView: View {
     }
 
     // MARK: Presets
+    //
+    // This row is presets (quick selections), not tabs — a real trap for a
+    // first-time visitor because a scrollable chip row that ends flush with
+    // the screen edge reads as complete. An expert playtest spent five
+    // minutes convinced this was a broken segmented control before
+    // discovering "All"/"Clear" only by accidentally scrolling (chantier
+    // #24 affordance fix). Two independent, low-risk cues instead of a
+    // full relayout: the native scroll indicator (previously hidden) plus a
+    // trailing fade that visibly cuts the last chip whenever more content
+    // sits off-screen to the right.
 
     @ViewBuilder
     private func presetBar(_ vm: KanaPoolViewModel) -> some View {
-        ScrollView(.horizontal, showsIndicators: false) {
+        ScrollView(.horizontal, showsIndicators: true) {
             HStack(spacing: 8) {
                 ForEach(KanaPreset.allCases) { preset in
                     Button {
-                        withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
-                            vm.applyPreset(preset)
-                        }
+                        applyPresetRespectingSequencing(vm, preset: preset)
                     } label: {
                         Text(LocalizedStringKey(preset.displayName))
                             .font(.ikeruCaption)
@@ -220,7 +274,35 @@ struct KanaPoolSelectorView: View {
                 .buttonStyle(.plain)
             }
             .padding(.vertical, 2)
+            // Trailing padding must be ≥ the fade's width below (28pt) so
+            // "Clear" fully clears the gradient once the row is scrolled all
+            // the way — otherwise the fade would still be dimming the last
+            // chip at rest, standing in as a false "more content" cue.
+            .padding(.trailing, 32)
         }
+        .overlay(alignment: .trailing) {
+            LinearGradient(
+                colors: [Color.ikeruBackground.opacity(0), Color.ikeruBackground.opacity(0.85)],
+                startPoint: .leading,
+                endPoint: .trailing
+            )
+            .frame(width: 28)
+            .allowsHitTesting(false)
+        }
+    }
+
+    /// Applies `preset` directly, unless it would introduce katakana before
+    /// the learner has made real progress on hiragana — then it stashes the
+    /// preset and asks first (chantier #24c).
+    private func applyPresetRespectingSequencing(_ vm: KanaPoolViewModel, preset: KanaPreset) {
+        guard vm.presetNeedsSequencingConfirmation(preset) else {
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+                vm.applyPreset(preset)
+            }
+            return
+        }
+        pendingSequencingPreset = preset
+        showSequencingConfirmation = true
     }
 
     // MARK: Script Sections
@@ -381,6 +463,73 @@ struct KanaPoolSelectorView: View {
             pendingMode = mode
             pendingCards = cards
             pendingGroups = vm.selectedGroups
+            // Clear any filter/label left over from a confusion-pair launch
+            // (see `launchConfusionCluster`) — this is a normal, unscoped session.
+            pendingCharacterFilter = nil
+            pendingSessionLabel = nil
+            showDrill = true
+        }
+    }
+
+    // MARK: Confusable pairs (chantier #24b)
+    //
+    // The classic katakana interference pairs (シ/ツ, ソ/ン, ...) otherwise
+    // only ever surface at random, mixed in among an entire group's cards.
+    // This section drills each cluster on its own — the queue IS the
+    // cluster, so the quiz distractors are guaranteed to include the
+    // actual look-alike (see `KanaDrillViewModel.buildQuiz`'s queue-first
+    // distractor priority).
+
+    @ViewBuilder
+    private func confusionPairsSection(_ vm: KanaPoolViewModel) -> some View {
+        VStack(alignment: .leading, spacing: IkeruTheme.Spacing.sm) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Kana.ConfusionPairs.Title")
+                    .font(.ikeruMicro)
+                    .ikeruTracking(.micro)
+                    .foregroundStyle(Color.ikeruTextTertiary)
+                Text("Kana.ConfusionPairs.Description")
+                    .font(.ikeruMicro)
+                    .foregroundStyle(Color.ikeruTextTertiary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            LazyVGrid(columns: columns, spacing: IkeruTheme.Spacing.sm) {
+                ForEach(KanaConfusionClusters.all) { cluster in
+                    confusionClusterCard(vm, cluster: cluster)
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func confusionClusterCard(_ vm: KanaPoolViewModel, cluster: KanaConfusionCluster) -> some View {
+        Button {
+            launchConfusionCluster(vm, cluster: cluster)
+        } label: {
+            VStack(spacing: 6) {
+                Text(cluster.displayLabel)
+                    .font(.system(size: 22, weight: .regular, design: .serif))
+                    .foregroundStyle(Color.ikeruTextPrimary)
+                Text("Kana.ConfusionPairs.PracticeLabel")
+                    .font(.ikeruMicro)
+                    .ikeruTracking(.micro)
+                    .foregroundStyle(Color.ikeruPrimaryAccent)
+            }
+            .frame(maxWidth: .infinity)
+            .tatamiRoom(.standard, padding: CGFloat(IkeruTheme.Spacing.md))
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func launchConfusionCluster(_ vm: KanaPoolViewModel, cluster: KanaConfusionCluster) {
+        Task { @MainActor in
+            let cards = await vm.cards(forConfusionCluster: cluster)
+            pendingMode = .freePractice
+            pendingCards = cards
+            pendingGroups = vm.groups(forConfusionCluster: cluster)
+            pendingCharacterFilter = Set(cluster.characters)
+            pendingSessionLabel = LocalizedStringKey(cluster.displayLabel)
             showDrill = true
         }
     }

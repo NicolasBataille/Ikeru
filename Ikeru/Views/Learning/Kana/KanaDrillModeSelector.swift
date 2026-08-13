@@ -11,6 +11,17 @@ struct KanaDrillModeSelector: View {
     @Environment(\.modelContext) private var modelContext
     let mode: KanaDrillMode
     let groups: Set<KanaGroup>
+    /// Restricts every card refresh to these fronts within `groups`. Used by
+    /// the confusion-pair drills (chantier #24b): repository queries are
+    /// group-scoped, so seeding/fetching pulls in the whole group, and this
+    /// filter is what keeps `refreshCards()` from re-widening the queue back
+    /// out to the full group on every appear. `nil` (default) preserves the
+    /// existing behaviour for the three main drill buttons.
+    let characterFilter: Set<String>?
+    /// Overrides `mode.displayName` in the header and is threaded through to
+    /// the Flashcard/Quiz view models. `nil` (default) preserves the
+    /// existing mode-name display.
+    let sessionLabel: LocalizedStringKey?
 
     /// Live queue for this mode. Seeded from the snapshot captured when the
     /// drill was launched, then refreshed on every appear (including pop-back
@@ -27,9 +38,17 @@ struct KanaDrillModeSelector: View {
     /// see the same hiragana order every time.
     @State private var runId: UUID = UUID()
 
-    init(mode: KanaDrillMode, groups: Set<KanaGroup>, cards: [CardDTO]) {
+    init(
+        mode: KanaDrillMode,
+        groups: Set<KanaGroup>,
+        cards: [CardDTO],
+        characterFilter: Set<String>? = nil,
+        sessionLabel: LocalizedStringKey? = nil
+    ) {
         self.mode = mode
         self.groups = groups
+        self.characterFilter = characterFilter
+        self.sessionLabel = sessionLabel
         _cards = State(initialValue: cards)
     }
 
@@ -85,7 +104,8 @@ struct KanaDrillModeSelector: View {
                 mode: mode,
                 queue: cards,
                 cardRepository: cardRepository,
-                vocabularyRepository: vocabularyRepository
+                vocabularyRepository: vocabularyRepository,
+                sessionLabel: sessionLabel
             ))
             .id(runId)
         }
@@ -94,7 +114,8 @@ struct KanaDrillModeSelector: View {
                 mode: mode,
                 queue: cards,
                 cardRepository: cardRepository,
-                vocabularyRepository: vocabularyRepository
+                vocabularyRepository: vocabularyRepository,
+                sessionLabel: sessionLabel
             ))
             .id(runId)
         }
@@ -106,7 +127,7 @@ struct KanaDrillModeSelector: View {
                 .font(.ikeruMicro)
                 .ikeruTracking(.micro)
                 .foregroundStyle(Color.ikeruTextTertiary)
-            Text(LocalizedStringKey(mode.displayName))
+            Text(sessionLabel ?? LocalizedStringKey(mode.displayName))
                 .font(.ikeruDisplaySmall)
                 .ikeruTracking(.display)
                 .foregroundStyle(Color.ikeruTextPrimary)
@@ -118,14 +139,19 @@ struct KanaDrillModeSelector: View {
 
     private func refreshCards() async {
         let kanaRepo = KanaCardRepository(cardRepository: cardRepository)
+        var result: [CardDTO]
         switch mode {
         case .dueReview:
-            cards = await kanaRepo.dueCardsForGroups(groups, now: Date())
+            result = await kanaRepo.dueCardsForGroups(groups, now: Date())
         case .freePractice:
-            cards = await kanaRepo.cardsForGroups(groups)
+            result = await kanaRepo.cardsForGroups(groups)
         case .weakReinforcement:
-            cards = await kanaRepo.weakCardsForGroups(groups)
+            result = await kanaRepo.weakCardsForGroups(groups)
         }
+        if let characterFilter {
+            result = result.filter { characterFilter.contains($0.front) }
+        }
+        cards = result
     }
 
     @ViewBuilder

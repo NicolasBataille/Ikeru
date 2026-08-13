@@ -23,15 +23,21 @@ struct IkeruSchemaTests {
         #expect(IkeruSchemaV2.versionIdentifier == Schema.Version(2, 0, 0))
     }
 
+    @Test("V3 has the same model COUNT as V2 (ReviewLog gains columns, not a new entity)")
+    func v3ModelCount() {
+        #expect(IkeruSchemaV3.models.count == IkeruSchemaV2.models.count)
+        #expect(IkeruSchemaV3.versionIdentifier == Schema.Version(3, 0, 0))
+    }
+
     @Test("Migration plan is well-formed: stages == schemas - 1")
     func planWellFormed() {
-        #expect(IkeruMigrationPlan.schemas.count == 2)
+        #expect(IkeruMigrationPlan.schemas.count == 3)
         #expect(IkeruMigrationPlan.stages.count == IkeruMigrationPlan.schemas.count - 1)
     }
 
-    @Test("A container opens with the current (V2) versioned schema + migration plan")
+    @Test("A container opens with the current (V3) versioned schema + migration plan")
     func containerOpensWithPlan() throws {
-        let schema = Schema(versionedSchema: IkeruSchemaV2.self)
+        let schema = Schema(versionedSchema: IkeruSchemaV3.self)
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         let container = try ModelContainer(
             for: schema,
@@ -39,9 +45,22 @@ struct IkeruSchemaTests {
             configurations: [config]
         )
         // Every declared model resolves to exactly one schema entity — a guard
-        // against a model being dropped from (or duplicated in) V2.
-        #expect(container.schema.entities.count == IkeruSchemaV2.models.count)
+        // against a model being dropped from (or duplicated in) V3.
+        #expect(container.schema.entities.count == IkeruSchemaV3.models.count)
     }
+
+    // Deliberately NOT adding a "container opens with frozen V2 alone" test
+    // here: unlike `Schema(versionedSchema:)` construction (safe — the golden
+    // fingerprint tests below already do this for V2), actually *opening a
+    // ModelContainer* against V2's frozen nested types poisons SwiftData's
+    // process-global entity↔class cache for the rest of THIS suite's process
+    // (same containment rule as `StoreMigrationV2V3Tests` — see its header
+    // comment). This file runs `--no-parallel` alongside CardRepositoryTests,
+    // KanaCardRepositoryTests, ProgressServiceTests, etc., all of which fetch
+    // live types — planting that container-open here would make their green
+    // status order-dependent. `v2GoldenFingerprint` below and
+    // `StoreMigrationV2V3Tests` (its own isolated process) already cover what
+    // this would have proven.
 
     // MARK: - Golden fingerprints (mechanical guard against silent drift)
 
@@ -217,5 +236,35 @@ struct IkeruSchemaTests {
         #expect(Self.fingerprint(of: schema) == golden)
         // Typed digest — see v1GoldenFingerprint for what this adds.
         #expect(Self.typedFingerprint(of: schema) == "eb462d92926249b7")
+    }
+
+    @Test("V3 golden fingerprint — V2 plus ReviewLog.answeredValue/exerciseType/surface")
+    func v3GoldenFingerprint() {
+        let schema = Schema(versionedSchema: IkeruSchemaV3.self)
+        var golden = Self.v1GoldenFingerprintList
+        golden.append("RPGState.activeDaysCount")
+        golden.append(contentsOf: [
+            "ExerciseOutcomeLog.accuracy",
+            "ExerciseOutcomeLog.id",
+            "ExerciseOutcomeLog.profileID",
+            "ExerciseOutcomeLog.skillRawValue",
+            "ExerciseOutcomeLog.timestamp",
+        ])
+        golden.append(contentsOf: [
+            "ReviewLog.answeredValue",
+            "ReviewLog.exerciseType",
+            "ReviewLog.surface",
+        ])
+        golden.sort()
+        #expect(Self.fingerprint(of: schema) == golden)
+        // Typed digest deliberately NOT asserted here (unlike V1/V2 above):
+        // it hashes SwiftData's own `String(describing:)` of each property,
+        // which is not reproducible by hand — only a real test run can
+        // produce it, and this agent was not authorized to run `swift test`
+        // (build contention with parallel work). Whoever next touches this
+        // file: run this suite once, read `typedFingerprint(of: schema)`,
+        // and add `#expect(Self.typedFingerprint(of: schema) == "<value>")`
+        // here, mirroring v1GoldenFingerprint/v2GoldenFingerprint. Left
+        // unasserted on purpose rather than filled with a guessed value.
     }
 }

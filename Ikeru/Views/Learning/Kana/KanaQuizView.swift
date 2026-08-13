@@ -55,6 +55,7 @@ struct KanaQuizView: View {
     private var content: some View {
         VStack(spacing: IkeruTheme.Spacing.md) {
             topBar
+            hiraganaBridgeHint
             Spacer(minLength: 0)
             if let card = viewModel.currentCard {
                 Text(card.front)
@@ -83,7 +84,7 @@ struct KanaQuizView: View {
                 .overlay(Rectangle().strokeBorder(TatamiTokens.goldDim.opacity(0.5), lineWidth: 1))
                 .sumiCorners(color: TatamiTokens.goldDim, size: 5, weight: 1.0)
             Spacer()
-            Text(LocalizedStringKey(viewModel.mode.displayName))
+            Text(viewModel.sessionLabel ?? LocalizedStringKey(viewModel.mode.displayName))
                 .textCase(.uppercase)
                 .font(.ikeruMicro)
                 .ikeruTracking(.micro)
@@ -95,6 +96,28 @@ struct KanaQuizView: View {
                 .sumiCorners(color: TatamiTokens.goldDim, size: 5, weight: 1.0)
         }
         .padding(.top, IkeruTheme.Spacing.sm)
+    }
+
+    // MARK: Hiragana bridge hint (chantier #24a)
+    //
+    // "Même son, nouvelle forme": the first time a katakana card is seen
+    // (masteryLevel == .new), show its hiragana counterpart grayed out above
+    // the quiz glyph, so the new shape reads as a variant of something
+    // already known rather than a completely unrelated character.
+
+    @ViewBuilder
+    private var hiraganaBridgeHint: some View {
+        if let bridge = viewModel.hiraganaBridgeCharacter {
+            HStack(spacing: 8) {
+                Text(bridge.character)
+                    .font(.system(size: 22, weight: .light, design: .serif))
+                    .foregroundStyle(Color.ikeruTextTertiary.opacity(0.6))
+                Text("Kana.HiraganaBridge.Caption")
+                    .font(.ikeruMicro)
+                    .foregroundStyle(Color.ikeruTextTertiary)
+            }
+            .transition(.opacity)
+        }
     }
 
     // MARK: Options

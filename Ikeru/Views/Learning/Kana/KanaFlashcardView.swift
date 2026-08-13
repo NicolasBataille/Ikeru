@@ -57,6 +57,7 @@ struct KanaFlashcardView: View {
     private var content: some View {
         VStack(spacing: 0) {
             topBar
+            hiraganaBridgeHint
             Spacer(minLength: 0)
             if let card = viewModel.currentCard {
                 SRSCardView(
@@ -129,7 +130,7 @@ struct KanaFlashcardView: View {
                 .overlay(Rectangle().strokeBorder(TatamiTokens.goldDim.opacity(0.5), lineWidth: 1))
                 .sumiCorners(color: TatamiTokens.goldDim, size: 5, weight: 1.0)
             Spacer()
-            Text(LocalizedStringKey(viewModel.mode.displayName))
+            Text(viewModel.sessionLabel ?? LocalizedStringKey(viewModel.mode.displayName))
                 .textCase(.uppercase)
                 .font(.ikeruMicro)
                 .ikeruTracking(.micro)
@@ -141,6 +142,29 @@ struct KanaFlashcardView: View {
                 .sumiCorners(color: TatamiTokens.goldDim, size: 5, weight: 1.0)
         }
         .padding(.top, IkeruTheme.Spacing.sm)
+    }
+
+    // MARK: Hiragana bridge hint (chantier #24a)
+    //
+    // "Même son, nouvelle forme": the first time a katakana card is seen
+    // (masteryLevel == .new), show its hiragana counterpart grayed out above
+    // the card, so the new glyph reads as a variant of something already
+    // known rather than a completely unrelated shape.
+
+    @ViewBuilder
+    private var hiraganaBridgeHint: some View {
+        if let bridge = viewModel.hiraganaBridgeCharacter {
+            HStack(spacing: 8) {
+                Text(bridge.character)
+                    .font(.system(size: 26, weight: .light, design: .serif))
+                    .foregroundStyle(Color.ikeruTextTertiary.opacity(0.6))
+                Text("Kana.HiraganaBridge.Caption")
+                    .font(.ikeruMicro)
+                    .foregroundStyle(Color.ikeruTextTertiary)
+            }
+            .padding(.top, IkeruTheme.Spacing.sm)
+            .transition(.opacity)
+        }
     }
 
     // MARK: Session footer

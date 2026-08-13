@@ -186,6 +186,45 @@ struct CardRepositoryTests {
         #expect(logs.first?.responseTimeMs == 1200)
     }
 
+    @Test("gradeCard persists answeredValue/exerciseType/surface on the ReviewLog (learner-telemetry lot 1)")
+    func gradeCardPersistsProvenance() async throws {
+        let container = try makeTestContainer()
+        let repository = CardRepository(modelContainer: container)
+
+        let card = await repository.createCard(front: "シ", back: "shi", type: .vocabulary)
+
+        await repository.gradeCard(
+            cardId: card.id,
+            grade: .again,
+            responseTimeMs: 1_500,
+            answeredValue: "ツ",
+            exerciseType: "kana.quiz",
+            surface: "iphone.drill"
+        )
+
+        let logs = await repository.reviewLogs(for: card.id)
+        #expect(logs.count == 1)
+        let log = try #require(logs.first)
+        #expect(log.answeredValue == "ツ")
+        #expect(log.exerciseType == "kana.quiz")
+        #expect(log.surface == "iphone.drill")
+    }
+
+    @Test("gradeCard without provenance args leaves answeredValue/exerciseType/surface nil (backward compatible)")
+    func gradeCardDefaultsProvenanceToNil() async throws {
+        let container = try makeTestContainer()
+        let repository = CardRepository(modelContainer: container)
+
+        let card = await repository.createCard(front: "日", back: "day", type: .kanji)
+        await repository.gradeCard(cardId: card.id, grade: .good, responseTimeMs: 1200)
+
+        let logs = await repository.reviewLogs(for: card.id)
+        let log = try #require(logs.first)
+        #expect(log.answeredValue == nil)
+        #expect(log.exerciseType == nil)
+        #expect(log.surface == nil)
+    }
+
     @Test("Grade card with Again increments lapse count")
     func gradeCardAgainIncreasesLapses() async throws {
         let container = try makeTestContainer()

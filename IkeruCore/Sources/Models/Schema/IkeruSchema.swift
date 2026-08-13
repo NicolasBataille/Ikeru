@@ -348,35 +348,265 @@ public enum IkeruSchemaV1: VersionedSchema {
 
 // MARK: - Versioned Schema V2
 
-/// **V2** — the fully live current shape. Two additive changes on top of V1:
+/// **V2** — frozen now that `IkeruSchemaV3` exists (learner-telemetry lot 1,
+/// remediation item #17). Two additive changes on top of V1:
 ///
 /// 1. `RPGState.activeDaysCount` (commit `aa03566`) — a new stored `Int`
 ///    property, defaulting to `0`. This is the property whose addition to
 ///    the *live* `RPGState` class silently mutated `IkeruSchemaV1`'s meaning
 ///    before V1 was frozen (see the post-mortem in `IkeruSchemaV1`'s doc
-///    comment); it is only ever meant to exist from V2 onward.
+///    comment); it only ever existed from V2 onward.
 /// 2. `ExerciseOutcomeLog` (remediation 4.4) — a brand-new entity whose only
 ///    cross-entity reference is a scalar `profileID: UUID` (not a SwiftData
 ///    relationship), so it doesn't change any existing entity's shape.
 ///
-/// Both changes are lightweight-safe: an added scalar property with a
-/// default, and a wholly new entity. Unlike V1, V2 uses *live* references
-/// throughout — it doesn't need to be frozen because there is currently no
-/// V3. The day a `V3` is created, V2 must be frozen the same way V1 was.
+/// Both changes were lightweight-safe: an added scalar property with a
+/// default, and a wholly new entity.
+///
+/// - Important: `IkeruSchemaV2.models` — and every nested frozen type below —
+///   must stay byte-identical to what shipped as "V2" (the shape released to
+///   TestFlight before `ReviewLog` gained `answeredValue`/`exerciseType`/
+///   `surface`). **Never edit anything in this enum** to reflect a new model
+///   change; that goes in `IkeruSchemaV3` (or later) plus a `MigrationStage`.
+///   See the golden-fingerprint tests in `IkeruSchemaTests.swift`.
+///
+/// ⚠️ Freezing V2 means every OTHER call site that opens a container with
+/// `Schema(versionedSchema: IkeruSchemaV2.self)` (or `Schema(IkeruSchemaV2.models)`)
+/// and then fetches/inserts using the *live* top-level types (`UserProfile`,
+/// `Card`, `ReviewLog`, `RPGState`) will now hit the same
+/// "Failed to cast model … to X" mismatch V1's post-mortem describes, because
+/// those live types now describe V3's shape, not V2's. As of this change the
+/// only call sites still opening V2 directly are OUTSIDE this remediation
+/// item's file perimeter (production bootstrap + several test files) — see
+/// the handoff notes for the exact list. They must be repointed at
+/// `IkeruSchemaV3` before V2's freeze is safe to ship.
 public enum IkeruSchemaV2: VersionedSchema {
 
     public static var versionIdentifier: Schema.Version { Schema.Version(2, 0, 0) }
 
     public static var models: [any PersistentModel.Type] {
         // The first four bind to the frozen nested snapshots below via name
-        // shadowing. ⚠️ Do NOT "clarify" them to `IkeruSchemaV1.UserProfile.self`
+        // shadowing. ⚠️ Do NOT "clarify" them to `IkeruSchemaV2.UserProfile.self`
         // etc.: self-qualifying the nested @Model types from inside this enum's
         // own body empirically breaks SwiftData's class↔entity resolution at
         // runtime ("Failed to cast model IkeruCore.UserProfile … to UserProfile"
-        // in the migration tests) — bisected 2026-07-15. The golden fingerprint
-        // tests in IkeruSchemaTests pin that these resolve to the frozen
-        // 19-property shapes; if this list is ever moved out of the enum body,
-        // those tests fail before anything ships.
+        // in the migration tests) — bisected 2026-07-15 (same pitfall as V1).
+        // The golden fingerprint tests in IkeruSchemaTests pin that these
+        // resolve to the frozen 20-property (RPGState) / 5-property
+        // (ReviewLog) shapes; if this list is ever moved out of the enum
+        // body, those tests fail before anything ships.
+        [
+            UserProfile.self,
+            Card.self,
+            ReviewLog.self,
+            RPGState.self,
+            MnemonicCache.self,
+            CompanionChatMessage.self,
+            AssetManifest.self,
+            VocabularyEntry.self,
+            VocabularyEncounter.self,
+            DailyTerm.self,
+            ExerciseOutcomeLog.self,
+        ]
+    }
+
+    // MARK: - Frozen snapshots
+
+    /// Frozen snapshot of `RPGState` as it stood for V2 — the 20-stored-
+    /// property shape (V1's 19 plus `activeDaysCount`). **Never add, remove,
+    /// retype, or rename a stored property here.**
+    @Model
+    public final class RPGState {
+
+        public var id: UUID
+        public var xp: Int
+        public var level: Int
+        public var totalReviewsCompleted: Int
+        public var attributesData: Data?
+        public var lootInventoryData: Data?
+        public var lootBoxesData: Data?
+        public var totalSessionsCompleted: Int
+        public var equippedTitleID: UUID?
+        public var equippedThemeID: UUID?
+        public var equippedBadgeIDsData: Data?
+        public var acknowledgedUnlocksData: Data?
+        public var sessionsSinceLastDrop: Int = 0
+        public var lastSessionDate: Date?
+        public var currentDailyStreak: Int = 0
+        public var longestDailyStreak: Int = 0
+
+        /// Added in V2 (commit `aa03566`) — see this enum's doc comment.
+        public var activeDaysCount: Int = 0
+
+        public var jlptBackfillVersion: Int = 0
+        public var lastReadinessBestFit: String?
+        public var profile: UserProfile?
+
+        public init(
+            xp: Int = 0,
+            level: Int = 1,
+            totalReviewsCompleted: Int = 0
+        ) {
+            self.id = UUID()
+            self.xp = xp
+            self.level = level
+            self.totalReviewsCompleted = totalReviewsCompleted
+            self.attributesData = nil
+            self.lootInventoryData = nil
+            self.lootBoxesData = nil
+            self.totalSessionsCompleted = 0
+            self.equippedTitleID = nil
+            self.equippedThemeID = nil
+            self.equippedBadgeIDsData = nil
+            self.sessionsSinceLastDrop = 0
+            self.lastSessionDate = nil
+            self.currentDailyStreak = 0
+            self.longestDailyStreak = 0
+        }
+    }
+
+    /// Frozen snapshot of `UserProfile` for V2 — unchanged from V1.
+    @Model
+    public final class UserProfile: Identifiable {
+
+        public var id: UUID
+        public var displayName: String
+        public var createdAt: Date
+        public var settings: ProfileSettings
+
+        @Relationship(deleteRule: .cascade, inverse: \Card.profile)
+        public var cards: [Card]?
+
+        @Relationship(deleteRule: .cascade, inverse: \RPGState.profile)
+        public var rpgState: RPGState?
+
+        public init(
+            displayName: String,
+            settings: ProfileSettings = ProfileSettings()
+        ) {
+            self.id = UUID()
+            self.displayName = displayName
+            self.createdAt = Date()
+            self.settings = settings
+            self.cards = []
+            self.rpgState = RPGState()
+        }
+    }
+
+    /// Frozen snapshot of `Card` for V2 — unchanged from V1.
+    @Model
+    public final class Card {
+
+        public var id: UUID
+        public var front: String
+        public var back: String
+        public var typeRawValue: String
+
+        public var type: CardType {
+            get { CardType(rawValue: typeRawValue) ?? .kanji }
+            set { typeRawValue = newValue.rawValue }
+        }
+
+        public var fsrsState: FSRSState
+        public var easeFactor: Double
+        public var interval: Int
+        public var dueDate: Date
+        public var lapseCount: Int
+        public var leechFlag: Bool
+        public var jlptLevelRawValue: String?
+
+        public var jlptLevel: JLPTLevel? {
+            get {
+                guard let raw = jlptLevelRawValue else { return nil }
+                return JLPTLevel(rawValue: raw)
+            }
+            set { jlptLevelRawValue = newValue?.rawValue }
+        }
+
+        public var profile: UserProfile?
+
+        @Relationship(deleteRule: .cascade, inverse: \ReviewLog.card)
+        public var reviewLogs: [ReviewLog]?
+
+        public init(
+            front: String,
+            back: String,
+            type: CardType,
+            fsrsState: FSRSState = FSRSState(),
+            easeFactor: Double = 2.5,
+            interval: Int = 0,
+            dueDate: Date = Date(),
+            lapseCount: Int = 0,
+            leechFlag: Bool = false,
+            jlptLevel: JLPTLevel? = nil
+        ) {
+            self.id = UUID()
+            self.front = front
+            self.back = back
+            self.typeRawValue = type.rawValue
+            self.fsrsState = fsrsState
+            self.easeFactor = easeFactor
+            self.interval = interval
+            self.dueDate = dueDate
+            self.lapseCount = lapseCount
+            self.leechFlag = leechFlag
+            self.jlptLevelRawValue = jlptLevel?.rawValue
+            self.reviewLogs = []
+        }
+    }
+
+    /// Frozen snapshot of `ReviewLog` for V2 — the 5-stored-property shape
+    /// **without** `answeredValue`/`exerciseType`/`surface`. Those are
+    /// V3-only; see `IkeruSchemaV3`.
+    @Model
+    public final class ReviewLog {
+
+        public var id: UUID
+        public var timestamp: Date
+        public var card: Card?
+        public var gradeRawValue: Int
+
+        public var grade: Grade {
+            get { Grade(rawValue: gradeRawValue) ?? .good }
+            set { gradeRawValue = newValue.rawValue }
+        }
+
+        public var responseTimeMs: Int
+
+        public init(
+            card: Card,
+            grade: Grade,
+            responseTimeMs: Int,
+            timestamp: Date = Date()
+        ) {
+            self.id = UUID()
+            self.timestamp = timestamp
+            self.card = card
+            self.gradeRawValue = grade.rawValue
+            self.responseTimeMs = responseTimeMs
+        }
+    }
+}
+
+// MARK: - Versioned Schema V3
+
+/// **V3** — the fully live current shape (learner-telemetry lot 1,
+/// remediation item #17). One additive change on top of V2:
+///
+/// `ReviewLog` gains three optional stored properties —  `answeredValue`,
+/// `exerciseType`, `surface` — so a review log entry can carry which value
+/// the learner actually chose (for confusion-pair analysis) and where the
+/// grade came from. All three default to `nil`, so this is lightweight-safe:
+/// existing V2 rows backfill as `nil` with no data transformation needed.
+///
+/// Unlike V2, V3 uses *live* references throughout — it doesn't need to be
+/// frozen because there is currently no V4. The day a `V4` is created, V3
+/// must be frozen the same way V1 and V2 were.
+public enum IkeruSchemaV3: VersionedSchema {
+
+    public static var versionIdentifier: Schema.Version { Schema.Version(3, 0, 0) }
+
+    public static var models: [any PersistentModel.Type] {
         [
             UserProfile.self,
             Card.self,
@@ -399,11 +629,12 @@ public enum IkeruSchemaV2: VersionedSchema {
 ///
 /// `IkeruSchemaV1` is the frozen shape released to TestFlight before
 /// versioned schemas existed (see its doc comment for the full story);
-/// `IkeruSchemaV2` is the live current shape. The V1 → V2 delta —
-/// `RPGState.activeDaysCount` (additive, defaulted) plus the wholly new
-/// `ExerciseOutcomeLog` entity — touches no existing entity's identity or
-/// required data, so a `.lightweight` stage is sufficient: SwiftData adds the
-/// new column and the new table and leaves all V1 data untouched.
+/// `IkeruSchemaV2` is frozen at the shape that shipped before the
+/// learner-telemetry `ReviewLog` fields; `IkeruSchemaV3` is the live current
+/// shape. Both stages are purely additive — new defaulted/optional columns
+/// and (for V1→V2) a wholly new entity — so `.lightweight` is sufficient for
+/// each: SwiftData adds the new columns/table and leaves prior data
+/// untouched.
 ///
 /// When a future `@Model` change needs data transformation (renames with
 /// data preservation, split/merge fields, etc.), use `.custom(...)` instead
@@ -411,10 +642,13 @@ public enum IkeruSchemaV2: VersionedSchema {
 public enum IkeruMigrationPlan: SchemaMigrationPlan {
 
     public static var schemas: [any VersionedSchema.Type] {
-        [IkeruSchemaV1.self, IkeruSchemaV2.self]
+        [IkeruSchemaV1.self, IkeruSchemaV2.self, IkeruSchemaV3.self]
     }
 
     public static var stages: [MigrationStage] {
-        [.lightweight(fromVersion: IkeruSchemaV1.self, toVersion: IkeruSchemaV2.self)]
+        [
+            .lightweight(fromVersion: IkeruSchemaV1.self, toVersion: IkeruSchemaV2.self),
+            .lightweight(fromVersion: IkeruSchemaV2.self, toVersion: IkeruSchemaV3.self),
+        ]
     }
 }

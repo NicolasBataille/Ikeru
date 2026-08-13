@@ -22,8 +22,15 @@ struct SessionDecouplingTests {
     // MARK: - Helpers
 
     private func makeContainer() throws -> ModelContainer {
-        // Full V2 schema so pool-drill outcomes (ExerciseOutcomeLog) can persist.
-        let schema = Schema(versionedSchema: IkeruSchemaV2.self)
+        // Full current (V3) schema so pool-drill outcomes (ExerciseOutcomeLog)
+        // can persist. Must be V3, not V2: `IkeruSchemaV2` is now frozen
+        // (nested snapshot types, learner-telemetry lot 1 / remediation #17)
+        // — a container opened with `versionedSchema: IkeruSchemaV2.self`
+        // would bind this suite's live-type fetches (via
+        // `ActiveProfileResolver` / `SessionViewModel`) to the WRONG entity
+        // identity and crash with "Failed to cast model ... to X". See
+        // IkeruSchema.swift's `IkeruSchemaV2` doc comment.
+        let schema = Schema(versionedSchema: IkeruSchemaV3.self)
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         ActiveProfileResolver.setActiveProfileID(nil)
         return try ModelContainer(for: schema, configurations: [config])

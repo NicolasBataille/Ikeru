@@ -23,6 +23,61 @@ raisonnement, les mesures, et les décisions.
 
 ---
 
+## 2026-08-13 — P2 lot 1 : planificateur, confusions, livret de compétence
+
+### Fait
+
+Six chantiers de conception (branche `feature/pedagogy-p2`) : **cartes dues
+prioritaires en absolu** sur les quotas + trois profils de séance par stade +
+durées modulées par maturité ; **journalisation des paires de confusion**
+(`answeredValue` / `exerciseType` / `surface` sur `ReviewLog`, **IkeruSchemaV3**) ;
+**livret de compétence** sur l'accueil, avec l'arbitrage du système RPG orphelin ;
+ponts か→カ et clusters de paires à interférence katakana ; mitigation du crash
+widget.
+
+### Testé
+
+- 3 schemes verts, lint et i18n-lint en exit 0, migration **V1→V2→V3 verte en
+  process isolés** (contrainte `LegacyStoreMigration`).
+- Cas « 24 dues, budget 5 min » **exécuté** : 60 dues / 300 s → 20 révisions,
+  budget intégralement consommé, 100 % de révisions. Les quotas s'appliquent
+  bien au reste.
+- Chaîne quiz → `ReviewLog` persisté **vérifiée en relisant la ligne depuis le
+  store** (réponse fausse, réponse juste, et flashcard avec `answeredValue` nil).
+- Miroir katakana↔hiragana vérifié **par programme** : 26/26 groupes ont un
+  ensemble de romaji identique, zéro contre-exemple.
+
+### Écarté
+
+- **Le crash widget n'est PAS notre code.** Les 8 rapports `.ips` ont une pile
+  entièrement dans les frameworks Apple (`xpc_connection_copy_bundle_id` ←
+  BaseBoard ← BoardServices), aucune frame Ikeru, et `is_simulated: 1` sur les
+  huit. Simulateur uniquement, aucun crash device observé. Livré comme
+  **mitigation défensive documentée**, pas comme correctif.
+- **Dues prioritaires « en absolu » : vrai en construction et en croisière,
+  PAS en fondation** — le mode fondation garde son plafond à 50 % pour qu'un
+  débutant voie de nouveaux kana. À dire tel quel plutôt que de sur-vendre.
+
+### Ouvert
+
+- **Bug attrapé en revue et corrigé ici** : `IkeruApp` déclarait encore
+  `IkeruSchemaV2` alors que le schéma courant est V3. Le conteneur s'ouvrait
+  sans erreur puis **trappait au premier insert**, y compris sur une
+  installation neuve — et la récupération de store n'entoure que
+  `makeModelContainer`, donc elle ne se déclenchait jamais. Boucle de crash non
+  récupérable. Leçon : **la version déclarée à l'app doit être vérifiée à chaque
+  ajout de version**, un test de migration vert ne la couvre pas.
+- **Chantier #17 à moitié livré** : la donnée de confusion est capturée mais
+  `DataExportManager` ne l'exporte pas — donc personne ne peut encore la relire.
+- **Tracés kana non livrés** : l'agent a été bloqué par le classifieur de
+  sécurité (incident transitoire), à relancer.
+- Le badge « +N cette semaine » ne s'affiche qu'**une seule fois** par semaine :
+  la baseline roule au même seuil que la comparaison, dans la même passe.
+- Le pont hiragana s'affiche aussi dans le **quiz**, où il donne la réponse — et
+  contamine l'`answeredValue` fraîchement journalisé.
+
+---
+
 ## 2026-08-12/13 — Review pédagogique experte, puis 5 itérations de remédiation
 
 ### Fait
