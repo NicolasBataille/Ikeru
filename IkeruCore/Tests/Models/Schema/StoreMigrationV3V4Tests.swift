@@ -30,8 +30,8 @@ struct StoreMigrationV3V4Tests {
     // that gained the sync columns. Splitting it into helpers would move the
     // store's lifetime out of the test and reintroduce exactly the cross-suite
     // container leakage this suite is isolated to avoid.
-    // swiftlint:disable:next function_body_length
     @Test("Existing V3 rows survive the lightweight V3→V4 stage; the 3 sync columns backfill per their documented defaults")
+    // swiftlint:disable:next function_body_length
     func v3ToV4AdditiveMigration() throws {
         let dir = FileManager.default.temporaryDirectory
         let url = dir.appendingPathComponent("ikeru-mig-v3v4-\(UUID().uuidString).store")
