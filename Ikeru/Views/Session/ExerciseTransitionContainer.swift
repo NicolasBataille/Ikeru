@@ -65,6 +65,28 @@ struct ExerciseTransitionContainer: View {
     @Namespace private var exerciseAnimation
     @State private var isRevealed = false
 
+    /// Read-only content repository used ONLY to fetch kana stroke-trace data
+    /// for `NewCardPresentationView` (see below). Built once per process via
+    /// `static let` (not `@State`) — `ActiveSessionView` re-renders this
+    /// container on every elapsed-time timer tick, and a `@State` initial
+    /// value re-evaluates on every construction, which would open (lazily,
+    /// harmlessly, but pointlessly) a fresh actor each time.
+    ///
+    /// This is a SECOND connection to the same bundled `n5-content.sqlite`
+    /// that `SessionViewModel` already opens for the vocabulary pool — that
+    /// repository is `private` to `SessionViewModel` and threading it down
+    /// here would mean editing `SessionViewModel`/`ActiveSessionView`, outside
+    /// this pass's scope. Mirrors the existing per-screen pattern already
+    /// used by `HomeView.makeContentRepository()` / `EtudeView.makeContentRepository()`
+    /// — read-only bundle, so a second connection is redundant but not unsafe.
+    private static let kanaContentRepository: ContentRepository? = {
+        guard let url = Bundle.main.url(forResource: "n5-content", withExtension: "sqlite") else {
+            Logger.ui.error("n5-content.sqlite not found in bundle — new-card stroke trace disabled")
+            return nil
+        }
+        return ContentRepository(bundleURL: url)
+    }()
+
     var body: some View {
         ZStack {
             if let exercise {
@@ -194,7 +216,8 @@ struct ExerciseTransitionContainer: View {
                 NewCardPresentationView(
                     card: card,
                     isPaused: isPaused,
-                    onAcknowledged: onPresentationAcknowledged
+                    onAcknowledged: onPresentationAcknowledged,
+                    contentRepository: Self.kanaContentRepository
                 )
                 .id(card.id)
             } else {
@@ -421,21 +444,34 @@ enum DrillGradeMapping {
 /// already gates its reveal-autoplay on, rather than introducing a second
 /// audio-preference flag.
 ///
-/// Two deliberate extension points, left empty rather than faked:
-/// - **Stroke-order trace**: kana stroke-trace data doesn't exist in the
-///   bundle yet (a parallel workstream owns it). A future pass can render an
-///   animated trace here, keyed by `card.front`, once that data source
-///   exists — there's nothing to wire against today, so nothing renders.
-/// - **Mnemonic link**: `MnemonicService` (IkeruCore) exists but is
-///   kanji/radical-oriented and isn't injected into `SessionViewModel`'s
-///   dependency graph — wiring that reaches outside this pass's file scope.
-///   Left unwired rather than half-wired; no dead "tip" button is shown.
+/// **Stroke-order trace**: plays ONCE, automatically, as a motor-encoding
+/// reinforcement — not a drill. No tap, no grade, no button; it reuses the
+/// SAME rendering engine `KanjiDisplayView` already drives for kanji
+/// (`StrokeOrderViewModel` + `StrokeOrderView`), just fed kana SVG data from
+/// `ContentRepository.kanaStrokeData(for:)`. Covers 142 of the 208 kana
+/// catalogue characters (92 base + 50 dakuten); the 66 yōon digraphs
+/// (きゃ, etc.) have no KanjiVG file for a two-codepoint combination, so the
+/// lookup returns `nil` and the trace view is simply omitted — no reserved
+/// frame, no placeholder, no dead affordance. The fetch runs in its own
+/// `.task`, independent of the audio-autoplay and auto-advance tasks below,
+/// so a slow or missing trace never delays the card's appearance, its audio,
+/// or its 18s auto-advance.
+///
+/// **Mnemonic link**: `MnemonicService` (IkeruCore) exists but is
+/// kanji/radical-oriented and isn't injected into `SessionViewModel`'s
+/// dependency graph — wiring that reaches outside this pass's file scope.
+/// Left unwired rather than half-wired; no dead "tip" button is shown.
 private struct NewCardPresentationView: View {
     let card: CardDTO
     let isPaused: Bool
     let onAcknowledged: () -> Void
+    /// `nil` when the bundle couldn't be resolved (see
+    /// `ExerciseTransitionContainer.kanaContentRepository`) — the trace
+    /// section just never appears in that case, same as a yōon lookup miss.
+    let contentRepository: ContentRepository?
 
     @State private var audioService = AudioService()
+    @State private var strokeOrderViewModel = StrokeOrderViewModel()
     @AppStorage("ikeru.audio.autoplay") private var isAudioAutoplayEnabled: Bool = true
 
     /// ~15-20s per the pedagogy review's "CARTE DE PRESENTATION" spec — long
@@ -464,9 +500,33 @@ private struct NewCardPresentationView: View {
                 .font(.system(size: 32, weight: .semibold, design: .rounded))
                 .foregroundStyle(Color.ikeruPrimaryAccent)
 
-            // Extension point: an animated stroke-order trace renders here
-            // once bundle data exists (see the type's doc comment). Empty
-            // today by design — no placeholder pretending to teach strokes.
+            // Kana stroke-order trace: only appears once fetched (or never,
+            // for a yōon digraph / missing bundle) — see the type's doc
+            // comment. No fixed frame reserved for the absent case, so there
+            // is no visual hole while it's missing or still loading.
+            if let strokeData = strokeOrderViewModel.strokeData {
+                StrokeOrderView(
+                    strokeData: strokeData,
+                    speed: .normal,
+                    isPlaying: strokeOrderViewModel.isAnimating,
+                    // Once the one-shot pass finishes, force the "fully
+                    // drawn" guide color for every stroke instead of the
+                    // view model's resting index (which sits ON the last
+                    // stroke, rendering it at 0.1 opacity per
+                    // `StrokeOrderView.guideColor` — fine for
+                    // `KanjiDisplayView`'s tap-to-dismiss flow, but wrong
+                    // here where the trace stays on screen for the
+                    // remainder of the ~18s card).
+                    currentStrokeIndex: strokeOrderViewModel.isAnimating
+                        ? strokeOrderViewModel.currentStrokeIndex
+                        : strokeData.strokes.count,
+                    onStrokeCompleted: {
+                        strokeOrderViewModel.advanceAnimationStroke()
+                    }
+                )
+                .frame(width: 120, height: 120)
+                .transition(.opacity)
+            }
 
             Spacer()
 
@@ -487,6 +547,22 @@ private struct NewCardPresentationView: View {
             guard isAudioAutoplayEnabled else { return }
             await audioService.playTTS(text: card.front)
         }
+        // Independent of the audio task above: a missing/slow trace must
+        // never delay the audio or the auto-advance timer. Unkeyed, like
+        // the audio `.task` — this view already gets a fresh identity per
+        // card via `.id(card.id)` in the parent, so it re-runs per card
+        // without needing an explicit `id:`. Deliberately NOT gated on
+        // `isPaused`: the trace is a few seconds of non-interactive
+        // reinforcement, not a timer the learner can get stuck behind, so
+        // pausing mid-trace just leaves it visually frozen rather than
+        // needing its own pause/resume bookkeeping.
+        .task {
+            guard let contentRepository else { return }
+            guard let result = await contentRepository.kanaStrokeData(for: card.front) else { return }
+            await strokeOrderViewModel.loadStrokes(for: card.front, svgData: result.svg)
+            strokeOrderViewModel.startAnimation()
+        }
+        .animation(.easeIn(duration: 0.3), value: strokeOrderViewModel.strokeData)
         // Keyed on `isPaused`: flipping it cancels whatever sleep is in
         // flight and restarts this task. Paused → returns immediately
         // (timer stops dead, nothing advances under the pause overlay).
