@@ -93,6 +93,29 @@ public final class RPGState {
     /// The user profile that owns this RPG state
     public var profile: UserProfile?
 
+    // MARK: - Cloud sync (schema-only, lot 0)
+    //
+    // Added by `IkeruSchemaV4` (cloud-sync lot 0, see
+    // `docs/design-specs/2026-08-10-cloud-sync-design.md` §5.1). `RPGState`
+    // holds monotone counters merged by `max()` per spec §5.3 rule 3, not
+    // LWW — but it still needs `updatedAt`/`syncedAt` to drive the push
+    // delta. Nothing reads or writes any of the three yet; that wiring is a
+    // later lot.
+
+    /// Local modification clock. Defaults to the Unix epoch at the property
+    /// level so the `.lightweight` V3→V4 migration can backfill existing
+    /// rows without a custom stage; the initializer below sets this to
+    /// `Date()` explicitly for freshly created objects.
+    public var updatedAt: Date = Date(timeIntervalSince1970: 0)
+
+    /// Tombstone. Non-nil means this row was locally deleted and awaits a
+    /// sync push of the deletion.
+    public var deletedAt: Date?
+
+    /// Timestamp of the last confirmed push to the sync server. `nil` means
+    /// never synced.
+    public var syncedAt: Date?
+
     public init(
         xp: Int = 0,
         level: Int = 1,
@@ -113,6 +136,9 @@ public final class RPGState {
         self.lastSessionDate = nil
         self.currentDailyStreak = 0
         self.longestDailyStreak = 0
+        self.updatedAt = Date()
+        self.deletedAt = nil
+        self.syncedAt = nil
     }
 
     // MARK: - Attributes Accessors

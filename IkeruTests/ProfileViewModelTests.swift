@@ -36,7 +36,11 @@ struct ProfileViewModelTests {
         // discriminator (schema form, actor- vs. context-routing) was found
         // that explains the full matrix — flagging for a dedicated follow-up
         // rather than guessing further.
-        let schema = Schema(versionedSchema: IkeruSchemaV3.self)
+        //
+        // V4, not V3 (2026-08-13, cloud-sync lot 0): `IkeruSchemaV3` is now
+        // frozen (nested snapshot types) — a container opened at V3 would
+        // bind this file's live-type fetches to the wrong entity identity.
+        let schema = Schema(versionedSchema: IkeruSchemaV4.self)
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         let container = try ModelContainer(for: schema, configurations: [config])
         return container.mainContext

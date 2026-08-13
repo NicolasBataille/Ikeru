@@ -210,6 +210,15 @@ jobs:
           cd IkeruCore
           swift test --no-parallel --filter "StoreMigrationV2V3"
 
+      - name: Run Store Migration V3→V4 Tests (isolated process)
+        # Same isolation reason as the two steps above: every store-opening
+        # migration suite gets its own `swift test` process. This one covers
+        # the sync columns (updatedAt / deletedAt / syncedAt) landing on
+        # existing rows — the migration real TestFlight devices will run.
+        run: |
+          cd IkeruCore
+          swift test --no-parallel --filter "StoreMigrationV3V4"
+
       - name: Run App Tests (green subset)
         # Same — scoped to suites known to pass. KanaDrillViewModel covers
         # the recent shuffle-fix regression tests.

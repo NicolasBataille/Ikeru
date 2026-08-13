@@ -3,7 +3,16 @@ import SwiftData
 import Foundation
 @testable import IkeruCore
 
-// MARK: - V2 → V3 migration
+// MARK: - V2 → V3 → V4 migration
+//
+// NOTE (2026-08-13, cloud-sync lot 0): this suite originally reopened the
+// store at V3 (the then-current live schema). `IkeruSchemaV3` is now frozen
+// (nested snapshot types) and `IkeruSchemaV4` is live, so the reopen target
+// below moved to V4 — the suite still seeds with V2 data and still exercises
+// the V2→V3 stage (plus the new V3→V4 stage), it just asserts through one
+// more migration hop than its name suggests. Left named "StoreMigrationV2V3"
+// deliberately — see the CI-filter note below; renaming it is out of this
+// lot's file perimeter (ci.yml).
 //
 // Runs in its OWN CI step / own `swift test` process — same containment
 // requirement as `LegacyStoreMigrationTests` (V1→V2) in
@@ -26,7 +35,7 @@ import Foundation
 @Suite("StoreMigrationV2V3", .serialized)
 struct StoreMigrationV2V3Tests {
 
-    @Test("Existing V2 ReviewLog rows survive the lightweight V2→V3 stage; new fields backfill to nil")
+    @Test("Existing V2 ReviewLog rows survive the lightweight V2→V3→V4 chain; new fields backfill to nil")
     func v2ToV3AdditiveMigration() throws {
         let dir = FileManager.default.temporaryDirectory
         let url = dir.appendingPathComponent("ikeru-mig-v2v3-\(UUID().uuidString).store")
@@ -73,19 +82,26 @@ struct StoreMigrationV2V3Tests {
             try ctx.save()
         }
 
-        // 2. Reopen with the V3 schema + migration plan → both lightweight
-        //    stages run (V1→V2 is a no-op here since the store is already
-        //    V2-shaped; V2→V3 adds the three new nullable columns).
-        let schemaV3 = Schema(versionedSchema: IkeruSchemaV3.self)
-        let configV3 = ModelConfiguration(schema: schemaV3, url: url)
-        let containerV3 = try ModelContainer(
-            for: schemaV3,
+        // 2. Reopen with the CURRENT (V4) schema + migration plan → all
+        //    lightweight stages run (V1→V2 is a no-op here since the store
+        //    is already V2-shaped; V2→V3 adds the three ReviewLog answer-
+        //    provenance columns; V3→V4 adds the cloud-sync columns). Must
+        //    target V4, not V3: `IkeruSchemaV3` is now frozen (nested
+        //    snapshot types, cloud-sync lot 0) — a container opened with
+        //    `versionedSchema: IkeruSchemaV3.self` would bind the live-type
+        //    fetches below to the WRONG entity identity and crash with
+        //    "Failed to cast model ... to X". See IkeruSchema.swift's
+        //    `IkeruSchemaV3` doc comment.
+        let schemaV4 = Schema(versionedSchema: IkeruSchemaV4.self)
+        let configV4 = ModelConfiguration(schema: schemaV4, url: url)
+        let containerV4 = try ModelContainer(
+            for: schemaV4,
             migrationPlan: IkeruMigrationPlan.self,
-            configurations: [configV3]
+            configurations: [configV4]
         )
-        let ctx = ModelContext(containerV3)
+        let ctx = ModelContext(containerV4)
 
-        // V2 data survived intact, now readable through the LIVE (V3) types.
+        // V2 data survived intact, now readable through the LIVE (V4) types.
         #expect(try ctx.fetch(FetchDescriptor<UserProfile>()).count == 1)
         #expect(try ctx.fetch(FetchDescriptor<Card>()).count == 1)
 
@@ -100,10 +116,17 @@ struct StoreMigrationV2V3Tests {
         #expect(migratedLog.answeredValue == nil)
         #expect(migratedLog.exerciseType == nil)
         #expect(migratedLog.surface == nil)
+        // ...and the new V4-only (cloud-sync) columns backfill per their
+        // documented defaults: `updatedAt` to the epoch sentinel (never a
+        // fabricated "now"), `deletedAt`/`syncedAt` to nil.
+        #expect(migratedLog.updatedAt == Date(timeIntervalSince1970: 0))
+        #expect(migratedLog.deletedAt == nil)
+        #expect(migratedLog.syncedAt == nil)
 
         let rpgStates = try ctx.fetch(FetchDescriptor<RPGState>())
         #expect(rpgStates.first?.xp == 900)
         #expect(rpgStates.first?.activeDaysCount == 5)
+        #expect(rpgStates.first?.updatedAt == Date(timeIntervalSince1970: 0))
 
         // The new columns are usable going forward in the migrated store.
         let card = try #require(try ctx.fetch(FetchDescriptor<Card>()).first)

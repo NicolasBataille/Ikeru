@@ -19,6 +19,27 @@ final class WatchConnectivityManager: NSObject, ObservableObject {
     /// Pending session results received from Watch (queued while offline).
     @Published private(set) var pendingResults: [WatchSessionResult] = []
 
+    // MARK: - ReviewLog provenance (chantier #46)
+    //
+    // Watch quiz answers are graded through the SAME `CardRepository
+    // .gradeCard` the iPhone kana drill uses (`kana.quiz` /
+    // `iphone.drill` — see `KanaDrillViewModel`), just with `surface`
+    // set to the reserved `"watch"` literal that `ReviewLog.surface`'s
+    // doc comment already declares (this was the first call site to
+    // ever write it).
+    private static let watchQuizExerciseType = "kana.quiz"
+    private static let watchSurface = "watch"
+
+    /// Bounded, persisted set of `WatchQuizReviewBatch.sessionId` values
+    /// already graded — `transferUserInfo` delivery is guaranteed but not
+    /// documented as exactly-once, and a redelivered batch (e.g. a relaunch
+    /// racing delivery) must not grade the same answers twice. Persisted
+    /// (not just in-memory) because the redelivery this guards against can
+    /// happen across a relaunch. Capped so it can't grow unbounded over the
+    /// life of an install.
+    private static let processedBatchIdsKey = "WatchConnectivityManager.processedBatchIds"
+    private static let processedBatchIdsCap = 200
+
     private override init() {
         super.init()
     }
@@ -82,7 +103,16 @@ final class WatchConnectivityManager: NSObject, ObservableObject {
 
         state.xp += result.xpEarned
         state.level = RPGConstants.levelForXP(state.xp)
-        state.totalReviewsCompleted += result.totalQuestions
+        // `totalReviewsCompleted` is presented to the learner as a count of
+        // reviews — only bump it for a drill that actually tested recall.
+        // `.pitchAccent` is a haptic exposure exercise with no correctness
+        // signal (see `HapticPitchDrillView.nextWord()`): counting it here
+        // would claim reviews that never happened. XP is still awarded
+        // above — a completed exposure exercise is still worth something —
+        // just not counted as a "review".
+        if result.drillType == .kanaQuiz {
+            state.totalReviewsCompleted += result.totalQuestions
+        }
 
         do {
             try context.save()
@@ -95,6 +125,119 @@ final class WatchConnectivityManager: NSObject, ObservableObject {
 
         // Send updated state back to Watch
         sendStateToWatch()
+    }
+
+    /// Processes a batch of individually-graded kana quiz answers from the
+    /// Watch: grades each one through `CardRepository.gradeCard` — the same
+    /// path the iPhone kana quiz uses — so it produces a real `ReviewLog`
+    /// (FSRS scheduling, confusion-pair `answeredValue`, provenance) instead
+    /// of only moving XP counters. Idempotent: a batch whose `sessionId` was
+    /// already processed is skipped entirely.
+    ///
+    /// Call path this exercises, for a reviewer to re-trace without a build:
+    /// `WatchQuizViewModel.selectAnswer` → `WatchSessionManager
+    /// .sendQuizReviewBatch` → `transferUserInfo` → `WatchConnectivityManager
+    /// .session(_:didReceiveUserInfo:)` → `processWatchQuizBatch` →
+    /// `KanaCardRepository.allKanaCards()` (character → `CardDTO` lookup) →
+    /// `CardRepository.gradeCard(surface: "watch")` → `ReviewLog`.
+    private func processWatchQuizBatch(_ batch: WatchQuizReviewBatch) async {
+        guard !isBatchAlreadyProcessed(batch.sessionId) else {
+            Logger.sync.info("Ignoring already-processed Watch quiz batch \(batch.sessionId)")
+            return
+        }
+        // Marked processed only once we know we can actually attempt
+        // grading (`modelContainer` present) — marking it earlier and then
+        // bailing on a nil container would drop the batch forever instead
+        // of leaving it eligible for a later retry/redelivery.
+        guard let container = modelContainer else { return }
+        markBatchProcessed(batch.sessionId)
+        let cardRepo = CardRepository(modelContainer: container)
+        let kanaRepo = KanaCardRepository(cardRepository: cardRepo)
+
+        // Character → card lookup. The Watch quiz pool (`KanaData.hiragana`)
+        // is static and doesn't know about `Card`/`CardDTO` at all — it
+        // reports which character was the target and which was chosen, and
+        // this side resolves that back to a real kana `Card` the same way
+        // `KanaCardRepository` already identifies one (`front` membership in
+        // the `KanaGroup` catalog).
+        let kanaCards = await kanaRepo.allKanaCards()
+        let cardByFront = Dictionary(kanaCards.map { ($0.front, $0) }, uniquingKeysWith: { first, _ in first })
+
+        var gradedCount = 0
+        for event in batch.events {
+            guard let card = cardByFront[event.targetCharacter] else {
+                // No matching kana card on this device — e.g. the learner
+                // hasn't chosen that kana group yet, or purged an unstarted
+                // one. Skip rather than crash or grade the wrong card; the
+                // event is logged, not silently dropped.
+                Logger.sync.warning(
+                    "Watch quiz answer for \(event.targetCharacter) has no matching kana card — skipped"
+                )
+                continue
+            }
+
+            // Same grade-mapping thresholds as the iPhone quiz
+            // (`DrillUtilities.mapQuizResultToGrade`), so a wrist answer and
+            // a phone answer with the same outcome/latency get the same
+            // FSRS grade.
+            let grade = mapQuizResultToGrade(correct: event.isCorrect, responseTimeMs: event.responseTimeMs)
+
+            await cardRepo.gradeCard(
+                cardId: card.id,
+                grade: grade,
+                responseTimeMs: event.responseTimeMs,
+                now: event.answeredAt,
+                answeredValue: event.answeredCharacter,
+                exerciseType: Self.watchQuizExerciseType,
+                surface: Self.watchSurface
+            )
+            gradedCount += 1
+        }
+
+        Logger.sync.info(
+            "Graded \(gradedCount)/\(batch.events.count) Watch quiz answers via gradeCard (surface=watch)"
+        )
+
+        // Aggregate XP / review-count bump — same legacy mechanic
+        // `WatchSessionResult` already drove, now fed from the graded
+        // batch's own tallies instead of a separate message.
+        //
+        // `gradedCount`, not `batch.events.count`: the watch draws from the
+        // whole hiragana set regardless of which groups were chosen on the
+        // phone, so answers with no matching card are the rule rather than
+        // the exception. Counting them would inflate `totalReviewsCompleted`
+        // with reviews that produced no ReviewLog — the same "counting
+        // reviews that did not happen" this change removes for the pitch
+        // drill.
+        let correctCount = batch.events.filter(\.isCorrect).count
+        processWatchResult(
+            WatchSessionResult(
+                correctCount: correctCount,
+                totalQuestions: gradedCount,
+                drillType: .kanaQuiz,
+                completedAt: batch.events.last?.answeredAt ?? Date(),
+                xpEarned: batch.xpEarned
+            )
+        )
+    }
+
+    // MARK: - Idempotency
+
+    private func isBatchAlreadyProcessed(_ sessionId: UUID) -> Bool {
+        processedBatchIds().contains(sessionId.uuidString)
+    }
+
+    private func markBatchProcessed(_ sessionId: UUID) {
+        var ids = processedBatchIds()
+        ids.append(sessionId.uuidString)
+        if ids.count > Self.processedBatchIdsCap {
+            ids.removeFirst(ids.count - Self.processedBatchIdsCap)
+        }
+        UserDefaults.standard.set(ids, forKey: Self.processedBatchIdsKey)
+    }
+
+    private func processedBatchIds() -> [String] {
+        UserDefaults.standard.stringArray(forKey: Self.processedBatchIdsKey) ?? []
     }
 }
 
@@ -123,11 +266,23 @@ extension WatchConnectivityManager: WCSessionDelegate {
         session.activate()
     }
 
-    /// Receives queued Watch session results via transferUserInfo.
+    /// Receives queued Watch payloads via transferUserInfo — either a
+    /// per-card `WatchQuizReviewBatch` (kana quiz, chantier #46) or a
+    /// legacy aggregate-only `WatchSessionResult` (pitch drill, or an old
+    /// Watch build). Tried in that order; the two formats' required keys
+    /// don't overlap (see `WatchQuizReviewBatch.fromDictionary`'s doc), so
+    /// this never misparses one as the other.
     nonisolated func session(
         _ session: WCSession,
         didReceiveUserInfo userInfo: [String: Any] = [:]
     ) {
+        if let batch = WatchQuizReviewBatch.fromDictionary(userInfo) {
+            Task { @MainActor in
+                await processWatchQuizBatch(batch)
+            }
+            return
+        }
+
         guard let result = WatchSessionResult.fromDictionary(userInfo) else {
             Logger.sync.warning("Received unrecognized userInfo from Watch")
             return

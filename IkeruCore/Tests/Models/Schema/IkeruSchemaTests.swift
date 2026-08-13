@@ -29,15 +29,21 @@ struct IkeruSchemaTests {
         #expect(IkeruSchemaV3.versionIdentifier == Schema.Version(3, 0, 0))
     }
 
+    @Test("V4 has the same model COUNT as V3 (8 entities gain sync columns, not new entities)")
+    func v4ModelCount() {
+        #expect(IkeruSchemaV4.models.count == IkeruSchemaV3.models.count)
+        #expect(IkeruSchemaV4.versionIdentifier == Schema.Version(4, 0, 0))
+    }
+
     @Test("Migration plan is well-formed: stages == schemas - 1")
     func planWellFormed() {
-        #expect(IkeruMigrationPlan.schemas.count == 3)
+        #expect(IkeruMigrationPlan.schemas.count == 4)
         #expect(IkeruMigrationPlan.stages.count == IkeruMigrationPlan.schemas.count - 1)
     }
 
-    @Test("A container opens with the current (V3) versioned schema + migration plan")
+    @Test("A container opens with the current (V4) versioned schema + migration plan")
     func containerOpensWithPlan() throws {
-        let schema = Schema(versionedSchema: IkeruSchemaV3.self)
+        let schema = Schema(versionedSchema: IkeruSchemaV4.self)
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         let container = try ModelContainer(
             for: schema,
@@ -45,22 +51,23 @@ struct IkeruSchemaTests {
             configurations: [config]
         )
         // Every declared model resolves to exactly one schema entity — a guard
-        // against a model being dropped from (or duplicated in) V3.
-        #expect(container.schema.entities.count == IkeruSchemaV3.models.count)
+        // against a model being dropped from (or duplicated in) V4.
+        #expect(container.schema.entities.count == IkeruSchemaV4.models.count)
     }
 
-    // Deliberately NOT adding a "container opens with frozen V2 alone" test
-    // here: unlike `Schema(versionedSchema:)` construction (safe — the golden
-    // fingerprint tests below already do this for V2), actually *opening a
-    // ModelContainer* against V2's frozen nested types poisons SwiftData's
-    // process-global entity↔class cache for the rest of THIS suite's process
-    // (same containment rule as `StoreMigrationV2V3Tests` — see its header
-    // comment). This file runs `--no-parallel` alongside CardRepositoryTests,
-    // KanaCardRepositoryTests, ProgressServiceTests, etc., all of which fetch
-    // live types — planting that container-open here would make their green
-    // status order-dependent. `v2GoldenFingerprint` below and
-    // `StoreMigrationV2V3Tests` (its own isolated process) already cover what
-    // this would have proven.
+    // Deliberately NOT adding a "container opens with frozen V2 (or V3)
+    // alone" test here: unlike `Schema(versionedSchema:)` construction (safe
+    // — the golden fingerprint tests below already do this for V2/V3),
+    // actually *opening a ModelContainer* against a frozen version's nested
+    // types poisons SwiftData's process-global entity↔class cache for the
+    // rest of THIS suite's process (same containment rule as
+    // `StoreMigrationV2V3Tests` / `StoreMigrationV3V4Tests` — see their
+    // header comments). This file runs `--no-parallel` alongside
+    // CardRepositoryTests, KanaCardRepositoryTests, ProgressServiceTests,
+    // etc., all of which fetch live types — planting that container-open
+    // here would make their green status order-dependent. `v2GoldenFingerprint`
+    // / `v3GoldenFingerprint` below and the isolated-process migration
+    // suites already cover what this would have proven.
 
     // MARK: - Golden fingerprints (mechanical guard against silent drift)
 
@@ -261,5 +268,54 @@ struct IkeruSchemaTests {
         // by running this suite (`swift test --no-parallel --filter
         // "IkeruSchema"`) and reading the printed value; not hand-computed.
         #expect(Self.typedFingerprint(of: schema) == "40044a8a4a774661")
+    }
+
+    /// The 24 `updatedAt`/`deletedAt`/`syncedAt` columns cloud-sync lot 0
+    /// (`docs/design-specs/2026-08-10-cloud-sync-design.md` §5.1) adds — one
+    /// triple per synchronized entity (spec §3): `UserProfile`, `Card`,
+    /// `ReviewLog`, `RPGState`, `VocabularyEntry`, `VocabularyEncounter`,
+    /// `ExerciseOutcomeLog`, `CompanionChatMessage`. `MnemonicCache`,
+    /// `AssetManifest`, `DailyTerm` are explicitly not synchronized and gain
+    /// nothing.
+    private static let v4SyncColumns = [
+        "UserProfile.updatedAt", "UserProfile.deletedAt", "UserProfile.syncedAt",
+        "Card.updatedAt", "Card.deletedAt", "Card.syncedAt",
+        "ReviewLog.updatedAt", "ReviewLog.deletedAt", "ReviewLog.syncedAt",
+        "RPGState.updatedAt", "RPGState.deletedAt", "RPGState.syncedAt",
+        "VocabularyEntry.updatedAt", "VocabularyEntry.deletedAt", "VocabularyEntry.syncedAt",
+        "VocabularyEncounter.updatedAt", "VocabularyEncounter.deletedAt", "VocabularyEncounter.syncedAt",
+        "ExerciseOutcomeLog.updatedAt", "ExerciseOutcomeLog.deletedAt", "ExerciseOutcomeLog.syncedAt",
+        "CompanionChatMessage.updatedAt", "CompanionChatMessage.deletedAt", "CompanionChatMessage.syncedAt",
+    ]
+
+    @Test("V4 golden fingerprint — V3 plus updatedAt/deletedAt/syncedAt on the 8 synchronized entities")
+    func v4GoldenFingerprint() {
+        let schema = Schema(versionedSchema: IkeruSchemaV4.self)
+        var golden = Self.v1GoldenFingerprintList
+        golden.append("RPGState.activeDaysCount")
+        golden.append(contentsOf: [
+            "ExerciseOutcomeLog.accuracy",
+            "ExerciseOutcomeLog.id",
+            "ExerciseOutcomeLog.profileID",
+            "ExerciseOutcomeLog.skillRawValue",
+            "ExerciseOutcomeLog.timestamp",
+        ])
+        golden.append(contentsOf: [
+            "ReviewLog.answeredValue",
+            "ReviewLog.exerciseType",
+            "ReviewLog.surface",
+        ])
+        golden.append(contentsOf: Self.v4SyncColumns)
+        golden.sort()
+        #expect(Self.fingerprint(of: schema) == golden)
+        // NOTE: no typed-digest assertion here (unlike v1/v2/v3 above). That
+        // hash can only be minted by actually running this suite (`swift
+        // test --no-parallel --filter "IkeruSchema"`) and reading the
+        // printed value — this lot was authored without build/test
+        // authorization (see handoff notes), so a fabricated hash would be
+        // worse than no assertion at all. First person to run this suite:
+        // read the digest `typedFingerprint(of: schema)` produces, verify it
+        // by hand against the property list above, and add
+        // `#expect(Self.typedFingerprint(of: schema) == "<value>")` here.
     }
 }

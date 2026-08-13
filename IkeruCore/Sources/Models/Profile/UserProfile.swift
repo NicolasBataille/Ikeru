@@ -31,6 +31,28 @@ public final class UserProfile: Identifiable {
     @Relationship(deleteRule: .cascade, inverse: \RPGState.profile)
     public var rpgState: RPGState?
 
+    // MARK: - Cloud sync (schema-only, lot 0)
+    //
+    // Added by `IkeruSchemaV4` (cloud-sync lot 0, see
+    // `docs/design-specs/2026-08-10-cloud-sync-design.md` §5.1). Nothing
+    // reads or writes these yet — no repository bumps `updatedAt` on
+    // mutation, nothing sets `deletedAt`, nothing sets `syncedAt`. That
+    // wiring is a later lot; this lot only adds the columns.
+
+    /// Local modification clock. Defaults to the Unix epoch at the property
+    /// level so the `.lightweight` V3→V4 migration can backfill existing
+    /// rows without a custom stage; every initializer below sets this to
+    /// `Date()` explicitly for freshly created objects.
+    public var updatedAt: Date = Date(timeIntervalSince1970: 0)
+
+    /// Tombstone. Non-nil means this row was locally deleted and awaits a
+    /// sync push of the deletion.
+    public var deletedAt: Date?
+
+    /// Timestamp of the last confirmed push to the sync server. `nil` means
+    /// never synced.
+    public var syncedAt: Date?
+
     public init(
         displayName: String,
         settings: ProfileSettings = ProfileSettings()
@@ -41,5 +63,8 @@ public final class UserProfile: Identifiable {
         self.settings = settings
         self.cards = []
         self.rpgState = RPGState()
+        self.updatedAt = Date()
+        self.deletedAt = nil
+        self.syncedAt = nil
     }
 }
