@@ -55,7 +55,6 @@ struct KanaQuizView: View {
     private var content: some View {
         VStack(spacing: IkeruTheme.Spacing.md) {
             topBar
-            hiraganaBridgeHint
             Spacer(minLength: 0)
             if let card = viewModel.currentCard {
                 Text(card.front)
@@ -98,27 +97,22 @@ struct KanaQuizView: View {
         .padding(.top, IkeruTheme.Spacing.sm)
     }
 
-    // MARK: Hiragana bridge hint (chantier #24a)
+    // MARK: Hiragana bridge hint — deliberately NOT shown here (chantier #45g)
     //
-    // "Même son, nouvelle forme": the first time a katakana card is seen
-    // (masteryLevel == .new), show its hiragana counterpart grayed out above
-    // the quiz glyph, so the new shape reads as a variant of something
-    // already known rather than a completely unrelated character.
-
-    @ViewBuilder
-    private var hiraganaBridgeHint: some View {
-        if let bridge = viewModel.hiraganaBridgeCharacter {
-            HStack(spacing: 8) {
-                Text(bridge.character)
-                    .font(.system(size: 22, weight: .light, design: .serif))
-                    .foregroundStyle(Color.ikeruTextTertiary.opacity(0.6))
-                Text("Kana.HiraganaBridge.Caption")
-                    .font(.ikeruMicro)
-                    .foregroundStyle(Color.ikeruTextTertiary)
-            }
-            .transition(.opacity)
-        }
-    }
+    // `KanaFlashcardView` shows the "même son, nouvelle forme" hiragana
+    // bridge above a first-exposure katakana card (chantier #24a) — that's a
+    // self-graded presentation card, so revealing the hiragana counterpart
+    // only helps the learner connect the new shape to something familiar.
+    // This view, by contrast, is the 4-choice romaji recognition QUIZ: the
+    // question being asked is "what romaji does this character make?", and
+    // the hiragana counterpart's reading answers that question outright.
+    // Showing it here would both defeat the exercise (nothing left to
+    // evaluate) and poison the `answeredValue` logged for that card — a
+    // hint-assisted correct answer would be indistinguishable from a free
+    // recall in `ReviewLog.answeredValue`. So the quiz never renders the
+    // bridge, regardless of `viewModel.hiraganaBridgeCharacter` —
+    // evaluation contexts don't get the hint, only the flashcard's
+    // presentation context does.
 
     // MARK: Options
 

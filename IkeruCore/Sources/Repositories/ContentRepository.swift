@@ -28,6 +28,16 @@ import SQLite3
 ///     stroke_count INTEGER
 /// );
 ///
+/// CREATE TABLE kana (
+///     character TEXT PRIMARY KEY,
+///     stroke_count INTEGER,       -- derived from the stored SVG's path count
+///     stroke_order_svg TEXT       -- KanjiVG SVG path data
+/// );                              -- covers the 92 base + 50 dakuten kana only;
+///                                 -- yōon digraphs (きゃ, etc.) have no row —
+///                                 -- KanjiVG has no file for a two-codepoint
+///                                 -- combination. See KanaGroup.swift for the
+///                                 -- full 208-character list (romaji, section).
+///
 /// CREATE TABLE kanji_radical_edges (
 ///     radical_character TEXT,
 ///     kanji_character TEXT,
@@ -83,6 +93,20 @@ public final class ContentRepository: Sendable {
     /// - Returns: Array of Radical structs that are components of the kanji.
     public func radicalsForKanji(_ character: String) async -> [Radical] {
         await actor.radicalsForKanji(character)
+    }
+
+    // MARK: - Kana Queries
+
+    /// Fetch stroke-order trace data for a single kana character.
+    ///
+    /// Covers the 92 base + 50 dakuten kana only (single Unicode codepoint
+    /// each). Yōon digraphs (きゃ, しゅ, ...) return `nil` — KanjiVG, the
+    /// upstream data source, has no file for a two-codepoint combination.
+    /// See `KanaGroup.swift` for the full 208-character kana list.
+    /// - Parameter character: The kana character to look up (e.g. "か").
+    /// - Returns: `(strokeCount, svg)` if trace data exists, else `nil`.
+    public func kanaStrokeData(for character: String) async -> (strokeCount: Int, svg: String)? {
+        await actor.kanaStrokeData(for: character)
     }
 
     // MARK: - Vocabulary Queries
@@ -288,6 +312,33 @@ actor ContentDatabaseActor {
             results.append(radical)
         }
         return results
+    }
+
+    // MARK: - Kana Queries
+
+    /// Returns `nil` both when the character has no trace data (e.g. a yōon
+    /// digraph) and when the bundle predates the `kana` table entirely —
+    /// `sqlite3_prepare_v2` fails gracefully on a missing table, it is
+    /// logged, not a crash.
+    func kanaStrokeData(for character: String) -> (strokeCount: Int, svg: String)? {
+        guard openIfNeeded() else { return nil }
+
+        let sql = "SELECT stroke_count, stroke_order_svg FROM kana WHERE character = ?"
+        var stmt: OpaquePointer?
+        guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else {
+            Logger.content.error("Failed to prepare kanaStrokeData query")
+            return nil
+        }
+        defer { sqlite3_finalize(stmt) }
+
+        sqlite3_bind_text(stmt, 1, character, -1, SQLITE_TRANSIENT)
+
+        guard sqlite3_step(stmt) == SQLITE_ROW,
+              let svg = columnOptionalText(stmt, 1) else {
+            return nil
+        }
+        let strokeCount = Int(sqlite3_column_int(stmt, 0))
+        return (strokeCount, svg)
     }
 
     // MARK: - Vocabulary Queries

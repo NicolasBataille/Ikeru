@@ -44,6 +44,24 @@ struct ExerciseTransitionContainer: View {
     /// predicted intervals under the grade buttons.
     var desiredRetention: Double = 0.9
 
+    /// Whether the current `.srsReview` exercise is a brand-new kana card's
+    /// ungraded presentation pass (see `SessionViewModel.isPresentingNewCard`)
+    /// rather than a normal graded touch-and-reveal test. Branches
+    /// `srsReviewView` to `NewCardPresentationView`.
+    var isPresentingNewCard: Bool = false
+
+    /// Forwarded so the presentation view's auto-advance timer can pause
+    /// itself while the session is paused, instead of ticking silently
+    /// under the pause overlay (`ActiveSessionView.pauseOverlay`).
+    var isPaused: Bool = false
+
+    /// Callback when the user's new-card presentation pass auto-advances
+    /// (or the user replays the audio, which does NOT call this — only the
+    /// auto-advance timer does). Routes to
+    /// `SessionViewModel.completeNewCardPresentation`, which writes no FSRS
+    /// grade.
+    var onPresentationAcknowledged: () -> Void = {}
+
     @Namespace private var exerciseAnimation
     @State private var isRevealed = false
 
@@ -159,6 +177,27 @@ struct ExerciseTransitionContainer: View {
     @ViewBuilder
     private var srsReviewView: some View {
         if let card = currentCard {
+            if isPresentingNewCard {
+                // `.id(card.id)` is load-bearing, not decoration: when a
+                // foundation-mode session introduces several new kana in a
+                // row (the common day-one shape — no due reviews, several
+                // intros back to back), consecutive intros stay in this SAME
+                // if-branch with no other structural change, so WITHOUT this
+                // id SwiftUI reuses the same `NewCardPresentationView`
+                // instance across cards. Its `.task` (autoplay, no id) would
+                // then never re-run for card #2+, and its `.task(id: isPaused)`
+                // auto-advance timer would never re-arm either (`isPaused`
+                // didn't change) — card #2 would sit silent and stuck
+                // forever, with no button and no swipe to escape it. Forcing
+                // a fresh identity per card makes both `.task`s fire again on
+                // every card, intro or not.
+                NewCardPresentationView(
+                    card: card,
+                    isPaused: isPaused,
+                    onAcknowledged: onPresentationAcknowledged
+                )
+                .id(card.id)
+            } else {
             VStack(spacing: 0) {
                 Spacer()
 
@@ -208,6 +247,7 @@ struct ExerciseTransitionContainer: View {
                 }
             }
             .animation(.spring(response: 0.35, dampingFraction: 0.85), value: isRevealed)
+            }
         }
     }
 
@@ -361,6 +401,103 @@ enum DrillGradeMapping {
     /// (`vocabularyStudy` is `.perGrade`) and is NEVER written to FSRS.
     static func vocabularyRecall(isCorrect: Bool) -> Grade {
         isCorrect ? .good : .again
+    }
+}
+
+// MARK: - New Card Presentation
+
+/// Ungraded "presentation" pass for a brand-new kana card the learner has
+/// never seen before: the glyph, its romaji reading (visible immediately —
+/// no reveal tap), and the pronunciation played automatically. No grading
+/// affordance — ON RENCONTRE, on n'évalue pas (2026-08 pedagogy review,
+/// "erreur de conception #1": grading a touch-and-reveal test on unseen
+/// material produces a first FSRS note that's noise, not signal). A tap
+/// anywhere replays the audio; the view advances on its own after
+/// `autoAdvanceSeconds` — no button, no added tap versus today's flow (see
+/// `SessionViewModel.completeNewCardPresentation`, called only by the
+/// auto-advance timer here, never by the tap).
+///
+/// Reuses the SAME `ikeru.audio.autoplay` `@AppStorage` key `SRSCardView`
+/// already gates its reveal-autoplay on, rather than introducing a second
+/// audio-preference flag.
+///
+/// Two deliberate extension points, left empty rather than faked:
+/// - **Stroke-order trace**: kana stroke-trace data doesn't exist in the
+///   bundle yet (a parallel workstream owns it). A future pass can render an
+///   animated trace here, keyed by `card.front`, once that data source
+///   exists — there's nothing to wire against today, so nothing renders.
+/// - **Mnemonic link**: `MnemonicService` (IkeruCore) exists but is
+///   kanji/radical-oriented and isn't injected into `SessionViewModel`'s
+///   dependency graph — wiring that reaches outside this pass's file scope.
+///   Left unwired rather than half-wired; no dead "tip" button is shown.
+private struct NewCardPresentationView: View {
+    let card: CardDTO
+    let isPaused: Bool
+    let onAcknowledged: () -> Void
+
+    @State private var audioService = AudioService()
+    @AppStorage("ikeru.audio.autoplay") private var isAudioAutoplayEnabled: Bool = true
+
+    /// ~15-20s per the pedagogy review's "CARTE DE PRESENTATION" spec — long
+    /// enough to read the glyph, hear it, and register the romaji before the
+    /// card moves on by itself.
+    private static let autoAdvanceSeconds: Double = 18
+
+    var body: some View {
+        VStack(spacing: IkeruTheme.Spacing.lg) {
+            Spacer()
+
+            Text("MEETING A NEW CHARACTER", comment: "Kicker above a brand-new kana's presentation card — there is nothing to answer here, only to notice")
+                .ikeruScaledFont(11, weight: .semibold, relativeTo: .caption2)
+                .tracking(2)
+                .textCase(.uppercase)
+                .foregroundStyle(Color.ikeruTextTertiary)
+
+            Text(card.front)
+                .font(.system(size: 180, weight: .light, design: .serif))
+                .foregroundStyle(Color.ikeruTextPrimary)
+                .shadow(color: Color.ikeruPrimaryAccent.opacity(0.25), radius: 32, y: 4)
+                .minimumScaleFactor(0.4)
+                .lineLimit(1)
+
+            Text(card.back)
+                .font(.system(size: 32, weight: .semibold, design: .rounded))
+                .foregroundStyle(Color.ikeruPrimaryAccent)
+
+            // Extension point: an animated stroke-order trace renders here
+            // once bundle data exists (see the type's doc comment). Empty
+            // today by design — no placeholder pretending to teach strokes.
+
+            Spacer()
+
+            Text("Tap to hear it again", comment: "Hint under a new-card presentation card — tapping replays the audio; the card advances on its own after a few seconds")
+                .ikeruScaledFont(11, weight: .semibold, relativeTo: .caption2)
+                .tracking(2)
+                .textCase(.uppercase)
+                .foregroundStyle(TatamiTokens.paperGhost)
+                .padding(.bottom, IkeruTheme.Spacing.md)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.horizontal, IkeruTheme.Spacing.lg)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            Task { await audioService.playTTS(text: card.front) }
+        }
+        .task {
+            guard isAudioAutoplayEnabled else { return }
+            await audioService.playTTS(text: card.front)
+        }
+        // Keyed on `isPaused`: flipping it cancels whatever sleep is in
+        // flight and restarts this task. Paused → returns immediately
+        // (timer stops dead, nothing advances under the pause overlay).
+        // Resumed → a FRESH full-length sleep starts (no partial-countdown
+        // bookkeeping needed for a single ungraded intro step).
+        .task(id: isPaused) {
+            guard !isPaused else { return }
+            try? await Task.sleep(for: .seconds(Self.autoAdvanceSeconds))
+            guard !Task.isCancelled else { return }
+            onAcknowledged()
+        }
     }
 }
 

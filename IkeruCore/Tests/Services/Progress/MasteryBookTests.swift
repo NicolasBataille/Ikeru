@@ -34,9 +34,9 @@ struct MasteryBookTests {
 
     @Test("Combining two snapshots sums level-by-level")
     func combinesWithPlus() {
-        let a = MasteryBookCounts(newCount: 2, learningCount: 1, familiarCount: 0, masteredCount: 0, anchoredCount: 0)
-        let b = MasteryBookCounts(newCount: 0, learningCount: 1, familiarCount: 3, masteredCount: 0, anchoredCount: 0)
-        let sum = a + b
+        let first = MasteryBookCounts(newCount: 2, learningCount: 1, familiarCount: 0, masteredCount: 0, anchoredCount: 0)
+        let second = MasteryBookCounts(newCount: 0, learningCount: 1, familiarCount: 3, masteredCount: 0, anchoredCount: 0)
+        let sum = first + second
         #expect(sum.newCount == 2)
         #expect(sum.learningCount == 2)
         #expect(sum.familiarCount == 3)

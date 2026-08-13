@@ -257,14 +257,9 @@ struct IkeruSchemaTests {
         ])
         golden.sort()
         #expect(Self.fingerprint(of: schema) == golden)
-        // Typed digest deliberately NOT asserted here (unlike V1/V2 above):
-        // it hashes SwiftData's own `String(describing:)` of each property,
-        // which is not reproducible by hand — only a real test run can
-        // produce it, and this agent was not authorized to run `swift test`
-        // (build contention with parallel work). Whoever next touches this
-        // file: run this suite once, read `typedFingerprint(of: schema)`,
-        // and add `#expect(Self.typedFingerprint(of: schema) == "<value>")`
-        // here, mirroring v1GoldenFingerprint/v2GoldenFingerprint. Left
-        // unasserted on purpose rather than filled with a guessed value.
+        // Typed digest — see v1GoldenFingerprint for what this adds. Produced
+        // by running this suite (`swift test --no-parallel --filter
+        // "IkeruSchema"`) and reading the printed value; not hand-computed.
+        #expect(Self.typedFingerprint(of: schema) == "40044a8a4a774661")
     }
 }

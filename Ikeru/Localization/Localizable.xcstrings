@@ -11995,6 +11995,40 @@
           }
         }
       }
+    },
+    "MEETING A NEW CHARACTER" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MEETING A NEW CHARACTER"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "NOUVEAU CARACTÈRE"
+          }
+        }
+      }
+    },
+    "Tap to hear it again" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap to hear it again"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Touchez pour réécouter"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

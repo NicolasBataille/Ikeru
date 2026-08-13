@@ -10,7 +10,9 @@ import os
 /// (2026-08-13 device pass, review OBS "Planificateur"):
 ///   - **lancement** (`composeFoundation`) — while any chosen kana is still
 ///     unseen: due reviews + one curriculum row of new kana. Pre-existing;
-///     unchanged by this pass.
+///     unchanged by this pass. Reviews here are capped at 50 % of the
+///     session budget (`totalSec / 2`), NOT an absolute priority like the
+///     other two stages below — see the `- Note:` on `composeFoundation`.
 ///   - **construction** (`composeConstruction`) — the 40/30/20/10 segment
 ///     skeleton (skill-balance booster / variety tile / new-content drip),
 ///     now with due reviews as an ABSOLUTE priority: `pickReviews` is given
@@ -279,11 +281,24 @@ public struct DefaultSessionPlanner: SessionPlanner {
     /// budget — a foundation session is intentionally compact, and rows of
     /// five are how the syllabary is actually learned. No booster, no
     /// variety: nothing here draws on content the learner hasn't met.
+    ///
+    /// - Note: Unlike `composeConstruction` and `composeCruising` — where due
+    ///   reviews get the *entire* session budget before anything else is
+    ///   scheduled — foundation keeps a hard 50 % ceiling on the review
+    ///   budget (`totalSec / 2` below). "Due reviews are an absolute
+    ///   priority" is therefore true for construction/cruising but NOT for
+    ///   foundation: here a large kana backlog is deliberately capped so a
+    ///   beginner still sees new kana every session rather than a review-only
+    ///   grind. Defendable (see rationale above), but undocumented until now
+    ///   — flagged by remediation item #45(e). Not changed by this comment.
     private func composeFoundation(
         inputs: SessionPlannerInputs,
         unseenKana: [CardDTO],
         totalSec: Int
     ) -> SessionPlan {
+        // 50 % ceiling, not an absolute priority — see the `- Note:` above
+        // composeFoundation. Contrast with composeConstruction/composeCruising,
+        // which hand pickReviews the entire remaining budget.
         let reviewItems = pickReviews(
             from: inputs.availableCards,
             secondsBudget: totalSec / 2

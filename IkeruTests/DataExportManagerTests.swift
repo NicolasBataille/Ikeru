@@ -27,6 +27,15 @@ struct DataExportManagerTests {
         let grade: Int
         let gradeLabel: String
         let responseTimeMs: Int
+        let answeredValue: String?
+        let exerciseType: String?
+        let surface: String?
+    }
+
+    private struct DecodedConfusion: Codable {
+        let expected: String
+        let answered: String
+        let count: Int
     }
 
     private func decoder() -> JSONDecoder {
@@ -305,6 +314,158 @@ struct DataExportManagerTests {
         )
         #expect(rows.count == 1)
         #expect(rows.first?.accuracy == 1.0)
+    }
+
+    // MARK: - Telemetry fields (learner-telemetry lot 1 export — chantier #44)
+
+    @Test("reviews.json carries answeredValue/exerciseType/surface for a quiz-style log, nil for a flashcard")
+    func reviewsJSONCarriesTelemetryFields() async throws {
+        let container = try makeContainer()
+        let profile = try seedProfile(container)
+        let context = container.mainContext
+
+        let card = Card(front: "シ", back: "shi", type: .kanji, dueDate: Date())
+        card.profile = profile
+        context.insert(card)
+
+        // Quiz-style log: the learner was shown シ and answered ツ.
+        context.insert(ReviewLog(
+            card: card, grade: .again, responseTimeMs: 800,
+            timestamp: Date(timeIntervalSince1970: 1_700_000_000),
+            answeredValue: "ツ", exerciseType: "kana.quiz", surface: "iphone.drill"
+        ))
+        // Self-graded flashcard log: nothing was chosen, so the 3 telemetry
+        // fields stay at their `nil` default.
+        context.insert(ReviewLog(
+            card: card, grade: .good, responseTimeMs: 900,
+            timestamp: Date(timeIntervalSince1970: 1_700_000_100)
+        ))
+        try context.save()
+
+        let dir = try await DataExportManager().buildExportDirectory(modelContainer: container)
+        defer { try? FileManager.default.removeItem(at: dir) }
+
+        let rows = try decoder().decode(
+            [DecodedReview].self,
+            from: Data(contentsOf: dir.appending(path: "reviews.json"))
+        )
+        #expect(rows.count == 2)
+
+        let quizRow = try #require(rows.first { $0.answeredValue != nil })
+        #expect(quizRow.answeredValue == "ツ")
+        #expect(quizRow.exerciseType == "kana.quiz")
+        #expect(quizRow.surface == "iphone.drill")
+
+        let flashcardRow = try #require(rows.first { $0.answeredValue == nil })
+        #expect(flashcardRow.exerciseType == nil)
+        #expect(flashcardRow.surface == nil)
+    }
+
+    // MARK: - confusions.json (derived aggregate)
+
+    @Test("confusions.json aggregates repeated (expected, answered) pairs and excludes correct answers")
+    func confusionsJSONAggregatesRepeatedPairs() async throws {
+        let container = try makeContainer()
+        let profile = try seedProfile(container)
+        let context = container.mainContext
+
+        let shi = Card(front: "シ", back: "shi", type: .kanji, dueDate: Date())
+        shi.profile = profile
+        context.insert(shi)
+
+        let so = Card(front: "ソ", back: "so", type: .kanji, dueDate: Date())
+        so.profile = profile
+        context.insert(so)
+
+        // シ confused with ツ, twice — the classic shi/tsu stroke-shape pair.
+        context.insert(ReviewLog(
+            card: shi, grade: .again, responseTimeMs: 700,
+            timestamp: Date(timeIntervalSince1970: 1_700_000_000),
+            answeredValue: "ツ", exerciseType: "kana.quiz", surface: "iphone.drill"
+        ))
+        context.insert(ReviewLog(
+            card: shi, grade: .again, responseTimeMs: 750,
+            timestamp: Date(timeIntervalSince1970: 1_700_000_100),
+            answeredValue: "ツ", exerciseType: "kana.quiz", surface: "iphone.drill"
+        ))
+        // ソ confused with ン, once.
+        context.insert(ReviewLog(
+            card: so, grade: .again, responseTimeMs: 720,
+            timestamp: Date(timeIntervalSince1970: 1_700_000_200),
+            answeredValue: "ン", exerciseType: "kana.quiz", surface: "iphone.drill"
+        ))
+        // A correct answer (expected == answered) — must NOT surface as a
+        // confusion pair.
+        context.insert(ReviewLog(
+            card: shi, grade: .good, responseTimeMs: 500,
+            timestamp: Date(timeIntervalSince1970: 1_700_000_300),
+            answeredValue: "シ", exerciseType: "kana.quiz", surface: "iphone.drill"
+        ))
+        try context.save()
+
+        let dir = try await DataExportManager().buildExportDirectory(modelContainer: container)
+        defer { try? FileManager.default.removeItem(at: dir) }
+
+        let confusionsURL = dir.appending(path: "confusions.json")
+        #expect(FileManager.default.fileExists(atPath: confusionsURL.path))
+
+        let rows = try decoder().decode([DecodedConfusion].self, from: Data(contentsOf: confusionsURL))
+        #expect(rows.count == 2)
+
+        let shiTsu = try #require(rows.first { $0.expected == "シ" })
+        #expect(shiTsu.answered == "ツ")
+        #expect(shiTsu.count == 2)
+
+        let soN = try #require(rows.first { $0.expected == "ソ" })
+        #expect(soN.answered == "ン")
+        #expect(soN.count == 1)
+
+        // Sorted count-descending — the 2x pair must lead.
+        #expect(rows.first?.expected == "シ")
+    }
+
+    @Test("confusions.json is a valid empty array when there is no confusable history")
+    func confusionsJSONEmpty() async throws {
+        let container = try makeContainer()
+        _ = try seedProfile(container)
+
+        let dir = try await DataExportManager().buildExportDirectory(modelContainer: container)
+        defer { try? FileManager.default.removeItem(at: dir) }
+
+        let confusionsURL = dir.appending(path: "confusions.json")
+        #expect(FileManager.default.fileExists(atPath: confusionsURL.path))
+
+        let rows = try decoder().decode([DecodedConfusion].self, from: Data(contentsOf: confusionsURL))
+        #expect(rows.isEmpty)
+    }
+
+    // MARK: - context.json documents the new fields (self-describing package)
+
+    @Test("context.json parses as valid JSON and documents grade_semantics + the new review/confusion fields")
+    func contextJSONDocumentsTelemetryFields() async throws {
+        let container = try makeContainer()
+        _ = try seedProfile(container)
+
+        let dir = try await DataExportManager().buildExportDirectory(modelContainer: container)
+        defer { try? FileManager.default.removeItem(at: dir) }
+
+        let data = try Data(contentsOf: dir.appending(path: "context.json"))
+        let json = try #require(try JSONSerialization.jsonObject(with: data) as? [String: Any])
+
+        let gradeSemantics = try #require(json["grade_semantics"] as? [String: Any])
+        let hard = try #require(gradeSemantics["2"] as? [String: Any])
+        #expect((hard["label"] as? String) == "hard")
+
+        let files = try #require(json["files"] as? [String: Any])
+        let reviewsFields = try #require((files["reviews.json"] as? [String: Any])?["fields"] as? [String: Any])
+        #expect(reviewsFields["answeredValue"] != nil)
+        #expect(reviewsFields["exerciseType"] != nil)
+        #expect(reviewsFields["surface"] != nil)
+
+        let confusionsFields = try #require((files["confusions.json"] as? [String: Any])?["fields"] as? [String: Any])
+        #expect(confusionsFields["expected"] != nil)
+        #expect(confusionsFields["answered"] != nil)
+        #expect(confusionsFields["count"] != nil)
     }
 
     // MARK: - The shared artifact is a single zip, not a directory

@@ -86,11 +86,13 @@ public final class HomeViewModel {
     /// sans installer le miroir").
     public private(set) var masteryBook: MasteryBookCounts = MasteryBookCounts()
 
-    /// Net change in `masteryBook.knownCount` (familiar-or-better) since a
-    /// week-old baseline, or nil when no baseline old enough to diff against
-    /// exists yet (first week for this profile). See
-    /// `MasteryBookSnapshotStore` — persisted in UserDefaults, no SwiftData
-    /// schema involved.
+    /// Net change in `masteryBook.knownCount` (familiar-or-better) since the
+    /// current weekly baseline, or nil when no baseline exists yet at all
+    /// (this profile's first-ever Home load). The baseline itself rolls
+    /// forward only once a full week has passed — see
+    /// `MasteryBookSnapshotStore`'s doc comment — so this delta stays
+    /// visible for the whole week, not just a single load. Persisted in
+    /// UserDefaults, no SwiftData schema involved.
     public private(set) var masteryBookWeeklyDelta: Int?
 
     /// Whether Home should invite the learner to choose a kana study set before

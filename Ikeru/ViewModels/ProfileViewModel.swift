@@ -164,6 +164,12 @@ public final class ProfileViewModel {
         // profile id and would otherwise linger forever.
         OnboardingFlags.clearAll(profileID: deletedID)
 
+        // Same reasoning again for the competency-booklet weekly-delta
+        // baseline (chantier #45h): also UserDefaults-backed and keyed by
+        // profile id (see `MasteryBookSnapshotStore`), so it doesn't cascade
+        // with the SwiftData delete below and would otherwise linger forever.
+        MasteryBookSnapshotStore.clear(profileID: deletedID)
+
         modelContext.delete(profile)
         do {
             try modelContext.save()
