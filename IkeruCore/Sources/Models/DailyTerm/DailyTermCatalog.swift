@@ -740,6 +740,227 @@ public enum DailyTermCatalog {
             flavourFR: "la solitude d'un lieu plutôt que d'une personne — un quai désert, une boutique fermée en octobre. Distinct du simple `さびしい`",
             jlptLevel: nil,
             tags: ["mood", "autumn", "evening"]
+        ),
+
+        // MARK: - Beginner reach (N5 / N4)
+        //
+        // The catalogue grew from the "interesting word" end and had, before
+        // these, exactly ONE entry at or below N4 — so a beginner asking for a
+        // term at their level got that one word, then fell back to vocabulary
+        // far above them. Level-aware selection cannot fix an empty shelf.
+        //
+        // These are ordinary words, deliberately. The flavour note carries the
+        // interest, not the rarity of the word: a learner who has just met
+        // あ・い・う should be able to read the word itself and still learn
+        // something. The register is also general-audience — the earlier
+        // entries drifted toward industrial and software vocabulary.
+        //
+        // JLPT levels are ESTIMATES, and they were checked against a
+        // reconstruction (JMdict/Tanos) rather than assigned by feel — a first
+        // pass got three of them wrong by a whole level, in both directions.
+        // The Japan Foundation stopped publishing official lists in 2010, so
+        // reconstructions disagree at the margins: 祭り reads N4 here and N3 in
+        // Tanos, and that kind of gap is expected. Check a source before
+        // changing one; do not trust the shape of the word.
+
+        DailyTermCandidate(
+            word: "水",
+            reading: "みず",
+            pronunciation: "mi-zu",
+            meaning: "water",
+            meaningFR: "eau",
+            flavour: "水に流す, to let something flow away with the water, is what you say when a quarrel is to be forgotten — not forgiven, forgotten",
+            flavourFR: "水に流す, laisser partir avec l'eau, se dit d'une brouille qu'on efface — non pas pardonnée, effacée",
+            jlptLevel: .n5,
+            tags: ["summer", "nature", "any"]
+        ),
+        DailyTermCandidate(
+            word: "雨",
+            reading: "あめ",
+            pronunciation: "a-me",
+            meaning: "rain",
+            meaningFR: "pluie",
+            flavour: "Japanese has dozens of words for it — 春雨 spring drizzle, 夕立 the sudden evening downpour, 五月雨 the long early-summer rain",
+            flavourFR: "le japonais en a des dizaines de noms — 春雨 la bruine de printemps, 夕立 l'averse soudaine du soir, 五月雨 la longue pluie du début d'été",
+            jlptLevel: .n5,
+            tags: ["summer", "nature", "mood", "any"]
+        ),
+        DailyTermCandidate(
+            word: "猫",
+            reading: "ねこ",
+            pronunciation: "ne-ko",
+            meaning: "cat",
+            meaningFR: "chat",
+            flavour: "the beckoning cat on shop counters raises its left paw for customers, its right for money — and both, occasionally, out of greed",
+            flavourFR: "le chat porte-bonheur des comptoirs lève la patte gauche pour attirer les clients, la droite pour l'argent — et les deux, parfois, par gourmandise",
+            jlptLevel: .n5,
+            tags: ["any", "mood"]
+        ),
+        DailyTermCandidate(
+            word: "山",
+            reading: "やま",
+            pronunciation: "ya-ma",
+            meaning: "mountain",
+            meaningFR: "montagne",
+            flavour: "many climb Fuji overnight to be standing at the summit when the sun comes up — though the authorities now discourage doing it without a hut stop",
+            flavourFR: "beaucoup gravissent le Fuji de nuit pour être au sommet au lever du soleil — même si les autorités déconseillent désormais de le faire sans étape en refuge",
+            jlptLevel: .n5,
+            tags: ["nature", "summer", "any"]
+        ),
+        DailyTermCandidate(
+            word: "海",
+            reading: "うみ",
+            pronunciation: "u-mi",
+            meaning: "sea",
+            meaningFR: "mer",
+            flavour: "no point in the country sits more than about 115 km from it — a fact that shaped the cooking long before it shaped the economy",
+            flavourFR: "aucun point du pays n'en est éloigné de plus de 115 km environ — un fait qui a façonné la cuisine bien avant l'économie",
+            jlptLevel: .n5,
+            tags: ["summer", "nature", "any"]
+        ),
+        DailyTermCandidate(
+            word: "手紙",
+            reading: "てがみ",
+            pronunciation: "te-ga-mi",
+            meaning: "letter (the written kind)",
+            meaningFR: "lettre (celle qu'on écrit)",
+            flavour: "written with the characters for hand and paper — and a false friend for Chinese readers, where the same pair means toilet paper",
+            flavourFR: "écrit avec les caractères de la main et du papier — et un faux ami pour un lecteur chinois, où la même paire désigne le papier toilette",
+            jlptLevel: .n5,
+            tags: ["any", "self", "evening"]
+        ),
+        DailyTermCandidate(
+            word: "友達",
+            reading: "ともだち",
+            pronunciation: "to-mo-da-chi",
+            meaning: "friend",
+            meaningFR: "ami",
+            flavour: "達 (たち) is still the plural suffix — 私たち, 子供たち — but in 友達 it fossilised as early as the Heian period, which is why the word suits one friend or several",
+            flavourFR: "達 (たち) est toujours le suffixe du pluriel — 私たち, 子供たち — mais dans 友達 il s'est figé dès l'époque de Heian, d'où le fait que le mot convienne aussi bien à un ami qu'à plusieurs",
+            jlptLevel: .n5,
+            tags: ["weekend", "society", "any"]
+        ),
+        DailyTermCandidate(
+            word: "元気",
+            reading: "げんき",
+            pronunciation: "ge-n-ki",
+            meaning: "well, in good spirits, full of energy",
+            meaningFR: "en forme, plein d'énergie",
+            flavour: "asking 元気ですか is closer to \"are you keeping well\" than to \"how are you\" — it expects an actual answer",
+            flavourFR: "demander 元気ですか tient plus du « tu vas bien, vraiment ? » que du « ça va ? » — la question attend une vraie réponse",
+            jlptLevel: .n5,
+            tags: ["morning", "mood", "self", "any"]
+        ),
+        DailyTermCandidate(
+            word: "駅",
+            reading: "えき",
+            pronunciation: "e-ki",
+            meaning: "railway station",
+            meaningFR: "gare",
+            flavour: "stations double as the default meeting point — Shibuya's dog statue has been \"see you at Hachikō\" for generations",
+            flavourFR: "les gares servent de point de rendez-vous par défaut — la statue du chien de Shibuya, c'est « on se voit à Hachikō » depuis des générations",
+            jlptLevel: .n5,
+            tags: ["any", "society", "morning"]
+        ),
+        DailyTermCandidate(
+            word: "空",
+            reading: "そら",
+            pronunciation: "so-ra",
+            meaning: "sky",
+            meaningFR: "ciel",
+            flavour: "the same character read から means empty — the sky as the empty place, which is also where 空手 karate gets its \"empty hand\"",
+            flavourFR: "le même caractère, lu から, signifie vide — le ciel comme lieu vide, d'où vient aussi la « main vide » du 空手 karaté",
+            jlptLevel: .n5,
+            tags: ["nature", "morning", "aesthetic", "any"]
+        ),
+        DailyTermCandidate(
+            word: "花",
+            reading: "はな",
+            pronunciation: "ha-na",
+            meaning: "flower",
+            meaningFR: "fleur",
+            flavour: "in classical poetry the word alone meant cherry blossom — no one needed to say which flower",
+            flavourFR: "dans la poésie classique, le mot seul désignait la fleur de cerisier — personne n'avait besoin de préciser laquelle",
+            jlptLevel: .n5,
+            tags: ["spring", "nature", "aesthetic", "any"]
+        ),
+        DailyTermCandidate(
+            word: "朝",
+            reading: "あさ",
+            pronunciation: "a-sa",
+            meaning: "morning",
+            meaningFR: "matin",
+            flavour: "おはよう comes from 早い, early — not from 朝, despite the resemblance: it is お早うございます, worn down",
+            flavourFR: "おはよう vient de 早い, tôt — et non de 朝 malgré la ressemblance : c'est お早うございます, usé par l'usage",
+            jlptLevel: .n5,
+            tags: ["morning", "self", "any"]
+        ),
+
+        DailyTermCandidate(
+            word: "祭り",
+            reading: "まつり",
+            pronunciation: "ma-tsu-ri",
+            meaning: "festival",
+            meaningFR: "fête, festival",
+            flavour: "the verb behind it, 祭る, means to enshrine a deity — the food stalls and drums came later, and stayed",
+            flavourFR: "le verbe qui lui a donné naissance, 祭る, signifie honorer une divinité — les stands et les tambours sont venus après, et sont restés",
+            jlptLevel: .n4,
+            tags: ["summer", "society", "weekend"]
+        ),
+        DailyTermCandidate(
+            word: "神社",
+            reading: "じんじゃ",
+            pronunciation: "ji-n-ja",
+            meaning: "Shinto shrine",
+            meaningFR: "sanctuaire shintō",
+            flavour: "the gate marks the boundary, not the building — you have already arrived once you pass under it",
+            flavourFR: "le portail marque la limite, pas le bâtiment — on est déjà arrivé dès qu'on passe dessous",
+            jlptLevel: .n4,
+            tags: ["january", "society", "aesthetic", "any"]
+        ),
+        DailyTermCandidate(
+            word: "季節",
+            reading: "きせつ",
+            pronunciation: "ki-se-tsu",
+            meaning: "season",
+            meaningFR: "saison",
+            flavour: "the traditional calendar splits the year into seventy-two of them, each about five days long — one is called \"the first peach blossoms\"",
+            flavourFR: "le calendrier traditionnel en découpe soixante-douze dans l'année, d'environ cinq jours chacune — l'une s'appelle « les premières fleurs de pêcher »",
+            jlptLevel: .n4,
+            tags: ["nature", "aesthetic", "any"]
+        ),
+        DailyTermCandidate(
+            word: "親切",
+            reading: "しんせつ",
+            pronunciation: "shi-n-se-tsu",
+            meaning: "kind, considerate",
+            meaningFR: "gentil, prévenant",
+            flavour: "親 here is close, not parent, and 切 is intensely, not to cut — care taken all the way. It was once written 深切, deep and intense",
+            flavourFR: "親 vaut ici proche, pas parent, et 切 vaut intensément, pas couper — une attention qui va jusqu'au bout. Le mot s'écrivait autrefois 深切, profond et intense",
+            jlptLevel: .n4,
+            tags: ["society", "mood", "any"]
+        ),
+        DailyTermCandidate(
+            word: "旅行",
+            reading: "りょこう",
+            pronunciation: "ryo-ko-u",
+            meaning: "travel, a trip",
+            meaningFR: "voyage",
+            flavour: "distinct from 旅, the older word, which carries the sense of going without knowing quite when you will be back",
+            flavourFR: "distinct de 旅, le mot plus ancien, qui porte l'idée de partir sans trop savoir quand on rentrera",
+            jlptLevel: .n5,
+            tags: ["summer", "weekend", "self", "any"]
+        ),
+        DailyTermCandidate(
+            word: "台所",
+            reading: "だいどころ",
+            pronunciation: "da-i-do-ko-ro",
+            meaning: "kitchen",
+            meaningFR: "cuisine (la pièce)",
+            flavour: "from 台盤所, the room where the 台盤 — the footed table dishes were set out on — stood in Heian nobles' houses. Osaka was called the nation's kitchen when it was the country's food market",
+            flavourFR: "de 台盤所, la pièce où l'on dressait le 台盤, la table à pieds qui portait les plats chez les nobles de Heian. Osaka était surnommée la cuisine du pays quand elle en était le marché alimentaire",
+            jlptLevel: .n5,
+            tags: ["evening", "self", "any"]
         )
     ]
 }
