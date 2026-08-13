@@ -401,9 +401,23 @@ enum StudySetStore {
     }
 
     /// The chosen kana groups (decoded from the shared selection key).
+    ///
+    /// Falls back to the same `[.hVowels]` default `KanaPoolViewModel.init`
+    /// uses, and for a reason that bit us: the view model assigns that default
+    /// inside `init`, where a `didSet` does not fire, so a learner who accepts
+    /// the default set and confirms never writes the key at all. Returning an
+    /// empty set here made every downstream consumer read "this learner chose
+    /// nothing" — which left the Watch showing "nothing to review yet" for
+    /// good and the phone silently refusing every answer it sent back.
+    ///
+    /// Same story for learners grandfathered in by `refreshStudySetGate`, who
+    /// never see the chooser at all.
     static var chosenGroups: Set<KanaGroup> {
-        guard let data = UserDefaults.standard.data(forKey: groupsKey) else { return [] }
-        return (try? JSONDecoder().decode(Set<KanaGroup>.self, from: data)) ?? []
+        guard let data = UserDefaults.standard.data(forKey: groupsKey),
+              let decoded = try? JSONDecoder().decode(Set<KanaGroup>.self, from: data),
+              !decoded.isEmpty
+        else { return [.hVowels] }
+        return decoded
     }
 
     /// Mark that the learner has made an explicit study-set choice.

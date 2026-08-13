@@ -11,7 +11,9 @@ struct KanaQuizView: View {
 
     var body: some View {
         ZStack {
-            if viewModel.isComplete {
+            if !viewModel.hasSufficientPool {
+                emptyStateView
+            } else if viewModel.isComplete {
                 completionView
             } else {
                 quizContent
@@ -20,6 +22,31 @@ struct KanaQuizView: View {
         .onAppear {
             viewModel.startSession()
         }
+    }
+
+    // MARK: - Empty State
+
+    /// Shown when the synced eligible-kana set (chosen groups ∩ already
+    /// graded at least once) has too few characters to run a session —
+    /// never falls back to the full hiragana syllabary. See
+    /// `WatchQuizViewModel.hasSufficientPool`.
+    private var emptyStateView: some View {
+        VStack(spacing: 8) {
+            Image(systemName: "character.book.closed")
+                .font(.system(size: 28))
+                .foregroundStyle(.secondary)
+
+            Text("Nothing to review here yet")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(.white)
+                .multilineTextAlignment(.center)
+
+            Text("Practice a few kana on iPhone first")
+                .font(.system(size: 11))
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+        }
+        .padding(.horizontal, 8)
     }
 
     // MARK: - Quiz Content

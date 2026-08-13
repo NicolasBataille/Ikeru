@@ -26,6 +26,22 @@ final class WatchQuizViewModel {
         currentQuestion >= totalQuestions
     }
 
+    /// Minimum distinct kana needed to build one 4-choice question (1
+    /// target + 3 distractors) — mirrors `KanaData.generateQuizQuestion`'s
+    /// own `pool.count >= 4` guard.
+    static let minimumPoolSize = 4
+
+    /// Whether the pool computed by the most recent `startSession()` has
+    /// enough eligible kana to run a session at all. False either before
+    /// the first `startSession()` call, or when the synced eligible set
+    /// (see `WatchSessionManager.eligibleKanaCharacters`) intersected with
+    /// the quiz's hiragana catalog has fewer than `minimumPoolSize`
+    /// entries — e.g. a brand-new learner who has never synced, or one who
+    /// picked only a katakana group and has nothing gradeable in hiragana
+    /// yet. The view renders an honest "nothing to review" state instead of
+    /// silently falling back to the full hiragana syllabary.
+    private(set) var hasSufficientPool = false
+
     /// The target kana character to identify.
     private(set) var targetCharacter: String = ""
 
@@ -35,8 +51,13 @@ final class WatchQuizViewModel {
     /// The 4 answer choices.
     private(set) var choices: [KanaData.Entry] = []
 
-    /// Result of the last answer (nil if no answer yet for current question).
+    // swiftlint:disable discouraged_optional_boolean
+    /// Result of the last answer. Genuinely tri-state, not a bool in
+    /// disguise: `nil` = no answer yet for the current question, `true` /
+    /// `false` = correct / incorrect once answered (see `submitAnswer` and
+    /// the `nil`-reset in `loadNextQuestion`).
     private(set) var lastAnswerResult: Bool?
+    // swiftlint:enable discouraged_optional_boolean
 
     /// ID of the last answered choice.
     private(set) var lastAnsweredId: String?
@@ -77,8 +98,7 @@ final class WatchQuizViewModel {
     // MARK: - Session Control
 
     func startSession() {
-        pool = KanaData.hiragana
-        targetQueue = pool.shuffled()
+        pool = Self.eligiblePool(from: WatchSessionManager.shared.eligibleKanaCharacters)
         currentQuestion = 0
         correctCount = 0
         questionResults = []
@@ -86,7 +106,37 @@ final class WatchQuizViewModel {
         sessionId = UUID()
         lastAnswerResult = nil
         lastAnsweredId = nil
+
+        hasSufficientPool = pool.count >= Self.minimumPoolSize
+        guard hasSufficientPool else {
+            // Honest empty state (chantier: never fall back to the whole
+            // hiragana syllabary) — the view checks `hasSufficientPool`
+            // before rendering the quiz content, so leaving `targetQueue`
+            // empty here is enough; `loadNextQuestion` is never called.
+            targetQueue = []
+            return
+        }
+
+        targetQueue = pool.shuffled()
         loadNextQuestion()
+    }
+
+    /// Restricts the quiz's hiragana catalog to `eligibleCharacters` — the
+    /// synced set from `WatchSessionManager.eligibleKanaCharacters`, itself
+    /// the iPhone's "chosen groups ∩ already graded (`reps > 0`)" kana (see
+    /// `WatchConnectivityManager.eligibleKanaFronts`). Hiragana-only for the
+    /// same reason `confusableGroups` below is: this quiz has no katakana
+    /// mode yet, so a katakana-only eligible set legitimately yields an
+    /// empty pool rather than silently testing katakana recognition this
+    /// quiz was never built for.
+    ///
+    /// Delegates the actual filtering to `WatchEligibleKanaPayload
+    /// .filterKanaEntries`, which is tested directly (pure, no
+    /// `WatchSessionManager`/`WCSession` involved) since this type lives
+    /// only in the watchOS-only `IkeruWatch` target and has no test target
+    /// of its own to run in.
+    static func eligiblePool(from eligibleCharacters: [String]) -> [KanaData.Entry] {
+        WatchEligibleKanaPayload.filterKanaEntries(KanaData.hiragana, toCharacters: eligibleCharacters)
     }
 
     func selectAnswer(_ choice: KanaData.Entry) {
