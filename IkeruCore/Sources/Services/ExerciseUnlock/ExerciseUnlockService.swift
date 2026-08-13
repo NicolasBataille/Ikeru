@@ -18,7 +18,13 @@ public struct DefaultExerciseUnlockService: ExerciseUnlockService {
     public static let listeningUnsubtitledWindow = 30
     public static let speakingRecallRequired = 0.6
     public static let speakingRecallWindowDays = 30
-    public static let sakuraConversationMinJLPT: JLPTLevel = .n4
+    /// N5, not N4: the only shipped content is N5 (`n5-content.sqlite`), so an N4 bar was
+    /// structurally unreachable through the nominal onboarding path. The gate is also
+    /// redundant — `ConversationService.buildSystemPrompt` already constrains Sakura to the
+    /// learner's JLPT level, and a real-conditions test showed an N5 conversation with a
+    /// beginner works well. Keeping the comparison (rather than dropping the gate outright)
+    /// preserves the lock/reason machinery for when higher-level content ships.
+    public static let sakuraConversationMinJLPT: JLPTLevel = .n5
 
     public init() {}
 

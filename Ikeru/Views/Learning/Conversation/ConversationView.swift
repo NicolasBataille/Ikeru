@@ -13,7 +13,9 @@ struct ConversationView: View {
     /// spinner instead of flashing the "no AI" section while it's still unknown.
     @State private var isInitializing = true
     /// In-app language (FR/EN), injected at the root via AppLocale. Drives which
-    /// language the beginner starter chips open in.
+    /// language the beginner starter chips open in, and is mirrored onto
+    /// `viewModel.interfaceLocale` so Sakura's translations/corrections are
+    /// written in this language rather than guessed from the learner's text.
     @Environment(\.locale) private var locale
 
     init(viewModel: ConversationViewModel) {
@@ -58,8 +60,15 @@ struct ConversationView: View {
             }
         }
         .task {
+            // Mirror the in-app language into the view model BEFORE onAppear —
+            // onAppear can immediately send a seeded opening message, and that
+            // first send must already carry the right interfaceLocale.
+            viewModel.interfaceLocale = locale
             await viewModel.onAppear()
             isInitializing = false
+        }
+        .onChange(of: locale) { _, newLocale in
+            viewModel.interfaceLocale = newLocale
         }
     }
 

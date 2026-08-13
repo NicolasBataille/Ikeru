@@ -27,6 +27,7 @@
     "Ikeru/Views/Session/SessionSummaryView.swift::%lld%%::specifier-mismatch",
     "Ikeru/Views/Settings/DisplayModeToggleRow.swift::畳::missing-key",
     "Ikeru/Views/Settings/SettingsView.swift::%lld::specifier-mismatch",
+    "Ikeru/Views/Settings/SettingsView.swift::Deletes every card, the RPG state, and the chat log for the current profile, then replaces them with fixture data.::missing-key",
     "Ikeru/Views/Settings/SettingsView.swift::Deletes every profile, RPG state, card, vocab encounter. Onboarding triggers on next cold launch.::missing-key",
     "Ikeru/Views/Settings/SettingsView.swift::Developer Tools::missing-key",
     "Ikeru/Views/Settings/SettingsView.swift::Seed fixture profile::missing-key",

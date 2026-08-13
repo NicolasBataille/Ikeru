@@ -81,11 +81,13 @@ public final class KanaPoolViewModel {
     // MARK: Persistence
 
     private static let storageKey = "ikeru.kana.selectedGroups"
+    private static let legacyExtendedGroupsMigratedKey = "ikeru.kana.migratedLegacyExtendedGroupsV1"
 
     // MARK: Init
 
     public init(repository: KanaCardRepository) {
         self.repository = repository
+        Self.migrateLegacyExtendedSelectionIfNeeded()
         self.selectedGroups = Self.loadPersistedSelection() ?? [.hVowels]
     }
 
@@ -98,6 +100,17 @@ public final class KanaPoolViewModel {
         // (which later trap `mastery(for:)`'s unique-keyed Dictionary).
         if case .loading = loadingState { return }
         loadingState = .loading
+        // Purge kana cards that were already created for a group no longer in
+        // the current selection but never studied (reps == 0). Most
+        // concretely: a build predating `migrateLegacyExtendedSelectionIfNeeded()`
+        // may have let the learner select (and therefore seed) a dakuten/yōon
+        // group; that migration strips such groups from the persisted
+        // selection, but on its own leaves their cards behind as an invisible,
+        // non-deselectable pile — still counted due, still blocking the
+        // foundation session mode. Safe to run on every load: it never
+        // touches a card with reps > 0, and is a no-op once the store is
+        // clean (see `KanaCardRepository.purgeUnstartedCards`).
+        await repository.purgeUnstartedCards(notIn: selectedGroups)
         // Seed ONLY the currently-selected groups, not all 92 kana. Opening the
         // grid no longer materialises the entire katakana set as immediately-due
         // cards — that was the source of katakana leaking into Home Practice.
@@ -209,6 +222,41 @@ public final class KanaPoolViewModel {
     private static func loadPersistedSelection() -> Set<KanaGroup>? {
         guard let data = UserDefaults.standard.data(forKey: storageKey) else { return nil }
         return try? JSONDecoder().decode(Set<KanaGroup>.self, from: data)
+    }
+
+    /// One-time migration for testers who checked a dakuten/yōon group back
+    /// when those groups were scaffolded with an empty character table: the
+    /// selection persisted, but it cost nothing and displayed nothing. Now
+    /// that the table is populated (see `KanaGroup`), leaving a stale
+    /// selection in place would silently seed up to 116 kana cards — all due
+    /// at once — the next time `loadMasteries()` runs. Strip any non-`.base`
+    /// group from a selection that predates this migration so existing
+    /// installs don't wake up to an avalanche they never knowingly chose.
+    /// Runs once (gated by `legacyExtendedGroupsMigratedKey`): a group picked
+    /// AFTER this migration is a deliberate choice and is left alone.
+    private static func migrateLegacyExtendedSelectionIfNeeded() {
+        let defaults = UserDefaults.standard
+        guard !defaults.bool(forKey: legacyExtendedGroupsMigratedKey) else { return }
+        defer { defaults.set(true, forKey: legacyExtendedGroupsMigratedKey) }
+
+        guard let persisted = loadPersistedSelection() else { return }
+        let baseOnly = persisted.filter { $0.section == .base }
+        guard baseOnly != persisted else { return }
+        // A selection that was entirely non-base groups is not a real study
+        // set (nothing would have rendered pre-fix either) — fall back to the
+        // same default a fresh install gets, rather than persisting an empty
+        // selection that would silently leave the learner with zero cards.
+        let migrated = baseOnly.isEmpty ? [.hVowels] : baseOnly
+
+        do {
+            let data = try JSONEncoder().encode(migrated)
+            defaults.set(data, forKey: storageKey)
+            Logger.content.info(
+                "KanaPool: migrated legacy selection, dropped \(persisted.count - baseOnly.count) non-base group(s)"
+            )
+        } catch {
+            Logger.content.error("KanaPool: failed to persist migrated selection: \(error.localizedDescription)")
+        }
     }
 }
 

@@ -125,17 +125,46 @@ struct NextStepRecommenderTests {
         #expect(step.stage == .converseWithSakura)
     }
 
-    @Test("Everything satisfied and past the JLPT bar is all caught up")
-    func allCaughtUp() {
+    @Test("JLPT level no longer gates Sakura: even at N1, rung 6 completion suggests Sakura")
+    func jlptLevelDoesNotGateSakura() {
+        // Regression guard for the P0 fix that dropped
+        // `sakuraConversationMinJLPT` to N5 (the floor of `JLPTLevel`): a
+        // comparison against it can never be true again, so rung 7 must not
+        // depend on `jlptLevel` at all.
         let step = NextStepRecommender.recommend(
             kana: KanaProgress(hiraganaMastered: hiraganaTotal, katakanaMastered: katakanaTotal),
             snapshot: snapshot(
-                jlptLevel: .n4,
+                jlptLevel: .n1,
                 vocab: NextStepRecommender.readingVocabularyMilestone,
                 kanji: NextStepRecommender.kanjiMilestone,
                 grammar: NextStepRecommender.grammarMilestone
             )
         )
-        #expect(step.stage == .allCaughtUp)
+        #expect(step.stage == .converseWithSakura)
+    }
+
+    @Test("Sakura is a terminal recommendation: no amount of extra progress moves past it")
+    func sakuraIsTerminal() {
+        // Regression guard for the 2nd-review finding: an earlier revision
+        // re-gated rung 7 on `vocabularyMasteredFamiliarPlus >=
+        // readingVocabularyMilestone` — a condition step 6 already proves
+        // true by the time execution reaches rung 7, i.e. a tautology — and
+        // fell through to a now-removed `.allCaughtUp` rung that the
+        // tautology made permanently unreachable. `.converseWithSakura` is
+        // the ladder's explicit terminal state: this pins that a learner far
+        // past every milestone (several multiples over, N1) still lands on
+        // Sakura, not on some other/unreachable stage.
+        let step = NextStepRecommender.recommend(
+            kana: KanaProgress(hiraganaMastered: hiraganaTotal, katakanaMastered: katakanaTotal),
+            snapshot: snapshot(
+                jlptLevel: .n1,
+                vocab: NextStepRecommender.readingVocabularyMilestone * 5,
+                kanji: NextStepRecommender.kanjiMilestone * 5,
+                grammar: NextStepRecommender.grammarMilestone * 5
+            )
+        )
+        #expect(step.stage == .converseWithSakura)
+        #expect(step.current == 0)
+        #expect(step.required == 0)
     }
 }

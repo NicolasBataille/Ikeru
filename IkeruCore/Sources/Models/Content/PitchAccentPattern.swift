@@ -115,6 +115,24 @@ public struct PitchAccentPattern: Sendable, Equatable {
     }
 }
 
+// MARK: - PitchAccentPattern + Trailing Particle
+
+public extension PitchAccentPattern {
+    /// The mora contour extended with one trailing mora for a particle that follows the word
+    /// (e.g. が, は, を).
+    ///
+    /// Odaka (尾高) and heiban (平板) produce an *identical* in-word contour — both are
+    /// low-then-high across the word itself — and only diverge on what happens to the pitch
+    /// immediately after: heiban never drops, so a following particle stays high; odaka's
+    /// accent nucleus sits on the final mora, so the drop lands on the particle, which is
+    /// low. Atamadaka and nakadaka have already dropped before the word ends, so the
+    /// particle simply continues low. This is how textbooks and accent dictionaries make the
+    /// heiban/odaka distinction audible, and why presenting a word in isolation can't show it.
+    var moraHighLowWithTrailingParticle: [Bool] {
+        moraHighLow + [type == .heiban]
+    }
+}
+
 // MARK: - PitchAccentResult
 
 /// The result of analyzing a learner's pitch accent against a target pattern.

@@ -21,6 +21,7 @@ struct SettingsView: View {
     @Environment(\.assetCache) private var assetCache
     @Environment(\.toastManager) private var toastManager
     @Environment(AppLocale.self) private var appLocale
+    @Environment(\.displayMode) private var displayMode
 
     // MARK: Editing state
 
@@ -73,6 +74,10 @@ struct SettingsView: View {
     @AppStorage("ikeru.furigana.enabled") private var furiganaEnabled = true
     @AppStorage("ikeru.furigana.userTouched") private var furiganaUserTouched = false
 
+    // MARK: Audio autoplay (SRSCardView reads the same key)
+
+    @AppStorage("ikeru.audio.autoplay") private var isAudioAutoplayEnabled = true
+
     // MARK: Language picker
 
     @State private var showingLanguagePicker = false
@@ -89,8 +94,21 @@ struct SettingsView: View {
         return "Off"
     }
 
+    /// Furigana's effective value — what conversations actually render, not
+    /// necessarily what's stored. When the user has never touched the toggle,
+    /// the effective value is derived from the display mode (ReadingAidResolver),
+    /// not from `furiganaEnabled`. Settings must always show the effective
+    /// value, or the row lies about what's on screen.
+    private var effectiveFuriganaEnabled: Bool {
+        ReadingAidResolver(
+            mode: displayMode,
+            userTouched: furiganaUserTouched,
+            storedValue: furiganaEnabled
+        ).effective
+    }
+
     private var furiganaStatusValue: LocalizedStringKey {
-        furiganaEnabled ? "On" : "Off"
+        effectiveFuriganaEnabled ? "On" : "Off"
     }
 
     private var preWarmStatusValue: LocalizedStringKey {
@@ -164,8 +182,16 @@ struct SettingsView: View {
             DeleteProfileSheet(
                 profile: profile,
                 onConfirm: {
-                    profileViewModel?.deleteProfile(profile)
+                    // Clear the sheet's item BEFORE deleting: `deleteProfile` posts
+                    // notifications synchronously as part of the save, and if
+                    // `profileToDelete` were still non-nil when those land, `.sheet(item:)`
+                    // could re-invoke this closure and rebuild `DeleteProfileSheet` against
+                    // a profile already deleted from the model context. DeleteProfileSheet
+                    // also no longer reads `profile.displayName` live (see its `displayName`
+                    // capture) as a second layer of defense for re-renders during the
+                    // dismiss animation.
                     profileToDelete = nil
+                    profileViewModel?.deleteProfile(profile)
                 },
                 onCancel: { profileToDelete = nil }
             )
@@ -326,15 +352,37 @@ struct SettingsView: View {
                     }
                 }
             )
+            VStack(alignment: .leading, spacing: 4) {
+                settingRow(
+                    jp: "振り仮名",
+                    label: "Furigana",
+                    value: localizedString(furiganaStatusValue),
+                    showChevron: false
+                ) {
+                    withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) {
+                        // Tapping always fixes the setting explicitly — from
+                        // here on the stored value is the effective value.
+                        furiganaEnabled = !effectiveFuriganaEnabled
+                        furiganaUserTouched = true
+                    }
+                }
+                if !furiganaUserTouched {
+                    Text("Follows display mode", comment: "Furigana subtitle shown only when the toggle above isn't user-set — its value follows the current display mode, not a stored preference.")
+                        .ikeruScaledFont(11, relativeTo: .caption2)
+                        .foregroundStyle(TatamiTokens.paperGhost)
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 12)
+                }
+            }
+
             settingRow(
-                jp: "振り仮名",
-                label: "Furigana",
-                value: localizedString(furiganaStatusValue),
+                jp: "自動再生",
+                label: "Audio autoplay",
+                value: isAudioAutoplayEnabled ? String(localized: "On") : String(localized: "Off"),
                 showChevron: false
             ) {
                 withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) {
-                    furiganaEnabled.toggle()
-                    furiganaUserTouched = true
+                    isAudioAutoplayEnabled.toggle()
                 }
             }
 
@@ -379,11 +427,16 @@ struct SettingsView: View {
     // MARK: - Section: 表示 / Display
 
     @Environment(\.displayModeRepository) private var displayModeRepo
-    /// Reactive mirror of the repository's mode so TatamiEligibilityRow
-    /// hides/shows immediately when DisplayModeToggleRow flips the mode
-    /// (a one-time `repo.current()` snapshot went stale until re-render).
-    @State private var currentDisplayMode: DisplayMode?
 
+    /// `displayMode` (declared above, `@Environment(\.displayMode)`) is the
+    /// single source of truth here — it is kept live by `MainTabView`, which
+    /// re-reads the repository both on an explicit toggle (`repo.publisher`)
+    /// *and* on a profile switch/create/delete (`.displayModeDidChange`,
+    /// posted by `ProfileViewModel`). A previous revision mirrored
+    /// `repo.publisher` into a local `@State` here instead; that mirror only
+    /// caught the toggle case and went stale across a profile change inside
+    /// this very screen (the Tatami-leak bug) — removed in favour of the
+    /// environment value, which both call sites keep fresh.
     private var displaySection: some View {
         section(label: ("表示", "Display"), mon: .kikkou) {
             if let repo = displayModeRepo {
@@ -391,18 +444,16 @@ struct SettingsView: View {
                 TatamiEligibilityRow(
                     modelContainer: modelContext.container,
                     activeProfileID: { ActiveProfileResolver.activeProfileID() },
-                    displayMode: currentDisplayMode ?? repo.current()
+                    displayMode: displayMode
                 )
-                .onAppear { currentDisplayMode = repo.current() }
-                .onReceive(repo.publisher) { currentDisplayMode = $0 }
             }
         }
     }
 
-    // MARK: - Section: 勘定 / Account
+    // MARK: - Section: アカウント / Account
 
     private var accountSection: some View {
-        section(label: ("勘定", "Account"), mon: .genji) {
+        section(label: ("アカウント", "Account"), mon: .genji) {
             settingRow(
                 jp: "プロフィール",
                 label: "Profile",
@@ -525,54 +576,76 @@ struct SettingsView: View {
         }
     }
 
+    /// One row per profile in the switcher list. Tapping the name/label area
+    /// switches to that profile (no-op when it's already current); the trash
+    /// icon opens `DeleteProfileSheet` for that profile — including the
+    /// *active* one, which `ProfileViewModel.deleteProfile` handles by
+    /// switching to whichever profile remains.
+    ///
+    /// This used to be a single row-wide `Button` with `.swipeActions` for
+    /// delete. `.swipeActions` only does anything inside a `List` row — this
+    /// screen builds its rows in a plain `VStack` inside a `ScrollView`, so
+    /// the modifier was silently inert: no swipe gesture was ever attached,
+    /// which is exactly the "no way to delete a profile" gap the review
+    /// flagged. Replaced with an always-visible, always-functional icon
+    /// button (two sibling tap targets, not nested — nesting a `Button`
+    /// inside a `Button`'s label doesn't work in SwiftUI).
     @ViewBuilder
     private func profileSwitchRow(_ profile: UserProfile) -> some View {
         let isCurrent = profile.id == profileViewModel?.currentProfile?.id
-        Button {
-            withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) {
-                profileViewModel?.switchProfile(to: profile)
-            }
-        } label: {
-            HStack(spacing: 16) {
-                Text("︙")
-                    .ikeruScaledFont(13, design: .serif, relativeTo: .caption)
-                    .foregroundStyle(TatamiTokens.paperGhost)
-                Text(profile.displayName)
-                    .ikeruScaledFont(13, relativeTo: .caption)
-                    .foregroundStyle(Color.ikeruTextPrimary)
-                Spacer()
-                if isCurrent {
-                    Text("Active", comment: "Active profile indicator")
-                        .ikeruScaledFont(13, design: .serif, relativeTo: .caption)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.7)
-                        .foregroundStyle(Color.ikeruPrimaryAccent)
-                } else {
-                    Text("Switch", comment: "Switch profile action")
-                        .ikeruScaledFont(13, design: .serif, relativeTo: .caption)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.7)
-                        .foregroundStyle(Color.ikeruPrimaryAccent)
-                    Text("›")
-                        .font(.system(size: 14))
-                        .foregroundStyle(TatamiTokens.goldDim)
+        HStack(spacing: 12) {
+            Button {
+                guard !isCurrent else { return }
+                withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) {
+                    profileViewModel?.switchProfile(to: profile)
                 }
+            } label: {
+                HStack(spacing: 16) {
+                    Text("︙")
+                        .ikeruScaledFont(13, design: .serif, relativeTo: .caption)
+                        .foregroundStyle(TatamiTokens.paperGhost)
+                    Text(profile.displayName)
+                        .ikeruScaledFont(13, relativeTo: .caption)
+                        .foregroundStyle(Color.ikeruTextPrimary)
+                    Spacer()
+                    if isCurrent {
+                        Text("Active", comment: "Active profile indicator")
+                            .ikeruScaledFont(13, design: .serif, relativeTo: .caption)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
+                            .foregroundStyle(Color.ikeruPrimaryAccent)
+                    } else {
+                        Text("Switch", comment: "Switch profile action")
+                            .ikeruScaledFont(13, design: .serif, relativeTo: .caption)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
+                            .foregroundStyle(Color.ikeruPrimaryAccent)
+                        Text("›")
+                            .font(.system(size: 14))
+                            .foregroundStyle(TatamiTokens.goldDim)
+                    }
+                }
+                .contentShape(Rectangle())
             }
-            .padding(.horizontal, 16).padding(.vertical, 14)
-            .overlay(alignment: .bottom) {
-                Rectangle().fill(TatamiTokens.goldDim.opacity(0.2))
-                    .frame(height: 1).padding(.horizontal, 16)
+            .buttonStyle(.plain)
+            .disabled(isCurrent)
+
+            Button {
+                profileToDelete = profile
+            } label: {
+                Image(systemName: "trash")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(Color.ikeruDanger)
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
+            .accessibilityLabel(Text("Delete profile", comment: "Accessibility label for the per-profile delete icon button in Settings"))
         }
-        .buttonStyle(.plain)
-        .swipeActions(edge: .trailing) {
-            if !isCurrent {
-                Button(role: .destructive) {
-                    profileToDelete = profile
-                } label: {
-                    Label("Delete", systemImage: "trash")
-                }
-            }
+        .padding(.horizontal, 16).padding(.vertical, 14)
+        .overlay(alignment: .bottom) {
+            Rectangle().fill(TatamiTokens.goldDim.opacity(0.2))
+                .frame(height: 1).padding(.horizontal, 16)
         }
     }
 
@@ -621,10 +694,10 @@ struct SettingsView: View {
         }
     }
 
-    // MARK: - Section link: 倉庫 / Data & Storage (sub-page)
+    // MARK: - Section link: データ / Data & Storage (sub-page)
 
     private var dataStorageLinkSection: some View {
-        section(label: ("倉庫", "Data & Storage"), mon: .maru) {
+        section(label: ("データ", "Data & Storage"), mon: .maru) {
             NavigationLink {
                 DataStorageSettingsView(
                     cacheStats: cacheStats,
@@ -677,10 +750,10 @@ struct SettingsView: View {
         return String(format: "%.0f / %.0f MB", usedMB, cacheQuotaMB)
     }
 
-    // MARK: - Section: 関連 / About
+    // MARK: - Section: 情報 / About
 
     private var aboutSection: some View {
-        section(label: ("関連", "About"), mon: .maru) {
+        section(label: ("情報", "About"), mon: .maru) {
             settingRow(jp: "バージョン", label: "Version", value: appVersionValue)
 
             settingRow(jp: "案内", label: "Tour.Settings.Replay", value: "") {
@@ -1024,7 +1097,7 @@ private struct DataStorageSettingsView: View {
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 24) {
                     VStack(alignment: .leading, spacing: 6) {
-                        BilingualLabel(japanese: "倉庫", chrome: "Data & Storage")
+                        BilingualLabel(japanese: "データ", chrome: "Data & Storage")
                         Text("Cache & Pre-warm", comment: "Data & Storage subpage heading")
                             .ikeruScaledFont(28, weight: .light, design: .serif, relativeTo: .title)
                             .foregroundStyle(Color.ikeruTextPrimary)
@@ -1062,7 +1135,7 @@ private struct DataStorageSettingsView: View {
 
     private var storageContentSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            BilingualLabel(japanese: "倉庫", chrome: "Storage", mon: .maru)
+            BilingualLabel(japanese: "データ", chrome: "Storage", mon: .maru)
             VStack(spacing: 0) {
                 storageRow(
                     jp: "資産キャッシュ",
@@ -1173,6 +1246,7 @@ private struct DevToolsSettingsView: View {
     @State private var devSeedDue: Double = 20
     @State private var devSeedMastered: Double = 120
     @State private var devShowResetConfirm = false
+    @State private var devShowSeedConfirm = false
     @State private var devLastAction: String = ""
 
     var body: some View {
@@ -1280,15 +1354,7 @@ private struct DevToolsSettingsView: View {
                     .foregroundStyle(Color.ikeruTextPrimary)
                 Spacer()
                 Button {
-                    guard let vm = profileViewModel else { return }
-                    TestFixtures.wipeAndSeed(
-                        context: modelContext,
-                        profileVM: vm,
-                        level: Int(devSeedLevel),
-                        dueCount: Int(devSeedDue),
-                        masteredCount: Int(devSeedMastered)
-                    )
-                    devLastAction = "✓ Seeded: lvl \(Int(devSeedLevel)), \(Int(devSeedDue)) due, \(Int(devSeedMastered)) mastered"
+                    devShowSeedConfirm = true
                 } label: {
                     Text("Seed")
                         .ikeruScaledFont(12, weight: .semibold, relativeTo: .caption2)
@@ -1301,6 +1367,27 @@ private struct DevToolsSettingsView: View {
                         )
                 }
                 .buttonStyle(.plain)
+                // Same destructive-confirmation motif as "Wipe profile"
+                // (`devShowResetConfirm` above): this used to replace every
+                // card, the RPG state, and the chat log for the current
+                // profile with no confirmation — a real risk since
+                // IKERU_DEV_TOOLS ships in Release/TestFlight builds.
+                .alert("Reseed profile?", isPresented: $devShowSeedConfirm) {
+                    Button("Cancel", role: .cancel) {}
+                    Button("Seed", role: .destructive) {
+                        guard let vm = profileViewModel else { return }
+                        TestFixtures.wipeAndSeed(
+                            context: modelContext,
+                            profileVM: vm,
+                            level: Int(devSeedLevel),
+                            dueCount: Int(devSeedDue),
+                            masteredCount: Int(devSeedMastered)
+                        )
+                        devLastAction = "✓ Seeded: lvl \(Int(devSeedLevel)), \(Int(devSeedDue)) due, \(Int(devSeedMastered)) mastered"
+                    }
+                } message: {
+                    Text("Deletes every card, the RPG state, and the chat log for the current profile, then replaces them with fixture data.")
+                }
             }
 
             devSlider(label: "Level",     value: $devSeedLevel,     range: 1...30,   step: 1)

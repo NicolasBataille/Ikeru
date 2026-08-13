@@ -71,9 +71,10 @@ public enum KanaGroup: String, Sendable, CaseIterable, Codable, Identifiable {
 
     // MARK: - Character Table
     //
-    // Full data for the 92 base kana (46 hiragana + 46 katakana).
-    // Dakuten and yōon groups are scaffolded as empty arrays for now.
-    // TODO: populate dakuten (g/z/d/b/p) and yōon (kya/sha/...) for both scripts.
+    // Full data for the 92 base kana (46 hiragana + 46 katakana), plus their
+    // dakuten (voiced) and yōon (combined digraph) extensions. `allBaseCharacters`
+    // below intentionally only covers the .base section — dakuten/yōon groups
+    // are additional content, not part of the beginner "X / 92" completion goal.
     private static let characterTable: [KanaGroup: [KanaCharacter]] = [
         // MARK: Hiragana base
         .hVowels: [
@@ -143,6 +144,100 @@ public enum KanaGroup: String, Sendable, CaseIterable, Codable, Identifiable {
             KanaCharacter(character: "ん", romaji: "n", group: .hWN),
         ],
 
+        // MARK: Hiragana dakuten
+        .hG: [
+            KanaCharacter(character: "が", romaji: "ga", group: .hG),
+            KanaCharacter(character: "ぎ", romaji: "gi", group: .hG),
+            KanaCharacter(character: "ぐ", romaji: "gu", group: .hG),
+            KanaCharacter(character: "げ", romaji: "ge", group: .hG),
+            KanaCharacter(character: "ご", romaji: "go", group: .hG),
+        ],
+        .hZ: [
+            KanaCharacter(character: "ざ", romaji: "za", group: .hZ),
+            KanaCharacter(character: "じ", romaji: "ji", group: .hZ),
+            KanaCharacter(character: "ず", romaji: "zu", group: .hZ),
+            KanaCharacter(character: "ぜ", romaji: "ze", group: .hZ),
+            KanaCharacter(character: "ぞ", romaji: "zo", group: .hZ),
+        ],
+        .hD: [
+            KanaCharacter(character: "だ", romaji: "da", group: .hD),
+            KanaCharacter(character: "ぢ", romaji: "ji", group: .hD),
+            KanaCharacter(character: "づ", romaji: "zu", group: .hD),
+            KanaCharacter(character: "で", romaji: "de", group: .hD),
+            KanaCharacter(character: "ど", romaji: "do", group: .hD),
+        ],
+        .hB: [
+            KanaCharacter(character: "ば", romaji: "ba", group: .hB),
+            KanaCharacter(character: "び", romaji: "bi", group: .hB),
+            KanaCharacter(character: "ぶ", romaji: "bu", group: .hB),
+            KanaCharacter(character: "べ", romaji: "be", group: .hB),
+            KanaCharacter(character: "ぼ", romaji: "bo", group: .hB),
+        ],
+        .hP: [
+            KanaCharacter(character: "ぱ", romaji: "pa", group: .hP),
+            KanaCharacter(character: "ぴ", romaji: "pi", group: .hP),
+            KanaCharacter(character: "ぷ", romaji: "pu", group: .hP),
+            KanaCharacter(character: "ぺ", romaji: "pe", group: .hP),
+            KanaCharacter(character: "ぽ", romaji: "po", group: .hP),
+        ],
+
+        // MARK: Hiragana yōon
+        .hKY: [
+            KanaCharacter(character: "きゃ", romaji: "kya", group: .hKY),
+            KanaCharacter(character: "きゅ", romaji: "kyu", group: .hKY),
+            KanaCharacter(character: "きょ", romaji: "kyo", group: .hKY),
+        ],
+        .hSH: [
+            KanaCharacter(character: "しゃ", romaji: "sha", group: .hSH),
+            KanaCharacter(character: "しゅ", romaji: "shu", group: .hSH),
+            KanaCharacter(character: "しょ", romaji: "sho", group: .hSH),
+        ],
+        .hCH: [
+            KanaCharacter(character: "ちゃ", romaji: "cha", group: .hCH),
+            KanaCharacter(character: "ちゅ", romaji: "chu", group: .hCH),
+            KanaCharacter(character: "ちょ", romaji: "cho", group: .hCH),
+        ],
+        .hNY: [
+            KanaCharacter(character: "にゃ", romaji: "nya", group: .hNY),
+            KanaCharacter(character: "にゅ", romaji: "nyu", group: .hNY),
+            KanaCharacter(character: "にょ", romaji: "nyo", group: .hNY),
+        ],
+        .hHY: [
+            KanaCharacter(character: "ひゃ", romaji: "hya", group: .hHY),
+            KanaCharacter(character: "ひゅ", romaji: "hyu", group: .hHY),
+            KanaCharacter(character: "ひょ", romaji: "hyo", group: .hHY),
+        ],
+        .hMY: [
+            KanaCharacter(character: "みゃ", romaji: "mya", group: .hMY),
+            KanaCharacter(character: "みゅ", romaji: "myu", group: .hMY),
+            KanaCharacter(character: "みょ", romaji: "myo", group: .hMY),
+        ],
+        .hRY: [
+            KanaCharacter(character: "りゃ", romaji: "rya", group: .hRY),
+            KanaCharacter(character: "りゅ", romaji: "ryu", group: .hRY),
+            KanaCharacter(character: "りょ", romaji: "ryo", group: .hRY),
+        ],
+        .hGY: [
+            KanaCharacter(character: "ぎゃ", romaji: "gya", group: .hGY),
+            KanaCharacter(character: "ぎゅ", romaji: "gyu", group: .hGY),
+            KanaCharacter(character: "ぎょ", romaji: "gyo", group: .hGY),
+        ],
+        .hJ: [
+            KanaCharacter(character: "じゃ", romaji: "ja", group: .hJ),
+            KanaCharacter(character: "じゅ", romaji: "ju", group: .hJ),
+            KanaCharacter(character: "じょ", romaji: "jo", group: .hJ),
+        ],
+        .hBY: [
+            KanaCharacter(character: "びゃ", romaji: "bya", group: .hBY),
+            KanaCharacter(character: "びゅ", romaji: "byu", group: .hBY),
+            KanaCharacter(character: "びょ", romaji: "byo", group: .hBY),
+        ],
+        .hPY: [
+            KanaCharacter(character: "ぴゃ", romaji: "pya", group: .hPY),
+            KanaCharacter(character: "ぴゅ", romaji: "pyu", group: .hPY),
+            KanaCharacter(character: "ぴょ", romaji: "pyo", group: .hPY),
+        ],
+
         // MARK: Katakana base
         .kVowels: [
             KanaCharacter(character: "ア", romaji: "a", group: .kVowels),
@@ -209,6 +304,100 @@ public enum KanaGroup: String, Sendable, CaseIterable, Codable, Identifiable {
             KanaCharacter(character: "ワ", romaji: "wa", group: .kWN),
             KanaCharacter(character: "ヲ", romaji: "wo", group: .kWN),
             KanaCharacter(character: "ン", romaji: "n", group: .kWN),
+        ],
+
+        // MARK: Katakana dakuten
+        .kG: [
+            KanaCharacter(character: "ガ", romaji: "ga", group: .kG),
+            KanaCharacter(character: "ギ", romaji: "gi", group: .kG),
+            KanaCharacter(character: "グ", romaji: "gu", group: .kG),
+            KanaCharacter(character: "ゲ", romaji: "ge", group: .kG),
+            KanaCharacter(character: "ゴ", romaji: "go", group: .kG),
+        ],
+        .kZ: [
+            KanaCharacter(character: "ザ", romaji: "za", group: .kZ),
+            KanaCharacter(character: "ジ", romaji: "ji", group: .kZ),
+            KanaCharacter(character: "ズ", romaji: "zu", group: .kZ),
+            KanaCharacter(character: "ゼ", romaji: "ze", group: .kZ),
+            KanaCharacter(character: "ゾ", romaji: "zo", group: .kZ),
+        ],
+        .kD: [
+            KanaCharacter(character: "ダ", romaji: "da", group: .kD),
+            KanaCharacter(character: "ヂ", romaji: "ji", group: .kD),
+            KanaCharacter(character: "ヅ", romaji: "zu", group: .kD),
+            KanaCharacter(character: "デ", romaji: "de", group: .kD),
+            KanaCharacter(character: "ド", romaji: "do", group: .kD),
+        ],
+        .kB: [
+            KanaCharacter(character: "バ", romaji: "ba", group: .kB),
+            KanaCharacter(character: "ビ", romaji: "bi", group: .kB),
+            KanaCharacter(character: "ブ", romaji: "bu", group: .kB),
+            KanaCharacter(character: "ベ", romaji: "be", group: .kB),
+            KanaCharacter(character: "ボ", romaji: "bo", group: .kB),
+        ],
+        .kP: [
+            KanaCharacter(character: "パ", romaji: "pa", group: .kP),
+            KanaCharacter(character: "ピ", romaji: "pi", group: .kP),
+            KanaCharacter(character: "プ", romaji: "pu", group: .kP),
+            KanaCharacter(character: "ペ", romaji: "pe", group: .kP),
+            KanaCharacter(character: "ポ", romaji: "po", group: .kP),
+        ],
+
+        // MARK: Katakana yōon
+        .kKY: [
+            KanaCharacter(character: "キャ", romaji: "kya", group: .kKY),
+            KanaCharacter(character: "キュ", romaji: "kyu", group: .kKY),
+            KanaCharacter(character: "キョ", romaji: "kyo", group: .kKY),
+        ],
+        .kSH: [
+            KanaCharacter(character: "シャ", romaji: "sha", group: .kSH),
+            KanaCharacter(character: "シュ", romaji: "shu", group: .kSH),
+            KanaCharacter(character: "ショ", romaji: "sho", group: .kSH),
+        ],
+        .kCH: [
+            KanaCharacter(character: "チャ", romaji: "cha", group: .kCH),
+            KanaCharacter(character: "チュ", romaji: "chu", group: .kCH),
+            KanaCharacter(character: "チョ", romaji: "cho", group: .kCH),
+        ],
+        .kNY: [
+            KanaCharacter(character: "ニャ", romaji: "nya", group: .kNY),
+            KanaCharacter(character: "ニュ", romaji: "nyu", group: .kNY),
+            KanaCharacter(character: "ニョ", romaji: "nyo", group: .kNY),
+        ],
+        .kHY: [
+            KanaCharacter(character: "ヒャ", romaji: "hya", group: .kHY),
+            KanaCharacter(character: "ヒュ", romaji: "hyu", group: .kHY),
+            KanaCharacter(character: "ヒョ", romaji: "hyo", group: .kHY),
+        ],
+        .kMY: [
+            KanaCharacter(character: "ミャ", romaji: "mya", group: .kMY),
+            KanaCharacter(character: "ミュ", romaji: "myu", group: .kMY),
+            KanaCharacter(character: "ミョ", romaji: "myo", group: .kMY),
+        ],
+        .kRY: [
+            KanaCharacter(character: "リャ", romaji: "rya", group: .kRY),
+            KanaCharacter(character: "リュ", romaji: "ryu", group: .kRY),
+            KanaCharacter(character: "リョ", romaji: "ryo", group: .kRY),
+        ],
+        .kGY: [
+            KanaCharacter(character: "ギャ", romaji: "gya", group: .kGY),
+            KanaCharacter(character: "ギュ", romaji: "gyu", group: .kGY),
+            KanaCharacter(character: "ギョ", romaji: "gyo", group: .kGY),
+        ],
+        .kJ: [
+            KanaCharacter(character: "ジャ", romaji: "ja", group: .kJ),
+            KanaCharacter(character: "ジュ", romaji: "ju", group: .kJ),
+            KanaCharacter(character: "ジョ", romaji: "jo", group: .kJ),
+        ],
+        .kBY: [
+            KanaCharacter(character: "ビャ", romaji: "bya", group: .kBY),
+            KanaCharacter(character: "ビュ", romaji: "byu", group: .kBY),
+            KanaCharacter(character: "ビョ", romaji: "byo", group: .kBY),
+        ],
+        .kPY: [
+            KanaCharacter(character: "ピャ", romaji: "pya", group: .kPY),
+            KanaCharacter(character: "ピュ", romaji: "pyu", group: .kPY),
+            KanaCharacter(character: "ピョ", romaji: "pyo", group: .kPY),
         ],
     ]
 

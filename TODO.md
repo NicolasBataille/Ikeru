@@ -11,6 +11,24 @@
 
 ## Top open debt (verified 2026-07-14)
 
+- [ ] **Learner telemetry for expert review** — spec written, not implemented:
+  [`docs/design-specs/2026-08-10-learner-telemetry-design.md`](docs/design-specs/2026-08-10-learner-telemetry-design.md).
+  Journaliser ce que fait l'apprenant pour faire relire ses résultats par un agent expert
+  (cadence hebdo vs ponctuelle **non tranchée**). Lot 1 = `answeredValue`/`exerciseType`/`surface`
+  sur `ReviewLog` → rend les **paires de confusion** observables (aujourd'hui calculées puis
+  jetées). Prérequis : réparer le seeder fixture (§10).
+- [ ] **Cloud sync (Supabase free tier)** — spec written, not implemented:
+  [`docs/design-specs/2026-08-10-cloud-sync-design.md`](docs/design-specs/2026-08-10-cloud-sync-design.md).
+  Comptes + avancement distant + resync, **local-d'abord** (l'app doit rester utilisable
+  hors-ligne). 4 entités sur 11 sont append-only ⇒ sans conflit ; `ReviewLog` fait autorité
+  sur `Card`. Prérequis bloquants : suppression de profil (obligation App Store dès qu'il y a
+  login) + `IkeruSchemaV3` (tombstones). Sert aussi de **banc de fixtures** pour les tests
+  utilisateur (§11).
+- [ ] **Fixture seeder is unusable** — seeds placeholder cards (`人0`, `日1`), zero kana,
+  hardcodes the display name, wipes the personal dictionary and resets tutorial flags.
+  Blocks all J+30/J+90 QA and the telemetry spec above. Found in the 2026-08 expert review
+  (OBS-013). Fix règle : **générer un historique `ReviewLog` sur du contenu réel et laisser
+  FSRS dériver l'état**, au lieu de poser `stability`/`reps` à la main.
 - [ ] **No UI-test target** — launch-argument fixture infrastructure exists but nothing
   exercises it. Add a minimal XCUITest smoke suite (remediation 8.7).
 - [ ] **Content expansion** — N5 bundle has 206 vocab items / 31 grammar points / 96 sentences

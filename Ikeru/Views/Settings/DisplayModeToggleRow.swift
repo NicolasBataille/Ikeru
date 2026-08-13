@@ -6,6 +6,12 @@ import IkeruCore
 struct DisplayModeToggleRow: View {
 
     let repository: any DisplayModePreferenceRepository
+
+    /// Kept live by `MainTabView` on every profile switch/create/delete (see
+    /// `.displayModeDidChange`) as well as on an explicit toggle. `isTatamiOn`
+    /// mirrors it below so the switch reflects the *active* profile instead
+    /// of whichever profile was active when this row was first initialized.
+    @Environment(\.displayMode) private var activeDisplayMode
     @State private var isTatamiOn: Bool
 
     init(repository: any DisplayModePreferenceRepository) {
@@ -42,6 +48,12 @@ struct DisplayModeToggleRow: View {
         }
         .onChange(of: isTatamiOn) { _, new in
             repository.set(new ? .tatami : .beginner)
+        }
+        .onChange(of: activeDisplayMode) { _, new in
+            let onValue = new == .tatami
+            if isTatamiOn != onValue {
+                isTatamiOn = onValue
+            }
         }
     }
 }

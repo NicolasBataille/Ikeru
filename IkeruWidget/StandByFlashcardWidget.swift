@@ -6,6 +6,14 @@ import IkeruCore
 
 /// Widget for StandBy mode that cycles through flashcards.
 /// Shows a single large kanji with its reading, cycling every 10 seconds.
+///
+/// The configuration display name / description below resolve against
+/// Localizable.xcstrings the same way the rest of the app does, but the
+/// IkeruWidget target has no Resources build phase yet (see CLAUDE.md /
+/// JOURNAL.md), so the catalog isn't embedded and this stays English-only
+/// until that pbxproj membership is added. The flashcard `meaning` strings
+/// (e.g. "Day, Sun") are vocabulary content, not chrome — left as-is,
+/// matching how `term.meaning` / `entry.meaning` are treated elsewhere.
 struct StandByFlashcardWidget: Widget {
     let kind = "StandByFlashcard"
 

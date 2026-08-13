@@ -97,11 +97,10 @@ struct ExerciseUnlockServiceTests {
         #expect(service.state(for: .speakingPractice, profile: p) == .unlocked)
     }
 
-    @Test("sakuraConversation requires JLPT estimate ≥ N4")
+    @Test("sakuraConversation is unlocked from N5 — only shipped content is N5, and the AI prompt already constrains level")
     func sakuraConversation() {
         let n5 = LearnerSnapshot.empty.with(\.jlptLevel, .n5)
-        #expect(service.state(for: .sakuraConversation, profile: n5)
-            == .locked(reason: .jlptLevelReached(required: .n4, current: .n5)))
+        #expect(service.state(for: .sakuraConversation, profile: n5) == .unlocked)
         let n4 = LearnerSnapshot.empty.with(\.jlptLevel, .n4)
         #expect(service.state(for: .sakuraConversation, profile: n4) == .unlocked)
     }
@@ -113,7 +112,7 @@ struct ExerciseUnlockServiceTests {
             .with(\.hiraganaMastered, true)
             .with(\.vocabularyMasteredFamiliarPlus, 50)
         let delta = service.newlyUnlocked(profile: p, previous: before)
-        #expect(delta == [.fillInBlank, .grammarExercise])
+        #expect(delta == [.fillInBlank, .grammarExercise, .sakuraConversation])
     }
 
     @Test("unlockedTypes returns the full set on a maxed profile")

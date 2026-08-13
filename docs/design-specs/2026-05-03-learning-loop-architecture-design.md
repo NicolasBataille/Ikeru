@@ -113,30 +113,53 @@ public protocol ExerciseUnlockService: Sendable {
 
 `ProfileSnapshot` aggregates the inputs the service needs (mastered card counts by type, kana/kanji breakdown, listening accuracy rolling window, JLPT estimate). Computed once per session-planning request, not on every call.
 
-### Unlock thresholds (research-grounded)
+### Unlock thresholds (product heuristics — not research citations)
+
+Every number below is a default we picked, not a value derived from a published
+study. The literature we skimmed while picking them (Laufer 1989, Hu & Nation
+2000, Nation 2006 on coverage thresholds; Swain 1985 on the output hypothesis;
+the i+1 input-primacy line of argument, critiqued for lacking an operational
+definition by Gregg 1984, via Lichtman & VanPatten 2021) supports *directions*
+— comprehension needs high lexical coverage, production may benefit from prior
+input, output can serve noticing/hypothesis-testing functions — but none of it
+hands us numbers like "100 words" or "60 % over 30 days". Those are ours.
+Guiding principle: **arbitrary-and-admitted is fine; arbitrary-dressed-as-science
+is not.** Treat every threshold in this section as a starting point to
+recalibrate once we have real usage data, not as a settled result.
 
 **Day 1 — always unlocked:**
 - `kanaStudy`
 - `kanjiStudy` (one card at a time, picks from the N5 list)
 - `vocabularyStudy` (picks from N5 vocab)
-- `listeningSubtitled` (receptive-first per SLA research)
+- `listeningSubtitled` (input-first is a defensible *direction* in SLA — but
+  i+1 has never been operationalized as a number, so treat "day 1" itself as
+  our product call, not a citation)
 
 **Earned via threshold:**
 
 | Type | Threshold | Rationale |
 |---|---|---|
-| `fillInBlank` | 50 vocab @ familiar+ | Minimum lexical building blocks |
-| `grammarExercise` | All 46 hiragana mastered | Particles & inflections need kana literacy |
-| `sentenceConstruction` | 5 N5 grammar points familiar+ | Need parts to assemble |
-| `readingPassage` | 100 vocab + 50 kanji @ familiar+ | ~95 % coverage of Tadoku L0 graded readers |
-| `writingPractice` | Both kana scripts mastered + 50 vocab | Output needs scaffolding (Swain) |
-| `listeningUnsubtitled` | ≥ 60 % accuracy on last 30 subtitled exercises | Sustained receptive proficiency |
-| `speakingPractice` | ≥ 60 % listening recall over last 30 days | Output prerequisite (Swain) |
-| `sakuraConversation` | JLPT estimate ≥ N4 (≥ 300 vocab + 30 N5 grammar familiar+) | Real conversation needs grammar foundation |
+| `fillInBlank` | 50 vocab @ familiar+ | Product default: minimum lexical building blocks to fill a blank meaningfully |
+| `grammarExercise` | All 46 hiragana mastered | Product default: particles & inflections need kana literacy to even read the exercise |
+| `sentenceConstruction` | 5 N5 grammar points familiar+ | Product default: need a few grammar parts on hand before assembling sentences |
+| `readingPassage` | 100 vocab + 50 kanji @ familiar+ | Product default, narrower claim than it looks: an L0-tier passage has roughly 20–50 *unique* words, so ~100 well-chosen known words can plausibly exhaust one. This is not a published coverage threshold (95%/98% comprehension thresholds per Laufer 1989 / Hu & Nation 2000 require thousands of word families, not 100) and tadoku.org publishes no numeric vocabulary definition for "L0" — see calibration note below |
+| `writingPractice` | Both kana scripts mastered + 50 vocab | Product default: writing gated behind more foundation than reading since we don't yet measure output quality. Not derived from the output hypothesis (Swain 1985) — that work describes functions of output (noticing, hypothesis-testing), not thresholds |
+| `listeningUnsubtitled` | ≥ 60 % accuracy on last 30 subtitled exercises | Product default: sustained receptive proficiency, chosen to avoid one-time fluke unlocks |
+| `speakingPractice` | ≥ 60 % listening recall over last 30 days | Product default, same caveat as `writingPractice` — no numeric threshold to derive from output-hypothesis or input-primacy research |
+| `sakuraConversation` | JLPT estimate ≥ N5 (the floor — effectively open from the start) | Lowered from an original N4 bar: the only shipped content is N5 (`n5-content.sqlite`), so N4 was structurally unreachable through the nominal onboarding path. Also redundant as a safety rail — `ConversationService.buildSystemPrompt` already constrains Sakura to the learner's JLPT level — and a real-conditions test showed an N5 conversation with a beginner works well |
 
 "@ familiar+" = `MasteryLevel.familiar` or higher in the existing scale (familiar / mastered / anchored). Excludes `.new` and `.learning`.
 
-The 60 %/30-window thresholds avoid one-time fluke unlocks and require sustained competence.
+The 60 %/30-window thresholds avoid one-time fluke unlocks and require sustained competence — a design choice, not a value from the literature.
+
+**Calibration note for `readingPassage`:** the defensible version of this gate
+isn't "our 100 words cover 95% of an external corpus we've never measured" —
+it's "our 100 words cover X% of *our own* content." We ship 96 sentences in
+`n5-content.sqlite`; before shipping this threshold, compute actual coverage
+of our first-100-vocab-by-frequency against those 96 sentences and display
+*that* number here instead of the Tadoku claim. A gate calibrated against the
+content it gates is defensible; one draped in an external corpus we never
+measured is not.
 
 ### Each unlock fires once
 
@@ -184,12 +207,14 @@ The "skill-balance booster" and "variety tile" segments draw from level-appropri
 
 | JLPT estimate | Variety pool |
 |---|---|
-| **N5** | listening-subtitled, fill-in-blank |
+| **N5** | listening-subtitled, fill-in-blank, sakura-conversation |
 | **N4** | + grammar-exercise, sentence-construction |
 | **N3** | + reading-passage, writing-practice, listening-unsubtitled |
-| **N2 / N1** | + speaking-practice, sakura-conversation, immersive-listening |
+| **N2 / N1** | + speaking-practice, immersive-listening |
 
-The pool intersects with `unlockedTypes` — if the learner is rated N3 but hasn't unlocked `speakingPractice`, it stays out of the pool.
+`sakura-conversation` doesn't stack on a hardcoded rung like the rest of this table — `VarietyPoolResolver` reads `DefaultExerciseUnlockService.sakuraConversationMinJLPT` (currently N5, the floor) directly, matching the "Earned via threshold" table above, so it's listed at N5 rather than N2/N1 here.
+
+The pool intersects with `unlockedTypes` — if the learner is rated N3 but hasn't unlocked `speakingPractice`, it stays out of the pool. Note this table describes `VarietyPoolResolver`'s *raw* pool: `DefaultSessionPlanner.composeHome` additionally subtracts `untaughtContentTypes` (which still lists `sakura-conversation`, alongside `listening-subtitled`/`listening-unsubtitled`/`speaking-practice`/`vocabulary-study`/`sentence-construction`) from both the skill-balance booster and variety-tile segments, so those six types don't actually reach HOME sessions yet regardless of level or unlock state — see `DefaultSessionPlanner.untaughtContentTypes`.
 
 ### Rest day
 
@@ -243,7 +268,7 @@ The existing JLPT-estimate hero stays at the top of Étude as a context summary;
 
 ### Sakura conversation gating note
 
-`sakuraConversation` doesn't appear as a Browse tile — it lives behind the existing Chat tab. The unlock service still tracks its state because Home's variety tile may surface a Sakura suggestion at N4+. The Chat tab remains accessible from day one, but with the existing no-AI / pre-N4 explanation messaging when the user isn't yet on the conversation tier.
+`sakuraConversation` doesn't appear as a Browse tile — it lives behind the existing Chat tab. The unlock service still tracks its state (now N5, the floor — see the "Earned via threshold" table above) for the variety pool described above, but `DefaultSessionPlanner.untaughtContentTypes` currently subtracts it from both HOME segments (see the note above), so Home's variety tile doesn't actually surface a Sakura suggestion yet. The Chat tab remains accessible from day one, but with the existing no-AI / pre-N5 explanation messaging when the user isn't yet on the conversation tier.
 
 ## Acceptance Criteria
 

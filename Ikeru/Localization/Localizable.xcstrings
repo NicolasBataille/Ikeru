@@ -2607,6 +2607,22 @@
         }
       }
     },
+    "Delete profile" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete profile"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer le profil"
+          }
+        }
+      }
+    },
     "Detail: %@" : {
       "localizations" : {
         "fr" : {
@@ -10723,40 +10739,6 @@
         }
       }
     },
-    "Home.NextStep.CaughtUp.Title" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "All caught up"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tout est à jour"
-          }
-        }
-      }
-    },
-    "Home.NextStep.CaughtUp.Body" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lovely work. Keep your reviews warm."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Beau travail. Entretiens tes révisions."
-          }
-        }
-      }
-    },
     "Play Again" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -11471,6 +11453,341 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vous êtes hors ligne — Sakura reviendra une fois connecté(e)."
+          }
+        }
+      }
+    },
+    "Follows display mode" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Follows display mode"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suit le mode d'affichage"
+          }
+        }
+      }
+    },
+    "Audio autoplay" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Audio autoplay"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lecture automatique"
+          }
+        }
+      }
+    },
+    "Settings.TatamiEligibility.PathCompetence" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cumulative competence"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compétence cumulée"
+          }
+        }
+      }
+    },
+    "Settings.TatamiEligibility.PathActiveDays" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Time practiced"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ancienneté"
+          }
+        }
+      }
+    },
+    "Settings.TatamiEligibility.Or" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "or"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ou"
+          }
+        }
+      }
+    },
+    "Settings.TatamiEligibility.PathMet" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Path met"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voie atteinte"
+          }
+        }
+      }
+    },
+    "Explore" : {
+      "comment" : "Explore tab header chrome label (BilingualLabel chrome text) — also matched by the tatami tab bar's VoiceOver accessibility label, which passes the same literal.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Explore"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Explorer"
+          }
+        }
+      }
+    },
+    "Japanese Flashcard" : {
+      "comment" : "StandBy flashcard widget configuration display name (widget gallery).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Japanese Flashcard"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flashcard japonaise"
+          }
+        }
+      }
+    },
+    "Learn kanji in StandBy mode." : {
+      "comment" : "StandBy flashcard widget configuration description (widget gallery).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Learn kanji in StandBy mode."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apprends des kanji en mode StandBy."
+          }
+        }
+      }
+    },
+    "Track your Japanese learning progress." : {
+      "comment" : "Home screen widget configuration description (widget gallery).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Track your Japanese learning progress."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suis ta progression en japonais."
+          }
+        }
+      }
+    },
+    "%lld due" : {
+      "comment" : "Home screen widget: due review count line.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld due"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld à réviser"
+          }
+        }
+      }
+    },
+    "Study time!" : {
+      "comment" : "Home screen widget: shown when no reviews are due.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Study time!"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "C'est l'heure d'étudier !"
+          }
+        }
+      }
+    },
+    "Lv. %lld" : {
+      "comment" : "Home screen widget: level line.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lv. %lld"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Niv. %lld"
+          }
+        }
+      }
+    },
+    "+%lld XP" : {
+      "comment" : "Session Live Activity (Dynamic Island expanded, trailing region): XP earned this session.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "+%lld XP"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "+%lld XP"
+          }
+        }
+      }
+    },
+    "🔥 %lld streak" : {
+      "comment" : "Session Live Activity (Dynamic Island expanded, bottom region): current correctness streak.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🔥 %lld streak"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🔥 %lld d'affilée"
+          }
+        }
+      }
+    },
+    "Mastery.New" : {
+      "comment" : "MasteryLevel.label — catalog KEY (not display text). IkeruCore can't resolve the app's locale-overridden bundle, so the view layer renders this via Text(LocalizedStringKey(...)); see CLAUDE.md Localisation section.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nouveau"
+          }
+        }
+      }
+    },
+    "Mastery.Learning" : {
+      "comment" : "MasteryLevel.label — catalog KEY (not display text). IkeruCore can't resolve the app's locale-overridden bundle, so the view layer renders this via Text(LocalizedStringKey(...)); see CLAUDE.md Localisation section.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Learning"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En apprentissage"
+          }
+        }
+      }
+    },
+    "Mastery.Familiar" : {
+      "comment" : "MasteryLevel.label — catalog KEY (not display text). IkeruCore can't resolve the app's locale-overridden bundle, so the view layer renders this via Text(LocalizedStringKey(...)); see CLAUDE.md Localisation section.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Familiar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Familier"
+          }
+        }
+      }
+    },
+    "Mastery.Mastered" : {
+      "comment" : "MasteryLevel.label — catalog KEY (not display text). IkeruCore can't resolve the app's locale-overridden bundle, so the view layer renders this via Text(LocalizedStringKey(...)); see CLAUDE.md Localisation section.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mastered"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maîtrisé"
+          }
+        }
+      }
+    },
+    "Mastery.Anchored" : {
+      "comment" : "MasteryLevel.label — catalog KEY (not display text). IkeruCore can't resolve the app's locale-overridden bundle, so the view layer renders this via Text(LocalizedStringKey(...)); see CLAUDE.md Localisation section.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anchored"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ancré"
           }
         }
       }

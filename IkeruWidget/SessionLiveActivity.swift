@@ -4,6 +4,12 @@ import SwiftUI
 import IkeruCore
 
 // MARK: - Session Live Activity
+//
+// Text literals below ("+%lld XP", "🔥 %lld streak") resolve against
+// Localizable.xcstrings the same way the rest of the app does, but the
+// IkeruWidget target has no Resources build phase yet (see CLAUDE.md /
+// JOURNAL.md), so the catalog isn't embedded and this stays English-only
+// until that pbxproj membership is added.
 
 struct SessionLiveActivity: Widget {
     let kind = "SessionLiveActivity"

@@ -48,6 +48,12 @@ public final class DailyTermViewModel {
     private let service: DailyTermService
     private let dailyTermRepository: DailyTermRepository
     private let vocabularyRepository: VocabularyRepository
+    /// Used solely to read the learner's current JLPT readiness estimate
+    /// (`progressService.loadDashboardData().jlptEstimate`) so the daily
+    /// term can be filtered to the learner's level. Same construction
+    /// pattern as `SessionComposer.buildSnapshot` / `HomeViewModel` — this
+    /// view model does not otherwise touch card data.
+    private let progressService: ProgressService
 
     /// Calendar day represented by the currently-loaded `today`. Used to
     /// detect when a midnight rollover should re-load.
@@ -60,6 +66,7 @@ public final class DailyTermViewModel {
         let vocabRepo = VocabularyRepository(modelContainer: modelContainer)
         self.dailyTermRepository = dailyTermRepo
         self.vocabularyRepository = vocabRepo
+        self.progressService = ProgressService(cardRepository: CardRepository(modelContainer: modelContainer))
         // Pass the app-resolved locale so the service renders FR text
         // when the user has chosen French (independently of the OS locale).
         self.service = DailyTermService(repository: dailyTermRepo, locale: locale)
@@ -79,10 +86,34 @@ public final class DailyTermViewModel {
             return
         }
 
+        let normalisedToday = Calendar.current.startOfDay(for: now)
         let dictionaryWords = Set((await vocabularyRepository.allEntries()).map(\.word))
-        let todayDTO = await service.termForDay(now, existingDictionaryWords: dictionaryWords)
+
+        // `service.termForDay` only consults `learnerLevel` the very first
+        // time a day's row is generated (see its doc comment) — once
+        // today's row exists, the value is ignored. `currentLearnerLevel`
+        // runs a full `ProgressService.loadDashboardData()` (all cards +
+        // six months of review logs), the same load `HomeViewModel`
+        // already performs — and `load()` is called on every Home
+        // appearance (`HomeView`'s `.task`), not just once a day. Skip
+        // that computation whenever today's row is already persisted —
+        // the common case, true every appearance except the first of a
+        // new calendar day — so Home's most-visited screen doesn't pay
+        // for a redundant dashboard load on every open.
+        let learnerLevel: JLPTLevel?
+        if await dailyTermRepository.term(on: normalisedToday) != nil {
+            learnerLevel = nil
+        } else {
+            learnerLevel = await currentLearnerLevel(now: now)
+        }
+
+        let todayDTO = await service.termForDay(
+            now,
+            existingDictionaryWords: dictionaryWords,
+            learnerLevel: learnerLevel
+        )
         today = todayDTO
-        currentDay = Calendar.current.startOfDay(for: now)
+        currentDay = normalisedToday
 
         yesterday = await service.previousDayTerm(before: now)
         recent = await service.recentTerms(before: now, limit: 30)
@@ -91,6 +122,21 @@ public final class DailyTermViewModel {
         Logger.dailyTerm.debug(
             "Daily term loaded: today=\(todayDTO.word, privacy: .public) revealed=\(todayDTO.revealedAt != nil)"
         )
+    }
+
+    /// Resolves the learner's current JLPT level from the same readiness
+    /// estimate the Progress dashboard and session composer use
+    /// (`ProgressService.loadDashboardData().jlptEstimate`), so the daily
+    /// term selection (`DailyTermService.termForDay(learnerLevel:)`) can
+    /// filter out words clearly above the learner's reach. Only consulted
+    /// on a day's *first* generation — see `termForDay`'s doc comment — and
+    /// `load()` only calls this once that first generation is actually
+    /// detected (no persisted row for today yet), so the expensive
+    /// dashboard load underneath happens once per calendar day, not once
+    /// per `load()` call.
+    private func currentLearnerLevel(now: Date) async -> JLPTLevel {
+        let estimate = await progressService.loadDashboardData(now: now).jlptEstimate
+        return JLPTLevel(rawValue: estimate.level.lowercased()) ?? .n5
     }
 
     /// Re-loads only if the calendar day has changed since the last load.

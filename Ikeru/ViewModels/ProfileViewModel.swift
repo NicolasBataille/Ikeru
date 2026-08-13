@@ -79,6 +79,12 @@ public final class ProfileViewModel {
             currentProfile = profile
             allProfiles.append(profile)
             ActiveProfileResolver.setActiveProfileID(profile.id)
+            // New active profile: the cached display mode in MainTabView
+            // must be re-read from the (now-different) active profile's
+            // key, or the brand-new profile inherits whatever mode the
+            // previously-active profile was showing. See the matching
+            // comment in `switchProfile`.
+            NotificationCenter.default.post(name: .displayModeDidChange, object: nil)
             Logger.ui.info("Created user profile: \(trimmedName)")
         } catch {
             Logger.ui.error("Failed to save user profile: \(error)")
@@ -93,11 +99,34 @@ public final class ProfileViewModel {
         currentProfile = profile
         ActiveProfileResolver.setActiveProfileID(profile.id)
         NotificationCenter.default.post(name: .ikeruActiveProfileDidChange, object: profile.id)
+        // The display mode (Tatami/Beginner) is stored per-profile
+        // (UserDefaultsDisplayModePreferenceRepository keys on the active
+        // profile id), but MainTabView caches the resolved mode in a
+        // `@State` fed by the repository's CurrentValueSubject — that
+        // subject only re-emits on an explicit `repo.set(...)`, never on a
+        // profile switch. Without this notification the newly-active
+        // profile's mode never gets re-read, and the UI keeps showing
+        // whichever mode the *previous* profile was in (the Tatami-leak
+        // bug). `.displayModeDidChange` already exists for exactly this
+        // "mode changed out from under the cached value" case (onboarding's
+        // placement step posts it too) — MainTabView already listens.
+        NotificationCenter.default.post(name: .displayModeDidChange, object: nil)
         Logger.ui.info("Switched to profile: \(profile.displayName)")
     }
 
-    /// Deletes a profile (only if it's not the last remaining one).
-    /// Cascades to RPGState + cards via the SwiftData relationship rule.
+    /// Deletes a profile. Cascades to RPGState + cards (+ their ReviewLogs)
+    /// via the SwiftData relationship rule declared on `UserProfile`.
+    ///
+    /// Deleting the *last* remaining profile is refused: this app has no
+    /// signed-out state, and driving the user back to onboarding after a
+    /// same-screen delete would require `IkeruApp`'s root `showOnboarding`
+    /// flag to re-open — state this view model has no reach into. The UI
+    /// (`SettingsView`) never offers a delete affordance while only one
+    /// profile exists, so this guard should never actually fire from a
+    /// live tap; it exists as a safety net if that invariant is ever
+    /// violated. See CLAUDE.md-adjacent task notes for the follow-up needed
+    /// to support "delete your only profile → back to onboarding".
+    ///
     /// - Parameter profile: The profile to delete.
     public func deleteProfile(_ profile: UserProfile) {
         guard allProfiles.count > 1 else {
@@ -107,6 +136,17 @@ public final class ProfileViewModel {
 
         let wasActive = currentProfile?.id == profile.id
 
+        // NOTE (data-model gap, not fixed here — out of this task's file
+        // perimeter): `VocabularyEntry`/`VocabularyEncounter` (the "personal
+        // dictionary") carry no `profileID` and no relationship back to
+        // `UserProfile` at all — they are a single global store shared by
+        // every profile on the device. Deleting a profile therefore cannot
+        // delete "its" dictionary, because the data model has no concept of
+        // per-profile ownership for it. `DeleteProfileSheet`'s summary
+        // correctly does NOT claim to erase dictionary entries. Making the
+        // dictionary genuinely per-profile needs a schema migration
+        // (IkeruSchemaV3) — flagging for a follow-up task.
+        //
         // ExerciseOutcomeLog is scoped by a scalar `profileID` (not a
         // relationship), so it does NOT cascade with the profile the way Card /
         // ReviewLog / RPGState do — delete its rows explicitly so no orphaned
@@ -132,6 +172,9 @@ public final class ProfileViewModel {
                 currentProfile = next
                 ActiveProfileResolver.setActiveProfileID(next.id)
                 NotificationCenter.default.post(name: .ikeruActiveProfileDidChange, object: next.id)
+                // Active profile changed as a side effect of the delete —
+                // same cached-display-mode staleness as `switchProfile`.
+                NotificationCenter.default.post(name: .displayModeDidChange, object: nil)
             }
             Logger.ui.info("Deleted profile: \(profile.displayName)")
         } catch {

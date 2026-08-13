@@ -172,6 +172,126 @@ struct DailyTermServiceTests {
         #expect(pickA != pickB)
     }
 
+    // MARK: - Level weighting
+
+    private let beginnerCandidate = DailyTermCandidate(
+        word: "初心者印",
+        reading: "しょしんしゃじるし",
+        pronunciation: "sho-shin-sha-ji-ru-shi",
+        meaning: "beginner marker",
+        flavour: "an N5-level candidate",
+        jlptLevel: .n5,
+        tags: []
+    )
+    private let advancedCandidate = DailyTermCandidate(
+        word: "上級印",
+        reading: "じょうきゅうじるし",
+        pronunciation: "jo-u-kyu-u-ji-ru-shi",
+        meaning: "advanced marker",
+        flavour: "an N1-level candidate, clearly above a beginner",
+        jlptLevel: .n1,
+        tags: []
+    )
+    private let offScaleCandidate = DailyTermCandidate(
+        word: "圏外印",
+        reading: "けんがいじるし",
+        pronunciation: "ke-n-ga-i-ji-ru-shi",
+        meaning: "off-scale marker",
+        flavour: "a candidate with no JLPT level at all",
+        jlptLevel: nil,
+        tags: []
+    )
+
+    @Test("A beginner never receives a candidate clearly above their level")
+    func beginnerAvoidsCandidateClearlyAboveLevel() throws {
+        let (service, _) = try makeService(catalog: [beginnerCandidate, advancedCandidate])
+        // Check across several distinct weekdays so the result isn't an
+        // artefact of one particular day's tag scoring.
+        let days = [
+            date(year: 2026, month: 5, day: 10), // Sunday
+            date(year: 2026, month: 5, day: 11), // Monday
+            date(year: 2026, month: 5, day: 15)  // Friday
+        ]
+        for day in days {
+            let pick = service.pickCandidate(for: day, excluding: [], learnerLevel: .n5)
+            #expect(pick.word == beginnerCandidate.word)
+        }
+    }
+
+    @Test("Off-scale (nil jlptLevel) candidates are never hard-excluded by the level filter")
+    func offScaleCandidateNeverExcluded() throws {
+        // Only a too-hard, levelled candidate and an off-scale one are
+        // available. The too-hard one is filtered out; the off-scale one
+        // must remain pickable rather than the pool silently emptying.
+        let (service, _) = try makeService(catalog: [advancedCandidate, offScaleCandidate])
+        let day = date(year: 2026, month: 5, day: 10)
+        let pick = service.pickCandidate(for: day, excluding: [], learnerLevel: .n5)
+        #expect(pick.word == offScaleCandidate.word)
+    }
+
+    @Test("A matched-level candidate outranks off-scale content for an early learner")
+    func matchedLevelBeatsOffScaleForBeginner() throws {
+        let (service, _) = try makeService(catalog: [beginnerCandidate, offScaleCandidate])
+        let day = date(year: 2026, month: 5, day: 10)
+        let pick = service.pickCandidate(for: day, excluding: [], learnerLevel: .n5)
+        #expect(pick.word == beginnerCandidate.word)
+    }
+
+    @Test("The always-a-term guarantee outranks level fit: an all-too-hard catalog still returns a term")
+    func levelFilterNeverBreaksTheAlwaysATermGuarantee() throws {
+        let onlyAdvanced = DailyTermCandidate(
+            word: "唯一上級印",
+            reading: "ゆいいつじょうきゅうじるし",
+            pronunciation: "yu-i-i-tsu-jo-u-kyu-u-ji-ru-shi",
+            meaning: "the only, too-advanced candidate",
+            flavour: "the level filter must not empty the pool to nothing",
+            jlptLevel: .n1,
+            tags: []
+        )
+        let (service, _) = try makeService(catalog: [onlyAdvanced])
+        let day = date(year: 2026, month: 5, day: 10)
+        let pick = service.pickCandidate(for: day, excluding: [], learnerLevel: .n5)
+        #expect(pick.word == onlyAdvanced.word)
+    }
+
+    @Test("Level-weighted picks stay deterministic for the same day and learner level")
+    func levelWeightedPickIsDeterministic() throws {
+        let (service, _) = try makeService(catalog: [beginnerCandidate, advancedCandidate, offScaleCandidate])
+        let day = date(year: 2026, month: 5, day: 10)
+        let firstPick = service.pickCandidate(for: day, excluding: [], learnerLevel: .n5)
+        let secondPick = service.pickCandidate(for: day, excluding: [], learnerLevel: .n5)
+        #expect(firstPick == secondPick)
+    }
+
+    @Test("A one-level-harder 'stretch' candidate is not hard-excluded")
+    func stretchLevelCandidateStaysInReach() throws {
+        let stretchCandidate = DailyTermCandidate(
+            word: "背伸び印",
+            reading: "せのびじるし",
+            pronunciation: "se-no-bi-ji-ru-shi",
+            meaning: "one level harder than the learner",
+            flavour: "N4 for an N5 learner — a deliberate stretch, not 'clearly above'",
+            jlptLevel: .n4,
+            tags: []
+        )
+        let (service, _) = try makeService(catalog: [stretchCandidate])
+        let day = date(year: 2026, month: 5, day: 10)
+        let pick = service.pickCandidate(for: day, excluding: [], learnerLevel: .n5)
+        #expect(pick.word == stretchCandidate.word)
+    }
+
+    @Test("termForDay's persisted term ignores a different learnerLevel passed on a later call for the same day")
+    func termForDayLevelOnlyConsultedOnFirstGeneration() async throws {
+        let (service, _) = try makeService(catalog: [beginnerCandidate, advancedCandidate])
+        let day = date(year: 2026, month: 5, day: 10)
+        let first = await service.termForDay(day, learnerLevel: .n5)
+        #expect(first.word == beginnerCandidate.word)
+
+        let second = await service.termForDay(day, learnerLevel: .n1)
+        #expect(second.word == first.word)
+        #expect(second.id == first.id)
+    }
+
     // MARK: - Persistence
 
     @Test("termForDay persists a row and returns the same row on repeat calls")

@@ -64,4 +64,48 @@ struct KanaGroupTests {
         #expect(KanaGroup.hKY.section == .combined)
         #expect(KanaGroup.kPY.section == .combined)
     }
+
+    @Test("No group is empty (dakuten and yōon are populated)")
+    func noGroupIsEmpty() {
+        for group in KanaGroup.allCases {
+            #expect(!group.characters.isEmpty, "\(group) has no characters")
+        }
+    }
+
+    @Test("Every hiragana character falls in the hiragana Unicode block")
+    func hiraganaCharactersInUnicodeBlock() {
+        let hiraganaRange: ClosedRange<UInt32> = 0x3040...0x309F
+        for group in KanaGroup.allCases where group.script == .hiragana {
+            for kana in group.characters {
+                for scalar in kana.character.unicodeScalars {
+                    #expect(
+                        hiraganaRange.contains(scalar.value),
+                        "\(kana.character) in \(group) is outside the hiragana block"
+                    )
+                }
+            }
+        }
+    }
+
+    @Test("Every katakana character falls in the katakana Unicode block")
+    func katakanaCharactersInUnicodeBlock() {
+        let katakanaRange: ClosedRange<UInt32> = 0x30A0...0x30FF
+        for group in KanaGroup.allCases where group.script == .katakana {
+            for kana in group.characters {
+                for scalar in kana.character.unicodeScalars {
+                    #expect(
+                        katakanaRange.contains(scalar.value),
+                        "\(kana.character) in \(group) is outside the katakana block"
+                    )
+                }
+            }
+        }
+    }
+
+    @Test("Dakuten and yōon groups do not count toward the 92 base-kana total")
+    func dakutenAndYoonExcludedFromBaseTotal() {
+        let extendedGroups = KanaGroup.allCases.filter { $0.section != .base }
+        #expect(extendedGroups.count == 32) // 16 dakuten/yōon groups × 2 scripts
+        #expect(KanaGroup.allBaseCharacters.count == 92)
+    }
 }

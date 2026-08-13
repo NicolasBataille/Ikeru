@@ -17,10 +17,17 @@ Docker Desktop, via Apple's native container runtime (macOS 26+):
     echo <container-ip> > /tmp/voicevox_ip.txt
     python3 scripts/generate-audio.py            # idempotent; skips existing
 
-Texts: the 92 base kana + every N5 vocabulary reading + every example sentence
-from Ikeru/Resources/ContentBundles/n5-content.sqlite, PLUS every "term of the
-day" reading parsed straight from IkeruCore's DailyTermCatalog.swift (so the set
-stays in lock-step with the catalog) (~450 clips, ~8 MB).
+Run this same command again whenever this file changes (e.g. new kana added
+to KanaGroup.swift, or new vocab/sentences in the content bundle) — already
+generated clips are skipped, so only the new texts get synthesized.
+
+Texts: all 208 drillable kana (92 base + 50 dakuten + 66 yōon, hiragana +
+katakana — see IkeruCore/Sources/Models/Kana/KanaGroup.swift's `characterTable`,
+the source of truth this list is matched against) + every N5 vocabulary
+reading + every example sentence from Ikeru/Resources/ContentBundles/
+n5-content.sqlite, PLUS every "term of the day" reading parsed straight from
+IkeruCore's DailyTermCatalog.swift (so the set stays in lock-step with the
+catalog) (~560 clips, ~10 MB).
 """
 import hashlib, os, re, sqlite3, subprocess, tempfile, urllib.parse, urllib.request
 
@@ -30,11 +37,76 @@ SPEAKER = 2  # 四国めたん ノーマル — clear, neutral
 OUT = "Ikeru/Resources/Audio"
 os.makedirs(OUT, exist_ok=True)
 
+# Base kana (92): unchanged since the pipeline's first version.
 HIRAGANA = "あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん"
 KATAKANA = "アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン"
 
+# Dakuten (voiced) kana (50): single code points, safe to iterate char-by-char
+# like the base sets above.
+HIRAGANA_DAKUTEN = "がぎぐげござじずぜぞだぢづでどばびぶべぼぱぴぷぺぽ"
+KATAKANA_DAKUTEN = "ガギグゲゴザジズゼゾダヂヅデドバビブベボパピプペポ"
+
+# Yōon (combined digraphs, e.g. きゃ) (66): each entry is TWO code points, so
+# these are lists of complete strings, never a string to iterate char-by-char
+# — doing so would split each digraph into two orphan kana with no clip.
+HIRAGANA_YOON = [
+    "きゃ", "きゅ", "きょ", "しゃ", "しゅ", "しょ", "ちゃ", "ちゅ", "ちょ",
+    "にゃ", "にゅ", "にょ", "ひゃ", "ひゅ", "ひょ", "みゃ", "みゅ", "みょ",
+    "りゃ", "りゅ", "りょ", "ぎゃ", "ぎゅ", "ぎょ", "じゃ", "じゅ", "じょ",
+    "びゃ", "びゅ", "びょ", "ぴゃ", "ぴゅ", "ぴょ",
+]
+KATAKANA_YOON = [
+    "キャ", "キュ", "キョ", "シャ", "シュ", "ショ", "チャ", "チュ", "チョ",
+    "ニャ", "ニュ", "ニョ", "ヒャ", "ヒュ", "ヒョ", "ミャ", "ミュ", "ミョ",
+    "リャ", "リュ", "リョ", "ギャ", "ギュ", "ギョ", "ジャ", "ジュ", "ジョ",
+    "ビャ", "ビュ", "ビョ", "ピャ", "ピュ", "ピョ",
+]
+
 def key_for(text):
     return hashlib.sha256(text.encode("utf-8")).hexdigest()[:16]
+
+KANA_GROUP_SWIFT = "IkeruCore/Sources/Models/Kana/KanaGroup.swift"
+
+def script_kana_set():
+    """Every kana this script knows about (base + dakuten single code points,
+    plus yōon digraphs kept as whole strings)."""
+    chars = set(HIRAGANA) | set(KATAKANA) | set(HIRAGANA_DAKUTEN) | set(KATAKANA_DAKUTEN)
+    chars |= set(HIRAGANA_YOON) | set(KATAKANA_YOON)
+    return chars
+
+def swift_kana_set():
+    """Best-effort regex parse of KanaGroup.swift's characterTable — matches
+    every `character: "X"` literal. Not a Swift parser, just enough to catch
+    a drifted or mistyped kana list before it silently ships broken."""
+    try:
+        src = open(KANA_GROUP_SWIFT, encoding="utf-8").read()
+    except FileNotFoundError:
+        print(f"WARN: {KANA_GROUP_SWIFT} not found — skipping kana cross-check", flush=True)
+        return None
+    return set(re.findall(r'character:\s*"([^"]+)"', src))
+
+def verify_kana_against_catalog():
+    """Cross-check this script's kana lists against KanaGroup.characterTable,
+    the source of truth. This is exactly the guard that would have caught the
+    い/じ typo in HIRAGANA_DAKUTEN: the script is idempotent and silent, so a
+    missing kana never fails a run — it just never gets a clip, forever.
+    Fails loudly (non-zero exit) on any divergence instead of generating a
+    partial, silently-broken audio set."""
+    swift_set = swift_kana_set()
+    if swift_set is None:
+        return  # can't verify without the Swift source; don't block on it
+    script_set = script_kana_set()
+    missing_from_script = swift_set - script_set
+    extra_in_script = script_set - swift_set
+    if missing_from_script or extra_in_script:
+        if missing_from_script:
+            print(f"ERROR: kana in {KANA_GROUP_SWIFT} but missing from this script "
+                  f"(would never get a bundled clip): {sorted(missing_from_script)}", flush=True)
+        if extra_in_script:
+            print(f"ERROR: kana in this script but not in {KANA_GROUP_SWIFT} "
+                  f"(dead/stale entry): {sorted(extra_in_script)}", flush=True)
+        raise SystemExit(1)
+    print(f"OK: kana cross-check passed ({len(swift_set)} kana match {KANA_GROUP_SWIFT})", flush=True)
 
 DAILY_TERM_CATALOG = "IkeruCore/Sources/Models/DailyTerm/DailyTermCatalog.swift"
 
@@ -51,8 +123,10 @@ def collect_daily_term_readings():
 
 def collect_texts():
     texts = []
-    for ch in HIRAGANA + KATAKANA:
+    for ch in HIRAGANA + KATAKANA + HIRAGANA_DAKUTEN + KATAKANA_DAKUTEN:
         texts.append(ch)
+    texts.extend(HIRAGANA_YOON)
+    texts.extend(KATAKANA_YOON)
     con = sqlite3.connect("Ikeru/Resources/ContentBundles/n5-content.sqlite")
     for (r,) in con.execute("SELECT DISTINCT reading FROM vocabulary WHERE reading IS NOT NULL AND TRIM(reading)!=''"):
         texts.append(r.strip())
@@ -78,6 +152,7 @@ def synth(text):
         return r.read()  # WAV bytes
 
 def main():
+    verify_kana_against_catalog()
     texts = collect_texts()
     print(f"to generate: {len(texts)} unique texts (speaker={SPEAKER})", flush=True)
     done = skipped = failed = 0

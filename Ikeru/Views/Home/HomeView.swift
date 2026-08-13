@@ -579,15 +579,18 @@ struct HomeView: View {
     //
     // One gentle "do this next" card derived from the learner's progress (the
     // first unmet rung of the ladder). Shown only once the learner has started
-    // (not while the choose-your-kana gate is up) and hidden when fully caught
-    // up. Kana rungs are tappable (open the chooser to add the next groups);
-    // later rungs are calm, informational — never dead taps.
+    // (not while the choose-your-kana gate is up). The ladder's terminal rung
+    // is `.converseWithSakura` — once a learner clears every earlier rung the
+    // card keeps recommending Sakura rather than disappearing, since
+    // `NextStepRecommender` has no "already caught up" state to fall back to
+    // (see its doc comment: there is no "has conversed with Sakura" signal to
+    // retire the rung with). Kana rungs are tappable (open the chooser to add
+    // the next groups); later rungs are calm, informational — never dead taps.
 
     @ViewBuilder
     private func nextStepSection(_ vm: HomeViewModel) -> some View {
         if !vm.needsStudySetChoice,
-           let step = vm.nextStep,
-           step.stage != .allCaughtUp {
+           let step = vm.nextStep {
             if isKanaStage(step.stage) {
                 Button { showStudySetChooser = true } label: { nextStepCard(step) }
                     .buttonStyle(.plain)
@@ -639,7 +642,6 @@ struct HomeView: View {
         case .studyGrammar:       return "Home.NextStep.Grammar.Title"
         case .readingListening:   return "Home.NextStep.Reading.Title"
         case .converseWithSakura: return "Home.NextStep.Sakura.Title"
-        case .allCaughtUp:        return "Home.NextStep.CaughtUp.Title"
         }
     }
 
@@ -652,7 +654,6 @@ struct HomeView: View {
         case .studyGrammar:       return "Home.NextStep.Grammar.Body"
         case .readingListening:   return "Home.NextStep.Reading.Body"
         case .converseWithSakura: return "Home.NextStep.Sakura.Body"
-        case .allCaughtUp:        return "Home.NextStep.CaughtUp.Body"
         }
     }
 

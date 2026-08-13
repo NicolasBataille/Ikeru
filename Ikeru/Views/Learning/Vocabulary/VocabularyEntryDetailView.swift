@@ -111,7 +111,7 @@ struct VocabularyEntryDetailView: View {
                 .foregroundStyle(Color.ikeruTextTertiary)
 
             HStack(spacing: 0) {
-                statTile(value: entry.mastery.emoji, label: entry.mastery.label)
+                statTile(value: entry.mastery.emoji, labelKey: LocalizedStringKey(entry.mastery.label))
                 statTile(value: "\(entry.encounterCount)", label: "Encounters")
                 statTile(value: "\(entry.interval)j", label: "Interval")
                 statTile(value: "\(entry.lapseCount)", label: "Lapses")
@@ -150,6 +150,27 @@ struct VocabularyEntryDetailView: View {
                 .minimumScaleFactor(0.7)
                 .foregroundStyle(Color.ikeruPrimaryAccent)
             Text(label.uppercased())
+                .ikeruScaledFont(10, relativeTo: .caption2)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+                .foregroundStyle(Color.ikeruTextTertiary)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    /// Variant for values whose label is a localization-catalog **key**
+    /// (e.g. `MasteryLevel.label`) rather than plain text — `.uppercased()`
+    /// can't run on a `LocalizedStringKey`, so `.textCase(.uppercase)` gets
+    /// the same visual effect after the catalog lookup resolves it.
+    private func statTile(value: String, labelKey: LocalizedStringKey) -> some View {
+        VStack(spacing: 4) {
+            Text(value)
+                .font(.ikeruStatsLarge)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+                .foregroundStyle(Color.ikeruPrimaryAccent)
+            Text(labelKey)
+                .textCase(.uppercase)
                 .ikeruScaledFont(10, relativeTo: .caption2)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
