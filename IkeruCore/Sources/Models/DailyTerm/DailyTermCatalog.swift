@@ -957,8 +957,8 @@ public enum DailyTermCatalog {
             pronunciation: "da-i-do-ko-ro",
             meaning: "kitchen",
             meaningFR: "cuisine (la pièce)",
-            flavour: "from 台盤所, the room where the 台盤 — the footed table dishes were set out on — stood in Heian nobles' houses. Osaka was called the nation's kitchen when it was the country's food market",
-            flavourFR: "de 台盤所, la pièce où l'on dressait le 台盤, la table à pieds qui portait les plats chez les nobles de Heian. Osaka était surnommée la cuisine du pays quand elle en était le marché alimentaire",
+            flavour: "from 台盤所 — the room where the footed serving table stood, in Heian nobles' houses. Osaka was the nation's kitchen when it was the country's food market",
+            flavourFR: "de 台盤所 — la pièce où se dressait la table à pieds qui portait les plats, chez les nobles de Heian. Osaka fut la cuisine du pays quand elle en était le marché alimentaire",
             jlptLevel: .n5,
             tags: ["evening", "self", "any"]
         )
