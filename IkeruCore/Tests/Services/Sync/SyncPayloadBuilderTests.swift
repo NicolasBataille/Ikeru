@@ -104,7 +104,7 @@ struct SyncPayloadBuilderTests {
 
         let row = try SyncPayloadBuilder.row(for: encounter)
         let encoded = try JSONEncoder().encode(row["payload"])
-        let json = String(decoding: encoded, as: UTF8.self)
+        let json = try #require(String(bytes: encoded, encoding: .utf8))
 
         #expect(!json.contains(snippet))
         #expect(!json.lowercased().contains("snippet"))
