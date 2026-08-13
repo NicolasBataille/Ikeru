@@ -336,10 +336,10 @@ struct HomeView: View {
 
     /// Returns "四月二十九日 · 火" (Japanese serif kanji date).
     private func serifJapaneseDate() -> String {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "ja_JP")
-        f.dateFormat = "M月d日 · E"
-        return f.string(from: Date())
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "ja_JP")
+        formatter.dateFormat = "M月d日 · E"
+        return formatter.string(from: Date())
     }
 
     // MARK: - Daily Term

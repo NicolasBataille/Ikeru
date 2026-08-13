@@ -500,33 +500,33 @@ struct NewCardPresentationTests {
 
     @Test("A never-reviewed kana card is duplicated: an intro slot plus a delayed graded-test slot")
     func newKanaCardGetsIntroAndDelayedTest() {
-        let a = kanaCard(front: "あ", romaji: "a")
+        let newKana = kanaCard(front: "あ", romaji: "a")
         // Two already-started filler reviews: the tail must be able to supply
         // the requested gap, otherwise the scheduler deliberately declines to
         // defer (see `shortTailDeclinesToDefer` below).
         let due1 = kanjiCard(front: "\u{751F}", reps: 3)
         let due2 = kanjiCard(front: "\u{5B66}", reps: 4)
-        let exercises: [ExerciseItem] = [.srsReview(a), .srsReview(due1), .srsReview(due2)]
+        let exercises: [ExerciseItem] = [.srsReview(newKana), .srsReview(due1), .srsReview(due2)]
 
         let result = NewCardPresentationScheduler.schedulingPresentations(
             for: exercises,
             offsetRange: 2...2
         )
 
-        #expect(result.cardsNeedingPresentation == [a.id])
-        let positions = srsReviewPositions(of: a.id, in: result.exercises)
+        #expect(result.cardsNeedingPresentation == [newKana.id])
+        let positions = srsReviewPositions(of: newKana.id, in: result.exercises)
         #expect(positions.count == 2)
         #expect(positions.first == 0)
         // The delayed test lands after 2 MORE `.srsReview` occurrences, so the
         // two occurrences of `a` are 3 apart — outside the deck's 3-deep peek
         // window, and far enough for the recall to measure something.
         #expect(positions.last == 3)
-        #expect(result.addedDurationSeconds == ExerciseItem.srsReview(a).estimatedDurationSeconds)
+        #expect(result.addedDurationSeconds == ExerciseItem.srsReview(newKana).estimatedDurationSeconds)
     }
 
     @Test("A tail too short to give the delayed test any interference declines to defer at all")
     func shortTailDeclinesToDefer() {
-        let a = kanaCard(front: "あ", romaji: "a")
+        let newKana = kanaCard(front: "あ", romaji: "a")
         let due = kanjiCard(front: "\u{751F}", reps: 3)
         // Only ONE other review follows the new card. Appending the test at the
         // end would put it immediately after its own presentation: it would
@@ -534,7 +534,7 @@ struct NewCardPresentationTests {
         // 3-deep peek window with the same card id (duplicate
         // matchedGeometryEffect). The scheduler declines instead — the card
         // stays a plain graded review, exactly as before the feature existed.
-        let exercises: [ExerciseItem] = [.srsReview(a), .srsReview(due)]
+        let exercises: [ExerciseItem] = [.srsReview(newKana), .srsReview(due)]
 
         let result = NewCardPresentationScheduler.schedulingPresentations(
             for: exercises,
@@ -544,18 +544,18 @@ struct NewCardPresentationTests {
         #expect(result.cardsNeedingPresentation.isEmpty)
         #expect(result.exercises.count == exercises.count)
         #expect(result.addedDurationSeconds == 0)
-        #expect(srsReviewPositions(of: a.id, in: result.exercises).count == 1)
+        #expect(srsReviewPositions(of: newKana.id, in: result.exercises).count == 1)
     }
 
     @Test("The delayed test lands after exactly `target` MORE .srsReview occurrences, non-.srsReview items don't count")
     func delayedTestCountsOnlySRSReviewOccurrences() {
-        let a = kanaCard(front: "い", romaji: "i")
+        let newKana = kanaCard(front: "い", romaji: "i")
         let b = kanjiCard(front: "\u{5B66}", reps: 5)
-        let c = kanjiCard(front: "\u{6821}", reps: 5)
+        let kanjiC = kanjiCard(front: "\u{6821}", reps: 5)
         // 1 non-.srsReview item, then 2 more .srsReview items — target=2 must
         // land right after `c`, ignoring the listening exercise entirely.
         let exercises: [ExerciseItem] = [
-            .srsReview(a), .listeningExercise(UUID()), .srsReview(b), .srsReview(c),
+            .srsReview(newKana), .listeningExercise(UUID()), .srsReview(b), .srsReview(kanjiC),
         ]
 
         let result = NewCardPresentationScheduler.schedulingPresentations(
@@ -563,7 +563,7 @@ struct NewCardPresentationTests {
             offsetRange: 2...2
         )
 
-        let positions = srsReviewPositions(of: a.id, in: result.exercises)
+        let positions = srsReviewPositions(of: newKana.id, in: result.exercises)
         #expect(positions.count == 2)
         // Original array: [a, listening, b, c] (indices 0..3). After
         // inserting the delayed test right after `c` (index 3), it lands at
@@ -574,8 +574,8 @@ struct NewCardPresentationTests {
 
     @Test("A non-kana never-reviewed card is left untouched (kana-only scoping)")
     func nonKanaNewCardIsNotDuplicated() {
-        let k = kanjiCard(front: "\u{65E5}", reps: 0)
-        let exercises: [ExerciseItem] = [.srsReview(k)]
+        let kanjiNew = kanjiCard(front: "\u{65E5}", reps: 0)
+        let exercises: [ExerciseItem] = [.srsReview(kanjiNew)]
 
         let result = NewCardPresentationScheduler.schedulingPresentations(for: exercises)
 
@@ -586,8 +586,8 @@ struct NewCardPresentationTests {
 
     @Test("An already-started kana card (reps > 0) is left untouched")
     func alreadyStartedKanaCardIsNotDuplicated() {
-        let a = kanaCard(front: "う", romaji: "u", reps: 1)
-        let exercises: [ExerciseItem] = [.srsReview(a)]
+        let newKana = kanaCard(front: "う", romaji: "u", reps: 1)
+        let exercises: [ExerciseItem] = [.srsReview(newKana)]
 
         let result = NewCardPresentationScheduler.schedulingPresentations(for: exercises)
 
@@ -630,7 +630,7 @@ struct NewCardPresentationTests {
         try ensureProfile(container: container)
         let repo = CardRepository(modelContainer: container)
 
-        let a = await repo.createCard(front: "え", back: "e", type: .vocabulary)
+        let newKana = await repo.createCard(front: "え", back: "e", type: .vocabulary)
         // Two filler reviews so the delayed test has something to be placed
         // after. They are ALSO `reps == 0` (freshly created), so grading them
         // during the walk contributes its own "new item learned" / graded
@@ -642,7 +642,7 @@ struct NewCardPresentationTests {
 
         let planner = MockSessionPlanner()
         planner.plan = SessionPlan(
-            exercises: [.srsReview(a), .srsReview(filler1), .srsReview(filler2)],
+            exercises: [.srsReview(newKana), .srsReview(filler1), .srsReview(filler2)],
             estimatedDurationMinutes: 1,
             exerciseBreakdown: [.reading: 3]
         )

@@ -141,8 +141,8 @@ struct KanaGroupCard: View {
     }
 
     private var masteryPercentString: String {
-        guard let m = mastery else { return "—" }
-        return "\(Int(m.aggregatePercent.rounded()))%"
+        guard let mastery else { return "—" }
+        return "\(Int(mastery.aggregatePercent.rounded()))%"
     }
 
     private var nextDueString: String {
