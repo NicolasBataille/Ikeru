@@ -3,7 +3,10 @@
 Fetch KanjiVG stroke-order data and embed it into the Ikeru content bundle.
 
 KanjiVG (https://kanjivg.tagaini.net/) by Ulrich Apel, licensed under
-Creative Commons Attribution-ShareAlike 3.0 (CC BY-SA 3.0).
+Creative Commons Attribution-ShareAlike 3.0 (CC BY-SA 3.0). KanjiVG covers
+kana as well as kanji — files are keyed by Unicode codepoint, not by CJK
+block — so this script populates both the `kanji` and `kana` tables from the
+same source and the same on-disk cache.
 Raw SVGs are cached in scripts/kanjivg-cache/ so regeneration works offline.
 
 The app's Swift parser (IkeruCore StrokeDataService) has a strict contract:
@@ -16,11 +19,20 @@ The app's Swift parser (IkeruCore StrokeDataService) has a strict contract:
 Raw KanjiVG paths use relative `c` and smooth `s` commands, so this script
 normalizes every path to absolute M/L/C/Q/Z before embedding.
 
+Kana coverage is partial by construction: KanjiVG has one file per Unicode
+codepoint, so the 92 base + 50 dakuten kana (single codepoint each) get real
+stroke data, but the 66 yōon combinations (きゃ, etc. — two codepoints: a
+base kana + a small ゃ/ゅ/ょ) do not, because there is no KanjiVG file for a
+two-codepoint digraph. The character list itself is read out of
+IkeruCore/Sources/Models/Kana/KanaGroup.swift (the app's source of truth for
+which kana exist), not hand-typed here — see `kana_characters_from_swift`.
+
 Usage:
-    python3 scripts/fetch-kanjivg.py                 # update default n5 bundle
+    python3 scripts/fetch-kanjivg.py                 # update default n5 bundle (kanji + kana)
     python3 scripts/fetch-kanjivg.py --db path.sqlite
     python3 scripts/fetch-kanjivg.py --no-network    # cache-only (offline)
     python3 scripts/fetch-kanjivg.py --validate-only # just re-run validation
+    python3 scripts/fetch-kanjivg.py --skip-kana     # kanji only
 """
 
 import argparse
@@ -36,6 +48,9 @@ PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
 DEFAULT_CACHE_DIR = os.path.join(SCRIPT_DIR, "kanjivg-cache")
 DEFAULT_DB_PATH = os.path.join(
     PROJECT_ROOT, "Ikeru", "Resources", "ContentBundles", "n5-content.sqlite"
+)
+KANA_SWIFT_SOURCE = os.path.join(
+    PROJECT_ROOT, "IkeruCore", "Sources", "Models", "Kana", "KanaGroup.swift"
 )
 KANJIVG_RAW_URL = "https://raw.githubusercontent.com/KanjiVG/kanjivg/master/kanji/{code}.svg"
 
@@ -294,6 +309,57 @@ def stroke_svg_for(
 
 
 # ---------------------------------------------------------------------------
+# Kana character list — read from KanaGroup.swift, never hand-typed
+# ---------------------------------------------------------------------------
+
+# Matches `KanaCharacter(character: "X", romaji: ...` literals as they are
+# written in KanaGroup.swift. Deliberately narrow (not a general Swift
+# parser) so it fails loudly via `findall() == []` if the source format ever
+# changes, rather than silently returning a partial list.
+_KANA_CHARACTER_RE = re.compile(r'KanaCharacter\(character: "([^"]+)"')
+
+
+def kana_characters_from_swift(swift_path: str = KANA_SWIFT_SOURCE) -> list[str]:
+    """Extract the kana this pipeline can trace: the 92 base + 50 dakuten
+    single-codepoint characters, read out of KanaGroup.swift (the app's own
+    source of truth), not hand-transcribed here.
+
+    The 66 yōon combinations (e.g. きゃ = き + small ゃ) are excluded by
+    construction: KanjiVG has no file for a two-codepoint digraph, so any
+    `character` value longer than one codepoint is dropped. This is not a
+    curated exclusion list — it falls out of `len(character) == 1`.
+
+    Raises if the Swift source is missing or yields no matches: a factual
+    character list must come from a real read, never a stale fallback.
+    """
+    if not os.path.exists(swift_path):
+        raise FileNotFoundError(
+            f"Cannot read kana source of truth: {swift_path} does not exist. "
+            "Has KanaGroup.swift moved?"
+        )
+
+    with open(swift_path, encoding="utf-8") as f:
+        source = f.read()
+
+    all_matches = _KANA_CHARACTER_RE.findall(source)
+    if not all_matches:
+        raise ValueError(
+            f"No `KanaCharacter(character: \"...\")` entries found in {swift_path} "
+            "— the Swift source format may have changed. Refusing to proceed "
+            "against an empty/stale character list."
+        )
+
+    # Preserve first-seen order, dedupe, and keep only single-codepoint
+    # entries (base + dakuten). Multi-codepoint entries are yōon digraphs —
+    # see docstring above.
+    seen: dict[str, None] = {}
+    for character in all_matches:
+        if len(character) == 1:
+            seen.setdefault(character, None)
+    return list(seen.keys())
+
+
+# ---------------------------------------------------------------------------
 # Validation — mimics the Swift StrokeDataService parsing logic
 # ---------------------------------------------------------------------------
 
@@ -396,8 +462,40 @@ def swift_parse_points(path_data: str) -> list[tuple[float, float]]:
     return points
 
 
+def _validate_stroke_svg(character: str, svg: str | None, label: str) -> tuple[bool, int]:
+    """Swift-mirror validation for a single stroke_order_svg value, shared by
+    the kanji and kana validators. Returns (ok, parsed_stroke_count) —
+    parsed_stroke_count is 0 when validation failed before paths could be
+    counted.
+    """
+    if not svg:
+        print(f"  FAIL {label} {character}: stroke_order_svg is empty")
+        return False, 0
+    path_datas = _SWIFT_PATH_RE.findall(svg)
+    if not path_datas:
+        print(f"  FAIL {label} {character}: Swift regex extracts no <path> elements")
+        return False, 0
+    # Only absolute M/L/C/Q/Z may appear — anything else would be silently
+    # mis-parsed by the Swift parser.
+    bad_cmds = set(re.findall(r"[A-Za-z]", " ".join(path_datas))) - set("MLCQZ")
+    if bad_cmds:
+        print(f"  FAIL {label} {character}: unsupported path commands {sorted(bad_cmds)}")
+        return False, len(path_datas)
+    for stroke_index, path_data in enumerate(path_datas, 1):
+        pts = swift_parse_points(path_data)
+        if len(pts) < 2:
+            print(f"  FAIL {label} {character}: stroke {stroke_index} parses to "
+                  f"{len(pts)} point(s)")
+            return False, len(path_datas)
+        if not all(-30 <= x <= 140 and -30 <= y <= 140 for x, y in pts):
+            print(f"  FAIL {label} {character}: stroke {stroke_index} has coordinates "
+                  f"outside the KanjiVG 109x109 viewBox range")
+            return False, len(path_datas)
+    return True, len(path_datas)
+
+
 def validate_database(db_path: str) -> bool:
-    """Re-parse every stroke_order_svg with the Swift-equivalent logic."""
+    """Re-parse every kanji stroke_order_svg with the Swift-equivalent logic."""
     conn = sqlite3.connect(db_path)
     cur = conn.cursor()
     rows = cur.execute(
@@ -408,42 +506,12 @@ def validate_database(db_path: str) -> bool:
     failures = 0
     stroke_count_mismatches = []
     for character, expected_strokes, svg in rows:
-        if not svg:
-            print(f"  FAIL {character}: stroke_order_svg is empty")
-            failures += 1
-            continue
-        path_datas = _SWIFT_PATH_RE.findall(svg)
-        if not path_datas:
-            print(f"  FAIL {character}: Swift regex extracts no <path> elements")
-            failures += 1
-            continue
-        # Only absolute M/L/C/Q/Z may appear — anything else would be
-        # silently mis-parsed by the Swift parser.
-        bad_cmds = set(re.findall(r"[A-Za-z]", " ".join(path_datas))) - set("MLCQZ")
-        if bad_cmds:
-            print(f"  FAIL {character}: unsupported path commands {sorted(bad_cmds)}")
-            failures += 1
-            continue
-        ok = True
-        for stroke_index, path_data in enumerate(path_datas, 1):
-            pts = swift_parse_points(path_data)
-            if len(pts) < 2:
-                print(f"  FAIL {character}: stroke {stroke_index} parses to "
-                      f"{len(pts)} point(s)")
-                ok = False
-                break
-            if not all(-30 <= x <= 140 and -30 <= y <= 140 for x, y in pts):
-                print(f"  FAIL {character}: stroke {stroke_index} has coordinates "
-                      f"outside the KanjiVG 109x109 viewBox range")
-                ok = False
-                break
+        ok, parsed_count = _validate_stroke_svg(character, svg, "kanji")
         if not ok:
             failures += 1
             continue
-        if len(path_datas) != expected_strokes:
-            stroke_count_mismatches.append(
-                (character, expected_strokes, len(path_datas))
-            )
+        if parsed_count != expected_strokes:
+            stroke_count_mismatches.append((character, expected_strokes, parsed_count))
 
     print(f"Validated {len(rows)} kanji rows: {len(rows) - failures} OK, "
           f"{failures} failed")
@@ -451,6 +519,46 @@ def validate_database(db_path: str) -> bool:
         print("Note: KanjiVG stroke count differs from bundled stroke_count for:")
         for character, expected, actual in stroke_count_mismatches:
             print(f"  {character}: bundle says {expected}, KanjiVG has {actual}")
+    return failures == 0
+
+
+def validate_kana_database(db_path: str) -> bool:
+    """Re-parse every kana stroke_order_svg with the Swift-equivalent logic.
+
+    Unlike kanji (whose stroke_count is a hand-curated fact from the N5
+    list, so a KanjiVG mismatch is only a note), kana's stroke_count is
+    *derived* from the same parsed paths in `update_kana_database` — so any
+    mismatch here would mean a bug in this script, not a content question,
+    and is treated as a hard failure.
+    """
+    conn = sqlite3.connect(db_path)
+    cur = conn.cursor()
+    table_exists = cur.execute(
+        "SELECT 1 FROM sqlite_master WHERE type='table' AND name='kana'"
+    ).fetchone()
+    if not table_exists:
+        conn.close()
+        print("No `kana` table present — nothing to validate.")
+        return True
+
+    rows = cur.execute(
+        "SELECT character, stroke_count, stroke_order_svg FROM kana ORDER BY character"
+    ).fetchall()
+    conn.close()
+
+    failures = 0
+    for character, stored_count, svg in rows:
+        ok, parsed_count = _validate_stroke_svg(character, svg, "kana")
+        if not ok:
+            failures += 1
+            continue
+        if parsed_count != stored_count:
+            print(f"  FAIL kana {character}: stored stroke_count={stored_count} "
+                  f"but re-parsing the stored SVG yields {parsed_count} paths")
+            failures += 1
+
+    print(f"Validated {len(rows)} kana rows: {len(rows) - failures} OK, "
+          f"{failures} failed")
     return failures == 0
 
 
@@ -493,6 +601,68 @@ def update_database(
     return updated, len(missing)
 
 
+KANA_SCHEMA_SQL = """
+CREATE TABLE IF NOT EXISTS kana (
+    character TEXT PRIMARY KEY,
+    stroke_count INTEGER,
+    stroke_order_svg TEXT
+);
+"""
+
+
+def update_kana_database(
+    db_path: str,
+    cache_dir: str = DEFAULT_CACHE_DIR,
+    allow_network: bool = True,
+    swift_path: str = KANA_SWIFT_SOURCE,
+) -> tuple[int, int]:
+    """Populate the `kana` table (character, stroke_count, stroke_order_svg)
+    for every base/dakuten kana in KanaGroup.swift. Returns (updated, missing).
+
+    Creates the table if it does not exist yet (`CREATE TABLE IF NOT
+    EXISTS`), so this also works against a bundle built before the kana
+    table was added to generate_content_bundles.py's schema — no full
+    regenerate-then-fetch dance required.
+    """
+    characters = kana_characters_from_swift(swift_path)
+
+    conn = sqlite3.connect(db_path)
+    cur = conn.cursor()
+    cur.executescript(KANA_SCHEMA_SQL)
+    cur.executemany(
+        "INSERT OR IGNORE INTO kana (character) VALUES (?)",
+        [(character,) for character in characters],
+    )
+
+    updated = 0
+    missing = []
+    for character in characters:
+        raw = fetch_raw_svg(character, cache_dir=cache_dir, allow_network=allow_network)
+        if raw is None:
+            missing.append(character)
+            continue
+        svg = build_app_stroke_svg(raw)
+        if svg is None:
+            missing.append(character)
+            continue
+        # Derived from the same parsed strokes, never hand-curated —
+        # guarantees stroke_count always matches the animated path count.
+        stroke_count = len(extract_raw_path_data(raw))
+        cur.execute(
+            "UPDATE kana SET stroke_count = ?, stroke_order_svg = ? WHERE character = ?",
+            (stroke_count, svg, character),
+        )
+        updated += 1
+
+    conn.commit()
+    conn.close()
+
+    if missing:
+        print(f"Missing stroke data for {len(missing)} kana: {''.join(missing)}",
+              file=sys.stderr)
+    return updated, len(missing)
+
+
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
@@ -510,6 +680,8 @@ def main() -> None:
                         help="Cache-only mode; never hit the network")
     parser.add_argument("--validate-only", action="store_true",
                         help="Skip updating; just validate existing rows")
+    parser.add_argument("--skip-kana", action="store_true",
+                        help="Only update/validate kanji stroke data, skip the kana table")
     args = parser.parse_args()
 
     if not os.path.exists(args.db):
@@ -522,7 +694,15 @@ def main() -> None:
         )
         print(f"Updated stroke_order_svg for {updated} kanji ({missing} missing)")
 
+        if not args.skip_kana:
+            kana_updated, kana_missing = update_kana_database(
+                args.db, cache_dir=args.cache_dir, allow_network=not args.no_network
+            )
+            print(f"Updated stroke_order_svg for {kana_updated} kana ({kana_missing} missing)")
+
     ok = validate_database(args.db)
+    if not args.skip_kana:
+        ok = validate_kana_database(args.db) and ok
     sys.exit(0 if ok else 1)
 
 

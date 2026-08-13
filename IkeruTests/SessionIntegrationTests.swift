@@ -82,6 +82,31 @@ struct SessionIntegrationTests {
         try context.save()
     }
 
+    /// Inserts `count` overdue `.vocabulary` cards (non-kana fronts,
+    /// `Word N`/`Meaning N`) attached to the active profile. Used in place of
+    /// `seedDueCards` where a test's XP assertion depends on the
+    /// `.vocabularyStudy` rule (no bonus, matching `ExerciseXP.rule`) rather
+    /// than `.kanjiStudy`'s +2 bonus — `seedDueCards` is `.kanji`-typed.
+    /// Non-kana fronts are deliberate too: real kana fronts would trip
+    /// `NewCardPresentationScheduler` (chantier #21) and duplicate each card
+    /// into an intro + delayed-test pair, which these generic-flow tests
+    /// don't expect. See `fullSessionFlow`'s comment for the full rationale.
+    private func seedDueVocabularyCards(container: ModelContainer, count: Int) throws {
+        let context = container.mainContext
+        let profile = activeProfile(container)
+        for i in 0..<count {
+            let card = Card(
+                front: "Word \(i)",
+                back: "Meaning \(i)",
+                type: .vocabulary,
+                dueDate: Date().addingTimeInterval(-3600 + Double(i))
+            )
+            card.profile = profile
+            context.insert(card)
+        }
+        try context.save()
+    }
+
     // MARK: - Full Flow Tests
 
     @Test("Full flow: seed content -> compose session -> review cards -> complete -> summary data correct")
@@ -90,12 +115,17 @@ struct SessionIntegrationTests {
         let repo = CardRepository(modelContainer: container)
         let planner = PlannerService(cardRepository: repo)
 
-        // Step 1: Seed content
-        let allCards = await repo.allCards()
-        let seeded = await ContentSeedService.seedBeginnerKanaIfNeeded(
-            repository: repo,
-            existingCardCount: allCards.count
-        )
+        // Step 1: Seed content. Deliberately generic `.vocabulary` due cards
+        // (`seedDueVocabularyCards`), NOT
+        // `ContentSeedService.seedBeginnerKanaIfNeeded` — this test exercises
+        // the generic session-flow plumbing (and asserts a FLAT
+        // `.vocabularyStudy`-rule XP total below, which real kana cards also
+        // resolve to), and real kana fronts would now ALSO trigger the
+        // new-card presentation pass (chantier #21), doubling the queue and
+        // breaking the "review N cards in N grades" loop below. See
+        // `NewCardPresentationScheduler` in `SessionComposer.swift`.
+        try seedDueVocabularyCards(container: container, count: 5)
+        let seeded = await repo.allCards()
         #expect(seeded.count == 5)
 
         // Inject a planner that returns exactly the seeded cards, so the
@@ -141,11 +171,10 @@ struct SessionIntegrationTests {
         let container = try makeContainer()
         let repo = CardRepository(modelContainer: container)
 
-        // Seed cards
-        await ContentSeedService.seedBeginnerKanaIfNeeded(
-            repository: repo,
-            existingCardCount: 0
-        )
+        // Seed cards. Generic `.kanji` due cards, not real kana — see
+        // `fullSessionFlow`'s comment on why (chantier #21 new-card
+        // presentation pass).
+        try seedDueCards(container: container, count: 5)
 
         let planner = PlannerService(cardRepository: repo)
         // Inject a planner that returns exactly the seeded cards as SRS
@@ -217,10 +246,11 @@ struct SessionIntegrationTests {
         let container = try makeContainer()
         let repo = CardRepository(modelContainer: container)
 
-        await ContentSeedService.seedBeginnerKanaIfNeeded(
-            repository: repo,
-            existingCardCount: 0
-        )
+        // Generic `.vocabulary` due cards (FLAT `.vocabularyStudy`-rule XP,
+        // matching the assertion below) and non-kana fronts — see
+        // `fullSessionFlow`'s comment on why (chantier #21 new-card
+        // presentation pass).
+        try seedDueVocabularyCards(container: container, count: 5)
 
         let planner = PlannerService(cardRepository: repo)
         let mockPlanner = await plannerWithSeededCards(repo: repo)
@@ -311,10 +341,9 @@ struct SessionIntegrationTests {
         let container = try makeContainer()
         let repo = CardRepository(modelContainer: container)
 
-        await ContentSeedService.seedBeginnerKanaIfNeeded(
-            repository: repo,
-            existingCardCount: 0
-        )
+        // Generic `.kanji` due card, not real kana — see `fullSessionFlow`'s
+        // comment on why (chantier #21 new-card presentation pass).
+        try seedDueCards(container: container, count: 1)
 
         let planner = PlannerService(cardRepository: repo)
         let vm = SessionViewModel(plannerService: planner, cardRepository: repo, modelContainer: container)

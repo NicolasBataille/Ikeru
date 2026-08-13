@@ -69,7 +69,8 @@ struct KanaGroupCard: View {
     private var characterRow: some View {
         HStack(alignment: .top, spacing: 6) {
             ForEach(group.characters) { kana in
-                VStack(spacing: 3) {
+                VStack(spacing: 2) {
+                    hiraganaBridge(for: kana)
                     Text(kana.character)
                         .font(.system(size: 22, weight: .regular, design: .serif))
                         .foregroundStyle(Color.ikeruTextPrimary)
@@ -91,6 +92,22 @@ struct KanaGroupCard: View {
                     Color.clear.frame(maxWidth: .infinity)
                 }
             }
+        }
+    }
+
+    /// "Même son, nouvelle forme" (chantier #24a): a katakana cell shows its
+    /// hiragana counterpart grayed out above the glyph, since the romaji is
+    /// identical on both sides (か and カ are both "ka"). Hiragana cells
+    /// reserve the same vertical space with an empty spacer so every column
+    /// in the grid lines up regardless of script.
+    @ViewBuilder
+    private func hiraganaBridge(for kana: KanaCharacter) -> some View {
+        if let counterpart = kana.hiraganaCounterpart {
+            Text(counterpart.character)
+                .font(.system(size: 12, weight: .regular, design: .serif))
+                .foregroundStyle(Color.ikeruTextTertiary.opacity(0.55))
+        } else {
+            Color.clear.frame(height: 14)
         }
     }
 
@@ -124,8 +141,8 @@ struct KanaGroupCard: View {
     }
 
     private var masteryPercentString: String {
-        guard let m = mastery else { return "—" }
-        return "\(Int(m.aggregatePercent.rounded()))%"
+        guard let mastery else { return "—" }
+        return "\(Int(mastery.aggregatePercent.rounded()))%"
     }
 
     private var nextDueString: String {

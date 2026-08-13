@@ -79,6 +79,11 @@ CREATE TABLE IF NOT EXISTS radicals (
     meaning TEXT,
     stroke_count INTEGER
 );
+CREATE TABLE IF NOT EXISTS kana (
+    character TEXT PRIMARY KEY,
+    stroke_count INTEGER,
+    stroke_order_svg TEXT
+);
 CREATE TABLE IF NOT EXISTS kanji_radical_edges (
     radical_character TEXT,
     kanji_character TEXT,

@@ -73,6 +73,16 @@ public final class SessionViewModel {
     /// single .hard or .again, even if every other card was correct.
     public private(set) var correctCount: Int = 0
 
+    /// Total REAL grading attempts this session — every `.again`/`.hard`/
+    /// `.good`/`.easy` that actually reached `trackCorrectness`, whether the
+    /// card passed or failed. Deliberately distinct from `reviewedCount`
+    /// (which also counts ungraded new-card presentation passes, see
+    /// `completeNewCardPresentation`): the summary's recall % must divide by
+    /// attempts that could have failed, not by every step the learner saw,
+    /// or an intro-heavy session (many presentations, zero of which can
+    /// fail) reads as a worse recall % than it honestly was.
+    public private(set) var gradedAttemptCount: Int = 0
+
     /// Whether this session was launched via the "Review mistakes" CTA.
     /// In `.reviewMistakes` mode, a card graded `.again` is re-queued at
     /// the end of `sessionQueue` (up to `maxRetriesPerCard`) so the user
@@ -95,6 +105,40 @@ public final class SessionViewModel {
     /// brand-new card), so without this guard a retried new card would be
     /// double-counted on the summary screen.
     private var newItemCountedIDs: Set<UUID> = []
+
+    /// Card ids whose ungraded "presentation" pass hasn't been shown yet this
+    /// session — populated at session start from
+    /// `SessionComposer`/`NewCardPresentationScheduler`'s presentation
+    /// schedule. A card's `.srsReview` occurrence renders as the ungraded
+    /// presentation (see `isPresentingNewCard`) while its id is still in
+    /// this set; the SAME card's delayed `.srsReview` occurrence a few
+    /// exercises later renders as the normal graded touch-and-reveal test,
+    /// because by then `completeNewCardPresentation` has removed it.
+    ///
+    /// 2026-08 pedagogy review, "erreur de conception #1": grading a
+    /// touch-and-reveal test on a character the learner has never been
+    /// shown produces a first FSRS note that's noise, not signal. The
+    /// presentation pass removes that noise; the delayed test is the card's
+    /// real first grade.
+    private var cardsNeedingPresentation: Set<UUID> = []
+
+    /// Whether the CURRENT exercise is the ungraded presentation pass for a
+    /// brand-new kana card rather than a normal graded touch-and-reveal
+    /// test. Drives `ExerciseTransitionContainer`'s branch to the
+    /// presentation view. See `cardsNeedingPresentation`.
+    public var isPresentingNewCard: Bool {
+        guard case .srsReview(let card) = currentExercise else { return false }
+        return cardsNeedingPresentation.contains(card.id)
+    }
+
+    /// The planner's own duration estimate for the composed plan — read
+    /// directly instead of re-summing `sessionExercises` flatly. A flat
+    /// re-sum ignores `DefaultSessionPlanner`'s per-review maturity
+    /// discount (`effectiveDurationSeconds`) and the extra time the new-card
+    /// presentation pass adds, so it silently drifted from the plan's own
+    /// honest estimate (SUIVI note, 2026-08 pedagogy P2 review). See
+    /// `estimatedTotalTime`.
+    private var planEstimatedDurationMinutes: Int = 0
 
     /// Card IDs already FSRS-graded this session through the NON-SRS drill path
     /// (`completeCurrentExercise`). `.kanjiStudy` and `.writingPractice` are both
@@ -186,9 +230,11 @@ public final class SessionViewModel {
         SessionExerciseSupport.formatTime(elapsedTime)
     }
 
-    /// Estimated total session duration in seconds, computed from exercise list.
+    /// Estimated total session duration in seconds — read from the planner's
+    /// own estimate (`planEstimatedDurationMinutes`), not re-summed flatly
+    /// from `sessionExercises`. See that property's doc comment.
     public var estimatedTotalTime: TimeInterval {
-        TimeInterval(sessionExercises.reduce(0) { $0 + $1.estimatedDurationSeconds })
+        TimeInterval(planEstimatedDurationMinutes * 60)
     }
 
     /// Estimated remaining time in seconds.
@@ -376,11 +422,14 @@ public final class SessionViewModel {
         levelUpLevel = nil
         consecutiveCorrect = 0
         correctCount = 0
+        gradedAttemptCount = 0
         missedCardIDs = []
         sessionMode = .normal
         retryCounts = [:]
         newItemCountedIDs = []
         nonSRSGradedCardIDs = []
+        cardsNeedingPresentation = []
+        planEstimatedDurationMinutes = 0
         lastSessionBonus = nil
         gradeSaveFailureCount = 0
         isPaused = false
@@ -423,6 +472,8 @@ public final class SessionViewModel {
         endPolicy = composed.endPolicy
         sessionJLPTLevel = composed.jlptLevel
         vocabularyPool = composed.vocabularyPool
+        cardsNeedingPresentation = composed.cardsNeedingPresentation
+        planEstimatedDurationMinutes = composed.estimatedDurationMinutes
 
         startTimer()
         await loadRPGState()
@@ -458,6 +509,8 @@ public final class SessionViewModel {
         endPolicy = composed.endPolicy
         sessionJLPTLevel = composed.jlptLevel
         vocabularyPool = composed.vocabularyPool
+        cardsNeedingPresentation = composed.cardsNeedingPresentation
+        planEstimatedDurationMinutes = composed.estimatedDurationMinutes
 
         startTimer()
         await loadRPGState()
@@ -482,6 +535,7 @@ public final class SessionViewModel {
         sessionMode = .reviewMistakes
         estimatedCardCount = composed.sessionExercises.count
         sessionExercises = composed.sessionExercises
+        planEstimatedDurationMinutes = composed.estimatedDurationMinutes
 
         endPolicy = SessionEndPolicy(
             durationBudgetMinutes: defaultDurationMinutes,
@@ -529,6 +583,8 @@ public final class SessionViewModel {
 
         // Store full exercise list for immersive mode
         sessionExercises = composed.sessionExercises
+        cardsNeedingPresentation = composed.cardsNeedingPresentation
+        planEstimatedDurationMinutes = composed.estimatedDurationMinutes
 
         // Start timer
         startTimer()
@@ -547,6 +603,19 @@ public final class SessionViewModel {
     /// - Parameter grade: The grade to apply.
     public func gradeAndAdvance(grade: Grade) async {
         guard let card = currentCard else { return }
+
+        // Defensive: the production UI never reaches this path while
+        // presenting a new-card intro — `ExerciseTransitionContainer`
+        // branches to `NewCardPresentationView` (no grade buttons, no swipe
+        // gesture) whenever `isPresentingNewCard` is true. This guard exists
+        // so any OTHER caller (a future UI path, a test driving the view
+        // model directly) can't accidentally write a real FSRS grade for an
+        // ungraded intro — it silently routes to the correct "acknowledge,
+        // don't grade" behavior instead.
+        if isPresentingNewCard {
+            await completeNewCardPresentation()
+            return
+        }
 
         let responseTimeMs = Int(Date().timeIntervalSince(cardStartTime) * 1000)
 
@@ -574,13 +643,24 @@ public final class SessionViewModel {
             requeueFailedCard(card)
         }
 
-        await gradeCardAndCheckSaveErrors(card: card, grade: grade, responseTimeMs: responseTimeMs)
+        // Hoisted above the grade write (pure function of `card`, no side
+        // effects) so the SAME resolved type feeds both the persisted
+        // ReviewLog.exerciseType (provenance, learner-telemetry lot 1) and
+        // the XP award below — one source of truth, not two computations
+        // that could drift apart.
+        let exerciseType = SessionExerciseSupport.exerciseTypeForCurrentReview(card: card)
+
+        await gradeCardAndCheckSaveErrors(
+            card: card,
+            grade: grade,
+            responseTimeMs: responseTimeMs,
+            exerciseType: exerciseType
+        )
 
         // Award XP via ExerciseXP (per-type × JLPT-level multiplier),
         // delegating to RPGService for level-up bookkeeping. Flashcard
         // types still match `xpForGrade` totals (delegation in the rule
         // table), so kana-only N5 sessions award the same XP as before.
-        let exerciseType = SessionExerciseSupport.exerciseTypeForCurrentReview(card: card)
         await awardExerciseXP(type: exerciseType, grade: grade, sampledTelemetry: true)
 
         // Track consecutive correct (display / Live Activity streak only).
@@ -612,6 +692,12 @@ public final class SessionViewModel {
         await finishSessionIfNeeded()
     }
 
+    /// Where every `ReviewLog` written by this view model came from. The main
+    /// SRS session runs only on iPhone today — no Watch call site persists a
+    /// `ReviewLog` yet — so this is the one constant value for the whole file.
+    /// See `ReviewLog.surface`.
+    private static let reviewSurface = "iphone.session"
+
     /// Persists a card's FSRS grade and surfaces persistence failures. Shared
     /// by the SRS deck path (`gradeAndAdvance`, always grades `currentCard`)
     /// and the non-SRS drill path (`completeCurrentExercise`, conditionally
@@ -619,14 +705,28 @@ public final class SessionViewModel {
     /// save-error-monitor check. A grade whose save failed may not count
     /// toward scheduling; this checks once right after the write and clears
     /// the monitor so the same failure isn't re-surfaced on the next card.
-    private func gradeCardAndCheckSaveErrors(card: CardDTO, grade: Grade, responseTimeMs: Int) async {
+    ///
+    /// `answeredValue` is never passed here — every grade reaching this layer
+    /// came from a self-graded Again/Hard/Good/Easy button, not a choice-format
+    /// exercise, so there is no "chosen value" to log (stays `nil` on the
+    /// persisted `ReviewLog`). Choice-format session exercises exist elsewhere
+    /// (e.g. vocabulary recall options) but their chosen answers aren't
+    /// plumbed to this layer yet — out of this lot's scope, not an oversight.
+    private func gradeCardAndCheckSaveErrors(
+        card: CardDTO,
+        grade: Grade,
+        responseTimeMs: Int,
+        exerciseType: ExerciseType
+    ) async {
         Logger.srs.debug(
             "Grading card \(card.front): grade=\(grade.rawValue), responseTime=\(responseTimeMs)ms"
         )
         await cardRepository.gradeCard(
             cardId: card.id,
             grade: grade,
-            responseTimeMs: responseTimeMs
+            responseTimeMs: responseTimeMs,
+            exerciseType: exerciseType.rawValue,
+            surface: Self.reviewSurface
         )
         if cardRepository.saveErrorMonitor.lastSaveError != nil {
             cardRepository.saveErrorMonitor.clear()
@@ -637,6 +737,7 @@ public final class SessionViewModel {
     /// Updates the display-only correctness streak. Shared by `gradeAndAdvance`
     /// and `completeCurrentExercise` — both apply the identical increment/reset.
     private func trackCorrectness(isCorrect: Bool) {
+        gradedAttemptCount += 1
         if isCorrect {
             consecutiveCorrect += 1
             correctCount += 1
@@ -810,15 +911,23 @@ public final class SessionViewModel {
         default:
             gradeableCard = nil
         }
+        // Hoisted above the grade write — see `gradeAndAdvance`'s identical
+        // reasoning for why the resolved type feeds both the persisted
+        // ReviewLog.exerciseType and the XP award below from one computation.
+        let resolvedType = SessionExerciseSupport.exerciseType(for: exercise)
         if let card = gradeableCard {
             nonSRSGradedCardIDs.insert(card.id)
-            await gradeCardAndCheckSaveErrors(card: card, grade: grade, responseTimeMs: responseTimeMs)
+            await gradeCardAndCheckSaveErrors(
+                card: card,
+                grade: grade,
+                responseTimeMs: responseTimeMs,
+                exerciseType: resolvedType
+            )
         }
 
         // Award XP for the exercise kind (per-type × JLPT-level multiplier).
         // `grade` is forwarded for `.perGrade` kinds (e.g. kanjiStudy) and
         // ignored by the rule table for `.perCompletion` kinds.
-        let resolvedType = SessionExerciseSupport.exerciseType(for: exercise)
         await awardExerciseXP(type: resolvedType, grade: grade, sampledTelemetry: false)
 
         // Track consecutive / total correct (display only). `.hard` counts as
@@ -862,6 +971,41 @@ public final class SessionViewModel {
         await reportLiveActivityProgress()
 
         // Advance the exercise pointer (never the SRS queue pointer here).
+        advanceToNextExercise()
+
+        await finishSessionIfNeeded()
+    }
+
+    /// Acknowledges the ungraded new-card presentation pass (see
+    /// `isPresentingNewCard`/`cardsNeedingPresentation`) and advances past
+    /// it. Deliberately does NOT write any FSRS grade and does NOT touch
+    /// `correctCount` / `missedCardIDs` / `newItemsLearned` /
+    /// `gradedAttemptCount` — those are earned by this SAME card's delayed
+    /// `.srsReview` occurrence a few exercises later, which still routes
+    /// through the untouched `gradeAndAdvance` and is the card's real first
+    /// FSRS grade (`effects.isNewItem` fires there, not here).
+    ///
+    /// `currentIndex` still advances: this occurrence IS one of
+    /// `sessionQueue`'s `.srsReview` slots (see `NewCardPresentationScheduler`
+    /// in `SessionComposer.swift`), so the queue/exercise pointers stay in
+    /// lockstep exactly as they do for a graded card — see
+    /// `isSessionComplete`'s doc comment on that invariant.
+    ///
+    /// `reviewedCount` DOES advance: it took real session time and gates
+    /// the time-budget policy's `completedCount`
+    /// (`SessionEndPolicy.queueLength` was sized to include this occurrence
+    /// — see `SessionComposer`), the Live Activity, and the abandon-dialog
+    /// label. It is intentionally NOT the denominator `SessionSummaryView`
+    /// uses for recall % — see `gradedAttemptCount`.
+    public func completeNewCardPresentation() async {
+        guard case .srsReview(let card) = currentExercise else { return }
+        cardsNeedingPresentation.remove(card.id)
+
+        reviewedCount += 1
+        currentIndex += 1
+        cardStartTime = Date()
+
+        await reportLiveActivityProgress()
         advanceToNextExercise()
 
         await finishSessionIfNeeded()
@@ -941,9 +1085,15 @@ public final class SessionViewModel {
             "Session ended early: \(self.reviewedCount)/\(self.sessionQueue.count) reviewed, \(self.xpEarned) XP"
         )
 
-        // If the user quits without reviewing a single card, skip the
-        // summary entirely and go straight back to the home screen.
-        if reviewedCount == 0 {
+        // If the user quits without GRADING a single card, skip the summary
+        // entirely and go straight back to the home screen. Checks
+        // `gradedAttemptCount`, not `reviewedCount`: an abandoned session
+        // that only showed ungraded new-card presentation passes (see
+        // `completeNewCardPresentation`) has `reviewedCount > 0` but nothing
+        // for the summary's CARDS/RECALL/NEW LEARNED/RE-LEARN stats to show
+        // — the summary would render as an empty, failure-reading screen for
+        // a session that, from the learner's perspective, did nothing wrong.
+        if gradedAttemptCount == 0 {
             dismissSession()
             return
         }

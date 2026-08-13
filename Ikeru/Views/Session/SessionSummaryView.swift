@@ -71,10 +71,14 @@ struct SessionSummaryView: View {
             }
             .frame(maxWidth: .infinity)
 
-            // Recall % is only meaningful when cards were actually reviewed —
-            // showing "0%" on an empty session reads as failure. Drop the whole
-            // column (and a hairline) to a clean CARDS | TIME layout instead.
-            if viewModel.reviewedCount > 0 {
+            // Recall % is only meaningful when at least one card was actually
+            // GRADED — showing "0%" on an empty session (or one that only
+            // presented brand-new kana without testing any of them yet)
+            // reads as failure. Drop the whole column (and a hairline) to a
+            // clean CARDS | TIME layout instead. Gated on `gradedAttemptCount`
+            // rather than `reviewedCount`, which also counts ungraded
+            // new-card presentation passes (see `recallPercentage`).
+            if viewModel.gradedAttemptCount > 0 {
                 verticalHairline
 
                 VStack(spacing: 6) {
@@ -211,24 +215,44 @@ struct SessionSummaryView: View {
     // directly — derive them locally from the canonical fields on
     // `SessionViewModel` without mutating its state.
 
-    private var cardsCount: Int { viewModel.reviewedCount }
+    /// Deliberately `gradedAttemptCount`, not `reviewedCount`: the latter
+    /// also counts ungraded new-card presentation passes (see
+    /// `SessionViewModel.completeNewCardPresentation`), which are encounters
+    /// — not reviewed cards. Keeping this in step with `gradedAttemptCount`
+    /// also keeps `newCount + relearnCount == cardsCount` below, so the
+    /// NEW LEARNED / RE-LEARN split cells always sum to the headline number.
+    private var cardsCount: Int { viewModel.gradedAttemptCount }
 
-    /// Recall percentage = total correct grades over total reviewed.
-    /// Uses the dedicated `correctCount` (incremented per-card) instead of
-    /// the streak-based `consecutiveCorrect`, which used to read 0% the
-    /// moment the user hit a single .hard or .again even if every other
-    /// card was correct. Returns 0 when no cards reviewed.
+    /// Recall percentage = total correct grades over total GRADED attempts
+    /// (`gradedAttemptCount`), not over `reviewedCount`. `reviewedCount` also
+    /// counts ungraded new-card presentation passes (see
+    /// `SessionViewModel.completeNewCardPresentation`) — those can never
+    /// fail (there's no grade to fail), so dividing by them would dilute an
+    /// intro-heavy session's recall % below what the learner actually
+    /// demonstrated. Uses the dedicated `correctCount` (incremented per-card)
+    /// instead of the streak-based `consecutiveCorrect`, which used to read
+    /// 0% the moment the user hit a single .hard or .again even if every
+    /// other card was correct. Returns 0 when nothing was graded.
     private var recallPercentage: Int {
-        guard viewModel.reviewedCount > 0 else { return 0 }
-        let ratio = Double(viewModel.correctCount) / Double(viewModel.reviewedCount)
+        guard viewModel.gradedAttemptCount > 0 else { return 0 }
+        let ratio = Double(viewModel.correctCount) / Double(viewModel.gradedAttemptCount)
         return Int((ratio * 100).rounded())
     }
 
     private var timeString: String { viewModel.elapsedTimeFormatted }
 
     private var newCount: Int { viewModel.newItemsLearned }
+
+    /// Everything ELSE that was actually GRADED (`gradedAttemptCount`) minus
+    /// the newly-learned count — deliberately over `reviewedCount`, which
+    /// also counts ungraded new-card presentation passes (see
+    /// `SessionViewModel.completeNewCardPresentation`). Those presentation
+    /// steps are neither "new learned" (that credit lands on the SAME card's
+    /// later, delayed graded test) nor a "re-learn" of anything — dividing
+    /// against `reviewedCount` would have miscounted every intro as a
+    /// re-learned review.
     private var relearnCount: Int {
-        max(0, viewModel.reviewedCount - viewModel.newItemsLearned)
+        max(0, viewModel.gradedAttemptCount - viewModel.newItemsLearned)
     }
 }
 

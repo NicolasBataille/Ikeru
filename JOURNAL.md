@@ -23,6 +23,165 @@ raisonnement, les mesures, et les décisions.
 
 ---
 
+## 2026-08-13 — P2 lot 2 : phase de présentation des cartes neuves, tracés kana, export confusions
+
+### Fait
+
+`5fff8e3`, sur `feature/pedagogy-p2`. Recommandation phare de la review
+pédagogique : un kana jamais vu (`fsrsState.reps == 0`) reçoit d'abord une
+rencontre **non notée** — glyphe, romaji, audio en autoplay, aucun bouton de
+note — avant que son vrai test FSRS n'arrive, différé de quelques révisions
+plus tard dans la même séance. La toute première note FSRS mesure enfin une
+rétention plutôt qu'un bruit de première rencontre. Câblage bout en bout
+vérifié par lecture : `NewCardPresentationScheduler.schedulingPresentations`
+(`SessionComposer.swift`) repère les kana neufs dans le plan, insère une
+seconde occurrence `.srsReview` 2 à 4 révisions plus loin, et alimente
+`cardsNeedingPresentation` ; `SessionViewModel.isPresentingNewCard` bascule
+`ExerciseTransitionContainer` vers `NewCardPresentationView` (struct privée du
+même fichier, pas de fichier neuf) tant que l'id de la carte est dans ce set ;
+`completeNewCardPresentation()` le retire à l'acquittement. Le critère de
+sortie de la carte différée (si son test est raté) ne réinvente rien : il
+retombe sur `requeueFailedCard` / `SessionRequeuePlanner` et leur plafond
+existant `maxRetriesPerCard = 2` plutôt que d'ajouter un second compteur qui
+pourrait boucler indépendamment.
+
+À côté : tracés de coup pour 142 des 208 caractères kana
+(`ContentRepository.kanaStrokeData(for:)`, 92 kana de base + 50 dakuten, un
+seul codepoint chacun — les yōon à deux codepoints n'ont pas de fichier
+KanjiVG source) ; export `confusions.json` (agrégat dérivé de `reviews.json`
+à l'export, pas une table persistée) plus le bloc `grade_semantics` dans
+`context.json` de `DataExportManager`, pour qu'un consommateur externe sache
+que le grade 2 (hard) est un succès et pas un échec avant de calculer un taux
+de rétention.
+
+### Testé
+
+- 3 schemes verts, SwiftLint et i18n-lint en exit 0, migration V1→V2→V3 verte
+  en process isolés (contrainte `LegacyStoreMigration`, voir CLAUDE.md).
+- 31 tests sur 4 suites d'app verts.
+- Couverture des tracés kana mesurée par comptage direct dans le catalogue :
+  142/208 caractères, les 66 manquants tous des yōon (きゃ, しゅ, …) — vérifié
+  que c'est structurel (absence de fichier source KanjiVG à deux codepoints),
+  pas un oubli de génération.
+
+### Écarté
+
+- **Ajouter un cas `.newCardPresentation` à `ExerciseItem`** : refusé.
+  `DefaultSessionPlanner.isLive(_:)` est un `switch` exhaustif sans `default`
+  sur `ExerciseItem` — un nouveau cas casse la compilation à ce site et à tout
+  autre switch exhaustif sur l'enum. La présentation réutilise donc le cas
+  `.srsReview` existant deux fois dans la file, et c'est un
+  `Set<UUID>` côté view-model (`cardsNeedingPresentation`) qui distingue la
+  rencontre non notée du vrai test — pas un type distinct.
+- **Créer un fichier `NewCardPresentationScheduler.swift` / `NewCardPresentationView.swift` séparés** :
+  le pbxproj de ce repo n'a aucun groupe synchronisé, chaque fichier source
+  est listé explicitement (voir CLAUDE.md) — un fichier neuf non enregistré
+  compile dans aucune cible et reste silencieusement mort. Le scheduler a été
+  ajouté dans `SessionComposer.swift`, la vue dans
+  `ExerciseTransitionContainer.swift`.
+- **Replier sur « ajoute le test différé en fin de liste » quand la file est
+  trop courte pour le délai visé (2-4 révisions)** : retiré après coup, pour
+  deux raisons cumulées dans le code du scheduler. Un ajout en fin de liste
+  place le test juste après sa propre présentation — gap nul, donc la mesure
+  de rétention ne mesure rien. Et il fait cohabiter les deux occurrences du
+  même `card.id` dans la fenêtre de peek à 3 niveaux du deck
+  (`upcomingCards`), ce qui collisionne l'id `matchedGeometryEffect` de
+  `SRSCardView`. Le planificateur calcule maintenant le nombre de
+  `.srsReview` réellement disponibles après la carte neuve
+  (`srsReviewCount(after:in:)`) et, si c'est sous `minimumSRSGap` (= 2, donc
+  un gap garanti ≥ 3, prouvé disjoint de la fenêtre de peek), retire la carte
+  de `cardsNeedingPresentation` : elle redevient une révision notée normale,
+  une seule occurrence. Une séance très courte ne déclenche simplement pas la
+  boucle de présentation plutôt que d'en jouer une version dégénérée.
+
+### Ouvert
+
+- **Les tracés kana n'ont AUCUN appelant à la livraison** : `grep` sur
+  `kanaStrokeData` ne remonte que la définition dans `ContentRepository.swift`
+  lui-même (couche publique + actor). Aucune vue, aucun view-model ne
+  l'invoque — la donnée existe et est mesurée, mais rien à l'écran ne
+  l'affiche encore. Couture restant à faire.
+- **`CloudBackupManager` perd toujours les trois nouveaux champs de
+  `ReviewLog`** : `ReviewSnapshot` (`BackupService.swift`) n'a que `id`,
+  `cardId`, `timestamp`, `grade`, `responseTimeMs` — ni `answeredValue`, ni
+  `exerciseType`, ni `surface`. La restauration (`CloudBackupManager.swift`
+  ligne ~313) reconstruit un `ReviewLog` sans eux. Latent tant que
+  `iCloudEnabled` vaut false ; régressif silencieusement le jour où iCloud
+  s'active — un utilisateur restauré perdrait sa donnée de confusion sans
+  erreur visible.
+- **`confusions.json` sera kana-only en pratique** : `answeredValue` est un
+  paramètre par défaut `nil` sur toute la chaîne `CardRepository` ; seul
+  `KanaDrillViewModel.swift` l'appelle avec une vraie valeur. Vérifié par
+  `grep` sur les autres view-models de la couche Learning — aucun autre appel
+  non-nil.
+- **`SessionViewModel.swift` fait 1315 lignes** — au-delà du garde-fou de 800
+  lignes du repo (`coding-style.md`), constaté en relisant le fichier pour ce
+  chantier, pas nouveau à ce lot mais pas résorbé non plus.
+- Régénération audio VOICEVOX des kana concernés et test device de
+  suppression de profil : toujours à la charge de Nico (cf. entrée
+  précédente), non touchés par ce lot.
+- Non vérifiable ici : la boucle de présentation en conditions réelles
+  (device ou simulateur) — l'autoplay audio, le timer d'auto-avance
+  (`.task(id: isPaused)`), et le comportement à plusieurs intros consécutives
+  en mode fondation n'ont été relus que dans le code, pas exercés à l'écran.
+
+---
+
+## 2026-08-13 — P2 lot 1 : planificateur, confusions, livret de compétence
+
+### Fait
+
+Six chantiers de conception (branche `feature/pedagogy-p2`) : **cartes dues
+prioritaires en absolu** sur les quotas + trois profils de séance par stade +
+durées modulées par maturité ; **journalisation des paires de confusion**
+(`answeredValue` / `exerciseType` / `surface` sur `ReviewLog`, **IkeruSchemaV3**) ;
+**livret de compétence** sur l'accueil, avec l'arbitrage du système RPG orphelin ;
+ponts か→カ et clusters de paires à interférence katakana ; mitigation du crash
+widget.
+
+### Testé
+
+- 3 schemes verts, lint et i18n-lint en exit 0, migration **V1→V2→V3 verte en
+  process isolés** (contrainte `LegacyStoreMigration`).
+- Cas « 24 dues, budget 5 min » **exécuté** : 60 dues / 300 s → 20 révisions,
+  budget intégralement consommé, 100 % de révisions. Les quotas s'appliquent
+  bien au reste.
+- Chaîne quiz → `ReviewLog` persisté **vérifiée en relisant la ligne depuis le
+  store** (réponse fausse, réponse juste, et flashcard avec `answeredValue` nil).
+- Miroir katakana↔hiragana vérifié **par programme** : 26/26 groupes ont un
+  ensemble de romaji identique, zéro contre-exemple.
+
+### Écarté
+
+- **Le crash widget n'est PAS notre code.** Les 8 rapports `.ips` ont une pile
+  entièrement dans les frameworks Apple (`xpc_connection_copy_bundle_id` ←
+  BaseBoard ← BoardServices), aucune frame Ikeru, et `is_simulated: 1` sur les
+  huit. Simulateur uniquement, aucun crash device observé. Livré comme
+  **mitigation défensive documentée**, pas comme correctif.
+- **Dues prioritaires « en absolu » : vrai en construction et en croisière,
+  PAS en fondation** — le mode fondation garde son plafond à 50 % pour qu'un
+  débutant voie de nouveaux kana. À dire tel quel plutôt que de sur-vendre.
+
+### Ouvert
+
+- **Bug attrapé en revue et corrigé ici** : `IkeruApp` déclarait encore
+  `IkeruSchemaV2` alors que le schéma courant est V3. Le conteneur s'ouvrait
+  sans erreur puis **trappait au premier insert**, y compris sur une
+  installation neuve — et la récupération de store n'entoure que
+  `makeModelContainer`, donc elle ne se déclenchait jamais. Boucle de crash non
+  récupérable. Leçon : **la version déclarée à l'app doit être vérifiée à chaque
+  ajout de version**, un test de migration vert ne la couvre pas.
+- **Chantier #17 à moitié livré** : la donnée de confusion est capturée mais
+  `DataExportManager` ne l'exporte pas — donc personne ne peut encore la relire.
+- **Tracés kana non livrés** : l'agent a été bloqué par le classifieur de
+  sécurité (incident transitoire), à relancer.
+- Le badge « +N cette semaine » ne s'affiche qu'**une seule fois** par semaine :
+  la baseline roule au même seuil que la comparaison, dans la même passe.
+- Le pont hiragana s'affiche aussi dans le **quiz**, où il donne la réponse — et
+  contamine l'`answeredValue` fraîchement journalisé.
+
+---
+
 ## 2026-08-12/13 — Review pédagogique experte, puis 5 itérations de remédiation
 
 ### Fait

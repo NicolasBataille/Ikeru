@@ -125,6 +125,64 @@ struct KanaDrillViewModelTests {
         #expect(vm.selectedOptionCharacter != nil)
     }
 
+    // MARK: - ReviewLog provenance (learner-telemetry lot 1)
+    //
+    // Full call path: KanaDrillViewModel → CardRepository.gradeCard →
+    // CardModelActor → ReviewLog(answeredValue:exerciseType:surface:) →
+    // read back via CardRepository.reviewLogs(for:). This is the only
+    // CI-executed proof that the plumbing actually reaches the persisted row
+    // (not just that a wider signature exists and nothing calls it).
+
+    @Test("submitQuizAnswer persists the confused character as answeredValue, with kana.quiz provenance")
+    func quizAnswerPersistsProvenance() async throws {
+        let (repo, cards) = try await makeRepoAndCards(group: .hVowels)
+        let vm = KanaDrillViewModel(mode: .freePractice, queue: cards, cardRepository: repo)
+        let cardID = try #require(vm.currentCard?.id)
+        let wrongOption = try #require(vm.quizOptions.first { $0 != vm.correctOption })
+        vm.selectOption(wrongOption)
+        await vm.submitQuizAnswer()
+
+        let logs = await repo.reviewLogs(for: cardID)
+        #expect(logs.count == 1)
+        let log = try #require(logs.first)
+        // The persisted value is the resolved kana character (what makes a
+        // confusion pair analyzable), not the raw romaji option label.
+        #expect(log.answeredValue == vm.selectedOptionCharacter)
+        #expect(log.answeredValue != nil)
+        #expect(log.exerciseType == "kana.quiz")
+        #expect(log.surface == "iphone.drill")
+    }
+
+    @Test("submitQuizAnswer on a CORRECT pick also persists answeredValue (not misses-only)")
+    func quizCorrectAnswerPersistsProvenance() async throws {
+        let (repo, cards) = try await makeRepoAndCards(group: .hVowels)
+        let vm = KanaDrillViewModel(mode: .freePractice, queue: cards, cardRepository: repo)
+        let cardID = try #require(vm.currentCard?.id)
+        vm.selectOption(vm.correctOption)
+        await vm.submitQuizAnswer()
+
+        let logs = await repo.reviewLogs(for: cardID)
+        let log = try #require(logs.first)
+        #expect(log.answeredValue != nil)
+        #expect(log.exerciseType == "kana.quiz")
+    }
+
+    @Test("Flashcard grade() leaves answeredValue nil (self-graded) but stamps kana.flashcard provenance")
+    func flashcardGradePersistsProvenance() async throws {
+        let (repo, cards) = try await makeRepoAndCards(group: .hVowels)
+        let vm = KanaDrillViewModel(mode: .freePractice, queue: cards, cardRepository: repo)
+        let cardID = try #require(vm.currentCard?.id)
+        vm.reveal()
+        await vm.grade(.good)
+
+        let logs = await repo.reviewLogs(for: cardID)
+        #expect(logs.count == 1)
+        let log = try #require(logs.first)
+        #expect(log.answeredValue == nil)
+        #expect(log.exerciseType == "kana.flashcard")
+        #expect(log.surface == "iphone.drill")
+    }
+
     // MARK: - Distractors
 
     @Test("quiz options are 4 unique values containing the correct answer")

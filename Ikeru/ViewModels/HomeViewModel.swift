@@ -15,9 +15,32 @@ public final class HomeViewModel {
     public private(set) var displayName: String = ""
 
     /// Current RPG level.
+    ///
+    /// Deliberately NOT surfaced anywhere in `HomeView`, including the new
+    /// competency-booklet mirror (`masteryBook`) — decision taken in the
+    /// 2026-08-10 review's "RPG orphelin" item (#25). Still computed because
+    /// the widget target reads `RPGState` independently (App Group, outside
+    /// this work item's file perimeter) and because retiring the underlying
+    /// XP/loot pipeline is a bigger call than one review pass. Reasons kept
+    /// out of the UI:
+    /// 1. The XP economy still pays hidden streak bonuses
+    ///    (`RPGConstants.fiveDayStreakBonus`, `.thirtyDayStreakBonus`,
+    ///    `.firstSessionOfDayBonus`) — exactly the pressure the product
+    ///    deliberately removed ("zero streak, zero ligue"). Showing "Lv. 4"
+    ///    would re-import that pressure wearing a different label, and an
+    ///    "effort" framing doesn't fix that the effort curve is secretly
+    ///    streak-shaped.
+    /// 2. It's redundant with what the booklet already shows: `masteryBook`
+    ///    tells the learner exactly what became familiar/mastered, which is
+    ///    legible and auditable. A level number the learner can't decompose
+    ///    ("why am I level 4 and not 5?") adds opacity, not signal.
+    /// 3. It wouldn't actually fix the orphan problem — the widget already
+    ///    shows "Lv. N" with zero context; duplicating that number on Home
+    ///    just adds a second unexplained instance of the same defect.
     public private(set) var level: Int = 1
 
-    /// Current total XP.
+    /// Current total XP. See `level`'s doc comment for why this stays out of
+    /// the new competency-booklet UI.
     public private(set) var xp: Int = 0
 
     /// XP required to reach the next level.
@@ -55,6 +78,22 @@ public final class HomeViewModel {
     /// Kana mastery (familiar+), for the calm "X/92" progress line on Home.
     public private(set) var kanaProgress: KanaProgress =
         KanaProgress(hiraganaMastered: 0, katakanaMastered: 0)
+
+    /// Aggregate mastery-level counts across kana cards + the personal
+    /// vocabulary dictionary — the "livret de compétence" (competency
+    /// booklet) mirror. See `MasteryBookCounts`'s doc comment and the
+    /// 2026-08-10 review (erreur de conception #4 — "tu as enlevé le fouet
+    /// sans installer le miroir").
+    public private(set) var masteryBook: MasteryBookCounts = MasteryBookCounts()
+
+    /// Net change in `masteryBook.knownCount` (familiar-or-better) since the
+    /// current weekly baseline, or nil when no baseline exists yet at all
+    /// (this profile's first-ever Home load). The baseline itself rolls
+    /// forward only once a full week has passed — see
+    /// `MasteryBookSnapshotStore`'s doc comment — so this delta stays
+    /// visible for the whole week, not just a single load. Persisted in
+    /// UserDefaults, no SwiftData schema involved.
+    public private(set) var masteryBookWeeklyDelta: Int?
 
     /// Whether Home should invite the learner to choose a kana study set before
     /// practising (the soft "choose your kana" gate). True only for a fresh
@@ -157,6 +196,10 @@ public final class HomeViewModel {
     private let cardRepository: CardRepository
     private let plannerService: PlannerService
     private let progressService: ProgressService
+    /// Feeds the vocabulary half of `masteryBook` — the personal dictionary
+    /// is a separate SwiftData model from `Card`, so it needs its own
+    /// repository (mirrors how `VocabularyDictionaryViewModel` reads it).
+    private let vocabularyRepository: VocabularyRepository
     /// Canonical planner — same instance type as `SessionViewModel` uses,
     /// so the preview counts always match what `startSession()` will serve.
     private let sessionPlanner: DefaultSessionPlanner
@@ -169,6 +212,7 @@ public final class HomeViewModel {
         self.cardRepository = repo
         self.plannerService = PlannerService(cardRepository: repo)
         self.progressService = ProgressService(cardRepository: repo)
+        self.vocabularyRepository = VocabularyRepository(modelContainer: modelContainer)
         self.sessionPlanner = DefaultSessionPlanner()
     }
 
@@ -182,6 +226,7 @@ public final class HomeViewModel {
         self.cardRepository = cardRepository
         self.plannerService = plannerService
         self.progressService = ProgressService(cardRepository: cardRepository)
+        self.vocabularyRepository = VocabularyRepository(modelContainer: modelContainer)
         self.sessionPlanner = DefaultSessionPlanner()
     }
 
@@ -294,6 +339,7 @@ public final class HomeViewModel {
         await loadDueCardCount()
         await loadKanjiLearnedCount()
         await loadKanaProgress()
+        await loadMasteryBook()
         // Skill balance must load BEFORE the snapshot consumers below
         // (`loadNextStep` / `composeSessionPreview` feed `skillBalance` into the
         // planner), otherwise they read the previous cycle's stale value.
@@ -391,6 +437,41 @@ public final class HomeViewModel {
     private func loadKanaProgress() async {
         let allCards = await cardRepository.allCards()
         kanaProgress = KanaProgress.from(cards: allCards)
+    }
+
+    /// Loads the competency-booklet mirror: combines SRS card mastery (kana
+    /// today) with the personal vocabulary dictionary, then diffs against a
+    /// week-old UserDefaults baseline (`MasteryBookSnapshotStore`) for the
+    /// weekly delta. No SwiftData schema involved — see the store's doc
+    /// comment for why a schema-backed history table isn't used here.
+    private func loadMasteryBook() async {
+        let cards = await cardRepository.allCards()
+        // Guard the vocabulary fetch on the container actually carrying the
+        // `VocabularyEntry` entity. Production's schema always does
+        // (`IkeruSchema`), but a caller can construct `HomeViewModel` with a
+        // narrower `ModelContainer` (e.g. a test schema listing only
+        // `UserProfile`/`Card`/`ReviewLog`/`RPGState`) — fetching an entity
+        // absent from the container's schema is a programmer-error case
+        // SwiftData is not guaranteed to fail gracefully on, so this is
+        // checked ahead of the fetch rather than merely wrapped in `try?`.
+        let vocabModelIsRegistered = modelContainer.schema.entities.contains { $0.name == "VocabularyEntry" }
+        let vocabEntries: [VocabularyEntryDTO]
+        if vocabModelIsRegistered {
+            vocabEntries = await vocabularyRepository.allEntries()
+        } else {
+            vocabEntries = []
+        }
+        let counts = MasteryBookCounts.from(cards: cards) + MasteryBookCounts.from(vocabularyEntries: vocabEntries)
+        masteryBook = counts
+
+        guard let profileID = ActiveProfileResolver.activeProfileID() else {
+            masteryBookWeeklyDelta = nil
+            return
+        }
+        masteryBookWeeklyDelta = MasteryBookSnapshotStore
+            .priorSnapshot(profileID: profileID)
+            .map { counts.delta(from: $0) }
+        MasteryBookSnapshotStore.recordIfStale(profileID: profileID, counts: counts)
     }
 
     /// Computes the single "do this next" suggestion from a real snapshot of the

@@ -22,8 +22,15 @@ struct SessionDecouplingTests {
     // MARK: - Helpers
 
     private func makeContainer() throws -> ModelContainer {
-        // Full V2 schema so pool-drill outcomes (ExerciseOutcomeLog) can persist.
-        let schema = Schema(versionedSchema: IkeruSchemaV2.self)
+        // Full current (V3) schema so pool-drill outcomes (ExerciseOutcomeLog)
+        // can persist. Must be V3, not V2: `IkeruSchemaV2` is now frozen
+        // (nested snapshot types, learner-telemetry lot 1 / remediation #17)
+        // — a container opened with `versionedSchema: IkeruSchemaV2.self`
+        // would bind this suite's live-type fetches (via
+        // `ActiveProfileResolver` / `SessionViewModel`) to the WRONG entity
+        // identity and crash with "Failed to cast model ... to X". See
+        // IkeruSchema.swift's `IkeruSchemaV2` doc comment.
+        let schema = Schema(versionedSchema: IkeruSchemaV3.self)
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         ActiveProfileResolver.setActiveProfileID(nil)
         return try ModelContainer(for: schema, configurations: [config])
@@ -436,5 +443,264 @@ struct SessionDecouplingTests {
         #expect(queueMatchesExercises(vm))
         // Session stays open so the requeued card is reachable.
         #expect(vm.isSessionComplete == false)
+    }
+}
+
+// MARK: - New-Card Presentation (2026-08 pedagogy P2, chantier #21)
+//
+// A never-reviewed KANA card must get an ungraded presentation pass before
+// its first graded touch-and-reveal test, and that graded test must be
+// delayed a few real recall events later — see `NewCardPresentationScheduler`
+// in `SessionComposer.swift` and `SessionViewModel.isPresentingNewCard` /
+// `completeNewCardPresentation`.
+@Suite("New-Card Presentation (chantier #21)")
+@MainActor
+struct NewCardPresentationTests {
+
+    // MARK: - Fixtures
+
+    private func kanaCard(front: String, romaji: String, reps: Int = 0) -> CardDTO {
+        CardDTO(
+            id: UUID(),
+            front: front,
+            back: romaji,
+            type: .vocabulary,
+            fsrsState: FSRSState(reps: reps),
+            easeFactor: 2.5,
+            interval: 0,
+            dueDate: Date(),
+            lapseCount: 0,
+            leechFlag: false
+        )
+    }
+
+    private func kanjiCard(front: String, reps: Int = 0) -> CardDTO {
+        CardDTO(
+            id: UUID(),
+            front: front,
+            back: "back-\(front)",
+            type: .kanji,
+            fsrsState: FSRSState(reps: reps),
+            easeFactor: 2.5,
+            interval: 0,
+            dueDate: Date(),
+            lapseCount: 0,
+            leechFlag: false
+        )
+    }
+
+    private func srsReviewPositions(of cardID: UUID, in exercises: [ExerciseItem]) -> [Int] {
+        exercises.enumerated().compactMap { index, item -> Int? in
+            if case .srsReview(let card) = item, card.id == cardID { return index }
+            return nil
+        }
+    }
+
+    // MARK: - Pure scheduler tests (NewCardPresentationScheduler)
+
+    @Test("A never-reviewed kana card is duplicated: an intro slot plus a delayed graded-test slot")
+    func newKanaCardGetsIntroAndDelayedTest() {
+        let newKana = kanaCard(front: "あ", romaji: "a")
+        // Two already-started filler reviews: the tail must be able to supply
+        // the requested gap, otherwise the scheduler deliberately declines to
+        // defer (see `shortTailDeclinesToDefer` below).
+        let due1 = kanjiCard(front: "\u{751F}", reps: 3)
+        let due2 = kanjiCard(front: "\u{5B66}", reps: 4)
+        let exercises: [ExerciseItem] = [.srsReview(newKana), .srsReview(due1), .srsReview(due2)]
+
+        let result = NewCardPresentationScheduler.schedulingPresentations(
+            for: exercises,
+            offsetRange: 2...2
+        )
+
+        #expect(result.cardsNeedingPresentation == [newKana.id])
+        let positions = srsReviewPositions(of: newKana.id, in: result.exercises)
+        #expect(positions.count == 2)
+        #expect(positions.first == 0)
+        // The delayed test lands after 2 MORE `.srsReview` occurrences, so the
+        // two occurrences of `a` are 3 apart — outside the deck's 3-deep peek
+        // window, and far enough for the recall to measure something.
+        #expect(positions.last == 3)
+        #expect(result.addedDurationSeconds == ExerciseItem.srsReview(newKana).estimatedDurationSeconds)
+    }
+
+    @Test("A tail too short to give the delayed test any interference declines to defer at all")
+    func shortTailDeclinesToDefer() {
+        let newKana = kanaCard(front: "あ", romaji: "a")
+        let due = kanjiCard(front: "\u{751F}", reps: 3)
+        // Only ONE other review follows the new card. Appending the test at the
+        // end would put it immediately after its own presentation: it would
+        // measure nothing, and both occurrences would sit inside the deck's
+        // 3-deep peek window with the same card id (duplicate
+        // matchedGeometryEffect). The scheduler declines instead — the card
+        // stays a plain graded review, exactly as before the feature existed.
+        let exercises: [ExerciseItem] = [.srsReview(newKana), .srsReview(due)]
+
+        let result = NewCardPresentationScheduler.schedulingPresentations(
+            for: exercises,
+            offsetRange: 2...2
+        )
+
+        #expect(result.cardsNeedingPresentation.isEmpty)
+        #expect(result.exercises.count == exercises.count)
+        #expect(result.addedDurationSeconds == 0)
+        #expect(srsReviewPositions(of: newKana.id, in: result.exercises).count == 1)
+    }
+
+    @Test("The delayed test lands after exactly `target` MORE .srsReview occurrences, non-.srsReview items don't count")
+    func delayedTestCountsOnlySRSReviewOccurrences() {
+        let newKana = kanaCard(front: "い", romaji: "i")
+        let b = kanjiCard(front: "\u{5B66}", reps: 5)
+        let kanjiC = kanjiCard(front: "\u{6821}", reps: 5)
+        // 1 non-.srsReview item, then 2 more .srsReview items — target=2 must
+        // land right after `c`, ignoring the listening exercise entirely.
+        let exercises: [ExerciseItem] = [
+            .srsReview(newKana), .listeningExercise(UUID()), .srsReview(b), .srsReview(kanjiC),
+        ]
+
+        let result = NewCardPresentationScheduler.schedulingPresentations(
+            for: exercises,
+            offsetRange: 2...2
+        )
+
+        let positions = srsReviewPositions(of: newKana.id, in: result.exercises)
+        #expect(positions.count == 2)
+        // Original array: [a, listening, b, c] (indices 0..3). After
+        // inserting the delayed test right after `c` (index 3), it lands at
+        // index 4 — the new end of the array.
+        #expect(positions.last == 4)
+        #expect(result.exercises.count == exercises.count + 1)
+    }
+
+    @Test("A non-kana never-reviewed card is left untouched (kana-only scoping)")
+    func nonKanaNewCardIsNotDuplicated() {
+        let kanjiNew = kanjiCard(front: "\u{65E5}", reps: 0)
+        let exercises: [ExerciseItem] = [.srsReview(kanjiNew)]
+
+        let result = NewCardPresentationScheduler.schedulingPresentations(for: exercises)
+
+        #expect(result.cardsNeedingPresentation.isEmpty)
+        #expect(result.exercises == exercises)
+        #expect(result.addedDurationSeconds == 0)
+    }
+
+    @Test("An already-started kana card (reps > 0) is left untouched")
+    func alreadyStartedKanaCardIsNotDuplicated() {
+        let newKana = kanaCard(front: "う", romaji: "u", reps: 1)
+        let exercises: [ExerciseItem] = [.srsReview(newKana)]
+
+        let result = NewCardPresentationScheduler.schedulingPresentations(for: exercises)
+
+        #expect(result.cardsNeedingPresentation.isEmpty)
+        #expect(result.exercises == exercises)
+    }
+
+    // MARK: - Integration (SessionViewModel)
+
+    private func makeContainer() throws -> ModelContainer {
+        let schema = Schema(versionedSchema: IkeruSchemaV3.self)
+        let config = ModelConfiguration(isStoredInMemoryOnly: true)
+        ActiveProfileResolver.setActiveProfileID(nil)
+        return try ModelContainer(for: schema, configurations: [config])
+    }
+
+    private func ensureProfile(container: ModelContainer) throws {
+        let context = container.mainContext
+        if ActiveProfileResolver.fetchActiveProfile(in: context) != nil { return }
+        let profile = UserProfile(displayName: "Test")
+        context.insert(profile)
+        try context.save()
+        ActiveProfileResolver.setActiveProfileID(profile.id)
+    }
+
+    private func makeVM(container: ModelContainer, planner: any SessionPlanner) -> SessionViewModel {
+        let repo = CardRepository(modelContainer: container)
+        let plannerService = PlannerService(cardRepository: repo)
+        return SessionViewModel(
+            plannerService: plannerService,
+            cardRepository: repo,
+            modelContainer: container,
+            sessionPlanner: planner
+        )
+    }
+
+    @Test("completeNewCardPresentation writes no FSRS grade and doesn't touch correctness counters; the delayed test does")
+    func presentationIsUngradedAndDelayedTestIsTheRealFirstGrade() async throws {
+        let container = try makeContainer()
+        try ensureProfile(container: container)
+        let repo = CardRepository(modelContainer: container)
+
+        let newKana = await repo.createCard(front: "え", back: "e", type: .vocabulary)
+        // Two filler reviews so the delayed test has something to be placed
+        // after. They are ALSO `reps == 0` (freshly created), so grading them
+        // during the walk contributes its own "new item learned" / graded
+        // attempt signal — the assertions below are deliberately DELTA-based
+        // (captured right before the delayed grade) so they isolate `a`'s
+        // own contribution regardless of what the fillers add.
+        let filler1 = await repo.createCard(front: "\u{751F}", back: "life", type: .kanji)
+        let filler2 = await repo.createCard(front: "\u{5B66}", back: "study", type: .kanji)
+
+        let planner = MockSessionPlanner()
+        planner.plan = SessionPlan(
+            exercises: [.srsReview(newKana), .srsReview(filler1), .srsReview(filler2)],
+            estimatedDurationMinutes: 1,
+            exerciseBreakdown: [.reading: 3]
+        )
+        let vm = makeVM(container: container, planner: planner)
+
+        await vm.startSession()
+
+        // The FIRST occurrence of `a` is the ungraded intro.
+        guard case .srsReview(let shown) = vm.currentExercise, shown.front == "え" else {
+            Issue.record("Expected the intro slot for 'え' first")
+            return
+        }
+        #expect(vm.isPresentingNewCard == true)
+
+        await vm.completeNewCardPresentation()
+
+        // No FSRS write, no correctness/graded-attempt/new-item bookkeeping —
+        // but the step still counted toward reviewedCount/pacing.
+        let cards = await repo.allCards()
+        let aAfterIntro = try #require(cards.first { $0.front == "え" })
+        #expect(aAfterIntro.fsrsState.reps == 0)
+        #expect(vm.correctCount == 0)
+        #expect(vm.gradedAttemptCount == 0)
+        #expect(vm.newItemsLearned == 0)
+        #expect(vm.reviewedCount == 1)
+        #expect(vm.currentIndex == 1)
+
+        // Walk forward to the delayed, graded occurrence of the SAME card.
+        var guardCount = 0
+        while vm.isPresentingNewCard == false, !vm.isSessionComplete, guardCount < 10 {
+            if case .srsReview(let shown) = vm.currentExercise, shown.front == "え" {
+                break
+            }
+            await vm.gradeAndAdvance(grade: .good)
+            guardCount += 1
+        }
+
+        guard case .srsReview(let delayed) = vm.currentExercise, delayed.front == "え" else {
+            Issue.record("Expected to reach the delayed test slot for 'え'")
+            return
+        }
+        // By construction this occurrence is no longer the intro.
+        #expect(vm.isPresentingNewCard == false)
+
+        // Delta-based: the fillers walked past above are ALSO `reps == 0`
+        // cards, so they contribute their own correctness/new-item signal.
+        // Capturing the baseline right here isolates `a`'s own contribution.
+        let correctBefore = vm.correctCount
+        let gradedBefore = vm.gradedAttemptCount
+        let newItemsBefore = vm.newItemsLearned
+
+        await vm.gradeAndAdvance(grade: .good)
+
+        // THIS is the card's real first FSRS grade.
+        let aLogs = await repo.reviewLogs(for: delayed.id)
+        #expect(aLogs.count == 1)
+        #expect(vm.correctCount == correctBefore + 1)
+        #expect(vm.gradedAttemptCount == gradedBefore + 1)
+        #expect(vm.newItemsLearned == newItemsBefore + 1)
     }
 }

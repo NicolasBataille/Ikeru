@@ -199,11 +199,24 @@ public final class CardRepository: Sendable {
     /// This is an atomic operation — the card state and review log are persisted together.
     /// If the save fails, the failure is logged at `.error` and published on
     /// `saveErrorMonitor` so the UI can warn that the grade did not persist.
+    /// - Parameters:
+    ///   - answeredValue: The value the learner actually chose/produced, for
+    ///     choice-format exercises (e.g. the kana character corresponding to
+    ///     a wrong quiz pick, for confusion-pair analysis). `nil` for a
+    ///     self-graded flashcard — there is nothing to record.
+    ///   - exerciseType: Free-form identifier for the exercise format this
+    ///     grade came from (e.g. an `ExerciseType.rawValue`, or
+    ///     "kana.flashcard" / "kana.quiz"). See `ReviewLog.exerciseType`.
+    ///   - surface: Where the review was graded from — `"iphone.session"`,
+    ///     `"iphone.drill"`, or `"watch"`. See `ReviewLog.surface`.
     public func gradeCard(
         cardId: UUID,
         grade: Grade,
         responseTimeMs: Int,
-        now: Date = Date()
+        now: Date = Date(),
+        answeredValue: String? = nil,
+        exerciseType: String? = nil,
+        surface: String? = nil
     ) async {
         do {
             try await backgroundActor.gradeCard(
@@ -211,7 +224,10 @@ public final class CardRepository: Sendable {
                 grade: grade,
                 responseTimeMs: responseTimeMs,
                 now: now,
-                leechThreshold: Self.leechThreshold
+                leechThreshold: Self.leechThreshold,
+                answeredValue: answeredValue,
+                exerciseType: exerciseType,
+                surface: surface
             )
         } catch {
             await reportSaveFailure(operation: "gradeCard", error: error)
@@ -342,6 +358,34 @@ public struct ReviewLogDTO: Sendable, Identifiable {
     public let timestamp: Date
     public let grade: Grade
     public let responseTimeMs: Int
+    /// See `ReviewLog.answeredValue`.
+    public let answeredValue: String?
+    /// See `ReviewLog.exerciseType`.
+    public let exerciseType: String?
+    /// See `ReviewLog.surface`.
+    public let surface: String?
+
+    public init(
+        id: UUID,
+        cardId: UUID?,
+        cardType: CardType?,
+        timestamp: Date,
+        grade: Grade,
+        responseTimeMs: Int,
+        answeredValue: String? = nil,
+        exerciseType: String? = nil,
+        surface: String? = nil
+    ) {
+        self.id = id
+        self.cardId = cardId
+        self.cardType = cardType
+        self.timestamp = timestamp
+        self.grade = grade
+        self.responseTimeMs = responseTimeMs
+        self.answeredValue = answeredValue
+        self.exerciseType = exerciseType
+        self.surface = surface
+    }
 }
 
 /// Lightweight, Sendable snapshot of an `ExerciseOutcomeLog` for cross-actor
@@ -554,7 +598,10 @@ actor CardModelActor {
         grade: Grade,
         responseTimeMs: Int,
         now: Date,
-        leechThreshold: Int
+        leechThreshold: Int,
+        answeredValue: String? = nil,
+        exerciseType: String? = nil,
+        surface: String? = nil
     ) throws {
         let predicate = #Predicate<Card> { $0.id == cardId }
         let descriptor = FetchDescriptor(predicate: predicate)
@@ -591,7 +638,15 @@ actor CardModelActor {
         }
 
         // Create review log in the same transaction
-        let log = ReviewLog(card: card, grade: grade, responseTimeMs: responseTimeMs, timestamp: now)
+        let log = ReviewLog(
+            card: card,
+            grade: grade,
+            responseTimeMs: responseTimeMs,
+            timestamp: now,
+            answeredValue: answeredValue,
+            exerciseType: exerciseType,
+            surface: surface
+        )
         modelContext.insert(log)
 
         // Save atomically — both card update and review log persist together.
@@ -738,7 +793,10 @@ extension ReviewLog {
             cardType: card?.type,
             timestamp: timestamp,
             grade: grade,
-            responseTimeMs: responseTimeMs
+            responseTimeMs: responseTimeMs,
+            answeredValue: answeredValue,
+            exerciseType: exerciseType,
+            surface: surface
         )
     }
 }

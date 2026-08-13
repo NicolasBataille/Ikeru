@@ -44,8 +44,48 @@ struct ExerciseTransitionContainer: View {
     /// predicted intervals under the grade buttons.
     var desiredRetention: Double = 0.9
 
+    /// Whether the current `.srsReview` exercise is a brand-new kana card's
+    /// ungraded presentation pass (see `SessionViewModel.isPresentingNewCard`)
+    /// rather than a normal graded touch-and-reveal test. Branches
+    /// `srsReviewView` to `NewCardPresentationView`.
+    var isPresentingNewCard: Bool = false
+
+    /// Forwarded so the presentation view's auto-advance timer can pause
+    /// itself while the session is paused, instead of ticking silently
+    /// under the pause overlay (`ActiveSessionView.pauseOverlay`).
+    var isPaused: Bool = false
+
+    /// Callback when the user's new-card presentation pass auto-advances
+    /// (or the user replays the audio, which does NOT call this — only the
+    /// auto-advance timer does). Routes to
+    /// `SessionViewModel.completeNewCardPresentation`, which writes no FSRS
+    /// grade.
+    var onPresentationAcknowledged: () -> Void = {}
+
     @Namespace private var exerciseAnimation
     @State private var isRevealed = false
+
+    /// Read-only content repository used ONLY to fetch kana stroke-trace data
+    /// for `NewCardPresentationView` (see below). Built once per process via
+    /// `static let` (not `@State`) — `ActiveSessionView` re-renders this
+    /// container on every elapsed-time timer tick, and a `@State` initial
+    /// value re-evaluates on every construction, which would open (lazily,
+    /// harmlessly, but pointlessly) a fresh actor each time.
+    ///
+    /// This is a SECOND connection to the same bundled `n5-content.sqlite`
+    /// that `SessionViewModel` already opens for the vocabulary pool — that
+    /// repository is `private` to `SessionViewModel` and threading it down
+    /// here would mean editing `SessionViewModel`/`ActiveSessionView`, outside
+    /// this pass's scope. Mirrors the existing per-screen pattern already
+    /// used by `HomeView.makeContentRepository()` / `EtudeView.makeContentRepository()`
+    /// — read-only bundle, so a second connection is redundant but not unsafe.
+    private static let kanaContentRepository: ContentRepository? = {
+        guard let url = Bundle.main.url(forResource: "n5-content", withExtension: "sqlite") else {
+            Logger.ui.error("n5-content.sqlite not found in bundle — new-card stroke trace disabled")
+            return nil
+        }
+        return ContentRepository(bundleURL: url)
+    }()
 
     var body: some View {
         ZStack {
@@ -159,6 +199,28 @@ struct ExerciseTransitionContainer: View {
     @ViewBuilder
     private var srsReviewView: some View {
         if let card = currentCard {
+            if isPresentingNewCard {
+                // `.id(card.id)` is load-bearing, not decoration: when a
+                // foundation-mode session introduces several new kana in a
+                // row (the common day-one shape — no due reviews, several
+                // intros back to back), consecutive intros stay in this SAME
+                // if-branch with no other structural change, so WITHOUT this
+                // id SwiftUI reuses the same `NewCardPresentationView`
+                // instance across cards. Its `.task` (autoplay, no id) would
+                // then never re-run for card #2+, and its `.task(id: isPaused)`
+                // auto-advance timer would never re-arm either (`isPaused`
+                // didn't change) — card #2 would sit silent and stuck
+                // forever, with no button and no swipe to escape it. Forcing
+                // a fresh identity per card makes both `.task`s fire again on
+                // every card, intro or not.
+                NewCardPresentationView(
+                    card: card,
+                    isPaused: isPaused,
+                    onAcknowledged: onPresentationAcknowledged,
+                    contentRepository: Self.kanaContentRepository
+                )
+                .id(card.id)
+            } else {
             VStack(spacing: 0) {
                 Spacer()
 
@@ -208,6 +270,7 @@ struct ExerciseTransitionContainer: View {
                 }
             }
             .animation(.spring(response: 0.35, dampingFraction: 0.85), value: isRevealed)
+            }
         }
     }
 
@@ -361,6 +424,156 @@ enum DrillGradeMapping {
     /// (`vocabularyStudy` is `.perGrade`) and is NEVER written to FSRS.
     static func vocabularyRecall(isCorrect: Bool) -> Grade {
         isCorrect ? .good : .again
+    }
+}
+
+// MARK: - New Card Presentation
+
+/// Ungraded "presentation" pass for a brand-new kana card the learner has
+/// never seen before: the glyph, its romaji reading (visible immediately —
+/// no reveal tap), and the pronunciation played automatically. No grading
+/// affordance — ON RENCONTRE, on n'évalue pas (2026-08 pedagogy review,
+/// "erreur de conception #1": grading a touch-and-reveal test on unseen
+/// material produces a first FSRS note that's noise, not signal). A tap
+/// anywhere replays the audio; the view advances on its own after
+/// `autoAdvanceSeconds` — no button, no added tap versus today's flow (see
+/// `SessionViewModel.completeNewCardPresentation`, called only by the
+/// auto-advance timer here, never by the tap).
+///
+/// Reuses the SAME `ikeru.audio.autoplay` `@AppStorage` key `SRSCardView`
+/// already gates its reveal-autoplay on, rather than introducing a second
+/// audio-preference flag.
+///
+/// **Stroke-order trace**: plays ONCE, automatically, as a motor-encoding
+/// reinforcement — not a drill. No tap, no grade, no button; it reuses the
+/// SAME rendering engine `KanjiDisplayView` already drives for kanji
+/// (`StrokeOrderViewModel` + `StrokeOrderView`), just fed kana SVG data from
+/// `ContentRepository.kanaStrokeData(for:)`. Covers 142 of the 208 kana
+/// catalogue characters (92 base + 50 dakuten); the 66 yōon digraphs
+/// (きゃ, etc.) have no KanjiVG file for a two-codepoint combination, so the
+/// lookup returns `nil` and the trace view is simply omitted — no reserved
+/// frame, no placeholder, no dead affordance. The fetch runs in its own
+/// `.task`, independent of the audio-autoplay and auto-advance tasks below,
+/// so a slow or missing trace never delays the card's appearance, its audio,
+/// or its 18s auto-advance.
+///
+/// **Mnemonic link**: `MnemonicService` (IkeruCore) exists but is
+/// kanji/radical-oriented and isn't injected into `SessionViewModel`'s
+/// dependency graph — wiring that reaches outside this pass's file scope.
+/// Left unwired rather than half-wired; no dead "tip" button is shown.
+private struct NewCardPresentationView: View {
+    let card: CardDTO
+    let isPaused: Bool
+    let onAcknowledged: () -> Void
+    /// `nil` when the bundle couldn't be resolved (see
+    /// `ExerciseTransitionContainer.kanaContentRepository`) — the trace
+    /// section just never appears in that case, same as a yōon lookup miss.
+    let contentRepository: ContentRepository?
+
+    @State private var audioService = AudioService()
+    @State private var strokeOrderViewModel = StrokeOrderViewModel()
+    @AppStorage("ikeru.audio.autoplay") private var isAudioAutoplayEnabled: Bool = true
+
+    /// ~15-20s per the pedagogy review's "CARTE DE PRESENTATION" spec — long
+    /// enough to read the glyph, hear it, and register the romaji before the
+    /// card moves on by itself.
+    private static let autoAdvanceSeconds: Double = 18
+
+    var body: some View {
+        VStack(spacing: IkeruTheme.Spacing.lg) {
+            Spacer()
+
+            Text("MEETING A NEW CHARACTER", comment: "Kicker above a brand-new kana's presentation card — there is nothing to answer here, only to notice")
+                .ikeruScaledFont(11, weight: .semibold, relativeTo: .caption2)
+                .tracking(2)
+                .textCase(.uppercase)
+                .foregroundStyle(Color.ikeruTextTertiary)
+
+            Text(card.front)
+                .font(.system(size: 180, weight: .light, design: .serif))
+                .foregroundStyle(Color.ikeruTextPrimary)
+                .shadow(color: Color.ikeruPrimaryAccent.opacity(0.25), radius: 32, y: 4)
+                .minimumScaleFactor(0.4)
+                .lineLimit(1)
+
+            Text(card.back)
+                .font(.system(size: 32, weight: .semibold, design: .rounded))
+                .foregroundStyle(Color.ikeruPrimaryAccent)
+
+            // Kana stroke-order trace: only appears once fetched (or never,
+            // for a yōon digraph / missing bundle) — see the type's doc
+            // comment. No fixed frame reserved for the absent case, so there
+            // is no visual hole while it's missing or still loading.
+            if let strokeData = strokeOrderViewModel.strokeData {
+                StrokeOrderView(
+                    strokeData: strokeData,
+                    speed: .normal,
+                    isPlaying: strokeOrderViewModel.isAnimating,
+                    // Once the one-shot pass finishes, force the "fully
+                    // drawn" guide color for every stroke instead of the
+                    // view model's resting index (which sits ON the last
+                    // stroke, rendering it at 0.1 opacity per
+                    // `StrokeOrderView.guideColor` — fine for
+                    // `KanjiDisplayView`'s tap-to-dismiss flow, but wrong
+                    // here where the trace stays on screen for the
+                    // remainder of the ~18s card).
+                    currentStrokeIndex: strokeOrderViewModel.isAnimating
+                        ? strokeOrderViewModel.currentStrokeIndex
+                        : strokeData.strokes.count,
+                    onStrokeCompleted: {
+                        strokeOrderViewModel.advanceAnimationStroke()
+                    }
+                )
+                .frame(width: 120, height: 120)
+                .transition(.opacity)
+            }
+
+            Spacer()
+
+            Text("Tap to hear it again", comment: "Hint under a new-card presentation card — tapping replays the audio; the card advances on its own after a few seconds")
+                .ikeruScaledFont(11, weight: .semibold, relativeTo: .caption2)
+                .tracking(2)
+                .textCase(.uppercase)
+                .foregroundStyle(TatamiTokens.paperGhost)
+                .padding(.bottom, IkeruTheme.Spacing.md)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.horizontal, IkeruTheme.Spacing.lg)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            Task { await audioService.playTTS(text: card.front) }
+        }
+        .task {
+            guard isAudioAutoplayEnabled else { return }
+            await audioService.playTTS(text: card.front)
+        }
+        // Independent of the audio task above: a missing/slow trace must
+        // never delay the audio or the auto-advance timer. Unkeyed, like
+        // the audio `.task` — this view already gets a fresh identity per
+        // card via `.id(card.id)` in the parent, so it re-runs per card
+        // without needing an explicit `id:`. Deliberately NOT gated on
+        // `isPaused`: the trace is a few seconds of non-interactive
+        // reinforcement, not a timer the learner can get stuck behind, so
+        // pausing mid-trace just leaves it visually frozen rather than
+        // needing its own pause/resume bookkeeping.
+        .task {
+            guard let contentRepository else { return }
+            guard let result = await contentRepository.kanaStrokeData(for: card.front) else { return }
+            await strokeOrderViewModel.loadStrokes(for: card.front, svgData: result.svg)
+            strokeOrderViewModel.startAnimation()
+        }
+        .animation(.easeIn(duration: 0.3), value: strokeOrderViewModel.strokeData)
+        // Keyed on `isPaused`: flipping it cancels whatever sleep is in
+        // flight and restarts this task. Paused → returns immediately
+        // (timer stops dead, nothing advances under the pause overlay).
+        // Resumed → a FRESH full-length sleep starts (no partial-countdown
+        // bookkeeping needed for a single ungraded intro step).
+        .task(id: isPaused) {
+            guard !isPaused else { return }
+            try? await Task.sleep(for: .seconds(Self.autoAdvanceSeconds))
+            guard !Task.isCancelled else { return }
+            onAcknowledged()
+        }
     }
 }
 

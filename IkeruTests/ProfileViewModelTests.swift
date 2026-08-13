@@ -11,8 +11,10 @@ struct ProfileViewModelTests {
     // MARK: - Helpers
 
     private func makeModelContext() throws -> ModelContext {
-        // Full V2 schema so ExerciseOutcomeLog (scalar-scoped, no cascade) is
-        // present for the deletion-cleanup test.
+        // Full V3 schema so ExerciseOutcomeLog (scalar-scoped, no cascade) is
+        // present for the deletion-cleanup test. Must track the app's current
+        // schema version (see IkeruApp) — declaring a stale version opens the
+        // container without error but traps on the first insert.
         //
         // NOTE (pre-existing, not fixed here — out of this repair's scope):
         // every `@Test` in this file SIGTRAPs inside SwiftData (EXC_BREAKPOINT,
@@ -34,7 +36,7 @@ struct ProfileViewModelTests {
         // discriminator (schema form, actor- vs. context-routing) was found
         // that explains the full matrix — flagging for a dedicated follow-up
         // rather than guessing further.
-        let schema = Schema(versionedSchema: IkeruSchemaV2.self)
+        let schema = Schema(versionedSchema: IkeruSchemaV3.self)
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         let container = try ModelContainer(for: schema, configurations: [config])
         return container.mainContext
@@ -324,5 +326,44 @@ struct ProfileViewModelTests {
         // Only the surviving profile's single outcome remains.
         #expect(remaining.count == 1)
         #expect(remaining.first?.profileID == keep.id)
+    }
+
+    @Test("Deleting a profile removes its MasteryBookSnapshotStore baseline (chantier #45h)")
+    func deleteProfileRemovesMasteryBookSnapshot() throws {
+        let context = try makeModelContext()
+        let viewModel = ProfileViewModel(modelContext: context)
+        viewModel.createProfile(name: "A")
+        viewModel.createProfile(name: "B")
+
+        let target = try #require(viewModel.allProfiles.first { $0.displayName == "A" })
+        let keep = try #require(viewModel.allProfiles.first { $0.displayName == "B" })
+
+        // MasteryBookSnapshotStore is UserDefaults-backed, keyed by profile
+        // id — it does NOT cascade with the SwiftData profile delete, so
+        // `deleteProfile` must clear it explicitly (same pattern as
+        // `OnboardingFlags` and `ExerciseOutcomeLog` above).
+        MasteryBookSnapshotStore.recordIfStale(
+            profileID: target.id,
+            counts: MasteryBookCounts(masteredCount: 4)
+        )
+        MasteryBookSnapshotStore.recordIfStale(
+            profileID: keep.id,
+            counts: MasteryBookCounts(masteredCount: 2)
+        )
+        defer {
+            MasteryBookSnapshotStore.clear(profileID: target.id)
+            MasteryBookSnapshotStore.clear(profileID: keep.id)
+        }
+
+        viewModel.deleteProfile(target)
+
+        // The deleted profile's baseline is gone; the surviving profile's
+        // baseline — proof the store really is scoped per profile — is
+        // untouched.
+        #expect(MasteryBookSnapshotStore.priorSnapshot(profileID: target.id) == nil)
+        #expect(
+            MasteryBookSnapshotStore.priorSnapshot(profileID: keep.id)
+                == MasteryBookCounts(masteredCount: 2)
+        )
     }
 }

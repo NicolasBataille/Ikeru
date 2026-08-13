@@ -266,7 +266,12 @@ struct ActiveSessionView: View {
                 upcomingCards: viewModel.upcomingCards,
                 feedbackState: viewModel.feedbackState,
                 vocabularyPool: viewModel.vocabularyPool,
-                desiredRetention: viewModel.desiredRetention
+                desiredRetention: viewModel.desiredRetention,
+                isPresentingNewCard: viewModel.isPresentingNewCard,
+                isPaused: viewModel.isPaused,
+                onPresentationAcknowledged: {
+                    Task { await viewModel.completeNewCardPresentation() }
+                }
             )
             .frame(maxHeight: .infinity)
         }
@@ -427,8 +432,14 @@ struct ActiveSessionView: View {
 
     /// Shows the swipe coach-mark the first time this profile reaches a real
     /// SRS card (sessions are SRS-only after the rework).
+    ///
+    /// Gated on `!isPresentingNewCard`: a fresh profile's very first
+    /// exercise can be a new-card presentation pass (no due reviews yet, all
+    /// new kana) — that view has no swipe gesture at all, so the coach-mark
+    /// would render over it and be dismissed/consumed before any swipeable
+    /// card ever appears.
     private func maybeShowSwipeTutorial() {
-        guard !showSwipeTutorial, viewModel.currentCard != nil else { return }
+        guard !showSwipeTutorial, viewModel.currentCard != nil, !viewModel.isPresentingNewCard else { return }
         guard let id = ActiveProfileResolver.activeProfileID() else { return }
         guard !OnboardingFlags.hasSeenSwipeTutorial(profileID: id) else { return }
         showSwipeTutorial = true

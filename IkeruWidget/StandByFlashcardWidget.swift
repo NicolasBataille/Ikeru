@@ -53,7 +53,29 @@ struct FlashcardTimelineProvider: TimelineProvider {
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<FlashcardEntry>) -> Void) {
-        // Generate entries cycling every 10 seconds for StandBy
+        // Entries cycle every 10 seconds for StandBy — WidgetKit walks the
+        // already-delivered `entries` array on its own clock and does NOT
+        // re-invoke this provider per displayed card, only when the
+        // timeline's `.after` reload policy elapses. The previous version
+        // only pre-computed ~2 minutes of cards (12 * 10s) before asking
+        // WidgetKit to come back, which meant the extension process was
+        // being asked to refresh (and, per the widget host's usual
+        // on-demand lifecycle, potentially relaunched) roughly every two
+        // minutes. That relaunch cadence is a plausible *contributor* to the
+        // EXC_GUARD/XPC_EXIT_REASON_FAULT crashes seen in
+        // ~/Library/Logs/DiagnosticReports (ExcUserFault_IkeruWidget-*.ips)
+        // — every one of those crash reports faults inside Apple's own
+        // system frameworks (libxpc / BaseBoard / ExtensionFoundation)
+        // while the extension's XPC listener is bootstrapping and
+        // identifying an incoming connection, *before* any of this file's
+        // Swift code has run. That fault is not reachable from here and
+        // can't be fixed by this provider. Widening the window to 5 minutes
+        // (30 cards, repeating
+        // the 12-card list) keeps the same 10s-per-card visual cadence
+        // while cutting how often WidgetKit needs to ask this extension for
+        // a fresh timeline by more than half, which lowers exposure to
+        // whatever race triggers that system-side fault — a mitigation,
+        // not a fix.
         let flashcards: [(character: String, reading: String, meaning: String)] = [
             ("日", "にち", "Day, Sun"),
             ("月", "げつ", "Moon, Month"),
@@ -69,11 +91,16 @@ struct FlashcardTimelineProvider: TimelineProvider {
             ("小", "しょう", "Small"),
         ]
 
+        let cardInterval: TimeInterval = 10
+        let windowSeconds: TimeInterval = 300
+        let entryCount = Int(windowSeconds / cardInterval)
+
         var entries: [FlashcardEntry] = []
         let now = Date()
 
-        for (index, card) in flashcards.enumerated() {
-            let entryDate = now.addingTimeInterval(Double(index) * 10)
+        for index in 0..<entryCount {
+            let card = flashcards[index % flashcards.count]
+            let entryDate = now.addingTimeInterval(Double(index) * cardInterval)
             entries.append(FlashcardEntry(
                 date: entryDate,
                 character: card.character,
@@ -83,7 +110,7 @@ struct FlashcardTimelineProvider: TimelineProvider {
         }
 
         let timeline = Timeline(entries: entries, policy: .after(
-            now.addingTimeInterval(Double(flashcards.count) * 10)
+            now.addingTimeInterval(windowSeconds)
         ))
         completion(timeline)
     }

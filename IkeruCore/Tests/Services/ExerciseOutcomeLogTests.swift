@@ -38,8 +38,15 @@ struct ExerciseOutcomeAccuracyTests {
 struct ExerciseOutcomeLogAggregationTests {
 
     private func makeContainer() throws -> ModelContainer {
-        // Full V2 schema so the ExerciseOutcomeLog entity is present.
-        let schema = Schema(versionedSchema: IkeruSchemaV2.self)
+        // Full current (V3) schema so the ExerciseOutcomeLog entity is
+        // present. Must be V3, not V2: `IkeruSchemaV2` is now frozen (nested
+        // snapshot types, learner-telemetry lot 1 / remediation #17) — a
+        // container opened with `versionedSchema: IkeruSchemaV2.self` would
+        // bind `CardRepository`'s live-type fetches (UserProfile/Card/
+        // ReviewLog/RPGState, used throughout this suite) to the WRONG
+        // entity identity and crash with "Failed to cast model ... to X".
+        // See IkeruSchema.swift's `IkeruSchemaV2` doc comment.
+        let schema = Schema(versionedSchema: IkeruSchemaV3.self)
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         return try ModelContainer(for: schema, configurations: [config])
     }
@@ -188,19 +195,28 @@ struct ExerciseOutcomeLogAggregationTests {
     }
 }
 
-// MARK: - V1 → V2 migration
+// MARK: - V1 → V2 → V3 migration
+//
+// Migrates a genuine V1-shaped store through the FULL current chain
+// (V1→V2→V3), matching what production actually does on a real user's
+// device — not just the V1→V2 stage in isolation. Extended for
+// learner-telemetry lot 1 / remediation #17 (which added V3): the store is
+// still SEEDED as V1 (unchanged), only the reopen target moved from V2 to
+// V3 so this keeps proving the WHOLE migration plan, not a stale prefix of
+// it. `IkeruSchemaTests.swift`'s `StoreMigrationV2V3Tests` separately proves
+// the V2→V3 stage in isolation, starting from a V2-shaped store.
 
 // Runs in its OWN CI step / own `swift test` process: opening a V1-shaped
 // container poisons CoreData's process-global entity↔class cache, so any
-// later V2 fetch of RPGState in the same process can materialize the wrong
-// class ("Failed to cast model ... to RPGState"). Process isolation — not
-// .serialized, not --no-parallel — is the only reliable containment.
+// later V2/V3 fetch of RPGState in the same process can materialize the
+// wrong class ("Failed to cast model ... to RPGState"). Process isolation —
+// not .serialized, not --no-parallel — is the only reliable containment.
 // The suite name deliberately avoids the "IkeruSchema" substring the main
 // CI filter matches.
-@Suite("LegacyStoreMigration V1→V2", .serialized)
+@Suite("LegacyStoreMigration V1→V2→V3", .serialized)
 struct LegacyStoreMigrationTests {
 
-    @Test("Existing V1 data survives the lightweight V1→V2 stage; ExerciseOutcomeLog becomes usable")
+    @Test("Existing V1 data survives the lightweight V1→V2→V3 chain; ExerciseOutcomeLog becomes usable")
     func v1ToV2AdditiveMigration() throws {
         let dir = FileManager.default.temporaryDirectory
         let url = dir.appendingPathComponent("ikeru-mig-\(UUID().uuidString).store")
@@ -218,7 +234,8 @@ struct LegacyStoreMigrationTests {
         //    container with NO migration plan attached. Insert data using the
         //    FROZEN V1 model types (`IkeruSchemaV1.UserProfile`, `.Card`,
         //    `.RPGState`, `.ReviewLog`) — not the live top-level types, which
-        //    now describe V2's shape. See IkeruSchema.swift.
+        //    now describe V3's shape (learner-telemetry lot 1 / remediation
+        //    #17 froze V2 and added V3 — see IkeruSchema.swift).
         do {
             let schema = Schema(versionedSchema: IkeruSchemaV1.self)
             let config = ModelConfiguration(schema: schema, url: url)
@@ -241,22 +258,37 @@ struct LegacyStoreMigrationTests {
             try ctx.save()
         }
 
-        // 2. Reopen with the V2 schema + migration plan → the lightweight stage runs.
-        let schemaV2 = Schema(versionedSchema: IkeruSchemaV2.self)
-        let configV2 = ModelConfiguration(schema: schemaV2, url: url)
-        let containerV2 = try ModelContainer(
-            for: schemaV2,
+        // 2. Reopen with the CURRENT (V3) schema + migration plan → BOTH
+        //    lightweight stages run in sequence (V1→V2, then V2→V3) —
+        //    exactly what production does. Must target V3, not V2: `IkeruSchemaV2`
+        //    is now frozen (nested snapshot types), so a container opened with
+        //    `versionedSchema: IkeruSchemaV2.self` would bind the live-type
+        //    fetches below to the WRONG entity identity and crash with
+        //    "Failed to cast model ... to X" — the same failure class this
+        //    test exists to catch, just one version later.
+        let schemaV3 = Schema(versionedSchema: IkeruSchemaV3.self)
+        let configV3 = ModelConfiguration(schema: schemaV3, url: url)
+        let containerV3 = try ModelContainer(
+            for: schemaV3,
             migrationPlan: IkeruMigrationPlan.self,
-            configurations: [configV2]
+            configurations: [configV3]
         )
-        let ctx = ModelContext(containerV2)
+        let ctx = ModelContext(containerV3)
 
-        // V1 data survived intact — now readable through the LIVE (V2) types.
+        // V1 data survived intact through BOTH stages — now readable through
+        // the LIVE (V3) types.
         let profiles = try ctx.fetch(FetchDescriptor<UserProfile>())
         #expect(profiles.count == 1)
         #expect(profiles.first?.displayName == "Migrator")
         #expect(try ctx.fetch(FetchDescriptor<Card>()).count == 1)
-        #expect(try ctx.fetch(FetchDescriptor<ReviewLog>()).count == 1)
+
+        let reviewLogs = try ctx.fetch(FetchDescriptor<ReviewLog>())
+        #expect(reviewLogs.count == 1)
+        // The V3-only columns backfill to nil for a row that predates them
+        // by two versions.
+        #expect(reviewLogs.first?.answeredValue == nil)
+        #expect(reviewLogs.first?.exerciseType == nil)
+        #expect(reviewLogs.first?.surface == nil)
 
         // RPGState's pre-existing values survived the migration untouched...
         let rpgStates = try ctx.fetch(FetchDescriptor<RPGState>())
@@ -270,7 +302,7 @@ struct LegacyStoreMigrationTests {
         // default for rows that predate it.
         #expect(rpg.activeDaysCount == 0)
 
-        // The newly-added entity is usable in the migrated store.
+        // The V2-added entity is usable in the migrated store.
         let profileID = try #require(profiles.first?.id)
         ctx.insert(ExerciseOutcomeLog(skill: .listening, accuracy: 1.0, profileID: profileID))
         try ctx.save()

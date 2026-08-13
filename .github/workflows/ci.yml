@@ -197,6 +197,19 @@ jobs:
           cd IkeruCore
           swift test --no-parallel --filter "LegacyStoreMigration"
 
+      - name: Run V2→V3 Store Migration Tests (own process)
+        # Same containment rule as the previous step, and for the same
+        # reason: opening a versioned-schema container against frozen nested
+        # types then reopening that store with live top-level types poisons
+        # SwiftData's process-global entity↔class cache, so this suite must
+        # never share a `swift test` process with any other SwiftData suite
+        # — see StoreMigrationV2V3Tests.swift's header comment. It also must
+        # not share a process with the Legacy-Store Migration step above:
+        # each store-opening migration suite gets its own process.
+        run: |
+          cd IkeruCore
+          swift test --no-parallel --filter "StoreMigrationV2V3"
+
       - name: Run App Tests (green subset)
         # Same — scoped to suites known to pass. KanaDrillViewModel covers
         # the recent shuffle-fix regression tests.
@@ -231,6 +244,8 @@ jobs:
             -skipPackagePluginValidation \
             -only-testing:IkeruTests/KanaDrillViewModelTests \
             -only-testing:IkeruTests/SessionDecouplingTests \
+            -only-testing:IkeruTests/NewCardPresentationTests \
+            -only-testing:IkeruTests/MasteryBookSnapshotStoreTests \
             -only-testing:IkeruTests/Tier1KanjiStudyBookkeepingTests \
             -only-testing:IkeruTests/Tier2AudioDrillCompletionTests \
             -only-testing:IkeruTests/Tier2VocabRecallTests \

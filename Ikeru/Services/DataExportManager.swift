@@ -15,7 +15,7 @@ final class DataExportManager {
 
     /// Generates a complete data export as a single `.zip` archive and returns
     /// its temporary URL. The archive contains: cards.json, reviews.json,
-    /// outcomes.json, rpg.json, context.json, cards.csv.
+    /// confusions.json, outcomes.json, rpg.json, context.json, cards.csv.
     ///
     /// The intermediate export directory is zipped (so the share sheet hands the
     /// user one file, not a bare folder) and then deleted. A serialization or
@@ -111,10 +111,14 @@ final class DataExportManager {
     // MARK: - Off-main writing
 
     /// Builds a fresh temporary directory and writes every export file into
-    /// it: cards.json, cards.csv, reviews.json, outcomes.json, rpg.json (if
-    /// present), and context.json. Runs off the main actor — only Sendable
-    /// inputs (`CardDTO`, `ReviewLogDTO`, `ExerciseOutcomeLogDTO`, `RPGExport`)
-    /// are accepted.
+    /// it: cards.json, cards.csv, reviews.json, confusions.json, outcomes.json,
+    /// rpg.json (if present), and context.json. Runs off the main actor — only
+    /// Sendable inputs (`CardDTO`, `ReviewLogDTO`, `ExerciseOutcomeLogDTO`,
+    /// `RPGExport`) are accepted.
+    ///
+    /// `confusions.json` is derived, not persisted: it is aggregated from
+    /// `reviews` + `cards` right here, at export time (learner-telemetry lot 1,
+    /// see `docs/design-specs/2026-08-10-learner-telemetry-design.md` §3.1/§4).
     nonisolated private static func writeExportFiles(
         cards: [CardDTO],
         reviews: [ReviewLogDTO],
@@ -146,6 +150,13 @@ final class DataExportManager {
         // Review logs
         let reviewsData = try encoder.encode(reviews.map { ReviewExportRow(from: $0) })
         try reviewsData.write(to: exportDir.appending(path: "reviews.json"))
+
+        // Confusion pairs — DERIVED from reviews + cards, nothing new persisted.
+        // Always written (an empty `[]` when there is no confusable history yet),
+        // matching the "empty history still writes a valid file" convention used
+        // by reviews.json/outcomes.json above.
+        let confusionsData = try encoder.encode(generateConfusions(cards: cards, reviews: reviews))
+        try confusionsData.write(to: exportDir.appending(path: "confusions.json"))
 
         // Exercise outcomes (listening / shadowing, no backing Card)
         let outcomesData = try encoder.encode(outcomes.map { OutcomeExportRow(from: $0) })
@@ -245,6 +256,49 @@ final class DataExportManager {
         return csv
     }
 
+    // MARK: - Confusion Pair Aggregation
+
+    /// Aggregates `(expected, answered)` character pairs from `reviews` into
+    /// occurrence counts. `expected` is the reviewed card's `front` (looked up
+    /// by `cardId`); `answered` is `ReviewLogDTO.answeredValue`.
+    ///
+    /// A row is included only when:
+    /// - `cardId` is non-nil (the card wasn't deleted, so `front` is
+    ///   resolvable) and matches a card in `cards`;
+    /// - `answeredValue` is non-nil (the exercise format recorded a choice —
+    ///   today, only the kana quiz does; self-graded flashcards never set it);
+    /// - `expected != answered` — a **correct** answer isn't a confusion, and
+    ///   inflating this file with matches would bury the pairs that matter.
+    ///   Per-item accuracy is already visible in `reviews.json`.
+    ///
+    /// Sorted by count descending, then `expected`/`answered` ascending, so the
+    /// output (and any test asserting on it) is deterministic regardless of
+    /// dictionary iteration order.
+    nonisolated private static func generateConfusions(
+        cards: [CardDTO],
+        reviews: [ReviewLogDTO]
+    ) -> [ConfusionExportRow] {
+        let frontByCardId = Dictionary(uniqueKeysWithValues: cards.map { ($0.id, $0.front) })
+
+        var counts: [ConfusionPairKey: Int] = [:]
+        for review in reviews {
+            guard let cardId = review.cardId,
+                let answered = review.answeredValue,
+                let expected = frontByCardId[cardId],
+                expected != answered
+            else { continue }
+            counts[ConfusionPairKey(expected: expected, answered: answered), default: 0] += 1
+        }
+
+        return counts
+            .map { ConfusionExportRow(expected: $0.key.expected, answered: $0.key.answered, count: $0.value) }
+            .sorted { lhs, rhs in
+                if lhs.count != rhs.count { return lhs.count > rhs.count }
+                if lhs.expected != rhs.expected { return lhs.expected < rhs.expected }
+                return lhs.answered < rhs.answered
+            }
+    }
+
     nonisolated private static func escapeCSV(_ value: String) -> String {
         if value.contains(",") || value.contains("\"") || value.contains("\n") {
             return "\"" + value.replacingOccurrences(of: "\"", with: "\"\"") + "\""
@@ -255,6 +309,14 @@ final class DataExportManager {
     // MARK: - Context JSON
 
     nonisolated private static func generateContextJSON() -> String {
+        // swiftlint:disable line_length
+        // The lines below are prose describing the exported schema for external
+        // consumers (data scientists, other tools) — kept as single JSON string
+        // values on purpose so they stay easy to grep/diff. Wrapping mid-sentence
+        // would either break JSON validity (a raw newline inside a JSON string
+        // isn't valid without an escaped \n) or require splitting one field's
+        // meaning across several JSON keys, which is worse for a reader of the
+        // exported context.json than one long line is for a reader of this file.
         """
         {
           "export_format": "ikeru-v1",
@@ -285,10 +347,26 @@ final class DataExportManager {
                 "cardId": "UUID of the reviewed card (null if the card was deleted)",
                 "cardType": "Card category at review time: kanji, vocabulary, grammar, listening",
                 "timestamp": "ISO8601 date when the review occurred",
-                "grade": "FSRS grade 1-4 (1=again, 2=hard, 3=good, 4=easy)",
+                "grade": "FSRS grade 1-4 (1=again, 2=hard, 3=good, 4=easy) — see grade_semantics below for what each value means pedagogically",
                 "gradeLabel": "Human-readable grade: again, hard, good, easy",
-                "responseTimeMs": "Time taken to answer, in milliseconds"
+                "responseTimeMs": "Time taken to answer, in milliseconds",
+                "answeredValue": "The value the learner actually chose or produced, for any exercise format that offers a choice. Null for a self-graded flashcard — there is nothing to record, the learner graded their own recall. Where present, this is what makes confusion pairs (see confusions.json) analyzable: e.g. the learner was shown シ and answered ツ. Script is NOT uniform across rows: for the kana quiz this is the kana character itself (シ), not the romaji option label, so it can be compared directly against a card's front; a few rows fall back to the raw romaji option string when the character couldn't be resolved. A consumer must not assume one script.",
+                "exerciseType": "Free-form identifier for the exercise format this grade came from. Null when not recorded. Two independent value spaces exist, distinguished by shape, not a shared enum: main-session values match ExerciseType.rawValue (e.g. kanjiStudy, vocabularyStudy, grammarStudy, listeningStudy); kana-drill values are 'kana.flashcard' or 'kana.quiz' (a surface that predates ExerciseType and grades kana cards outside the session pipeline).",
+                "surface": "Where the review was graded from: iphone.session (main SRS session), iphone.drill (kana drill flashcard/quiz), or watch. 'watch' is reserved: no Watch code path persists a ReviewLog yet, so this export will never actually contain that value today — do not read its absence as evidence the learner isn't using the Watch."
               }
+            },
+            "confusions.json": {
+              "description": "DERIVED aggregate, not a persisted table — computed from reviews.json at export time, every time. One row per distinct (expected, answered) pair with how many times it occurred in the exported window. This is the file with the highest diagnostic value: it names recurring confusions (e.g. シ/ツ, ソ/ン) instead of forcing an inference from accuracy alone.",
+              "fields": {
+                "expected": "The character/value the learner was shown (the reviewed card's front)",
+                "answered": "The character/value the learner actually chose — see reviews.json.fields.answeredValue for the script caveat",
+                "count": "Number of times this exact (expected, answered) pair occurred"
+              },
+              "exclusions": [
+                "Rows where expected == answered are NOT included — a correct answer isn't a confusion. Per-item accuracy already lives in reviews.json/cards.json.",
+                "Reviews with a null answeredValue are excluded (most flashcard/self-graded reviews today — only the kana quiz currently populates answeredValue, so confusions.json will be empty or kana-only until other formats adopt the same field).",
+                "Reviews whose card was deleted (cardId present but no longer resolvable, or cardId null) are excluded — 'expected' cannot be determined without the card."
+              ]
             },
             "outcomes.json": {
               "description": "Pool-based output drill outcomes (listening / shadowing) with no backing flashcard",
@@ -312,14 +390,36 @@ final class DataExportManager {
               }
             }
           },
+          "grade_semantics": {
+            "description": "What the 4 grade buttons mean, pedagogically — read this before computing any recall/retention rate from reviews.json or outcomes.json.",
+            "1": {
+              "label": "again",
+              "meaning": "The learner failed to recall. This is the ONLY grade that counts as a lapse/failure — it resets the card's FSRS interval and is what leech detection counts."
+            },
+            "2": {
+              "label": "hard",
+              "meaning": "The learner recalled correctly, but slowly or with effort. This is a SUCCESS, not a failure, in the SRS sense — 'slow but correct'. A recall/retention rate must count hard as a success alongside good and easy; counting it as a failure understates the learner's actual retention and was a bug the app itself has fixed (recall-rate calculations now treat everything except again as success)."
+            },
+            "3": {
+              "label": "good",
+              "meaning": "Recalled correctly at the expected effort — the baseline success."
+            },
+            "4": {
+              "label": "easy",
+              "meaning": "Recalled correctly with no effort — success, and schedules a longer interval than good."
+            },
+            "recall_rate_formula": "successes / total, where successes = count(grade != again) = count(grade in {hard, good, easy})"
+          },
           "usage_notes": [
             "All dates are ISO8601 format in UTC",
             "Card types: kanji, vocabulary, grammar, listening",
             "Ease factor follows FSRS algorithm conventions",
-            "Leech detection threshold: 4 lapses"
+            "Leech detection threshold: 4 lapses",
+            "See grade_semantics for what each of the 4 review grades means before computing any success/retention rate — grade 2 (hard) is a success, not a failure"
           ]
         }
         """
+        // swiftlint:enable line_length
     }
 }
 
@@ -359,6 +459,17 @@ private struct ReviewExportRow: Codable, Sendable {
     let grade: Int
     let gradeLabel: String
     let responseTimeMs: Int
+    /// See `ReviewLog.answeredValue` — nil for a self-graded flashcard,
+    /// otherwise the value the learner chose/produced (script not uniform:
+    /// kana character for the kana quiz, romaji as a fallback — a consumer
+    /// must not assume one).
+    let answeredValue: String?
+    /// See `ReviewLog.exerciseType` — free-form, value space differs by
+    /// prefix (see `context.json`'s `reviews.json.fields.exerciseType`).
+    let exerciseType: String?
+    /// See `ReviewLog.surface` — `"iphone.session"`, `"iphone.drill"`, or the
+    /// reserved (not yet emitted) `"watch"`.
+    let surface: String?
 
     init(from dto: ReviewLogDTO) {
         self.id = dto.id
@@ -368,6 +479,9 @@ private struct ReviewExportRow: Codable, Sendable {
         self.grade = dto.grade.rawValue
         self.gradeLabel = Self.label(for: dto.grade)
         self.responseTimeMs = dto.responseTimeMs
+        self.answeredValue = dto.answeredValue
+        self.exerciseType = dto.exerciseType
+        self.surface = dto.surface
     }
 
     /// Explicit grade → label mapping for the exported `gradeLabel` field.
@@ -382,6 +496,22 @@ private struct ReviewExportRow: Codable, Sendable {
         case .easy: "easy"
         }
     }
+}
+
+/// Key for aggregating confusion pair counts in `generateConfusions`. Not
+/// exported directly — `ConfusionExportRow` is the flattened, encodable shape.
+private struct ConfusionPairKey: Hashable {
+    let expected: String
+    let answered: String
+}
+
+/// One row of `confusions.json`: an `(expected, answered)` character pair and
+/// how many times it occurred across the exported review history. Derived at
+/// export time by `generateConfusions` — nothing new persisted.
+private struct ConfusionExportRow: Codable, Sendable {
+    let expected: String
+    let answered: String
+    let count: Int
 }
 
 private struct OutcomeExportRow: Codable, Sendable {

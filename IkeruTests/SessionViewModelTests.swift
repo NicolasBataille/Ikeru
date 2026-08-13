@@ -172,6 +172,33 @@ struct SessionViewModelTests {
         #expect(vm.reviewedCount == 1)
     }
 
+    /// Learner-telemetry lot 1 (remediation #17): full call path from
+    /// `gradeAndAdvance` down to the persisted `ReviewLog` — proves
+    /// `exerciseType`/`surface` actually reach the row, not just that
+    /// `CardRepository.gradeCard`'s signature grew unused parameters. Seeded
+    /// cards are `.kanji`, which `SessionExerciseSupport.exerciseTypeForCurrentReview`
+    /// maps to `.kanjiStudy`. `answeredValue` stays nil: `gradeAndAdvance` is
+    /// always a self-graded Again/Hard/Good/Easy button press, never a
+    /// choice-format answer.
+    @Test("gradeAndAdvance persists exerciseType/surface on the ReviewLog; answeredValue stays nil")
+    func gradeAndAdvancePersistsProvenance() async throws {
+        let container = try makeContainer()
+        let ids = try seedDueCards(container: container, count: 1)
+        let planner = await plannerWithSeededCards(container: container)
+        let vm = makeViewModel(container: container, sessionPlanner: planner)
+        let repo = CardRepository(modelContainer: container)
+
+        await vm.startSession()
+        await vm.gradeAndAdvance(grade: .good)
+
+        let logs = await repo.reviewLogs(for: try #require(ids.first))
+        #expect(logs.count == 1)
+        let log = try #require(logs.first)
+        #expect(log.answeredValue == nil)
+        #expect(log.exerciseType == ExerciseType.kanjiStudy.rawValue)
+        #expect(log.surface == "iphone.session")
+    }
+
     @Test("gradeAndAdvance earns flat XP for good grade")
     func gradeGoodEarnsFlatXP() async throws {
         let container = try makeContainer()

@@ -62,6 +62,10 @@ final class SessionComposer {
         let vocabularyPool: [VocabularyItem]
         let srsCardCount: Int
         let estimatedDurationMinutes: Int
+        /// Card ids awaiting their ungraded new-card presentation pass — see
+        /// `NewCardPresentationScheduler`. `SessionViewModel` seeds its own
+        /// `cardsNeedingPresentation` from this at session start.
+        let cardsNeedingPresentation: Set<UUID>
     }
 
     /// Composes a session queue via the `SessionPlanner` pipeline for the
@@ -80,22 +84,26 @@ final class SessionComposer {
             availableCards: cards
         )
         let plan = await sessionPlanner.compose(inputs: inputs)
-        let srsCards = Self.srsCards(from: plan.exercises)
+        let scheduled = NewCardPresentationScheduler.schedulingPresentations(for: plan.exercises)
+        let exercises = scheduled.exercises
+        let srsCards = Self.srsCards(from: exercises)
         guard !srsCards.isEmpty else { return nil }
 
         let pool = await vocabularyPool(level: snapshot.jlptLevel)
 
         return HomeRecommendationPlan(
             sessionQueue: srsCards,
-            sessionExercises: plan.exercises,
+            sessionExercises: exercises,
             endPolicy: SessionEndPolicy(
                 durationBudgetMinutes: durationMinutes,
-                queueLength: plan.exercises.count
+                queueLength: exercises.count
             ),
             jlptLevel: snapshot.jlptLevel,
             vocabularyPool: pool,
             srsCardCount: srsCards.count,
             estimatedDurationMinutes: plan.estimatedDurationMinutes
+                + Self.minutes(fromSeconds: scheduled.addedDurationSeconds),
+            cardsNeedingPresentation: scheduled.cardsNeedingPresentation
         )
     }
 
@@ -109,6 +117,8 @@ final class SessionComposer {
         let vocabularyPool: [VocabularyItem]
         let srsCardCount: Int
         let estimatedDurationMinutes: Int
+        /// See `HomeRecommendationPlan.cardsNeedingPresentation`.
+        let cardsNeedingPresentation: Set<UUID>
     }
 
     /// Composes a custom session from the Étude → Compose sheet. Same
@@ -132,7 +142,9 @@ final class SessionComposer {
             availableCards: cards
         )
         let plan = await sessionPlanner.compose(inputs: inputs)
-        let srsCards = Self.srsCards(from: plan.exercises)
+        let scheduled = NewCardPresentationScheduler.schedulingPresentations(for: plan.exercises)
+        let exercises = scheduled.exercises
+        let srsCards = Self.srsCards(from: exercises)
 
         // Custom sessions: use the highest selected JLPT level so the XP
         // multiplier matches the user's chosen difficulty rather than their
@@ -143,15 +155,17 @@ final class SessionComposer {
 
         return StudyCustomPlan(
             sessionQueue: srsCards,
-            sessionExercises: plan.exercises,
+            sessionExercises: exercises,
             endPolicy: SessionEndPolicy(
                 durationBudgetMinutes: duration,
-                queueLength: plan.exercises.count
+                queueLength: exercises.count
             ),
             jlptLevel: jlptLevel,
             vocabularyPool: pool,
             srsCardCount: srsCards.count,
             estimatedDurationMinutes: plan.estimatedDurationMinutes
+                + Self.minutes(fromSeconds: scheduled.addedDurationSeconds),
+            cardsNeedingPresentation: scheduled.cardsNeedingPresentation
         )
     }
 
@@ -160,19 +174,31 @@ final class SessionComposer {
     struct ReviewMistakesPlan {
         let sessionQueue: [CardDTO]
         let sessionExercises: [ExerciseItem]
+        /// Flat (non-maturity-modulated) estimate — review-mistakes never
+        /// went through the planner's maturity budgeting, so this preserves
+        /// the pre-existing behavior rather than introducing a new model.
+        let estimatedDurationMinutes: Int
     }
 
     /// Restarts the session with only the cards graded `.again` in the
     /// previous session. Returns nil if the missed-set (or the resolved card
     /// list) is empty, matching the original's early-return guards.
+    ///
+    /// No new-card presentation pass here by construction: every card in
+    /// `missedCardIDs` was already graded `.again` in a prior session, so
+    /// `fsrsState.reps` is always > 0 — `NewCardPresentationScheduler`'s
+    /// `reps == 0` gate would never fire on this set anyway.
     func composeReviewMistakes(missedCardIDs: Set<UUID>) async -> ReviewMistakesPlan? {
         guard !missedCardIDs.isEmpty else { return nil }
         let allCards = await cardRepository.allCards()
         let mistakes = allCards.filter { missedCardIDs.contains($0.id) }
         guard !mistakes.isEmpty else { return nil }
+        let exercises = mistakes.map { ExerciseItem.srsReview($0) }
+        let totalSeconds = exercises.reduce(0) { $0 + $1.estimatedDurationSeconds }
         return ReviewMistakesPlan(
             sessionQueue: mistakes,
-            sessionExercises: mistakes.map { ExerciseItem.srsReview($0) }
+            sessionExercises: exercises,
+            estimatedDurationMinutes: Self.minutes(fromSeconds: totalSeconds)
         )
     }
 
@@ -189,8 +215,16 @@ final class SessionComposer {
     /// exercise breakdown.
     func composePreview(config: SessionConfig) async -> AdaptivePreview {
         let plan = await plannerService.composeAdaptiveSession(config: config)
-        let totalExercises = plan.exercises.count
-        let totalSeconds = plan.exercises.reduce(0) { $0 + $1.estimatedDurationSeconds }
+        let scheduled = NewCardPresentationScheduler.schedulingPresentations(for: plan.exercises)
+        let totalExercises = scheduled.exercises.count
+        // Read the planner's own maturity-modulated estimate rather than
+        // re-summing `estimatedDurationSeconds` flat across every exercise —
+        // a flat re-sum ignores `DefaultSessionPlanner`'s per-review
+        // maturity discount (`effectiveDurationSeconds`) and silently drifts
+        // from the honest total (SUIVI note, 2026-08 pedagogy P2 review).
+        // The new-card presentation pass adds real time on top of what the
+        // planner priced in, so its seconds are added back explicitly.
+        let totalSeconds = plan.estimatedDurationMinutes * 60 + scheduled.addedDurationSeconds
 
         var skillSplit: [SkillType: Double] = [:]
         if totalExercises > 0 {
@@ -200,7 +234,7 @@ final class SessionComposer {
         }
 
         let preview = SessionPreview(
-            estimatedMinutes: plan.estimatedDurationMinutes,
+            estimatedMinutes: Self.minutes(fromSeconds: totalSeconds),
             cardCount: totalExercises,
             exerciseBreakdown: plan.exerciseBreakdown,
             skillSplit: skillSplit
@@ -216,6 +250,9 @@ final class SessionComposer {
         let sessionExercises: [ExerciseItem]
         let srsCardCount: Int
         let supplementaryExerciseCount: Int
+        let estimatedDurationMinutes: Int
+        /// See `HomeRecommendationPlan.cardsNeedingPresentation`.
+        let cardsNeedingPresentation: Set<UUID>
     }
 
     /// Composes an adaptive session using the provided config. Returns nil
@@ -224,12 +261,17 @@ final class SessionComposer {
     func composeAdaptive(config: SessionConfig) async -> AdaptiveSessionPlan? {
         let plan = await plannerService.composeAdaptiveSession(config: config)
         guard !plan.exercises.isEmpty else { return nil }
-        let srsCards = Self.srsCards(from: plan.exercises)
+        let scheduled = NewCardPresentationScheduler.schedulingPresentations(for: plan.exercises)
+        let exercises = scheduled.exercises
+        let srsCards = Self.srsCards(from: exercises)
         return AdaptiveSessionPlan(
             sessionQueue: srsCards,
-            sessionExercises: plan.exercises,
+            sessionExercises: exercises,
             srsCardCount: srsCards.count,
-            supplementaryExerciseCount: plan.supplementaryExerciseCount
+            supplementaryExerciseCount: plan.supplementaryExerciseCount,
+            estimatedDurationMinutes: plan.estimatedDurationMinutes
+                + Self.minutes(fromSeconds: scheduled.addedDurationSeconds),
+            cardsNeedingPresentation: scheduled.cardsNeedingPresentation
         )
     }
 
@@ -294,5 +336,182 @@ final class SessionComposer {
             .fetchActiveRPGState(in: modelContainer.mainContext)?
             .acknowledgedUnlocks ?? []
         return live.union(acknowledged)
+    }
+
+    // MARK: - Duration Helper
+
+    /// Whole minutes from a seconds total, floored (matches
+    /// `DefaultSessionPlanner.finalize`'s `max(0, secs / 60)` so the
+    /// app-layer estimate stays consistent with the planner's own rounding).
+    fileprivate static func minutes(fromSeconds seconds: Int) -> Int {
+        max(0, seconds / 60)
+    }
+}
+
+// MARK: - NewCardPresentationScheduler
+//
+// Ensures every never-reviewed KANA card in a composed exercise list gets an
+// ungraded "presentation" encounter before its first graded touch-and-reveal
+// test, and that the graded test is delayed a few real recall events later
+// rather than sitting immediately behind the intro. This is the fix for the
+// pedagogy review's "erreur de conception #1": touching a card to reveal a
+// character nobody has ever taught, and grading that guess, produces a first
+// FSRS note that is noise, not signal — the guard-rail `reps >= 2` on
+// `MasteryLevel` exists precisely because a first grade can't be trusted.
+//
+// Deliberately reuses the EXISTING `.srsReview` case for both the intro and
+// the delayed test — no new `ExerciseItem` case. `DefaultSessionPlanner`'s
+// `isLive(_:)` switch is an intentionally exhaustive checklist over every
+// `ExerciseItem` case (see that switch's own doc comment) that this pass is
+// forbidden from touching; adding a case here would break that file's build.
+// `SessionViewModel.cardsNeedingPresentation` (a `Set<UUID>`, not the
+// `ExerciseItem` payload) is what actually distinguishes the intro
+// occurrence of a card from its later, graded occurrence.
+//
+// Scoped to kana specifically (`card.isKana`), matching the review's
+// concrete scenario ("un lot de nouveaux kana") and the existing
+// `ikeru.audio.autoplay` autoplay pattern this reuses (already kana-gated in
+// `SRSCardView`). Extending the same treatment to first-ever kanji /
+// vocabulary / grammar cards is a plausible follow-up but a distinct design
+// decision (those already get their own dedicated study surfaces, e.g.
+// `.kanjiStudy`) — left out of this pass rather than guessed at.
+enum NewCardPresentationScheduler {
+
+    struct Result {
+        let exercises: [ExerciseItem]
+        /// Ids of cards whose FIRST occurrence in `exercises` is the
+        /// ungraded presentation pass. `SessionViewModel` seeds its
+        /// `cardsNeedingPresentation` from this at session start.
+        let cardsNeedingPresentation: Set<UUID>
+        /// Extra `estimatedDurationSeconds` contributed by the duplicated
+        /// `.srsReview` occurrences (the delayed tests) — additive on top
+        /// of `SessionPlan.estimatedDurationMinutes`, which was computed
+        /// from the ORIGINAL (pre-duplication) exercise list.
+        let addedDurationSeconds: Int
+    }
+
+    /// How many exercises the task's pedagogy review asks for ("2 a 4
+    /// cartes plus loin") — but counted in `.srsReview` OCCURRENCES passed,
+    /// not raw array positions. See the collision note below.
+    private static let defaultOffsetRange: ClosedRange<Int> = 2...4
+
+    /// Smallest number of `.srsReview` occurrences that must follow a
+    /// presentation for its delayed test to be worth scheduling. Below this the
+    /// card is not deferred at all — see the guard in `schedulingPresentations`.
+    ///
+    /// It matches `defaultOffsetRange.lowerBound` on purpose: the test lands
+    /// just after `target` occurrences have passed, so the resulting gap is
+    /// `target + 1`. Requiring 2 available therefore guarantees a gap of at
+    /// least 3 — exactly what keeps the two occurrences of the same card id
+    /// outside the deck's 3-deep peek window.
+    private static let minimumSRSGap = defaultOffsetRange.lowerBound
+
+    static func schedulingPresentations(
+        for exercises: [ExerciseItem],
+        offsetRange: ClosedRange<Int> = defaultOffsetRange
+    ) -> Result {
+        var seen = Set<UUID>()
+        var deferred: [(sourceIndex: Int, card: CardDTO)] = []
+
+        for (index, item) in exercises.enumerated() {
+            guard case .srsReview(let card) = item,
+                  card.fsrsState.reps == 0,
+                  card.isKana,
+                  !seen.contains(card.id) else { continue }
+            seen.insert(card.id)
+            deferred.append((index, card))
+        }
+
+        guard !deferred.isEmpty else {
+            return Result(exercises: exercises, cardsNeedingPresentation: [], addedDurationSeconds: 0)
+        }
+
+        var working = exercises
+        var addedSeconds = 0
+        var presenting = seen
+
+        // Reverse source-index order: inserting a later item first never
+        // shifts an earlier, not-yet-processed item's recorded sourceIndex.
+        for (sourceIndex, card) in deferred.sorted(by: { $0.sourceIndex > $1.sourceIndex }) {
+            // The whole point of deferring is interference: the delayed test
+            // only measures retention if other recalls happened in between.
+            // Near the end of a session the tail may be too short to provide
+            // that gap — and appending at the end would then place the test
+            // immediately after its own presentation, which measures nothing
+            // AND puts two occurrences of the same card id inside the deck's
+            // 3-deep peek window (duplicate matchedGeometryEffect id).
+            //
+            // When the gap is not achievable, do NOT defer: drop the card
+            // from the presentation set so its single occurrence behaves
+            // exactly as it did before this feature — a normal graded review.
+            // A very short session simply does not run the presentation loop,
+            // which is preferable to running a degenerate version of it.
+            let available = srsReviewCount(after: sourceIndex, in: working)
+            guard available >= minimumSRSGap else {
+                presenting.remove(card.id)
+                continue
+            }
+
+            let target = min(Int.random(in: offsetRange), available)
+            let insertAt = insertionIndex(
+                after: sourceIndex,
+                skippingSRSReviews: target,
+                in: working
+            )
+            let testItem = ExerciseItem.srsReview(card)
+            working.insert(testItem, at: insertAt)
+            addedSeconds += testItem.estimatedDurationSeconds
+        }
+
+        return Result(
+            exercises: working,
+            cardsNeedingPresentation: presenting,
+            addedDurationSeconds: addedSeconds
+        )
+    }
+
+    /// Finds the array index right after `target` MORE `.srsReview`
+    /// occurrences have appeared past `sourceIndex` (i.e. the intro's own
+    /// slot doesn't count). Counting `.srsReview` occurrences instead of raw
+    /// array positions guarantees a minimum QUEUE-position gap of
+    /// `target + 1` between the intro and its delayed test — for `target >=
+    /// 2` that gap (>= 3) is provably outside `SessionViewModel`'s 3-deep
+    /// peek window (`upcomingCards`): the set of `currentIndex` values that
+    /// can show the intro in-peek and the set that can show the test in-peek
+    /// are disjoint whenever the gap is >= 3, so the two occurrences of the
+    /// SAME `card.id` can never render simultaneously in `SRSCardView`'s
+    /// peek `ForEach`/`matchedGeometryEffect`. Counting raw array positions
+    /// instead (offsets of 2-4 INCLUDING non-`.srsReview` drills) would not
+    /// guarantee this — a session with sparse review density between the
+    /// intro and its test could land the delayed test within that window.
+    /// Falls back to appending at the end if fewer than `target`
+    /// `.srsReview` items remain in the tail.
+    /// How many `.srsReview` occurrences follow `sourceIndex`. Used to decide
+    /// whether a meaningful gap is achievable before committing to defer.
+    private static func srsReviewCount(after sourceIndex: Int, in exercises: [ExerciseItem]) -> Int {
+        var count = 0
+        var i = sourceIndex + 1
+        while i < exercises.count {
+            if case .srsReview = exercises[i] { count += 1 }
+            i += 1
+        }
+        return count
+    }
+
+    private static func insertionIndex(
+        after sourceIndex: Int,
+        skippingSRSReviews target: Int,
+        in exercises: [ExerciseItem]
+    ) -> Int {
+        var passed = 0
+        var i = sourceIndex + 1
+        while i < exercises.count {
+            if case .srsReview = exercises[i] {
+                passed += 1
+                if passed == target { return i + 1 }
+            }
+            i += 1
+        }
+        return exercises.count
     }
 }

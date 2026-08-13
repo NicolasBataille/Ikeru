@@ -16,8 +16,10 @@ struct DailyTermViewModelTests {
         // `CardRepository`, which fetch `Card`, `ReviewLog`, `UserProfile`
         // and `ExerciseOutcomeLog`. A container scoped to only the
         // daily-term models crashes the moment that fetch runs against a
-        // schema that doesn't know those entities.
-        let schema = Schema(IkeruSchemaV2.models)
+        // schema that doesn't know those entities. Must track the app's
+        // current schema version (see IkeruApp) — declaring a stale version
+        // opens the container without error but traps on the first insert.
+        let schema = Schema(IkeruSchemaV3.models)
         let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
         return try ModelContainer(for: schema, configurations: [config])
     }
