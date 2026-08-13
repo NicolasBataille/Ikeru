@@ -232,7 +232,10 @@ final class CloudBackupManager: ObservableObject {
                     cardId: card.id,
                     timestamp: log.timestamp,
                     grade: "\(log.gradeRawValue)",
-                    responseTimeMs: log.responseTimeMs
+                    responseTimeMs: log.responseTimeMs,
+                    answeredValue: log.answeredValue,
+                    exerciseType: log.exerciseType,
+                    surface: log.surface
                 )
             }
         }
@@ -314,7 +317,10 @@ final class CloudBackupManager: ObservableObject {
                     card: card,
                     grade: grade,
                     responseTimeMs: reviewSnap.responseTimeMs,
-                    timestamp: reviewSnap.timestamp
+                    timestamp: reviewSnap.timestamp,
+                    answeredValue: reviewSnap.answeredValue,
+                    exerciseType: reviewSnap.exerciseType,
+                    surface: reviewSnap.surface
                 )
                 log.id = reviewSnap.id
                 context.insert(log)

@@ -132,13 +132,36 @@ public struct ReviewSnapshot: Codable, Sendable {
     public let timestamp: Date
     public let grade: String
     public let responseTimeMs: Int
+    /// Mirrors `ReviewLog.answeredValue` (added in `IkeruSchemaV3`). `nil` for
+    /// both self-graded flashcards and backups written before this field
+    /// existed — decoder treats a missing key as `nil`, so old backups keep
+    /// restoring without error.
+    public let answeredValue: String?
+    /// Mirrors `ReviewLog.exerciseType`. Same back-compat contract as
+    /// `answeredValue`.
+    public let exerciseType: String?
+    /// Mirrors `ReviewLog.surface`. Same back-compat contract as
+    /// `answeredValue`.
+    public let surface: String?
 
-    public init(id: UUID, cardId: UUID, timestamp: Date, grade: String, responseTimeMs: Int) {
+    public init(
+        id: UUID,
+        cardId: UUID,
+        timestamp: Date,
+        grade: String,
+        responseTimeMs: Int,
+        answeredValue: String? = nil,
+        exerciseType: String? = nil,
+        surface: String? = nil
+    ) {
         self.id = id
         self.cardId = cardId
         self.timestamp = timestamp
         self.grade = grade
         self.responseTimeMs = responseTimeMs
+        self.answeredValue = answeredValue
+        self.exerciseType = exerciseType
+        self.surface = surface
     }
 }
 
