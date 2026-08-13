@@ -94,6 +94,9 @@
 		18E9DC4FD1F74D0FAA2ECBA9 /* SessionRPGPersistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5D19A2E022D482ABEBA510C /* SessionRPGPersistence.swift */; };
 		4735F216E74F4CF897D23083 /* SessionRequeuePlanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20938EFCBF5A4BE491AE40C4 /* SessionRequeuePlanner.swift */; };
 		DF127A82825249D3B576C22C /* SessionTimerCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC5C15DA174645C7A3AF1EE9 /* SessionTimerCoordinator.swift */; };
+		61FC01F1334CAFEC34B5DD2A /* SessionLiveActivityCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 964516B50C3230647FC2C68B /* SessionLiveActivityCoordinator.swift */; };
+		103BD421BAABCD9C768A7A9C /* SessionViewModel+GradingFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B81D61C688F5A0AC277631C /* SessionViewModel+GradingFlow.swift */; };
+		CFE29CF536DC3013F8990F51 /* SessionViewModel+Lifecycle.swift in Sources */ = {isa = PBXBuildFile; fileRef = EEB45DDA89C2586A5956055E /* SessionViewModel+Lifecycle.swift */; };
 		678EBB6CB1EC67C38071F0BC /* VocabularyDictionaryViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5628B43A53BA4F60FC2FAA4E /* VocabularyDictionaryViewModel.swift */; };
 		67FD08C3F44BED1CBC549314 /* KanaPoolSelectorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50DC3FFD19212D20C2539520 /* KanaPoolSelectorView.swift */; };
 		699CDC8CCD6C70501B8AF94A /* n5-content.sqlite in Resources */ = {isa = PBXBuildFile; fileRef = D5D9BA9F4FDA871221354B88 /* n5-content.sqlite */; };
@@ -133,6 +136,7 @@
 		96318E447330C86C4B8FF75B /* VocabularyStudyViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1F62206E7AC1CAC9A3335D5 /* VocabularyStudyViewModel.swift */; };
 		96B7AA4DDFCB52A92BA246C3 /* SessionViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8908562DCE1E539972918E03 /* SessionViewModelTests.swift */; };
 		DEC0BE1F5E5510000000A002 /* SessionDecouplingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DEC0BE1F5E5510000000A001 /* SessionDecouplingTests.swift */; };
+		089B11EF20581D564AD90A5F /* KanaSessionEndToEndTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82992A767555A341F6BB2B48 /* KanaSessionEndToEndTests.swift */; };
 		5E02AE89C3BC30636B8FB412 /* Tier1DrillTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D24FC039FE8A45A02F8AC15 /* Tier1DrillTests.swift */; };
 		633D62BF8400B33A4DD31A23 /* Tier2ListeningDrillTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15CEB66BEAD74F04186E5E8B /* Tier2ListeningDrillTests.swift */; };
 		64556B07D1020D14EA984AB5 /* Tier2VocabRecallTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A631C81DE81FDAB63D84B2EE /* Tier2VocabRecallTests.swift */; };
@@ -351,6 +355,9 @@
 		B5D19A2E022D482ABEBA510C /* SessionRPGPersistence.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SessionRPGPersistence.swift; sourceTree = "<group>"; };
 		20938EFCBF5A4BE491AE40C4 /* SessionRequeuePlanner.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SessionRequeuePlanner.swift; sourceTree = "<group>"; };
 		CC5C15DA174645C7A3AF1EE9 /* SessionTimerCoordinator.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SessionTimerCoordinator.swift; sourceTree = "<group>"; };
+		964516B50C3230647FC2C68B /* SessionLiveActivityCoordinator.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SessionLiveActivityCoordinator.swift; sourceTree = "<group>"; };
+		3B81D61C688F5A0AC277631C /* SessionViewModel+GradingFlow.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "SessionViewModel+GradingFlow.swift"; sourceTree = "<group>"; };
+		EEB45DDA89C2586A5956055E /* SessionViewModel+Lifecycle.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "SessionViewModel+Lifecycle.swift"; sourceTree = "<group>"; };
 		6C0690DD9A67CB231FB3B2BE /* PreWarmFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreWarmFactory.swift; sourceTree = "<group>"; };
 		6CE66823D49245E40B9FB5AE /* IkeruLogo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IkeruLogo.swift; sourceTree = "<group>"; };
 		6DB3671081E55064A6B6ADE5 /* KanaFlashcardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KanaFlashcardView.swift; sourceTree = "<group>"; };
@@ -368,6 +375,7 @@
 		86F0467337CA5D848E771C8C /* KanaDrillViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KanaDrillViewModel.swift; sourceTree = "<group>"; };
 		8908562DCE1E539972918E03 /* SessionViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionViewModelTests.swift; sourceTree = "<group>"; };
 		DEC0BE1F5E5510000000A001 /* SessionDecouplingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionDecouplingTests.swift; sourceTree = "<group>"; };
+		82992A767555A341F6BB2B48 /* KanaSessionEndToEndTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KanaSessionEndToEndTests.swift; sourceTree = "<group>"; };
 		3D24FC039FE8A45A02F8AC15 /* Tier1DrillTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tier1DrillTests.swift; sourceTree = "<group>"; };
 		15CEB66BEAD74F04186E5E8B /* Tier2ListeningDrillTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tier2ListeningDrillTests.swift; sourceTree = "<group>"; };
 		A631C81DE81FDAB63D84B2EE /* Tier2VocabRecallTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tier2VocabRecallTests.swift; sourceTree = "<group>"; };
@@ -786,6 +794,7 @@
 				DB8329720757C93EEDE0EF41 /* SessionIntegrationTests.swift */,
 				8908562DCE1E539972918E03 /* SessionViewModelTests.swift */,
 				DEC0BE1F5E5510000000A001 /* SessionDecouplingTests.swift */,
+				82992A767555A341F6BB2B48 /* KanaSessionEndToEndTests.swift */,
 				3D24FC039FE8A45A02F8AC15 /* Tier1DrillTests.swift */,
 				15CEB66BEAD74F04186E5E8B /* Tier2ListeningDrillTests.swift */,
 				A631C81DE81FDAB63D84B2EE /* Tier2VocabRecallTests.swift */,
@@ -909,6 +918,9 @@
 				B5D19A2E022D482ABEBA510C /* SessionRPGPersistence.swift */,
 				20938EFCBF5A4BE491AE40C4 /* SessionRequeuePlanner.swift */,
 				CC5C15DA174645C7A3AF1EE9 /* SessionTimerCoordinator.swift */,
+				964516B50C3230647FC2C68B /* SessionLiveActivityCoordinator.swift */,
+				3B81D61C688F5A0AC277631C /* SessionViewModel+GradingFlow.swift */,
+				EEB45DDA89C2586A5956055E /* SessionViewModel+Lifecycle.swift */,
 			);
 			path = Session;
 			sourceTree = "<group>";
@@ -1316,6 +1328,7 @@
 				7F007D67BD6304542673C64D /* SessionIntegrationTests.swift in Sources */,
 				96B7AA4DDFCB52A92BA246C3 /* SessionViewModelTests.swift in Sources */,
 				DEC0BE1F5E5510000000A002 /* SessionDecouplingTests.swift in Sources */,
+				089B11EF20581D564AD90A5F /* KanaSessionEndToEndTests.swift in Sources */,
 				5E02AE89C3BC30636B8FB412 /* Tier1DrillTests.swift in Sources */,
 				633D62BF8400B33A4DD31A23 /* Tier2ListeningDrillTests.swift in Sources */,
 				64556B07D1020D14EA984AB5 /* Tier2VocabRecallTests.swift in Sources */,
@@ -1455,6 +1468,9 @@
 				18E9DC4FD1F74D0FAA2ECBA9 /* SessionRPGPersistence.swift in Sources */,
 				4735F216E74F4CF897D23083 /* SessionRequeuePlanner.swift in Sources */,
 				DF127A82825249D3B576C22C /* SessionTimerCoordinator.swift in Sources */,
+				61FC01F1334CAFEC34B5DD2A /* SessionLiveActivityCoordinator.swift in Sources */,
+				103BD421BAABCD9C768A7A9C /* SessionViewModel+GradingFlow.swift in Sources */,
+				CFE29CF536DC3013F8990F51 /* SessionViewModel+Lifecycle.swift in Sources */,
 				24B1C98084294C7E17812BF1 /* SettingsView.swift in Sources */,
 				B2142C70A1C6014266FB9F2E /* ShadowingExerciseView.swift in Sources */,
 				D8EB495D638484D9EAB4DC02 /* ShadowingViewModel.swift in Sources */,
