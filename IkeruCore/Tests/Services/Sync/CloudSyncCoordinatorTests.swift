@@ -58,9 +58,10 @@ struct CloudSyncCoordinatorTests {
 
     /// A `MockSyncCursorStore` pre-seeded with a cursor for every pulled
     /// table — the default `cursorStore` for every coordinator this suite
-    /// builds, UNLESS a test explicitly wants rule 1 to fire (this suite's
-    /// own CRITIQUE-B tests below pass a bare `MockSyncCursorStore()`
-    /// instead).
+    /// builds, INCLUDING this file's own CRITIQUE-B / identity
+    /// re-provisioning test below (which reaches rule 1 a different way —
+    /// by triggering `CloudSyncCoordinator.syncNow()`'s identity-change
+    /// check, not by starting cold — see that test's own comment).
     ///
     /// Without this, an unseeded `MockSyncCursorStore()` looks like a
     /// genuine cold start to `SyncPullActor`'s rule 1
@@ -75,10 +76,12 @@ struct CloudSyncCoordinatorTests {
     /// "already-synced" cards started reading as dirty again, because rule
     /// 1 fired on every single one of them by fixture accident, not by
     /// intent. Pre-seeding every table's cursor makes `isColdStart` false,
-    /// so rule 1 never fires here — this suite tests delta selection on an
-    /// already-synced device, not rule 1 (that's
-    /// `SyncPullDivergenceTests`'s and this file's own CRITIQUE-B tests'
-    /// job).
+    /// so rule 1 never fires here BY ACCIDENT — this suite tests delta
+    /// selection on an already-synced device, not rule 1 (that's
+    /// `SyncPullDivergenceTests`'s job at the `SyncPullActor` level; this
+    /// file's own re-provisioning test below is the coordinator-level
+    /// equivalent, reaching rule 1 deliberately through the identity-change
+    /// path rather than a bare fixture).
     private static func makeSeededCursorStore() -> MockSyncCursorStore {
         var cursors: [String: SyncCursorPosition] = [:]
         for table in SyncPullActor.pullOrder {
@@ -97,6 +100,15 @@ struct CloudSyncCoordinatorTests {
         pullTransport: MockSyncPullTransport = MockSyncPullTransport(),
         cursorStore: MockSyncCursorStore = CloudSyncCoordinatorTests.makeSeededCursorStore(),
         skipTracker: MockSyncSkipTracker = MockSyncSkipTracker(),
+        // A fresh, empty `MockSyncIdentityStore` by default — every test in
+        // this suite except the identity-re-provisioning one below hits the
+        // "nothing stored yet, just record it" branch on its single
+        // `syncNow()` call, which must NOT reset the (seeded, by default)
+        // cursor store — see `CloudSyncCoordinator.syncNow()`'s doc comment
+        // on that branch. If this default ever starts resetting cursors on
+        // a first call, most of this file's delta-selection tests break —
+        // that's the regression net for defect 1's fix.
+        identityStore: MockSyncIdentityStore = MockSyncIdentityStore(),
         consentStore: MockSyncConsentStore = MockSyncConsentStore(),
         minSyncInterval: TimeInterval = 60
     ) -> CloudSyncCoordinator {
@@ -107,6 +119,7 @@ struct CloudSyncCoordinatorTests {
             pullTransport: pullTransport,
             cursorStore: cursorStore,
             skipTracker: skipTracker,
+            identityStore: identityStore,
             consentStore: consentStore,
             minSyncInterval: minSyncInterval
         )
@@ -283,49 +296,71 @@ struct CloudSyncCoordinatorTests {
         #expect(second == .skippedThrottled)
     }
 
-    // MARK: - CRITIQUE B: empty cloud + populated local actually re-seeds
-    // cards and logs, not just profiles/rpg_states
+    // MARK: - CRITIQUE B + identity re-provisioning: a device that HAS
+    // already synced (non-nil cursors) still re-seeds cards and logs, not
+    // just profiles/rpg_states, once its identity silently changes underneath
+    // it
 
-    @Test("CRITIQUE B: an empty-remote seed marks every local row unsynced, so cards and logs — not just profiles/rpg_states — are actually pushed")
-    func seedFromLocalPushesCardsAndLogsNotJustProfileAndRPGState() async throws {
+    @Test("Identity re-provisioning: seeded cursors + a changed user_id resets the cursors, so cards and logs — not just profiles/rpg_states — are still pushed to the new account")
+    func identityReprovisioningResetsSeededCursorsAndPushesCardsAndLogs() async throws {
         let container = try makeContainer()
         let profile = try seedProfile(in: container)
         // BOTH already carry a `syncedAt` stamp — exactly what's left on
-        // disk by a device that synced to an account that has since been
-        // wiped (`CloudDataDeletionService.deleteAllCloudData()`) or
-        // replaced by a silently re-provisioned identity (a rejected
-        // refresh token, `AnonymousIdentityManager`). Before CRITIQUE B's
-        // fix, `pushDirtyCards`/`pushDirtyReviewLogs`'s delta filters read
-        // these as "already synced" and pushed NEITHER of them — only
-        // `profiles`/`rpg_states` (pushed unconditionally) actually
-        // reached the new account.
+        // disk by a device that fully synced under a PREVIOUS identity.
+        // Before defect 1's fix, `pushDirtyCards`/`pushDirtyReviewLogs`'s
+        // delta filters read these as "already synced" and pushed NEITHER
+        // of them once the identity changed — only `profiles`/`rpg_states`
+        // (pushed unconditionally) actually reached the new account.
         let card = try seedCard(in: container, profile: profile, alreadySynced: true)
         let log = try seedReviewLog(for: card, in: container, alreadySynced: true)
 
         let dataTransport = MockSyncDataTransport()
-        // Deliberately a BARE, unseeded `MockSyncCursorStore()` — a genuine
-        // cold start (see `makeSeededCursorStore`'s doc comment) — and a
-        // BARE `MockSyncPullTransport()` with nothing enqueued for any
-        // table, so the remote reads as completely empty. Local is
-        // populated (the profile/card/log above): exactly rule 1's
-        // "empty remote + populated local" trigger.
+        // `makeSeededCursorStore()` — NON-nil cursors on every table, the
+        // shape a device that has genuinely already synced actually has.
+        // A bare `MockSyncCursorStore()` (this test's ORIGINAL fixture,
+        // before this fix) can never represent a rejected-refresh-token
+        // re-provisioning: that scenario always starts from an
+        // already-synced device, and `SyncPullActor`'s rule-1 cold-start
+        // guard (`isColdStart = pullOrder.allSatisfy { cursor(forTable:) == nil }`)
+        // cannot fire while any cursor is non-nil — bare cursors made this
+        // test pass for the wrong reason (a literal cold start), not
+        // because re-provisioning was actually being exercised.
+        let cursorStore = CloudSyncCoordinatorTests.makeSeededCursorStore()
+        // "Last known" identity from BEFORE the rejected refresh — a
+        // DIFFERENT id than the one `identity` below will report.
+        let previousUserID = UUID()
+        let identityStore = MockSyncIdentityStore(lastKnownUserID: previousUserID)
+        // A fresh `AnonymousIdentityManager` that signs in as a DIFFERENT
+        // user — standing in for `AnonymousIdentityManager` silently
+        // minting a new anonymous identity after its stored refresh token
+        // was rejected (that fallback itself is covered independently by
+        // `AnonymousIdentityManagerTests.rejectedRefreshFallsBackToSignIn`;
+        // this test only needs the OBSERVABLE end state that produces —
+        // "the identity manager now reports a user_id this device has
+        // never seen before").
+        let reprovisionedUserID = UUID()
+        let (identity, _) = makeIdentityManager(userID: reprovisionedUserID)
+
         let coordinator = makeCoordinator(
             container: container,
+            identity: identity,
             dataTransport: dataTransport,
-            cursorStore: MockSyncCursorStore(),
+            cursorStore: cursorStore,
+            identityStore: identityStore,
             consentStore: MockSyncConsentStore(consentGiven: true)
         )
 
         let outcome = await coordinator.syncNow()
 
         guard case .success(_, let pull) = outcome, pull == .seededFromLocal else {
-            Issue.record("Expected a seeded-from-local success, got \(outcome)")
+            Issue.record("Expected the identity mismatch to reset the cursors and produce a seeded-from-local pull, got \(outcome)")
             return
         }
 
         #expect(dataTransport.rows(forTable: "profiles").count == 1)
-        // The actual regression this test exists for: BEFORE CRITIQUE B's
-        // fix, both of these were empty.
+        // The actual regression this test exists for: BEFORE defect 1's
+        // fix, both of these were empty — seeded cursors meant rule 1
+        // could never fire at all, regardless of the identity change.
         let pushedCardIDs = dataTransport.rows(forTable: "cards").compactMap { row -> String? in
             guard case .string(let value) = row["id"] else { return nil }
             return value
@@ -336,6 +371,10 @@ struct CloudSyncCoordinatorTests {
         }
         #expect(pushedCardIDs.contains(card.id.uuidString))
         #expect(pushedLogIDs.contains(log.id.uuidString))
+
+        // The "remember the new id" half of the fix — not just "reset",
+        // but "reset AND stop comparing against the stale id forever after."
+        #expect(identityStore.lastKnownUserID() == reprovisionedUserID)
     }
 
     @Test("setConsent(false) does NOT mark local rows unsynced — server-side data is still correct, so nothing needs re-pushing")

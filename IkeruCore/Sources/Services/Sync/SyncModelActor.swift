@@ -199,10 +199,19 @@ actor SyncModelActor {
     ///   for real.
     /// - `CloudSyncCoordinator.syncNow()`, BEFORE the push half of a cycle
     ///   whose pull half just reported `PullOutcome.seededFromLocal` —
-    ///   this is the one that actually matters for the rejected-refresh-
-    ///   token case above, since that path never goes through
-    ///   `CloudDataDeletionService` at all: the ONLY signal it produces is
-    ///   rule 1 firing on the next pull against the fresh identity.
+    ///   this is what actually delivers cards/review_logs/vocabulary to a
+    ///   FRESHLY-SEEDED server account, regardless of which of the two
+    ///   real-world causes put rule 1 into that state. For the
+    ///   rejected-refresh-token case above specifically: rule 1 does NOT
+    ///   fire on its own just because the identity changed — a device
+    ///   that already synced still has non-nil pull cursors from the OLD
+    ///   account, and rule 1's cold-start guard requires every cursor to
+    ///   be `nil`. `syncNow()` closes that gap with a separate check
+    ///   (`SyncIdentityStore`, compared against
+    ///   `AnonymousIdentityManager.currentUserID()` on every cycle) that
+    ///   resets the cursors the moment it sees the `user_id` changed —
+    ///   ONLY once that reset has happened does the next pull genuinely
+    ///   become a cold start, reach rule 1, and land here.
     ///
     /// Deliberately NOT called from `setConsent(false)`: turning backup off
     /// leaves the data on the server exactly as it was, so every local

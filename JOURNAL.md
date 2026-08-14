@@ -23,6 +23,106 @@ raisonnement, les mesures, et les décisions.
 
 ---
 
+## 2026-08-14 — Lot 2 (pull) : correction chirurgicale des 2 défauts survivants (ronde 4)
+
+### Fait
+
+SHA : non commité (arbre de travail, branche `feature/cloud-lot2-pull`). Deux
+correctifs précisément spécifiés par le relecteur de la ronde 3 (voir entrée
+ci-dessous, sondes 1 et 2), appliqués tels quels :
+
+- **Défaut 1 (identité re-provisionnée)** — `IkeruCore/Sources/Services/Sync/SyncIdentityStore.swift`
+  (nouveau : protocole + `UserDefaultsSyncIdentityStore` + `MockSyncIdentityStore`,
+  même motif « pas de schéma » que le curseur). `CloudSyncCoordinator.swift`
+  (`syncNow()`, juste après `validAccessToken()` et avant `runPull`) : compare
+  `identity.currentUserID()` au dernier `user_id` connu ; un changement
+  déclenche `cursorStore.resetAll()` + `skipTracker.resetAll()`, rien au premier
+  appel (pas de faux positif). Commentaire faux corrigé dans
+  `SyncModelActor.swift` (`markEverythingUnsynced`, ~L200) : il prétendait que
+  le site coordinateur suffisait au cas refresh-token rejeté — faux tant que
+  les curseurs ne sont pas remis à zéro par ailleurs.
+- **Défaut 2 (3-strikes ne distingue pas permanent/transitoire)** — nouveau
+  type `RowApplyOutcome` (`SyncPullActor+RowDecoding.swift`) : `.applied` /
+  `.skippedPermanent` (payload indécodable) / `.skippedTransient` (FK non
+  résolue — seulement `review_logs`→`cards` et `vocabulary_encounters`→`vocabulary_entries` ;
+  `exercise_outcome_logs.profile_id` est un champ scalaire, pas un lookup, donc
+  toujours permanent). `SyncSkipTracker` gagne `recordTransientSkip` (compteur
+  et clé UserDefaults séparés de `recordSkip`). Nouveau seuil
+  `SyncPullActor.transientPoisonDropThreshold = 50` (vs `poisonDropThreshold = 3`)
+  pour borner l'attente sans jamais consommer un strike permanent — sinon on
+  rouvre la CRITIQUE A (parent qui n'arrive jamais épinglerait le curseur sans
+  fin). Logique d'abandon extraite dans un nouveau fichier
+  `SyncPullActor+StuckRowResolution.swift` (`strikeCountAndThreshold`,
+  `resolveStuckRow`) pour rester sous les budgets SwiftLint après l'ajout.
+
+### Testé
+
+- **Défaut 1** : `CloudSyncCoordinatorTests.swift` — l'ancien test
+  `seedFromLocalPushesCardsAndLogsNotJustProfileAndRPGState` prétendait couvrir
+  la re-provisioning mais utilisait une fixture `MockSyncCursorStore()` NUE
+  (donc testait un cold start, pas une re-provisioning — curseurs déjà
+  synchronisés = jamais nuls). Remplacé par
+  `identityReprovisioningResetsSeededCursorsAndPushesCardsAndLogs` :
+  `makeSeededCursorStore()` + un `MockSyncIdentityStore` pré-rempli avec un
+  ancien `user_id` + un `AnonymousIdentityManager` qui signe sous un
+  `user_id` différent. **Rouge vérifié empiriquement** (neutralisé le `if`
+  du reset avec `if false, …` — le test échoue avec `cards`/`review_logs`
+  vides) puis **vert restauré**. Reste de la suite (11 tests) inchangé, preuve
+  qu'aucun cycle `syncNow()` « premier appel » n'est cassé par le nouveau
+  garde-fou.
+- **Défaut 2** : nouveau fichier
+  `SyncPullDivergenceTests+TransientSkip.swift`, 2 tests. Le premier reproduit
+  le scénario exact du relecteur (log dont la carte arrive tardivement,
+  au-delà de `poisonDropThreshold`) et vérifie en plus le MÉCANISME — pas
+  seulement l'absence du symptôme : `skipTracker.currentCount` (permanent)
+  reste `nil`, `currentTransientCount` grimpe. Le second prouve que le seuil
+  de 50 borne quand même l'attente si le parent n'arrive jamais.
+  **Rouge vérifié empiriquement** (routé `.skippedTransient` vers
+  `recordSkip`/`poisonDropThreshold`, seuil 3 partagé comme avant le
+  correctif) → échec exact à cycle 3-4, correspondant au symptôme décrit ;
+  restauré, vert. Régression `poisonRowIsDroppedAfterThreeCyclesAndUnblocksLaterRows`
+  (fichier `+PoisonRow.swift`, préexistant) toujours verte — confirme que le
+  chemin permanent garde son seuil de 3.
+- Suite complète : `swift test --no-parallel --filter "Sync|CloudData"` → 94
+  tests verts (92 + 2 nouveaux), 0 régression.
+- `swift build` propre. `xcodebuild … -destination "generic/platform=iOS"` →
+  BUILD SUCCEEDED (relancé après le découpage en fichier séparé, donc reflète
+  l'état final). `python3 scripts/i18n-lint.py --baseline …` → 0 NEW (aucune
+  string visible touchée — service Core uniquement). `swiftlint lint` sur les
+  10 fichiers touchés (lancé depuis la racine du repo, avec `.swiftlint.yml`
+  du projet — piège rencontré : lancé depuis `IkeruCore/`, swiftlint retombe
+  sur ses seuils par défaut bien plus stricts et fait croire à des violations
+  qui n'existent pas dans la vraie config CI) → 0 violation.
+
+Pas testé : device réel / TestFlight (hors périmètre de cette ronde
+chirurgicale, aucun changement de schéma ni de flux UI).
+
+### Écarté
+
+- **Un test coordinateur séparé pour le cold start « bare fixture »** (en plus
+  du test de re-provisioning) : envisagé pour ne pas perdre de couverture,
+  finalement écarté — la seule différence entre les deux scénarios est *ce qui
+  vide les curseurs*, pas le code aval (`seededFromLocal` → `markEverythingUnsynced`
+  → push), déjà exercé par le test modifié. Le cold start générique reste
+  couvert au niveau `SyncPullActor` par `SyncPullDivergenceTests:297`
+  (« Empty cloud, populated local »).
+- **Un protocole `resetAll()` sur `SyncIdentityStore`** : pas nécessaire, le
+  type n'expose que `lastKnownUserID()`/`setLastKnownUserID(_:)` — rien
+  d'autre à réinitialiser, et un `resetAll()` non appelé nulle part aurait été
+  du code mort.
+- **`UserDefaults.standard` en défaut de test pour `SyncIdentityStore`** :
+  jamais envisagé sérieusement — les mocks de ce fichier de tests partagent
+  déjà le même process Swift Testing (`--no-parallel` ne les isole pas les
+  uns des autres), donc un vrai `UserDefaults.standard` aurait fait fuiter
+  l'état entre tests.
+
+### Ouvert
+
+Rien de nouveau. Les deux défauts nommés par la ronde 3 sont fermés et
+prouvés rouge→vert. Pas de nouvelle piste ouverte par cette ronde.
+
+---
+
 ## 2026-08-14 — Lot 2 (pull) : contre-relecture adversariale, ronde 3
 
 ### Fait

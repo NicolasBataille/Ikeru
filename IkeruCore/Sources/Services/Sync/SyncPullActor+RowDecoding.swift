@@ -31,6 +31,58 @@ extension VocabularyEntry: SyncIdentifiable {}
 extension VocabularyEncounter: SyncIdentifiable {}
 extension ExerciseOutcomeLog: SyncIdentifiable {}
 
+// MARK: - RowApplyOutcome
+
+/// Per-row outcome from an `apply*Rows` function — supersedes a bare `Bool`
+/// (2026-08 lot-2 pull review, round 4): the old scheme could only say
+/// "applied" or "skipped," so a skip caused by an undecodable payload
+/// (PERMANENT — no future cycle can ever fix that) and a skip caused by an
+/// unresolved foreign key (TRANSIENT — the referenced row hasn't been
+/// pulled/applied YET, but will be once its own table's page arrives) were
+/// indistinguishable to `SyncPullActor.pullAndApply`, which counted both
+/// identically toward `SyncSkipTracker`'s tight 3-cycle drop threshold.
+///
+/// That silently abandoned real review history: a `review_logs` row whose
+/// `cards` parent was itself delayed behind an unrelated poison row for 3+
+/// cycles got permanently dropped at cycle 3 for "not resolving fast
+/// enough," even though it was never actually unrecoverable — only
+/// waiting. `pullAndApply` now routes `.skippedPermanent` through
+/// `SyncSkipTracker.recordSkip` (unchanged 3-strike threshold) and
+/// `.skippedTransient` through the separate `recordTransientSkip` (a much
+/// wider bound — see `SyncPullActor.transientPoisonDropThreshold`'s doc
+/// comment for why a bound is still needed there too).
+///
+/// Every `apply*Rows` function (4 in `SyncPullActor.swift`, 3 in
+/// `SyncPullActor+StandaloneTables.swift`) must append exactly one case per
+/// row it iterates, in the same order as its input `[SyncRow]` — the same
+/// "one flag per row, in order" contract the old `[Bool]` scheme had (see
+/// the `apply(table:rows:...)` dispatcher's doc comment), just with a third
+/// state instead of two.
+enum RowApplyOutcome: Sendable, Equatable {
+    /// Applied this cycle — either newly created/updated, or (on one of the
+    /// 3 append-only tables: `review_logs`, `vocabulary_encounters`,
+    /// `exercise_outcome_logs`) a safe no-op redelivery of a row already
+    /// durably present. `pullAndApply`'s cursor-advance prefix treats both
+    /// the same way: safe to advance the cursor past.
+    case applied
+    /// Skipped because the payload itself could not be decoded — a
+    /// malformed or missing required field, or a value this app version
+    /// doesn't recognize (see every `apply*Rows` function's `try?` decode
+    /// guards). Retrying later cannot help on its own; only
+    /// `SyncSkipTracker`'s tight `SyncPullActor.poisonDropThreshold` should
+    /// ever abandon a row for this reason.
+    case skippedPermanent
+    /// Skipped because a foreign key this row depends on — a `cards` row
+    /// for `review_logs`, a `vocabulary_entries` row for
+    /// `vocabulary_encounters` — is not yet present locally. Expected to
+    /// self-heal once the parent table's own pull catches up (`cards` and
+    /// `vocabulary_entries` are always pulled before their dependents, per
+    /// `SyncPullActor`'s `pullOrder`) — must never consume a
+    /// `poisonDropThreshold` strike, only the much wider
+    /// `SyncPullActor.transientPoisonDropThreshold` one.
+    case skippedTransient
+}
+
 // MARK: - SyncRowDecoding
 
 /// Decodes the fields `SyncPullTransport` returns from a real PostgREST

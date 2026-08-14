@@ -32,16 +32,18 @@ extension SyncPullActor {
     /// No rule-2 equivalent here — `VocabularyEntry` has no append-only log
     /// to replay from (see `SyncPayloadBuilder`'s doc comment on that
     /// table), so this is a plain rule-4 (tombstone-aware LWW) apply.
-    func applyVocabularyEntryRows(_ rows: [SyncRow]) throws -> (count: Int, appliedFlags: [Bool]) {
+    func applyVocabularyEntryRows(_ rows: [SyncRow]) throws -> (count: Int, outcomes: [RowApplyOutcome]) {
         var applied = 0
-        var appliedFlags: [Bool] = []
-        appliedFlags.reserveCapacity(rows.count)
+        var outcomes: [RowApplyOutcome] = []
+        outcomes.reserveCapacity(rows.count)
         for row in rows {
             // `try?` on the decode (CRITIQUE 2) — see `SyncPullActor.applyProfileRows`.
+            // Always PERMANENT — `vocabulary_entries` has no foreign key of
+            // its own to wait on (see `RowApplyOutcome`).
             guard let common = try? SyncRowDecoding.common(row),
                   let payloadValue = row["payload"],
                   let payload = try? SyncRowDecoding.decode(VocabularyEntryPayload.self, from: payloadValue) else {
-                appliedFlags.append(false)
+                outcomes.append(.skippedPermanent)
                 continue
             }
 
@@ -86,9 +88,9 @@ extension SyncPullActor {
                 modelContext.insert(entry)
             }
             applied += 1
-            appliedFlags.append(true)
+            outcomes.append(.applied)
         }
-        return (applied, appliedFlags)
+        return (applied, outcomes)
     }
 
     // MARK: - vocabulary_encounters
@@ -97,15 +99,17 @@ extension SyncPullActor {
         let source: String
     }
 
-    func applyVocabularyEncounterRows(_ rows: [SyncRow]) throws -> (count: Int, appliedFlags: [Bool], alreadyPresentCount: Int) {
+    func applyVocabularyEncounterRows(_ rows: [SyncRow]) throws -> (count: Int, outcomes: [RowApplyOutcome], alreadyPresentCount: Int) {
         var applied = 0
         var alreadyPresent = 0
-        var appliedFlags: [Bool] = []
-        appliedFlags.reserveCapacity(rows.count)
+        var outcomes: [RowApplyOutcome] = []
+        outcomes.reserveCapacity(rows.count)
         for row in rows {
+            // PERMANENT — the row itself is undecodable, not waiting on
+            // anything.
             guard let common = try? SyncRowDecoding.common(row),
                   let payloadValue = row["payload"] else {
-                appliedFlags.append(false)
+                outcomes.append(.skippedPermanent)
                 continue
             }
 
@@ -114,18 +118,25 @@ extension SyncPullActor {
             // `applied` (see `PullSummary.alreadyPresentRowCounts`).
             if try fetchOne(VocabularyEncounter.self, id: common.id) != nil {
                 alreadyPresent += 1
-                appliedFlags.append(true)
+                outcomes.append(.applied)
                 continue
             }
 
             guard let entryID = SyncRowDecoding.uuid(row, "entry_id"),
                   let entry = try fetchOne(VocabularyEntry.self, id: entryID) else {
-                appliedFlags.append(false)
+                // TRANSIENT — the referenced `vocabulary_entries` row isn't
+                // locally present YET (same "wait, don't abandon" reasoning
+                // as `applyReviewLogRows`' card lookup — `vocabulary_entries`
+                // is pulled before `vocabulary_encounters` in `pullOrder`,
+                // but the entry can itself be delayed).
+                outcomes.append(.skippedTransient)
                 continue
             }
+            // PERMANENT — the FK resolved; what's left undecodable here is
+            // the row's own content.
             guard let payload = try? SyncRowDecoding.decode(VocabularyEncounterPayload.self, from: payloadValue),
                   let timestamp = SyncRowDecoding.date(row, "occurred_at") else {
-                appliedFlags.append(false)
+                outcomes.append(.skippedPermanent)
                 continue
             }
 
@@ -144,9 +155,9 @@ extension SyncPullActor {
             encounter.syncedAt = common.updatedAt
             modelContext.insert(encounter)
             applied += 1
-            appliedFlags.append(true)
+            outcomes.append(.applied)
         }
-        return (applied, appliedFlags, alreadyPresent)
+        return (applied, outcomes, alreadyPresent)
     }
 
     // MARK: - exercise_outcome_logs
@@ -156,15 +167,17 @@ extension SyncPullActor {
         let accuracy: Double
     }
 
-    func applyExerciseOutcomeLogRows(_ rows: [SyncRow]) throws -> (count: Int, appliedFlags: [Bool], alreadyPresentCount: Int) {
+    func applyExerciseOutcomeLogRows(_ rows: [SyncRow]) throws -> (count: Int, outcomes: [RowApplyOutcome], alreadyPresentCount: Int) {
         var applied = 0
         var alreadyPresent = 0
-        var appliedFlags: [Bool] = []
-        appliedFlags.reserveCapacity(rows.count)
+        var outcomes: [RowApplyOutcome] = []
+        outcomes.reserveCapacity(rows.count)
         for row in rows {
+            // PERMANENT — the row itself is undecodable, not waiting on
+            // anything.
             guard let common = try? SyncRowDecoding.common(row),
                   let payloadValue = row["payload"] else {
-                appliedFlags.append(false)
+                outcomes.append(.skippedPermanent)
                 continue
             }
 
@@ -173,14 +186,21 @@ extension SyncPullActor {
             // `applied` (see `PullSummary.alreadyPresentRowCounts`).
             if try fetchOne(ExerciseOutcomeLog.self, id: common.id) != nil {
                 alreadyPresent += 1
-                appliedFlags.append(true)
+                outcomes.append(.applied)
                 continue
             }
 
+            // `profile_id` here is a SCALAR field on the row (`ExerciseOutcomeLog.profileID`
+            // is not a SwiftData relationship — see that model's doc
+            // comment), not a local-entity lookup — a missing/unparseable
+            // value is a decode failure of THIS row, not a reference to
+            // something that hasn't arrived yet. Always PERMANENT,
+            // unlike `applyReviewLogRows`'/`applyVocabularyEncounterRows`'
+            // FK lookups.
             guard let profileID = SyncRowDecoding.uuid(row, "profile_id"),
                   let timestamp = SyncRowDecoding.date(row, "occurred_at"),
                   let payload = try? SyncRowDecoding.decode(ExerciseOutcomeLogPayload.self, from: payloadValue) else {
-                appliedFlags.append(false)
+                outcomes.append(.skippedPermanent)
                 continue
             }
 
@@ -196,8 +216,8 @@ extension SyncPullActor {
             log.syncedAt = common.updatedAt
             modelContext.insert(log)
             applied += 1
-            appliedFlags.append(true)
+            outcomes.append(.applied)
         }
-        return (applied, appliedFlags, alreadyPresent)
+        return (applied, outcomes, alreadyPresent)
     }
 }

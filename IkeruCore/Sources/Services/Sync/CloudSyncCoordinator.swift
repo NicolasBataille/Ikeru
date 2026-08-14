@@ -124,6 +124,7 @@ public actor CloudSyncCoordinator {
     private let pullTransport: any SyncPullTransport
     private let cursorStore: any SyncCursorStore
     private let skipTracker: any SyncSkipTracker
+    private let identityStore: any SyncIdentityStore
     private let consentStore: any SyncConsentStore
     private let minSyncInterval: TimeInterval
     private let now: @Sendable () -> Date
@@ -178,6 +179,7 @@ public actor CloudSyncCoordinator {
         pullTransport: any SyncPullTransport = PostgRESTPullTransport(),
         cursorStore: any SyncCursorStore = UserDefaultsSyncCursorStore(),
         skipTracker: any SyncSkipTracker = UserDefaultsSyncSkipTracker(),
+        identityStore: any SyncIdentityStore = UserDefaultsSyncIdentityStore(),
         consentStore: any SyncConsentStore = UserDefaultsSyncConsentStore(),
         minSyncInterval: TimeInterval = 60,
         now: @escaping @Sendable () -> Date = Date.init
@@ -188,6 +190,7 @@ public actor CloudSyncCoordinator {
         self.pullTransport = pullTransport
         self.cursorStore = cursorStore
         self.skipTracker = skipTracker
+        self.identityStore = identityStore
         self.consentStore = consentStore
         self.minSyncInterval = minSyncInterval
         self.now = now
@@ -281,6 +284,54 @@ public actor CloudSyncCoordinator {
 
         do {
             let accessToken = try await identity.validAccessToken()
+
+            // IDENTITY RE-PROVISIONING GUARD (2026-08 lot-2 pull review,
+            // round 4 CRITICAL). A rejected refresh token makes
+            // `AnonymousIdentityManager` silently mint a brand-new
+            // anonymous `user_id` (see that type's `currentSession()` doc
+            // comment) — the server-side account behind THAT id is empty
+            // by definition, even though THIS device's pull cursors are
+            // still non-nil from the previous, now-orphaned account. Left
+            // unchecked, `SyncPullActor`'s rule-1 cold-start guard
+            // (`isColdStart = pullOrder.allSatisfy { cursor(forTable:) == nil }`)
+            // can never fire in that state — a device that has already
+            // synced always has non-nil cursors on every table — so the
+            // pull below would read the fresh, empty account as "nothing
+            // changed" rather than "nothing has EVER been pushed here."
+            // `PullOutcome.seededFromLocal` (and the `markEverythingUnsynced()`
+            // call below gated on it) would stay unreachable, and
+            // cards/review_logs/vocabulary would silently never reach the
+            // new account — only `profiles`/`rpg_states` (pushed
+            // unconditionally every cycle) would, while `SettingsView`
+            // keeps reporting "up to date" throughout.
+            //
+            // Comparing the identity manager's CURRENT `user_id` against
+            // the one persisted the last time this method ran
+            // (`SyncIdentityStore`) catches the mismatch here and resets
+            // both `cursorStore` and `skipTracker` — the same pairing
+            // `setConsent(false)` already uses, for the same reason (see
+            // that method's doc comment: a stale skip-tracker strike count
+            // surviving a cursor reset could drop a brand-new account's
+            // row after inheriting strikes from a completely unrelated
+            // previous account) — so the pull that follows genuinely IS a
+            // cold start again, and rule 1's existing machinery takes it
+            // from there unchanged.
+            let currentUserID = try await identity.currentUserID()
+            if let lastKnownUserID = identityStore.lastKnownUserID() {
+                if lastKnownUserID != currentUserID {
+                    cursorStore.resetAll()
+                    skipTracker.resetAll()
+                    identityStore.setLastKnownUserID(currentUserID)
+                }
+            } else {
+                // Nothing stored yet — a fresh install, OR a device
+                // mid-history that simply never ran this check before this
+                // fix shipped. Neither is a re-provisioning signal by
+                // itself: recording without resetting is what keeps this
+                // guard from wiping an already-seeded, perfectly healthy
+                // cursor set the very first time it runs.
+                identityStore.setLastKnownUserID(currentUserID)
+            }
 
             // Pull BEFORE push (lot 2): merges/replays remote state into
             // the local store first, so the push below sends the
