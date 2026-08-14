@@ -164,6 +164,18 @@ apprenants existants (53 → ~74 dans le cas observé) et la porte Tatami se
 rapproche. C'est une correction, pas un cadeau, mais c'est un changement de
 comportement sur une porte pédagogique — à annoncer, pas à glisser.
 
+### GAP-14 — Le schéma serveur n'est pas reproductible depuis le repo
+**Sévérité : moyenne.** `supabase/migrations/` ne contient que la migration de
+clé composite du 2026-08-14. Les 8 tables, leurs politiques RLS, la colonne
+`server_updated_at` et ses triggers ont été appliqués directement sur le projet
+vivant et n'existent **nulle part** dans le dépôt. Un projet Supabase
+réinitialisé ne se reconstruit pas.
+
+Ce qui le fermerait : `supabase db pull` pour aspirer le schéma existant dans
+`supabase/migrations/`, en vérifiant que le rejeu sur une base vierge redonne
+bien les 8 tables, les politiques et les triggers. À faire avant que le schéma
+ne bouge encore.
+
 ### GAP-09 — Aucune cible de tests UI
 **Sévérité : moyenne.** L'infrastructure de fixtures par argument de lancement
 existe, mais rien ne l'exerce. Aucun parcours utilisateur n'est testé de bout en
