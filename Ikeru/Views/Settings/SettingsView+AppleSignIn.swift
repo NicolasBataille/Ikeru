@@ -75,6 +75,16 @@ extension SettingsView {
     }
 
     /// Apple's own button as pure chrome (hit-testing off, VoiceOver-hidden) — taps route through `handleAppleSignIn()`.
+    ///
+    /// The `.contentShape(Rectangle())` is load-bearing, not decoration. A
+    /// `Button` derives its tappable region from its label's content, and this
+    /// label's only content has hit-testing disabled (so Apple's own button
+    /// can't run its own flow). Without an explicit content shape the Button
+    /// ends up with NO hit region at all and taps fall straight through it —
+    /// which shipped, and looked exactly like "the button does nothing":
+    /// silent, with no error and no log, because `handleAppleSignIn()` was
+    /// never reached. Verified on device by instrumenting the flow and seeing
+    /// zero output on tap.
     private var appleSignInRow: some View {
         HStack(spacing: 12) {
             Text(verbatim: "サインイン")
@@ -82,6 +92,7 @@ extension SettingsView {
             Button(action: handleAppleSignIn) {
                 SignInWithAppleButton(.signIn) { _ in } onCompletion: { _ in }
                     .allowsHitTesting(false).accessibilityHidden(true).signInWithAppleButtonStyle(.whiteOutline).frame(height: 44)
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.plain).disabled(isSigningInWithApple)
             .accessibilityLabel(Text("Sign in with Apple", comment: "Accessibility label for the sign-in row"))
@@ -141,6 +152,12 @@ extension SettingsView {
                 // foreground/network-regain trigger.
                 await cloudSyncCoordinatorInstance().syncNow()
             } catch AppleSignInFlow.SignInError.userCanceled {
+                // Deliberately silent for the learner: dismissing the sheet is
+                // a choice, not a failure. Logged anyway, because Apple also
+                // reports `.canceled` when the sheet CANNOT be presented —
+                // so a genuine misconfiguration is otherwise indistinguishable
+                // from a tap on "Cancel", and both look like nothing happened.
+                Logger.ui.info("Sign in with Apple: canceled (user dismissal, or the sheet could not be presented)")
             } catch AppleLinkError.linkIdentityGuardTripped {
                 appleSignInErrorMessage = String(localized: "We couldn't verify your account connection. Nothing was changed — please try again.")
             } catch {
