@@ -1,6 +1,5 @@
 import SwiftUI
 import SwiftData
-import IkeruCore
 
 // Split out of `SettingsView.swift` for the same reason as
 // `SettingsView+DataStorage.swift`: the file had crossed SwiftLint's
@@ -68,6 +67,13 @@ struct DevToolsSettingsView: View {
             VStack(spacing: 0) {
                 devSeedRow
                 Rectangle().fill(TatamiTokens.goldDim.opacity(0.2)).frame(height: 1)
+                // The `value:` column is padded so it lines up down the rows.
+                // SwiftLint's `comma` rule reads that padding as a violation.
+                // It always did — but this code sat inline in SettingsView.swift
+                // on lines no PR had touched, and the strict pass only judges
+                // touched lines, so nobody ever saw it. Moving the file makes
+                // every line "new". The alignment is deliberate; it stays.
+                // swiftlint:disable comma
                 devActionRow(jp: "削除", label: "Wipe profile",    value: "destructive") { devShowResetConfirm = true }
                 devActionRow(jp: "昇段", label: "Force level-up",  value: "next") {
                     TestFixtures.grantLevelUp(context: modelContext)
@@ -78,6 +84,7 @@ struct DevToolsSettingsView: View {
                     devLastAction = "✓ Asset cache cleared"
                 }
                 devActionRow(jp: "情報", label: "Build info",       value: devBuildInfo, action: nil)
+                // swiftlint:enable comma
 
                 if !devLastAction.isEmpty {
                     Text(devLastAction)
@@ -167,9 +174,12 @@ struct DevToolsSettingsView: View {
                 }
             }
 
+            // Aligned columns again — same reason as the block above.
+            // swiftlint:disable comma
             devSlider(label: "Level",     value: $devSeedLevel,     range: 1...30,   step: 1)
             devSlider(label: "Due",       value: $devSeedDue,       range: 0...50,   step: 5)
             devSlider(label: "Mastered",  value: $devSeedMastered,  range: 0...200,  step: 10)
+            // swiftlint:enable comma
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
