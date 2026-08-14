@@ -1,0 +1,28 @@
+# Supabase CLI configuration.
+#
+# This file exists so that `supabase functions deploy` reproduces the EXACT
+# deployed configuration from the repo, rather than depending on whatever was
+# clicked in a dashboard once. Without it, a redeploy could silently ship the
+# function with different settings than the one that was reviewed.
+#
+# Only the Edge Function config lives here on purpose. The database schema is
+# NOT declared in this file: the 8 sync tables, their RLS policies, and the
+# `server_updated_at` triggers were applied via migrations against the live
+# project, and re-declaring them here would create a second source of truth
+# that drifts. If the schema ever needs to be reproducible from the repo too,
+# that is `supabase db pull` into `supabase/migrations/` — a separate job.
+
+project_id = "aiayzlarixlogcoyswna"
+
+[functions.delete-account]
+# The gateway rejects unsigned/expired tokens BEFORE the function body runs,
+# so a caller cannot even reach the deletion logic without a valid JWT. This
+# is defence in depth, not the actual authorisation check: the function still
+# re-derives the caller's identity itself via `auth.getUser()`, because a
+# valid JWT proves "someone is signed in", not "this specific user asked".
+#
+# Never flip this to false. With `verify_jwt = false` the endpoint would be
+# open to the internet, and the only thing standing between an anonymous
+# request and `service_role` deletion would be the function's own header
+# parsing.
+verify_jwt = true
