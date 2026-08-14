@@ -495,7 +495,7 @@ struct SettingsView: View {
                     jp: "振り仮名",
                     label: "Furigana",
                     value: localizedString(furiganaStatusValue),
-                    showChevron: false
+                    chevron: .hidden
                 ) {
                     withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) {
                         // Tapping always fixes the setting explicitly — from
@@ -517,7 +517,7 @@ struct SettingsView: View {
                 jp: "自動再生",
                 label: "Audio autoplay",
                 value: isAudioAutoplayEnabled ? String(localized: "On") : String(localized: "Off"),
-                showChevron: false
+                chevron: .hidden
             ) {
                 withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) {
                     isAudioAutoplayEnabled.toggle()
@@ -596,7 +596,7 @@ struct SettingsView: View {
                 jp: "プロフィール",
                 label: "Profile",
                 value: profileNameValue,
-                showChevron: false
+                chevron: .hidden
             ) {
                 editingName = profileNameValue
                 withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) {
@@ -1218,6 +1218,28 @@ struct SettingsView: View {
 // `private` is file-scoped, not declaration-scoped — any extension of the
 // same type in the same file shares access (SE-0169).
 
+/// Whether a settings row shows its trailing chevron.
+///
+/// Exists instead of a plain `Bool` so the DEFAULT can mean "ask the row" —
+/// a bare `Bool` has no third value for "derive it", and defaulting it to
+/// `true` is what let rows ship looking tappable while doing nothing.
+enum ChevronVisibility {
+    /// Show one iff the row has an action. The right answer almost always.
+    case auto
+    /// Force one — for a row whose action is temporarily nil (in flight).
+    case shown
+    /// Never show one — for a row that displays a value and nothing more.
+    case hidden
+
+    func resolved(hasAction: Bool) -> Bool {
+        switch self {
+        case .auto:   return hasAction
+        case .shown:  return true
+        case .hidden: return false
+        }
+    }
+}
+
 extension SettingsView {
 
     @ViewBuilder
@@ -1236,23 +1258,23 @@ extension SettingsView {
     /// Tappable row. Pass `action: nil` for an informational (read-only) row.
     /// Not `private` — used from `SettingsView+AppleSignIn.swift` too.
     @ViewBuilder
-    /// `showChevron` defaults to "whatever the action implies": a row with no
-    /// action gets no chevron, because a chevron promises a destination.
+    /// `chevron` defaults to `.auto`: a row with no action gets no chevron,
+    /// because a chevron promises a destination.
     ///
-    /// It used to default to `true` regardless, which meant forgetting the
-    /// action silently produced a row that looked tappable and did nothing.
-    /// That shipped on the Version row, and again on "Connected with Apple"
-    /// until the account-section pass. Passing the value explicitly still
-    /// wins, for the rows that legitimately want a chevron while their action
-    /// is momentarily nil (mid-flight sign-in, for one).
+    /// This used to be a `Bool` defaulting to `true` regardless of the action,
+    /// which meant forgetting the action silently produced a row that looked
+    /// tappable and did nothing. That shipped on the Version row, and again on
+    /// "Connected with Apple" until the account-section pass. `.shown` still
+    /// forces one, for rows that legitimately want a chevron while their action
+    /// is momentarily nil (a sign-in in flight, for one).
     func settingRow(
         jp: String,
         label: LocalizedStringKey,
         value: String,
-        showChevron: Bool? = nil,
+        chevron: ChevronVisibility = .auto,
         action: (() -> Void)? = nil
     ) -> some View {
-        let showChevron = showChevron ?? (action != nil)
+        let showChevron = chevron.resolved(hasAction: action != nil)
         Button {
             action?()
         } label: {

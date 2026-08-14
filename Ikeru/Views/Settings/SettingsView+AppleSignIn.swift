@@ -53,7 +53,7 @@ extension SettingsView {
                 settingRow(
                     jp: "サインイン", label: "Sign in again to keep syncing",
                     value: isSigningInWithApple ? String(localized: "Signing in…") : "",
-                    showChevron: !isSigningInWithApple, action: isSigningInWithApple ? nil : { handleAppleSignIn() }
+                    chevron: isSigningInWithApple ? .hidden : .shown, action: isSigningInWithApple ? nil : { handleAppleSignIn() }
                 )
             } else if isLinkedWithApple {
                 // State, not navigation — same shape as the `プロフィール`
@@ -69,7 +69,7 @@ extension SettingsView {
                 settingRow(
                     jp: "サインイン", label: "Apple ID",
                     value: String(localized: "Connected"),
-                    showChevron: false
+                    chevron: .hidden
                 )
             } else if hasEverHeldLinkedSessionOnThisDevice {
                 // Restored device: the Keychain is empty (so none of the
@@ -82,7 +82,7 @@ extension SettingsView {
                 settingRow(
                     jp: "サインイン", label: "Your progress is waiting — sign in to reconnect",
                     value: isSigningInWithApple ? String(localized: "Signing in…") : "",
-                    showChevron: !isSigningInWithApple, action: isSigningInWithApple ? nil : { handleAppleSignIn() }
+                    chevron: isSigningInWithApple ? .hidden : .shown, action: isSigningInWithApple ? nil : { handleAppleSignIn() }
                 )
             } else {
                 appleSignInRow
