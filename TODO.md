@@ -17,18 +17,43 @@
   (cadence hebdo vs ponctuelle **non tranchée**). Lot 1 = `answeredValue`/`exerciseType`/`surface`
   sur `ReviewLog` → rend les **paires de confusion** observables (aujourd'hui calculées puis
   jetées). Prérequis : réparer le seeder fixture (§10).
-- [ ] **Cloud sync (Supabase free tier)** — spec written, not implemented:
+- [~] **Cloud sync (Supabase free tier)** — spec :
   [`docs/design-specs/2026-08-10-cloud-sync-design.md`](docs/design-specs/2026-08-10-cloud-sync-design.md).
-  Comptes + avancement distant + resync, **local-d'abord** (l'app doit rester utilisable
-  hors-ligne). 4 entités sur 11 sont append-only ⇒ sans conflit ; `ReviewLog` fait autorité
-  sur `Card`. Prérequis bloquants : suppression de profil (obligation App Store dès qu'il y a
-  login) + `IkeruSchemaV3` (tombstones). Sert aussi de **banc de fixtures** pour les tests
-  utilisateur (§11).
-- [ ] **Fixture seeder is unusable** — seeds placeholder cards (`人0`, `日1`), zero kana,
-  hardcodes the display name, wipes the personal dictionary and resets tutorial flags.
-  Blocks all J+30/J+90 QA and the telemetry spec above. Found in the 2026-08 expert review
-  (OBS-013). Fix règle : **générer un historique `ReviewLog` sur du contenu réel et laisser
-  FSRS dériver l'état**, au lieu de poser `stability`/`reps` à la main.
+  **Lots 0, 1 et 4 livrés** (schéma V4 + tombstones, sauvegarde push-only sur identité
+  anonyme, conformité : `privacy.html` + `PrivacyInfo` + suppression serveur + interrupteur
+  dégaté). **Lot 2 en cours** (pull + fusion : les 4 règles du §5.3, rejeu FSRS, tests de
+  divergence). **Lot 3 à faire** (Sign in with Apple — tranché le 2026-08-14).
+  ⚠️ Pour le lot 3 : la promotion anonyme→compte passe par `linkIdentityWithIdToken`, **pas**
+  `signInWithIdToken` (le second crée un autre utilisateur et orpheline l'historique poussé),
+  et demande deux réglages dashboard : « Client IDs » = `com.ikeru.app` + **Manual linking**.
+  Sert aussi de **banc de fixtures** pour les tests utilisateur (§11).
+- [ ] **IA sans clé : accès OpenRouter fourni par l'app** — idée 2026-08-14, non planifiée.
+  Aujourd'hui Sakura est inutilisable tant que l'apprenant n'a pas collé sa propre clé Gemini,
+  ce qui est une falaise à l'entrée. Objectif : un accès par défaut fourni de notre côté, la
+  clé personnelle restant une **option** (pas une suppression).
+  Trois contraintes à intégrer **avant** de concevoir, pas après :
+  1. **Une clé partagée ne peut pas être embarquée.** Le repo est public, et de toute façon
+     toute clé dans un binaire iOS s'extrait. Donc ce n'est pas « mettre une clé par défaut »
+     mais **écrire un proxy** : la clé vit côté serveur, l'app appelle le proxy. La brique
+     existe déjà — `supabase/functions/delete-account` est le patron exact (vérifier le JWT de
+     l'appelant, puis agir avec un secret privilégié).
+  2. **Le coût devient le nôtre, et l'abus aussi.** Un proxy fait converger l'usage de tout le
+     monde sur un seul compte, alors que les identités anonymes sont gratuites et illimitées à
+     créer — quelqu'un peut en fabriquer des milliers. Il faut une limite par utilisateur, donc
+     une identité **durable**, ce que l'anonyme-par-appareil n'est pas (réinstallation = nouvelle
+     identité). **C'est un argument pour faire le lot 3 avant ce chantier**, pas après.
+  3. **Ça change notre posture vis-à-vis des données.** La politique actuelle dit que le texte
+     part chez *le fournisseur choisi par l'utilisateur avec sa propre clé*. Avec un proxy,
+     **nous** devenons l'intermédiaire pour du contenu de conversation. `privacy.html` et
+     `PrivacyInfo.xcprivacy` seraient à remettre à jour — même classe de problème que le lot 4,
+     et c'est celle qui mord en silence.
+  À trancher au moment de planifier : les modèles gratuits d'OpenRouter sont limités et
+  changent ; un usage réel demanderait des crédits payants, ce qui touche la contrainte
+  « aucune API payante ».
+- [x] ~~**Fixture seeder is unusable**~~ — corrigé (OBS-013). `TestFixtures.swift` génère
+  désormais un historique `ReviewLog` sur du contenu réel et laisse FSRS dériver l'état, au
+  lieu de poser `stability`/`reps` à la main ; les cartes bouche-trou (`人0`, `日1`) ont
+  disparu. Débloque la QA J+30/J+90 et la télémétrie ci-dessus.
 - [ ] **No UI-test target** — launch-argument fixture infrastructure exists but nothing
   exercises it. Add a minimal XCUITest smoke suite (remediation 8.7).
 - [ ] **Content expansion** — N5 bundle has 206 vocab items / 31 grammar points / 96 sentences
