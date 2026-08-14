@@ -12032,17 +12032,18 @@
     },
     "Backs up your progress to a server in Europe. No account is needed. Conversations with Sakura are not included. Restoring on a new device is not available yet." : {
       "extractionState" : "manual",
+      "comment" : "Value reworded for lot 3 (Sign in with Apple) — key text kept stable to avoid a re-key; the last sentence now points at the new sign-in row instead of claiming cross-device restore is unavailable, which it no longer is once signed in.",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Backs up your progress to a server in Europe. No account is needed. Conversations with Sakura are not included. Restoring on a new device is not available yet."
+            "value" : "Backs up your progress to a server in Europe. No account is needed. Conversations with Sakura are not included. Restoring on a new device requires signing in with Apple."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sauvegarde votre progression sur un serveur situé en Europe. Aucun compte n'est nécessaire. Les conversations avec Sakura ne sont pas incluses. La restauration sur un nouvel appareil n'est pas encore disponible."
+            "value" : "Sauvegarde votre progression sur un serveur situé en Europe. Aucun compte n'est nécessaire. Les conversations avec Sakura ne sont pas incluses. La restauration sur un nouvel appareil nécessite de vous connecter avec Apple."
           }
         }
       }
@@ -12153,17 +12154,18 @@
     },
     "Delete data from server?" : {
       "extractionState" : "manual",
+      "comment" : "Value reworded for lot 3 (Sign in with Apple) — key text kept stable to avoid a re-key. Deletion now also erases the account itself (Apple identity included), not just the backed-up rows.",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Delete data from server?"
+            "value" : "Delete your account and data?"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Supprimer les données du serveur ?"
+            "value" : "Supprimer votre compte et vos données ?"
           }
         }
       }
@@ -12181,6 +12183,132 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Supprimer mes données du serveur"
+          }
+        }
+      }
+    },
+    "Sign in with Apple" : {
+      "extractionState" : "manual",
+      "comment" : "Accessibility label for the Sign in with Apple row in Settings — the visible button is Apple's own native chrome, hit-tested via a wrapping plain Button (lot 3)",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sign in with Apple"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se connecter avec Apple"
+          }
+        }
+      }
+    },
+    "Sign in to pick up your progress on another device." : {
+      "extractionState" : "manual",
+      "comment" : "One-line explainer shown under the Sign in with Apple row in Settings (lot 3)",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sign in to pick up your progress on another device."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connectez-vous pour retrouver votre progression sur un autre appareil."
+          }
+        }
+      }
+    },
+    "Connected with Apple" : {
+      "extractionState" : "manual",
+      "comment" : "Settings row state once the learner has signed in / linked with Apple (lot 3) — replaces the sign-in button",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connected with Apple"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connecté avec Apple"
+          }
+        }
+      }
+    },
+    "Signing in…" : {
+      "extractionState" : "manual",
+      "comment" : "Loading label shown next to the spinner while the Sign in with Apple network call is in flight (lot 3)",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Signing in…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connexion…"
+          }
+        }
+      }
+    },
+    "Sign in again to keep syncing" : {
+      "extractionState" : "manual",
+      "comment" : "Shown instead of the normal Connected-with-Apple state when the linked session's refresh token was rejected server-side (SyncAuthError.reauthenticationRequired) — tapping re-runs the same sign-in flow, which reconnects the same account (lot 3)",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sign in again to keep syncing"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reconnectez-vous pour continuer la synchronisation"
+          }
+        }
+      }
+    },
+    "We couldn't verify your account connection. Nothing was changed — please try again." : {
+      "extractionState" : "manual",
+      "comment" : "Sign in with Apple error — AppleLinkError.linkIdentityGuardTripped: the server returned a different account than expected, so nothing was adopted (lot 3). Distinct from the generic network-failure message and from a silent cancellation.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "We couldn't verify your account connection. Nothing was changed — please try again."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de vérifier la connexion de votre compte. Rien n'a été modifié — réessayez."
+          }
+        }
+      }
+    },
+    "Couldn't sign in with Apple. Check your connection and try again." : {
+      "extractionState" : "manual",
+      "comment" : "Sign in with Apple error — generic/network failure (AppleSignInFlow.SignInError.missingIdentityToken/.underlying, or any other propagated error), distinct from the guard-tripped and cancellation cases (lot 3)",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't sign in with Apple. Check your connection and try again."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connexion avec Apple impossible. Vérifiez votre connexion et réessayez."
           }
         }
       }
@@ -12204,17 +12332,18 @@
     },
     "Permanently deletes your backed-up progress — profiles, cards, review history, and vocabulary — from the server. This cannot be undone. Data on this device stays untouched." : {
       "extractionState" : "manual",
+      "comment" : "Value reworded for lot 3 (Sign in with Apple) — key text kept stable to avoid a re-key. Deletion now also erases the account itself; wording covers both anonymous-only and Apple-linked learners since most are the former.",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Permanently deletes your backed-up progress — profiles, cards, review history, and vocabulary — from the server. This cannot be undone. Data on this device stays untouched."
+            "value" : "Permanently deletes your account and everything backed up to it — profiles, cards, review history, and vocabulary. If you're signed in with Apple, that connection is removed too. This cannot be undone. Data on this device stays untouched."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Supprime définitivement la progression sauvegardée — profils, cartes, historique de révisions, vocabulaire — du serveur. Action irréversible. Les données sur cet appareil ne sont pas concernées."
+            "value" : "Supprime définitivement votre compte et tout ce qui y est sauvegardé — profils, cartes, historique de révisions, vocabulaire. Si vous êtes connecté avec Apple, cette connexion est également supprimée. Action irréversible. Les données sur cet appareil ne sont pas concernées."
           }
         }
       }

@@ -4,7 +4,11 @@
   Rationale (kept in sync with docs/privacy.html — see item 1.3 of the
   2026-07-08 remediation plan; docs/privacy.html's "Cloud backup
   (optional)" section, added the same lot, describes this same set of
-  tables and the anonymous user_id in learner-facing language):
+  tables and the anonymous user_id in learner-facing language). Updated
+  for cloud-sync lot 3 (Sign in with Apple): docs/privacy.html's "Sign in
+  with Apple (optional)" bullet, in that same "Cloud backup (optional)"
+  section, is where the NSPrivacyCollectedDataTypeEmailAddress entry below
+  is explained to the learner:
 
   - Companion chat messages (CompanionChatMessage, via CompanionChatRepository)
     are persisted locally on-device via SwiftData. That local storage alone is
@@ -41,6 +45,32 @@
     name the learner typed in Settings, pushed verbatim in the `profiles`
     row's payload (see SyncPayloadBuilder.row(for: UserProfile)). Linked:
     true — pushed under the same user_id as every other row.
+  - NSPrivacyCollectedDataTypeEmailAddress (lot 3, Sign in with Apple —
+    AppleSignInFlow.swift, AnonymousIdentityManager.linkOrSignInWithApple):
+    signing in with Apple is opt-in and layered ON TOP of the anonymous
+    identity above, never a replacement requirement — the anonymous path
+    with no email stays the default. When a learner does choose to link,
+    GoTrue (the Supabase auth server) records the email address tied to
+    their Apple ID in its own auth.users table — potentially Apple's
+    private relay address if the learner chose to hide their real one.
+    This app never reads that address back, never stores a copy of it
+    on-device or in any table SyncPayloadBuilder pushes to, and no line of
+    Swift in this repo touches an email string (verified: no `email`
+    identifier anywhere under IkeruCore/Sources/Services/Sync or
+    Ikeru/Services/AppleSignInFlow.swift). None of that makes it
+    undeclared, though: it is still collected, server-side, about this
+    learner, as a direct result of a feature this app ships and prompts
+    the learner to use — Apple's own guidance is to declare data collected
+    by first-party server infrastructure the app's flow causes to be
+    collected, not only what the client code itself parses. Linked: true —
+    supabase/functions/delete-account/index.ts's DELETE_ORDER plus the
+    final `adminClient.auth.admin.deleteUser(userID)` call confirm the
+    email lives on the exact same auth.users row keyed by this learner's
+    user_id, and erasing that row (the "delete my data" flow in Settings)
+    takes the email with it. Tracking: false — never used for
+    cross-app/cross-site tracking or ad targeting, only to authenticate
+    the same learner across their own devices. Purpose:
+    AppFunctionality only.
   - NSPrivacyCollectedDataTypeProductInteraction: learning progress and
     exercise results — RPGState (xp, level, streaks, sessions/reviews
     completed), Card and VocabularyEntry spaced-repetition state (FSRS
@@ -106,6 +136,18 @@
 		<dict>
 			<key>NSPrivacyCollectedDataType</key>
 			<string>NSPrivacyCollectedDataTypeName</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<true/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+			</array>
+		</dict>
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypeEmailAddress</string>
 			<key>NSPrivacyCollectedDataTypeLinked</key>
 			<true/>
 			<key>NSPrivacyCollectedDataTypeTracking</key>

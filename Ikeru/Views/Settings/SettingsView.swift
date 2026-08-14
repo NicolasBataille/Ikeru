@@ -1,6 +1,7 @@
 import SwiftUI
 import Combine
 import IkeruCore
+import AuthenticationServices
 import os
 
 // MARK: - SettingsView
@@ -76,6 +77,11 @@ struct SettingsView: View {
     @AppStorage(CloudSyncPreferences.lastErrorDefaultsKey) private var cloudSyncLastError: String = ""
     @State private var isDeletingCloudData = false
     @State private var showDeleteCloudDataConfirmation = false
+
+    // MARK: Sign in with Apple (lot 3)
+    @AppStorage("ikeru.appleSignIn.isLinked") private var isLinkedWithApple = false // Core has no "am I linked" accessor
+    @State private var isSigningInWithApple = false
+    @State private var appleSignInErrorMessage: String?
 
     // MARK: Profile management
 
@@ -314,7 +320,7 @@ struct SettingsView: View {
         } message: {
             Text("Removes every cached audio file and image. Assets will be regenerated on next use.")
         }
-        .alert("Delete data from server?", isPresented: $showDeleteCloudDataConfirmation) {
+        .alert("Delete data from server?", isPresented: $showDeleteCloudDataConfirmation) { // catalog VALUES reworded for lot 3
             Button("Cancel", role: .cancel) { }
             Button("Delete", role: .destructive) {
                 deleteCloudDataFromServer()
@@ -627,6 +633,8 @@ struct SettingsView: View {
             // same lot to describe exactly what this toggle sends.
             cloudBackupBlock
 
+            appleSignInBlock
+
             // Plan / Premium row intentionally omitted — does not exist in the app.
 
             languageRow
@@ -765,6 +773,7 @@ struct SettingsView: View {
                 cloudSyncConsentEnabled = false
                 cloudSyncLastSuccessEpoch = 0
                 cloudSyncLastAttemptEpoch = 0
+                isLinkedWithApple = false // deletion erases the account itself now (Apple identity included)
                 // A stale "pull-failed"/"pull-degraded" error string must
                 // not outlive an account wipe: `CloudDataDeletionService`
                 // already resets the pull cursor and skip-tracker state —
@@ -1354,6 +1363,73 @@ extension SettingsView {
             return String(localized: String.LocalizationValue(key))
         }
         return ""
+    }
+
+    // MARK: - Sign in with Apple (lot 3)
+    /// Reauth > connected > not-yet-signed-in; not-yet-linked wraps Apple's own button as pure chrome.
+    @ViewBuilder
+    private var appleSignInBlock: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            if isLinkedWithApple && cloudSyncLastError == "reauthenticationRequired" {
+                settingRow(
+                    jp: "サインイン", label: "Sign in again to keep syncing",
+                    value: isSigningInWithApple ? String(localized: "Signing in…") : "",
+                    showChevron: !isSigningInWithApple, action: isSigningInWithApple ? nil : { handleAppleSignIn() }
+                )
+            } else if isLinkedWithApple {
+                settingRow(jp: "サインイン", label: "Connected with Apple", value: "", showChevron: false)
+            } else {
+                appleSignInRow
+            }
+            if let appleSignInErrorMessage {
+                Text(appleSignInErrorMessage)
+                    .ikeruScaledFont(11, relativeTo: .caption2).foregroundStyle(Color.ikeruDanger).padding(.horizontal, 16).padding(.bottom, 4)
+            }
+            Text("Sign in to pick up your progress on another device.", comment: "Explainer under the Sign in with Apple row")
+                .ikeruScaledFont(11, relativeTo: .caption2).foregroundStyle(TatamiTokens.paperGhost).padding(.horizontal, 16).padding(.bottom, 12)
+        }
+    }
+
+    /// Apple's own button as pure chrome (hit-testing off, VoiceOver-hidden) — taps route through `handleAppleSignIn()`.
+    private var appleSignInRow: some View {
+        HStack(spacing: 12) {
+            Text(verbatim: "サインイン")
+                .ikeruScaledFont(13, design: .serif, relativeTo: .caption).foregroundStyle(TatamiTokens.paperGhost)
+            Button(action: handleAppleSignIn) {
+                SignInWithAppleButton(.signIn) { _ in } onCompletion: { _ in }
+                    .allowsHitTesting(false).accessibilityHidden(true).signInWithAppleButtonStyle(.whiteOutline).frame(height: 44)
+            }
+            .buttonStyle(.plain).disabled(isSigningInWithApple)
+            .accessibilityLabel(Text("Sign in with Apple", comment: "Accessibility label for the sign-in row"))
+            if isSigningInWithApple { ProgressView().tint(Color.ikeruPrimaryAccent) }
+            Spacer()
+        }
+        .padding(.horizontal, 16).padding(.vertical, 10)
+        .overlay(alignment: .bottom) {
+            Rectangle().fill(TatamiTokens.goldDim.opacity(0.2)).frame(height: 1).padding(.horizontal, 16)
+        }
+    }
+
+    /// Drives `AppleSignInFlow.signIn()`; each failure gets its own distinct, non-silent message.
+    private func handleAppleSignIn() {
+        guard !isSigningInWithApple else { return }
+        isSigningInWithApple = true
+        appleSignInErrorMessage = nil
+        Task { @MainActor in
+            defer { isSigningInWithApple = false }
+            do {
+                let flow = AppleSignInFlow(identity: AnonymousIdentityManager())
+                _ = try await flow.signIn()
+                isLinkedWithApple = true
+                cloudSyncLastError = "" // clears a stale reconnect-required banner
+            } catch AppleSignInFlow.SignInError.userCanceled {
+            } catch AppleLinkError.linkIdentityGuardTripped {
+                appleSignInErrorMessage = String(localized: "We couldn't verify your account connection. Nothing was changed — please try again.")
+            } catch {
+                Logger.ui.error("Sign in with Apple failed: \(String(describing: error))")
+                appleSignInErrorMessage = String(localized: "Couldn't sign in with Apple. Check your connection and try again.")
+            }
+        }
     }
 }
 

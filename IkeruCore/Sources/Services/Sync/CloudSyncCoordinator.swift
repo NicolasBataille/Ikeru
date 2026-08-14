@@ -317,11 +317,20 @@ public actor CloudSyncCoordinator {
             // cold start again, and rule 1's existing machinery takes it
             // from there unchanged.
             let currentUserID = try await identity.currentUserID()
+            // Lot 3 (Apple linking): also true the cycle a LINKED session
+            // switches this device onto a DIFFERENT, already-populated
+            // account (matrix case (c) — the Apple ID was already linked to
+            // someone else's account elsewhere). Read alongside the
+            // `markEverythingUnsynced` call below — see its own comment for
+            // why an identity change alone, regardless of WHICH of the two
+            // causes produced it, is what that call is now conditioned on.
+            var identityChangedThisCycle = false
             if let lastKnownUserID = identityStore.lastKnownUserID() {
                 if lastKnownUserID != currentUserID {
                     cursorStore.resetAll()
                     skipTracker.resetAll()
                     identityStore.setLastKnownUserID(currentUserID)
+                    identityChangedThisCycle = true
                 }
             } else {
                 // Nothing stored yet — a fresh install, OR a device
@@ -366,7 +375,28 @@ public actor CloudSyncCoordinator {
             // points at a previous, now-gone server-side account — see
             // `SyncModelActor.markEverythingUnsynced()`'s doc comment for
             // the full failure mode this closes.
+            //
+            // Lot 3 fix: ALSO run this on ANY identity change this cycle,
+            // not only when the pull happened to come back seeded-from-local.
+            // `seededFromLocal` only fires when the NEW account is EMPTY —
+            // true for a re-provisioned anonymous identity (lot 2's
+            // original case), but matrix case (c) breaks that assumption:
+            // an Apple ID already linked to a DIFFERENT, POPULATED account
+            // switches `currentUserID` just the same, yet the pull above is
+            // a perfectly normal `.applied` (rule 1 never fires — the
+            // remote account is not empty). Without this, every local row
+            // still carrying a `syncedAt` stamp from the OLD identity reads
+            // as "already synced" forever and never reaches the new
+            // account — only `profiles`/`rpg_states` would. Safe to call
+            // unconditionally on every identity change: `markEverythingUnsynced`
+            // is idempotent (see its own doc comment), and this runs AFTER
+            // the pull above has already merged whatever the new account
+            // actually had, so it cannot discard real remote data — it only
+            // re-offers this device's local state to the push's delta
+            // comparison below.
             if case .seededFromLocal = pullOutcome {
+                try await modelActor().markEverythingUnsynced()
+            } else if identityChangedThisCycle {
                 try await modelActor().markEverythingUnsynced()
             }
 
