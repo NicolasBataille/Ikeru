@@ -50,7 +50,7 @@ struct SettingsView: View {
     @State private var showExportShare = false
     @State private var exportURL: URL?
 
-    // MARK: Cloud sync (Supabase, lot 1 — push-only, opt-in)
+    // MARK: Cloud backup (Supabase, lot 4 — push-only, opt-in, user-facing)
     //
     // `CloudSyncCoordinator` is IkeruCore's push-only cloud backup (design
     // spec `docs/design-specs/2026-08-10-cloud-sync-design.md`, distinct
@@ -59,11 +59,14 @@ struct SettingsView: View {
     // is the only place in the app that constructs the coordinator today
     // (no foreground/session-end/network-regain triggers are wired yet;
     // that integration is out of this lot's scope, see the coordinator's
-    // doc comment).
+    // doc comment). There is no pull/restore path — this is a one-way
+    // backup, never call it "sync" in anything the learner reads.
     @State private var cloudSyncCoordinator: CloudSyncCoordinator?
     @AppStorage(CloudSyncPreferences.consentDefaultsKey) private var cloudSyncConsentEnabled = false
     @AppStorage(CloudSyncPreferences.lastSuccessDefaultsKey) private var cloudSyncLastSuccessEpoch: Double = 0
     @AppStorage(CloudSyncPreferences.lastAttemptDefaultsKey) private var cloudSyncLastAttemptEpoch: Double = 0
+    @State private var isDeletingCloudData = false
+    @State private var showDeleteCloudDataConfirmation = false
 
     // MARK: Profile management
 
@@ -105,17 +108,31 @@ struct SettingsView: View {
         return "Off"
     }
 
-    /// Honest cloud-sync status (task item 5: "jamais synchronisé / à jour /
-    /// en attente", never a bare error). Reads the same `UserDefaults` keys
-    /// `CloudSyncCoordinator` writes on every attempt — `@AppStorage`
-    /// re-renders this automatically even though the coordinator writes
-    /// from a background actor, since both go through the same
-    /// `UserDefaults.standard` keys declared in `CloudSyncPreferences`.
+    /// Honest cloud-backup status ("never backed up / up to date / backup
+    /// pending", never a bare error, never the word "sync" — this is a
+    /// push-only backup, there is no restore path). Reads the same
+    /// `UserDefaults` keys `CloudSyncCoordinator` writes on every attempt —
+    /// `@AppStorage` re-renders this automatically even though the
+    /// coordinator writes from a background actor, since both go through
+    /// the same `UserDefaults.standard` keys declared in
+    /// `CloudSyncPreferences`.
     private var cloudSyncStatusValue: LocalizedStringKey {
         guard cloudSyncConsentEnabled else { return "Off" }
         if cloudSyncLastSuccessEpoch > 0 { return "Up to date" }
-        if cloudSyncLastAttemptEpoch > 0 { return "Sync pending" }
-        return "Never synced"
+        if cloudSyncLastAttemptEpoch > 0 { return "Backup pending" }
+        return "Never backed up"
+    }
+
+    /// Whether backup has been turned on at least once. Derived from
+    /// existing state rather than a separate "ever enabled" flag: consent
+    /// currently on, or a past attempt/success recorded, both only happen
+    /// after the toggle was flipped on at some point. Gates the "delete my
+    /// data from the server" row — before this is true there is nothing on
+    /// the server to erase. All three signals get reset together on a
+    /// successful deletion (`deleteCloudDataFromServer`), so this goes
+    /// false again once the server side is actually empty.
+    private var hasEverBackedUp: Bool {
+        cloudSyncConsentEnabled || cloudSyncLastSuccessEpoch > 0 || cloudSyncLastAttemptEpoch > 0
     }
 
     /// Furigana's effective value — what conversations actually render, not
@@ -252,6 +269,14 @@ struct SettingsView: View {
             }
         } message: {
             Text("Removes every cached audio file and image. Assets will be regenerated on next use.")
+        }
+        .alert("Delete data from server?", isPresented: $showDeleteCloudDataConfirmation) {
+            Button("Cancel", role: .cancel) { }
+            Button("Delete", role: .destructive) {
+                deleteCloudDataFromServer()
+            }
+        } message: {
+            Text("Permanently deletes your backed-up progress — profiles, cards, review history, and vocabulary — from the server. This cannot be undone. Data on this device stays untouched.")
         }
         .task {
             if CloudBackupManager.iCloudEnabled {
@@ -548,16 +573,15 @@ struct SettingsView: View {
                 }
             }
 
-            // Cloud sync is gated to dev builds until the trust surfaces catch
-            // up. `docs/privacy.html` and `PrivacyInfo.xcprivacy` still describe
-            // an app that keeps everything on device — which is true today only
-            // because nobody can reach this switch. Shipping a user-facing sync
-            // toggle before updating them would repeat the exact mistake this
-            // project already had to correct once, and it is a release blocker
-            // rather than a merge blocker. Spec lot 4 owns that work.
-            #if IKERU_DEV_TOOLS
-            cloudSyncToggleRow
-            #endif
+            // Live for everyone as of lot 4 — no more `#if IKERU_DEV_TOOLS`
+            // gate. That gate never actually protected TestFlight users
+            // anyway: `IKERU_DEV_TOOLS` is active in Release too (see
+            // CLAUDE.md), so it only hid the row from App Store review /
+            // screenshots, not from real installs. `docs/privacy.html`
+            // (section "Sauvegarde cloud (optionnelle)" / "Cloud backup
+            // (optional)") and `PrivacyInfo.xcprivacy` were updated in this
+            // same lot to describe exactly what this toggle sends.
+            cloudBackupBlock
 
             // Plan / Premium row intentionally omitted — does not exist in the app.
 
@@ -565,11 +589,30 @@ struct SettingsView: View {
         }
     }
 
-    /// One row: toggle + inline honest status — cloud-sync lot 1. New
-    /// localization keys used here ("Cloud backup (beta)", "Never synced",
-    /// "Sync pending", "Up to date") are not yet in
-    /// `Localizable.xcstrings` — declared in this task's handoff notes
-    /// rather than added directly (out of this task's file perimeter).
+    /// Toggle + inline honest status, an always-visible plain-language
+    /// explainer, and — once backup has ever been turned on
+    /// (`hasEverBackedUp`) — a destructive row to erase the server copy.
+    /// This is a one-way backup with no restore path; the explainer says so
+    /// in plain language rather than letting "cloud backup" imply more.
+    private var cloudBackupBlock: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            cloudSyncToggleRow
+            Text(
+                "Backs up your progress to a server in Europe. No account is needed. Conversations with Sakura are not included. Restoring on a new device is not available yet.",
+                comment: "Explanatory text shown under the cloud backup toggle in Settings, describing what the backup does and does not do"
+            )
+            .ikeruScaledFont(11, relativeTo: .caption2)
+            .foregroundStyle(TatamiTokens.paperGhost)
+            .padding(.horizontal, 16)
+            .padding(.bottom, hasEverBackedUp ? 4 : 12)
+
+            if hasEverBackedUp {
+                deleteCloudDataRow
+            }
+        }
+    }
+
+    /// One row: toggle + inline honest status — cloud backup, lot 4.
     private var cloudSyncToggleRow: some View {
         reminderToggleRow(
             jp: "クラウド",
@@ -581,6 +624,39 @@ struct SettingsView: View {
                 .ikeruScaledFont(13, design: .serif, relativeTo: .caption)
                 .foregroundStyle(Color.ikeruPrimaryAccent)
         }
+    }
+
+    /// Destructive row, shown only once `hasEverBackedUp` is true — before
+    /// that there is nothing on the server to erase and the row would be
+    /// meaningless. Tapping only opens the confirmation alert; the actual
+    /// deletion call is `deleteCloudDataFromServer()`, wired to that
+    /// alert's destructive button below.
+    private var deleteCloudDataRow: some View {
+        Button {
+            showDeleteCloudDataConfirmation = true
+        } label: {
+            HStack(spacing: 16) {
+                Text("削除")
+                    .ikeruScaledFont(13, design: .serif, relativeTo: .caption)
+                    .foregroundStyle(TatamiTokens.paperGhost)
+                Text("Delete my data from the server")
+                    .ikeruScaledFont(13, relativeTo: .caption)
+                    .foregroundStyle(Color.ikeruDanger)
+                Spacer()
+                if isDeletingCloudData {
+                    ProgressView()
+                        .tint(Color.ikeruDanger)
+                } else {
+                    Text("›")
+                        .font(.system(size: 14))
+                        .foregroundStyle(TatamiTokens.goldDim)
+                }
+            }
+            .padding(.horizontal, 16).padding(.vertical, 14)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(isDeletingCloudData)
     }
 
     /// Lazily builds the coordinator over the live `ModelContainer` — never
@@ -606,6 +682,46 @@ struct SettingsView: View {
             await coordinator.setConsent(enabled)
             if enabled {
                 await coordinator.syncNow()
+            }
+        }
+    }
+
+    /// Erases the learner's data on the server (`CloudDataDeletionService`,
+    /// built in `IkeruCore` for this same lot). On success, also turns
+    /// backup off locally and zeroes the displayed timestamps — otherwise
+    /// the app would keep trying to push to an identity that was just
+    /// wiped server-side, and the status row would keep claiming "up to
+    /// date" about data that no longer exists. On failure, nothing local
+    /// changes: consent stays as it was, no timestamp is touched, and the
+    /// toast names the failure instead of silently pretending it worked.
+    private func deleteCloudDataFromServer() {
+        isDeletingCloudData = true
+        Task {
+            do {
+                try await CloudDataDeletionService().deleteAllCloudData()
+                isDeletingCloudData = false
+                cloudSyncConsentEnabled = false
+                cloudSyncLastSuccessEpoch = 0
+                cloudSyncLastAttemptEpoch = 0
+                // The success path used to be entirely silent, which reads
+                // as "nothing happened" for an action whose whole point is
+                // that something irreversible did.
+                toastManager.showInfo(
+                    String(localized: "Your data has been deleted from the server")
+                )
+            } catch {
+                isDeletingCloudData = false
+                // The technical description goes to the log, not to the
+                // learner: `CloudDeletionError` is not `LocalizedError`, so
+                // `localizedDescription` renders as
+                // "The operation couldn't be completed. (IkeruCore.CloudDeletionError error 1.)"
+                // — noise that also leaks a type name into the UI. What the
+                // learner needs is the one fact that changes their next
+                // action: nothing was deleted, so try again.
+                Logger.ui.error("Cloud data deletion failed: \(error.localizedDescription)")
+                toastManager.showError(
+                    String(localized: "Couldn't delete your data from the server. Nothing was deleted — check your connection and try again.")
+                )
             }
         }
     }

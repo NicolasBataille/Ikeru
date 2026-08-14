@@ -52,6 +52,39 @@ public actor AnonymousIdentityManager {
         try await currentSession().userID
     }
 
+    /// A valid access token for the identity **already stored on this
+    /// device**, or `nil` if this device has never had one.
+    ///
+    /// Deliberately NOT `validAccessToken()`, and the difference is the
+    /// whole point: that method's contract is "get me a usable token by any
+    /// means", so it happily mints a brand-new anonymous identity when none
+    /// is stored or when a refresh token is rejected. That is right for
+    /// pushing (a new identity just starts a new server mirror) and
+    /// catastrophic for deleting — the request would erase a freshly-minted
+    /// EMPTY account, report success, and leave the learner's real rows on
+    /// the server under the old `user_id` with nothing left to address them
+    /// by. An erasure request that silently erases the wrong (empty) account
+    /// is worse than one that fails visibly.
+    ///
+    /// So this method only ever works with what is already in the Keychain:
+    /// - nothing stored → `nil` (there is genuinely nothing to delete);
+    /// - stored and still valid → that token;
+    /// - stored but needing a refresh → refresh it, and **throw** if the
+    ///   refresh fails, rather than falling through to a fresh sign-in.
+    public func existingSessionAccessToken() async throws -> String? {
+        if let cachedSession, !cachedSession.needsRefresh() {
+            return cachedSession.accessToken
+        }
+        guard let stored = loadStoredSession() else { return nil }
+        if !stored.needsRefresh() {
+            cachedSession = stored
+            return stored.accessToken
+        }
+        let refreshed = try await transport.refreshSession(refreshToken: stored.refreshToken)
+        try persist(refreshed)
+        return refreshed.accessToken
+    }
+
     /// Deletes the locally cached and Keychain-persisted session. Does NOT
     /// delete the server-side anonymous user (no lot 1 endpoint for that);
     /// the next `validAccessToken()` call signs in fresh, minting a new

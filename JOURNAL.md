@@ -23,6 +23,114 @@ raisonnement, les mesures, et les décisions.
 
 ---
 
+## 2026-08-14 — Lot 4 : la sauvegarde cloud devient annonçable (conformité)
+
+### Fait
+
+Branche `feature/cloud-lot4-compliance`. Le lot 1 avait livré une sauvegarde
+push-only qui ne pouvait pas être annoncée : la politique de confidentialité
+affirmait que les données d'apprentissage ne quittaient pas l'appareil, et
+l'interrupteur était derrière `IKERU_DEV_TOOLS`.
+
+**Le gate ne protégeait rien.** `IKERU_DEV_TOOLS` est actif en configuration
+**Release** (pbxproj ligne 1727, c'est documenté dans CLAUDE.md — les outils dev
+partent volontairement en TestFlight). J'avais affirmé le contraire à l'oral la
+veille : faux. Ce qui a sauvé la mise, c'est que le code de synchro n'a jamais
+été mergé dans `master` — donc aucun build TestFlight ne l'a embarqué. À la
+première release, l'interrupteur serait devenu accessible aux testeurs avec une
+politique mensongère. D'où l'ordre lot 4 avant lot 2.
+
+Livré : `privacy.html` (FR+EN, section « Sauvegarde cloud (optionnelle) »),
+`PrivacyInfo.xcprivacy` (3 types ajoutés), Edge Function de suppression +
+`CloudDataDeletionService` + entrée Réglages, dégatage de l'interrupteur.
+
+**Deux découvertes côté serveur, vérifiées en SQL** (`pg_constraint`,
+`information_schema.triggers`), qui ont changé des décisions :
+
+1. Les 8 tables ont leur `user_id` en `REFERENCES auth.users(id) ON DELETE
+   CASCADE`. Supprimer l'utilisateur auth suffit donc à tout effacer — y compris
+   une table qu'on ajouterait plus tard sans y penser. Les `delete` par table de
+   la fonction Edge ne sont **pas** porteurs de la correction ; ils servent à
+   rendre un compte de lignes honnête plutôt qu'un « faites confiance au
+   cascade », et à survivre à une migration qui retirerait le CASCADE.
+2. Chaque table porte un `server_updated_at` alimenté par un trigger
+   `BEFORE INSERT OR UPDATE`. C'est le curseur de pull du lot 2, daté par
+   l'horloge du **serveur** — insensible à un téléphone mal réglé. Le lot 2 ne
+   touchera ni au schéma serveur ni au schéma SwiftData (pas de V5, donc pas de
+   nouveau process CI isolé à créer).
+
+**Le défaut le plus coûteux, trouvé en relecture adversariale.** La première
+version du service traitait **tout** échec d'obtention de jeton comme « rien à
+supprimer » et renvoyait un succès. Trois conséquences en cascade : un apprenant
+hors ligne s'entendait dire que ses données étaient effacées alors qu'elles
+étaient intactes ; l'UI remettait les trois compteurs à zéro, donc
+`hasEverBackedUp` repassait à `false` et **la ligne de suppression disparaissait
+de l'écran** — plus aucun moyen de réessayer. Pire encore en ligne : si le
+refresh token était rejeté, `validAccessToken()` mintait une **nouvelle**
+identité, la suppression portait sur ce compte neuf et vide, et les lignes de
+l'ancien `user_id` devenaient orphelines définitivement, avec un succès affiché.
+
+Correctif en amont plutôt qu'en surface : `AnonymousIdentityManager` expose
+`existingSessionAccessToken()`, qui ne travaille qu'avec ce qui est déjà dans le
+Trousseau et **ne mint jamais** d'identité de repli. Seul un Trousseau vide est
+un no-op légitime ; tout le reste remonte comme erreur. La distinction est
+volontairement dans Core et pas dans la vue : c'est une propriété du domaine
+(« une demande d'effacement ne doit jamais viser le mauvais compte »), pas un
+détail d'affichage.
+
+### Testé
+
+- `swift build` + `swift test --no-parallel --filter "CloudDataDeletion"` : 5/5.
+  Deux tests réécrits parce que leur sémantique a changé, un ajouté pour la
+  régression ci-dessus (session présente mais non rafraîchissable → doit lever,
+  ne doit ni appeler l'endpoint ni se connecter en repli).
+- `--filter "AnonymousIdentity|CloudSyncCoordinator|SyncPayloadBuilder"` : 24/24.
+- Builds `Ikeru` (iOS), `IkeruWatch` (watchOS), `IkeruWidget` : les trois OK.
+  ⚠️ Pour la Watch, `-destination "generic/platform=iOS"` échoue en tapant sur la
+  montre physique appairée ; c'est `generic/platform=watchOS` qu'il faut.
+- `plutil -lint` sur le manifeste : OK. `privacy.html` reparsé : OK.
+- **Non testé** : le bouton de suppression sur device. La fonction Edge n'est pas
+  déployée (voir Ouvert), donc le chemin nominal n'a jamais été exercé en réel —
+  seulement contre un transport factice.
+
+### Écarté
+
+- **Réécrire `Localizable.xcstrings` via `json.dump`** : à ne jamais refaire. Le
+  fichier n'est **pas** trié alphabétiquement et Xcode sépare les clés par
+  `" : "` (espace avant le deux-points). Une sérialisation naïve a produit
+  7923 insertions / 7736 suppressions pour 2 clés ajoutées. Reconstruit en
+  conservant l'ordre d'origine et en n'ajoutant les nouvelles clés qu'à la fin :
+  187 insertions, 0 suppression. Si le diff du catalogue dépasse quelques
+  dizaines de lignes, c'est qu'on l'a cassé.
+- **L'opt-in séparé pour l'historique Sakura** (prévu au lot 4 par la spec) :
+  reporté, et déclaré plutôt que passé sous silence. Rien ne pousse
+  `companion_chat_messages` aujourd'hui — construire l'opt-in *et* le push serait
+  un élargissement de périmètre. Choix retenu : le chat reste local, la politique
+  le dit explicitement, l'opt-in arrivera avec le push du chat s'il arrive.
+- **Concaténer `error.localizedDescription` dans le toast d'échec** :
+  `CloudDeletionError` ne conforme pas à `LocalizedError`, donc l'apprenant
+  lisait « The operation couldn't be completed. (IkeruCore.CloudDeletionError
+  error 1.) » — bruit technique qui fuite en plus un nom de type dans l'UI. Le
+  détail va au log ; l'utilisateur reçoit le seul fait qui change sa prochaine
+  action : rien n'a été supprimé, réessayez.
+
+### Ouvert
+
+- **La fonction Edge n'est pas déployée** (`list_edge_functions` renvoie `[]`).
+  Tant qu'elle ne l'est pas, le bouton renvoie 404 et `privacy.html` promet une
+  suppression qui n'existe pas. **Bloquant avant tout merge `dev → master`**,
+  puisque c'est ce merge qui publie la page sur GitHub Pages. Rien dans le repo
+  ne rejoue ce déploiement : à documenter dans CLAUDE.md une fois fait.
+- Deux réglages Supabase pour le lot 3 (dashboard, hors portée MCP) :
+  « Client IDs » = `com.ikeru.app` (le jeton natif porte le bundle id dans `aud`,
+  activer le provider ne suffit pas) et **Manual linking**, sans quoi le
+  rattachement du compte anonyme est indisponible. Le lot 3 devra utiliser
+  `linkIdentityWithIdToken` et **pas** `signInWithIdToken` — le second crée un
+  autre utilisateur et abandonne l'historique poussé.
+- Toujours dû : le test device de la suppression de profil (actif puis non actif).
+
+---
+
 ## 2026-08-13 — P2 lot 2 : phase de présentation des cartes neuves, tracés kana, export confusions
 
 ### Fait
