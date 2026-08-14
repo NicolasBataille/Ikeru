@@ -20,7 +20,10 @@ struct SettingsView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @Environment(\.assetCache) private var assetCache
-    @Environment(\.toastManager) private var toastManager
+    // Not `private`: `SettingsView+AppleSignIn.swift`'s `handleSignOut()`
+    // shows a toast on both outcomes, same as `deleteCloudDataFromServer()`
+    // already does in this file — Swift's `private` is file-scoped.
+    @Environment(\.toastManager) var toastManager
     @Environment(AppLocale.self) private var appLocale
     @Environment(\.displayMode) private var displayMode
 
@@ -65,9 +68,22 @@ struct SettingsView: View {
     // over the same `ModelContainer` used to be able to run overlapping
     // pulls and double-insert a `ReviewLog` (post-review fix; see
     // `CloudSyncTriggers.sharedCoordinator(modelContainer:)`).
-    @AppStorage(CloudSyncPreferences.consentDefaultsKey) private var cloudSyncConsentEnabled = false
-    @AppStorage(CloudSyncPreferences.lastSuccessDefaultsKey) private var cloudSyncLastSuccessEpoch: Double = 0
-    @AppStorage(CloudSyncPreferences.lastAttemptDefaultsKey) private var cloudSyncLastAttemptEpoch: Double = 0
+    /// Not `private`: also reset from `SettingsView+AppleSignIn.swift`'s
+    /// `handleSignOut()`, same reason every other cross-file property in
+    /// this section drops `private` — Swift's `private` is file-scoped, and
+    /// sign-out needs to zero these three exactly like a successful
+    /// `deleteCloudDataFromServer()` already does, so `hasEverBackedUp`
+    /// (and the destructive "Delete my data from the server" row it gates)
+    /// goes back to false too. Left ungated, that row would survive a
+    /// voluntary sign-out and silently no-op on tap: `CloudDataDeletionService
+    /// .deleteAllCloudData()` reads `nil` (empty Keychain) + `wasLinked ==
+    /// false` (sign-out resets it, same as a confirmed deletion does) as
+    /// "nothing was ever backed up" and returns without calling the server —
+    /// `SettingsView` would then show a green "deleted" toast for an account
+    /// that still has every row intact.
+    @AppStorage(CloudSyncPreferences.consentDefaultsKey) var cloudSyncConsentEnabled = false
+    @AppStorage(CloudSyncPreferences.lastSuccessDefaultsKey) var cloudSyncLastSuccessEpoch: Double = 0
+    @AppStorage(CloudSyncPreferences.lastAttemptDefaultsKey) var cloudSyncLastAttemptEpoch: Double = 0
     /// Diagnostic message from the most recent failed attempt (see
     /// `SyncConsentStore.lastErrorMessage()`'s doc comment — not localized
     /// UI copy, never shown verbatim). Read here only to check for
@@ -79,6 +95,8 @@ struct SettingsView: View {
     @AppStorage(CloudSyncPreferences.lastErrorDefaultsKey) var cloudSyncLastError: String = ""
     @State private var isDeletingCloudData = false
     @State private var showDeleteCloudDataConfirmation = false
+    @State var isSigningOut = false
+    @State var showSignOutConfirmation = false
 
     // MARK: Sign in with Apple (lot 3)
     // Not `private` — see `SettingsView+AppleSignIn.swift`'s header comment.
