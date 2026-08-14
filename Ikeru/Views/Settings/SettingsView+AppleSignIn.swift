@@ -71,7 +71,63 @@ extension SettingsView {
             }
             Text("Sign in to pick up your progress on another device.", comment: "Explainer under the Sign in with Apple row")
                 .ikeruScaledFont(11, relativeTo: .caption2).foregroundStyle(TatamiTokens.paperGhost).padding(.horizontal, 16).padding(.bottom, 12)
+
+            // Only offered once this device holds a linked Keychain session
+            // — `isLinkedWithApple`, not `hasEverHeldLinkedSessionOnThisDevice`
+            // (that second flag covers a RESTORED device with an already-empty
+            // Keychain, which has nothing local left to sign out of). Shown
+            // in BOTH `isLinkedWithApple` branches above, including the
+            // reauth-required one: a dead session is still this device's own
+            // claim to the account, and sign-out is the deliberate way to
+            // let go of it instead of being stuck between "sign in again" and
+            // nothing else.
+            if isLinkedWithApple {
+                signOutRow
+            }
         }
+        // Attached to the whole block (not just `signOutRow`) so the
+        // dialog's `isPresented` binding stays next to the row that opens
+        // it, same pattern as `SettingsView`'s own `.alert`/`.confirmationDialog`
+        // modifiers next to their triggering rows.
+        .confirmationDialog(
+            "Sign out of Apple?",
+            isPresented: $showSignOutConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Sign out") { handleSignOut() } // no `role: .destructive` — deliberate, see `signOutRow`'s doc comment
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            // Deliberately does NOT say backup "resumes" or "picks back up"
+            // on its own once signed back in — it doesn't.
+            // `handleAppleSignIn()` never re-enables `cloudSyncConsentEnabled`
+            // (and must not: re-enabling a privacy consent just because
+            // authentication succeeded is exactly what this project's
+            // consent model exists to prevent — see this file's git history
+            // for the remediation this text is part of), so a sync
+            // immediately after reconnecting returns `.skippedConsentOff`
+            // and nothing is pushed. The learner has to turn Cloud backup
+            // back on themselves; this text says so instead of promising an
+            // automatic resume the code doesn't deliver.
+            Text(
+                "Your progress stays on this device, and stays on your account on the server. Backup stops until you sign in again and turn Cloud backup back on.",
+                comment: "Explains that signing out is not destructive (local progress and the server account both survive) and that resuming backup takes two explicit steps: signing in again, then turning Cloud backup back on"
+            )
+        }
+    }
+
+    /// Non-destructive, deliberately styled to look nothing like
+    /// `SettingsView.deleteCloudDataRow` (that row's label is
+    /// `Color.ikeruDanger`; this one uses the same plain `ikeruTextPrimary`
+    /// every other tappable settings row uses, via `settingRow`). The two
+    /// actions must never be confused: this one only detaches THIS device
+    /// from the account — nothing is erased anywhere, and it is fully
+    /// reversible by signing back in.
+    private var signOutRow: some View {
+        settingRow(
+            jp: "サインアウト", label: "Sign out",
+            value: isSigningOut ? String(localized: "Signing out…") : "",
+            showChevron: !isSigningOut, action: isSigningOut ? nil : { showSignOutConfirmation = true }
+        )
     }
 
     /// Apple's own button as pure chrome (hit-testing off, VoiceOver-hidden) — taps route through `handleAppleSignIn()`.
@@ -163,6 +219,54 @@ extension SettingsView {
             } catch {
                 Logger.ui.error("Sign in with Apple failed: \(String(describing: error))")
                 appleSignInErrorMessage = String(localized: "Couldn't sign in with Apple. Check your connection and try again.")
+            }
+        }
+    }
+
+    /// Voluntary sign-out — NOT `SettingsView.deleteCloudDataFromServer()`,
+    /// and must never be confused with it (see `signOutRow`'s doc comment).
+    /// `CloudSyncCoordinator.signOut()` only forgets THIS device's local
+    /// claim to the account; the account and every row it owns are
+    /// untouched on the server. Local SwiftData is never touched either —
+    /// Ikeru is local-first, and this is purely a server-identity reset.
+    ///
+    /// On success, mirrors the local bookkeeping `deleteCloudDataFromServer()`
+    /// already resets (consent, both timestamps, the stale error slot) so
+    /// `hasEverBackedUp` goes back to `false` too — see the doc comment on
+    /// `cloudSyncConsentEnabled`'s declaration for why that gate matters
+    /// here. Also resets BOTH linked-state flags (`isLinkedWithApple` AND
+    /// `hasEverHeldLinkedSessionOnThisDevice` — deletion only needs the
+    /// first, because the account itself is gone; sign-out needs the
+    /// second too, so `appleSignInBlock` falls straight back to the
+    /// ordinary, tappable "Sign in with Apple" row — the reconnect UI the
+    /// learner asked for — instead of lingering on the "your progress is
+    /// waiting" branch for an account this device chose to leave, not lose.
+    private func handleSignOut() {
+        guard !isSigningOut else { return }
+        isSigningOut = true
+        Task { @MainActor in
+            defer { isSigningOut = false }
+            do {
+                try await cloudSyncCoordinatorInstance().signOut()
+                isLinkedWithApple = false
+                hasEverHeldLinkedSessionOnThisDevice = false
+                cloudSyncConsentEnabled = false
+                cloudSyncLastSuccessEpoch = 0
+                cloudSyncLastAttemptEpoch = 0
+                cloudSyncLastError = ""
+                appleSignInErrorMessage = nil
+                // Same honesty fix as the confirmation dialog above: signing
+                // in alone does not restart backup (`cloudSyncConsentEnabled`
+                // is reset to `false` by this same method, above, and
+                // `handleAppleSignIn()` never flips it back) — say so.
+                toastManager.showInfo(
+                    String(localized: "You're signed out. Your progress is safe on this device and on your account. To back up again, sign in and turn Cloud backup back on.")
+                )
+            } catch {
+                Logger.ui.error("Sign out failed: \(String(describing: error))")
+                toastManager.showError(
+                    String(localized: "Couldn't sign out on this device. Try again.")
+                )
             }
         }
     }

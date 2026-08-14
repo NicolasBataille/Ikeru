@@ -12517,6 +12517,114 @@
         }
       }
     },
+    "Sign out" : {
+      "extractionState" : "manual",
+      "comment" : "Settings row label AND the confirmation dialog's action button — sign out of Apple, non-destructive (the account and local progress both survive)",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sign out"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se déconnecter"
+          }
+        }
+      }
+    },
+    "Sign out of Apple?" : {
+      "extractionState" : "manual",
+      "comment" : "Confirmation dialog title before signing out — not phrased as destructive, because it is not",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sign out of Apple?"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se déconnecter d'Apple ?"
+          }
+        }
+      }
+    },
+    "Signing out…" : {
+      "extractionState" : "manual",
+      "comment" : "Loading label shown next to the spinner while CloudSyncCoordinator.signOut() is in flight",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Signing out…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Déconnexion…"
+          }
+        }
+      }
+    },
+    "Your progress stays on this device, and stays on your account on the server. Backup stops until you sign in again and turn Cloud backup back on." : {
+      "extractionState" : "manual",
+      "comment" : "Explains that signing out is not destructive (local progress and the server account both survive) and that resuming backup takes two explicit steps: signing in again, then turning Cloud backup back on",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your progress stays on this device, and stays on your account on the server. Backup stops until you sign in again and turn Cloud backup back on."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre progression reste sur cet appareil et reste aussi sur votre compte sur le serveur. La sauvegarde s'arrête, jusqu'à ce que vous vous reconnectiez et réactiviez la sauvegarde cloud."
+          }
+        }
+      }
+    },
+    "You're signed out. Your progress is safe on this device and on your account. To back up again, sign in and turn Cloud backup back on." : {
+      "extractionState" : "manual",
+      "comment" : "Toast shown after a successful sign-out — states plainly that nothing was lost, and that resuming backup takes two explicit steps rather than promising it resumes automatically",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You're signed out. Your progress is safe on this device and on your account. To back up again, sign in and turn Cloud backup back on."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous êtes déconnecté. Votre progression est en sécurité sur cet appareil et sur votre compte. Pour reprendre la sauvegarde, reconnectez-vous puis réactivez la sauvegarde cloud."
+          }
+        }
+      }
+    },
+    "Couldn't sign out on this device. Try again." : {
+      "extractionState" : "manual",
+      "comment" : "Toast shown when CloudSyncCoordinator.signOut() throws (a local Keychain failure — this call makes no network request)",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't sign out on this device. Try again."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de se déconnecter sur cet appareil. Réessayez."
+          }
+        }
+      }
+    },
     "Sign in again to keep syncing" : {
       "extractionState" : "manual",
       "comment" : "Shown instead of the normal Connected-with-Apple state when the linked session's refresh token was rejected server-side (SyncAuthError.reauthenticationRequired) — tapping re-runs the same sign-in flow, which reconnects the same account (lot 3)",

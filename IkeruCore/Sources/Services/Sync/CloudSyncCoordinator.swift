@@ -237,6 +237,44 @@ public actor CloudSyncCoordinator {
         }
     }
 
+    // MARK: - Sign out (voluntary, account survives)
+
+    /// Voluntary sign-out (Settings → "Sign out") — the account and every
+    /// row it owns SURVIVE on the server; only this device forgets its
+    /// local claim to it. NOT `CloudDataDeletionService.deleteAllCloudData()`
+    /// — that erases the server-side account itself and is unconditionally
+    /// destructive; this is closer to the opposite, reversible and
+    /// non-destructive: "this device stops being attached", never "this
+    /// account stops existing". Ikeru is local-first: local SwiftData rows
+    /// (`Card`, `ReviewLog`, `UserProfile`, …) are NEVER touched by this —
+    /// signing out only changes which server identity this device pushes to
+    /// and pulls from next.
+    ///
+    /// Sequence, deliberately in this order:
+    /// 1. `identity.signOut()` — forgets the Keychain session AND resets the
+    ///    `wasLinked` marker (⚠️ CRITICAL — see that method's doc comment
+    ///    for why skipping the marker reset would leave `currentSession()`'s
+    ///    demotion guard throwing `.reauthenticationRequired` forever, on an
+    ///    account the learner deliberately chose to step away from, not
+    ///    lose).
+    /// 2. `setConsent(false)` — turns the backup toggle off AND resets every
+    ///    pull cursor plus the skip-tracker's strike counts (the SAME call
+    ///    the Settings toggle already uses turning OFF, including its
+    ///    `pendingCursorReset` handling for a cycle mid-flight on this
+    ///    instance), so a future reconnect — same Apple ID or a fresh
+    ///    anonymous start — begins as a genuine cold start rather than
+    ///    resuming from cursors pointed at an identity this device no
+    ///    longer holds.
+    ///
+    /// Step 1 runs first and can throw (a Keychain failure): if it does,
+    /// step 2 never runs, leaving consent and cursors untouched rather than
+    /// silently turning backup off while the dead session is still sitting
+    /// in the Keychain.
+    public func signOut() async throws {
+        try await identity.signOut()
+        setConsent(false)
+    }
+
     // MARK: - Status (for an honest Settings row — task item 5)
 
     public func lastSuccessDate() -> Date? { consentStore.lastSuccessDate() }

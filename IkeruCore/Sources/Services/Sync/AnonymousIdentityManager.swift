@@ -86,6 +86,38 @@ public actor AnonymousIdentityManager {
 
     private var cachedSession: SyncSession?
 
+    /// Bumped by every call that deliberately erases this actor's Keychain
+    /// session — `signOut()` and `forgetSessionAfterAccountDeletion()` — so
+    /// a token refresh suspended on the network can tell, once it resumes,
+    /// whether one of those ran while it was away.
+    ///
+    /// Same shape of problem `CloudSyncCoordinator.pendingCursorReset`
+    /// exists for (see that property's doc comment), but the fix runs in
+    /// the opposite direction: `pendingCursorReset` lets an in-flight cycle
+    /// finish and THEN applies the pending reset. Here there is nothing to
+    /// defer — `signOut()`'s own Keychain delete + `wasLinked` reset are
+    /// synchronous and complete immediately, in full, the moment they run
+    /// (actors are only reentrant at `await`, and neither `signOut()` nor
+    /// `forgetSessionAfterAccountDeletion()` awaits anything). The hazard is
+    /// the SUSPENDED caller instead: `existingSyncSession()`/`currentSession()`
+    /// read a stored session, `await transport.refreshSession(...)`, and
+    /// only then call `persist()` — Keychain write plus, for a linked
+    /// session, `identityStore.setWasLinked(true)`. If a sign-out lands
+    /// during that `await`, the eventual `persist()` would silently
+    /// resurrect exactly what sign-out just deleted, undoing it with no
+    /// error and no trace (2026-08 sign-out remediation — the same
+    /// enforced-consent kind of gap `AppleSignInFlow`'s doc comment on
+    /// `cloudSyncConsentEnabled` describes, one call site over).
+    ///
+    /// Capturing this counter immediately before the `await` and comparing
+    /// it immediately after closes that window: a mismatch means one of the
+    /// two erasing calls ran to completion in between, so the refreshed
+    /// session must be treated as stale and discarded rather than persisted.
+    /// A plain `Int` is sufficient — every read/write of it sits on either
+    /// side of an `await`, never between one, so no two callers can ever
+    /// observe or update it mid-change.
+    private var identityGeneration = 0
+
     public init(
         transport: any SupabaseAuthTransport = URLSessionSupabaseAuthTransport(),
         keychain: any KeychainStore = KeychainHelper(),
@@ -162,7 +194,14 @@ public actor AnonymousIdentityManager {
             cachedSession = stored
             return stored
         }
+        // Captured before the suspension below — see `identityGeneration`'s
+        // doc comment for the race this guards against.
+        let generationBeforeRefresh = identityGeneration
         let refreshed = try await transport.refreshSession(refreshToken: stored.refreshToken)
+        guard generationBeforeRefresh == identityGeneration else {
+            Logger.sync.info("Cloud sync: a sign-out ran while a token refresh was in flight — discarding the refreshed session instead of persisting it.")
+            throw SyncAuthError.reauthenticationRequired
+        }
         let carried = carryingIsAnonymous(from: stored, onto: refreshed)
         try persist(carried)
         return carried
@@ -254,10 +293,68 @@ public actor AnonymousIdentityManager {
     /// and immediately hits the same guard again. Resetting the marker lets
     /// this device mint a fresh anonymous identity next time, exactly like
     /// a genuinely first-ever install.
+    ///
+    /// See `signOut()` below for the sibling method: same Keychain/`wasLinked`
+    /// mechanics, but for a voluntary disconnect where the account survives —
+    /// never call THIS method for that case, its contract requires a
+    /// server-confirmed deletion.
     public func forgetSessionAfterAccountDeletion() throws {
         cachedSession = nil
         try keychain.delete(key: sessionKey)
         identityStore.setWasLinked(false)
+        // Bumped so a refresh already suspended on the network (see
+        // `identityGeneration`'s doc comment) discards its result instead
+        // of resurrecting the session/marker this call just erased.
+        identityGeneration += 1
+    }
+
+    /// Voluntary sign-out (Settings → "Sign out") — the counterpart to
+    /// `forgetSessionAfterAccountDeletion()` above for a device whose
+    /// account is NOT being erased, just deliberately disconnected. Ikeru
+    /// is local-first: signing out never touches local SwiftData — it only
+    /// ends THIS device's claim to the server-side identity, which
+    /// survives untouched (see `CloudSyncCoordinator.signOut()`'s doc
+    /// comment for the full picture, including why the cursor/skip-tracker/
+    /// consent reset live there instead of here).
+    ///
+    /// Same body as `forgetSessionAfterAccountDeletion()` — clear the
+    /// Keychain session AND reset `wasLinked` back to `false` — but a
+    /// DIFFERENT name and a DIFFERENT contract, because the two are not
+    /// interchangeable: that method may be called ONLY once the server has
+    /// CONFIRMED the account itself no longer exists; this one is for an
+    /// ordinary, reversible disconnect where the account is still real.
+    /// Reusing the deletion-named method here would have been correct by
+    /// accident (the Keychain/`wasLinked` mechanics really are identical)
+    /// but wrong by name — a future reader could reasonably assume that
+    /// call site means the account was erased, when it was not.
+    ///
+    /// `wasLinked` MUST reset to `false` here, exactly like the deletion
+    /// path (⚠️ CRITICAL — do not drop this line). `forgetSession()`'s own
+    /// doc comment explains why the marker must normally SURVIVE a
+    /// merely-local session loss (a dead refresh token, a reinstall, a
+    /// backup restore) — the account is still real in all of those, so
+    /// `currentSession()`'s demotion guard must keep protecting it. None of
+    /// that reasoning applies to a DELIBERATE sign-out: the learner
+    /// explicitly chose to stop being connected, so there is nothing left
+    /// for the guard to protect either — leaving `wasLinked` at `true`
+    /// would instead make every future `currentSession()` call throw
+    /// `SyncAuthError.reauthenticationRequired` forever, locking a learner
+    /// who chose to step away out of even an anonymous, no-account backup
+    /// afterward. That is the exact permanent lock-out
+    /// `forgetSessionAfterAccountDeletion()`'s own doc comment warns
+    /// against, reproduced here for a voluntary disconnect instead of a
+    /// confirmed deletion.
+    public func signOut() throws {
+        cachedSession = nil
+        try keychain.delete(key: sessionKey)
+        identityStore.setWasLinked(false)
+        // ⚠️ Bumped so a refresh already suspended on the network — a
+        // `syncNow()` mid-cycle when the learner tapped "Sign out" — cannot
+        // resurrect the Keychain session or `wasLinked` once it resumes.
+        // See `identityGeneration`'s doc comment for the full race and
+        // `CloudSyncSignOutTests.signOutDuringInFlightRefreshIsNotUndone`
+        // for the reproduction.
+        identityGeneration += 1
     }
 
     // MARK: - Apple identity linking (lot 3)
@@ -420,7 +517,18 @@ public actor AnonymousIdentityManager {
                 return stored
             }
             do {
+                // Captured before the suspension below — see
+                // `identityGeneration`'s doc comment for the race this
+                // guards against: a `signOut()` (or account-deletion forget)
+                // landing on this actor while the refresh below is in
+                // flight must not have its Keychain erasure silently undone
+                // once this call resumes.
+                let generationBeforeRefresh = identityGeneration
                 let refreshed = try await transport.refreshSession(refreshToken: stored.refreshToken)
+                guard generationBeforeRefresh == identityGeneration else {
+                    Logger.sync.info("Cloud sync: a sign-out ran while a token refresh was in flight — discarding the refreshed session instead of persisting it.")
+                    throw SyncAuthError.reauthenticationRequired
+                }
                 let carried = carryingIsAnonymous(from: stored, onto: refreshed)
                 try persist(carried)
                 return carried
