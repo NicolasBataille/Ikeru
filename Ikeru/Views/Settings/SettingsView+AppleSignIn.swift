@@ -22,18 +22,30 @@ extension SettingsView {
     /// Reauth > connected > restored-but-disconnected > not-yet-signed-in;
     /// not-yet-linked wraps Apple's own button as pure chrome.
     ///
-    /// The two `isLinkedWithApple` rows above are tappable whenever they
-    /// show (Critique #1) — a device that still has SOME stored session
-    /// (dead or alive) always has a way back in. What Critique #1 did NOT
-    /// solve, and this branch (2026-08 lot-3 round-2 remediation, IMPORTANT)
-    /// does: a device restored from an iCloud backup taken AFTER linking
-    /// Apple has an EMPTY Keychain, so `isLinkedWithApple` reads `false` —
-    /// none of the branches above ever fire, and the learner lands on the
-    /// plain, never-linked sign-in row with no hint that their progress is
-    /// one tap away. `hasEverHeldLinkedSessionOnThisDevice` (backed by
-    /// `AnonymousIdentityManager.hasEverHeldLinkedSession()`, which reads
-    /// the `UserDefaults`-persisted marker that DOES survive a restore,
-    /// unlike the Keychain) is what makes that case discoverable.
+    /// Only ONE of these branches is a plain state display with no action:
+    /// the plain-connected one right below. The other two — reauth-required
+    /// and restored-but-disconnected — stay tappable (Critique #1 / lot-3
+    /// round-2): a device that still has SOME stored session (dead or
+    /// alive) always needs a way back in, and those are it. What changed
+    /// (visual-coherence pass, this file's git history) is the plain
+    /// "connected, nothing wrong" case: it used to be tappable too — same
+    /// chrome as `settingRow`'s ordinary navigation rows, chevron included
+    /// — which read as either a broken nav link or, worse, as "tap here to
+    /// re-run sign-in for no reason." It never needed to be an action.
+    /// A session that has gone dead is caught by ONE of the two remaining
+    /// branches: an in-app sync failure writes `SyncAuthError
+    /// .reauthenticationRequired` to `cloudSyncLastError` (see
+    /// `CloudSyncCoordinator.runPush`/`runPull`'s `catch` blocks, which
+    /// `String(describing:)` the thrown error into `SyncConsentStore
+    /// .recordError` — exactly the string `reauthenticationRequiredMessage`
+    /// is defined as), which flips the branch below to the reauth row on
+    /// the very next sync attempt; a restored device is caught by
+    /// `hasEverHeldLinkedSessionOnThisDevice` instead. The only case that
+    /// slips through both is "session died, but no sync has run yet to
+    /// notice" — inherently transient, since it resolves itself into the
+    /// reauth branch at the next sync, foreground-triggered or otherwise.
+    /// The learner is never stuck on the plain-connected branch believing
+    /// everything is fine when it isn't for longer than one sync cycle.
     @ViewBuilder
     var appleSignInBlock: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -44,10 +56,20 @@ extension SettingsView {
                     showChevron: !isSigningInWithApple, action: isSigningInWithApple ? nil : { handleAppleSignIn() }
                 )
             } else if isLinkedWithApple {
+                // State, not navigation — same shape as the `プロフィール`
+                // row above it in `accountSection`: a label naming the
+                // field and a gold VALUE naming its state, no chevron, no
+                // `action` (defaults to `nil`, which is what makes
+                // `settingRow`'s underlying `Button` non-interactive).
+                // Deliberately NOT wired to `handleAppleSignIn()` anymore —
+                // there is nothing to sign into from here, the account is
+                // already connected and healthy (see this property's doc
+                // comment for why a dead session never lingers on this
+                // exact branch for more than one sync cycle).
                 settingRow(
-                    jp: "サインイン", label: "Connected with Apple",
-                    value: isSigningInWithApple ? String(localized: "Signing in…") : "",
-                    showChevron: !isSigningInWithApple, action: isSigningInWithApple ? nil : { handleAppleSignIn() }
+                    jp: "サインイン", label: "Apple ID",
+                    value: String(localized: "Connected"),
+                    showChevron: false
                 )
             } else if hasEverHeldLinkedSessionOnThisDevice {
                 // Restored device: the Keychain is empty (so none of the
@@ -117,20 +139,65 @@ extension SettingsView {
 
     /// Non-destructive, deliberately styled to look nothing like
     /// `SettingsView.deleteCloudDataRow` (that row's label is
-    /// `Color.ikeruDanger`; this one uses the same plain `ikeruTextPrimary`
-    /// every other tappable settings row uses, via `settingRow`). The two
-    /// actions must never be confused: this one only detaches THIS device
-    /// from the account — nothing is erased anywhere, and it is fully
-    /// reversible by signing back in.
+    /// `Color.ikeruDanger`, a red reserved for destructive actions only;
+    /// this one is `Color.ikeruPrimaryAccent`, the same warm gold the rest
+    /// of the screen already uses for values and its primary CTA — never
+    /// for anything destructive). The two actions must never be confused:
+    /// this one only detaches THIS device from the account — nothing is
+    /// erased anywhere, and it is fully reversible by signing back in.
+    ///
+    /// Custom `Button`, not `settingRow`: label-left/value-right/chevron is
+    /// this screen's shape for NAVIGATION, and a plain settings row in that
+    /// shape is exactly what read as "trop caché" (owner feedback) — a
+    /// deconnection action indistinguishable from "Add profile" or "Export
+    /// data". No chevron (same reasoning `rowChrome` already documents for
+    /// toggle-style rows: a chevron falsely signals navigation), and
+    /// centered — the only centered row in this section, which is the
+    /// point: nothing else here looks like this, so it reads at a glance as
+    /// an action to take, not a row to open.
     private var signOutRow: some View {
-        settingRow(
-            jp: "サインアウト", label: "Sign out",
-            value: isSigningOut ? String(localized: "Signing out…") : "",
-            showChevron: !isSigningOut, action: isSigningOut ? nil : { showSignOutConfirmation = true }
-        )
+        Button {
+            showSignOutConfirmation = true
+        } label: {
+            HStack(spacing: 8) {
+                Spacer(minLength: 0)
+                if isSigningOut {
+                    ProgressView().tint(Color.ikeruPrimaryAccent)
+                    Text("Signing out…")
+                        .ikeruScaledFont(13, relativeTo: .caption)
+                        .foregroundStyle(Color.ikeruPrimaryAccent)
+                } else {
+                    Text(verbatim: "サインアウト")
+                        .ikeruScaledFont(13, design: .serif, relativeTo: .caption)
+                        .foregroundStyle(TatamiTokens.paperGhost)
+                    Text("Sign out")
+                        .ikeruScaledFont(13, relativeTo: .caption)
+                        .foregroundStyle(Color.ikeruPrimaryAccent)
+                }
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal, 16).padding(.vertical, 14)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(isSigningOut)
+        .overlay(alignment: .bottom) {
+            Rectangle().fill(TatamiTokens.goldDim.opacity(0.2)).frame(height: 1).padding(.horizontal, 16)
+        }
     }
 
     /// Apple's own button as pure chrome (hit-testing off, VoiceOver-hidden) — taps route through `handleAppleSignIn()`.
+    ///
+    /// Style is `.black`, not `.whiteOutline`. Apple ships exactly three
+    /// (`.white`, `.whiteOutline`, `.black`) and dictates the text, glyph,
+    /// and proportions inside all of them — that part is never touched,
+    /// which is what keeps this button App Review-safe. `.black` is the
+    /// only one of the three that isn't a white slab, so on this screen's
+    /// dark paper it reads as a deliberate button instead of the one stray
+    /// white rectangle on an otherwise sober page (owner feedback: "trop
+    /// différent"). Given its own line and generous vertical padding below
+    /// (was squeezed into a single settings-row height before) rather than
+    /// crammed next to the `サインイン` glyph in one dense row.
     ///
     /// The `.contentShape(Rectangle())` is load-bearing, not decoration. A
     /// `Button` derives its tappable region from its label's content, and this
@@ -140,22 +207,26 @@ extension SettingsView {
     /// which shipped, and looked exactly like "the button does nothing":
     /// silent, with no error and no log, because `handleAppleSignIn()` was
     /// never reached. Verified on device by instrumenting the flow and seeing
-    /// zero output on tap.
+    /// zero output on tap. Still attached directly to the `Button`'s label
+    /// here — moving the button onto its own line changed layout, not this
+    /// wiring, so the fix stays intact.
     private var appleSignInRow: some View {
-        HStack(spacing: 12) {
+        VStack(alignment: .leading, spacing: 10) {
             Text(verbatim: "サインイン")
                 .ikeruScaledFont(13, design: .serif, relativeTo: .caption).foregroundStyle(TatamiTokens.paperGhost)
-            Button(action: handleAppleSignIn) {
-                SignInWithAppleButton(.signIn) { _ in } onCompletion: { _ in }
-                    .allowsHitTesting(false).accessibilityHidden(true).signInWithAppleButtonStyle(.whiteOutline).frame(height: 44)
-                    .contentShape(Rectangle())
+            HStack(spacing: 12) {
+                Button(action: handleAppleSignIn) {
+                    SignInWithAppleButton(.signIn) { _ in } onCompletion: { _ in }
+                        .allowsHitTesting(false).accessibilityHidden(true).signInWithAppleButtonStyle(.black).frame(height: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain).disabled(isSigningInWithApple)
+                .accessibilityLabel(Text("Sign in with Apple", comment: "Accessibility label for the sign-in row"))
+                if isSigningInWithApple { ProgressView().tint(Color.ikeruPrimaryAccent) }
+                Spacer()
             }
-            .buttonStyle(.plain).disabled(isSigningInWithApple)
-            .accessibilityLabel(Text("Sign in with Apple", comment: "Accessibility label for the sign-in row"))
-            if isSigningInWithApple { ProgressView().tint(Color.ikeruPrimaryAccent) }
-            Spacer()
         }
-        .padding(.horizontal, 16).padding(.vertical, 10)
+        .padding(.horizontal, 16).padding(.vertical, 18)
         .overlay(alignment: .bottom) {
             Rectangle().fill(TatamiTokens.goldDim.opacity(0.2)).frame(height: 1).padding(.horizontal, 16)
         }

@@ -1236,13 +1236,23 @@ extension SettingsView {
     /// Tappable row. Pass `action: nil` for an informational (read-only) row.
     /// Not `private` — used from `SettingsView+AppleSignIn.swift` too.
     @ViewBuilder
+    /// `showChevron` defaults to "whatever the action implies": a row with no
+    /// action gets no chevron, because a chevron promises a destination.
+    ///
+    /// It used to default to `true` regardless, which meant forgetting the
+    /// action silently produced a row that looked tappable and did nothing.
+    /// That shipped on the Version row, and again on "Connected with Apple"
+    /// until the account-section pass. Passing the value explicitly still
+    /// wins, for the rows that legitimately want a chevron while their action
+    /// is momentarily nil (mid-flight sign-in, for one).
     func settingRow(
         jp: String,
         label: LocalizedStringKey,
         value: String,
-        showChevron: Bool = true,
+        showChevron: Bool? = nil,
         action: (() -> Void)? = nil
     ) -> some View {
+        let showChevron = showChevron ?? (action != nil)
         Button {
             action?()
         } label: {
