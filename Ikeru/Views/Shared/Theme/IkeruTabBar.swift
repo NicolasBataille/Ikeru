@@ -43,8 +43,28 @@ struct IkeruTabBar: View {
             }
         }
         .padding(.horizontal, 22)
-        .padding(.top, 12)
-        .padding(.bottom, 26)
+        // Measured, not guessed. Reference: a standard iOS tab bar is ~83pt
+        // total — ~49pt of content plus the ~34pt the system reserves for the
+        // home indicator. This bar sits inside the bottom safe area, so that
+        // 34pt is already accounted for and must NOT be padded a second time;
+        // doing exactly that (a 26pt bottom padding) is what made the bar
+        // ~120pt and left a band of dead space under the labels.
+        //
+        // This bar owns the bottom safe area (`MainTabView` hands it over), so
+        // these two values are the ENTIRE vertical budget — nothing is added
+        // underneath. 8 + ~41 content + 22 = ~71pt, flush to the physical
+        // bottom edge.
+        //
+        // The 22 is not decoration: it is the clearance the home indicator
+        // needs. That indicator draws roughly 8pt from the bottom, so labels
+        // must not come closer than about 20pt or they crowd it and sit in a
+        // region the system treats as its own for gestures.
+        //
+        // If this ever needs revisiting, measure a screenshot rather than
+        // nudging values — three rounds were spent adjusting by feel, and two
+        // of them trimmed the wrong edge entirely.
+        .padding(.top, 8)
+        .padding(.bottom, 22)
         .background(.ultraThinMaterial)
         .overlay(alignment: .top) {
             FusumaRail(opacity: 0.7)
@@ -76,7 +96,7 @@ private struct TatamiTabCell: View {
 
     var body: some View {
         Button(action: onTap) {
-            VStack(spacing: 4) {
+            VStack(spacing: 2) {
                 if isActive {
                     MonCrest(kind: monKind, size: 10, color: .ikeruPrimaryAccent)
                 } else {
@@ -88,7 +108,7 @@ private struct TatamiTabCell: View {
                         isActive ? Color.ikeruPrimaryAccent : TatamiTokens.paperGhost
                     )
                 ZStack {
-                    Color.clear.frame(height: 5)
+                    Color.clear.frame(height: 3)
                     if isActive {
                         KintsugiTabRail()
                             .matchedGeometryEffect(id: "tab-rail", in: railNamespace)

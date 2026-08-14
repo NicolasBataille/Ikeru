@@ -641,6 +641,20 @@ struct SettingsView: View {
     private var cloudBackupBlock: some View {
         VStack(alignment: .leading, spacing: 6) {
             cloudSyncToggleRow
+            // Status on its own full-width line rather than squeezed into the
+            // row's trailing slot. That slot sits between two fixed-width
+            // labels and the toggle, so there is almost no room left: French
+            // statuses ("Jamais sauvegardé", and worse "Sauvegardé, nouvel
+            // essai prévu") wrapped one character per line. Truncating them
+            // instead would have been no better — the whole point of these
+            // strings is to distinguish "backed up" from "backed up but the
+            // restore side is failing", which a clipped string cannot do.
+            if cloudSyncConsentEnabled {
+                Text(cloudSyncStatusValue)
+                    .ikeruScaledFont(13, design: .serif, relativeTo: .caption)
+                    .foregroundStyle(Color.ikeruPrimaryAccent)
+                    .padding(.horizontal, 16)
+            }
             Text(
                 "Backs up your progress to a server in Europe. No account is needed. Conversations with Sakura are not included. Restoring on a new device is not available yet.",
                 comment: "Explanatory text shown under the cloud backup toggle in Settings, describing what the backup does and does not do"
@@ -656,7 +670,9 @@ struct SettingsView: View {
         }
     }
 
-    /// One row: toggle + inline honest status — cloud backup, lot 4.
+    /// Just the toggle — cloud backup, lot 4. The status deliberately does
+    /// NOT ride in this row's trailing slot (see `cloudBackupBlock`): its
+    /// strings are full sentences, and this row has no width to spare.
     private var cloudSyncToggleRow: some View {
         reminderToggleRow(
             jp: "クラウド",
@@ -664,9 +680,7 @@ struct SettingsView: View {
             isOn: $cloudSyncConsentEnabled,
             onToggleChange: { enabled in handleCloudSyncToggleChange(enabled) }
         ) {
-            Text(cloudSyncStatusValue)
-                .ikeruScaledFont(13, design: .serif, relativeTo: .caption)
-                .foregroundStyle(Color.ikeruPrimaryAccent)
+            EmptyView()
         }
     }
 
@@ -1200,6 +1214,13 @@ extension SettingsView {
             Spacer(minLength: 4)
             if isOn.wrappedValue {
                 trailing()
+                    // Safety net: the two labels and the toggle are all
+                    // fixed-width, so whatever little room is left here can
+                    // collapse to a few points. Without this, a trailing
+                    // string long enough (a French status, an hour with a
+                    // long weekday) wraps one character per line instead of
+                    // truncating — which is how it shipped and how it looked.
+                    .lineLimit(1)
                     .padding(.trailing, 4)
             }
             TatamiToggle(isOn: isOn, onChange: onToggleChange)
