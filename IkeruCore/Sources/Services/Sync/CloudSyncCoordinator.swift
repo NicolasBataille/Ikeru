@@ -25,11 +25,19 @@ import os
 /// wired from `Ikeru/Services/CloudSyncTriggers.swift` (foreground +
 /// network-regain; session-end is provided but not yet called — see that
 /// type's doc comment), plus the Settings cloud-sync toggle turning ON
-/// (`SettingsView.handleCloudSyncToggleChange`). Both construct this type
-/// with every initializer parameter defaulted, so the pull/push transports
-/// and cursor store below MUST default to their live implementations —
-/// anything else would leave production sync silently dormant regardless
-/// of what this type's tests exercise.
+/// (`SettingsView.handleCloudSyncToggleChange`). **`CloudSyncTriggers.shared`
+/// is the sole constructor of this type** — `start(modelContainer:)` builds
+/// it once at launch, and `SettingsView` now asks
+/// `CloudSyncTriggers.shared.sharedCoordinator(modelContainer:)` for that SAME
+/// instance rather than building its own (fixed post-review: two live
+/// coordinators over one `ModelContainer` each ran their own
+/// `SyncPullActor`, and nothing stopped both from inserting the same
+/// `ReviewLog` id — see `isSyncing` below for the other half of that fix).
+/// Every initializer parameter here still defaults to its live
+/// implementation regardless, so the pull/push transports and cursor store
+/// MUST default to their live implementations — anything else would leave
+/// production sync silently dormant regardless of what this type's tests
+/// exercise.
 ///
 /// ### Pull runs before push — lot 2
 ///
@@ -43,6 +51,15 @@ public actor CloudSyncCoordinator {
     public enum SyncOutcome: Sendable, Equatable {
         case skippedConsentOff
         case skippedThrottled
+        /// A `syncNow()` call arrived while this SAME actor instance was
+        /// already mid-cycle — the `isSyncing` reentrance guard fired, not
+        /// the `minSyncInterval` throttle. Kept distinct from
+        /// `.skippedThrottled` rather than reusing it: this can legitimately
+        /// happen well inside the throttle window (e.g. foreground trigger
+        /// and a Settings toggle landing at the same instant), and a caller
+        /// diagnosing "why didn't this push" benefits from knowing which
+        /// guard actually fired.
+        case skippedAlreadySyncing
         case success(pushedRowCount: Int, pull: PullOutcome)
         case failure(String)
     }
@@ -69,6 +86,19 @@ public actor CloudSyncCoordinator {
         case failed(String)
     }
 
+    /// Marker prefix `SyncConsentStore.recordError` messages carry when the
+    /// PUSH half of a cycle succeeded but the PULL half failed
+    /// (post-review CRITICAL fix: `recordError(nil)` used to run
+    /// unconditionally after a successful push, wiping any pull failure and
+    /// leaving Settings claiming "up to date" while pulls stayed broken
+    /// indefinitely). `SettingsView.cloudSyncStatusValue` checks for this
+    /// prefix to show an honest, non-alarming status instead. Lives here
+    /// (not as a second `SyncConsentStore` method) because that protocol is
+    /// declared in `SyncPreferences.swift`, outside this lot's file
+    /// perimeter — this reuses the existing single error slot rather than
+    /// widening the protocol.
+    public static let pullFailureMessagePrefix = "pull-failed: "
+
     private let modelContainer: ModelContainer
     private let identity: AnonymousIdentityManager
     private let transport: any SyncDataTransport
@@ -80,6 +110,22 @@ public actor CloudSyncCoordinator {
 
     private var syncModelActor: SyncModelActor?
     private var syncPullActor: SyncPullActor?
+
+    /// Real anti-reentrance guard for `syncNow()`, distinct from the
+    /// `minSyncInterval` throttle below and from `CloudSyncTriggers` now
+    /// handing out a single shared instance (see the type doc comment).
+    /// Those two fixes stop two DIFFERENT actor instances — or the same
+    /// instance called too soon after itself — from racing; neither stops
+    /// two `syncNow()` calls that land on the SAME instance from
+    /// interleaving mid-cycle. Swift actors are reentrant at every `await`:
+    /// a second call arriving while the first is suspended (on the
+    /// network, or inside `SyncPullActor`) would otherwise run its own
+    /// pull/push pass concurrently with the first, over the same
+    /// `ModelContainer` — the exact double-`ReviewLog`-insert risk this
+    /// guard closes. A plain `Bool` is sufficient here specifically because
+    /// every read/write of it below sits on either side of an `await`, never
+    /// between one — so no other task can ever observe it mid-update.
+    private var isSyncing = false
 
     public init(
         modelContainer: ModelContainer,
@@ -111,8 +157,25 @@ public actor CloudSyncCoordinator {
     /// Settings toggle) decide whether/when to also call `syncNow()`, so
     /// "the learner said yes" and "a network request happened" stay two
     /// separately auditable events.
+    ///
+    /// Revoking consent (`enabled == false`) also resets every pull cursor
+    /// (IMPORTANT 6 remediation). Without this, turning backup back on
+    /// later — same device, same still-installed Keychain identity, or a
+    /// freshly re-provisioned one after `CloudDataDeletionService` wiped the
+    /// server — would resume pulling with STALE, non-nil cursors. That
+    /// defeats `SyncPullActor`'s rule-1 cold-start guard
+    /// (`isColdStart = pullOrder.allSatisfy { cursor(forTable:) == nil }`,
+    /// `SyncPullActor.swift`): a genuinely fresh/empty server account would
+    /// no longer look like a cold start, so the guard that stops an empty
+    /// cloud from ever being read as "nothing to merge" (and, one push
+    /// later, the guard that seeds the server FROM local instead of
+    /// wrongly treating local as already represented) never fires. Resetting
+    /// here makes the next opted-back-in pull a true cold start again.
     public func setConsent(_ enabled: Bool) {
         consentStore.setConsentGiven(enabled)
+        if !enabled {
+            cursorStore.resetAll()
+        }
     }
 
     // MARK: - Status (for an honest Settings row — task item 5)
@@ -129,16 +192,21 @@ public actor CloudSyncCoordinator {
     /// UI-level gate. Throttled to at most once per `minSyncInterval`
     /// (default 60s) regardless of caller — cheap insurance against a
     /// caller invoking this in a loop, though nothing in this lot's shipped
-    /// call path currently does.
+    /// call path currently does. Also refuses to run a second, overlapping
+    /// cycle on this SAME instance — see `isSyncing`'s doc comment.
     @discardableResult
     public func syncNow() async -> SyncOutcome {
         guard consentStore.isConsentGiven() else { return .skippedConsentOff }
+        guard !isSyncing else { return .skippedAlreadySyncing }
 
         let attemptTime = now()
         if let lastAttempt = consentStore.lastAttemptDate(),
            attemptTime.timeIntervalSince(lastAttempt) < minSyncInterval {
             return .skippedThrottled
         }
+
+        isSyncing = true
+        defer { isSyncing = false }
         consentStore.recordAttempt(at: attemptTime)
 
         do {
@@ -164,8 +232,24 @@ public actor CloudSyncCoordinator {
             // companion_chat_messages: intentionally never pushed by this
             // lot — see `SyncPayloadBuilder`'s trailing comment.
 
+            // Push itself just completed without throwing — that success is
+            // real and must be recorded regardless of how the pull half
+            // went (per-design: "ne pas dramatiser", a failed pull does not
+            // put the backup itself in question).
             consentStore.recordSuccess(at: now())
-            consentStore.recordError(nil)
+            // But do NOT unconditionally wipe the error slot with
+            // `recordError(nil)` here (CRITICAL fix): if the pull half of
+            // THIS cycle failed, that failure must stay visible — silently
+            // clearing it left `SettingsView` showing "up to date" while
+            // pulls stayed broken indefinitely, with no signal anywhere
+            // that the merge/replay half of sync was not actually running.
+            // A pull that DID succeed (or hit rule 1's `seededFromLocal`)
+            // still clears any older error, same as before.
+            if case .failed(let pullMessage) = pullOutcome {
+                consentStore.recordError(Self.pullFailureMessagePrefix + pullMessage)
+            } else {
+                consentStore.recordError(nil)
+            }
             return .success(pushedRowCount: pushedCount, pull: pullOutcome)
         } catch {
             let message = String(describing: error)

@@ -47,10 +47,28 @@ public final class CloudSyncTriggers {
     /// Builds the coordinator and starts the network monitor. Safe to call
     /// more than once — later calls are no-ops.
     public func start(modelContainer: ModelContainer) {
-        if coordinator == nil {
-            coordinator = CloudSyncCoordinator(modelContainer: modelContainer)
-        }
+        _ = sharedCoordinator(modelContainer: modelContainer)
         startNetworkMonitorIfNeeded()
+    }
+
+    /// Returns the ONE shared `CloudSyncCoordinator`, building it on first
+    /// call if `start(modelContainer:)` hasn't run yet. This is now the
+    /// only way any part of the app obtains a coordinator — `SettingsView`
+    /// calls this too (post-review fix for a duplicate-`ReviewLog` bug: two
+    /// independently-constructed coordinators over the same
+    /// `ModelContainer` each ran their own `SyncPullActor`, and the
+    /// `UserDefaults`-based throttle in `CloudSyncCoordinator.syncNow()` is
+    /// a read-then-write across two different actor instances — not atomic,
+    /// and never intended as a cross-instance mutex). Returning the SAME
+    /// instance to every caller means `CloudSyncCoordinator`'s own
+    /// `isSyncing` reentrance guard (actor-isolated, genuinely atomic) is
+    /// the only anti-reentrance mechanism that has to work — there is no
+    /// second instance left for it to fail to protect against.
+    public func sharedCoordinator(modelContainer: ModelContainer) -> CloudSyncCoordinator {
+        if let coordinator { return coordinator }
+        let created = CloudSyncCoordinator(modelContainer: modelContainer)
+        coordinator = created
+        return created
     }
 
     // MARK: - Trigger: foreground

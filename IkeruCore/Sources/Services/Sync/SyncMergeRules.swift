@@ -98,11 +98,16 @@ public enum SyncMergeRules {
     /// are append-only and carry a client-generated UUID (spec §3's
     /// "architectural gift": they cannot conflict with each other, only
     /// `Card`'s derived scheduling state can drift). Pass the union of both
-    /// devices' logs as `logs`; duplicates (the same `id` present in both
-    /// sets, e.g. a log that was already pulled once) collapse naturally
-    /// because this function reduces over `logs` as given — callers doing
-    /// the actual union should dedup by `id` before calling, same as any
-    /// `Set`/dictionary keyed by `id` would.
+    /// devices' logs as `logs`; **this function de-duplicates by `id`
+    /// itself** before replaying (keeping the first occurrence of a given
+    /// id in `logs`' input order) — a duplicate id (e.g. the same row
+    /// present in both devices' local sets, or redelivered across two pull
+    /// pages that both land in the same union before this is called) is
+    /// applied exactly once, not once per occurrence. This used to be a
+    /// documented caller obligation; it was moved in here so a caller that
+    /// forgets — or a future union site this doc comment doesn't know
+    /// about — can't silently double-replay a review event on every future
+    /// call, forever.
     ///
     /// ⚠️ **Determinism is the entire point.** Two devices independently
     /// replaying the *same* merged log set must land on the *identical*
@@ -132,7 +137,13 @@ public enum SyncMergeRules {
     ) -> FSRSState? {
         guard !logs.isEmpty else { return nil }
 
-        let ordered = logs.sorted { lhs, rhs in
+        // De-duplicate by `id` before replaying — see the doc comment above.
+        // `Set.insert(_:).inserted` is false on the second+ occurrence of an
+        // id, so `filter` keeps only the first.
+        var seenIDs = Set<UUID>()
+        let deduplicated = logs.filter { seenIDs.insert($0.id).inserted }
+
+        let ordered = deduplicated.sorted { lhs, rhs in
             if lhs.timestamp != rhs.timestamp {
                 return lhs.timestamp < rhs.timestamp
             }

@@ -448,6 +448,319 @@ struct SyncPullDivergenceTests {
         #expect(statesB.first?.xp == 77)
         #expect(profilesB.first?.rpgState?.id == statesB.first?.id)
     }
+
+    // MARK: - Test 6 (CRITIQUE 1): a row skipped mid-page must not let the
+    // cursor skip past it
+
+    @Test("CRITIQUE 1: a row skipped mid-page does not let the cursor advance past it — it is re-fetched on the next cycle")
+    func skippedRowMidPageIsNotLostByCursorAdvance() async throws {
+        let container = try makeContainer()
+        let cursorStore = MockSyncCursorStore()
+        let transport = MockSyncPullTransport()
+
+        // Already local, as if a previous cycle already pulled it — logs
+        // referencing it can attach immediately.
+        let cardID = UUID()
+        try seedCard(
+            id: cardID,
+            updatedAt: Date(timeIntervalSince1970: 1_699_000_000),
+            syncedAt: Date(timeIntervalSince1970: 1_699_000_000),
+            into: container
+        )
+        let scratchCard = Card(front: "犬", back: "dog", type: .vocabulary)
+        scratchCard.id = cardID
+
+        let t1 = Date(timeIntervalSince1970: 1_700_300_000)
+        let t2 = t1.addingTimeInterval(10)
+        let t3 = t1.addingTimeInterval(20)
+
+        // log1: valid, attaches to `cardID` — APPLIES.
+        let log1 = ReviewLog(card: scratchCard, grade: .good, responseTimeMs: 300, timestamp: t1)
+        log1.updatedAt = t1
+        var log1Row = try SyncPayloadBuilder.row(for: log1)
+        log1Row["server_updated_at"] = .string(SyncJSON.iso8601String(t1))
+
+        // log2: references a card that does NOT exist locally — SKIPPED.
+        // Sits in the MIDDLE of the page, between two rows that both
+        // apply fine — the exact shape CRITIQUE 1 describes (a log for a
+        // card this device hasn't pulled yet, delivered alongside logs
+        // that DO apply in the same page).
+        let orphanCardID = UUID()
+        let log2 = ReviewLog(card: scratchCard, grade: .again, responseTimeMs: 300, timestamp: t2)
+        log2.updatedAt = t2
+        var log2Row = try SyncPayloadBuilder.row(for: log2)
+        log2Row["card_id"] = .uuid(orphanCardID)
+        log2Row["server_updated_at"] = .string(SyncJSON.iso8601String(t2))
+
+        // log3: valid, attaches to `cardID` — APPLIES, but comes AFTER
+        // the skipped row. Before the CRITIQUE 1 fix, `advanceCursor` was
+        // called with the WHOLE page, so its `max(server_updated_at)`
+        // would be t3 — past log2 — and log2 would never be re-fetched.
+        let log3 = ReviewLog(card: scratchCard, grade: .good, responseTimeMs: 300, timestamp: t3)
+        log3.updatedAt = t3
+        var log3Row = try SyncPayloadBuilder.row(for: log3)
+        log3Row["server_updated_at"] = .string(SyncJSON.iso8601String(t3))
+
+        transport.enqueueRows([log1Row, log2Row, log3Row], forTable: "review_logs")
+
+        let pullActor = SyncPullActor(modelContainer: container)
+        let summary = try await pullActor.pullAll(transport: transport, cursorStore: cursorStore, accessToken: "token")
+
+        // log1 and log3 both applied — log2 is the only skip.
+        #expect(summary.appliedRowCounts["review_logs"] == 2)
+        #expect(summary.skippedRowCounts["review_logs"] == 1)
+
+        // The cursor must NOT have advanced past log2's timestamp: it can
+        // only certify the prefix up to (and including) log1, since log2
+        // — mid-page — failed to apply.
+        let advancedCursor = cursorStore.cursor(forTable: "review_logs")
+        #expect(advancedCursor == t1)
+        #expect(advancedCursor != t3)
+
+        // A follow-up cycle re-queries `review_logs` from that safe
+        // boundary (t1), NOT from t3 — proving log2 (and log3, its
+        // safe-to-redeliver neighbor) are not permanently lost, only
+        // deferred to the next cycle, exactly like a real `gte` re-fetch
+        // would redeliver them once log2's card shows up.
+        _ = try await pullActor.pullAll(transport: transport, cursorStore: cursorStore, accessToken: "token")
+        let secondCall = transport.calls(forTable: "review_logs").last
+        #expect(secondCall?.since == t1)
+    }
+
+    // MARK: - Test 7 (CRITIQUE 3): a fully-tied full page must throw, not
+    // loop forever
+
+    @Test("CRITIQUE 3: a full page entirely tied on server_updated_at throws instead of looping forever")
+    func fullyTiedFullPageThrowsInsteadOfLooping() async throws {
+        let container = try makeContainer()
+        let cursorStore = MockSyncCursorStore()
+        let transport = MockSyncPullTransport()
+
+        // Two rows sharing the EXACT same `server_updated_at` — the shape
+        // a single bulk push transaction produces (Postgres `now()` stamps
+        // every row in one transaction identically — see
+        // `SyncPullTransport`'s doc comment). `pageSize: 2` below makes
+        // this ONE tie cluster exactly fill a page — the hazard that doc
+        // comment describes.
+        let tiedTimestamp = Date(timeIntervalSince1970: 1_700_400_000)
+
+        let entryA = VocabularyEntry(word: "犬", reading: "いぬ", meaning: "dog")
+        entryA.updatedAt = tiedTimestamp
+        var rowA = try SyncPayloadBuilder.row(for: entryA)
+        rowA["server_updated_at"] = .string(SyncJSON.iso8601String(tiedTimestamp))
+
+        let entryB = VocabularyEntry(word: "猫", reading: "ねこ", meaning: "cat")
+        entryB.updatedAt = tiedTimestamp
+        var rowB = try SyncPayloadBuilder.row(for: entryB)
+        rowB["server_updated_at"] = .string(SyncJSON.iso8601String(tiedTimestamp))
+
+        let tiedPage = [rowA, rowB]
+
+        // Enqueue the IDENTICAL tied page TWICE — this is what a real
+        // `gte` re-fetch against a cursor that failed to advance past the
+        // tie cluster would return: the exact same two rows again.
+        transport.enqueueRows(tiedPage, forTable: "vocabulary_entries")
+        transport.enqueueRows(tiedPage, forTable: "vocabulary_entries")
+
+        let pullActor = SyncPullActor(modelContainer: container)
+
+        do {
+            _ = try await pullActor.pullAll(
+                transport: transport,
+                cursorStore: cursorStore,
+                accessToken: "token",
+                pageSize: 2
+            )
+            Issue.record("Expected pullAll to throw cursorStalledOnFullPage — a fully-tied full page must not silently succeed")
+        } catch let error as SyncPullActor.SyncPullActorError {
+            #expect(error == .cursorStalledOnFullPage(table: "vocabulary_entries"))
+        }
+
+        // The stall was caught on the SECOND identical page, not allowed
+        // to drain past it — exactly 2 `fetchRows` calls for this table.
+        // The old `advanced == nil`-only check never fires on a page that
+        // parses and applies fine (a tie cluster still produces a real,
+        // just-unchanged, `max()`), so it would have silently consumed
+        // BOTH queued pages and returned a clean, successful `PullSummary`
+        // — exactly the silent-infinite-loop-in-production hazard this
+        // test guards against.
+        #expect(transport.calls(forTable: "vocabulary_entries").count == 2)
+    }
+
+    // MARK: - Test 8 (CRITIQUE 2): an undecodable row must not block tables
+    // pulled after it
+
+    @Test("CRITIQUE 2: an undecodable row in one table does not block tables pulled after it in pullOrder")
+    func undecodableRowDoesNotBlockSubsequentTables() async throws {
+        let container = try makeContainer()
+        let cursorStore = MockSyncCursorStore()
+        let transport = MockSyncPullTransport()
+
+        // A `cards` row whose `payload` is missing every required field
+        // (`front`, `back`, `type`, …) — cannot decode as `CardPayload`.
+        // Before CRITIQUE 2, the non-append-only apply functions called
+        // `SyncRowDecoding.decode` with a bare `try`, so this row's decode
+        // failure threw straight out of `applyCardRows`, out of
+        // `pullAndApply`, and out of `pullAll` — aborting `review_logs`,
+        // `vocabulary_entries`, and every table after `cards` in
+        // `pullOrder` for the ENTIRE cycle, not just this one bad row.
+        let badCardID = UUID()
+        let badTimestamp = Date(timeIntervalSince1970: 1_700_500_000)
+        let badCardRow: SyncRow = [
+            "id": .uuid(badCardID),
+            "profile_id": .null,
+            "payload": .object([:]),
+            "updated_at": .date(badTimestamp),
+            "deleted_at": .null,
+            "server_updated_at": .string(SyncJSON.iso8601String(badTimestamp)),
+        ]
+        transport.enqueueRows([badCardRow], forTable: "cards")
+
+        // A perfectly valid `vocabulary_entries` row — pulled right AFTER
+        // `cards` in `pullOrder` — is what must still succeed.
+        let entry = VocabularyEntry(word: "水", reading: "みず", meaning: "water")
+        let entryTimestamp = badTimestamp.addingTimeInterval(100)
+        entry.updatedAt = entryTimestamp
+        var entryRow = try SyncPayloadBuilder.row(for: entry)
+        entryRow["server_updated_at"] = .string(SyncJSON.iso8601String(entryTimestamp))
+        transport.enqueueRows([entryRow], forTable: "vocabulary_entries")
+
+        let pullActor = SyncPullActor(modelContainer: container)
+        // Must NOT throw — the whole point of CRITIQUE 2.
+        let summary = try await pullActor.pullAll(transport: transport, cursorStore: cursorStore, accessToken: "token")
+
+        #expect(summary.appliedRowCounts["cards"] == 0)
+        #expect(summary.skippedRowCounts["cards"] == 1)
+        // The table pulled right after `cards` still ran and applied its
+        // row — proving the decode failure didn't abort the whole cycle.
+        #expect(summary.appliedRowCounts["vocabulary_entries"] == 1)
+
+        let context = ModelContext(container)
+        let entries = try context.fetch(FetchDescriptor<VocabularyEntry>())
+        #expect(entries.count == 1)
+        #expect(entries.first?.word == "水")
+
+        // The bad card was never created locally.
+        let badCardDescriptor = FetchDescriptor<Card>(predicate: #Predicate { $0.id == badCardID })
+        let badCards = try context.fetch(badCardDescriptor)
+        #expect(badCards.isEmpty)
+    }
+
+    // MARK: - Test 9 (IMPORTANT 4): a remote win must not overwrite FSRS
+    // scheduling fields ahead of the replay that's supposed to own them
+
+    @Test("IMPORTANT 4: a remote win against a card with local review logs does not overwrite its FSRS scheduling fields before replay runs")
+    func remoteWinDoesNotOverwriteSchedulingAheadOfReplay() async throws {
+        let container = try makeContainer()
+        // NOT a bare `MockSyncCursorStore()`: with every table's cursor
+        // `nil`, `pullAll`'s rule-1 cold-start guard primes a FIRST page
+        // for every table — including `review_logs` — BEFORE the normal
+        // per-table loop even starts, so `TableFailingTransport` (below)
+        // would fail on that priming call and abort before `cards` ever
+        // gets its chance to apply. Pre-seeding `review_logs`'s own cursor
+        // makes `isColdStart` false, so the normal `pullOrder` sequence
+        // (`cards` before `review_logs`) is what actually runs.
+        let cursorStore = MockSyncCursorStore(cursors: ["review_logs": Date(timeIntervalSince1970: 1)])
+
+        let cardID = UUID()
+        let t0 = Date(timeIntervalSince1970: 1_700_600_000)
+        try seedCard(id: cardID, updatedAt: t0, syncedAt: t0, into: container)
+
+        // Local device grades the card — this both creates a local
+        // `ReviewLog` AND advances the card's own
+        // `fsrsState`/`interval`/`dueDate`/`lapseCount` locally, while
+        // `updatedAt` stays behind whatever the remote row below claims
+        // (so the remote wins the LWW check).
+        let t1 = t0.addingTimeInterval(3600)
+        try gradeCard(id: cardID, grade: .good, timestamp: t1, in: container)
+
+        let localBefore = try #require(try fetchCard(id: cardID, in: container))
+        let fsrsStateBefore = localBefore.fsrsState
+        let intervalBefore = localBefore.interval
+        let dueDateBefore = localBefore.dueDate
+        let lapseCountBefore = localBefore.lapseCount
+        let easeFactorBefore = localBefore.easeFactor
+
+        // Remote row: LATER `updatedAt` (wins LWW) with DIFFERENT content
+        // AND deliberately garbage scheduling fields — as if another
+        // device graded this card differently (or the row is simply
+        // stale relative to what a completed replay would derive).
+        let remoteUpdatedAt = t1.addingTimeInterval(3600)
+        var garbageState = FSRSState()
+        garbageState = FSRSService.schedule(state: garbageState, grade: .again, now: remoteUpdatedAt)
+        let scratchCard = Card(
+            front: "REMOTE-front",
+            back: "REMOTE-back",
+            type: .vocabulary,
+            fsrsState: garbageState,
+            easeFactor: 1.3,
+            interval: 999,
+            dueDate: remoteUpdatedAt.addingTimeInterval(86400 * 999),
+            lapseCount: 42,
+            leechFlag: true
+        )
+        scratchCard.id = cardID
+        scratchCard.updatedAt = remoteUpdatedAt
+        var cardRow = try SyncPayloadBuilder.row(for: scratchCard)
+        cardRow["server_updated_at"] = .string(SyncJSON.iso8601String(remoteUpdatedAt))
+
+        let mockTransport = MockSyncPullTransport()
+        mockTransport.enqueueRows([cardRow], forTable: "cards")
+        // `review_logs` fails outright — simulating a crash or network
+        // failure AFTER the `cards` page above has already been applied
+        // and saved (`pullAndApply` saves per-page), but BEFORE
+        // `replayFSRS` — which only runs once, after `review_logs`
+        // finishes entirely (see `pullAll`) — ever gets a chance to run.
+        let transport = TableFailingTransport(inner: mockTransport, failingTable: "review_logs")
+
+        let pullActor = SyncPullActor(modelContainer: container)
+        await #expect(throws: (any Error).self) {
+            _ = try await pullActor.pullAll(transport: transport, cursorStore: cursorStore, accessToken: "token")
+        }
+
+        let localAfter = try #require(try fetchCard(id: cardID, in: container))
+
+        // Content fields DID come from the remote win, as expected...
+        #expect(localAfter.front == "REMOTE-front")
+        #expect(localAfter.back == "REMOTE-back")
+
+        // ...but the scheduling fields, which only a COMPLETED replay is
+        // authoritative over (rule 2), were NOT overwritten by the remote
+        // payload's garbage values — they are still exactly what the
+        // local grade produced before this pull, because the replay that
+        // was supposed to correct them never got to run.
+        #expect(localAfter.fsrsState == fsrsStateBefore)
+        #expect(localAfter.interval == intervalBefore)
+        #expect(localAfter.dueDate == dueDateBefore)
+        #expect(localAfter.lapseCount == lapseCountBefore)
+        #expect(localAfter.easeFactor == easeFactorBefore)
+        // In particular, definitely not the garbage remote values.
+        #expect(localAfter.lapseCount != 42)
+    }
+}
+
+// MARK: - TableFailingTransport
+
+/// Wraps another `SyncPullTransport` (typically `MockSyncPullTransport`) and
+/// makes every `fetchRows` call against ONE specific table fail, forwarding
+/// every other table through unchanged. Used by
+/// `remoteWinDoesNotOverwriteSchedulingAheadOfReplay` (IMPORTANT 4) to
+/// simulate a network failure that lands squarely between two real steps of
+/// one `pullAll` cycle — `cards` succeeding and being saved, `review_logs`
+/// (and therefore the `replayFSRS` pass that only runs after it) never
+/// getting to run — something neither `MockSyncPullTransport.setErrorToThrow`
+/// (global, not table-scoped) nor `FakeSyncServer` (never fails) can express
+/// on their own.
+private struct TableFailingTransport: SyncPullTransport {
+    let inner: any SyncPullTransport
+    let failingTable: String
+
+    func fetchRows(table: String, since: Date?, limit: Int, accessToken: String) async throws -> [SyncRow] {
+        if table == failingTable {
+            throw SyncPullTransportError.requestFailed(status: 500, body: "TableFailingTransport: simulated failure for \(table)")
+        }
+        return try await inner.fetchRows(table: table, since: since, limit: limit, accessToken: accessToken)
+    }
 }
 
 // MARK: - FakeSyncServer

@@ -12047,6 +12047,24 @@
         }
       }
     },
+    "Backed up, will retry" : {
+      "extractionState" : "manual",
+      "comment" : "Cloud backup status row in Settings: shown when the last push succeeded but the pull/merge half of that sync cycle failed — the backup itself is fine, a retry (foreground or network-regain trigger) will pick the pull back up",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Backed up, will retry"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sauvegardé, nouvel essai prévu"
+          }
+        }
+      }
+    },
     "Backup pending" : {
       "extractionState" : "manual",
       "localizations" : {

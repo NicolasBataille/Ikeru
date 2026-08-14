@@ -110,10 +110,9 @@ struct SyncMergeRulesTests {
         let timestamp = Date(timeIntervalSince1970: 1_700_000_000)
         let sharedID = UUID()
 
-        // The caller is responsible for deduping the union by id before
-        // calling replay; this test documents that a de-duplicated set of
-        // logs (the correct union) produces the same result as the single
-        // underlying event, not a double-application of the same grade.
+        // A de-duplicated set of logs (the correct union) produces the same
+        // result as the single underlying event, not a double-application
+        // of the same grade.
         let dedupedLogs = [SyncMergeRules.ReplayLogEntry(id: sharedID, timestamp: timestamp, grade: .good)]
         let deduped = SyncMergeRules.replayFSRSState(logs: dedupedLogs)
 
@@ -121,6 +120,37 @@ struct SyncMergeRulesTests {
         expected = FSRSService.schedule(state: expected, grade: .good, now: timestamp)
 
         #expect(deduped == expected)
+    }
+
+    @Test("IMPORTANT 5: an UN-deduplicated union (same id present twice in `logs`) is replayed only once, not twice")
+    func rule2UndedupedDuplicateIdIsReplayedOnlyOnce() {
+        // `replayFSRSState` used to document deduping-by-id as a CALLER
+        // obligation (`SyncPullActor`'s own union, at the call site in
+        // `replayFSRS`, never actually did this). If a duplicate id ever
+        // slipped through — a page redelivered twice, a future union site
+        // that forgets — the same review event would apply its grade TWICE
+        // to the replayed state, every time replay runs, forever. Passing
+        // the SAME entry twice (simulating that un-deduped union) must
+        // still produce the state a SINGLE application of it produces, not
+        // a double-application — without a fix, `.again` applied twice in a
+        // row lands on a materially different (more lapsed) `FSRSState`
+        // than `.again` applied once, so this fails loudly if the internal
+        // dedup regresses.
+        let timestamp = Date(timeIntervalSince1970: 1_700_050_000)
+        let sharedID = UUID()
+        let entry = SyncMergeRules.ReplayLogEntry(id: sharedID, timestamp: timestamp, grade: .again)
+
+        let withDuplicate = SyncMergeRules.replayFSRSState(logs: [entry, entry])
+
+        var expectedSingleApplication = FSRSState()
+        expectedSingleApplication = FSRSService.schedule(state: expectedSingleApplication, grade: .again, now: timestamp)
+
+        var doubleApplication = FSRSState()
+        doubleApplication = FSRSService.schedule(state: doubleApplication, grade: .again, now: timestamp)
+        doubleApplication = FSRSService.schedule(state: doubleApplication, grade: .again, now: timestamp)
+
+        #expect(withDuplicate == expectedSingleApplication)
+        #expect(withDuplicate != doubleApplication)
     }
 
     // MARK: - Rule 3: monotone counters

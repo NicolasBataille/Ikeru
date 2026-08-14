@@ -85,6 +85,19 @@ actor SyncPullActor {
         /// `pullOrder` has an entry, possibly `0`.
         var appliedRowCounts: [String: Int] = [:]
 
+        /// Rows fetched but SKIPPED per table this cycle — a decode
+        /// failure (unparseable payload, missing required field) or an
+        /// unattachable foreign key (e.g. a `review_logs` row whose `card`
+        /// no longer exists locally). Distinct from `appliedRowCounts`
+        /// specifically so a pull that silently discards half a page is
+        /// distinguishable from a clean one — before this field existed,
+        /// both looked identical to a caller (see CRITIQUE 1/2 in the
+        /// 2026-08 lot-2 pull review: a skipped row's timestamp is never
+        /// let past the cursor either — see `pullAndApply` — so a row
+        /// counted here is retried on every future cycle until it
+        /// succeeds, not lost).
+        var skippedRowCounts: [String: Int] = [:]
+
         /// Cards whose `fsrsState` was recomputed by an FSRS replay this
         /// cycle (rule 2). Exposed so a test can assert convergence
         /// happened, not just that no error was thrown.
@@ -95,13 +108,25 @@ actor SyncPullActor {
 
     enum SyncPullActorError: Error, Sendable, Equatable {
         /// A page came back at exactly `pageSize` rows but the cursor did
-        /// not advance past it — the tie-cluster-wider-than-one-page hazard
-        /// `SyncPullTransport` warns about. Aborting this table's pagination
-        /// loop here (leaving its cursor where it safely still is) is
-        /// correct per that type's own guidance: "better to abandon that
-        /// page than to spin." The next `pullAll` call re-fetches the same
-        /// page and makes the same call — this does not silently lose the
-        /// tie cluster, it makes the stall visible instead of hanging.
+        /// not make forward progress against it — the
+        /// tie-cluster-wider-than-one-page hazard `SyncPullTransport` warns
+        /// about. "No forward progress" means EITHER `advanceCursor`
+        /// returned `nil` (nothing in the page carried a parseable
+        /// `server_updated_at`) OR it returned a value equal to `since`,
+        /// the cursor this same page was fetched with (every row in the
+        /// page ties with — or trails — the boundary already applied,
+        /// which is exactly what an all-tied page one page too wide looks
+        /// like: re-fetching with the SAME `since` would return the
+        /// IDENTICAL page forever). Checking `advanced == nil` alone
+        /// missed this second case entirely — every row in a tie cluster
+        /// still parses fine and still produces a real (just unchanged)
+        /// `max()`, so that check never fired and the loop spun without
+        /// end. Aborting this table's pagination loop here (leaving its
+        /// cursor where it safely still is) is correct per
+        /// `SyncPullTransport`'s own guidance: "better to abandon that page
+        /// than to spin." The next `pullAll` call re-fetches the same page
+        /// and makes the same call — this does not silently lose the tie
+        /// cluster, it makes the stall visible instead of hanging.
         case cursorStalledOnFullPage(table: String)
     }
 
@@ -179,7 +204,7 @@ actor SyncPullActor {
         var pendingCardReplayIDs: Set<UUID> = []
 
         for table in Self.pullOrder {
-            let applied = try await pullAndApply(
+            let (applied, skipped) = try await pullAndApply(
                 table: table,
                 transport: transport,
                 cursorStore: cursorStore,
@@ -189,6 +214,7 @@ actor SyncPullActor {
                 pendingCardReplayIDs: &pendingCardReplayIDs
             )
             summary.appliedRowCounts[table] = applied
+            summary.skippedRowCounts[table] = skipped
 
             if table == "review_logs" {
                 // Everything either step could have flagged is now known,
@@ -227,8 +253,9 @@ actor SyncPullActor {
         pageSize: Int,
         primedFirstPage: [SyncRow]?,
         pendingCardReplayIDs: inout Set<UUID>
-    ) async throws -> Int {
+    ) async throws -> (applied: Int, skipped: Int) {
         var totalApplied = 0
+        var totalSkipped = 0
         var isFirstIteration = true
 
         while true {
@@ -250,7 +277,13 @@ actor SyncPullActor {
 
             guard !page.isEmpty else { break }
 
-            totalApplied += try apply(table: table, rows: page, pendingCardReplayIDs: &pendingCardReplayIDs)
+            let (appliedCount, appliedFlags) = try apply(
+                table: table,
+                rows: page,
+                pendingCardReplayIDs: &pendingCardReplayIDs
+            )
+            totalApplied += appliedCount
+            totalSkipped += page.count - appliedCount
 
             // MUST save before advancing the cursor, not after — see
             // `SyncCursorStore.setCursor`'s ordering contract doc comment.
@@ -262,28 +295,70 @@ actor SyncPullActor {
             // them forever on the next pull. Mirrors `SyncModelActor`'s
             // per-batch `try modelContext.save()` on the push side.
             try modelContext.save()
-            let advanced = cursorStore.advanceCursor(forTable: table, afterApplying: page)
+
+            // Advance the cursor over the PREFIX of `page` that was
+            // actually applied — NOT over the whole page (CRITIQUE 1). A
+            // row skipped mid-page (failed decode, unattachable FK, …) is
+            // still counted in `appliedFlags` as `false`; if the cursor
+            // were allowed to jump to `max(server_updated_at)` across the
+            // WHOLE page — including rows applied AFTER the skipped one —
+            // the next cycle's `since: gte(cursor)` would start strictly
+            // past the skipped row's own timestamp and it would never be
+            // redelivered, silently and permanently. `page` is sorted
+            // `server_updated_at.asc, id.asc` (see `SyncPullTransport`'s
+            // doc comment), so `prefix(while:)` from the start is the
+            // longest run this cycle can safely certify as durable; the
+            // skipped row (and everything after it, even rows that
+            // themselves applied fine) waits for the next cycle, which
+            // re-fetches from the skipped row's own timestamp (`gte`) and
+            // re-delivers those later rows too — a safe no-op upsert for
+            // the ones already applied here.
+            let appliedPrefix = zip(page, appliedFlags).prefix(while: { $0.1 }).map(\.0)
+            let advanced = cursorStore.advanceCursor(forTable: table, afterApplying: appliedPrefix)
 
             if page.count < pageSize {
                 // Short page: caught up, stop regardless of whether the
                 // cursor moved (an all-tied short page is still "done").
                 break
             }
-            // Full page: more may follow, UNLESS the cursor failed to
-            // advance — the tie-cluster-wider-than-one-page hazard
-            // `SyncPullTransport` documents. Hard stop per its guidance,
-            // rather than re-issuing the identical request forever.
-            if advanced == nil {
+            // Full page: more may follow, UNLESS the cursor failed to make
+            // forward progress — the tie-cluster-wider-than-one-page hazard
+            // `SyncPullTransport` documents (CRITIQUE 3). This is not just
+            // `advanced == nil` (a page can parse and advance the cursor
+            // just fine while still going NOWHERE, if every row in it ties
+            // with `since` — that's the actual tie-cluster shape, and it
+            // reports a perfectly real, just-unchanged, `max()`). Checking
+            // `advanced == since` as well is what actually stops the spin;
+            // `advanced == nil` alone left this loop running forever on a
+            // real tie-cluster-wider-than-one-page hazard, silently
+            // burning network and battery with no error surfaced. Hard
+            // stop per `SyncPullTransport`'s guidance, rather than
+            // re-issuing the identical request forever.
+            if advanced == nil || advanced == since {
                 throw SyncPullActorError.cursorStalledOnFullPage(table: table)
             }
         }
 
-        return totalApplied
+        return (totalApplied, totalSkipped)
     }
 
     // MARK: - Row application dispatch
 
-    private func apply(table: String, rows: [SyncRow], pendingCardReplayIDs: inout Set<UUID>) throws -> Int {
+    /// Dispatches to the per-table apply function and returns, alongside the
+    /// applied count, `appliedFlags` — one `Bool` per element of `rows`, IN
+    /// THE SAME ORDER, `true` where that row was actually applied and
+    /// `false` where it was skipped (undecodable payload, unattachable
+    /// foreign key, …). `pullAndApply` uses this to compute the safe
+    /// cursor-advance prefix (CRITIQUE 1) — every per-table apply function
+    /// this dispatches to — 4 of them below, plus the 3 standalone-table
+    /// ones in `SyncPullActor+StandaloneTables.swift` — must append exactly
+    /// one flag per row it iterates, in order, or that prefix computation
+    /// silently misaligns.
+    private func apply(
+        table: String,
+        rows: [SyncRow],
+        pendingCardReplayIDs: inout Set<UUID>
+    ) throws -> (count: Int, appliedFlags: [Bool]) {
         switch table {
         case "profiles":
             return try applyProfileRows(rows)
@@ -292,11 +367,11 @@ actor SyncPullActor {
         case "cards":
             let result = try applyCardRows(rows)
             pendingCardReplayIDs.formUnion(result.needsReplay)
-            return result.count
+            return (result.count, result.appliedFlags)
         case "review_logs":
             let result = try applyReviewLogRows(rows)
             pendingCardReplayIDs.formUnion(result.touchedCardIDs)
-            return result.count
+            return (result.count, result.appliedFlags)
         case "vocabulary_entries":
             return try applyVocabularyEntryRows(rows)
         case "vocabulary_encounters":
@@ -308,7 +383,7 @@ actor SyncPullActor {
             // with any other value, so this is unreachable in practice;
             // fail loudly rather than silently dropping unknown rows.
             assertionFailure("SyncPullActor.apply called with unrecognized table: \(table)")
-            return 0
+            return (0, Array(repeating: false, count: rows.count))
         }
     }
 
@@ -337,12 +412,22 @@ actor SyncPullActor {
         let settings: ProfileSettings
     }
 
-    private func applyProfileRows(_ rows: [SyncRow]) throws -> Int {
+    private func applyProfileRows(_ rows: [SyncRow]) throws -> (count: Int, appliedFlags: [Bool]) {
         var applied = 0
+        var appliedFlags: [Bool] = []
+        appliedFlags.reserveCapacity(rows.count)
         for row in rows {
-            guard let common = try? SyncRowDecoding.common(row) else { continue }
-            guard let payloadValue = row["payload"] else { continue }
-            let payload = try SyncRowDecoding.decode(ProfilePayload.self, from: payloadValue)
+            // `try?` on the decode, not `try` (CRITIQUE 2): a single
+            // undecodable row (e.g. an enum value written by a newer app
+            // version, or a null where this DTO expects a value) must skip
+            // just that row, not throw out of `applyProfileRows` and abort
+            // every table still left in `pullOrder` for this cycle.
+            guard let common = try? SyncRowDecoding.common(row),
+                  let payloadValue = row["payload"],
+                  let payload = try? SyncRowDecoding.decode(ProfilePayload.self, from: payloadValue) else {
+                appliedFlags.append(false)
+                continue
+            }
 
             if let existing = try fetchOne(UserProfile.self, id: common.id) {
                 let winner = SyncMergeRules.resolveWinner(
@@ -366,8 +451,9 @@ actor SyncPullActor {
                 modelContext.insert(profile)
             }
             applied += 1
+            appliedFlags.append(true)
         }
-        return applied
+        return (applied, appliedFlags)
     }
 
     // MARK: - rpg_states
@@ -383,12 +469,18 @@ actor SyncPullActor {
         let lastSessionDate: Date?
     }
 
-    private func applyRPGStateRows(_ rows: [SyncRow]) throws -> Int {
+    private func applyRPGStateRows(_ rows: [SyncRow]) throws -> (count: Int, appliedFlags: [Bool]) {
         var applied = 0
+        var appliedFlags: [Bool] = []
+        appliedFlags.reserveCapacity(rows.count)
         for row in rows {
-            guard let common = try? SyncRowDecoding.common(row) else { continue }
-            guard let payloadValue = row["payload"] else { continue }
-            let payload = try SyncRowDecoding.decode(RPGStatePayload.self, from: payloadValue)
+            // `try?` on the decode (CRITIQUE 2) — see `applyProfileRows`.
+            guard let common = try? SyncRowDecoding.common(row),
+                  let payloadValue = row["payload"],
+                  let payload = try? SyncRowDecoding.decode(RPGStatePayload.self, from: payloadValue) else {
+                appliedFlags.append(false)
+                continue
+            }
             let profileID = SyncRowDecoding.uuid(row, "profile_id")
 
             // Rule 3 applies to the counters regardless of which side's
@@ -446,8 +538,9 @@ actor SyncPullActor {
                 modelContext.insert(state)
             }
             applied += 1
+            appliedFlags.append(true)
         }
-        return applied
+        return (applied, appliedFlags)
     }
 
     private func mergeRPGState(
@@ -510,9 +603,10 @@ actor SyncPullActor {
         let jlptLevel: String?
     }
 
-    /// Applies pulled `cards` rows. Returns, alongside the applied count,
-    /// the set of card ids that need an FSRS replay pass (rule 2) once
-    /// `review_logs` has been fully applied:
+    /// Applies pulled `cards` rows. Returns, alongside the applied count and
+    /// `appliedFlags` (see the `apply` dispatcher's doc comment), the set of
+    /// card ids that need an FSRS replay pass (rule 2) once `review_logs`
+    /// has been fully applied:
     ///
     /// - Every card with at least one LOCAL review log already on disk —
     ///   whether that card was just created, or overwritten by a remote
@@ -525,13 +619,38 @@ actor SyncPullActor {
     /// - A card with zero review logs (freshly created, never graded on
     ///   either side) has nothing to replay — its pulled scheduling fields
     ///   are applied as-is, since rule 2 has nothing to arbitrate.
-    private func applyCardRows(_ rows: [SyncRow]) throws -> (count: Int, needsReplay: Set<UUID>) {
+    ///
+    /// ⚠️ CRITIQUE 4: a remote win against a card that ALREADY has local
+    /// review logs does NOT copy the payload's scheduling fields
+    /// (`fsrsState`/`easeFactor`/`interval`/`dueDate`/`lapseCount`) — only
+    /// its content fields (`front`/`back`/`type`/`jlptLevel`/`leechFlag`).
+    /// This save() happens per-page (`pullAndApply`), durably, BEFORE the
+    /// replay pass that's supposed to be the sole authority over those
+    /// fields even runs (`replayFSRS` only runs once, after the ENTIRE
+    /// `review_logs` table finishes — see `pullAll`). If the payload's
+    /// scheduling fields were written here and a later page (or the replay
+    /// pass itself) then failed — a network error, a crash — the wrong,
+    /// non-authoritative remote values would be left on disk permanently:
+    /// the card's own row won't be re-delivered once the cursor has moved
+    /// past it, so nothing would ever re-signal the correction is still
+    /// owed. Leaving the existing (locally-derived) scheduling fields
+    /// untouched here instead means a missed replay just leaves the prior —
+    /// still internally consistent — local state in place, and the next
+    /// successful replay (this cycle or a future one, since the card is
+    /// still queued in `needsReplay`) corrects it for real.
+    private func applyCardRows(_ rows: [SyncRow]) throws -> (count: Int, appliedFlags: [Bool], needsReplay: Set<UUID>) {
         var applied = 0
+        var appliedFlags: [Bool] = []
+        appliedFlags.reserveCapacity(rows.count)
         var needsReplay: Set<UUID> = []
         for row in rows {
-            guard let common = try? SyncRowDecoding.common(row) else { continue }
-            guard let payloadValue = row["payload"] else { continue }
-            let payload = try SyncRowDecoding.decode(CardPayload.self, from: payloadValue)
+            // `try?` on the decode (CRITIQUE 2) — see `applyProfileRows`.
+            guard let common = try? SyncRowDecoding.common(row),
+                  let payloadValue = row["payload"],
+                  let payload = try? SyncRowDecoding.decode(CardPayload.self, from: payloadValue) else {
+                appliedFlags.append(false)
+                continue
+            }
             let profileID = SyncRowDecoding.uuid(row, "profile_id")
 
             if let existing = try fetchOne(Card.self, id: common.id) {
@@ -539,22 +658,29 @@ actor SyncPullActor {
                     local: .init(updatedAt: existing.updatedAt, deletedAt: existing.deletedAt),
                     remote: .init(updatedAt: common.updatedAt, deletedAt: common.deletedAt)
                 )
+                let hasLocalReviewLogs = !(existing.reviewLogs ?? []).isEmpty
                 if winner == .remote {
                     existing.front = payload.front
                     existing.back = payload.back
                     existing.typeRawValue = payload.type
-                    existing.fsrsState = payload.fsrsState
-                    existing.easeFactor = payload.easeFactor
-                    existing.interval = payload.interval
-                    existing.dueDate = payload.dueDate
-                    existing.lapseCount = payload.lapseCount
                     existing.leechFlag = payload.leechFlag
                     existing.jlptLevelRawValue = payload.jlptLevel
+                    if !hasLocalReviewLogs {
+                        // Only apply the payload's scheduling fields when
+                        // there is no local log set for `replayFSRS` to
+                        // derive them from instead — see this function's
+                        // doc comment (CRITIQUE 4).
+                        existing.fsrsState = payload.fsrsState
+                        existing.easeFactor = payload.easeFactor
+                        existing.interval = payload.interval
+                        existing.dueDate = payload.dueDate
+                        existing.lapseCount = payload.lapseCount
+                    }
                     existing.updatedAt = common.updatedAt
                     existing.deletedAt = common.deletedAt
                     existing.syncedAt = common.updatedAt
                 }
-                if existing.deletedAt == nil, !(existing.reviewLogs ?? []).isEmpty {
+                if existing.deletedAt == nil, hasLocalReviewLogs {
                     needsReplay.insert(existing.id)
                 }
             } else {
@@ -584,8 +710,9 @@ actor SyncPullActor {
                 // adds any card it touches to the replay set on its own.
             }
             applied += 1
+            appliedFlags.append(true)
         }
-        return (applied, needsReplay)
+        return (applied, appliedFlags, needsReplay)
     }
 
     // MARK: - review_logs
@@ -594,12 +721,17 @@ actor SyncPullActor {
         let responseTimeMs: Int
     }
 
-    private func applyReviewLogRows(_ rows: [SyncRow]) throws -> (count: Int, touchedCardIDs: Set<UUID>) {
+    private func applyReviewLogRows(_ rows: [SyncRow]) throws -> (count: Int, appliedFlags: [Bool], touchedCardIDs: Set<UUID>) {
         var applied = 0
+        var appliedFlags: [Bool] = []
+        appliedFlags.reserveCapacity(rows.count)
         var touchedCardIDs: Set<UUID> = []
         for row in rows {
-            guard let common = try? SyncRowDecoding.common(row) else { continue }
-            guard let payloadValue = row["payload"] else { continue }
+            guard let common = try? SyncRowDecoding.common(row),
+                  let payloadValue = row["payload"] else {
+                appliedFlags.append(false)
+                continue
+            }
 
             // Append-only per design spec §3 — a review log is never
             // updated after creation, only ever created (or, in principle,
@@ -611,6 +743,7 @@ actor SyncPullActor {
             // previous cycle) and applying it again is a safe no-op.
             if try fetchOne(ReviewLog.self, id: common.id) != nil {
                 applied += 1
+                appliedFlags.append(true)
                 continue
             }
 
@@ -622,13 +755,18 @@ actor SyncPullActor {
                 // synced (e.g. a card later hard-deleted server-side
                 // outside this app's own tombstone flow) must not crash
                 // the whole pull over one unattachable log. Skipped, not
-                // counted as applied.
+                // counted as applied — and (CRITIQUE 1) the cursor is not
+                // allowed to advance past it either, so it's retried on a
+                // future cycle rather than lost the instant its card does
+                // show up.
+                appliedFlags.append(false)
                 continue
             }
             guard let payload = try? SyncRowDecoding.decode(ReviewLogPayload.self, from: payloadValue),
                   let timestamp = SyncRowDecoding.date(row, "occurred_at"),
                   let gradeRaw = SyncRowDecoding.number(row, "grade"),
                   let grade = Grade(rawValue: Int(gradeRaw)) else {
+                appliedFlags.append(false)
                 continue
             }
 
@@ -651,8 +789,9 @@ actor SyncPullActor {
                 touchedCardIDs.insert(cardID)
             }
             applied += 1
+            appliedFlags.append(true)
         }
-        return (applied, touchedCardIDs)
+        return (applied, appliedFlags, touchedCardIDs)
     }
 
     // MARK: - Rule 2: FSRS replay
@@ -738,163 +877,14 @@ actor SyncPullActor {
         return min(max(raw, FSRSService.desiredRetentionRange.lowerBound), FSRSService.desiredRetentionRange.upperBound)
     }
 
-    // MARK: - vocabulary_entries
-
-    private struct VocabularyEntryPayload: Decodable {
-        let word: String
-        let reading: String
-        let meaning: String
-        let jlptLevel: String?
-        let fsrsState: FSRSState
-        let easeFactor: Double
-        let interval: Int
-        let dueDate: Date
-        let lapseCount: Int
-        let isInDictionary: Bool
-        let createdAt: Date
-    }
-
-    /// No rule-2 equivalent here — `VocabularyEntry` has no append-only log
-    /// to replay from (see `SyncPayloadBuilder`'s doc comment on that
-    /// table), so this is a plain rule-4 (tombstone-aware LWW) apply.
-    private func applyVocabularyEntryRows(_ rows: [SyncRow]) throws -> Int {
-        var applied = 0
-        for row in rows {
-            guard let common = try? SyncRowDecoding.common(row) else { continue }
-            guard let payloadValue = row["payload"] else { continue }
-            let payload = try SyncRowDecoding.decode(VocabularyEntryPayload.self, from: payloadValue)
-
-            if let existing = try fetchOne(VocabularyEntry.self, id: common.id) {
-                let winner = SyncMergeRules.resolveWinner(
-                    local: .init(updatedAt: existing.updatedAt, deletedAt: existing.deletedAt),
-                    remote: .init(updatedAt: common.updatedAt, deletedAt: common.deletedAt)
-                )
-                if winner == .remote {
-                    existing.word = payload.word
-                    existing.reading = payload.reading
-                    existing.meaning = payload.meaning
-                    existing.jlptLevelRawValue = payload.jlptLevel
-                    existing.fsrsState = payload.fsrsState
-                    existing.easeFactor = payload.easeFactor
-                    existing.interval = payload.interval
-                    existing.dueDate = payload.dueDate
-                    existing.lapseCount = payload.lapseCount
-                    existing.isInDictionary = payload.isInDictionary
-                    existing.updatedAt = common.updatedAt
-                    existing.deletedAt = common.deletedAt
-                    existing.syncedAt = common.updatedAt
-                }
-            } else {
-                let entry = VocabularyEntry(
-                    word: payload.word,
-                    reading: payload.reading,
-                    meaning: payload.meaning,
-                    jlptLevel: payload.jlptLevel.flatMap(JLPTLevel.init(rawValue:)),
-                    isInDictionary: payload.isInDictionary,
-                    fsrsState: payload.fsrsState,
-                    easeFactor: payload.easeFactor,
-                    interval: payload.interval,
-                    dueDate: payload.dueDate,
-                    lapseCount: payload.lapseCount,
-                    createdAt: payload.createdAt
-                )
-                entry.id = common.id
-                entry.updatedAt = common.updatedAt
-                entry.deletedAt = common.deletedAt
-                entry.syncedAt = common.updatedAt
-                modelContext.insert(entry)
-            }
-            applied += 1
-        }
-        return applied
-    }
-
-    // MARK: - vocabulary_encounters
-
-    private struct VocabularyEncounterPayload: Decodable {
-        let source: String
-    }
-
-    private func applyVocabularyEncounterRows(_ rows: [SyncRow]) throws -> Int {
-        var applied = 0
-        for row in rows {
-            guard let common = try? SyncRowDecoding.common(row) else { continue }
-            guard let payloadValue = row["payload"] else { continue }
-
-            // Append-only, same reasoning as `applyReviewLogRows`.
-            if try fetchOne(VocabularyEncounter.self, id: common.id) != nil {
-                applied += 1
-                continue
-            }
-
-            guard let entryID = SyncRowDecoding.uuid(row, "entry_id"),
-                  let entry = try fetchOne(VocabularyEntry.self, id: entryID) else {
-                continue
-            }
-            guard let payload = try? SyncRowDecoding.decode(VocabularyEncounterPayload.self, from: payloadValue),
-                  let timestamp = SyncRowDecoding.date(row, "occurred_at") else {
-                continue
-            }
-
-            // `contextSnippet` is never pushed (see `SyncPayloadBuilder`'s
-            // trailing comment on this table) — a pulled encounter has no
-            // snippet to restore, so it's left empty rather than fabricated.
-            let encounter = VocabularyEncounter(
-                source: EncounterSource(rawValue: payload.source) ?? .sakuraChat,
-                contextSnippet: "",
-                entry: entry,
-                timestamp: timestamp
-            )
-            encounter.id = common.id
-            encounter.updatedAt = common.updatedAt
-            encounter.deletedAt = common.deletedAt
-            encounter.syncedAt = common.updatedAt
-            modelContext.insert(encounter)
-            applied += 1
-        }
-        return applied
-    }
-
-    // MARK: - exercise_outcome_logs
-
-    private struct ExerciseOutcomeLogPayload: Decodable {
-        let skill: String
-        let accuracy: Double
-    }
-
-    private func applyExerciseOutcomeLogRows(_ rows: [SyncRow]) throws -> Int {
-        var applied = 0
-        for row in rows {
-            guard let common = try? SyncRowDecoding.common(row) else { continue }
-            guard let payloadValue = row["payload"] else { continue }
-
-            // Append-only, same reasoning as `applyReviewLogRows`.
-            if try fetchOne(ExerciseOutcomeLog.self, id: common.id) != nil {
-                applied += 1
-                continue
-            }
-
-            guard let profileID = SyncRowDecoding.uuid(row, "profile_id"),
-                  let timestamp = SyncRowDecoding.date(row, "occurred_at"),
-                  let payload = try? SyncRowDecoding.decode(ExerciseOutcomeLogPayload.self, from: payloadValue) else {
-                continue
-            }
-
-            let log = ExerciseOutcomeLog(
-                skill: SkillType(rawValue: payload.skill) ?? .listening,
-                accuracy: payload.accuracy,
-                profileID: profileID,
-                timestamp: timestamp
-            )
-            log.id = common.id
-            log.updatedAt = common.updatedAt
-            log.deletedAt = common.deletedAt
-            log.syncedAt = common.updatedAt
-            modelContext.insert(log)
-            applied += 1
-        }
-        return applied
-    }
+    // MARK: - vocabulary_entries, vocabulary_encounters, exercise_outcome_logs
+    //
+    // The 3 standalone (no FK dependency on `cards`/`review_logs`, no rule-2
+    // replay involvement) apply functions live in
+    // `SyncPullActor+StandaloneTables.swift`, not here — splitting them out
+    // is what keeps this file/actor under SwiftLint's `file_length` (1200)
+    // and `type_body_length` (600) budgets. `fetchOne` below is `internal`,
+    // not `private`, specifically so that extension can still reach it.
 
     // MARK: - Fetch-by-id helper
 
@@ -902,7 +892,14 @@ actor SyncPullActor {
     /// every synced `@Model` type in this file — all 7 share the same
     /// `id: UUID` shape (see each model's doc comment), so one helper
     /// serves all of them rather than repeating this fetch 7 times.
-    private func fetchOne<T: PersistentModel>(_ type: T.Type, id: UUID) throws -> T? where T: SyncIdentifiable {
+    ///
+    /// Not `private`: `SyncPullActor+StandaloneTables.swift`'s extension
+    /// calls this too, and cross-file extensions of the same type cannot
+    /// see each other's `private` members — only `internal` (the default
+    /// for a symbol with no access modifier) is visible module-wide, which
+    /// is exactly as narrow as this needs to be since `SyncPullActor`
+    /// itself is never `public`.
+    func fetchOne<T: PersistentModel>(_ type: T.Type, id: UUID) throws -> T? where T: SyncIdentifiable {
         let predicate = #Predicate<T> { $0.id == id }
         var descriptor = FetchDescriptor(predicate: predicate)
         descriptor.fetchLimit = 1
@@ -915,8 +912,13 @@ actor SyncPullActor {
 /// Narrow conformance so `SyncPullActor.fetchOne` can write `$0.id == id`
 /// inside a `#Predicate` generically — `#Predicate`'s macro expansion needs
 /// the `id` property to be visible on the generic type at the call site,
-/// which a bare `PersistentModel` constraint doesn't provide.
-private protocol SyncIdentifiable {
+/// which a bare `PersistentModel` constraint doesn't provide. Not `private`:
+/// `fetchOne` itself is `internal` (see its doc comment) so this file's
+/// `SyncPullActor+StandaloneTables.swift` extension can call it, and a
+/// `private` generic constraint on an `internal` function is not allowed —
+/// module-internal is still no wider exposure than before, since neither
+/// this protocol nor `SyncPullActor` is ever `public`.
+protocol SyncIdentifiable {
     var id: UUID { get }
 }
 
@@ -932,10 +934,12 @@ extension ExerciseOutcomeLog: SyncIdentifiable {}
 
 /// Decodes the fields `SyncPullTransport` returns from a real PostgREST
 /// `SELECT *` response — the reverse direction of `SyncPayloadBuilder`
-/// (which only ever WRITES a `SyncRow`). Kept private to this file, same
-/// scoping choice `SyncCursorTimestampParsing` makes in
-/// `SyncCursorStore.swift` for the same underlying reason.
-private enum SyncRowDecoding {
+/// (which only ever WRITES a `SyncRow`). Module-internal rather than
+/// `private` to this file: `SyncPullActor+StandaloneTables.swift`'s
+/// extension needs it too, for the same reason `SyncCursorTimestampParsing`
+/// stays scoped in `SyncCursorStore.swift` — it is never `public`, so this
+/// costs nothing outside `IkeruCore`.
+enum SyncRowDecoding {
 
     struct CommonFields {
         let id: UUID
