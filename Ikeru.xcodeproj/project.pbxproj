@@ -17,6 +17,7 @@
 		2E7BEA1CF1869BC7DED6158B /* WidgetSnapshotStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25A7130171295376EED78A07 /* WidgetSnapshotStore.swift */; };
 		1D49980FCB6299CCF998D5F4 /* WidgetSnapshotStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25A7130171295376EED78A07 /* WidgetSnapshotStore.swift */; };
 		606B578980D413E9E951ED2B /* WidgetSnapshotRefresher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E47B92BCD0BF85A100174BB /* WidgetSnapshotRefresher.swift */; };
+		F0D9E646BDB41F87A76B18D7 /* CloudSyncTriggers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 193512742B1558C97B04DAB5 /* CloudSyncTriggers.swift */; };
 		88F3336D470E07CB8575027C /* WidgetDeepLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2324815C58F87A181CE08E7 /* WidgetDeepLink.swift */; };
 		5DB1F1D625EFFA31A5669DB5 /* WidgetDeepLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2324815C58F87A181CE08E7 /* WidgetDeepLink.swift */; };
 		0140648B5E3FFD4029D23F8E /* BilingualLabel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69C7077A729B04B8A3E50617 /* BilingualLabel.swift */; };
@@ -498,6 +499,7 @@
 		6560A454BBBF5CB89E486220 /* WatchEligibleKanaPayload.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchEligibleKanaPayload.swift; sourceTree = "<group>"; };
 		25A7130171295376EED78A07 /* WidgetSnapshotStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetSnapshotStore.swift; sourceTree = "<group>"; };
 		3E47B92BCD0BF85A100174BB /* WidgetSnapshotRefresher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetSnapshotRefresher.swift; sourceTree = "<group>"; };
+		193512742B1558C97B04DAB5 /* CloudSyncTriggers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudSyncTriggers.swift; sourceTree = "<group>"; };
 		A2324815C58F87A181CE08E7 /* WidgetDeepLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetDeepLink.swift; sourceTree = "<group>"; };
 		F75C1AD94292B42125242E1C /* StandByFlashcardWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StandByFlashcardWidget.swift; sourceTree = "<group>"; };
 		F8175DFE1144779F7DC87BB4 /* AppLocale.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppLocale.swift; sourceTree = "<group>"; };
@@ -899,6 +901,7 @@
 			isa = PBXGroup;
 			children = (
 				EEC26D21B28CD7D093350336 /* CloudBackupManager.swift */,
+				193512742B1558C97B04DAB5 /* CloudSyncTriggers.swift */,
 				AA8ABC5B44D456C6BD980427 /* DataExportManager.swift */,
 				94DFE0591021BC898110AB38 /* LiveActivityManager.swift */,
 				F00C65E3B1046C3448638D50 /* NotificationManager.swift */,
@@ -1537,6 +1540,7 @@
 				02CD127A519AC0865600390C /* EtudeView.swift in Sources */,
 				2E7BEA1CF1869BC7DED6158B /* WidgetSnapshotStore.swift in Sources */,
 				606B578980D413E9E951ED2B /* WidgetSnapshotRefresher.swift in Sources */,
+				F0D9E646BDB41F87A76B18D7 /* CloudSyncTriggers.swift in Sources */,
 				88F3336D470E07CB8575027C /* WidgetDeepLink.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

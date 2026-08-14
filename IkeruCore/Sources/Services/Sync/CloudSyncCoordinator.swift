@@ -22,36 +22,71 @@ import os
 /// ### The only live caller, today
 ///
 /// Foreground/session-end/network-regain triggers (design spec §5.2) are
-/// NOT wired — those call sites live in app-lifecycle / session files
-/// outside this lot's perimeter (`Ikeru/Views/Settings/SettingsView.swift`
-/// is the only app-target file in scope, for a status row). The Settings
-/// cloud-sync toggle turning ON is, as shipped, the ONLY call path that
-/// invokes `syncNow()` — see that view's `cloudSyncToggleRow` /
-/// `handleCloudSyncToggleChange`. This is declared in this task's final
-/// notes; treat it as an open integration item for a follow-up lot, not as
-/// "the triggers exist but are untested."
+/// wired from `Ikeru/Services/CloudSyncTriggers.swift` (foreground +
+/// network-regain; session-end is provided but not yet called — see that
+/// type's doc comment), plus the Settings cloud-sync toggle turning ON
+/// (`SettingsView.handleCloudSyncToggleChange`). Both construct this type
+/// with every initializer parameter defaulted, so the pull/push transports
+/// and cursor store below MUST default to their live implementations —
+/// anything else would leave production sync silently dormant regardless
+/// of what this type's tests exercise.
+///
+/// ### Pull runs before push — lot 2
+///
+/// `syncNow()` pulls first, then pushes, so a merged/replayed local state
+/// (rules 2/3 in `SyncMergeRules`) is what actually gets pushed back up in
+/// the same cycle, rather than the pre-merge state. A pull FAILURE does
+/// **not** abort the push that follows it — see `runPull`'s doc comment for
+/// why that's a deliberate, not an accidental, choice.
 public actor CloudSyncCoordinator {
 
     public enum SyncOutcome: Sendable, Equatable {
         case skippedConsentOff
         case skippedThrottled
-        case success(pushedRowCount: Int)
+        case success(pushedRowCount: Int, pull: PullOutcome)
         case failure(String)
+    }
+
+    /// What the pull half of a `syncNow()` cycle did — kept distinct from
+    /// `SyncOutcome` (the push half's own success/failure is always
+    /// reported via `.success`/`.failure`, never folded into this) because
+    /// a pull failure does not, by itself, fail the overall sync — see
+    /// `runPull`.
+    public enum PullOutcome: Sendable, Equatable {
+        /// Rule 1 fired: the account was brand new (empty on every synced
+        /// table) and this device had local data, so nothing was pulled —
+        /// the push that follows this in `syncNow()` seeds the server
+        /// instead.
+        case seededFromLocal
+        /// The normal path: `rowCount` rows were created or updated locally
+        /// across every pulled table this cycle (may be `0` on an
+        /// already-caught-up device).
+        case applied(rowCount: Int)
+        /// The pull attempt threw — network error, a stalled cursor
+        /// (`SyncPullActor.SyncPullActorError.cursorStalledOnFullPage`),
+        /// etc. `message` is diagnostic only, same non-localized-copy
+        /// contract as `SyncConsentStore.lastErrorMessage()`.
+        case failed(String)
     }
 
     private let modelContainer: ModelContainer
     private let identity: AnonymousIdentityManager
     private let transport: any SyncDataTransport
+    private let pullTransport: any SyncPullTransport
+    private let cursorStore: any SyncCursorStore
     private let consentStore: any SyncConsentStore
     private let minSyncInterval: TimeInterval
     private let now: @Sendable () -> Date
 
     private var syncModelActor: SyncModelActor?
+    private var syncPullActor: SyncPullActor?
 
     public init(
         modelContainer: ModelContainer,
         identity: AnonymousIdentityManager = AnonymousIdentityManager(),
         transport: any SyncDataTransport = PostgRESTSyncTransport(),
+        pullTransport: any SyncPullTransport = PostgRESTPullTransport(),
+        cursorStore: any SyncCursorStore = UserDefaultsSyncCursorStore(),
         consentStore: any SyncConsentStore = UserDefaultsSyncConsentStore(),
         minSyncInterval: TimeInterval = 60,
         now: @escaping @Sendable () -> Date = Date.init
@@ -59,6 +94,8 @@ public actor CloudSyncCoordinator {
         self.modelContainer = modelContainer
         self.identity = identity
         self.transport = transport
+        self.pullTransport = pullTransport
+        self.cursorStore = cursorStore
         self.consentStore = consentStore
         self.minSyncInterval = minSyncInterval
         self.now = now
@@ -106,6 +143,14 @@ public actor CloudSyncCoordinator {
 
         do {
             let accessToken = try await identity.validAccessToken()
+
+            // Pull BEFORE push (lot 2): merges/replays remote state into
+            // the local store first, so the push below sends the
+            // post-merge truth, not the pre-merge one. A pull failure is
+            // swallowed into `PullOutcome.failed` rather than rethrown —
+            // see `runPull`'s doc comment.
+            let pullOutcome = await runPull(accessToken: accessToken)
+
             let actor = modelActor()
 
             var pushedCount = 0
@@ -121,7 +166,7 @@ public actor CloudSyncCoordinator {
 
             consentStore.recordSuccess(at: now())
             consentStore.recordError(nil)
-            return .success(pushedRowCount: pushedCount)
+            return .success(pushedRowCount: pushedCount, pull: pullOutcome)
         } catch {
             let message = String(describing: error)
             consentStore.recordError(message)
@@ -130,10 +175,61 @@ public actor CloudSyncCoordinator {
         }
     }
 
+    // MARK: - Pull
+
+    /// Runs the pull half of one `syncNow()` cycle and reports what
+    /// happened as a `PullOutcome` — never throws.
+    ///
+    /// A pull failure is deliberately NOT propagated to abort the push that
+    /// follows it. Two reasons, not one:
+    ///
+    /// 1. **Local-first, per design spec §8.** A Supabase free-tier project
+    ///    pauses after ~7 days idle; the spec is explicit that a sync
+    ///    failure "doit être un non-événement pour l'apprenant." Push is
+    ///    the backup half of this feature (lot 1) and stands entirely on
+    ///    its own — it must not be held hostage to pull succeeding first.
+    /// 2. **A push does not need a pull to have succeeded to be correct.**
+    ///    Push only ever sends rows this device already knows are locally
+    ///    dirty; a failed pull just means this cycle didn't learn about
+    ///    remote changes yet, not that pushing local changes is unsafe.
+    ///
+    /// ⚠️ **Known cost of this ordering choice, stated plainly:** if pull
+    /// fails and push then succeeds, this device's local tombstones/merges
+    /// (rule 4) have NOT been reconciled against the server this cycle —
+    /// the exact window "pull before push" exists to close re-opens until
+    /// the next successful pull. Accepted as the lesser failure mode versus
+    /// "one flaky pull request blocks the backup half of this feature
+    /// entirely," not an oversight.
+    private func runPull(accessToken: String) async -> PullOutcome {
+        do {
+            let actor = pullActor()
+            let summary = try await actor.pullAll(
+                transport: pullTransport,
+                cursorStore: cursorStore,
+                accessToken: accessToken
+            )
+            if summary.seededFromLocal {
+                return .seededFromLocal
+            }
+            return .applied(rowCount: summary.totalApplied)
+        } catch {
+            let message = String(describing: error)
+            Logger.sync.error("Cloud sync pull failed (push still proceeds): \(message)")
+            return .failed(message)
+        }
+    }
+
     private func modelActor() -> SyncModelActor {
         if let syncModelActor { return syncModelActor }
         let actor = SyncModelActor(modelContainer: modelContainer)
         syncModelActor = actor
+        return actor
+    }
+
+    private func pullActor() -> SyncPullActor {
+        if let syncPullActor { return syncPullActor }
+        let actor = SyncPullActor(modelContainer: modelContainer)
+        syncPullActor = actor
         return actor
     }
 }

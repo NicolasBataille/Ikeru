@@ -60,6 +60,8 @@ struct CloudSyncCoordinatorTests {
         container: ModelContainer,
         identity: AnonymousIdentityManager? = nil,
         dataTransport: MockSyncDataTransport = MockSyncDataTransport(),
+        pullTransport: MockSyncPullTransport = MockSyncPullTransport(),
+        cursorStore: MockSyncCursorStore = MockSyncCursorStore(),
         consentStore: MockSyncConsentStore = MockSyncConsentStore(),
         minSyncInterval: TimeInterval = 60
     ) -> CloudSyncCoordinator {
@@ -67,6 +69,8 @@ struct CloudSyncCoordinatorTests {
             modelContainer: container,
             identity: identity ?? makeIdentityManager().manager,
             transport: dataTransport,
+            pullTransport: pullTransport,
+            cursorStore: cursorStore,
             consentStore: consentStore,
             minSyncInterval: minSyncInterval
         )
