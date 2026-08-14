@@ -296,6 +296,45 @@ struct CloudSyncCoordinatorTests {
         #expect(second == .skippedThrottled)
     }
 
+    @Test("ignoringThrottle bypasses minSyncInterval; the default still respects it")
+    func ignoringThrottleBypassesWindowDefaultStillThrottles() async throws {
+        let container = try makeContainer()
+        let profile = try seedProfile(in: container)
+        _ = try seedCard(in: container, profile: profile, alreadySynced: false)
+
+        let dataTransport = MockSyncDataTransport()
+        let coordinator = makeCoordinator(
+            container: container,
+            dataTransport: dataTransport,
+            consentStore: MockSyncConsentStore(consentGiven: true),
+            minSyncInterval: 3600
+        )
+
+        let first = await coordinator.syncNow()
+        guard case .success = first else {
+            Issue.record("Expected first call to succeed, got \(first)")
+            return
+        }
+
+        // Default (no argument): still inside the 3600s window — throttled,
+        // same as `throttlesRapidCalls` above. This is the "not a caller who
+        // asked to skip the throttle" control for the assertion below.
+        let secondDefault = await coordinator.syncNow()
+        #expect(secondDefault == .skippedThrottled)
+
+        // Onboarding restore (`NameEntryView.performRestoreSync()`) is an
+        // explicit, one-shot learner action — it must not be silently
+        // swallowed by the same throttle that exists to stop a background
+        // trigger from hammering the network. `ignoringThrottle: true`
+        // bypasses ONLY the `minSyncInterval` gate; `isSyncing`/consent
+        // guards are untouched, so this still performs a real sync.
+        let third = await coordinator.syncNow(ignoringThrottle: true)
+        guard case .success = third else {
+            Issue.record("Expected ignoringThrottle call to succeed, got \(third)")
+            return
+        }
+    }
+
     // MARK: - CRITIQUE B + identity re-provisioning: a device that HAS
     // already synced (non-nil cursors) still re-seeds cards and logs, not
     // just profiles/rpg_states, once its identity silently changes underneath

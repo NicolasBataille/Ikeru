@@ -52,7 +52,7 @@
     },
     "I already have an account" : {
       "extractionState" : "manual",
-      "comment" : "Accessibility label for the Sign in with Apple button on onboarding's welcome screen",
+      "comment" : "Accessibility label for the Sign in with Apple button at the foot of onboarding's name-entry screen",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -164,6 +164,22 @@
         }
       }
     },
+    "This can take a moment depending on your connection." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This can take a moment depending on your connection."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cela peut prendre un moment selon ta connexion."
+          }
+        }
+      }
+    },
     "This only takes a moment." : {
       "localizations" : {
         "en" : {
@@ -176,6 +192,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cela ne prend qu'un instant."
+          }
+        }
+      }
+    },
+    "We couldn't reach the server to check for a backup. Starting fresh from here will create a new, separate profile — check your connection and try restoring again first." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "We couldn't reach the server to check for a backup. Starting fresh from here will create a new, separate profile — check your connection and try restoring again first."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de joindre le serveur pour vérifier une sauvegarde. Repartir de zéro ici créera un second profil séparé — vérifie ta connexion et réessaie d'abord de restaurer."
           }
         }
       }

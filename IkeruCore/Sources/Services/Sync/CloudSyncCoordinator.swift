@@ -253,13 +253,25 @@ public actor CloudSyncCoordinator {
     /// caller invoking this in a loop, though nothing in this lot's shipped
     /// call path currently does. Also refuses to run a second, overlapping
     /// cycle on this SAME instance — see `isSyncing`'s doc comment.
+    ///
+    /// - Parameter ignoringThrottle: Bypasses ONLY the `minSyncInterval`
+    ///   time-window check above — `isSyncing` and the consent gate are
+    ///   untouched, so this can never run two overlapping cycles or leak
+    ///   data without consent. `false` by default; the one caller that
+    ///   passes `true` is `NameEntryView.performRestoreSync()` (onboarding's
+    ///   "I already have an account" restore), because that call is an
+    ///   explicit, one-shot learner action — not a background trigger the
+    ///   throttle exists to protect against — and the throttle's own outcome
+    ///   (`.skippedThrottled`) reads to that screen as "still finishing up",
+    ///   which is actively misleading when nothing is actually in flight.
     @discardableResult
-    public func syncNow() async -> SyncOutcome {
+    public func syncNow(ignoringThrottle: Bool = false) async -> SyncOutcome {
         guard consentStore.isConsentGiven() else { return .skippedConsentOff }
         guard !isSyncing else { return .skippedAlreadySyncing }
 
         let attemptTime = now()
-        if let lastAttempt = consentStore.lastAttemptDate(),
+        if !ignoringThrottle,
+           let lastAttempt = consentStore.lastAttemptDate(),
            attemptTime.timeIntervalSince(lastAttempt) < minSyncInterval {
             return .skippedThrottled
         }

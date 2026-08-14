@@ -269,9 +269,21 @@ struct IkeruApp: App {
                 .onChange(of: showOnboarding) { wasShowing, isShowing in
                     guard wasShowing && !isShowing else { return }
                     if onboardingFinishedViaRestore {
-                        // Restored an existing profile — this learner has
-                        // already seen the tour on whichever device backed
-                        // this up. Consume the flag and stay quiet.
+                        // Restored an existing profile. This handler only
+                        // stops itself from ALSO posting `.requestFeatureTour`
+                        // — it does NOT, by itself, stop the tour from
+                        // running: `MainTabView.onAppear` calls its own
+                        // `tourController.startIfNeeded(profileID:)`
+                        // independently of this flag, and would still fire
+                        // for a returning learner if that `onAppear` re-runs
+                        // on this cover's dismissal. What actually prevents
+                        // that is `NameEntryView.performRestoreSync()`
+                        // explicitly calling
+                        // `FeatureTourController.markSeen(profileID:)`
+                        // before setting this flag — `startIfNeeded` then
+                        // finds `hasSeenTour` already true and no-ops on its
+                        // own. Consume the flag here regardless, purely to
+                        // avoid the redundant `.requestFeatureTour` post.
                         onboardingFinishedViaRestore = false
                     } else {
                         // Sign-up onboarding just finished — kick off the

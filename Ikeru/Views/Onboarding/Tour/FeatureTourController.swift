@@ -44,6 +44,19 @@ final class FeatureTourController {
         defaults.bool(forKey: Self.storageKey(for: profileID))
     }
 
+    /// Marks a profile's tour as already seen without running it — used by
+    /// `NameEntryView.performRestoreSync()` for a returning learner whose
+    /// progress (and the fact that they've already seen the tour, on
+    /// whichever device backed it up) was just restored. Writes directly to
+    /// the same UserDefaults key `hasSeenTour(profileID:)` reads, static
+    /// and independent of any live `FeatureTourController` instance — the
+    /// restore path runs inside `NameEntryView`, a different view hierarchy
+    /// than `MainTabView`'s own `tourController`, so there is no shared
+    /// instance to call `complete()` on.
+    static func markSeen(profileID: UUID, defaults: UserDefaults = .standard) {
+        defaults.set(true, forKey: storageKey(for: profileID))
+    }
+
     // MARK: Lifecycle
 
     /// Starts the tour only if this profile has never completed it. Safe to call
