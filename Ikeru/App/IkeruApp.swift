@@ -37,6 +37,12 @@ struct IkeruApp: App {
     @State private var toastManager = ToastManager()
     @State private var profileViewModel: ProfileViewModel?
     @State private var showOnboarding = false
+    /// Set by `NameEntryView` right before it dismisses itself on the
+    /// "I already have an account" restore path — read (and reset) by the
+    /// `onChange(of: showOnboarding)` below so a RETURNING learner does not
+    /// get the brand-new-user feature tour, which that handler otherwise
+    /// fires unconditionally on every onboarding dismissal.
+    @State private var onboardingFinishedViaRestore = false
     @State private var hasCheckedProfile = false
     @State private var hasFinishedLaunch: Bool = IkeruApp.hasPlayedLaunchAnimation
     /// Set by `LaunchAnimationView.onReadyForContent` so the real UI is built
@@ -253,7 +259,7 @@ struct IkeruApp: App {
         if hasCheckedProfile {
             MainTabView(isNewUserOnboarding: showOnboarding)
                 .fullScreenCover(isPresented: $showOnboarding) {
-                    NameEntryView()
+                    NameEntryView(finishedViaRestore: $onboardingFinishedViaRestore)
                         .environment(\.profileViewModel, profileViewModel)
                         .onDisappear {
                             // Reload profile after onboarding dismisses
@@ -261,9 +267,27 @@ struct IkeruApp: App {
                         }
                 }
                 .onChange(of: showOnboarding) { wasShowing, isShowing in
-                    // Sign-up onboarding just finished — kick off the in-app
-                    // feature tour for this brand-new profile.
-                    if wasShowing && !isShowing {
+                    guard wasShowing && !isShowing else { return }
+                    if onboardingFinishedViaRestore {
+                        // Restored an existing profile. This handler only
+                        // stops itself from ALSO posting `.requestFeatureTour`
+                        // — it does NOT, by itself, stop the tour from
+                        // running: `MainTabView.onAppear` calls its own
+                        // `tourController.startIfNeeded(profileID:)`
+                        // independently of this flag, and would still fire
+                        // for a returning learner if that `onAppear` re-runs
+                        // on this cover's dismissal. What actually prevents
+                        // that is `NameEntryView.performRestoreSync()`
+                        // explicitly calling
+                        // `FeatureTourController.markSeen(profileID:)`
+                        // before setting this flag — `startIfNeeded` then
+                        // finds `hasSeenTour` already true and no-ops on its
+                        // own. Consume the flag here regardless, purely to
+                        // avoid the redundant `.requestFeatureTour` post.
+                        onboardingFinishedViaRestore = false
+                    } else {
+                        // Sign-up onboarding just finished — kick off the
+                        // in-app feature tour for this brand-new profile.
                         NotificationCenter.default.post(name: .requestFeatureTour, object: nil)
                     }
                 }

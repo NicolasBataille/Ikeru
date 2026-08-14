@@ -23,6 +23,330 @@ raisonnement, les mesures, et les décisions.
 
 ---
 
+## 2026-08-14 — Onboarding restore : ronde de remédiation (retrait de `.welcome`, 3 défauts importants)
+
+### Fait
+
+SHA : non commité (arbre de travail, branche `feature/onboarding-restore`, HEAD
+`85433e3`). Relecture adversariale de l'entrée précédente : 1 décision de
+conception à annuler + 3 défauts importants + 2 mineurs. Tous appliqués dans
+le code, pas seulement documentés cette fois.
+
+1. **Retrait de l'étape `.welcome`** (`Ikeru/Views/Onboarding/NameEntryView.swift`)
+   — le brief exigeait zéro étape gagnée sur le chemin par défaut ; l'entrée
+   précédente avait inséré un écran devant `.name` et corrigé le JOURNAL au
+   lieu du code, le mauvais arbitrage. `Step` perd `.welcome` (ne garde que
+   `.restoring, .name, .placement, .tour`), redevient `step = .name` au
+   démarrage. Le CTA « Déjà utilisé Ikeru ? / J'ai déjà un compte » descend
+   en pied de `NameEntryStep` (nouvelle propriété `restoreSection`, chrome et
+   copie identiques, juste déplacés) — visible, mais qui n'interrompt plus le
+   parcours par défaut. Vérifié : `.name → .placement → .tour → dismiss()`
+   est de nouveau strictement le chemin d'avant ce lot, sans paramètre ni
+   condition additionnelle sur ce trajet.
+2. **Les deux réponses possibles à « est-ce qu'un `fullScreenCover` qui se
+   ferme redéclenche l'`onAppear` du présentateur ? » étaient fausses** —
+   `performRestoreSync()` (cas `.profileRestored`) ne dépend plus de cette
+   question : poste explicitement `.ikeruActiveProfileDidChange` (même
+   notification que `ProfileViewModel.switchProfile`, lue par `HomeView` pour
+   `viewModel?.loadData()`) et `.displayModeDidChange` (relit le mode
+   d'affichage du profil actif dans `MainTabView`), et appelle un nouveau
+   `FeatureTourController.markSeen(profileID:)` (méthode statique, écrit
+   directement la clé UserDefaults que `hasSeenTour(profileID:)` lit) au lieu
+   de compter uniquement sur `onboardingFinishedViaRestore`. Le commentaire
+   d'`IkeruApp.swift` sur ce flag (« Consume the flag and stay quiet ») —
+   qui laissait croire que ce seul `onChange` suffisait à empêcher le tour —
+   est réécrit pour dire ce qui empêche vraiment le tour : le `markSeen`
+   explicite, pas ce handler.
+3. **`CloudSyncCoordinator.syncNow(ignoringThrottle: Bool = false)`**
+   (`IkeruCore/Sources/Services/Sync/CloudSyncCoordinator.swift`) — le
+   restore d'onboarding est une action explicite, ponctuelle ; elle ne doit
+   pas se heurter au throttle de 60s pensé pour les triggers en arrière-plan.
+   `performRestoreSync()` appelle `syncNow(ignoringThrottle: true)` — seul
+   appelant à passer `true` dans tout le repo (vérifié : tous les autres
+   sites, `SettingsView`, `SettingsView+AppleSignIn`, `CloudSyncTriggers`,
+   utilisent l'appel sans argument, donc le défaut `false` ne change rien
+   pour eux). Les gardes `isSyncing` et consentement sont inchangés — seul le
+   test de fenêtre temporelle est court-circuité. Nouveau test Core,
+   `ignoringThrottleBypassesWindowDefaultStillThrottles`
+   (`CloudSyncCoordinatorTests.swift`), qui vérifie les deux sens dans la
+   même fonction (throttle par défaut toujours actif, bypass avec
+   `ignoringThrottle: true`).
+4. **`RestoringStep` promettait une durée qu'il ne tient pas** — « This only
+   takes a moment. » devient « This can take a moment depending on your
+   connection. » (fr : « Cela peut prendre un moment selon ta connexion. »,
+   nouvelle clé, l'ancienne reste orpheline dans le catalogue — diff additif
+   uniquement, pas de suppression de clé). Ajout d'un bouton « Annuler »
+   (`cancelRestore()`) qui repose l'étape sur `.name` et annule le `Task` en
+   cours (`restoreTask`, nouveau `@State`). `performRestoreSync()` garde
+   TOUTES ses écritures d'état (y compris `profileViewModel?.loadProfile()`,
+   pas seulement le message d'erreur) derrière `guard step == .restoring`,
+   pour qu'un résultat de sync arrivant après un `cancelRestore()` n'écrase
+   ni l'écran ni le view-model pendant que l'apprenant tape déjà un nouveau
+   prénom.
+5. **Mineurs** — le commentaire du cas `.syncFailed` (`OnboardingRestoreDecision`)
+   affirmait « ne retombe jamais sur la création de profil » : vrai de
+   `decide()` lui-même, faux du parcours (l'écran laisse taper « Continuer »,
+   consentement déjà actif) — reformulé, et le message d'erreur affiché est
+   durci pour prévenir explicitement qu'un nouveau départ ici crée un second
+   profil séparé. Le log sur `AppleSignInFlow.SignInError.userCanceled`
+   (déjà présent, contrairement à ce que son propre commentaire « Deliberately
+   silent » laissait presque croire) est aligné sur le message déjà utilisé
+   dans `SettingsView+AppleSignIn.handleAppleSignIn` — mentionne explicitement
+   qu'Apple renvoie aussi `.canceled` quand la feuille ne peut pas s'afficher.
+
+### Testé
+
+- **`xcodebuild build` (scheme `Ikeru`, generic/platform=iOS, no signing)** —
+  succès, avant et après chaque changement significatif, y compris après le
+  test empirique du point suivant.
+- **Rouge vérifié empiriquement pour le fix #3** : revert temporaire de
+  `if !ignoringThrottle, let lastAttempt = ...` → `if let lastAttempt = ...`
+  dans `CloudSyncCoordinator.swift`, re-run du nouveau test →
+  `Suite "CloudSyncCoordinator" failed after 0.096 seconds with 1 issue`
+  confirmé, puis fichier restauré depuis une copie de sauvegarde → suite
+  repasse verte (12/12). **Pas fait pour les fixes #1/#2/#4** : ce sont des
+  changements de navigation/état SwiftUI (suppression d'étape, notifications,
+  guard sur `step`), pas isolables en test unitaire sans un harnais UI que ce
+  lot n'a pas construit — même limite déjà posée dans l'entrée précédente
+  pour `WelcomeStep`/`RestoringStep`.
+- **`cd IkeruCore && swift test --no-parallel --filter "Sync|CloudData|AppleIdentity"`**
+  — 118/118 verts (117 avant cette ronde + le nouveau test throttle).
+- **`xcodebuild test -only-testing:IkeruTests/OnboardingRestoreDecisionTests
+  -only-testing:IkeruTests/FeatureTourControllerTests`** sur simulateur
+  iPhone Air (boot réel, log confirmant à nouveau
+  `[ui] No profile found — showing onboarding`) — 10 + 7 = 17/17 verts.
+  `FeatureTourControllerTests` est hors du périmètre déclaré de cette tâche
+  (`IkeruTests/OnboardingRestoreDecisionTests.swift` seulement) : lancé en
+  lecture seule comme garde de non-régression pour `FeatureTourController.swift`
+  (fichier touché), pas modifié — voir Écarté pour pourquoi aucun test n'y a
+  été ajouté pour `markSeen`.
+- **`python3 scripts/i18n-lint.py --baseline scripts/i18n-lint-baseline.json`**
+  — 0 NEW (26 total, 33 dans la baseline — écart normal, comportement du
+  script inchangé par cette ronde).
+- **`swiftlint lint --quiet`** sur les 5 fichiers Swift touchés — 0 nouvelle
+  violation ; le seul warning (`function_body_length` sur
+  `IkeruApp.initializeProfileViewModel`, 104 lignes) est le même préexistant
+  déjà noté dans l'entrée précédente, sur une fonction que cette ronde ne
+  touche pas.
+- **`git diff --stat Ikeru/Localization/Localizable.xcstrings`** → 34
+  insertions(+), 1 suppression(-) : 2 nouvelles clés (fr+en) + 1 commentaire
+  de clé existante corrigé (mention « welcome screen » devenue fausse depuis
+  le retrait de l'étape). Diff vérifié à l'œil : additif au sens du contenu,
+  aucune réécriture `json.dump`, ordre des clés existantes intact.
+- **PAS testé** (même limite que l'entrée précédente, non résolue par cette
+  ronde) : le parcours restore de bout en bout avec un vrai compte Apple et
+  un vrai pull Supabase. Le bouton « Annuler » du `RestoringStep` n'a pas non
+  plus été cliqué à la main sur un restore réel en cours (pas de sauvegarde
+  serveur disponible pour faire durer l'appel assez longtemps) — sa
+  correction repose sur la lecture de code (`guard step == .restoring`,
+  `Task.cancel()` étant un no-op sûr si l'appel est déjà fini), pas sur une
+  observation device.
+
+### Écarté
+
+- **Ajouter un test à `FeatureTourControllerTests.swift` pour `markSeen(profileID:)`**
+  — écarté : ce fichier est hors du périmètre déclaré de cette tâche. La
+  méthode est triviale (une ligne, `defaults.set(true, forKey:)`) et son
+  mécanisme sous-jacent (la clé `storageKey(for:)`) est déjà exercé par ce
+  même fichier de test existant, qui écrit directement à cette clé pour
+  simuler « déjà vu » (`skipsWhenAlreadySeen`) — couverture indirecte, pas la
+  méthode-wrapper elle-même.
+- **Renommer ou supprimer la clé de catalogue orpheline « This only takes a
+  moment. »** — écarté : la consigne exige un diff additif uniquement ;
+  supprimer une clé existante est une suppression, pas une addition. Reste
+  inutilisée mais présente.
+- **Deviner le comportement réel de `fullScreenCover`-dismiss vs. `onAppear`
+  plutôt que de le neutraliser** — écarté explicitement par la consigne
+  elle-même (« ne dépends d'aucune hypothèse sur `onAppear` »). Les deux
+  notifications explicites + le `markSeen` explicite rendent la question sans
+  objet : le résultat est correct quelle que soit la réponse, donc inutile de
+  la trancher.
+
+### Ouvert
+
+- **Repris de l'entrée précédente, toujours vrai après cette ronde** :
+  passage device réel requis avec un compte Apple de test + une sauvegarde
+  Supabase existante pour valider le chemin heureux de bout en bout (restore
+  → profil qui arrive → `HomeView` non vide, tour qui ne se lance pas). Cette
+  ronde rend le résultat correct QUELLE QUE SOIT la réponse à la question
+  `onAppear`, mais ne l'a pas fait tourner sur un vrai backend.
+- **CI ne fait toujours pas tourner `OnboardingRestoreDecisionTests` ni
+  `FeatureTourControllerTests`** — inchangé depuis l'entrée précédente.
+- **Le bouton Annuler ouvre une fenêtre légèrement plus large sur le risque
+  de second profil déjà documenté** dans l'entrée précédente : si l'apprenant
+  annule puis crée un nouveau profil via « Continuer » AVANT que le
+  `syncNow()` annulé (mais pas nécessairement stoppé côté réseau) ne
+  finisse, et que ce cycle livre malgré tout le vrai profil restauré en
+  arrière-plan plus tard (via un autre trigger foreground/network-regain),
+  les deux profils coexistent. Le `guard step == .restoring` empêche tout
+  affichage/dismiss erroné au moment où cela arrive, mais ne fusionne pas
+  les deux profils après coup. Pas de correctif supplémentaire ici — c'est
+  la même variante de dégradé déjà acceptée explicitement dans l'entrée
+  précédente, pas un risque nouveau créé par cette ronde, juste rendu
+  atteignable par un chemin de plus (Annuler).
+- **Clavier vs. le CTA en pied d'écran** : `NameEntryStep` donne le focus au
+  champ nom après 0.5s ; la mise en page est un `VStack` à base de `Spacer`,
+  sans `ScrollView` ni geste de fermeture du clavier. Sur un écran compressé
+  (classe SE en particulier), `restoreSection` peut se retrouver sous le
+  clavier une fois le champ focus, sans façon de le fermer autrement qu'en
+  tapant un prénom et en continuant. La consigne place explicitement le CTA
+  ici et interdit de redessiner au-delà des correctifs demandés — non corrigé
+  par cette ronde, mais à vérifier explicitement lors du passage device déjà
+  ouvert ci-dessus (ne pas laisser ce cas être redécouvert à ce moment-là).
+
+---
+
+## 2026-08-14 — Onboarding : l'écran d'accueil ne dit jamais qu'un compte existe
+
+### Fait
+
+SHA : non commité (arbre de travail, branche `feature/onboarding-restore`).
+La synchro cloud + Sign in with Apple (lots 1-3) étaient livrés mais invisibles
+depuis l'onboarding : quelqu'un qui réinstallait créait un profil neuf sans
+jamais savoir que sa progression l'attendait sur le serveur.
+
+- **`Ikeru/Views/Onboarding/NameEntryView.swift`** — nouvelle étape `.welcome`
+  insérée avant `.name` dans la machine à états (`Step` gagne `.welcome` et
+  `.restoring`), et devient le step initial (`step = .welcome`, avant c'était
+  `step = .name`). **Correction (vérification a posteriori) : ce n'est PAS
+  « zéro friction ajoutée » comme écrit initialement ici — un nouvel écran
+  (« Let's get started » / 門, avec un bouton « Commencer ») s'intercale
+  désormais devant TOUT le monde, y compris un nouvel utilisateur, avant la
+  saisie du prénom. C'est un tap et un écran de plus par rapport à l'ancien
+  flux, qui démarrait directement sur `.name`. À partir du tap sur
+  « Commencer », le reste du chemin (`.name → .placement → .tour`) est
+  strictement inchangé. Ce compromis est probablement le bon — il fallait un
+  endroit pour poser le CTA « J'ai déjà un compte » — mais il faut le nommer
+  correctement : c'est un changement de flux par défaut, pas une addition
+  invisible.** « J'ai déjà un compte » réutilise le chrome natif
+  `SignInWithAppleButton` (même motif
+  `.contentShape(Rectangle())` que `SettingsView+AppleSignIn.appleSignInRow` —
+  sans lui le bouton n'a aucune zone tappable, bug déjà livré une fois) →
+  `AppleSignInFlow.signIn()` → `.restoring` (spinner honnête, pas de sortie
+  avant la fin) → `CloudSyncCoordinator.setConsent(true)` puis `syncNow()`
+  **attendu en entier** avant toute décision. Le consentement n'est activé
+  qu'*après* le succès de la connexion Apple (jamais avant, jamais sur un
+  cancel/échec) — la phrase de disclosure sur l'écran d'accueil ("Signing in
+  turns on backup...") est affichée *avant* le tap, formulée conditionnellement
+  (« si tu l'avais enregistrée »), jamais une promesse inconditionnelle.
+  3 messages d'erreur distincts (annulation → silencieux ; jeton refusé
+  `SyncAuthError.requestFailed` 400/401/403 ou `AppleLinkError
+  .linkIdentityGuardTripped` ; échec générique/réseau), tous ramènent
+  proprement à `.welcome`.
+- **`OnboardingRestoreDecision`** (même fichier, type pur sans SwiftUI) —
+  décide quoi faire une fois `syncNow()` revenu : `hasProfile` (relu depuis le
+  store après le pull) l'emporte toujours sur `outcome`, y compris sur un
+  `.failure` ou un `.skippedAlreadySyncing` concurrent (le pull tourne avant
+  le push, et un trigger foreground/network-regain peut livrer le profil en
+  parallèle de cet appel). Sans profil : `.applied`/`.seededFromLocal` →
+  « pas de sauvegarde » (bascule sur `.name` avec un bandeau honnête, pas de
+  promesse) ; `.failed`/`.failure` → échec réel, ne JAMAIS conclure « pas de
+  sauvegarde » sur un échec réseau ; `.skippedThrottled`/`.skippedAlreadySyncing`
+  → « réessaie dans un instant », distinct d'un vrai échec.
+- **`Ikeru/App/IkeruApp.swift`** — piège trouvé par le relecteur avant
+  d'écrire une ligne de vue : `onChange(of: showOnboarding)` postait
+  `.requestFeatureTour` sur **toute** fermeture de l'onboarding, y compris un
+  utilisateur restauré qui a déjà vu le tour sur un autre appareil.
+  `onboardingFinishedViaRestore` (nouveau `@State`, binding passé à
+  `NameEntryView`) coupe le post uniquement sur le chemin restore-succès.
+- **`Ikeru/Localization/Localizable.xcstrings`** — 14 nouvelles clés (fr+en),
+  édition chirurgicale (insertions ciblées via `Edit`, jamais de réécriture
+  JSON complète). Diff : 226 lignes, entièrement additif, 0 suppression,
+  0 réordonnancement — au-delà des « quelques dizaines » indiquées dans la
+  consigne, mais proportionnel (14 clés × ~16 lignes chacune) ; deux messages
+  d'erreur réutilisent verbatim des clés déjà existantes de `SettingsView+AppleSignIn`
+  (pas de doublon créé).
+- **`IkeruTests/OnboardingRestoreDecisionTests.swift`** (nouveau, hors
+  périmètre déclaré de la tâche — justifié par la consigne elle-même :
+  « si une part de la logique est testable hors SwiftUI, extrais-la et
+  teste-la ») + 4 lignes d'enregistrement pbxproj (`PBXBuildFile`,
+  `PBXFileReference`, entrée de groupe, entrée Sources build phase pour la
+  cible `IkeruTests`, gabarit exact de `ProfileViewModelTests.swift`).
+  10 tests, tous les cas de `OnboardingRestoreDecision.decide`.
+
+### Testé
+
+- **`xcodebuild build` (scheme `Ikeru`, generic/platform=iOS, no signing)** —
+  succès, avant et après chaque changement significatif.
+- **`xcodebuild test -only-testing:IkeruTests/OnboardingRestoreDecisionTests`**
+  sur simulateur iPhone Air (boot réel de l'app dans le simulateur, log
+  confirmant `[ui] No profile found — showing onboarding` donc le gating
+  onboarding-si-pas-de-profil est intact) — 10/10 tests passent.
+- **`cd IkeruCore && swift test --no-parallel --filter "Sync|CloudData|AppleIdentity"`**
+  — 117 tests, tous verts (non-régression sur le pull/push/consent existants).
+- **`python3 scripts/i18n-lint.py --baseline scripts/i18n-lint-baseline.json`**
+  — 0 NEW (26 total, tous dans la baseline).
+- **`swiftlint lint --quiet`** sur les 3 fichiers touchés — 0 nouvelle
+  violation ; le seul warning (`function_body_length` sur
+  `initializeProfileViewModel`, 104 lignes) est préexistant, vérifié en
+  lintant la version `HEAD` du fichier séparément (même 104 lignes avant mes
+  changements — ma modif touche une fonction différente).
+- **PAS testé** (et je le dis clairement plutôt que de le maquiller) : le
+  parcours restore de bout en bout avec un vrai identifiant Apple → pull
+  Supabase réel → profil qui arrive. Je n'ai ni compte Apple de test ni accès
+  réseau au projet Supabase depuis cet environnement. L'hypothèse
+  architecturale (les écritures de `SyncPullActor` sur le `ModelContainer`
+  partagé sont visibles par un `fetch` frais sur `mainContext` dans
+  `loadProfile()`) est saine sur le papier — même conteneur, même schéma —
+  mais seul un passage device la prouve. L'UI SwiftUI elle-même
+  (`WelcomeStep`, `RestoringStep`, le bandeau sur `NameEntryStep`) n'est pas
+  testable dans cet environnement — vérifiée seulement par lecture de code et
+  par le fait que l'app boote et affiche l'onboarding sans crash dans le
+  simulateur.
+
+### Écarté
+
+- **Découper `NameEntryView.swift` en plusieurs fichiers dans `Onboarding/`**
+  (la consigne l'autorisait explicitement) — écarté au profit d'un seul
+  fichier (767 lignes, sous le plafond de 800). Le pbxproj de ce repo est un
+  format classique, pas une `PBXFileSystemSynchronizedRootGroup`
+  (`grep -c PBXFileSystemSynchronizedRootGroup` → 0) : tout nouveau fichier de
+  *production* y exige un enregistrement manuel (`PBXFileReference` +
+  `PBXBuildFile` + entrée de groupe + entrée Sources build phase). Le risque
+  de casser la compilation de la cible `Ikeru` pour un gain de style
+  (plusieurs petits fichiers vs un seul sous la limite) n'en valait pas la
+  chandelle. Seul le fichier de *test* (dont l'échec n'affecte pas le build
+  de l'app) a reçu cet enregistrement pbxproj.
+- **Bouton "J'ai déjà un compte" en `Button` custom (icône + texte)** plutôt
+  que le chrome natif `SignInWithAppleButton` — écarté : Apple exige son
+  composant natif comme point d'entrée Sign in with Apple (App Store Review
+  4.8), et ce repo a déjà un pattern éprouvé + un bug déjà corrigé une fois
+  (`.contentShape(Rectangle())` manquant) pour ce cas précis. Réutiliser au
+  lieu de réinventer.
+- **Utiliser `outcome` seul pour décider "pas de sauvegarde"** — écarté au
+  profit de "relire `hasProfile` depuis le store, l'outcome ne sert qu'en
+  absence de profil" : le pull tourne avant le push dans `syncNow()`, et un
+  trigger concurrent (foreground, retour réseau) peut livrer le profil
+  indépendamment de ce que CET appel précis rapporte.
+
+### Ouvert
+
+- **CI ne fait pas tourner `OnboardingRestoreDecisionTests`** — le filtre CI
+  actuel (`.github/workflows/ci.yml`) ne cible qu'un sous-ensemble vert
+  explicite (Core filtré + `KanaDrillViewModelTests`). Le nouveau fichier est
+  hors du périmètre déclaré de cette tâche (`IkeruTests/`) donc je ne l'ai pas
+  ajouté au workflow — à faire en 1 ligne si on veut cette couverture en CI.
+- **Passage device réel requis** avant de considérer le chemin restore
+  fiable en production : compte Apple de test + compte Supabase avec une
+  sauvegarde existante, pour vérifier le pull → `loadProfile()` → sortie
+  directe vers l'accueil (le point le plus à risque de tout ce lot).
+- **Utilisateur restauré atterrit en `DisplayMode.beginner`** — la
+  préférence tatami/beginner est `UserDefaults` locale à l'appareil, pas
+  synchronisée ; comme `.placement` est sauté sur le chemin restore, la
+  personne restaurée retrouve le mode par défaut même si elle avait choisi
+  tatami ailleurs. Limite connue, pas corrigée ici (changement de schéma /
+  sync du réglage nécessaire).
+- **Retry après un restore échoué** : si le sign-in Apple a réussi mais le
+  pull échoue (réseau), le consentement reste activé (correct — la
+  disclosure promettait exactement ça) et l'utilisateur peut retomber sur
+  "Commencer" pour créer un profil neuf. Une synchro ultérieure en arrière-plan
+  peut alors faire redescendre le VRAI profil comme second profil inactif à
+  côté du profil jetable. C'est le dégradé que la tâche accepte déjà
+  explicitement (« il aura créé un profil jetable entre-temps ») — rendu plus
+  rare par ce lot, pas éliminé.
+
+---
+
 ## 2026-08-14 — Lot 2 (pull) : correction chirurgicale des 2 défauts survivants (ronde 4)
 
 ### Fait

@@ -1,6 +1,38 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "Already used Ikeru before?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Already used Ikeru before?"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu as déjà utilisé Ikeru ?"
+          }
+        }
+      }
+    },
+    "Couldn't reach the server. Check your connection and try again." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't reach the server. Check your connection and try again."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de joindre le serveur. Vérifie ta connexion et réessaie."
+          }
+        }
+      }
+    },
     "Couldn't save your review — it may not count." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -14,6 +46,232 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Impossible d'enregistrer ta révision — elle pourrait ne pas compter."
+          }
+        }
+      }
+    },
+    "I already have an account" : {
+      "extractionState" : "manual",
+      "comment" : "Accessibility label for the Sign in with Apple button at the foot of onboarding's name-entry screen",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "I already have an account"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "J'ai déjà un compte"
+          }
+        }
+      }
+    },
+    "Let's get\nstarted" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Let's get\nstarted"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prêt(e) à\ncommencer ?"
+          }
+        }
+      }
+    },
+    "No backup was found for that Apple account — let's set up your profile." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No backup was found for that Apple account — let's set up your profile."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune sauvegarde trouvée pour ce compte Apple — configurons ton profil."
+          }
+        }
+      }
+    },
+    "Restoring your progress…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restoring your progress…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restauration de ta progression…"
+          }
+        }
+      }
+    },
+    "Signing in turns on backup, so we can restore your progress if you saved it before." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Signing in turns on backup, so we can restore your progress if you saved it before."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se connecter active la sauvegarde, pour qu'on puisse restaurer ta progression si tu l'avais enregistrée."
+          }
+        }
+      }
+    },
+    "Start" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Commencer"
+          }
+        }
+      }
+    },
+    "Still finishing up — please wait a moment and try again." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Still finishing up — please wait a moment and try again."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Encore en cours — patiente un instant puis réessaie."
+          }
+        }
+      }
+    },
+    "This can take a moment depending on your connection." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This can take a moment depending on your connection."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cela peut prendre un moment selon ta connexion."
+          }
+        }
+      }
+    },
+    "This only takes a moment." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This only takes a moment."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cela ne prend qu'un instant."
+          }
+        }
+      }
+    },
+    "We couldn't reach the server to check for a backup. Starting fresh from here will create a new, separate profile — check your connection and try restoring again first." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "We couldn't reach the server to check for a backup. Starting fresh from here will create a new, separate profile — check your connection and try restoring again first."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de joindre le serveur pour vérifier une sauvegarde. Repartir de zéro ici créera un second profil séparé — vérifie ta connexion et réessaie d'abord de restaurer."
+          }
+        }
+      }
+    },
+    "WELCOME" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "WELCOME"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BIENVENUE"
+          }
+        }
+      }
+    },
+    "Your Apple sign-in couldn't be verified. Please try again." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your Apple sign-in couldn't be verified. Please try again."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ta connexion Apple n'a pas pu être vérifiée. Réessaie."
+          }
+        }
+      }
+    },
+    "始める" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "始める"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "始める"
+          }
+        }
+      }
+    },
+    "門" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "門"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "門"
           }
         }
       }
