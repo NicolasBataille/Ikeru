@@ -131,6 +131,39 @@ Ce qui le fermerait : produire des `ReviewLog` côté montre et les remonter via
 `WatchConnectivity` (`transferUserInfo`, file d'attente garantie), puis les
 appliquer côté iPhone.
 
+### GAP-13 — « Révisions » et l'historique réel divergent, dans les deux sens
+**Sévérité : moyenne (porte pédagogique faussée).** Constaté sur device le
+2026-08-14 : le Tatami affichait **53 révisions** pendant que la sauvegarde
+cloud remontait **74 `ReviewLog`**. Ce ne sont pas deux mesures du même
+phénomène, ce sont deux compteurs alimentés par des chemins disjoints.
+
+- **Journaux sans crédit** : `CardRepository.gradeCard` écrit un `ReviewLog` à
+  chaque carte notée, mais seul `SessionRPGPersistence` incrémente
+  `totalReviewsCompleted`. `KanaDrillViewModel` appelle `gradeCard` et ne touche
+  **jamais** l'état RPG (vérifié) — chaque kana révisé hors séance est donc
+  travaillé, journalisé, et jamais crédité.
+- **Crédit sans journal** : `WatchConnectivityManager` fait
+  `totalReviewsCompleted += result.totalQuestions` sans produire le moindre
+  `ReviewLog` (c'est [GAP-08]). La montre rapproche la porte sans rien apprendre
+  au planificateur.
+
+Pourquoi ça compte : ce compteur garde l'accès au mode Tatami (750 révisions) et
+s'affiche sous le libellé « COMPÉTENCE CUMULÉE ». Il sous-crédite le travail réel
+tout en étant gonflable par une surface qui ne laisse aucune trace FSRS.
+
+Ce qui le fermerait — **dériver le chiffre des `ReviewLog`** plutôt que maintenir
+un compteur parallèle. C'est le principe déjà retenu pour la synchro (règle 2 :
+`ReviewLog` fait autorité), ça supprime la divergence structurellement au lieu
+d'ajouter un troisième site d'incrémentation qui redivergera au prochain écran,
+et un appareil restauré depuis le cloud retrouve le bon chiffre tout seul.
+Ajouter l'incrément dans les drills marche aussi, mais laisse deux vérités
+côte à côte — exactement ce qui a produit ce bug.
+
+⚠️ Effet à assumer : le chiffre affiché **augmente** d'un coup pour les
+apprenants existants (53 → ~74 dans le cas observé) et la porte Tatami se
+rapproche. C'est une correction, pas un cadeau, mais c'est un changement de
+comportement sur une porte pédagogique — à annoncer, pas à glisser.
+
 ### GAP-09 — Aucune cible de tests UI
 **Sévérité : moyenne.** L'infrastructure de fixtures par argument de lancement
 existe, mais rien ne l'exerce. Aucun parcours utilisateur n'est testé de bout en
@@ -147,13 +180,16 @@ l'image, pas par du travail sur nos tests.
 
 ## E. Dû par l'utilisateur (ne peut pas être fait par un agent)
 
-### GAP-11 — Suppression de profil sur device
-Supprimer un profil **actif**, puis un profil **non actif**. Guetter un nom vide
-pendant l'animation de disparition. C'est le seul risque de crash que la
-vérification statique ne peut pas trancher.
+**Vide au 2026-08-14** — les deux entrées de cette section ont été fermées lors
+de la passe device du jour. Section conservée : la prochaine livraison touchant
+à l'UI ou à un flux destructif en remettra.
 
-### GAP-12 — Parcours de sauvegarde cloud sur device
-Activer l'interrupteur, vérifier que le statut passe à « À jour », puis
-« Supprimer mes données du serveur » et vérifier le message de confirmation. La
-fonction Edge est déployée et testée en HTTP, mais **le chemin app → fonction
-n'a jamais été exercé depuis un vrai appareil**.
+*Fermé* — **GAP-11, suppression de profil** : les deux cas passent sur iPhone
+14 Pro. Non actif comme actif, aucun nom vide pendant l'animation, aucun crash,
+retour propre sur le profil habituel. À noter pour qui rejouera ce test : créer
+un profil l'**active immédiatement** (`ProfileViewModel.createProfile` pose
+l'actif et émet `displayModeDidChange` — délibéré, c'est la parade à l'héritage
+du mode d'affichage par un profil neuf). Tester le cas « non actif » demande
+donc de rebasculer d'abord.
+
+*Fermé* — **GAP-12, parcours de sauvegarde cloud** : voir plus haut.

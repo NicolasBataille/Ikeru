@@ -64,8 +64,18 @@ struct MainTabView: View {
             tabContent
                 .ignoresSafeArea(.keyboard)
 
+            // The bar OWNS the bottom safe area rather than sitting on top of
+            // it. Respecting it (the default) pins the content above the home
+            // indicator while the material still tints that ~34pt strip, so
+            // the labels float with a band of dead space underneath that no
+            // amount of padding elsewhere can reclaim — trimming above the
+            // icons only moved them further from it.
+            //
+            // Owning it lets the content sit lower, and the bar manages its
+            // own bottom clearance instead (see `IkeruTabBar`'s padding).
             IkeruTabBar(selection: $selectedTab, tabs: AppTab.allCases)
                 .ignoresSafeArea(.keyboard)
+                .ignoresSafeArea(.container, edges: .bottom)
         }
         .overlayPreferenceValue(TourAnchorKey.self) { anchors in
             GeometryReader { proxy in
