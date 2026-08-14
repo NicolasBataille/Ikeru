@@ -166,6 +166,59 @@ actor SyncModelActor {
     // companion_chat_messages: no pushDirty* method exists for this entity
     // — see `SyncPayloadBuilder`'s trailing comment. Not an omission to fix
     // later in THIS lot.
+
+    // MARK: - markEverythingUnsynced (CRITIQUE B)
+
+    /// Sets `syncedAt = nil` on every row across all 7 synced types and
+    /// saves — the fix for the most serious defect this lot's second
+    /// adversarial review round found (Critical B): "cloud account wiped,
+    /// then re-seeded from local" silently pushed almost nothing.
+    ///
+    /// The bug this closes: `pushDirtyCards`/`pushDirtyVocabularyEntries`
+    /// filter on `isDirty` (`syncedAt == nil || updatedAt > syncedAt`), and
+    /// the 3 append-only `pushDirty*` methods filter on `syncedAt == nil`
+    /// STRICTLY. After a server-side account is erased
+    /// (`CloudDataDeletionService.deleteAllCloudData()`) — or after a
+    /// rejected refresh token silently mints a brand-new anonymous identity
+    /// (`AnonymousIdentityManager`, same failure mode without going through
+    /// deletion at all) — every local row still carries the `syncedAt`
+    /// stamp from pushes made to the OLD, now-gone account. Every one of
+    /// those rows reads as "already synced" to the delta filters above, so
+    /// a subsequent push sends ZERO cards, ZERO review logs, ZERO
+    /// vocabulary — only `profiles`/`rpg_states` (pushed unconditionally
+    /// every cycle regardless of `syncedAt`) actually reach the new
+    /// account. Months of review history silently never make it to the
+    /// server, while `SettingsView`'s status row reports "up to date"
+    /// (the push itself DID succeed — it just had almost nothing dirty to
+    /// send).
+    ///
+    /// Called from exactly two places, both documented at their own call
+    /// sites:
+    /// - `CloudDataDeletionService.deleteAllCloudData()`, right after that
+    ///   service resets the pull cursors — so a LATER opt-back-in re-seeds
+    ///   for real.
+    /// - `CloudSyncCoordinator.syncNow()`, BEFORE the push half of a cycle
+    ///   whose pull half just reported `PullOutcome.seededFromLocal` —
+    ///   this is the one that actually matters for the rejected-refresh-
+    ///   token case above, since that path never goes through
+    ///   `CloudDataDeletionService` at all: the ONLY signal it produces is
+    ///   rule 1 firing on the next pull against the fresh identity.
+    ///
+    /// Deliberately NOT called from `setConsent(false)`: turning backup off
+    /// leaves the data on the server exactly as it was, so every local
+    /// `syncedAt` stays factually correct. Marking everything unsynced
+    /// there would just re-push identical rows for no reason the moment
+    /// consent is turned back on.
+    func markEverythingUnsynced() throws {
+        for profile in try modelContext.fetch(FetchDescriptor<UserProfile>()) { profile.syncedAt = nil }
+        for state in try modelContext.fetch(FetchDescriptor<RPGState>()) { state.syncedAt = nil }
+        for card in try modelContext.fetch(FetchDescriptor<Card>()) { card.syncedAt = nil }
+        for log in try modelContext.fetch(FetchDescriptor<ReviewLog>()) { log.syncedAt = nil }
+        for entry in try modelContext.fetch(FetchDescriptor<VocabularyEntry>()) { entry.syncedAt = nil }
+        for encounter in try modelContext.fetch(FetchDescriptor<VocabularyEncounter>()) { encounter.syncedAt = nil }
+        for log in try modelContext.fetch(FetchDescriptor<ExerciseOutcomeLog>()) { log.syncedAt = nil }
+        try modelContext.save()
+    }
 }
 
 // MARK: - Chunking

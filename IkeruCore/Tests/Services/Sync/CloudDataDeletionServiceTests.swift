@@ -1,5 +1,6 @@
 import Testing
 import Foundation
+import SwiftData
 @testable import IkeruCore
 
 /// Suite name deliberately does not collide with any other token in the CI
@@ -10,6 +11,21 @@ import Foundation
 /// of the alternation terms in that filter, run alongside `CloudSyncCoordinator`.
 @Suite("CloudDataDeletion")
 struct CloudDataDeletionServiceTests {
+
+    private func makeContainer() throws -> ModelContainer {
+        let schema = Schema([
+            UserProfile.self,
+            Card.self,
+            ReviewLog.self,
+            RPGState.self,
+            VocabularyEntry.self,
+            VocabularyEncounter.self,
+            ExerciseOutcomeLog.self,
+            CompanionChatMessage.self,
+        ])
+        let config = ModelConfiguration(isStoredInMemoryOnly: true)
+        return try ModelContainer(for: schema, configurations: [config])
+    }
 
     private func makeSession(userID: UUID = UUID(), expiresIn: TimeInterval = 3600) -> SyncSession {
         SyncSession(
@@ -39,7 +55,7 @@ struct CloudDataDeletionServiceTests {
         let authTransport = MockSupabaseAuthTransport()
         let identity = AnonymousIdentityManager(transport: authTransport, keychain: keychain)
         let deletionTransport = MockCloudDeletionTransport()
-        let service = CloudDataDeletionService(identity: identity, transport: deletionTransport)
+        let service = CloudDataDeletionService(modelContainer: try makeContainer(), identity: identity, transport: deletionTransport)
 
         try await service.deleteAllCloudData()
 
@@ -60,7 +76,7 @@ struct CloudDataDeletionServiceTests {
         let authTransport = MockSupabaseAuthTransport(signInResult: .success(makeSession()))
         let identity = AnonymousIdentityManager(transport: authTransport, keychain: keychain)
         let deletionTransport = MockCloudDeletionTransport()
-        let service = CloudDataDeletionService(identity: identity, transport: deletionTransport)
+        let service = CloudDataDeletionService(modelContainer: try makeContainer(), identity: identity, transport: deletionTransport)
 
         try await service.deleteAllCloudData() // must not throw
 
@@ -86,7 +102,7 @@ struct CloudDataDeletionServiceTests {
         )
         let identity = AnonymousIdentityManager(transport: authTransport, keychain: keychain)
         let deletionTransport = MockCloudDeletionTransport()
-        let service = CloudDataDeletionService(identity: identity, transport: deletionTransport)
+        let service = CloudDataDeletionService(modelContainer: try makeContainer(), identity: identity, transport: deletionTransport)
 
         // This is the regression this test exists for. The earlier version
         // swallowed every token failure as "nothing to delete", so an
@@ -116,7 +132,7 @@ struct CloudDataDeletionServiceTests {
         let deletionTransport = MockCloudDeletionTransport(
             errorToThrow: CloudDeletionError.requestFailed(status: 500, body: "boom")
         )
-        let service = CloudDataDeletionService(identity: identity, transport: deletionTransport)
+        let service = CloudDataDeletionService(modelContainer: try makeContainer(), identity: identity, transport: deletionTransport)
 
         await #expect(throws: CloudDeletionError.self) {
             try await service.deleteAllCloudData()
@@ -137,7 +153,7 @@ struct CloudDataDeletionServiceTests {
         let authTransport = MockSupabaseAuthTransport(signInResult: .success(makeSession()))
         let identity = AnonymousIdentityManager(transport: authTransport, keychain: keychain)
         let deletionTransport = MockCloudDeletionTransport()
-        let service = CloudDataDeletionService(identity: identity, transport: deletionTransport)
+        let service = CloudDataDeletionService(modelContainer: try makeContainer(), identity: identity, transport: deletionTransport)
 
         try await service.deleteAllCloudData()
         try await service.deleteAllCloudData() // must not throw
@@ -149,5 +165,55 @@ struct CloudDataDeletionServiceTests {
         // created as a side effect of asking to be forgotten.
         #expect(deletionTransport.callCount == 1)
         #expect(authTransport.signInCallCount == 0)
+    }
+
+    // MARK: - CRITIQUE B, call site (a): markEverythingUnsynced
+
+    /// The other half of the CRITIQUE B fix (`SyncModelActor.markEverythingUnsynced()`'s
+    /// doc comment) — this is the deletion-service call site, distinct from
+    /// the `CloudSyncCoordinator` seed-path call site covered by
+    /// `CloudSyncCoordinatorTests`. Proves `deleteAllCloudData()` itself
+    /// clears `syncedAt` locally, not just the server-side rows and the
+    /// pull cursors — without this, a card already `syncedAt`-stamped from
+    /// the account that was just erased would read as "already synced" to
+    /// `SyncModelActor.pushDirtyCards`'s delta filter forever after.
+    @Test("A successful deletion marks every local row unsynced, not just the server-side rows and cursors")
+    @MainActor
+    func deletionMarksLocalRowsUnsynced() async throws {
+        let session = makeSession()
+        let keychain = MockKeychainStore()
+        try seed(session, into: keychain)
+
+        let authTransport = MockSupabaseAuthTransport()
+        let identity = AnonymousIdentityManager(transport: authTransport, keychain: keychain)
+        let deletionTransport = MockCloudDeletionTransport()
+        let container = try makeContainer()
+
+        // A card that looks fully synced — exactly what's left behind on
+        // disk after a normal push to the account that's about to be
+        // erased.
+        let context = container.mainContext
+        let profile = UserProfile(displayName: "Learner")
+        context.insert(profile)
+        let card = Card(front: "犬", back: "dog", type: .vocabulary)
+        card.profile = profile
+        card.syncedAt = card.updatedAt
+        context.insert(card)
+        let log = ReviewLog(card: card, grade: .good, responseTimeMs: 500)
+        log.syncedAt = log.updatedAt
+        context.insert(log)
+        try context.save()
+
+        let service = CloudDataDeletionService(modelContainer: container, identity: identity, transport: deletionTransport)
+        try await service.deleteAllCloudData()
+
+        let freshContext = ModelContext(container)
+        let cards = try freshContext.fetch(FetchDescriptor<Card>())
+        let logs = try freshContext.fetch(FetchDescriptor<ReviewLog>())
+        let profiles = try freshContext.fetch(FetchDescriptor<UserProfile>())
+
+        #expect(cards.first?.syncedAt == nil)
+        #expect(logs.first?.syncedAt == nil)
+        #expect(profiles.first?.syncedAt == nil)
     }
 }

@@ -1,5 +1,6 @@
 import Foundation
 import SwiftData
+import os
 
 /// Background `ModelActor` that pulls remote rows and applies them to the
 /// local store, honoring the 4 merge rules from
@@ -54,6 +55,16 @@ actor SyncPullActor {
     /// pages and stall the cursor (see `advancePastFullPage` below).
     static let defaultPageSize = 1000
 
+    /// After this many CONSECUTIVE cycles stuck on the exact same
+    /// head-of-line row, that row is force-abandoned rather than retried
+    /// forever — see `SyncSkipTracker`'s doc comment for the full
+    /// rationale. 3 is deliberately small: this is the difference between
+    /// "wait for a card that hasn't arrived yet" (resolves within one or
+    /// two cycles, since `cards` is pulled before `review_logs` in
+    /// `pullOrder` every cycle) and "this row will never apply" — waiting
+    /// longer only delays making a permanent problem visible.
+    static let poisonDropThreshold = 3
+
     /// The 7 tables this actor pulls, in the dependency + merge-rule order
     /// documented on the type. `companion_chat_messages` is excluded — see
     /// the type doc comment.
@@ -74,15 +85,40 @@ actor SyncPullActor {
     struct PullSummary: Sendable, Equatable {
         /// True when rule 1 fired: the remote account had zero rows across
         /// every pulled table while the local store was non-empty, so
-        /// nothing was applied and no cursor moved — the caller's push
-        /// (already scheduled to run right after pull in
-        /// `CloudSyncCoordinator.syncNow()`) is what seeds the server.
+        /// nothing was applied and no cursor moved.
+        ///
+        /// The push that follows right after in
+        /// `CloudSyncCoordinator.syncNow()` is what seeds the server in
+        /// this case — but that claim is only actually true because
+        /// `syncNow()` calls `SyncModelActor.markEverythingUnsynced()`
+        /// FIRST when it sees this flag (see that method's doc comment).
+        /// Without that call, a device whose local rows still carry
+        /// `syncedAt` from a PREVIOUS, since-deleted server-side account
+        /// (e.g. after `CloudDataDeletionService.deleteAllCloudData()`, or
+        /// a rejected refresh token silently re-provisioning a brand-new
+        /// anonymous identity — see `AnonymousIdentityManager`) would have
+        /// every delta-filtered `pushDirty*` call see those rows as
+        /// already synced and push NOTHING for them — only
+        /// `profiles`/`rpg_states` (pushed unconditionally every cycle)
+        /// would actually reach the new, empty account, while
+        /// cards/logs/vocabulary silently stayed local-only. This was a
+        /// real, previously-shipped defect (CRITIQUE B in the 2026-08
+        /// lot-2 pull review), not a hypothetical this comment is
+        /// pre-emptively guarding against.
         var seededFromLocal = false
 
-        /// Rows actually applied (created or updated), per table. A table
-        /// absent from this dictionary was never queried this cycle only
-        /// in the `seededFromLocal` case; otherwise every table in
-        /// `pullOrder` has an entry, possibly `0`.
+        /// Rows newly CREATED locally this cycle, per table — a row this
+        /// device had never seen before. A table absent from this
+        /// dictionary was never queried this cycle only in the
+        /// `seededFromLocal` case; otherwise every table in `pullOrder`
+        /// has an entry, possibly `0`. Deliberately EXCLUDES redelivered
+        /// rows on the 3 append-only tables (`review_logs`,
+        /// `vocabulary_encounters`, `exercise_outcome_logs`) — see
+        /// `alreadyPresentRowCounts` for those; folding them in here used
+        /// to overstate how much work a cycle actually did (a table
+        /// endlessly re-fetching the same already-applied boundary row
+        /// from a `gte` cursor looked exactly as "busy" as one making real
+        /// progress).
         var appliedRowCounts: [String: Int] = [:]
 
         /// Rows fetched but SKIPPED per table this cycle — a decode
@@ -90,13 +126,30 @@ actor SyncPullActor {
         /// unattachable foreign key (e.g. a `review_logs` row whose `card`
         /// no longer exists locally). Distinct from `appliedRowCounts`
         /// specifically so a pull that silently discards half a page is
-        /// distinguishable from a clean one — before this field existed,
-        /// both looked identical to a caller (see CRITIQUE 1/2 in the
-        /// 2026-08 lot-2 pull review: a skipped row's timestamp is never
-        /// let past the cursor either — see `pullAndApply` — so a row
-        /// counted here is retried on every future cycle until it
-        /// succeeds, not lost).
+        /// distinguishable from a clean one. A skipped row is normally
+        /// retried on every future cycle until it succeeds — UNLESS it's
+        /// also counted in `permanentlyDroppedRowCounts` below, in which
+        /// case this cycle was its last retry.
         var skippedRowCounts: [String: Int] = [:]
+
+        /// Append-only rows (see the 3 tables named on `appliedRowCounts`)
+        /// that were fetched again but were ALREADY durably present
+        /// locally — a safe, expected no-op redelivery (the keyset cursor
+        /// boundary row, or a page re-sent after a crash between apply and
+        /// cursor-advance), not new work. Kept distinct from
+        /// `appliedRowCounts` so a table quietly re-fetching its own
+        /// boundary forever doesn't read as "very active" to anything
+        /// diagnosing this summary.
+        var alreadyPresentRowCounts: [String: Int] = [:]
+
+        /// Rows force-abandoned this cycle after `poisonDropThreshold`
+        /// consecutive cycles stuck on the same row — see
+        /// `SyncSkipTracker`'s doc comment. Also counted in
+        /// `skippedRowCounts` for the cycle they're dropped on (they WERE
+        /// skipped, this is just the cycle retrying stops), but unlike an
+        /// ordinary skip they will never be retried again: the cursor was
+        /// deliberately advanced past them.
+        var permanentlyDroppedRowCounts: [String: Int] = [:]
 
         /// Cards whose `fsrsState` was recomputed by an FSRS replay this
         /// cycle (rule 2). Exposed so a test can assert convergence
@@ -104,30 +157,49 @@ actor SyncPullActor {
         var replayedCardIDs: Set<UUID> = []
 
         var totalApplied: Int { appliedRowCounts.values.reduce(0, +) }
+        var totalSkipped: Int { skippedRowCounts.values.reduce(0, +) }
+        var totalPermanentlyDropped: Int { permanentlyDroppedRowCounts.values.reduce(0, +) }
     }
 
     enum SyncPullActorError: Error, Sendable, Equatable {
-        /// A page came back at exactly `pageSize` rows but the cursor did
-        /// not make forward progress against it — the
-        /// tie-cluster-wider-than-one-page hazard `SyncPullTransport` warns
-        /// about. "No forward progress" means EITHER `advanceCursor`
-        /// returned `nil` (nothing in the page carried a parseable
-        /// `server_updated_at`) OR it returned a value equal to `since`,
-        /// the cursor this same page was fetched with (every row in the
-        /// page ties with — or trails — the boundary already applied,
-        /// which is exactly what an all-tied page one page too wide looks
-        /// like: re-fetching with the SAME `since` would return the
-        /// IDENTICAL page forever). Checking `advanced == nil` alone
-        /// missed this second case entirely — every row in a tie cluster
-        /// still parses fine and still produces a real (just unchanged)
-        /// `max()`, so that check never fired and the loop spun without
-        /// end. Aborting this table's pagination loop here (leaving its
-        /// cursor where it safely still is) is correct per
-        /// `SyncPullTransport`'s own guidance: "better to abandon that page
-        /// than to spin." The next `pullAll` call re-fetches the same page
-        /// and makes the same call — this does not silently lose the tie
-        /// cluster, it makes the stall visible instead of hanging.
-        case cursorStalledOnFullPage(table: String)
+        /// A page came back at exactly `pageSize` rows, every row in it
+        /// applied successfully, and the cursor STILL failed to make
+        /// forward progress against it.
+        ///
+        /// With the composite `(server_updated_at, id)` cursor
+        /// (`SyncCursorPosition`) this is now an anomaly guard, not the
+        /// routine hazard it used to be under the earlier single-`Date`
+        /// cursor design: a tie cluster wider than one page no longer
+        /// stalls anything (every row's `id` gives it a unique position),
+        /// and a genuinely unrecoverable ("poison") row is handled by
+        /// `SyncSkipTracker`'s 3-strikes policy — which runs BEFORE this
+        /// check is ever reached, and never throws. The only way this
+        /// still fires is the residual case where every row in the page
+        /// applied fine but their OWN `server_updated_at`/`id` (a pair
+        /// `advanceCursor` reads independently of whatever `apply` needed
+        /// to succeed) is missing or unparseable across the entire prefix
+        /// — a shape that should not occur in practice. Kept as a loud
+        /// last-resort signal rather than removed outright, per this
+        /// project's "fail loudly, not silently" stance.
+        ///
+        /// `pullAll`'s per-table loop catches this (see there) rather than
+        /// letting it propagate — a stall on ONE table must not take every
+        /// table after it in `pullOrder` down with it. That used to be
+        /// exactly what happened here (a previous review round's Critical
+        /// A finding): this error propagating straight out of `pullAll`
+        /// meant a stall on, say, `cards` silently meant `review_logs`
+        /// through `exercise_outcome_logs` were never even queried that
+        /// cycle. The `…SoFar` payloads let the catcher salvage what this
+        /// table actually accomplished before the stall rather than
+        /// reporting `0` for a table that may have applied several pages
+        /// first.
+        case cursorStalledOnFullPage(
+            table: String,
+            appliedSoFar: Int,
+            skippedSoFar: Int,
+            alreadyPresentSoFar: Int,
+            permanentlyDroppedSoFar: Int
+        )
     }
 
     // MARK: - Entry point
@@ -139,6 +211,7 @@ actor SyncPullActor {
     func pullAll(
         transport: any SyncPullTransport,
         cursorStore: any SyncCursorStore,
+        skipTracker: any SyncSkipTracker,
         accessToken: String,
         pageSize: Int = SyncPullActor.defaultPageSize
     ) async throws -> PullSummary {
@@ -204,17 +277,43 @@ actor SyncPullActor {
         var pendingCardReplayIDs: Set<UUID> = []
 
         for table in Self.pullOrder {
-            let (applied, skipped) = try await pullAndApply(
-                table: table,
-                transport: transport,
-                cursorStore: cursorStore,
-                accessToken: accessToken,
-                pageSize: pageSize,
-                primedFirstPage: primedFirstPages[table],
-                pendingCardReplayIDs: &pendingCardReplayIDs
-            )
+            let applied: Int
+            let skipped: Int
+            let alreadyPresent: Int
+            let permanentlyDropped: Int
+            do {
+                (applied, skipped, alreadyPresent, permanentlyDropped) = try await pullAndApply(
+                    table: table,
+                    transport: transport,
+                    cursorStore: cursorStore,
+                    skipTracker: skipTracker,
+                    accessToken: accessToken,
+                    pageSize: pageSize,
+                    primedFirstPage: primedFirstPages[table],
+                    pendingCardReplayIDs: &pendingCardReplayIDs
+                )
+            } catch let error as SyncPullActorError {
+                // See `SyncPullActorError.cursorStalledOnFullPage`'s doc
+                // comment: this table's anomaly must not silently take
+                // every table after it in `pullOrder` down with it
+                // (Critical A). Salvage whatever this table accomplished
+                // before the stall and move on to the next table exactly
+                // as if this one had simply run out of pages.
+                switch error {
+                case .cursorStalledOnFullPage(_, let appliedSoFar, let skippedSoFar, let alreadyPresentSoFar, let droppedSoFar):
+                    Logger.sync.error(
+                        "Cloud sync pull: \(table, privacy: .public) stalled (anomaly guard, see SyncPullActorError) — continuing with the next table"
+                    )
+                    applied = appliedSoFar
+                    skipped = skippedSoFar
+                    alreadyPresent = alreadyPresentSoFar
+                    permanentlyDropped = droppedSoFar
+                }
+            }
             summary.appliedRowCounts[table] = applied
             summary.skippedRowCounts[table] = skipped
+            summary.alreadyPresentRowCounts[table] = alreadyPresent
+            summary.permanentlyDroppedRowCounts[table] = permanentlyDropped
 
             if table == "review_logs" {
                 // Everything either step could have flagged is now known,
@@ -249,13 +348,16 @@ actor SyncPullActor {
         table: String,
         transport: any SyncPullTransport,
         cursorStore: any SyncCursorStore,
+        skipTracker: any SyncSkipTracker,
         accessToken: String,
         pageSize: Int,
         primedFirstPage: [SyncRow]?,
         pendingCardReplayIDs: inout Set<UUID>
-    ) async throws -> (applied: Int, skipped: Int) {
+    ) async throws -> (applied: Int, skipped: Int, alreadyPresent: Int, permanentlyDropped: Int) {
         var totalApplied = 0
         var totalSkipped = 0
+        var totalAlreadyPresent = 0
+        var totalPermanentlyDropped = 0
         var isFirstIteration = true
 
         while true {
@@ -275,15 +377,21 @@ actor SyncPullActor {
             }
             isFirstIteration = false
 
-            guard !page.isEmpty else { break }
+            guard !page.isEmpty else {
+                // Caught up on this table — whatever was tracked as a
+                // stuck candidate before (if anything) is moot now.
+                skipTracker.clearSkip(table: table)
+                break
+            }
 
-            let (appliedCount, appliedFlags) = try apply(
+            let (appliedCount, appliedFlags, alreadyPresentCount) = try apply(
                 table: table,
                 rows: page,
                 pendingCardReplayIDs: &pendingCardReplayIDs
             )
             totalApplied += appliedCount
-            totalSkipped += page.count - appliedCount
+            totalAlreadyPresent += alreadyPresentCount
+            totalSkipped += page.count - appliedCount - alreadyPresentCount
 
             // MUST save before advancing the cursor, not after — see
             // `SyncCursorStore.setCursor`'s ordering contract doc comment.
@@ -291,99 +399,173 @@ actor SyncPullActor {
             // very end of `pullAll`) is exactly the "advance-before-apply"
             // failure mode that doc comment calls out: a crash between
             // advancing and the deferred save would leave the cursor past
-            // rows that were never actually persisted, and `gte` would skip
-            // them forever on the next pull. Mirrors `SyncModelActor`'s
-            // per-batch `try modelContext.save()` on the push side.
+            // rows that were never actually persisted, and the keyset
+            // filter would skip them forever on the next pull. Mirrors
+            // `SyncModelActor`'s per-batch `try modelContext.save()` on the
+            // push side.
             try modelContext.save()
 
             // Advance the cursor over the PREFIX of `page` that was
-            // actually applied — NOT over the whole page (CRITIQUE 1). A
-            // row skipped mid-page (failed decode, unattachable FK, …) is
-            // still counted in `appliedFlags` as `false`; if the cursor
-            // were allowed to jump to `max(server_updated_at)` across the
-            // WHOLE page — including rows applied AFTER the skipped one —
-            // the next cycle's `since: gte(cursor)` would start strictly
-            // past the skipped row's own timestamp and it would never be
-            // redelivered, silently and permanently. `page` is sorted
-            // `server_updated_at.asc, id.asc` (see `SyncPullTransport`'s
-            // doc comment), so `prefix(while:)` from the start is the
-            // longest run this cycle can safely certify as durable; the
-            // skipped row (and everything after it, even rows that
-            // themselves applied fine) waits for the next cycle, which
-            // re-fetches from the skipped row's own timestamp (`gte`) and
+            // actually applied — NOT over the whole page. A row skipped
+            // mid-page (failed decode, unattachable FK, …) is still
+            // counted in `appliedFlags` as `false`; if the cursor were
+            // allowed to jump past it to the max position across the WHOLE
+            // page — including rows applied AFTER the skipped one — the
+            // next cycle would start strictly past the skipped row and it
+            // would never be redelivered, silently and permanently. `page`
+            // is sorted `server_updated_at.asc, id.asc` (see
+            // `SyncPullTransport`'s doc comment), so `prefix(while:)` from
+            // the start is the longest run this cycle can safely certify
+            // as durable; the skipped row (and everything after it, even
+            // rows that themselves applied fine) waits for the next cycle,
+            // which re-fetches from the skipped row's own position and
             // re-delivers those later rows too — a safe no-op upsert for
             // the ones already applied here.
             let appliedPrefix = zip(page, appliedFlags).prefix(while: { $0.1 }).map(\.0)
             let advanced = cursorStore.advanceCursor(forTable: table, afterApplying: appliedPrefix)
 
-            if page.count < pageSize {
-                // Short page: caught up, stop regardless of whether the
-                // cursor moved (an all-tied short page is still "done").
+            guard appliedPrefix.count < page.count else {
+                // Full progress this page — nothing stuck on this table.
+                skipTracker.clearSkip(table: table)
+
+                // Anomaly guard — see `SyncPullActorError.cursorStalledOnFullPage`'s
+                // doc comment for why this should be unreachable in normal
+                // operation now, and why it's kept anyway.
+                if page.count == pageSize, advanced == nil || advanced == since {
+                    throw SyncPullActorError.cursorStalledOnFullPage(
+                        table: table,
+                        appliedSoFar: totalApplied,
+                        skippedSoFar: totalSkipped,
+                        alreadyPresentSoFar: totalAlreadyPresent,
+                        permanentlyDroppedSoFar: totalPermanentlyDropped
+                    )
+                }
+                if page.count < pageSize { break }
+                continue
+            }
+
+            // A row stopped the safe prefix short — the head of this
+            // table's unapplied rows this cycle. Track it (the poison-row
+            // policy — see `SyncSkipTracker`'s doc comment) rather than
+            // either looping forever on it or, on a full page, taking the
+            // whole cycle down with it the way the old `Date`-only cursor
+            // design used to (Critical A in the 2026-08 lot-2 pull review).
+            let stuckRow = page[appliedPrefix.count]
+            guard let stuckID = SyncRowDecoding.uuid(stuckRow, "id") else {
+                // The stuck row's own `id` doesn't even parse — cannot be
+                // tracked by the skip tracker (nothing to key it on), and
+                // every apply function already requires a parseable `id`
+                // to do anything at all (see `SyncRowDecoding.common`), so
+                // a row shaped like this should never reach here in
+                // practice. Same residual-anomaly territory as the guard
+                // above: stop making progress on this table THIS cycle
+                // rather than guessing at a cursor position, and only
+                // escalate to the loud safety net when the page was full
+                // (matching the pre-existing "full page, no progress"
+                // signature).
+                if page.count == pageSize {
+                    throw SyncPullActorError.cursorStalledOnFullPage(
+                        table: table,
+                        appliedSoFar: totalApplied,
+                        skippedSoFar: totalSkipped,
+                        alreadyPresentSoFar: totalAlreadyPresent,
+                        permanentlyDroppedSoFar: totalPermanentlyDropped
+                    )
+                }
                 break
             }
-            // Full page: more may follow, UNLESS the cursor failed to make
-            // forward progress — the tie-cluster-wider-than-one-page hazard
-            // `SyncPullTransport` documents (CRITIQUE 3). This is not just
-            // `advanced == nil` (a page can parse and advance the cursor
-            // just fine while still going NOWHERE, if every row in it ties
-            // with `since` — that's the actual tie-cluster shape, and it
-            // reports a perfectly real, just-unchanged, `max()`). Checking
-            // `advanced == since` as well is what actually stops the spin;
-            // `advanced == nil` alone left this loop running forever on a
-            // real tie-cluster-wider-than-one-page hazard, silently
-            // burning network and battery with no error surfaced. Hard
-            // stop per `SyncPullTransport`'s guidance, rather than
-            // re-issuing the identical request forever.
-            if advanced == nil || advanced == since {
-                throw SyncPullActorError.cursorStalledOnFullPage(table: table)
+
+            let strikes = skipTracker.recordSkip(table: table, headRowID: stuckID)
+            if strikes >= Self.poisonDropThreshold,
+               case .string(let stuckTimestamp)? = stuckRow["server_updated_at"] {
+                // 3 consecutive cycles stuck on the SAME row: abandon it,
+                // visibly, rather than pinning this table's cursor forever.
+                // `setCursor`, not `advanceCursor` — this row was never
+                // durably applied, so routing through `advanceCursor`
+                // (whose contract is specifically "the rows behind this
+                // were already applied") would be exactly the kind of
+                // comment-lies-about-the-code-next-to-it this project's
+                // rules forbid. This is a deliberate skip, spelled out as
+                // one, made SAFE (rather than a data-loss risk) precisely
+                // because the composite cursor can point at this one row
+                // exactly, without touching anything else that shares its
+                // timestamp.
+                cursorStore.setCursor(SyncCursorPosition(timestamp: stuckTimestamp, id: stuckID), forTable: table)
+                totalPermanentlyDropped += 1
+                skipTracker.clearSkip(table: table)
+                Logger.sync.error(
+                    "Cloud sync: permanently dropping unrecoverable row \(stuckID, privacy: .public) in \(table, privacy: .public) after \(strikes) consecutive cycles"
+                )
+                continue
             }
+
+            // Not yet at the drop threshold (or the stuck row can't even be
+            // positioned — missing `server_updated_at`, the same residual
+            // anomaly territory as above): this table makes no further
+            // progress THIS cycle. Stop here rather than throwing — the
+            // caller (`pullAll`) simply moves on to the next table, and the
+            // next cycle retries this same row (accumulating another
+            // strike if it's still the same one).
+            break
         }
 
-        return (totalApplied, totalSkipped)
+        return (totalApplied, totalSkipped, totalAlreadyPresent, totalPermanentlyDropped)
     }
 
     // MARK: - Row application dispatch
 
     /// Dispatches to the per-table apply function and returns, alongside the
     /// applied count, `appliedFlags` — one `Bool` per element of `rows`, IN
-    /// THE SAME ORDER, `true` where that row was actually applied and
+    /// THE SAME ORDER, `true` where that row was actually applied (created,
+    /// updated, OR already durably present as a safe redelivery no-op) and
     /// `false` where it was skipped (undecodable payload, unattachable
     /// foreign key, …). `pullAndApply` uses this to compute the safe
-    /// cursor-advance prefix (CRITIQUE 1) — every per-table apply function
-    /// this dispatches to — 4 of them below, plus the 3 standalone-table
-    /// ones in `SyncPullActor+StandaloneTables.swift` — must append exactly
-    /// one flag per row it iterates, in order, or that prefix computation
+    /// cursor-advance prefix — every per-table apply function this
+    /// dispatches to — 4 of them below, plus the 3 standalone-table ones in
+    /// `SyncPullActor+StandaloneTables.swift` — must append exactly one
+    /// flag per row it iterates, in order, or that prefix computation
     /// silently misaligns.
+    ///
+    /// The third element, `alreadyPresentCount`, is nonzero only for the 3
+    /// append-only tables (`review_logs`, `vocabulary_encounters`,
+    /// `exercise_outcome_logs`) — see `PullSummary.alreadyPresentRowCounts`
+    /// for why a redelivered-but-already-applied row is tracked separately
+    /// from `count` rather than folded into it.
     private func apply(
         table: String,
         rows: [SyncRow],
         pendingCardReplayIDs: inout Set<UUID>
-    ) throws -> (count: Int, appliedFlags: [Bool]) {
+    ) throws -> (count: Int, appliedFlags: [Bool], alreadyPresentCount: Int) {
         switch table {
         case "profiles":
-            return try applyProfileRows(rows)
+            let result = try applyProfileRows(rows)
+            return (result.count, result.appliedFlags, 0)
         case "rpg_states":
-            return try applyRPGStateRows(rows)
+            let result = try applyRPGStateRows(rows)
+            return (result.count, result.appliedFlags, 0)
         case "cards":
             let result = try applyCardRows(rows)
             pendingCardReplayIDs.formUnion(result.needsReplay)
-            return (result.count, result.appliedFlags)
+            return (result.count, result.appliedFlags, 0)
         case "review_logs":
             let result = try applyReviewLogRows(rows)
             pendingCardReplayIDs.formUnion(result.touchedCardIDs)
-            return (result.count, result.appliedFlags)
+            return (result.count, result.appliedFlags, result.alreadyPresentCount)
         case "vocabulary_entries":
-            return try applyVocabularyEntryRows(rows)
+            let result = try applyVocabularyEntryRows(rows)
+            return (result.count, result.appliedFlags, 0)
         case "vocabulary_encounters":
-            return try applyVocabularyEncounterRows(rows)
+            let result = try applyVocabularyEncounterRows(rows)
+            return (result.count, result.appliedFlags, result.alreadyPresentCount)
         case "exercise_outcome_logs":
-            return try applyExerciseOutcomeLogRows(rows)
+            let result = try applyExerciseOutcomeLogRows(rows)
+            return (result.count, result.appliedFlags, result.alreadyPresentCount)
         default:
             // Not one of `pullOrder`'s 7 tables — nothing calls `apply`
             // with any other value, so this is unreachable in practice;
             // fail loudly rather than silently dropping unknown rows.
             assertionFailure("SyncPullActor.apply called with unrecognized table: \(table)")
-            return (0, Array(repeating: false, count: rows.count))
+            return (0, Array(repeating: false, count: rows.count), 0)
         }
     }
 
@@ -721,8 +903,9 @@ actor SyncPullActor {
         let responseTimeMs: Int
     }
 
-    private func applyReviewLogRows(_ rows: [SyncRow]) throws -> (count: Int, appliedFlags: [Bool], touchedCardIDs: Set<UUID>) {
+    private func applyReviewLogRows(_ rows: [SyncRow]) throws -> (count: Int, appliedFlags: [Bool], touchedCardIDs: Set<UUID>, alreadyPresentCount: Int) {
         var applied = 0
+        var alreadyPresent = 0
         var appliedFlags: [Bool] = []
         appliedFlags.reserveCapacity(rows.count)
         var touchedCardIDs: Set<UUID> = []
@@ -738,11 +921,15 @@ actor SyncPullActor {
             // tombstoned, though nothing in this codebase does that today —
             // see `ReviewLog`'s doc comment). So unlike every other table,
             // there is no "remote wins, overwrite fields" branch: if it
-            // already exists locally, this row is a redelivery (the `gte`
-            // pagination boundary, or a re-applied already-seen id from a
-            // previous cycle) and applying it again is a safe no-op.
+            // already exists locally, this row is a redelivery (the keyset
+            // boundary row, or a re-applied already-seen id from a
+            // previous cycle) and applying it again is a safe no-op — safe
+            // enough to advance the cursor past (`appliedFlags = true`),
+            // but not NEW work, so it's counted separately in
+            // `alreadyPresent` rather than in `applied` (see
+            // `PullSummary.alreadyPresentRowCounts`'s doc comment).
             if try fetchOne(ReviewLog.self, id: common.id) != nil {
-                applied += 1
+                alreadyPresent += 1
                 appliedFlags.append(true)
                 continue
             }
@@ -791,7 +978,7 @@ actor SyncPullActor {
             applied += 1
             appliedFlags.append(true)
         }
-        return (applied, appliedFlags, touchedCardIDs)
+        return (applied, appliedFlags, touchedCardIDs, alreadyPresent)
     }
 
     // MARK: - Rule 2: FSRS replay
@@ -905,146 +1092,9 @@ actor SyncPullActor {
         descriptor.fetchLimit = 1
         return try modelContext.fetch(descriptor).first
     }
-}
 
-// MARK: - SyncIdentifiable
-
-/// Narrow conformance so `SyncPullActor.fetchOne` can write `$0.id == id`
-/// inside a `#Predicate` generically — `#Predicate`'s macro expansion needs
-/// the `id` property to be visible on the generic type at the call site,
-/// which a bare `PersistentModel` constraint doesn't provide. Not `private`:
-/// `fetchOne` itself is `internal` (see its doc comment) so this file's
-/// `SyncPullActor+StandaloneTables.swift` extension can call it, and a
-/// `private` generic constraint on an `internal` function is not allowed —
-/// module-internal is still no wider exposure than before, since neither
-/// this protocol nor `SyncPullActor` is ever `public`.
-protocol SyncIdentifiable {
-    var id: UUID { get }
-}
-
-extension UserProfile: SyncIdentifiable {}
-extension RPGState: SyncIdentifiable {}
-extension Card: SyncIdentifiable {}
-extension ReviewLog: SyncIdentifiable {}
-extension VocabularyEntry: SyncIdentifiable {}
-extension VocabularyEncounter: SyncIdentifiable {}
-extension ExerciseOutcomeLog: SyncIdentifiable {}
-
-// MARK: - SyncRowDecoding
-
-/// Decodes the fields `SyncPullTransport` returns from a real PostgREST
-/// `SELECT *` response — the reverse direction of `SyncPayloadBuilder`
-/// (which only ever WRITES a `SyncRow`). Module-internal rather than
-/// `private` to this file: `SyncPullActor+StandaloneTables.swift`'s
-/// extension needs it too, for the same reason `SyncCursorTimestampParsing`
-/// stays scoped in `SyncCursorStore.swift` — it is never `public`, so this
-/// costs nothing outside `IkeruCore`.
-enum SyncRowDecoding {
-
-    struct CommonFields {
-        let id: UUID
-        let updatedAt: Date
-        let deletedAt: Date?
-    }
-
-    enum DecodingError: Error, Sendable {
-        case missingField(String)
-    }
-
-    /// Every synced row carries `id` and `updated_at` unconditionally, and
-    /// `deleted_at` as a nullable column. Throws rather than returning
-    /// `nil` so a malformed row (missing/unparseable `id` or `updated_at`)
-    /// is distinguishable, at the call site, from "this row is fine but has
-    /// no `deleted_at`" — callers that don't care about telling those apart
-    /// use `try?`.
-    static func common(_ row: SyncRow) throws -> CommonFields {
-        guard let id = uuid(row, "id") else { throw DecodingError.missingField("id") }
-        guard let updatedAt = date(row, "updated_at") else { throw DecodingError.missingField("updated_at") }
-        return CommonFields(id: id, updatedAt: updatedAt, deletedAt: date(row, "deleted_at"))
-    }
-
-    static func string(_ row: SyncRow, _ key: String) -> String? {
-        guard case .string(let value)? = row[key] else { return nil }
-        return value
-    }
-
-    static func number(_ row: SyncRow, _ key: String) -> Double? {
-        guard case .number(let value)? = row[key] else { return nil }
-        return value
-    }
-
-    static func uuid(_ row: SyncRow, _ key: String) -> UUID? {
-        string(row, key).flatMap(UUID.init(uuidString:))
-    }
-
-    static func date(_ row: SyncRow, _ key: String) -> Date? {
-        string(row, key).flatMap(SyncPullDateParsing.parse)
-    }
-
-    /// Decodes a nested `payload` `JSONValue` object into a typed DTO,
-    /// through a LOCAL decoder (`payloadDecoder` below) rather than the
-    /// shared `SyncJSON.decoder` — see `SyncPullDateParsing`'s doc comment
-    /// for why: `SyncJSON.decoder`'s date strategy only accepts the
-    /// always-fractional form this codebase's own encoder writes, and a
-    /// real Postgres row can legitimately omit the fraction. Encoding
-    /// `value` back through `SyncJSON.encoder` first is safe regardless of
-    /// that encoder's date strategy — a `JSONValue` never contains a raw
-    /// `Date`, only the already-stringified form, so no date-encoding logic
-    /// runs on this leg at all.
-    static func decode<T: Decodable>(_ type: T.Type, from value: JSONValue) throws -> T {
-        let data = try SyncJSON.encoder.encode(value)
-        return try payloadDecoder.decode(T.self, from: data)
-    }
-
-    private static let payloadDecoder: JSONDecoder = {
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .custom { decoder in
-            let container = try decoder.singleValueContainer()
-            let raw = try container.decode(String.self)
-            guard let date = SyncPullDateParsing.parse(raw) else {
-                throw Swift.DecodingError.dataCorruptedError(
-                    in: container,
-                    debugDescription: "Invalid ISO-8601 date: \(raw)"
-                )
-            }
-            return date
-        }
-        return decoder
-    }()
-}
-
-// MARK: - SyncPullDateParsing
-
-/// Tolerant ISO-8601 parsing for every date this actor reads off the wire —
-/// row-level columns (`updated_at`, `deleted_at`, `occurred_at`) AND, via
-/// `SyncRowDecoding.payloadDecoder` above, dates nested inside a `payload`
-/// object (`dueDate`, `lastReview`, `createdAt`, `lastSessionDate`).
-///
-/// Duplicated from (not shared with — out of this lot's file perimeter)
-/// `SyncCursorStore.swift`'s private `SyncCursorTimestampParsing`, for the
-/// exact same empirically-verified reason: real Postgres `to_json` output
-/// DROPS the fractional-seconds part entirely for an exact-second
-/// timestamp (`"2026-08-14T10:00:00+00:00"`, no decimal point) while
-/// `SyncJSON.dateFormatter` is configured `.withFractionalSeconds`-only and
-/// returns `nil` on that shape. Every Date field this actor decodes off a
-/// real row is exposed to the same hazard `server_updated_at` is — not just
-/// the cursor column — so the same two-formatter fallback is needed here
-/// too, not only in the cursor store.
-private enum SyncPullDateParsing {
-
-    nonisolated(unsafe) private static let fractional: ISO8601DateFormatter = {
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        return formatter
-    }()
-
-    nonisolated(unsafe) private static let wholeSecond: ISO8601DateFormatter = {
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime]
-        return formatter
-    }()
-
-    static func parse(_ raw: String) -> Date? {
-        fractional.date(from: raw) ?? wholeSecond.date(from: raw)
-    }
+    // `SyncIdentifiable`, `SyncRowDecoding`, and `SyncPullDateParsing` live
+    // in `SyncPullActor+RowDecoding.swift`, not here — split out purely to
+    // stay under SwiftLint's `file_length` (1200 lines) budget, same
+    // reasoning as `SyncPullActor+StandaloneTables.swift`.
 }

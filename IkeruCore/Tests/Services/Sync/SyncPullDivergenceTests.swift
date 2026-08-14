@@ -36,7 +36,12 @@ struct SyncPullDivergenceTests {
 
     // MARK: - Fixtures
 
-    private func makeContainer() throws -> ModelContainer {
+    // Not `private`: `SyncPullDivergenceTests+PoisonRow.swift`'s extension
+    // (a separate file, split out purely to stay under SwiftLint's
+    // `type_body_length` budget — see that file's doc comment) needs this
+    // too, and cross-file access needs at least `internal` (Swift's
+    // `private` is file-scoped).
+    func makeContainer() throws -> ModelContainer {
         let schema = Schema([
             UserProfile.self,
             Card.self,
@@ -58,10 +63,16 @@ struct SyncPullDivergenceTests {
         container: ModelContainer,
         server: FakeSyncServer,
         cursorStore: any SyncCursorStore,
+        skipTracker: any SyncSkipTracker,
         accessToken: String = "device-token"
     ) async throws -> SyncPullActor.PullSummary {
         let pullActor = SyncPullActor(modelContainer: container)
-        let summary = try await pullActor.pullAll(transport: server, cursorStore: cursorStore, accessToken: accessToken)
+        let summary = try await pullActor.pullAll(
+            transport: server,
+            cursorStore: cursorStore,
+            skipTracker: skipTracker,
+            accessToken: accessToken
+        )
 
         let pushActor = SyncModelActor(modelContainer: container)
         _ = try await pushActor.pushAllProfiles(using: server, accessToken: accessToken)
@@ -183,6 +194,8 @@ struct SyncPullDivergenceTests {
         let containerB = try makeContainer()
         let cursorA = MockSyncCursorStore()
         let cursorB = MockSyncCursorStore()
+        let skipA = MockSyncSkipTracker()
+        let skipB = MockSyncSkipTracker()
 
         let cardID = UUID()
         let t0 = Date(timeIntervalSince1970: 1_700_000_000)
@@ -202,13 +215,13 @@ struct SyncPullDivergenceTests {
         try gradeCard(id: cardID, grade: .again, timestamp: t2, in: containerB)
 
         // A comes online first: pulls (nothing new yet), pushes its grade.
-        try await syncDevice(container: containerA, server: server, cursorStore: cursorA)
+        try await syncDevice(container: containerA, server: server, cursorStore: cursorA, skipTracker: skipA)
         // B comes online: pulls A's log (merges + replays against its own),
         // pushes its own grade + the merged card state.
-        try await syncDevice(container: containerB, server: server, cursorStore: cursorB)
+        try await syncDevice(container: containerB, server: server, cursorStore: cursorB, skipTracker: skipB)
         // A syncs again (e.g. the next foreground trigger): pulls B's log,
         // merges + replays too.
-        try await syncDevice(container: containerA, server: server, cursorStore: cursorA)
+        try await syncDevice(container: containerA, server: server, cursorStore: cursorA, skipTracker: skipA)
 
         let finalA = try fetchCard(id: cardID, in: containerA)
         let finalB = try fetchCard(id: cardID, in: containerB)
@@ -242,6 +255,8 @@ struct SyncPullDivergenceTests {
         let containerB = try makeContainer()
         let cursorA = MockSyncCursorStore()
         let cursorB = MockSyncCursorStore()
+        let skipA = MockSyncSkipTracker()
+        let skipB = MockSyncSkipTracker()
 
         let cardID = UUID()
         let t0 = Date(timeIntervalSince1970: 1_700_100_000)
@@ -260,15 +275,15 @@ struct SyncPullDivergenceTests {
         try gradeCard(id: cardID, grade: .good, timestamp: t2, in: containerB)
 
         // A syncs first: pushes its tombstone to the server.
-        try await syncDevice(container: containerA, server: server, cursorStore: cursorA)
+        try await syncDevice(container: containerA, server: server, cursorStore: cursorA, skipTracker: skipA)
         // B syncs: PULLS FIRST, so it reconciles against A's tombstone
         // (rule 4) BEFORE its own push would otherwise clobber it —
         // exactly why `CloudSyncCoordinator.syncNow()` pulls before it
         // pushes. B's local card becomes tombstoned here.
-        try await syncDevice(container: containerB, server: server, cursorStore: cursorB)
+        try await syncDevice(container: containerB, server: server, cursorStore: cursorB, skipTracker: skipB)
         // A syncs again — confirms the deletion is stable, not resurrected
         // by anything B pushed.
-        try await syncDevice(container: containerA, server: server, cursorStore: cursorA)
+        try await syncDevice(container: containerA, server: server, cursorStore: cursorA, skipTracker: skipA)
 
         let finalA = try fetchCard(id: cardID, in: containerA)
         let finalB = try fetchCard(id: cardID, in: containerB)
@@ -285,11 +300,12 @@ struct SyncPullDivergenceTests {
         let server = FakeSyncServer()
         let container = try makeContainer()
         let cursorStore = MockSyncCursorStore()
+        let skipTracker = MockSyncSkipTracker()
 
         let seeded = try seedRichLocalState(into: container)
 
         let pullActor = SyncPullActor(modelContainer: container)
-        let summary = try await pullActor.pullAll(transport: server, cursorStore: cursorStore, accessToken: "token")
+        let summary = try await pullActor.pullAll(transport: server, cursorStore: cursorStore, skipTracker: skipTracker, accessToken: "token")
 
         // Rule 1 must have fired: nothing applied, seed decision recorded.
         #expect(summary.seededFromLocal == true)
@@ -321,17 +337,19 @@ struct SyncPullDivergenceTests {
         let containerB = try makeContainer()
         let cursorA = MockSyncCursorStore()
         let cursorB = MockSyncCursorStore()
+        let skipA = MockSyncSkipTracker()
+        let skipB = MockSyncSkipTracker()
 
         let stateID = UUID()
 
         // A is already ahead — xp 1000, level 5 — and syncs first.
         try seedRPGState(id: stateID, xp: 1000, level: 5, into: containerA)
-        try await syncDevice(container: containerA, server: server, cursorStore: cursorA)
+        try await syncDevice(container: containerA, server: server, cursorStore: cursorA, skipTracker: skipA)
 
         // B has been offline a long time and is stuck on a stale, LOWER
         // snapshot — xp 200, level 2 — for the SAME rpg_state id.
         try seedRPGState(id: stateID, xp: 200, level: 2, into: containerB)
-        try await syncDevice(container: containerB, server: server, cursorStore: cursorB)
+        try await syncDevice(container: containerB, server: server, cursorStore: cursorB, skipTracker: skipB)
 
         // B must have merged UP to the higher remote value, not stayed at
         // (or pushed) its stale one.
@@ -342,7 +360,7 @@ struct SyncPullDivergenceTests {
         // A syncs again — must still read 1000. If B's stale push had
         // somehow reached the server as a raw overwrite (rather than
         // merging locally before pushing), this would regress to 200.
-        try await syncDevice(container: containerA, server: server, cursorStore: cursorA)
+        try await syncDevice(container: containerA, server: server, cursorStore: cursorA, skipTracker: skipA)
         let stateA = try fetchRPGState(id: stateID, in: containerA)
         #expect(stateA?.xp == 1000)
         #expect(stateA?.level == 5)
@@ -354,6 +372,7 @@ struct SyncPullDivergenceTests {
     func idempotentReapplicationOfSamePage() async throws {
         let container = try makeContainer()
         let cursorStore = MockSyncCursorStore()
+        let skipTracker = MockSyncSkipTracker()
         let transport = MockSyncPullTransport()
 
         let cardID = UUID()
@@ -387,7 +406,7 @@ struct SyncPullDivergenceTests {
         }
 
         let pullActor = SyncPullActor(modelContainer: container)
-        _ = try await pullActor.pullAll(transport: transport, cursorStore: cursorStore, accessToken: "token")
+        _ = try await pullActor.pullAll(transport: transport, cursorStore: cursorStore, skipTracker: skipTracker, accessToken: "token")
 
         let afterFirst = ModelContext(container)
         let cardsAfterFirst = try afterFirst.fetch(FetchDescriptor<Card>())
@@ -397,7 +416,7 @@ struct SyncPullDivergenceTests {
         let stateAfterFirst = cardsAfterFirst.first?.fsrsState
         let dueDateAfterFirst = cardsAfterFirst.first?.dueDate
 
-        _ = try await pullActor.pullAll(transport: transport, cursorStore: cursorStore, accessToken: "token")
+        _ = try await pullActor.pullAll(transport: transport, cursorStore: cursorStore, skipTracker: skipTracker, accessToken: "token")
 
         let afterSecond = ModelContext(container)
         let cardsAfterSecond = try afterSecond.fetch(FetchDescriptor<Card>())
@@ -419,6 +438,7 @@ struct SyncPullDivergenceTests {
         let server = FakeSyncServer()
         let containerA = try makeContainer()
         let cursorA = MockSyncCursorStore()
+        let skipA = MockSyncSkipTracker()
 
         let context = ModelContext(containerA)
         let profile = UserProfile(displayName: "Learner")
@@ -426,7 +446,7 @@ struct SyncPullDivergenceTests {
         context.insert(profile)
         try context.save()
 
-        try await syncDevice(container: containerA, server: server, cursorStore: cursorA)
+        try await syncDevice(container: containerA, server: server, cursorStore: cursorA, skipTracker: skipA)
 
         // Device B: brand new, never seen this profile before. Its OWN
         // `UserProfile.init` will mint a fresh, unrelated `RPGState` with a
@@ -435,7 +455,8 @@ struct SyncPullDivergenceTests {
         // very same pull cycle.
         let containerB = try makeContainer()
         let cursorB = MockSyncCursorStore()
-        try await syncDevice(container: containerB, server: server, cursorStore: cursorB)
+        let skipB = MockSyncSkipTracker()
+        try await syncDevice(container: containerB, server: server, cursorStore: cursorB, skipTracker: skipB)
 
         let contextB = ModelContext(containerB)
         let profilesB = try contextB.fetch(FetchDescriptor<UserProfile>())
@@ -456,6 +477,7 @@ struct SyncPullDivergenceTests {
     func skippedRowMidPageIsNotLostByCursorAdvance() async throws {
         let container = try makeContainer()
         let cursorStore = MockSyncCursorStore()
+        let skipTracker = MockSyncSkipTracker()
         let transport = MockSyncPullTransport()
 
         // Already local, as if a previous cycle already pulled it — logs
@@ -504,87 +526,28 @@ struct SyncPullDivergenceTests {
         transport.enqueueRows([log1Row, log2Row, log3Row], forTable: "review_logs")
 
         let pullActor = SyncPullActor(modelContainer: container)
-        let summary = try await pullActor.pullAll(transport: transport, cursorStore: cursorStore, accessToken: "token")
+        let summary = try await pullActor.pullAll(transport: transport, cursorStore: cursorStore, skipTracker: skipTracker, accessToken: "token")
 
         // log1 and log3 both applied — log2 is the only skip.
         #expect(summary.appliedRowCounts["review_logs"] == 2)
         #expect(summary.skippedRowCounts["review_logs"] == 1)
 
-        // The cursor must NOT have advanced past log2's timestamp: it can
+        // The cursor must NOT have advanced past log2's position: it can
         // only certify the prefix up to (and including) log1, since log2
         // — mid-page — failed to apply.
+        let expectedPosition = SyncCursorPosition(timestamp: SyncJSON.iso8601String(t1), id: log1.id)
         let advancedCursor = cursorStore.cursor(forTable: "review_logs")
-        #expect(advancedCursor == t1)
-        #expect(advancedCursor != t3)
+        #expect(advancedCursor == expectedPosition)
+        #expect(advancedCursor?.id != log3.id)
 
         // A follow-up cycle re-queries `review_logs` from that safe
-        // boundary (t1), NOT from t3 — proving log2 (and log3, its
-        // safe-to-redeliver neighbor) are not permanently lost, only
-        // deferred to the next cycle, exactly like a real `gte` re-fetch
-        // would redeliver them once log2's card shows up.
-        _ = try await pullActor.pullAll(transport: transport, cursorStore: cursorStore, accessToken: "token")
+        // boundary (log1's position), NOT from log3's — proving log2 (and
+        // log3, its safe-to-redeliver neighbor) are not permanently lost,
+        // only deferred to the next cycle, exactly like a real keyset
+        // re-fetch would redeliver them once log2's card shows up.
+        _ = try await pullActor.pullAll(transport: transport, cursorStore: cursorStore, skipTracker: skipTracker, accessToken: "token")
         let secondCall = transport.calls(forTable: "review_logs").last
-        #expect(secondCall?.since == t1)
-    }
-
-    // MARK: - Test 7 (CRITIQUE 3): a fully-tied full page must throw, not
-    // loop forever
-
-    @Test("CRITIQUE 3: a full page entirely tied on server_updated_at throws instead of looping forever")
-    func fullyTiedFullPageThrowsInsteadOfLooping() async throws {
-        let container = try makeContainer()
-        let cursorStore = MockSyncCursorStore()
-        let transport = MockSyncPullTransport()
-
-        // Two rows sharing the EXACT same `server_updated_at` — the shape
-        // a single bulk push transaction produces (Postgres `now()` stamps
-        // every row in one transaction identically — see
-        // `SyncPullTransport`'s doc comment). `pageSize: 2` below makes
-        // this ONE tie cluster exactly fill a page — the hazard that doc
-        // comment describes.
-        let tiedTimestamp = Date(timeIntervalSince1970: 1_700_400_000)
-
-        let entryA = VocabularyEntry(word: "犬", reading: "いぬ", meaning: "dog")
-        entryA.updatedAt = tiedTimestamp
-        var rowA = try SyncPayloadBuilder.row(for: entryA)
-        rowA["server_updated_at"] = .string(SyncJSON.iso8601String(tiedTimestamp))
-
-        let entryB = VocabularyEntry(word: "猫", reading: "ねこ", meaning: "cat")
-        entryB.updatedAt = tiedTimestamp
-        var rowB = try SyncPayloadBuilder.row(for: entryB)
-        rowB["server_updated_at"] = .string(SyncJSON.iso8601String(tiedTimestamp))
-
-        let tiedPage = [rowA, rowB]
-
-        // Enqueue the IDENTICAL tied page TWICE — this is what a real
-        // `gte` re-fetch against a cursor that failed to advance past the
-        // tie cluster would return: the exact same two rows again.
-        transport.enqueueRows(tiedPage, forTable: "vocabulary_entries")
-        transport.enqueueRows(tiedPage, forTable: "vocabulary_entries")
-
-        let pullActor = SyncPullActor(modelContainer: container)
-
-        do {
-            _ = try await pullActor.pullAll(
-                transport: transport,
-                cursorStore: cursorStore,
-                accessToken: "token",
-                pageSize: 2
-            )
-            Issue.record("Expected pullAll to throw cursorStalledOnFullPage — a fully-tied full page must not silently succeed")
-        } catch let error as SyncPullActor.SyncPullActorError {
-            #expect(error == .cursorStalledOnFullPage(table: "vocabulary_entries"))
-        }
-
-        // The stall was caught on the SECOND identical page, not allowed
-        // to drain past it — exactly 2 `fetchRows` calls for this table.
-        // The old `advanced == nil`-only check never fires on a page that
-        // parses and applies fine (a tie cluster still produces a real,
-        // just-unchanged, `max()`), so it would have silently consumed
-        // BOTH queued pages and returned a clean, successful `PullSummary`
-        // — exactly the silent-infinite-loop-in-production hazard this
-        // test guards against.
-        #expect(transport.calls(forTable: "vocabulary_entries").count == 2)
+        #expect(secondCall?.since == expectedPosition)
     }
 
     // MARK: - Test 8 (CRITIQUE 2): an undecodable row must not block tables
@@ -594,6 +557,7 @@ struct SyncPullDivergenceTests {
     func undecodableRowDoesNotBlockSubsequentTables() async throws {
         let container = try makeContainer()
         let cursorStore = MockSyncCursorStore()
+        let skipTracker = MockSyncSkipTracker()
         let transport = MockSyncPullTransport()
 
         // A `cards` row whose `payload` is missing every required field
@@ -627,7 +591,7 @@ struct SyncPullDivergenceTests {
 
         let pullActor = SyncPullActor(modelContainer: container)
         // Must NOT throw — the whole point of CRITIQUE 2.
-        let summary = try await pullActor.pullAll(transport: transport, cursorStore: cursorStore, accessToken: "token")
+        let summary = try await pullActor.pullAll(transport: transport, cursorStore: cursorStore, skipTracker: skipTracker, accessToken: "token")
 
         #expect(summary.appliedRowCounts["cards"] == 0)
         #expect(summary.skippedRowCounts["cards"] == 1)
@@ -660,7 +624,10 @@ struct SyncPullDivergenceTests {
         // gets its chance to apply. Pre-seeding `review_logs`'s own cursor
         // makes `isColdStart` false, so the normal `pullOrder` sequence
         // (`cards` before `review_logs`) is what actually runs.
-        let cursorStore = MockSyncCursorStore(cursors: ["review_logs": Date(timeIntervalSince1970: 1)])
+        let cursorStore = MockSyncCursorStore(cursors: [
+            "review_logs": SyncCursorPosition(timestamp: SyncJSON.iso8601String(Date(timeIntervalSince1970: 1)), id: UUID()),
+        ])
+        let skipTracker = MockSyncSkipTracker()
 
         let cardID = UUID()
         let t0 = Date(timeIntervalSince1970: 1_700_600_000)
@@ -715,7 +682,7 @@ struct SyncPullDivergenceTests {
 
         let pullActor = SyncPullActor(modelContainer: container)
         await #expect(throws: (any Error).self) {
-            _ = try await pullActor.pullAll(transport: transport, cursorStore: cursorStore, accessToken: "token")
+            _ = try await pullActor.pullAll(transport: transport, cursorStore: cursorStore, skipTracker: skipTracker, accessToken: "token")
         }
 
         let localAfter = try #require(try fetchCard(id: cardID, in: container))
@@ -755,7 +722,7 @@ private struct TableFailingTransport: SyncPullTransport {
     let inner: any SyncPullTransport
     let failingTable: String
 
-    func fetchRows(table: String, since: Date?, limit: Int, accessToken: String) async throws -> [SyncRow] {
+    func fetchRows(table: String, since: SyncCursorPosition?, limit: Int, accessToken: String) async throws -> [SyncRow] {
         if table == failingTable {
             throw SyncPullTransportError.requestFailed(status: 500, body: "TableFailingTransport: simulated failure for \(table)")
         }
@@ -770,17 +737,22 @@ private struct TableFailingTransport: SyncPullTransport {
 /// from one simulated device becomes visible to a `fetchRows` call from
 /// another — the one piece of infrastructure `MockSyncDataTransport` and
 /// `MockSyncPullTransport` don't provide alone (each only records calls for
-/// its own single role). Rows are keyed by `(table, id)`; `upsert`
-/// overwrites by id and stamps a monotonically increasing
-/// `server_updated_at` on every write — mirroring the real
-/// `touch_server_updated_at()` trigger's guarantee (verified in
-/// `SyncCursorStore.swift`'s doc comment) that it never goes backward.
+/// its own single role). Rows are keyed by `(table, id)`.
 final class FakeSyncServer: SyncDataTransport, SyncPullTransport, @unchecked Sendable {
 
     private var tables: [String: [String: SyncRow]] = [:]
     private var clockTick: TimeInterval = 1_650_000_000
     private let lock = NSLock()
 
+    /// One `server_updated_at` stamp for the WHOLE batch, not one per row —
+    /// mirrors the real `touch_server_updated_at()` trigger's guarantee
+    /// (verified in `SyncCursorPosition`'s doc comment): `now()` is the
+    /// TRANSACTION clock, so every row one `upsert`/push call writes gets
+    /// the EXACT SAME timestamp. The earlier version of this fake bumped
+    /// `clockTick` per ROW, which could never actually produce a tie —
+    /// making any "tie cluster" test run against it prove nothing about the
+    /// real hazard. `clockTick` itself still only ever increases between
+    /// separate `upsert` calls, so cross-batch ordering stays deterministic.
     func upsert(table: String, rows: [SyncRow], accessToken: String) async throws {
         guard !rows.isEmpty else { return }
         // `withLock` runs the whole critical section synchronously, so it's
@@ -788,41 +760,48 @@ final class FakeSyncServer: SyncDataTransport, SyncPullTransport, @unchecked Sen
         // `MockSyncDataTransport.upsert` / `MockSyncPullTransport.fetchRows`
         // use, for the same `lock()`/`unlock()`-are-`noasync` reason.
         lock.withLock {
+            clockTick += 1
+            let stamp = SyncJSON.iso8601String(Date(timeIntervalSince1970: clockTick))
             var stored = tables[table, default: [:]]
             for row in rows {
                 guard case .string(let idString)? = row["id"] else { continue }
-                clockTick += 1
                 var stamped = row
-                stamped["server_updated_at"] = .string(SyncJSON.iso8601String(Date(timeIntervalSince1970: clockTick)))
+                stamped["server_updated_at"] = .string(stamp)
                 stored[idString] = stamped
             }
             tables[table] = stored
         }
     }
 
-    func fetchRows(table: String, since: Date?, limit: Int, accessToken: String) async throws -> [SyncRow] {
+    /// Implements the SAME keyset semantics as `PostgRESTPullTransport`'s
+    /// `or=` filter — every row STRICTLY after `since` in
+    /// `(server_updated_at, id)` order — over the in-memory store, rather
+    /// than the old `since >= stamp` scalar comparison a single-`Date`
+    /// cursor needed. `id` ties break on `uuidString` lexicographic order,
+    /// matching `advanceCursor`'s tie-break and the `id.asc` secondary sort
+    /// key this transport requests.
+    func fetchRows(table: String, since: SyncCursorPosition?, limit: Int, accessToken: String) async throws -> [SyncRow] {
         lock.withLock {
-            let rows = Array((tables[table] ?? [:]).values)
-            let filtered: [SyncRow]
-            if let since {
-                filtered = rows.filter { row in
-                    guard case .string(let raw)? = row["server_updated_at"],
-                          let stamped = SyncJSON.dateFormatter.date(from: raw) else { return false }
-                    return stamped >= since
-                }
-            } else {
-                filtered = rows
+            let decorated: [(row: SyncRow, date: Date, id: String)] = (tables[table] ?? [:]).values.compactMap { row in
+                guard case .string(let raw)? = row["server_updated_at"],
+                      let date = SyncJSON.dateFormatter.date(from: raw),
+                      case .string(let idString)? = row["id"] else { return nil }
+                return (row, date, idString)
             }
-            let sorted = filtered.sorted { lhs, rhs in
-                guard case .string(let lRaw)? = lhs["server_updated_at"],
-                      let lDate = SyncJSON.dateFormatter.date(from: lRaw),
-                      case .string(let rRaw)? = rhs["server_updated_at"],
-                      let rDate = SyncJSON.dateFormatter.date(from: rRaw) else { return false }
-                if lDate != rDate { return lDate < rDate }
-                guard case .string(let lID)? = lhs["id"], case .string(let rID)? = rhs["id"] else { return false }
-                return lID < rID
+            let sorted = decorated.sorted { lhs, rhs in
+                if lhs.date != rhs.date { return lhs.date < rhs.date }
+                return lhs.id < rhs.id
             }
-            return Array(sorted.prefix(limit))
+            guard let since,
+                  let sinceDate = SyncJSON.dateFormatter.date(from: since.timestamp) else {
+                return Array(sorted.prefix(limit).map(\.row))
+            }
+            let sinceID = since.id.uuidString
+            let filtered = sorted.filter { candidate in
+                if candidate.date != sinceDate { return candidate.date > sinceDate }
+                return candidate.id > sinceID
+            }
+            return Array(filtered.prefix(limit).map(\.row))
         }
     }
 }

@@ -130,12 +130,19 @@ struct SettingsView: View {
     /// (CRITICAL fix — this used to be indistinguishable: a broken pull
     /// left this row claiming everything was fine, indefinitely, because
     /// the coordinator wiped the error slot on every successful push
-    /// regardless of the pull outcome). The label stays deliberately calm:
-    /// the backup itself did succeed, so this must not read as an error.
+    /// regardless of the pull outcome). A pull that DID succeed but left
+    /// some rows stuck or permanently abandoned (a poison row — see
+    /// `SyncPullActor`'s poison-row policy) is a THIRD, calmer state
+    /// (`pullDegradedThisCycle`) — the point E/F/G observability fix: this
+    /// used to be computed and surfaced nowhere, so a table quietly stuck
+    /// forever was invisible from Settings. The label stays deliberately
+    /// calm in every case: the backup itself did succeed, so none of these
+    /// must read as an error.
     private var cloudSyncStatusValue: LocalizedStringKey {
         guard cloudSyncConsentEnabled else { return "Off" }
         if cloudSyncLastSuccessEpoch > 0 {
             if pullFailedThisCycle { return "Backed up, will retry" }
+            if pullDegradedThisCycle { return "Backed up, restore incomplete" }
             return "Up to date"
         }
         if cloudSyncLastAttemptEpoch > 0 { return "Backup pending" }
@@ -149,6 +156,15 @@ struct SettingsView: View {
     /// second `UserDefaults` key.
     private var pullFailedThisCycle: Bool {
         cloudSyncLastError.hasPrefix(CloudSyncCoordinator.pullFailureMessagePrefix)
+    }
+
+    /// Whether the most recently recorded error is specifically the
+    /// "pull succeeded but left some rows stuck or permanently abandoned"
+    /// state — see `CloudSyncCoordinator.pullDegradedMessagePrefix`'s doc
+    /// comment. Mutually exclusive with `pullFailedThisCycle`: the
+    /// coordinator only ever writes one prefix (or none) per cycle.
+    private var pullDegradedThisCycle: Bool {
+        cloudSyncLastError.hasPrefix(CloudSyncCoordinator.pullDegradedMessagePrefix)
     }
 
     /// Whether backup has been turned on at least once. Derived from
@@ -730,16 +746,20 @@ struct SettingsView: View {
         isDeletingCloudData = true
         Task {
             do {
-                try await CloudDataDeletionService().deleteAllCloudData()
+                try await CloudDataDeletionService(modelContainer: modelContext.container).deleteAllCloudData()
                 isDeletingCloudData = false
                 cloudSyncConsentEnabled = false
                 cloudSyncLastSuccessEpoch = 0
                 cloudSyncLastAttemptEpoch = 0
-                // A stale "pull-failed" error string must not outlive an
-                // account wipe: `CloudDataDeletionService` already resets
-                // the pull cursors server-side, but this row's own status
-                // display has its own error slot and must not keep pointing
-                // at a failure from an identity that no longer exists.
+                // A stale "pull-failed"/"pull-degraded" error string must
+                // not outlive an account wipe: `CloudDataDeletionService`
+                // already resets the pull cursor and skip-tracker state —
+                // but that's LOCAL `UserDefaults` bookkeeping, not
+                // something that happens "server-side" (the server side of
+                // this is just the deleted rows themselves) — and this
+                // row's own status display has its own error slot that
+                // must not keep pointing at a failure from an identity
+                // that no longer exists.
                 cloudSyncLastError = ""
                 // The success path used to be entirely silent, which reads
                 // as "nothing happened" for an action whose whole point is

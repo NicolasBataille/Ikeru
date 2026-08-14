@@ -23,6 +23,336 @@ raisonnement, les mesures, et les décisions.
 
 ---
 
+## 2026-08-14 — Lot 2 (pull) : contre-relecture adversariale, ronde 3
+
+### Fait
+
+Aucune modification de code. Relecture adversariale de l'arbre de travail
+(base `e1312cf` + modifications non commitées), avec **rejeu empirique** des
+7 scénarios nommés plutôt que lecture de « code qui ressemble au correctif ».
+
+⚠️ Piège de méthode à retenir : `git diff dev...HEAD` **ne montre pas** ce
+travail — l'essentiel de la ronde 2 est non commité. Il faut `git diff` (arbre
+de travail) + les 3 fichiers `??`. Le vérificateur précédent s'était déjà fait
+avoir là-dessus sur l'étape SwiftLint.
+
+### Testé
+
+3 sondes jetables (`ZZReviewProbeTests.swift`, supprimée après coup, archivée
+dans le scratchpad de session) exécutées via `swift test --no-parallel` :
+
+- **Sonde 1 — identité re-provisionnée** : curseurs non-nuls + compte serveur
+  vide → `profiles`=1, `rpg_states`=1, **`cards`=0, `review_logs`=0**. CRITIQUE B
+  n'est PAS fermé sur ce chemin (voir Ouvert).
+- **Sonde 2 — cascade parent/enfant** : `cards` bloquée derrière 2 lignes poison
+  (pageSize 1, `FakeSyncServer`) → le `review_logs` en attente brûle ses 3
+  strikes au cycle 3 et est abandonné définitivement ; la carte arrive au cycle
+  5, le log est perdu pour de bon (`logs=0`).
+- **Sonde 3 — abandon chirurgical dans un paquet d'ex æquo** : 3 lignes d'un
+  même upsert, la poison ayant le plus petit uuid → au cycle 3 elle est
+  abandonnée et **les 2 sœurs s'appliquent** (`["一","二"]`). Le curseur
+  composite tient sa promesse. Cette sonde mérite d'être adoptée comme test de
+  non-régression.
+
+Vérifié aussi hors sonde : `ISO8601DateFormatter` **tronque à la milliseconde**
+(snippet Swift autonome : `…22.968936+00:00` et `…22.968999+00:00` donnent le
+même `Date`). Conséquence analysée : redélivrance possible de la queue d'une
+même milliseconde, jamais de perte — le curseur est toujours posé sur une ligne
+réellement présente dans la page, donc strictement en avant.
+
+Suites filtrées relancées après suppression de la sonde : 72 tests, 5 suites,
+vertes (`SyncPullDivergence|SyncMergeRules|SyncCursorStore|CloudSyncCoordinator|CloudDataDeletion`).
+
+### Écarté
+
+- **Première version de la sonde 2** (transport FIFO `MockSyncPullTransport`,
+  page `[poisonA, poisonB, realCard]`) : ne prouvait rien. `apply()` traite
+  **toute** la page, y compris les lignes situées après la ligne bloquante —
+  seul le *curseur* est limité au préfixe. La carte était donc appliquée dès le
+  cycle 1 et le log s'attachait. Il faut `FakeSyncServer` + `pageSize` petit
+  pour que le parent reste hors de portée. À ne pas refaire.
+- **Soupçon d'aller-retour `Date` dans le curseur** : cherché activement
+  (`grep SyncCursorPosition(` sur tout le code de prod → un seul site,
+  `SyncPullActor.swift:493`, qui réutilise la chaîne verbatim de la ligne).
+  Rien à signaler, scénario 4 fermé.
+- **Soupçon de boucle non bornée dans `pullAndApply`** : chaque `continue`
+  avance le curseur strictement (drop poison) ou consomme une page pleine dont
+  le curseur a bougé. Borné.
+
+### Ouvert
+
+- **CRITIQUE** — `SyncModelActor.markEverythingUnsynced()` n'est jamais appelé
+  quand l'identité anonyme est silencieusement re-provisionnée (refresh token
+  rejeté) : la règle 1 exige `isColdStart` (TOUS les curseurs nuls), ce qu'un
+  appareil déjà synchronisé n'est jamais. Le commentaire de la méthode affirme
+  pourtant l'inverse. Correctif proposé : mémoriser le dernier `user_id` connu
+  (UserDefaults) et, dans `syncNow()` juste après `validAccessToken()` et
+  **avant** `runPull`, réinitialiser curseurs + skip tracker si l'id a changé —
+  le compte neuf étant vide, la règle 1 refire et la machinerie CRITIQUE B
+  existante fait le reste, sans second site d'appel.
+- **IMPORTANT** — la politique 3 strikes ne distingue pas « payload
+  indécodable » (permanent) de « FK pas encore arrivée » (transitoire) : voir
+  sonde 2. Piste : ne pas compter de strike sur une table enfant tant que sa
+  table parente n'a pas atteint « caught up » dans le même cycle.
+- **MINEUR** — une ligne en tête de page avec un `server_updated_at` non-`.string`
+  ne peut jamais être force-abandonnée (`SyncPullActor.swift:479-480`) : elle
+  n'est pas positionnable, donc « documenter + logger fort » est la réponse
+  honnête.
+
+---
+
+## 2026-08-14 — Lot 2 (pull) : vérification indépendante de la ronde 2
+
+### Fait
+
+Contre-vérification (pas d'implémentation nouvelle) de l'entrée ci-dessous, sur
+le même arbre de travail non commité (base `e1312cf`). Toutes les commandes
+demandées passent (build IkeruCore, filtres de tests Sync + non-régression,
+suite Sync complète 86 tests, builds `Ikeru`/`IkeruWidget` iOS et `IkeruWatch`
+watchOS, i18n-lint 0 NEW, diff du catalogue = 18 lignes chirurgicales, filtre
+CI contient bien SyncCursorStore/SyncMergeRules/SyncPullDivergence sans
+collision). Contrôle manuel du code (pas seulement des tests) : le curseur
+stocke `timestamp: String` verbatim sans aller-retour `Date` (confirmé dans
+`SyncCursorStore.swift`), `setConsent(false)` n'appelle jamais
+`markEverythingUnsynced` (seuls `cursorStore.resetAll()` /
+`skipTracker.resetAll()`, éventuellement différés), et le consentement est
+re-testé entre pull et push dans `CloudSyncCoordinator.syncNow()` juste avant
+le premier `pushDirty*`. Repris moi-même le disable/restore du site d'appel
+(a) (`CloudDataDeletionService.swift:197`, `markEverythingUnsynced` sous
+`if false`) que le rapport de l'implémenteur laissait non revérifié : le test
+`deletionMarksLocalRowsUnsynced` passe bien au rouge, restauré ensuite
+octet-pour-octet (hash SHA-256 identique avant/après). Corrigé un commentaire
+inexact repéré par l'implémenteur lui-même : `SyncPullActor+RowDecoding.swift`
+prétendait que `SyncCursorTimestampParsing` était « hors du périmètre de
+fichiers de ce lot » — faux, les deux types vivent dans `Services/Sync/` et
+rien n'empêchait un appel direct ; reformulé pour dire honnêtement que la
+duplication est volontairement laissée telle quelle (deux petits formatters
+privés, sans risque de correction) plutôt que refactorée.
+
+### Testé
+
+Voir ci-dessus. Non revérifié moi-même (fait confiance au rapport de
+l'implémenteur, lui-même journalisé) : l'isolation de `pendingCursorReset` en
+dehors du test combiné `consentRevokedMidPullSkipsPushAndStillResetsCursors`,
+et le wiring de `pullDegradedMessagePrefix`/`cloudSyncStatusValue` (vérifié
+seulement en lisant le code, pas en le désactivant). La contrainte
+SwiftLint « lignes touchées après commit, diff contre `origin/dev` » n'a pas
+pu tourner à l'identique puisque rien n'est commité sur cette branche ; j'ai
+reproduit sa logique (`swiftlint-diff-filter.py`) à la main sur l'arbre de
+travail non commité contre `origin/dev` — 0 violation sur les lignes
+touchées, mais c'est une approximation, à refaire pour de vrai après commit.
+Rien vérifié contre le backend Supabase réel ce tour-ci (seul le curl manuel
+documenté dans les commentaires du code l'a été, avant cette session).
+
+### Écarté
+
+Rien.
+
+### Ouvert
+
+Même limite résiduelle documentée par l'implémenteur, non retestée par moi :
+une ligne en tête de page dont l'`id` est valide mais dont
+`server_updated_at` ne parse pas retente indéfiniment sans jamais être
+force-abandonnée (`SyncPullActor.swift` autour de la ligne 454-476,
+comportement volontaire mais non couvert par un test). Rien n'a été commité
+par cette session de vérification — un seul fichier corrigé
+(`SyncPullActor+RowDecoding.swift`, non suivi par git), le reste de l'arbre
+inchangé.
+
+---
+
+## 2026-08-14 — Lot 2 (pull) : curseur composite + politique de ligne poison (remédiation ronde 2)
+
+### Fait
+
+Branche `feature/cloud-lot2-pull`, **pas encore commité** (pas de SHA — travail
+en cours au moment de cette entrée, sur la base WIP `e1312cf`). Deuxième ronde
+de relecture adversariale sur le pull engine : la racine commune des bugs
+n'était pas une suite de défauts isolés mais le choix de design du curseur —
+un `Date` scalaire ne peut pas à la fois « ne perdre aucune ligne » et
+« progresser toujours ». Cinq points traités :
+
+1. **Curseur composite `(timestamp: String, id: UUID)`** — `SyncCursorPosition`,
+   nouveau type dans `SyncCursorStore.swift`. Le `timestamp` est stocké
+   **verbatim**, jamais reconstruit depuis un `Date` (6 chiffres de
+   microsecondes + `+00:00`, jamais `Z`, fraction supprimée à la seconde
+   exacte — vérifié en réel contre `aiayzlarixlogcoyswna`). `SyncPullTransport`
+   construit désormais la requête PostgREST validée par curl :
+   `or=(server_updated_at.gt.{TS},and(server_updated_at.eq.{TS},id.gt.{ID}))`.
+   Piège découvert en cours de route et corrigé : `URLComponents` laisse `+`
+   non échappé dans la query (RFC 3986 l'autorise, mais PostgREST — comme la
+   plupart des serveurs — le décode comme un espace, suivant la convention
+   `application/x-www-form-urlencoded`). Un `+00:00` non échappé aurait
+   silencieusement corrompu le filtre `eq`. Fix : post-traitement
+   `percentEncodedQuery.replacingOccurrences(of: "+", with: "%2B")`.
+   `IkeruCore/Sources/Services/Sync/{SyncCursorStore,SyncPullTransport}.swift`.
+   Tests : `SyncCursorStoreTests` (formats réels PostgREST, tie-break par id),
+   `tiedClusterWiderThanOnePageIsFullyTraversed` +
+   `exAequoTieClusterAgainstRealKeysetFilter` (`SyncPullDivergenceTests+PoisonRow.swift`).
+
+2. **Politique de ligne poison (CRITIQUE A)** — nouveau protocole
+   `SyncSkipTracker` (`SyncSkipTracker.swift`, persisté UserDefaults comme le
+   curseur — un compteur en mémoire seule ne survivrait pas à un relaunch
+   entre deux cycles). `SyncPullActor.pullAndApply` trace, par table, l'id de
+   la ligne de tête bloquée ; au bout de 3 cycles consécutifs sur le même id,
+   avance le curseur exactement au-delà d'elle (`setCursor`, pas
+   `advanceCursor` — cette ligne n'a jamais été appliquée, le contrat
+   « after durably applied » de `advanceCursor` aurait menti), compte la
+   ligne dans `permanentlyDroppedRowCounts`, log `Logger.sync.error`. Autre
+   fix structurel dans le même geste : `pullAll` attrape désormais
+   `SyncPullActorError` **par table** au lieu de laisser l'erreur remonter et
+   tuer tout le cycle — avant, une ligne poison sur `cards` empêchait
+   `review_logs` à `exercise_outcome_logs` d'être même interrogées. Le garde-fou
+   « page pleine sans avancée » original reste en place comme filet
+   d'anomalie résiduel (tous les rows d'une page s'appliquent mais aucun n'a
+   de `server_updated_at` exploitable) — plus jamais atteint en usage normal,
+   mais toujours attrapé par le même `catch` par table s'il se déclenche.
+   `IkeruCore/Sources/Services/Sync/{SyncPullActor,SyncSkipTracker}.swift`.
+   Tests : `poisonRowOnFullPageDoesNotAbortSubsequentTables` (page pleine),
+   `poisonRowIsDroppedAfterThreeCyclesAndUnblocksLaterRows` (page courte),
+   `residualAnomalyGuardOnFullPageDoesNotAbortSubsequentTables` (le filet
+   résiduel) — les trois dans `SyncPullDivergenceTests+PoisonRow.swift`.
+
+3. **Seed après effacement ne seedait rien (CRITIQUE B)** — `SyncModelActor.markEverythingUnsynced()`
+   (fetch + `syncedAt = nil` sur les 7 types + save), appelé (a) depuis
+   `CloudDataDeletionService.deleteAllCloudData()` juste après
+   `cursorStore.resetAll()`, et (b) depuis `CloudSyncCoordinator.syncNow()`
+   quand le pull renvoie `.seededFromLocal`, **avant** le push. Sans (b), le
+   cas « refresh token rejeté → nouvelle identité anonyme silencieuse »
+   (`AnonymousIdentityManager`) ne passe jamais par (a) et restait cassé.
+   `CloudDataDeletionService` prend maintenant un `modelContainer` requis
+   (appel site : `SettingsView.deleteCloudDataFromServer()`,
+   `modelContext.container`). Commentaire de `PullSummary.seededFromLocal`
+   corrigé : il affirmait que le push seede toujours le serveur — vrai
+   seulement parce que (b) existe maintenant, précisé explicitement.
+   Tests : `seedFromLocalPushesCardsAndLogsNotJustProfileAndRPGState`
+   (`CloudSyncCoordinatorTests.swift`), `deletionMarksLocalRowsUnsynced`
+   (`CloudDataDeletionServiceTests.swift`).
+
+4. **Réentrance d'acteur (IMPORTANT C)** — `setConsent(false)` posait
+   `cursorStore.resetAll()` immédiatement, y compris pendant qu'un
+   `syncNow()` était suspendu (réentrance des acteurs Swift à chaque
+   `await`) — le cycle en vol réécrivait des curseurs par-dessus juste
+   après, défaisant le reset silencieusement. Fix : `pendingCursorReset`,
+   honoré dans le `defer` de `syncNow()`. Deuxième moitié, plus grave :
+   `syncNow()` ne vérifiait le consentement qu'à l'entrée — une révocation
+   à mi-cycle laissait les 7 `pushDirty*` partir quand même (violation de
+   consentement, pas un détail UX). Fix : re-check entre le pull et le
+   premier push, sortie sur `.skippedConsentOff`.
+   `IkeruCore/Sources/Services/Sync/CloudSyncCoordinator.swift`. Test :
+   `consentRevokedMidPullSkipsPushAndStillResetsCursors` — utilise un
+   `GatedPullTransport` + `PullGate` (deux `CheckedContinuation` dans une
+   boîte `@unchecked Sendable`) pour suspendre réellement `syncNow()` au
+   milieu d'un `fetchRows`, révoquer depuis le test, puis relâcher.
+
+5. **Observabilité (mineurs E/F/G)** — `PullSummary.skippedRowCounts` /
+   `permanentlyDroppedRowCounts` étaient calculés et lus par personne.
+   Câblés jusqu'au statut via un second préfixe,
+   `CloudSyncCoordinator.pullDegradedMessagePrefix` (même mécanisme que
+   `pullFailureMessagePrefix`) ; `SettingsView` gagne un 3ᵉ statut, « Backed
+   up, restore incomplete » / « Sauvegardé, restauration incomplète »
+   (catalogue de localisation, fr+en, édition chirurgicale). Commentaire
+   corrigé dans `SettingsView` : les curseurs/skip-tracker sont de l'état
+   `UserDefaults` **local**, pas « server-side » comme l'affirmait le
+   commentaire précédent. Distinction `applied` vs `alreadyPresent` pour les
+   3 tables append-only — une ligne déjà présente incrémentait `applied`,
+   surestimant le travail d'un cycle qui ne fait en réalité que re-fetcher
+   la même borne. Test : `degradedPullSurfacesVisibleStatus`
+   (`CloudSyncCoordinatorTests.swift`).
+
+**Découpage fichiers pour rester sous les seuils SwiftLint** (`file_length`
+1200, `type_body_length` 600) : `SyncPullActor.swift` a débordé à 1237 lignes
+après l'ajout de la politique poison → extrait `SyncRowDecoding` /
+`SyncPullDateParsing` / `SyncIdentifiable` dans
+`SyncPullActor+RowDecoding.swift` (redescend à 1100). Même chose côté tests :
+`SyncPullDivergenceTests.swift` à 602 lignes de corps de struct (limite 600)
+après les 5 nouveaux tests → extraits dans
+`SyncPullDivergenceTests+PoisonRow.swift` (`extension SyncPullDivergenceTests`,
+`makeContainer()` remonté de `private` à `internal` pour l'accès cross-fichier).
+
+### Testé
+
+- `cd IkeruCore && swift build` — propre (avertissements pré-existants
+  ailleurs dans le repo, aucun nouveau).
+- `swift test --no-parallel --filter "SyncPullDivergence|SyncMergeRules|SyncCursorStore"`
+  — 55 tests, verts.
+- `swift test --no-parallel --filter "CloudSyncCoordinator|CloudDataDeletion|FSRSService"`
+  — 45 tests, verts.
+- `swift test --no-parallel --filter "Sync"` (filet plus large, toute la
+  suite Sync) — 86 tests, verts.
+- **Chaque correctif désactivé manuellement puis re-testé** (exigence de la
+  tâche) : seuil poison → `Int.max` (seul `poisonRowIsDroppedAfterThreeCyclesAndUnblocksLaterRows`
+  rouge), `catch` par table → `throw` (seul `residualAnomalyGuardOnFullPageDoesNotAbortSubsequentTables`
+  rouge), `markEverythingUnsynced` (b) commenté (seul `seedFromLocalPushesCardsAndLogsNotJustProfileAndRPGState`
+  rouge), `markEverythingUnsynced` (a) commenté (seul `deletionMarksLocalRowsUnsynced`
+  rouge), re-check consentement mi-cycle retiré (données parties après
+  révocation — `dataTransport.calls` non vide, exactement la violation
+  décrite), reset différé retiré (le cycle en vol réécrit le curseur
+  par-dessus le reset — reproduit puis re-vérifié corrigé), câblage du statut
+  dégradé commenté (seul `degradedPullSurfacesVisibleStatus` rouge). À
+  chaque fois, fichier restauré et diff vérifié identique à l'original avant
+  de continuer.
+- `xcodebuild build -project Ikeru.xcodeproj -scheme Ikeru -destination
+  "generic/platform=iOS" -skipPackagePluginValidation CODE_SIGNING_ALLOWED=NO`
+  — `BUILD SUCCEEDED` (valide que `SettingsView.swift` et
+  `CloudSyncTriggers.swift` compilent contre la nouvelle API IkeruCore).
+- `swiftlint lint` sur le périmètre modifié — aucune violation nouvelle
+  (`file_length`/`type_body_length` déjà au vert après le découpage ; les
+  seuls dépassements restants dans le rapport global — `HomeView.swift`,
+  `SettingsView.swift`, `DailyTermCatalog.swift` — sont pré-existants,
+  vérifié via `git show HEAD:...` avant mon edit).
+- **Non vérifié** : pas de run réel contre le vrai backend Supabase pour
+  cette ronde (le curseur composite lui-même a été validé par curl par
+  l'utilisateur avant la tâche — voir le prompt de tâche — mais le code
+  Swift qui le reproduit n'a été exercé qu'en tests unitaires/fakes, jamais
+  en intégration réseau réelle). À vérifier au premier device-pass.
+
+### Écarté
+
+- **Test 7 original (`fullyTiedFullPageThrowsInsteadOfLooping`) réécrit, pas
+  gardé tel quel.** Il asserait qu'une page pleine entièrement ex-æquo
+  DEVAIT lever `cursorStalledOnFullPage` — correct pour l'ancien curseur
+  `Date` scalaire, qui ne pouvait distinguer deux lignes de même timestamp.
+  Le curseur composite supprime le hazard structurellement (chaque ligne a
+  une position unique). Garder l'assertion originale aurait revalidé une
+  régression exactement au point que ce lot corrige. Remplacé par
+  `tiedClusterWiderThanOnePageIsFullyTraversed` (traversée complète, pas
+  d'exception) + `exAequoTieClusterAgainstRealKeysetFilter` (même scénario
+  contre le vrai filtre `FakeSyncServer`, une seule transaction `upsert`
+  pour les 3 lignes — l'ancien fake bumpait l'horloge par ligne, ce qui ne
+  pouvait jamais produire un vrai ex-æquo).
+- **Poison-row tracking par table unique, pas multi-candidats.** Le tracker
+  ne suit qu'UN candidat par table à la fois (le premier row bloqué). Si
+  deux lignes poison différentes se trouvent dans la même page, la seconde
+  n'est comptabilisée qu'après que la première ait été droppée (au cycle
+  suivant, via un re-fetch). Plus simple et plus prévisible qu'un tracking
+  multi-id par table ; le coût est un délai supplémentaire de cycles pour
+  des pages contenant plusieurs poisons distinctes simultanément — jugé
+  acceptable, ce cas devrait être rarissime en pratique.
+- **`FakeSyncServer` : basculé de « un timestamp par ligne » à « un
+  timestamp par transaction `upsert` ».** L'ancienne version ne pouvait
+  jamais produire un vrai ex-æquo (chaque ligne recevait un tick d'horloge
+  différent), donc tout ancien test « tie cluster » ne prouvait rien sur le
+  vrai hazard. Signalé par la relecture avant que ça devienne un trou de
+  couverture silencieux.
+
+### Ouvert
+
+- Le résidu documenté dans `pullAndApply` (ligne de tête avec `id` valide
+  mais `server_updated_at` manquant/illisible à la 3ᵉ frappe) ne progresse
+  jamais — pas de crash, pas de position fabriquée, mais pas de résolution
+  non plus (retente indéfiniment sans jamais dropper). Comportement
+  délibéré et documenté (« mieux vaut ne rien faire que fabriquer une
+  position fausse ») mais reste un cas résiduel non couvert par un test
+  dédié — jugé assez pathologique (colonne serveur absente alors que
+  `updated_at` est présent) pour ne pas justifier plus de temps sur cette
+  ronde.
+- Rien commité sur cette branche pour l'instant — à faire sur demande
+  explicite, avec un message de commit qui distingue les 5 points listés
+  ci-dessus.
+
+---
+
 ## 2026-08-14 — Lot 4 : la sauvegarde cloud devient annonçable (conformité)
 
 ### Fait

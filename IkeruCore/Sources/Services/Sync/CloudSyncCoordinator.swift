@@ -77,8 +77,13 @@ public actor CloudSyncCoordinator {
         case seededFromLocal
         /// The normal path: `rowCount` rows were created or updated locally
         /// across every pulled table this cycle (may be `0` on an
-        /// already-caught-up device).
-        case applied(rowCount: Int)
+        /// already-caught-up device). `skippedRowCount` and
+        /// `permanentlyDroppedRowCount` surface `SyncPullActor.PullSummary`'s
+        /// same-named totals — both `0` on a clean cycle; `syncNow()` uses
+        /// them to set a calm, honest "restore incomplete" status distinct
+        /// from both "up to date" and an outright pull failure (see
+        /// `pullDegradedMessagePrefix`).
+        case applied(rowCount: Int, skippedRowCount: Int, permanentlyDroppedRowCount: Int)
         /// The pull attempt threw — network error, a stalled cursor
         /// (`SyncPullActor.SyncPullActorError.cursorStalledOnFullPage`),
         /// etc. `message` is diagnostic only, same non-localized-copy
@@ -99,11 +104,26 @@ public actor CloudSyncCoordinator {
     /// widening the protocol.
     public static let pullFailureMessagePrefix = "pull-failed: "
 
+    /// Marker prefix for the "push succeeded, pull succeeded (or seeded),
+    /// but some rows are stuck or were permanently abandoned" status —
+    /// distinct from `pullFailureMessagePrefix` (the pull itself THREW)
+    /// and from a clean cycle (no prefix, error slot cleared). Reuses the
+    /// exact same single-error-slot mechanism `pullFailureMessagePrefix`
+    /// established (see that constant's doc comment for why this lives
+    /// here rather than widening `SyncConsentStore`) — this is the "point
+    /// E/F/G" observability fix: before this existed, `PullSummary.skippedRowCounts`
+    /// / `permanentlyDroppedRowCounts` were computed and read by nobody, so
+    /// a table stuck on a poison row (see `SyncPullActor`'s poison-row
+    /// policy) was completely invisible in production — the backup half of
+    /// sync can be working perfectly while the restore half quietly limps.
+    public static let pullDegradedMessagePrefix = "pull-degraded: "
+
     private let modelContainer: ModelContainer
     private let identity: AnonymousIdentityManager
     private let transport: any SyncDataTransport
     private let pullTransport: any SyncPullTransport
     private let cursorStore: any SyncCursorStore
+    private let skipTracker: any SyncSkipTracker
     private let consentStore: any SyncConsentStore
     private let minSyncInterval: TimeInterval
     private let now: @Sendable () -> Date
@@ -127,12 +147,37 @@ public actor CloudSyncCoordinator {
     /// between one — so no other task can ever observe it mid-update.
     private var isSyncing = false
 
+    /// Set by `setConsent(false)` when it fires WHILE `isSyncing` is true —
+    /// honored in `syncNow()`'s `defer`, once the in-flight cycle is fully
+    /// done writing cursors, rather than reset immediately (IMPORTANT C
+    /// remediation).
+    ///
+    /// Swift actors are reentrant at every `await`: `setConsent` itself has
+    /// no `await` in it, so it always runs start-to-finish without
+    /// interleaving — but `syncNow()` has MANY, and `setConsent(false)` can
+    /// be dispatched to this actor while `syncNow()` is suspended on one of
+    /// them (a network call, `SyncPullActor`'s SwiftData work). Resetting
+    /// `cursorStore` immediately in that case used to be silently undone:
+    /// the in-flight cycle would resume moments later and keep calling
+    /// `cursorStore.setCursor`/`advanceCursor` per table as it finishes its
+    /// OWN pull, leaving fresh, non-`nil` cursors sitting right on top of
+    /// the reset that was supposed to have cleared them — consent was
+    /// revoked, but the NEXT opt-back-in would see stale cursors and skip
+    /// rule 1's cold-start guard, the exact hazard `setConsent`'s own doc
+    /// comment on the (non-reentrant) reset already explains. Deferring the
+    /// reset until the in-flight cycle's `defer` fires closes that window:
+    /// whatever cursors that cycle wrote get wiped right back out
+    /// afterward, deterministically, regardless of how the two calls
+    /// interleaved.
+    private var pendingCursorReset = false
+
     public init(
         modelContainer: ModelContainer,
         identity: AnonymousIdentityManager = AnonymousIdentityManager(),
         transport: any SyncDataTransport = PostgRESTSyncTransport(),
         pullTransport: any SyncPullTransport = PostgRESTPullTransport(),
         cursorStore: any SyncCursorStore = UserDefaultsSyncCursorStore(),
+        skipTracker: any SyncSkipTracker = UserDefaultsSyncSkipTracker(),
         consentStore: any SyncConsentStore = UserDefaultsSyncConsentStore(),
         minSyncInterval: TimeInterval = 60,
         now: @escaping @Sendable () -> Date = Date.init
@@ -142,6 +187,7 @@ public actor CloudSyncCoordinator {
         self.transport = transport
         self.pullTransport = pullTransport
         self.cursorStore = cursorStore
+        self.skipTracker = skipTracker
         self.consentStore = consentStore
         self.minSyncInterval = minSyncInterval
         self.now = now
@@ -174,7 +220,17 @@ public actor CloudSyncCoordinator {
     public func setConsent(_ enabled: Bool) {
         consentStore.setConsentGiven(enabled)
         if !enabled {
-            cursorStore.resetAll()
+            if isSyncing {
+                // A cycle is in flight on THIS instance right now — defer
+                // the reset to `syncNow()`'s own `defer`, once that cycle
+                // is done writing cursors, instead of resetting immediately
+                // only to have it silently undone. See `pendingCursorReset`'s
+                // doc comment for the full reentrance story.
+                pendingCursorReset = true
+            } else {
+                cursorStore.resetAll()
+                skipTracker.resetAll()
+            }
         }
     }
 
@@ -206,7 +262,21 @@ public actor CloudSyncCoordinator {
         }
 
         isSyncing = true
-        defer { isSyncing = false }
+        defer {
+            isSyncing = false
+            // Honor a consent revocation that arrived WHILE this cycle was
+            // in flight — see `pendingCursorReset`'s doc comment. Runs
+            // AFTER `isSyncing` flips back to `false` so a `setConsent`
+            // call racing this very `defer` (vanishingly unlikely — this
+            // block has no `await`, so nothing can interleave with it —
+            // but not structurally impossible to reason about otherwise)
+            // still sees a consistent `isSyncing` state.
+            if pendingCursorReset {
+                pendingCursorReset = false
+                cursorStore.resetAll()
+                skipTracker.resetAll()
+            }
+        }
         consentStore.recordAttempt(at: attemptTime)
 
         do {
@@ -218,6 +288,36 @@ public actor CloudSyncCoordinator {
             // swallowed into `PullOutcome.failed` rather than rethrown —
             // see `runPull`'s doc comment.
             let pullOutcome = await runPull(accessToken: accessToken)
+
+            // IMPORTANT C, second half: consent can be revoked WHILE this
+            // cycle was suspended inside `runPull` above (network I/O,
+            // `SyncPullActor`'s SwiftData work) — `syncNow()` used to check
+            // consent only at entry, so a mid-cycle revocation didn't stop
+            // the 7 `pushDirty*` calls below from still running. That is
+            // not a minor inefficiency: it means data left the device
+            // AFTER the learner had already withdrawn consent to send it,
+            // which is a consent violation, not just a UX rough edge.
+            // Re-checking here, between pull and the first push call,
+            // closes that window (a THIRD revocation, arriving mid-push
+            // itself, is not closed by this — see the file's known-limits
+            // notes — but every push call is a single non-cancellable
+            // network request, so there is no later "between pushes" point
+            // to re-check at without adding a check inside every one of
+            // the 7 calls for a race this narrow).
+            guard consentStore.isConsentGiven() else {
+                return .skippedConsentOff
+            }
+
+            // CRITIQUE B: a pull that just seeded-from-local (rule 1: empty
+            // remote account, populated local store) needs every local row
+            // marked unsynced BEFORE the push below, or the push's delta
+            // filters silently skip everything whose `syncedAt` still
+            // points at a previous, now-gone server-side account — see
+            // `SyncModelActor.markEverythingUnsynced()`'s doc comment for
+            // the full failure mode this closes.
+            if case .seededFromLocal = pullOutcome {
+                try await modelActor().markEverythingUnsynced()
+            }
 
             let actor = modelActor()
 
@@ -243,11 +343,21 @@ public actor CloudSyncCoordinator {
             // clearing it left `SettingsView` showing "up to date" while
             // pulls stayed broken indefinitely, with no signal anywhere
             // that the merge/replay half of sync was not actually running.
-            // A pull that DID succeed (or hit rule 1's `seededFromLocal`)
+            // A degraded-but-not-failed pull (some rows stuck or
+            // permanently dropped this cycle — see `pullDegradedMessagePrefix`)
+            // gets its own, calmer status instead of either extreme. A
+            // pull that is fully clean (or hit rule 1's `seededFromLocal`)
             // still clears any older error, same as before.
-            if case .failed(let pullMessage) = pullOutcome {
+            switch pullOutcome {
+            case .failed(let pullMessage):
                 consentStore.recordError(Self.pullFailureMessagePrefix + pullMessage)
-            } else {
+            case .applied(_, let skippedRowCount, let permanentlyDroppedRowCount)
+                where skippedRowCount > 0 || permanentlyDroppedRowCount > 0:
+                consentStore.recordError(
+                    Self.pullDegradedMessagePrefix +
+                        "\(skippedRowCount) row(s) stuck, \(permanentlyDroppedRowCount) permanently dropped this cycle"
+                )
+            default:
                 consentStore.recordError(nil)
             }
             return .success(pushedRowCount: pushedCount, pull: pullOutcome)
@@ -290,12 +400,17 @@ public actor CloudSyncCoordinator {
             let summary = try await actor.pullAll(
                 transport: pullTransport,
                 cursorStore: cursorStore,
+                skipTracker: skipTracker,
                 accessToken: accessToken
             )
             if summary.seededFromLocal {
                 return .seededFromLocal
             }
-            return .applied(rowCount: summary.totalApplied)
+            return .applied(
+                rowCount: summary.totalApplied,
+                skippedRowCount: summary.totalSkipped,
+                permanentlyDroppedRowCount: summary.totalPermanentlyDropped
+            )
         } catch {
             let message = String(describing: error)
             Logger.sync.error("Cloud sync pull failed (push still proceeds): \(message)")

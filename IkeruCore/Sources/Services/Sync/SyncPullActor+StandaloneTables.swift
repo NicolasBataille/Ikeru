@@ -97,8 +97,9 @@ extension SyncPullActor {
         let source: String
     }
 
-    func applyVocabularyEncounterRows(_ rows: [SyncRow]) throws -> (count: Int, appliedFlags: [Bool]) {
+    func applyVocabularyEncounterRows(_ rows: [SyncRow]) throws -> (count: Int, appliedFlags: [Bool], alreadyPresentCount: Int) {
         var applied = 0
+        var alreadyPresent = 0
         var appliedFlags: [Bool] = []
         appliedFlags.reserveCapacity(rows.count)
         for row in rows {
@@ -108,9 +109,11 @@ extension SyncPullActor {
                 continue
             }
 
-            // Append-only, same reasoning as `SyncPullActor.applyReviewLogRows`.
+            // Append-only, same reasoning as `SyncPullActor.applyReviewLogRows`
+            // — including counting a redelivery in `alreadyPresent`, not
+            // `applied` (see `PullSummary.alreadyPresentRowCounts`).
             if try fetchOne(VocabularyEncounter.self, id: common.id) != nil {
-                applied += 1
+                alreadyPresent += 1
                 appliedFlags.append(true)
                 continue
             }
@@ -143,7 +146,7 @@ extension SyncPullActor {
             applied += 1
             appliedFlags.append(true)
         }
-        return (applied, appliedFlags)
+        return (applied, appliedFlags, alreadyPresent)
     }
 
     // MARK: - exercise_outcome_logs
@@ -153,8 +156,9 @@ extension SyncPullActor {
         let accuracy: Double
     }
 
-    func applyExerciseOutcomeLogRows(_ rows: [SyncRow]) throws -> (count: Int, appliedFlags: [Bool]) {
+    func applyExerciseOutcomeLogRows(_ rows: [SyncRow]) throws -> (count: Int, appliedFlags: [Bool], alreadyPresentCount: Int) {
         var applied = 0
+        var alreadyPresent = 0
         var appliedFlags: [Bool] = []
         appliedFlags.reserveCapacity(rows.count)
         for row in rows {
@@ -164,9 +168,11 @@ extension SyncPullActor {
                 continue
             }
 
-            // Append-only, same reasoning as `SyncPullActor.applyReviewLogRows`.
+            // Append-only, same reasoning as `SyncPullActor.applyReviewLogRows`
+            // — including counting a redelivery in `alreadyPresent`, not
+            // `applied` (see `PullSummary.alreadyPresentRowCounts`).
             if try fetchOne(ExerciseOutcomeLog.self, id: common.id) != nil {
-                applied += 1
+                alreadyPresent += 1
                 appliedFlags.append(true)
                 continue
             }
@@ -192,6 +198,6 @@ extension SyncPullActor {
             applied += 1
             appliedFlags.append(true)
         }
-        return (applied, appliedFlags)
+        return (applied, appliedFlags, alreadyPresent)
     }
 }

@@ -4,22 +4,18 @@ import Foundation
 
 /// Abstraction over a PostgREST bulk-read call — the pull-side counterpart
 /// to `SyncDataTransport.upsert`. Protocol boundary so a future pull engine
-/// (`SyncModelActor` / `CloudSyncCoordinator`, out of this lot's file
-/// perimeter) is testable with `MockSyncPullTransport` below, without
-/// touching the network.
+/// (`SyncModelActor` / `CloudSyncCoordinator`) is testable with
+/// `MockSyncPullTransport` below, without touching the network.
 ///
-/// ## Pagination contract
+/// ## Pagination contract — keyset, not offset
 /// `fetchRows` returns AT MOST `limit` rows, ordered ascending by
-/// `server_updated_at` (with `id` as a secondary sort key, for a
-/// deterministic order among ties — see below). The caller owns the
-/// pagination loop:
+/// `(server_updated_at, id)`. The caller owns the pagination loop:
 ///
 /// 1. Call `fetchRows(table:since:limit:accessToken:)` with `since` set to
 ///    `SyncCursorStore.cursor(forTable:)` (`nil` on a cold start).
 /// 2. Apply the returned rows locally.
 /// 3. Advance the cursor from those SAME rows —
-///    `SyncCursorStore.advanceCursor(forTable:afterApplying:)`, which
-///    returns the new cursor (`nil` if it didn't move) — never advance
+///    `SyncCursorStore.advanceCursor(forTable:afterApplying:)` — never
 ///    before step 2 succeeds (see that method's doc comment).
 /// 4. If the response had exactly `limit` rows, there may be more: repeat
 ///    from step 1 with the now-advanced cursor.
@@ -28,51 +24,40 @@ import Foundation
 ///
 /// A learner with a year of history can have thousands of `review_logs`
 /// rows; without this loop a single page silently truncates their pull.
-/// Stopping early on a full page is the wrong optimization to make here —
-/// re-querying once more when already caught up is cheap, silently
-/// truncating a sync is not.
 ///
-/// ## Known hazard: a tie cluster wider than `limit` stalls this loop
-/// This cursor is a single `Date`, per the task's fixed protocol shape —
-/// not a `(timestamp, id)` keyset cursor. That matters because every
-/// synced table's `server_updated_at` trigger stamps rows with `now()`
-/// (the TRANSACTION timestamp, not `clock_timestamp()` — verified via
-/// `pg_get_functiondef` against the live `touch_server_updated_at()`
+/// ## Why a composite `(timestamp, id)` cursor, not a single `Date`
+/// Every synced table's `server_updated_at` trigger stamps rows with
+/// `now()` (the TRANSACTION timestamp, not `clock_timestamp()` — verified
+/// via `pg_get_functiondef` against the live `touch_server_updated_at()`
 /// function on 2026-08-14, same function on all 8 tables). One bulk
 /// upsert — e.g. one `SyncModelActor` push flushing hundreds of dirty
 /// `review_logs` rows in a single `POST` — therefore gives ALL of those
-/// rows the exact same `server_updated_at`. If that tie cluster is larger
-/// than `limit`, step 3's cursor stops advancing (every row in the page
-/// has the same timestamp as the last), step 4's re-fetch with `gte.`
-/// that same timestamp returns the identical page again, and step 5's
-/// termination condition never fires — the loop spins forever without
-/// making progress.
-///
-/// This transport does not solve that (a `Date`-only cursor structurally
-/// can't distinguish "already delivered this tied row" from "haven't
-/// delivered it yet" once the tie cluster exceeds one page — only a
-/// composite `(server_updated_at, id)` cursor can, and that's a protocol
-/// change outside this lot's scope). Mitigations available to the
-/// pull-engine caller within today's protocol:
-///
-/// - Pick `limit` comfortably larger than the largest single-transaction
-///   batch the push side ever writes, so realistic tie clusters fit in
-///   one page.
-/// - Treat "`advanceCursor` returned `nil` (or an unchanged value) after a
-///   full-`limit` page" as a hard stop with a logged/surfaced error,
-///   rather than an infinite retry — better to abandon that page than to
-///   spin.
+/// rows the exact same `server_updated_at`; tie clusters wider than one
+/// page are routine, not an edge case. A single `Date` cursor cannot tell
+/// "already delivered this tied row" from "haven't delivered it yet" once
+/// a tie cluster spans more than one page, and — the sharper problem —
+/// cannot skip a single unrecoverable ("poison") row without skipping its
+/// ENTIRE tie cluster along with it, which could mean hundreds of
+/// legitimately-applicable rows silently going unretried forever. Adding
+/// `id` as a secondary key (see `SyncCursorPosition`) gives every row a
+/// unique position in the ordering, which is what makes both a tie cluster
+/// wider than a page AND a surgical single-row skip (see
+/// `SyncPullActor`'s poison-row handling) actually work.
 public protocol SyncPullTransport: Sendable {
 
     /// Fetches up to `limit` rows from `table`, ordered ascending by
-    /// `server_updated_at`.
+    /// `(server_updated_at, id)`.
     ///
     /// - `since: nil` means "no lower bound" — a full first pull, used only
     ///   when `SyncCursorStore.cursor(forTable:)` is `nil` for this table.
-    /// - `since` non-nil filters `server_updated_at >= since` (inclusive —
-    ///   see `PostgRESTPullTransport`'s doc comment for why `gte` and not
-    ///   `gt`).
-    func fetchRows(table: String, since: Date?, limit: Int, accessToken: String) async throws -> [SyncRow]
+    /// - `since` non-nil returns every row STRICTLY AFTER `since` in
+    ///   `(server_updated_at, id)` order — see
+    ///   `PostgRESTPullTransport.keysetFilter` for the exact filter this
+    ///   compiles to. Unlike the earlier `Date`-only design's `gte`
+    ///   boundary, this is exclusive: the row AT `since` was already
+    ///   applied (or deliberately abandoned) by definition of the cursor
+    ///   having been advanced past it, so it must not be re-delivered.
+    func fetchRows(table: String, since: SyncCursorPosition?, limit: Int, accessToken: String) async throws -> [SyncRow]
 }
 
 public enum SyncPullTransportError: Error, Sendable, Equatable {
@@ -86,27 +71,27 @@ public enum SyncPullTransportError: Error, Sendable, Equatable {
 /// stance as `PostgRESTSyncTransport` (`SyncDataTransport.swift`), and
 /// deliberately mirrors its header/error-handling style.
 ///
-/// Request shape:
+/// Request shape — validated end-to-end against the live Supabase project
+/// (`aiayzlarixlogcoyswna`) on 2026-08-14 via `curl` with `limit=1`, walking
+/// a real 3-row tie cluster row by row (HTTP 200 at every step, correct
+/// order, empty page at the end):
 ///
-/// - `GET {baseURL}/rest/v1/{table}?order=server_updated_at.asc,id.asc&limit={limit}`,
-///   plus `&server_updated_at=gte.{iso8601}` when `since` is non-nil. The
-///   `id.asc` secondary sort key exists purely for a deterministic row
-///   order among ties (see the "known hazard" section on
-///   `SyncPullTransport` above) — it does not, by itself, make pagination
-///   correct across a tie cluster wider than `limit`.
-/// - `apikey: <publishableKey>` + `Authorization: Bearer <accessToken>` —
-///   same pairing as the push transport; RLS scopes every row this returns
-///   to `auth.uid() = user_id`, so no other learner's rows can leak through
-///   this call regardless of `table`.
+/// ```
+/// GET {baseURL}/rest/v1/{table}
+///   ?select=*
+///   &or=(server_updated_at.gt.{TS},and(server_updated_at.eq.{TS},id.gt.{ID}))
+///   &order=server_updated_at.asc,id.asc
+///   &limit={N}
+/// ```
 ///
-/// ## Why `gte`, not `gt`
-/// Two rows can legitimately share the exact same `server_updated_at`
-/// (same trigger-clock tick). Filtering strictly greater-than the cursor
-/// after advancing it to `max(seen)` would silently drop the row(s) tied
-/// for that max. `gte` intentionally re-fetches the boundary row(s) already
-/// applied on the previous page — safe because applying a row is an upsert
-/// keyed by primary key (`id`), so re-applying an already-applied row is a
-/// no-op, not a duplicate or a data-loss risk.
+/// `{TS}` is `since.timestamp` used VERBATIM (see `SyncCursorPosition`'s
+/// doc comment for why) and `{ID}` is `since.id`. The `or=` filter is
+/// omitted entirely when `since` is `nil` (a cold-start full pull).
+///
+/// `apikey: <publishableKey>` + `Authorization: Bearer <accessToken>` — same
+/// pairing as the push transport; RLS scopes every row this returns to
+/// `auth.uid() = user_id`, so no other learner's rows can leak through this
+/// call regardless of `table`.
 public struct PostgRESTPullTransport: SyncPullTransport {
 
     private let baseURL: URL
@@ -123,7 +108,7 @@ public struct PostgRESTPullTransport: SyncPullTransport {
         self.session = session
     }
 
-    public func fetchRows(table: String, since: Date?, limit: Int, accessToken: String) async throws -> [SyncRow] {
+    public func fetchRows(table: String, since: SyncCursorPosition?, limit: Int, accessToken: String) async throws -> [SyncRow] {
         guard var components = URLComponents(
             url: baseURL.appendingPathComponent("rest/v1/\(table)"),
             resolvingAgainstBaseURL: false
@@ -132,13 +117,31 @@ public struct PostgRESTPullTransport: SyncPullTransport {
         }
 
         var queryItems = [
+            URLQueryItem(name: "select", value: "*"),
             URLQueryItem(name: "order", value: "server_updated_at.asc,id.asc"),
-            URLQueryItem(name: "limit", value: String(limit))
+            URLQueryItem(name: "limit", value: String(limit)),
         ]
         if let since {
-            queryItems.append(URLQueryItem(name: "server_updated_at", value: "gte.\(SyncJSON.iso8601String(since))"))
+            queryItems.append(URLQueryItem(name: "or", value: Self.keysetFilter(after: since)))
         }
         components.queryItems = queryItems
+
+        // `URLComponents`' own percent-encoding leaves `+` unescaped — it is
+        // a legal RFC 3986 query character — but PostgREST's query parser
+        // (like most, following the `application/x-www-form-urlencoded`
+        // convention) decodes an unescaped `+` as a space. Every real
+        // `server_updated_at` this app ever filters on carries a `+00:00`
+        // UTC offset (verified against the live project, never `Z` — see
+        // `SyncCursorPosition`'s doc comment), so leaving it unescaped would
+        // silently turn `...T09:42:22.968936+00:00` into
+        // `...T09:42:22.968936 00:00` on the wire — a timestamp Postgres
+        // cannot parse, corrupting the one filter this pagination scheme
+        // depends on. Escaping every literal `+` left over in the
+        // already-percent-encoded query string is the standard fix for this
+        // well-known `URLComponents` gap.
+        if let encodedQuery = components.percentEncodedQuery {
+            components.percentEncodedQuery = encodedQuery.replacingOccurrences(of: "+", with: "%2B")
+        }
 
         guard let url = components.url else {
             throw SyncPullTransportError.invalidResponse
@@ -166,6 +169,15 @@ public struct PostgRESTPullTransport: SyncPullTransport {
             return row
         }
     }
+
+    /// Builds the `or=` filter value implementing keyset pagination past
+    /// `position` — see the type doc comment for the validated request
+    /// shape this is one piece of.
+    static func keysetFilter(after position: SyncCursorPosition) -> String {
+        let ts = position.timestamp
+        let id = position.id.uuidString
+        return "(server_updated_at.gt.\(ts),and(server_updated_at.eq.\(ts),id.gt.\(id)))"
+    }
 }
 
 // MARK: - MockSyncPullTransport
@@ -177,7 +189,7 @@ public final class MockSyncPullTransport: SyncPullTransport, @unchecked Sendable
 
     public struct Call: Sendable, Equatable {
         public let table: String
-        public let since: Date?
+        public let since: SyncCursorPosition?
         public let limit: Int
         public let accessToken: String
     }
@@ -208,7 +220,7 @@ public final class MockSyncPullTransport: SyncPullTransport, @unchecked Sendable
         errorToThrow = error
     }
 
-    public func fetchRows(table: String, since: Date?, limit: Int, accessToken: String) async throws -> [SyncRow] {
+    public func fetchRows(table: String, since: SyncCursorPosition?, limit: Int, accessToken: String) async throws -> [SyncRow] {
         // `withLock` runs the whole critical section synchronously, so it's
         // safe to call from this `async` function — same rationale as
         // `MockSyncDataTransport.upsert`.
