@@ -52,7 +52,7 @@ struct CloudSyncCoordinatorTests {
             expiresAt: Date().addingTimeInterval(3600)
         )
         let authTransport = MockSupabaseAuthTransport(signInResult: .success(session))
-        let manager = AnonymousIdentityManager(transport: authTransport, keychain: MockKeychainStore())
+        let manager = AnonymousIdentityManager(transport: authTransport, keychain: MockKeychainStore(), identityStore: MockSyncIdentityStore())
         return (manager, authTransport)
     }
 

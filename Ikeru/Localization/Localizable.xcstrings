@@ -12277,6 +12277,24 @@
         }
       }
     },
+    "Your progress is waiting — sign in to reconnect" : {
+      "extractionState" : "manual",
+      "comment" : "Shown instead of the normal not-yet-linked sign-in row when this device restored from an iCloud backup taken after Sign in with Apple was linked elsewhere — the Keychain session is empty, but the wasLinked marker (UserDefaults, survives the restore) says this device once held a linked account. Tapping runs the same sign-in flow, which reconnects to that same account (lot 3, round-2 remediation)",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your progress is waiting — sign in to reconnect"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre progression vous attend — reconnectez-vous pour la retrouver"
+          }
+        }
+      }
+    },
     "We couldn't verify your account connection. Nothing was changed — please try again." : {
       "extractionState" : "manual",
       "comment" : "Sign in with Apple error — AppleLinkError.linkIdentityGuardTripped: the server returned a different account than expected, so nothing was adopted (lot 3). Distinct from the generic network-failure message and from a silent cancellation.",
@@ -12291,6 +12309,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Impossible de vérifier la connexion de votre compte. Rien n'a été modifié — réessayez."
+          }
+        }
+      }
+    },
+    "This Apple ID is already linked to another account. You're now signed in as that account — this device's earlier backup is no longer reachable." : {
+      "extractionState" : "manual",
+      "comment" : "Sign in with Apple notice — AppleLinkOutcome.switchedIdentity where the linked Apple ID genuinely belongs to a DIFFERENT, pre-existing account (not the ordinary reconnect-after-restore case, which is filtered out by comparing user IDs before this shows). Tells the learner their device just switched accounts and the old anonymous backup is now unreachable from the app (lot 3, Important #4 remediation).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This Apple ID is already linked to another account. You're now signed in as that account — this device's earlier backup is no longer reachable."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cet identifiant Apple est déjà lié à un autre compte. Vous êtes maintenant connecté à ce compte — l'ancienne sauvegarde de cet appareil n'est plus accessible."
           }
         }
       }

@@ -73,15 +73,34 @@ struct SettingsView: View {
     /// UI copy, never shown verbatim). Read here only to check for
     /// `CloudSyncCoordinator.pullFailureMessagePrefix`, which distinguishes
     /// "push succeeded, pull failed this cycle" from a full sync failure —
-    /// see `cloudSyncStatusValue`.
-    @AppStorage(CloudSyncPreferences.lastErrorDefaultsKey) private var cloudSyncLastError: String = ""
+    /// see `cloudSyncStatusValue`. Not `private`: also read from
+    /// `SettingsView+AppleSignIn.swift` (the reauth-banner check) — Swift's
+    /// `private` is file-scoped.
+    @AppStorage(CloudSyncPreferences.lastErrorDefaultsKey) var cloudSyncLastError: String = ""
     @State private var isDeletingCloudData = false
     @State private var showDeleteCloudDataConfirmation = false
 
     // MARK: Sign in with Apple (lot 3)
-    @AppStorage("ikeru.appleSignIn.isLinked") private var isLinkedWithApple = false // Core has no "am I linked" accessor
-    @State private var isSigningInWithApple = false
-    @State private var appleSignInErrorMessage: String?
+    // Not `private` — see `SettingsView+AppleSignIn.swift`'s header comment.
+    /// Loaded from `AnonymousIdentityManager.isLinkedToExternalIdentity()`
+    /// (`.task` below), NOT an `@AppStorage` mirror — that used to survive
+    /// an iCloud restore (empty Keychain) and keep claiming "Connected"
+    /// with no way to recover (Critique #1).
+    @State var isLinkedWithApple = false
+    /// Loaded from `AnonymousIdentityManager.hasEverHeldLinkedSession()`
+    /// (`.task` below) — the DURABLE half of the split `isLinkedWithApple`
+    /// above answers only the Keychain half of (2026-08 lot-3 round-2
+    /// remediation, IMPORTANT). `isLinkedWithApple` reads the Keychain,
+    /// which never migrates across devices; this reads `UserDefaults`,
+    /// which DOES restore from an iCloud backup. A device restored after
+    /// linking Apple elsewhere has `isLinkedWithApple == false` but
+    /// `hasEverHeldLinkedSessionOnThisDevice == true` — without this second
+    /// flag, `appleSignInBlock` falls straight to the ordinary
+    /// never-linked sign-in row, and the learner has no way to discover
+    /// that their progress is one tap away instead of gone.
+    @State var hasEverHeldLinkedSessionOnThisDevice = false
+    @State var isSigningInWithApple = false
+    @State var appleSignInErrorMessage: String?
 
     // MARK: Profile management
 
@@ -329,6 +348,8 @@ struct SettingsView: View {
             Text("Permanently deletes your backed-up progress — profiles, cards, review history, and vocabulary — from the server. This cannot be undone. Data on this device stays untouched.")
         }
         .task {
+            isLinkedWithApple = await CloudSyncTriggers.shared.sharedIdentityManager.isLinkedToExternalIdentity()
+            hasEverHeldLinkedSessionOnThisDevice = await CloudSyncTriggers.shared.sharedIdentityManager.hasEverHeldLinkedSession()
             if CloudBackupManager.iCloudEnabled {
                 await backupManager.checkLastBackup()
             }
@@ -733,7 +754,10 @@ struct SettingsView: View {
     /// read-then-write between two different actors standing in for a real
     /// mutex — see that method's doc comment for the duplicate-`ReviewLog`
     /// failure mode this closes.
-    private func cloudSyncCoordinatorInstance() -> CloudSyncCoordinator {
+    ///
+    /// Not `private` — also called from `SettingsView+AppleSignIn.swift`
+    /// (to sync right after a successful Apple link, Mineur #7).
+    func cloudSyncCoordinatorInstance() -> CloudSyncCoordinator {
         CloudSyncTriggers.shared.sharedCoordinator(modelContainer: modelContext.container)
     }
 
@@ -768,12 +792,24 @@ struct SettingsView: View {
         isDeletingCloudData = true
         Task {
             do {
-                try await CloudDataDeletionService(modelContainer: modelContext.container).deleteAllCloudData()
+                // Shared `AnonymousIdentityManager` — see
+                // `CloudSyncTriggers.sharedIdentityManager`'s doc comment;
+                // same staleness reasoning as the Sign in with Apple fix.
+                try await CloudDataDeletionService(
+                    modelContainer: modelContext.container,
+                    identity: CloudSyncTriggers.shared.sharedIdentityManager
+                ).deleteAllCloudData()
                 isDeletingCloudData = false
                 cloudSyncConsentEnabled = false
                 cloudSyncLastSuccessEpoch = 0
                 cloudSyncLastAttemptEpoch = 0
                 isLinkedWithApple = false // deletion erases the account itself now (Apple identity included)
+                // The durable `wasLinked` marker is reset server-side by
+                // `CloudDataDeletionService.deleteAllCloudData()` itself
+                // (2026-08 lot-3 round-2 remediation, CRITIQUE item 4) — mirror
+                // that here so the reconnect row below doesn't keep inviting
+                // the learner back into an account that no longer exists.
+                hasEverHeldLinkedSessionOnThisDevice = false
                 // A stale "pull-failed"/"pull-degraded" error string must
                 // not outlive an account wipe: `CloudDataDeletionService`
                 // already resets the pull cursor and skip-tracker state —
@@ -1180,8 +1216,9 @@ extension SettingsView {
     }
 
     /// Tappable row. Pass `action: nil` for an informational (read-only) row.
+    /// Not `private` — used from `SettingsView+AppleSignIn.swift` too.
     @ViewBuilder
-    private func settingRow(
+    func settingRow(
         jp: String,
         label: LocalizedStringKey,
         value: String,
@@ -1365,72 +1402,9 @@ extension SettingsView {
         return ""
     }
 
-    // MARK: - Sign in with Apple (lot 3)
-    /// Reauth > connected > not-yet-signed-in; not-yet-linked wraps Apple's own button as pure chrome.
-    @ViewBuilder
-    private var appleSignInBlock: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            if isLinkedWithApple && cloudSyncLastError == "reauthenticationRequired" {
-                settingRow(
-                    jp: "サインイン", label: "Sign in again to keep syncing",
-                    value: isSigningInWithApple ? String(localized: "Signing in…") : "",
-                    showChevron: !isSigningInWithApple, action: isSigningInWithApple ? nil : { handleAppleSignIn() }
-                )
-            } else if isLinkedWithApple {
-                settingRow(jp: "サインイン", label: "Connected with Apple", value: "", showChevron: false)
-            } else {
-                appleSignInRow
-            }
-            if let appleSignInErrorMessage {
-                Text(appleSignInErrorMessage)
-                    .ikeruScaledFont(11, relativeTo: .caption2).foregroundStyle(Color.ikeruDanger).padding(.horizontal, 16).padding(.bottom, 4)
-            }
-            Text("Sign in to pick up your progress on another device.", comment: "Explainer under the Sign in with Apple row")
-                .ikeruScaledFont(11, relativeTo: .caption2).foregroundStyle(TatamiTokens.paperGhost).padding(.horizontal, 16).padding(.bottom, 12)
-        }
-    }
-
-    /// Apple's own button as pure chrome (hit-testing off, VoiceOver-hidden) — taps route through `handleAppleSignIn()`.
-    private var appleSignInRow: some View {
-        HStack(spacing: 12) {
-            Text(verbatim: "サインイン")
-                .ikeruScaledFont(13, design: .serif, relativeTo: .caption).foregroundStyle(TatamiTokens.paperGhost)
-            Button(action: handleAppleSignIn) {
-                SignInWithAppleButton(.signIn) { _ in } onCompletion: { _ in }
-                    .allowsHitTesting(false).accessibilityHidden(true).signInWithAppleButtonStyle(.whiteOutline).frame(height: 44)
-            }
-            .buttonStyle(.plain).disabled(isSigningInWithApple)
-            .accessibilityLabel(Text("Sign in with Apple", comment: "Accessibility label for the sign-in row"))
-            if isSigningInWithApple { ProgressView().tint(Color.ikeruPrimaryAccent) }
-            Spacer()
-        }
-        .padding(.horizontal, 16).padding(.vertical, 10)
-        .overlay(alignment: .bottom) {
-            Rectangle().fill(TatamiTokens.goldDim.opacity(0.2)).frame(height: 1).padding(.horizontal, 16)
-        }
-    }
-
-    /// Drives `AppleSignInFlow.signIn()`; each failure gets its own distinct, non-silent message.
-    private func handleAppleSignIn() {
-        guard !isSigningInWithApple else { return }
-        isSigningInWithApple = true
-        appleSignInErrorMessage = nil
-        Task { @MainActor in
-            defer { isSigningInWithApple = false }
-            do {
-                let flow = AppleSignInFlow(identity: AnonymousIdentityManager())
-                _ = try await flow.signIn()
-                isLinkedWithApple = true
-                cloudSyncLastError = "" // clears a stale reconnect-required banner
-            } catch AppleSignInFlow.SignInError.userCanceled {
-            } catch AppleLinkError.linkIdentityGuardTripped {
-                appleSignInErrorMessage = String(localized: "We couldn't verify your account connection. Nothing was changed — please try again.")
-            } catch {
-                Logger.ui.error("Sign in with Apple failed: \(String(describing: error))")
-                appleSignInErrorMessage = String(localized: "Couldn't sign in with Apple. Check your connection and try again.")
-            }
-        }
-    }
+    // Sign in with Apple UI (lot 3): `appleSignInBlock`, `appleSignInRow`,
+    // `handleAppleSignIn()` moved to `SettingsView+AppleSignIn.swift` — see
+    // that file's header comment for why.
 }
 
 // MARK: - Sub-page: Data & Storage Settings

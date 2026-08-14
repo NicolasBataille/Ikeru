@@ -140,18 +140,40 @@ public actor CloudDataDeletionService {
     public func deleteAllCloudData() async throws {
         // `existingSessionAccessToken()`, NOT `validAccessToken()`. The
         // distinction is load-bearing for an erasure request, and the
-        // reasoning lives in that method's doc comment: only a `nil` return
-        // (nothing in the Keychain — this device never backed anything up)
-        // is a legitimate no-op success. Any OTHER failure to obtain a token
-        // — offline, sign-in down, refresh token rejected — now propagates
-        // to the caller as a thrown error instead of being swallowed.
+        // reasoning lives in that method's doc comment: a `nil` return only
+        // tells us "nothing in the Keychain right now" — it does NOT by
+        // itself tell us whether this device ever backed anything up.
         //
-        // What that buys: the UI can no longer tell a learner "your data was
-        // deleted" while their rows are untouched on the server. Silence on
-        // this path is not success; it is an unverified claim about someone
-        // else's copy of their data, and it is exactly the claim a GDPR
-        // erasure request must not get wrong.
+        // 2026-08 lot-3 round-2 remediation (CRITIQUE): those used to be
+        // treated as the same fact. They are not. The Keychain never
+        // migrates across devices (`kSecAttrAccessibleWhenUnlockedThisDeviceOnly`),
+        // but `UserDefaults` — and therefore `identityStore`'s `wasLinked`
+        // marker, read here via `hasEverHeldLinkedSession()` — DOES restore
+        // from an iCloud backup. So a learner who links Apple on device A
+        // and then restores that backup onto device B arrives on B with an
+        // EMPTY Keychain but `wasLinked == true`: this device (B) has never
+        // itself held a token, but the ACCOUNT is real and still has rows
+        // on the server. Treating a `nil` token there as "nothing to
+        // delete" used to make this method return a silent success —
+        // `SettingsView` would then show the learner a green "your data has
+        // been deleted from the server" toast while every row survived
+        // untouched, directly contradicting the erasure promise
+        // `docs/privacy.html` makes.
+        //
+        // So: `nil` is a legitimate no-op success ONLY when this device has
+        // never held a linked session at all. Any other case — a genuinely
+        // dead/offline token on a device that already held one, or a
+        // restored device that never re-established its own — must
+        // propagate a loud, attributable error instead. What that buys: the
+        // UI can no longer tell a learner "your data was deleted" while
+        // their rows are untouched on the server. Silence on this path is
+        // not success; it is an unverified claim about someone else's copy
+        // of their data, and it is exactly the claim a GDPR erasure request
+        // must not get wrong.
         guard let accessToken = try await identity.existingSessionAccessToken() else {
+            if await identity.hasEverHeldLinkedSession() {
+                throw SyncAuthError.reauthenticationRequired
+            }
             return
         }
 
@@ -203,6 +225,15 @@ public actor CloudDataDeletionService {
         // session left, any retry mints a BRAND-NEW anonymous identity
         // (see `AnonymousIdentityManager`) with nothing left to point a
         // deletion request at, silently orphaning the old rows forever.
-        try await identity.forgetSession()
+        //
+        // `forgetSessionAfterAccountDeletion()`, NOT `forgetSession()` —
+        // this is the one call site in the whole app that is allowed to
+        // reset the `wasLinked` marker (2026-08 lot-3 round-2 remediation,
+        // CRITIQUE item 4). The account was just confirmed erased above, so
+        // there is nothing left for the `wasLinked` guard to protect;
+        // leaving it `true` here would instead lock this device out of ever
+        // syncing anonymously again — see that method's doc comment for the
+        // full reasoning.
+        try await identity.forgetSessionAfterAccountDeletion()
     }
 }

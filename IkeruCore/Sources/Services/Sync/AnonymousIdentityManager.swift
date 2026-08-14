@@ -72,17 +72,30 @@ public actor AnonymousIdentityManager {
     private let transport: any SupabaseAuthTransport
     private let keychain: any KeychainStore
     private let sessionKey: String
+    /// Where the `wasLinked` marker lives (Critique #1, lot 3) —
+    /// `UserDefaults`-backed by default, deliberately a SEPARATE concern
+    /// from `CloudSyncCoordinator`'s own `identityStore` param (that one
+    /// tracks `lastKnownUserID` for the re-provisioning guard; this one
+    /// tracks "has this device ever held a linked session"). Both may
+    /// point at the same real `UserDefaults.standard` suite in production
+    /// — different keys, no collision — but tests MUST inject their own
+    /// `MockSyncIdentityStore` here, never rely on the default: it reads
+    /// real `UserDefaults.standard`, which persists across test runs in
+    /// the same process (see `MockSyncIdentityStore`'s own doc comment).
+    private let identityStore: any SyncIdentityStore
 
     private var cachedSession: SyncSession?
 
     public init(
         transport: any SupabaseAuthTransport = URLSessionSupabaseAuthTransport(),
         keychain: any KeychainStore = KeychainHelper(),
-        sessionKey: String = SyncKeychainKeys.session
+        sessionKey: String = SyncKeychainKeys.session,
+        identityStore: any SyncIdentityStore = UserDefaultsSyncIdentityStore()
     ) {
         self.transport = transport
         self.keychain = keychain
         self.sessionKey = sessionKey
+        self.identityStore = identityStore
     }
 
     /// A currently-valid access token — signs in anonymously (first call
@@ -116,28 +129,135 @@ public actor AnonymousIdentityManager {
     /// - stored but needing a refresh → refresh it, and **throw** if the
     ///   refresh fails, rather than falling through to a fresh sign-in.
     public func existingSessionAccessToken() async throws -> String? {
+        try await existingSyncSession()?.accessToken
+    }
+
+    /// Same freshness/refresh evaluation `existingSessionAccessToken()`
+    /// performs, but returns the whole `SyncSession` instead of just the
+    /// token.
+    ///
+    /// ⚠️ Mineur #8 fix: this is now the SINGLE source both
+    /// `existingSessionAccessToken()` and `linkOrSignInWithApple` derive
+    /// their value from. Before this existed, `linkOrSignInWithApple`
+    /// called `existingSessionAccessToken()` for the token and, separately,
+    /// `currentUserID()` (→ `currentSession()`) for `previousUserID` — TWO
+    /// independent `needsRefresh()` evaluations, each reading the wall
+    /// clock at a different instant. If the session sat exactly on the
+    /// refresh margin, the two calls could disagree: the first might
+    /// return the still-valid token as-is, while the second — a few
+    /// milliseconds later — decided a refresh (or even a fresh mint, on
+    /// the anonymous/dead-session path) was now needed, producing a
+    /// `previousUserID` that did NOT belong to the `accessToken` actually
+    /// sent to `linkAppleIdentity`. The link_identity guard then compared
+    /// the server's response against the WRONG previous id and refused an
+    /// otherwise-correct link. Deriving both values from one session,
+    /// evaluated once, makes that race structurally impossible instead of
+    /// merely unlikely.
+    private func existingSyncSession() async throws -> SyncSession? {
         if let cachedSession, !cachedSession.needsRefresh() {
-            return cachedSession.accessToken
+            return cachedSession
         }
         guard let stored = loadStoredSession() else { return nil }
         if !stored.needsRefresh() {
             cachedSession = stored
-            return stored.accessToken
+            return stored
         }
         let refreshed = try await transport.refreshSession(refreshToken: stored.refreshToken)
         let carried = carryingIsAnonymous(from: stored, onto: refreshed)
         try persist(carried)
-        return carried.accessToken
+        return carried
+    }
+
+    /// The BOUND, current-device state — "does this device's own stored
+    /// session already carry a linked (non-anonymous) identity right
+    /// now?" Consulted by the app layer (`SettingsView`, the ASAuthorization
+    /// flow) instead of a self-maintained `@AppStorage` flag, which could
+    /// drift from what is actually in the Keychain. Deliberately reads
+    /// straight off `loadStoredSession()` — the durable, on-disk truth —
+    /// rather than `cachedSession`, so a caller asking "am I linked?"
+    /// right after a cold launch (nothing cached yet) still gets the
+    /// right answer without forcing a network round-trip.
+    ///
+    /// NOT the same question as `identityStore`'s `wasLinked` marker
+    /// below: this answers "linked RIGHT NOW, per the Keychain"; that one
+    /// answers "was EVER linked, even if the Keychain is currently empty"
+    /// — see `currentSession()`'s guard for why the distinction matters.
+    public func isLinkedToExternalIdentity() -> Bool {
+        loadStoredSession()?.isAnonymous == false
+    }
+
+    /// The DURABLE, restore-surviving question: "has this device EVER
+    /// persisted a linked (non-anonymous) `SyncSession`, even if the
+    /// Keychain is empty right now?" — a thin pass-through to
+    /// `identityStore.wasLinked()`, exposed on the actor (next to
+    /// `isLinkedToExternalIdentity()` above) so callers never need to reach
+    /// past this type into `SyncIdentityStore` directly.
+    ///
+    /// The two accessors answer genuinely different questions and must NOT
+    /// be conflated (2026-08 lot-3 round-2 remediation, Critique CRITIQUE):
+    /// `isLinkedToExternalIdentity()` reads the Keychain, which never
+    /// migrates across devices; this one reads `UserDefaults`, which DOES
+    /// restore from an iCloud backup. A device restored from a backup taken
+    /// after linking Apple has `isLinkedToExternalIdentity() == false`
+    /// (empty Keychain) but `hasEverHeldLinkedSession() == true` — exactly
+    /// the state `CloudDataDeletionService.deleteAllCloudData()` must not
+    /// mistake for "nothing to delete", and the state
+    /// `SettingsView+AppleSignIn`'s reconnect row must not mistake for
+    /// "ordinary, never-linked sign-in".
+    public func hasEverHeldLinkedSession() -> Bool {
+        identityStore.wasLinked()
     }
 
     /// Deletes the locally cached and Keychain-persisted session. Does NOT
-    /// delete the server-side anonymous user (no lot 1 endpoint for that);
+    /// delete the server-side anonymous user (no lot 1 endpoint for that),
+    /// and does NOT clear the `identityStore`'s `wasLinked` marker either —
     /// the next `validAccessToken()` call signs in fresh, minting a new
-    /// `user_id`. Exposed for tests and for a future "reset sync identity"
-    /// action — nothing in this lot's shipped call path invokes it.
+    /// `user_id`, ONLY if this device's `wasLinked` marker is still `false`
+    /// (never held a linked session). On a device that WAS linked, this
+    /// instead reproduces exactly the empty-Keychain-plus-`wasLinked`
+    /// state `currentSession()`'s demotion guard exists to catch — the
+    /// next call throws `SyncAuthError.reauthenticationRequired` rather
+    /// than minting, same as a real iCloud-restore-onto-a-new-device would.
+    /// That is intentional, not a gap: an already-linked device forgetting
+    /// its session locally (this method) should behave identically to one
+    /// that lost it to a backup restore — both are "no session, but this
+    /// account is real" — the reachable recovery path is the same either
+    /// way (`linkOrSignInWithApple`'s `.reauthenticatedAfterDeadSession`).
+    /// Exposed for tests and for a future "reset sync identity" action.
+    /// `CloudDataDeletionService` deliberately does NOT call this one —
+    /// see `forgetSessionAfterAccountDeletion()` below for why a confirmed
+    /// server-side account deletion needs different semantics.
     public func forgetSession() throws {
         cachedSession = nil
         try keychain.delete(key: sessionKey)
+    }
+
+    /// The counterpart to `forgetSession()` for use ONLY after
+    /// `CloudDataDeletionService.deleteAllCloudData()` has confirmed the
+    /// server-side account no longer exists — never for an ordinary "forget
+    /// my local session" action. Clears the Keychain session exactly like
+    /// `forgetSession()`, but ALSO resets the `wasLinked` marker back to
+    /// `false` (2026-08 lot-3 round-2 remediation, Critique CRITIQUE item 4).
+    ///
+    /// `forgetSession()`'s own doc comment explains why `wasLinked` must
+    /// normally survive a merely-local session loss (a dead refresh token,
+    /// a reinstall, a backup restore onto a new device): the demotion guard
+    /// in `currentSession()` has to keep protecting a linked account across
+    /// all of those, because the account is still real on the server. None
+    /// of that reasoning applies here — the account itself was just erased
+    /// server-side, so there is nothing left for the guard to protect.
+    /// Leaving `wasLinked` at `true` after a real deletion would turn the
+    /// guard into a permanent lock-out instead: every future
+    /// `currentSession()` call would throw `SyncAuthError
+    /// .reauthenticationRequired` forever, on a device whose only way back
+    /// in is signing in with the SAME Apple ID — which recreates an account
+    /// and immediately hits the same guard again. Resetting the marker lets
+    /// this device mint a fresh anonymous identity next time, exactly like
+    /// a genuinely first-ever install.
+    public func forgetSessionAfterAccountDeletion() throws {
+        cachedSession = nil
+        try keychain.delete(key: sessionKey)
+        identityStore.setWasLinked(false)
     }
 
     // MARK: - Apple identity linking (lot 3)
@@ -177,11 +297,13 @@ public actor AnonymousIdentityManager {
     ///   that is a legitimate, expected outcome, not an error.
     /// - **No session** — a fresh install, a device whose session was
     ///   already forgotten, OR the fallback above, OR the stored session's
-    ///   refresh token was explicitly REJECTED (a 4xx from
-    ///   `existingSessionAccessToken()`'s own refresh attempt — dead, not
-    ///   merely unreachable; see the demotion guard in `currentSession()`
-    ///   for why that must never be papered over by silently minting a new
-    ///   anonymous identity instead) — a plain
+    ///   refresh token was explicitly REJECTED (a 400/401/403 from
+    ///   `existingSyncSession()`'s own refresh attempt — dead, not merely
+    ///   unreachable or rate-limited; see that catch clause below for
+    ///   exactly which statuses count and why 429 must NOT — and see the
+    ///   demotion guard in `currentSession()` for why a dead session must
+    ///   never be papered over by silently minting a new anonymous
+    ///   identity instead) — a plain
     ///   `SupabaseAuthTransport.signInWithApple`, no `link_identity`, no
     ///   `Authorization` header. Deliberately NOT catching network failures
     ///   or 5xx here: those mean "couldn't tell," not "the server said no,"
@@ -206,12 +328,20 @@ public actor AnonymousIdentityManager {
     /// guard trip either — that would be adopting the very identity switch
     /// the guard exists to refuse, just one call later.
     public func linkOrSignInWithApple(idToken: String, rawNonce: String) async throws -> AppleLinkOutcome {
-        let accessToken: String?
+        let existingSession: SyncSession?
         do {
-            accessToken = try await existingSessionAccessToken()
-        } catch SyncAuthError.requestFailed(let status, _, _) where (400..<500).contains(status) {
-            // The stored session's refresh token was explicitly REJECTED —
-            // dead, not just unreachable. Treated identically to "no local
+            // Mineur #8 fix: ONE evaluation of freshness, yielding BOTH the
+            // access token to link FROM and the `user_id` the guard below
+            // compares against — see `existingSyncSession()`'s doc comment
+            // for the race this closes versus calling
+            // `existingSessionAccessToken()` and `currentUserID()`
+            // separately.
+            existingSession = try await existingSyncSession()
+        } catch SyncAuthError.requestFailed(let status, _, _) where [400, 401, 403].contains(status) {
+            // Important #3 fix: an EXPLICIT refresh-token rejection —
+            // 400/401 (GoTrue's own "invalid_grant" shapes) or 403 (a
+            // rejected API key/credential on this specific request) — dead,
+            // not just unreachable. Treated identically to "no local
             // session at all" so this is a reachable recovery path for the
             // `.reauthenticationRequired` error `currentSession()`'s
             // demotion guard throws: signing in with Apple on a
@@ -222,20 +352,34 @@ public actor AnonymousIdentityManager {
             // true reconnect. A dead ANONYMOUS session re-authenticating as
             // whatever account Apple reports is no worse than the
             // unreachable anonymous mirror it replaces.
+            //
+            // ⚠️ Deliberately NOT the full `(400..<500)` range this used to
+            // be: that range also matched 429 (rate limit) and other 4xx
+            // that mean "try again," not "this token is dead." A 429 here
+            // used to make a perfectly live anonymous session fall through
+            // to `signInWithApple` with NO `link_identity` and NO
+            // `Authorization` header — minting a brand-new, unrelated
+            // `user_id` and silently orphaning the live one, on the exact
+            // rate-limit response that should have just been retried. A
+            // 429 (or any other 4xx not in this list) now propagates
+            // unchanged, same as a 5xx already did.
             let session = try await transport.signInWithApple(idToken: idToken, rawNonce: rawNonce)
             try adoptSession(session)
             return .reauthenticatedAfterDeadSession(userID: session.userID)
         }
 
-        guard let accessToken else {
+        guard let existingSession else {
             let session = try await transport.signInWithApple(idToken: idToken, rawNonce: rawNonce)
             try adoptSession(session)
             return .switchedIdentity(userID: session.userID, wasAlreadyLinkedElsewhere: false)
         }
 
-        // Captured BEFORE the linking call — the value the guard above
-        // compares the response against.
-        let previousUserID = try await currentUserID()
+        let accessToken = existingSession.accessToken
+        // The value the guard below compares the response against — drawn
+        // from the SAME `existingSession` the access token above came from,
+        // never re-derived via a second, independently-timed call (see
+        // `existingSyncSession()`'s doc comment).
+        let previousUserID = existingSession.userID
 
         do {
             let linked = try await transport.linkAppleIdentity(idToken: idToken, rawNonce: rawNonce, accessToken: accessToken)
@@ -275,10 +419,38 @@ public actor AnonymousIdentityManager {
                 cachedSession = stored
                 return stored
             }
-            if let refreshed = try? await transport.refreshSession(refreshToken: stored.refreshToken) {
+            do {
+                let refreshed = try await transport.refreshSession(refreshToken: stored.refreshToken)
                 let carried = carryingIsAnonymous(from: stored, onto: refreshed)
                 try persist(carried)
                 return carried
+            } catch SyncAuthError.requestFailed(let status, _, _) where [400, 401, 403].contains(status) {
+                // 2026-08 lot-3 round-2 remediation ("the blind try? of the
+                // ordinary path"): this used to be `if let refreshed =
+                // try? ...`, which swallowed EVERY refresh failure —
+                // network unreachable, a 429 rate limit, a 5xx — and fell
+                // straight through to the demotion-guard logic below as if
+                // the token had been explicitly rejected. Mirrors
+                // `linkOrSignInWithApple`'s matching catch clause above:
+                // ONLY an explicit 400/401/403 rejection (dead, not merely
+                // unreachable or rate-limited — see that clause's doc
+                // comment for exactly why this range and no wider) is
+                // treated as "this session is dead." Everything else is NOT
+                // caught here and propagates unchanged out of this
+                // function, exactly like a `try` with no `?` would. Two
+                // proven failure modes this closes:
+                //   - K1: a 429 on an ANONYMOUS session's refresh used to
+                //     fall through to `signInAnonymously()` below, abandoning
+                //     a live account and orphaning its rows, on a response
+                //     that meant "retry later," not "start over."
+                //   - K2: a plain network failure (offline, timeout) on a
+                //     LINKED session's refresh used to fall through to the
+                //     guard just below and throw `.reauthenticationRequired`
+                //     — a learner who opens the app in airplane mode would
+                //     be told to sign in again for no reason; nothing was
+                //     actually lost, the server just couldn't be reached.
+                // "Couldn't tell" must never be silently reinterpreted as
+                // "the server said no."
             }
             // Refresh token was rejected (expired, or already rotated away
             // by a previous attempt that crashed after the server issued a
@@ -317,6 +489,32 @@ public actor AnonymousIdentityManager {
                 throw SyncAuthError.reauthenticationRequired
             }
             Logger.sync.error("Cloud sync: refresh token rejected, minting a new anonymous identity (previous user_id's server rows are orphaned).")
+        }
+
+        // ⚠️ CRITIQUE #1 GUARD (lot 3 remediation) — the Keychain-EMPTY half
+        // of the demotion guard above, which only ever fires when
+        // `loadStoredSession()` returned something. It fires for nothing
+        // when the Keychain is EMPTY (`stored == nil`), which is exactly
+        // what happens after an iCloud backup is restored onto a new
+        // device: `UserDefaults` (and therefore `identityStore`'s
+        // `wasLinked` marker) restores from the backup, but the Keychain
+        // entry — persisted with `kSecAttrAccessibleWhenUnlockedThisDeviceOnly`
+        // — never does. Without this check, a learner who signed in with
+        // Apple on device A and restores that backup onto device B would
+        // fall straight through to `signInAnonymously()` below on the
+        // first `syncNow()`: a brand-new, empty ghost identity that
+        // `CloudSyncCoordinator`'s re-provisioning guard then treats as a
+        // legitimate identity change, resetting every cursor and pushing
+        // into an account the learner can never see their real data from
+        // again. `identityStore.wasLinked()` is the one signal that
+        // survives this exact asymmetry — see `SyncIdentityStore`'s type
+        // doc comment. A device that has NEVER held a linked session
+        // (`wasLinked() == false`, the ordinary first-install case) is
+        // completely unaffected: it falls through to the anonymous mint
+        // below exactly as before.
+        guard !identityStore.wasLinked() else {
+            Logger.sync.error("Cloud sync: no session in Keychain, but wasLinked marker is true (UserDefaults restore) — refusing to mint anonymous ghost.")
+            throw SyncAuthError.reauthenticationRequired
         }
 
         let fresh = try await transport.signInAnonymously()
@@ -359,5 +557,21 @@ public actor AnonymousIdentityManager {
         // actually durable (a crash right after would lose it silently).
         try keychain.save(key: sessionKey, value: string)
         cachedSession = session
+        // Critique #1 fix: record the `wasLinked` marker in the SAME place
+        // (`identityStore`, UserDefaults-backed) `CloudSyncCoordinator`
+        // already keeps `lastKnownUserID` — the store that DOES restore
+        // from an iCloud backup, unlike the Keychain entry just written
+        // above. Only ever set to `true`, never back to `false`, by
+        // anything in this lot: once a device has held a linked identity,
+        // `currentSession()`'s guard must keep protecting it even across a
+        // LATER anonymous session existing locally (there is no legitimate
+        // flow that demotes a linked device back to "never linked").
+        // Deliberately placed AFTER the `keychain.save` above succeeds,
+        // same ordering rationale as `cachedSession` on the line above:
+        // if the Keychain write throws, the marker must not claim a
+        // linked session exists when nothing durable actually got written.
+        if !session.isAnonymous {
+            identityStore.setWasLinked(true)
+        }
     }
 }

@@ -74,16 +74,42 @@ public enum SyncAuthError: Error, Sendable, Equatable {
     /// `AnonymousIdentityManager.linkOrSignInWithApple` surfaces the
     /// generic `.requestFailed` instead — loud, not silent, either way.
     case identityAlreadyLinked(status: Int, body: String)
-    /// A LINKED (non-anonymous, `isAnonymous == false`) session's refresh
-    /// token was rejected by the server — thrown by
-    /// `AnonymousIdentityManager.currentSession()`'s demotion guard, lot 3.
-    /// Never thrown for an anonymous session (that case still silently
-    /// mints a fresh one, unchanged from lot 1 — see that method's doc
-    /// comment). The reachable recovery path is
+    /// Thrown by `AnonymousIdentityManager.currentSession()`'s demotion
+    /// guards (lot 3) whenever minting a fresh anonymous identity would
+    /// silently demote an already-linked device instead of asking the
+    /// learner to reconnect. Two distinct triggers, both surfaced as this
+    /// SAME case (a caller cannot tell which without inspecting Keychain
+    /// state directly, and does not need to — both mean "reconnect"):
+    /// - a LINKED (`isAnonymous == false`) session's refresh token was
+    ///   explicitly rejected by the server; or
+    /// - the Keychain holds NO session at all, but this device's
+    ///   `SyncIdentityStore.wasLinked()` marker is `true` — the
+    ///   iCloud-restore-onto-a-new-device case, where `UserDefaults`
+    ///   restores but the `ThisDeviceOnly` Keychain entry does not (see
+    ///   `SyncIdentityStore`'s type doc comment).
+    /// Never thrown for a device that has NEVER held a linked session
+    /// (`wasLinked() == false`) — that case still silently mints a fresh
+    /// anonymous identity, unchanged from lot 1 — see `currentSession()`'s
+    /// doc comment for both guards. The reachable recovery path from
+    /// EITHER trigger is
     /// `AnonymousIdentityManager.linkOrSignInWithApple`, which treats this
     /// exact rejection as "no local session" and re-authenticates via
     /// Apple.
     case reauthenticationRequired
+
+    /// The exact string `CloudSyncCoordinator.syncNow()`'s catch-all
+    /// (`String(describing: error)`) writes into
+    /// `SyncConsentStore.recordError` when THIS case is what aborted a
+    /// cycle. `SettingsView`'s reconnect-prompt UI (app target, outside
+    /// this lot's file perimeter) reads `cloudSyncLastError` back out and
+    /// compares it against this exact value to decide whether to offer
+    /// "Sign in with Apple again" — the ONLY reconnection path in the app.
+    /// A bare string literal at that call site would silently stop
+    /// matching the moment this case is ever renamed; referencing this
+    /// constant from both sides keeps the two in lockstep by construction.
+    /// Verified equal to what the coordinator actually writes by
+    /// `AppleIdentityLinkingTests.reauthenticationRequiredMessageMatchesCoordinatorWrite`.
+    public static let reauthenticationRequiredMessage = String(describing: SyncAuthError.reauthenticationRequired)
 }
 
 // MARK: - URLSessionSupabaseAuthTransport

@@ -17,10 +17,12 @@ import SwiftData
 /// reasoning as `CloudSyncCoordinatorTests`'s own top-of-file comment.
 ///
 /// Suite name deliberately does NOT contain "AnonymousIdentityManager",
-/// "CloudSyncCoordinator", or "CloudDataDeletion" — those are the CI
-/// `--filter` terms this repo's green subset already matches on
-/// (`.github/workflows/ci.yml`), and this suite is not (yet) part of that
-/// list — see this lot's final report.
+/// "CloudSyncCoordinator", or "CloudDataDeletion" — those are pre-existing
+/// CI `--filter` terms in `.github/workflows/ci.yml`'s green subset.
+/// This suite's own name (`AppleIdentityLinking`) is a separate, explicit
+/// term in that same filter list, alongside `SupabaseAuthTransportRequestShape`
+/// — both added as part of this lot's remediation and confirmed to run
+/// green in that filtered subset (630/630 as of the lot-3 verification pass).
 @Suite("AppleIdentityLinking")
 @MainActor
 struct AppleIdentityLinkingTests {
@@ -51,7 +53,7 @@ struct AppleIdentityLinkingTests {
 
         let linked = makeSession(userID: anonID, isAnonymous: false) // SAME user_id
         let transport = MockSupabaseAuthTransport(linkAppleResult: .success(linked))
-        let manager = AnonymousIdentityManager(transport: transport, keychain: keychain)
+        let manager = AnonymousIdentityManager(transport: transport, keychain: keychain, identityStore: MockSyncIdentityStore())
 
         let outcome = try await manager.linkOrSignInWithApple(idToken: "ID_TOKEN", rawNonce: "RAW_NONCE")
 
@@ -86,7 +88,7 @@ struct AppleIdentityLinkingTests {
 
         let linked = makeSession(userID: anonID, isAnonymous: false)
         let transport = MockSupabaseAuthTransport(linkAppleResult: .success(linked))
-        let manager = AnonymousIdentityManager(transport: transport, keychain: keychain)
+        let manager = AnonymousIdentityManager(transport: transport, keychain: keychain, identityStore: MockSyncIdentityStore())
 
         _ = try await manager.linkOrSignInWithApple(idToken: "ID_TOKEN", rawNonce: "RAW_NONCE")
 
@@ -128,7 +130,7 @@ struct AppleIdentityLinkingTests {
         let existingAccountID = UUID() // may already exist server-side; irrelevant here
         let session = makeSession(userID: existingAccountID, isAnonymous: false)
         let transport = MockSupabaseAuthTransport(signInWithAppleResult: .success(session))
-        let manager = AnonymousIdentityManager(transport: transport, keychain: MockKeychainStore())
+        let manager = AnonymousIdentityManager(transport: transport, keychain: MockKeychainStore(), identityStore: MockSyncIdentityStore())
 
         let outcome = try await manager.linkOrSignInWithApple(idToken: "ID_TOKEN", rawNonce: "RAW_NONCE")
 
@@ -156,7 +158,7 @@ struct AppleIdentityLinkingTests {
             linkAppleResult: .failure(SyncAuthError.identityAlreadyLinked(status: 422, body: "{}")),
             signInWithAppleResult: .success(makeSession(userID: populatedAccountID, isAnonymous: false))
         )
-        let manager = AnonymousIdentityManager(transport: transport, keychain: keychain)
+        let manager = AnonymousIdentityManager(transport: transport, keychain: keychain, identityStore: MockSyncIdentityStore())
 
         let outcome = try await manager.linkOrSignInWithApple(idToken: "ID_TOKEN", rawNonce: "RAW_NONCE")
 
@@ -187,7 +189,7 @@ struct AppleIdentityLinkingTests {
         // adopted it.
         let seededKeychain = MockKeychainStore()
         try seed(session, in: seededKeychain)
-        let manager = AnonymousIdentityManager(transport: transport, keychain: seededKeychain)
+        let manager = AnonymousIdentityManager(transport: transport, keychain: seededKeychain, identityStore: MockSyncIdentityStore())
 
         let identityStore = MockSyncIdentityStore(lastKnownUserID: previousUserID)
         var cursors: [String: SyncCursorPosition] = [:]
@@ -255,7 +257,7 @@ struct AppleIdentityLinkingTests {
         // HTTP 2xx, but for a completely unrelated user_id.
         let wrongUserID = UUID()
         let transport = MockSupabaseAuthTransport(linkAppleResult: .success(makeSession(userID: wrongUserID, isAnonymous: false)))
-        let manager = AnonymousIdentityManager(transport: transport, keychain: keychain)
+        let manager = AnonymousIdentityManager(transport: transport, keychain: keychain, identityStore: MockSyncIdentityStore())
 
         await #expect(throws: AppleLinkError.linkIdentityGuardTripped) {
             _ = try await manager.linkOrSignInWithApple(idToken: "ID_TOKEN", rawNonce: "RAW_NONCE")
@@ -284,7 +286,7 @@ struct AppleIdentityLinkingTests {
         let transport = MockSupabaseAuthTransport(
             linkAppleResult: .failure(SyncAuthError.requestFailed(status: 401, errorCode: "invalid_grant", body: ""))
         )
-        let manager = AnonymousIdentityManager(transport: transport, keychain: keychain)
+        let manager = AnonymousIdentityManager(transport: transport, keychain: keychain, identityStore: MockSyncIdentityStore())
 
         await #expect(throws: SyncAuthError.self) {
             _ = try await manager.linkOrSignInWithApple(idToken: "BAD_TOKEN", rawNonce: "RAW_NONCE")
@@ -306,7 +308,7 @@ struct AppleIdentityLinkingTests {
         try seed(anon, in: keychain)
 
         let transport = MockSupabaseAuthTransport(linkAppleResult: .failure(NetworkFailure()))
-        let manager = AnonymousIdentityManager(transport: transport, keychain: keychain)
+        let manager = AnonymousIdentityManager(transport: transport, keychain: keychain, identityStore: MockSyncIdentityStore())
 
         await #expect(throws: NetworkFailure.self) {
             _ = try await manager.linkOrSignInWithApple(idToken: "ID_TOKEN", rawNonce: "RAW_NONCE")
@@ -329,7 +331,7 @@ struct AppleIdentityLinkingTests {
             signInResult: .success(makeSession()), // would mint an unrelated identity if ever reached
             refreshResult: .failure(SyncAuthError.requestFailed(status: 401, errorCode: "invalid_grant", body: ""))
         )
-        let manager = AnonymousIdentityManager(transport: transport, keychain: keychain)
+        let manager = AnonymousIdentityManager(transport: transport, keychain: keychain, identityStore: MockSyncIdentityStore())
 
         await #expect(throws: SyncAuthError.reauthenticationRequired) {
             _ = try await manager.validAccessToken()
@@ -353,7 +355,7 @@ struct AppleIdentityLinkingTests {
             signInResult: .success(fresh),
             refreshResult: .failure(SyncAuthError.requestFailed(status: 401, errorCode: "invalid_grant", body: ""))
         )
-        let manager = AnonymousIdentityManager(transport: transport, keychain: keychain)
+        let manager = AnonymousIdentityManager(transport: transport, keychain: keychain, identityStore: MockSyncIdentityStore())
 
         let userID = try await manager.currentUserID()
 
@@ -378,7 +380,7 @@ struct AppleIdentityLinkingTests {
             // GoTrue returns the same user_id for the same Apple identity.
             signInWithAppleResult: .success(makeSession(userID: linkedID, isAnonymous: false))
         )
-        let manager = AnonymousIdentityManager(transport: transport, keychain: keychain)
+        let manager = AnonymousIdentityManager(transport: transport, keychain: keychain, identityStore: MockSyncIdentityStore())
 
         let outcome = try await manager.linkOrSignInWithApple(idToken: "ID_TOKEN", rawNonce: "RAW_NONCE")
 
@@ -405,7 +407,7 @@ struct AppleIdentityLinkingTests {
             refreshResult: .failure(SyncAuthError.requestFailed(status: 503, errorCode: nil, body: "")),
             signInWithAppleResult: .success(makeSession(userID: UUID(), isAnonymous: false))
         )
-        let manager = AnonymousIdentityManager(transport: transport, keychain: keychain)
+        let manager = AnonymousIdentityManager(transport: transport, keychain: keychain, identityStore: MockSyncIdentityStore())
 
         // `existingSessionAccessToken()`'s OWN refresh attempt is what
         // throws here — a 5xx from IT is not in `(400..<500)`, so
@@ -439,6 +441,171 @@ struct AppleIdentityLinkingTests {
         let decoded = try SyncJSON.decoder.decode(SyncSession.self, from: Data(json.utf8))
         #expect(decoded.isAnonymous == true)
         #expect(decoded.userID == userID)
+    }
+
+    // MARK: - Remediation, Critique #1: the wasLinked marker survives an
+    // empty Keychain (iPhone A links → iCloud restore onto iPhone B).
+
+    @Test("CRITIQUE #1: empty Keychain + wasLinked marker true (iCloud-restore-onto-new-device) throws reauthenticationRequired, never mints an anonymous ghost")
+    func emptyKeychainWithWasLinkedMarkerThrowsInsteadOfMinting() async throws {
+        let keychain = MockKeychainStore() // nothing seeded — the Keychain entry never restores (ThisDeviceOnly)
+        let identityStore = MockSyncIdentityStore(wasLinked: true) // UserDefaults DID restore this marker
+        let transport = MockSupabaseAuthTransport(signInResult: .success(makeSession())) // would mint if ever reached
+        let manager = AnonymousIdentityManager(transport: transport, keychain: keychain, identityStore: identityStore)
+
+        await #expect(throws: SyncAuthError.reauthenticationRequired) {
+            _ = try await manager.validAccessToken()
+        }
+        #expect(transport.signInCallCount == 0, "must never mint an anonymous ghost identity on a device that was previously linked")
+    }
+
+    @Test("Baseline preserved: empty Keychain + wasLinked marker false (genuine first install) still mints anonymously — no regression")
+    func emptyKeychainNeverLinkedStillMintsAnonymously() async throws {
+        let keychain = MockKeychainStore()
+        let identityStore = MockSyncIdentityStore(wasLinked: false)
+        let fresh = makeSession()
+        let transport = MockSupabaseAuthTransport(signInResult: .success(fresh))
+        let manager = AnonymousIdentityManager(transport: transport, keychain: keychain, identityStore: identityStore)
+
+        let userID = try await manager.currentUserID()
+
+        #expect(userID == fresh.userID)
+        #expect(transport.signInCallCount == 1)
+    }
+
+    @Test("The wasLinked marker is set the moment a linked session is adopted, and isLinkedToExternalIdentity() reports the bound state correctly")
+    func wasLinkedMarkerSetOnAdoptionAndBoundStateAccessor() async throws {
+        let anonID = UUID()
+        let anon = makeSession(userID: anonID, isAnonymous: true)
+        let keychain = MockKeychainStore()
+        try seed(anon, in: keychain)
+        let identityStore = MockSyncIdentityStore()
+        #expect(identityStore.wasLinked() == false)
+
+        let linked = makeSession(userID: anonID, isAnonymous: false)
+        let transport = MockSupabaseAuthTransport(linkAppleResult: .success(linked))
+        let manager = AnonymousIdentityManager(transport: transport, keychain: keychain, identityStore: identityStore)
+
+        #expect(await manager.isLinkedToExternalIdentity() == false, "still anonymous before linking")
+
+        _ = try await manager.linkOrSignInWithApple(idToken: "ID_TOKEN", rawNonce: "RAW_NONCE")
+
+        #expect(identityStore.wasLinked() == true, "the persisted marker must survive even if the Keychain entry is later lost")
+        #expect(await manager.isLinkedToExternalIdentity() == true, "the bound accessor must reflect the just-adopted linked session")
+    }
+
+    // MARK: - Remediation, Important #3: a 429 must not be treated as a dead session
+
+    @Test("IMPORTANT #3: a 429 (rate limit) while refreshing during Apple link does NOT fall back to plain sign-in — propagates so the caller can retry")
+    func rateLimitWhileLinkingDoesNotFallBackToSignIn() async throws {
+        let linkedID = UUID()
+        let expiring = makeSession(userID: linkedID, expiresIn: 10, isAnonymous: false)
+        let keychain = MockKeychainStore()
+        try seed(expiring, in: keychain)
+
+        let transport = MockSupabaseAuthTransport(
+            refreshResult: .failure(SyncAuthError.requestFailed(status: 429, errorCode: "over_request_rate_limit", body: "")),
+            signInWithAppleResult: .success(makeSession(userID: UUID(), isAnonymous: false))
+        )
+        let manager = AnonymousIdentityManager(transport: transport, keychain: keychain, identityStore: MockSyncIdentityStore())
+
+        await #expect(throws: SyncAuthError.requestFailed(status: 429, errorCode: "over_request_rate_limit", body: "")) {
+            _ = try await manager.linkOrSignInWithApple(idToken: "ID_TOKEN", rawNonce: "RAW_NONCE")
+        }
+        #expect(
+            transport.signInWithAppleCallCount == 0,
+            "a 429 means retry-later, not dead — must not orphan a live linked/anonymous session by minting a brand-new unrelated identity via plain sign-in"
+        )
+    }
+
+    @Test("IMPORTANT #3 baseline: a 403 while refreshing during Apple link IS still treated as a dead session — falls back to reconnect via Apple")
+    func status403WhileLinkingStillFallsBackToSignIn() async throws {
+        let linkedID = UUID()
+        let expiring = makeSession(userID: linkedID, expiresIn: 10, isAnonymous: false)
+        let keychain = MockKeychainStore()
+        try seed(expiring, in: keychain)
+
+        let transport = MockSupabaseAuthTransport(
+            refreshResult: .failure(SyncAuthError.requestFailed(status: 403, errorCode: nil, body: "")),
+            signInWithAppleResult: .success(makeSession(userID: linkedID, isAnonymous: false))
+        )
+        let manager = AnonymousIdentityManager(transport: transport, keychain: keychain, identityStore: MockSyncIdentityStore())
+
+        let outcome = try await manager.linkOrSignInWithApple(idToken: "ID_TOKEN", rawNonce: "RAW_NONCE")
+
+        guard case .reauthenticatedAfterDeadSession(let userID) = outcome else {
+            Issue.record("Expected .reauthenticatedAfterDeadSession, got \(outcome)")
+            return
+        }
+        #expect(userID == linkedID)
+        #expect(transport.signInWithAppleCallCount == 1)
+    }
+
+    // MARK: - Remediation, Mineur #8: one freshness evaluation, not two
+
+    @Test("MINEUR #8: the access token and previousUserID come from ONE freshness evaluation, not two independent ones (no double refresh)")
+    func singleFreshnessEvaluationAvoidsDoubleRefresh() async throws {
+        let linkedID = UUID()
+        let expiring = makeSession(userID: linkedID, expiresIn: 10, isAnonymous: false) // within the 60s default margin
+        // The refreshed session ALSO comes back still within the margin —
+        // so a SECOND, independently-timed needsRefresh() evaluation would
+        // see it as needing refresh AGAIN, which is exactly the race this
+        // fix closes.
+        let refreshed = makeSession(userID: linkedID, expiresIn: 10, isAnonymous: false)
+        let keychain = MockKeychainStore()
+        try seed(expiring, in: keychain)
+
+        let transport = MockSupabaseAuthTransport(
+            refreshResult: .success(refreshed),
+            linkAppleResult: .success(makeSession(userID: linkedID, isAnonymous: false))
+        )
+        let manager = AnonymousIdentityManager(transport: transport, keychain: keychain, identityStore: MockSyncIdentityStore())
+
+        let outcome = try await manager.linkOrSignInWithApple(idToken: "ID_TOKEN", rawNonce: "RAW_NONCE")
+
+        guard case .linkedExistingIdentity(let userID) = outcome else {
+            Issue.record("Expected .linkedExistingIdentity (the guard must NOT trip on a correctly-preserved user_id), got \(outcome)")
+            return
+        }
+        #expect(userID == linkedID)
+        #expect(
+            transport.refreshCallCount == 1,
+            "the access token and previousUserID must be derived from ONE freshness evaluation, not two independent (and independently-timed) ones"
+        )
+    }
+
+    // MARK: - Remediation, Mineur #5: the reauthenticationRequiredMessage constant
+
+    @Test("MINEUR #5: SyncAuthError.reauthenticationRequiredMessage is exactly the string CloudSyncCoordinator.syncNow() writes to lastErrorMessage — proved end-to-end on the CRITIQUE #1 restore scenario")
+    @MainActor
+    func reauthenticationRequiredMessageMatchesCoordinatorWrite() async throws {
+        let keychain = MockKeychainStore() // empty — the restored-onto-new-device Keychain
+        let identityStore = MockSyncIdentityStore(wasLinked: true) // UserDefaults DID restore
+        let authTransport = MockSupabaseAuthTransport(signInResult: .success(makeSession())) // would mint if ever reached
+        let manager = AnonymousIdentityManager(transport: authTransport, keychain: keychain, identityStore: identityStore)
+
+        let container = try makeEmptyContainer()
+        let consentStore = MockSyncConsentStore(consentGiven: true)
+        let coordinator = CloudSyncCoordinator(
+            modelContainer: container,
+            identity: manager,
+            transport: MockSyncDataTransport(),
+            pullTransport: MockSyncPullTransport(),
+            cursorStore: MockSyncCursorStore(),
+            skipTracker: MockSyncSkipTracker(),
+            identityStore: MockSyncIdentityStore(),
+            consentStore: consentStore
+        )
+
+        let outcome = await coordinator.syncNow()
+
+        guard case .failure(let message) = outcome else {
+            Issue.record("Expected .failure, got \(outcome)")
+            return
+        }
+        #expect(message == SyncAuthError.reauthenticationRequiredMessage)
+        #expect(await coordinator.lastErrorMessage() == SyncAuthError.reauthenticationRequiredMessage)
+        #expect(authTransport.signInCallCount == 0, "must never mint an anonymous ghost, even routed through the full syncNow() cycle")
     }
 }
 

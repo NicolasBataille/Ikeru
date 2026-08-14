@@ -49,27 +49,27 @@
     AppleSignInFlow.swift, AnonymousIdentityManager.linkOrSignInWithApple):
     signing in with Apple is opt-in and layered ON TOP of the anonymous
     identity above, never a replacement requirement — the anonymous path
-    with no email stays the default. When a learner does choose to link,
-    GoTrue (the Supabase auth server) records the email address tied to
-    their Apple ID in its own auth.users table — potentially Apple's
-    private relay address if the learner chose to hide their real one.
-    This app never reads that address back, never stores a copy of it
-    on-device or in any table SyncPayloadBuilder pushes to, and no line of
-    Swift in this repo touches an email string (verified: no `email`
-    identifier anywhere under IkeruCore/Sources/Services/Sync or
-    Ikeru/Services/AppleSignInFlow.swift). None of that makes it
-    undeclared, though: it is still collected, server-side, about this
-    learner, as a direct result of a feature this app ships and prompts
-    the learner to use — Apple's own guidance is to declare data collected
-    by first-party server infrastructure the app's flow causes to be
-    collected, not only what the client code itself parses. Linked: true —
-    supabase/functions/delete-account/index.ts's DELETE_ORDER plus the
-    final `adminClient.auth.admin.deleteUser(userID)` call confirm the
-    email lives on the exact same auth.users row keyed by this learner's
-    user_id, and erasing that row (the "delete my data" flow in Settings)
-    takes the email with it. Tracking: false — never used for
-    cross-app/cross-site tracking or ad targeting, only to authenticate
-    the same learner across their own devices. Purpose:
+    with no email stays the default. The app itself requests no scopes at
+    all (`request.requestedScopes = []` in AppleSignInFlow.swift — even
+    `.fullName` is deliberately not requested), and no line of Swift in
+    this repo reads, stores, or transmits an email string. What we have
+    NOT verified is what GoTrue (the Supabase auth server) does on its
+    side of the exchange when it receives the Apple identity token —
+    specifically whether it records an email address (the learner's real
+    one, or Apple's private relay address) into its own auth.users table.
+    That would require a real Apple ID sign-in on a real device to
+    observe, which has not been done yet. This entry is kept as a
+    deliberately conservative placeholder pending that verification:
+    under-declaring collected data is the dangerous mistake (App Review
+    rejection or worse, a misleading privacy label), while over-declaring
+    is merely cautious and can be walked back once confirmed. TODO before
+    relying on this comment as ground truth: perform a real Sign in with
+    Apple on-device, inspect the resulting auth.users row in Supabase, and
+    either confirm this entry (and tighten this comment to state what was
+    observed) or remove it if GoTrue turns out not to persist an email
+    here. Tracking: false — if collected at all, it would only ever be
+    used to authenticate the same learner across their own devices, never
+    for cross-app/cross-site tracking or ad targeting. Purpose:
     AppFunctionality only.
   - NSPrivacyCollectedDataTypeProductInteraction: learning progress and
     exercise results — RPGState (xp, level, streaks, sessions/reviews
