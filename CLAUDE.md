@@ -73,6 +73,52 @@ Clips pré-générés et embarqués dans `Ikeru/Resources/Audio/` (un `.m4a` par
 - La clé Swift (`BundledAudioLocator`) et la clé Python doivent rester **identiques**.
 - `Audio/` est une **folder reference** dans le pbxproj (`lastKnownFileType = folder`) → nouveaux clips inclus sans édition pbxproj.
 
+## Sauvegarde cloud Supabase
+
+Projet `aiayzlarixlogcoyswna`, **région UE**, palier gratuit. Identité **anonyme**
+(pas de compte) : `AnonymousIdentityManager` fait un `POST /auth/v1/signup` à
+corps vide et garde le jeton dans le Trousseau de l'appareil.
+
+- **La clé publiable est publique par nature** — elle est committée dans
+  `SyncJSON.swift` et embarquée dans le binaire. Elle ne donne rien seule : les
+  8 tables ont RLS, chaque ligne porte `user_id = auth.uid()`. Vérifié en réel
+  le 2026-08-13 : un second utilisateur anonyme ne voit ni ne modifie les lignes
+  du premier. Ne jamais committer la clé **`service_role`**, elle est d'une autre
+  nature.
+- **Curseur de pull** : chaque table porte `server_updated_at` avec un trigger
+  `BEFORE INSERT OR UPDATE`. C'est l'horloge du **serveur** — ne jamais paginer
+  sur `updated_at` (horloge client, fausse sur un téléphone mal réglé).
+- **Suppression** : les 8 tables sont en `ON DELETE CASCADE` vers `auth.users`,
+  donc supprimer l'utilisateur auth efface tout, y compris une table ajoutée
+  plus tard.
+
+### Fonction Edge : à redéployer à la main
+
+`supabase/functions/delete-account` **n'est pas redéployée automatiquement** —
+pas de step CI (il faudrait un secret `SUPABASE_ACCESS_TOKEN`). Après toute
+modification du fichier, ou si le projet Supabase est réinitialisé :
+
+```bash
+supabase functions deploy delete-account --project-ref aiayzlarixlogcoyswna
+```
+
+Ne pas l'oublier : `docs/privacy.html` **promet** la suppression des données
+serveur. Si la fonction est absente, le bouton renvoie 404 pendant que la
+politique de confidentialité affirme le contraire — la page est servie par
+GitHub Pages dès le merge sur `master`. `supabase/config.toml` fige la config
+(`verify_jwt = true`) pour que le redéploiement reproduise l'existant.
+
+Vérifier après déploiement : sans en-tête `Authorization` → 401, jeton bidon →
+401, `GET` → 405, appel authentifié → 200 avec le compte de lignes par table.
+
+### Mise en pause du palier gratuit
+
+Un projet gratuit est **mis en pause après ~7 jours sans requête**.
+`.github/workflows/supabase-keepalive.yml` le ping tous les jours. L'app étant
+local-d'abord, une pause n'est jamais une perte de données — mais elle casse la
+sauvegarde en silence. Si ce job passe au rouge, le projet est probablement déjà
+en pause : il faut le restaurer depuis le dashboard.
+
 ## Pipeline CI
 
 Workflow : `.github/workflows/ci.yml`.

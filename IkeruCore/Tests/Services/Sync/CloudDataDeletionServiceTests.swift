@@ -1,0 +1,153 @@
+import Testing
+import Foundation
+@testable import IkeruCore
+
+/// Suite name deliberately does not collide with any other token in the CI
+/// `--filter` regex (`.github/workflows/ci.yml`'s green-subset step) — it
+/// must not accidentally match an existing alternation branch (e.g. it must
+/// not contain "Sync" as a standalone match, which several existing filter
+/// terms do substring-match against). "CloudDataDeletion" is now itself one
+/// of the alternation terms in that filter, run alongside `CloudSyncCoordinator`.
+@Suite("CloudDataDeletion")
+struct CloudDataDeletionServiceTests {
+
+    private func makeSession(userID: UUID = UUID(), expiresIn: TimeInterval = 3600) -> SyncSession {
+        SyncSession(
+            userID: userID,
+            accessToken: "access-\(UUID().uuidString)",
+            refreshToken: "refresh-\(UUID().uuidString)",
+            expiresAt: Date().addingTimeInterval(expiresIn)
+        )
+    }
+
+    /// Seeds a `MockKeychainStore` with an already-valid session, exactly
+    /// as `AnonymousIdentityManager` would have persisted it itself (same
+    /// key, same `SyncJSON` codec) — see
+    /// `AnonymousIdentityManagerTests.loadsStoredSessionWithoutSigningInAgain`
+    /// for the identical pattern this is copied from.
+    private func seed(_ session: SyncSession, into keychain: MockKeychainStore) throws {
+        let data = try SyncJSON.encoder.encode(session)
+        try keychain.save(key: SyncKeychainKeys.session, value: String(data: data, encoding: .utf8)!)
+    }
+
+    @Test("Nominal success: deletes server-side, then forgets the local session")
+    func nominalSuccessDeletesThenForgetsSession() async throws {
+        let session = makeSession()
+        let keychain = MockKeychainStore()
+        try seed(session, into: keychain)
+
+        let authTransport = MockSupabaseAuthTransport()
+        let identity = AnonymousIdentityManager(transport: authTransport, keychain: keychain)
+        let deletionTransport = MockCloudDeletionTransport()
+        let service = CloudDataDeletionService(identity: identity, transport: deletionTransport)
+
+        try await service.deleteAllCloudData()
+
+        #expect(deletionTransport.callCount == 1)
+        #expect(deletionTransport.lastAccessToken == session.accessToken)
+        // Session purged locally only after server success.
+        #expect(try keychain.load(key: SyncKeychainKeys.session) == nil)
+    }
+
+    @Test("No session ever existed: no-op success that never mints an identity")
+    func noSessionSucceedsAsNoOp() async throws {
+        let keychain = MockKeychainStore()
+        // Sign-in is set up to SUCCEED here on purpose. The empty keychain
+        // is the only thing that should decide this case, and the
+        // assertions below prove it: an empty keychain means "nothing was
+        // ever backed up", so the service must return without either
+        // calling the deletion endpoint or signing in.
+        let authTransport = MockSupabaseAuthTransport(signInResult: .success(makeSession()))
+        let identity = AnonymousIdentityManager(transport: authTransport, keychain: keychain)
+        let deletionTransport = MockCloudDeletionTransport()
+        let service = CloudDataDeletionService(identity: identity, transport: deletionTransport)
+
+        try await service.deleteAllCloudData() // must not throw
+
+        #expect(deletionTransport.callCount == 0)
+        // Minting an identity here would be actively harmful, not merely
+        // wasteful: the deletion would then target a brand-new EMPTY user
+        // and report success, which is the "erased the wrong account"
+        // failure mode this whole code path is shaped to avoid.
+        #expect(authTransport.signInCallCount == 0)
+    }
+
+    @Test("Stored session that cannot be refreshed: throws instead of claiming success")
+    func unrefreshableSessionThrowsRatherThanFakingSuccess() async throws {
+        let keychain = MockKeychainStore()
+        // A session that exists but is already expired, so a refresh is
+        // required — and that refresh fails (offline, or the refresh token
+        // was rejected).
+        try seed(makeSession(expiresIn: -3600), into: keychain)
+
+        let authTransport = MockSupabaseAuthTransport(
+            signInResult: .success(makeSession()),
+            refreshResult: .failure(SyncAuthError.invalidResponse)
+        )
+        let identity = AnonymousIdentityManager(transport: authTransport, keychain: keychain)
+        let deletionTransport = MockCloudDeletionTransport()
+        let service = CloudDataDeletionService(identity: identity, transport: deletionTransport)
+
+        // This is the regression this test exists for. The earlier version
+        // swallowed every token failure as "nothing to delete", so an
+        // offline learner was told their data had been erased while every
+        // row was still on the server — an untrue claim about a GDPR
+        // erasure request.
+        await #expect(throws: (any Error).self) {
+            try await service.deleteAllCloudData()
+        }
+
+        #expect(deletionTransport.callCount == 0)
+        // No fallback sign-in: the real rows still belong to the stored
+        // identity, and a fresh one could never address them.
+        #expect(authTransport.signInCallCount == 0)
+        // The session stays put so a later retry can still target it.
+        #expect(try keychain.load(key: SyncKeychainKeys.session) != nil)
+    }
+
+    @Test("Server failure: propagates the error and the local session survives")
+    func serverFailurePropagatesAndKeepsSession() async throws {
+        let session = makeSession()
+        let keychain = MockKeychainStore()
+        try seed(session, into: keychain)
+
+        let authTransport = MockSupabaseAuthTransport()
+        let identity = AnonymousIdentityManager(transport: authTransport, keychain: keychain)
+        let deletionTransport = MockCloudDeletionTransport(
+            errorToThrow: CloudDeletionError.requestFailed(status: 500, body: "boom")
+        )
+        let service = CloudDataDeletionService(identity: identity, transport: deletionTransport)
+
+        await #expect(throws: CloudDeletionError.self) {
+            try await service.deleteAllCloudData()
+        }
+
+        // The whole point: a failed server-side deletion must NOT purge the
+        // learner's only local proof of which server-side user_id was
+        // theirs, or a retry would orphan the real data forever.
+        #expect(try keychain.load(key: SyncKeychainKeys.session) != nil)
+    }
+
+    @Test("A second call after a successful deletion does not throw (idempotent)")
+    func secondCallAfterSuccessIsIdempotent() async throws {
+        let session = makeSession()
+        let keychain = MockKeychainStore()
+        try seed(session, into: keychain)
+
+        let authTransport = MockSupabaseAuthTransport(signInResult: .success(makeSession()))
+        let identity = AnonymousIdentityManager(transport: authTransport, keychain: keychain)
+        let deletionTransport = MockCloudDeletionTransport()
+        let service = CloudDataDeletionService(identity: identity, transport: deletionTransport)
+
+        try await service.deleteAllCloudData()
+        try await service.deleteAllCloudData() // must not throw
+
+        // The first call purged the session, so the second finds an empty
+        // keychain and stops there. Tapping the button twice therefore does
+        // NOT mint a throwaway identity just to delete it again — the
+        // second tap is genuinely free, and no new server-side user is
+        // created as a side effect of asking to be forgotten.
+        #expect(deletionTransport.callCount == 1)
+        #expect(authTransport.signInCallCount == 0)
+    }
+}
