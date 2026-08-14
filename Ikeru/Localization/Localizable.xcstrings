@@ -12499,6 +12499,42 @@
         }
       }
     },
+    "Apple ID" : {
+      "extractionState" : "manual",
+      "comment" : "Settings row label for the Apple sign-in state once connected (visual-coherence pass) — paired with a \"Connected\" value, same label+value shape as the Profile row above it; not tappable",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple ID"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Identifiant Apple"
+          }
+        }
+      }
+    },
+    "Connected" : {
+      "extractionState" : "manual",
+      "comment" : "Value shown next to \"Apple ID\" once the learner is signed in (visual-coherence pass) — a state, not a tappable row",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connected"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connecté"
+          }
+        }
+      }
+    },
     "Signing in…" : {
       "extractionState" : "manual",
       "comment" : "Loading label shown next to the spinner while the Sign in with Apple network call is in flight (lot 3)",

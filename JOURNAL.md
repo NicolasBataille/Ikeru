@@ -23,6 +23,118 @@ raisonnement, les mesures, et les décisions.
 
 ---
 
+## 2026-08-14/15 — Comptes Apple : de la clé primaire au bouton qui ne réagissait pas
+
+### Fait
+
+Cinq PR après le lot 2 : `#77` clé primaire composite, `#78`/`#79` Sign in with
+Apple, `#80` restauration à l'onboarding, `#81` déconnexion, `#82` cohérence
+visuelle de la section Compte.
+
+**Le fait qui a sauvé le lot 3, et qui ne s'invente pas.** IkeruCore n'a aucune
+dépendance externe, donc l'appel de liaison est écrit à la main. Il a été lu
+dans le code source de `auth-js` (`GoTrueClient.linkIdentityIdToken`) :
+
+    POST /auth/v1/token?grant_type=id_token
+    Authorization: Bearer <session anonyme actuelle>
+    { provider, id_token, nonce, link_identity: true }
+
+C'est **le même endpoint** qu'une connexion ordinaire. `link_identity: true` est
+la SEULE chose qui sépare « greffer Apple sur cette identité » de « se connecter
+ailleurs et orpheliner tout l'historique ». Sans cette lecture, on écrivait
+l'appel destructeur, et il aurait eu l'air parfaitement correct. Un test parse
+le vrai `httpBody` pour que ce champ ne puisse pas disparaître discrètement.
+
+**Un bug déjà mergé, trouvé en sondant le serveur** (`#77`). La clé primaire des
+8 tables était `id` seul — l'UUID généré par le client — donc unique pour TOUS
+les utilisateurs. Après un refresh token rejeté, l'app mint une identité neuve,
+le lot 2 déclenche un re-seed, et chaque ligne repoussée porte un id qui existe
+déjà sous l'ancien compte devenu inaccessible : `403 RLS` à chaque push,
+historique jamais resemable. Aucune relecture ne pouvait l'attraper : le défaut
+ne vit pas dans le Swift, il vit dans l'écart entre le faux serveur des tests et
+Postgres. Deux `curl` l'ont sorti. Clé composite `(user_id, id)` — validée sur
+table jetable AVANT migration, et sans aucun changement client (PostgREST déduit
+la cible du conflit de la PK, `user_id` reste rempli par son défaut).
+
+**Le défaut de conception du lot 3, trouvé en deux rondes** : le Trousseau est
+`ThisDeviceOnly` et ne migre jamais ; `UserDefaults` est restauré depuis une
+sauvegarde iCloud. Stocker « suis-je connecté » dans le second alors que la
+session vit dans le premier faisait qu'un iPhone restauré se déclarait connecté
+sans session, avec une synchro qui rapportait un succès vers un compte fantôme,
+et **aucune issue dans l'app**. La ronde 2 a montré que corriger un site d'appel
+n'avait pas corrigé le défaut : la même confusion faisait aussi que « Supprimer
+mes données » renvoyait un succès sans rien supprimer. La correction finale est
+une distinction, pas trois rustines — « suis-je lié maintenant » lit le
+Trousseau, « cet appareil a-t-il déjà été lié » lit un marqueur qui survit.
+
+### Testé
+
+**Passe device sur iPhone 14 Pro, corroborée en SQL des deux côtés.**
+
+- **Le test d'acceptation du lot 3 passe** : `user_id` `72757be9-…` identique
+  avant et après la liaison, `is_anonymous` bascule à `false`, **un seul compte**,
+  46 cartes et 74 journaux intacts, identité `apple` rattachée au même
+  utilisateur. Rejoué après un cycle déconnexion → reconnexion : toujours le
+  même id. Ça valide aussi le sens du nonce (inversé, le jeton serait rejeté).
+- **GAP-11 fermé** — suppression de profil, actif et non actif : aucun nom vide,
+  aucun crash. Détail à connaître : créer un profil l'**active** aussitôt, donc
+  tester le cas « non actif » demande de rebasculer d'abord.
+- **GAP-12 fermé** — sauvegarde et suppression exercées depuis l'appareil : 46
+  cartes / 74 journaux montés, **0 message de conversation** (l'exclusion Sakura
+  tient sur le chemin réel), puis compte auth ET lignes à zéro.
+- **La question de l'e-mail, tranchée par la mesure** : `auth.users.email` et le
+  claim `email` de l'identité sont **NULL**. GoTrue ne stocke aucune adresse
+  quand l'app ne demande aucun scope, pas même une adresse de relais. Aucune doc
+  ne le disait ; une requête SQL l'a réglé.
+- Sur la CI : le **Device Build passe**, donc la capability `applesignin` se
+  provisionne correctement en automatique — le point de vigilance ouvert depuis
+  l'ajout de l'entitlement est levé.
+
+**Non testé** : la fusion entre deux vrais clients (GAP-01), et le parcours de
+restauration complet depuis un appareil vierge.
+
+### Écarté
+
+- **Sur-déclarer l'e-mail « par prudence »**. Le manifeste annonçait
+  `NSPrivacyCollectedDataTypeEmailAddress` en attendant de savoir. Une fois
+  mesuré : retiré. Une étiquette App Store qui affirme « adresse e-mail, liée à
+  vous » sur une app qui n'en collecte aucune est une **fausse déclaration**,
+  pas une précaution.
+- **Rendre vraie la promesse « la sauvegarde reprendra à la reconnexion »** en
+  réactivant le consentement automatiquement. C'est le texte qui a changé :
+  réactiver l'envoi de données parce que quelqu'un s'est authentifié est
+  exactement ce que la conformité du lot 4 interdit.
+- **L'écran d'accueil ajouté à l'onboarding**. Il violait la contrainte posée
+  (« le chemin par défaut ne gagne rien ») et la ronde de revue avait corrigé la
+  *documentation* au lieu du *code*. Le CTA est redescendu en pied de l'écran du
+  prénom : zéro friction, découvrabilité intacte.
+- **Un `Bool?` pour le chevron**. Le lint strict l'a refusé, à raison : un
+  booléen optionnel n'a pas de nom pour son troisième état. Remplacé par un type
+  nommé.
+
+### Ouvert
+
+- **GAP-01** — la fusion n'a jamais tourné entre deux vrais clients. Débloqué
+  maintenant que la connexion existe : iPhone + simulateur sur le même compte
+  Apple, même carte notée hors ligne des deux côtés.
+- **GAP-13** — « Révisions » sous-crédite le travail réel (53 affichés contre 74
+  journaux). Lot dédié, décidé avec l'utilisateur.
+- **PR #82 en attente de revue visuelle** sur appareil.
+- Le clavier peut recouvrir le CTA de restauration en pied d'écran du prénom sur
+  petit format — signalé, non redessiné.
+- Une fois déconnecté, les données de l'ancien compte ne sont plus supprimables
+  depuis l'app (plus de jeton pour lui parler). Cohérent, mais à savoir.
+
+### Leçon de méthode, la même trois fois
+
+Le trigger `now()`, la clé primaire, la hauteur de la barre d'onglets, le bouton
+sans zone tappable : à chaque fois, **sonder le vrai système a battu raisonner
+dessus**, et à chaque fois j'avais commencé par raisonner. Une build
+instrumentée a réglé en une passe ce que trois ajustements « au jugé »
+n'avaient pas résolu. Quand le système est joignable, mesurer d'abord.
+
+---
+
 ## 2026-08-14 — Onboarding restore : ronde de remédiation (retrait de `.welcome`, 3 défauts importants)
 
 ### Fait
