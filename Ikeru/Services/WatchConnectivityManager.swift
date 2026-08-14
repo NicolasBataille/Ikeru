@@ -40,7 +40,7 @@ final class WatchConnectivityManager: NSObject, ObservableObject {
     private static let processedBatchIdsKey = "WatchConnectivityManager.processedBatchIds"
     private static let processedBatchIdsCap = 200
 
-    private override init() {
+    override private init() {
         super.init()
     }
 
@@ -83,13 +83,46 @@ final class WatchConnectivityManager: NSObject, ObservableObject {
                 source: .iPhone
             )
 
+            // Merged into the SAME applicationContext dictionary — see
+            // `WatchEligibleKanaPayload`'s doc for why a second
+            // `updateApplicationContext` call can't be used instead.
+            let eligibleCharacters = await eligibleKanaFronts(cardRepository: cardRepo)
+            var contextDict = payload.toDictionary()
+            contextDict[WatchEligibleKanaPayload.contextKey] = Array(eligibleCharacters)
+
             do {
-                try session.updateApplicationContext(payload.toDictionary())
-                Logger.sync.info("Sent state to Watch: level=\(state.level), xp=\(state.xp)")
+                try session.updateApplicationContext(contextDict)
+                Logger.sync.info(
+                    "Sent state to Watch: level=\(state.level), xp=\(state.xp), eligibleKana=\(eligibleCharacters.count)"
+                )
             } catch {
                 Logger.sync.error("Failed to send state to Watch: \(error.localizedDescription)")
             }
         }
+    }
+
+    /// Kana fronts the Watch quiz may draw questions from: the learner's
+    /// CURRENTLY chosen kana groups (`StudySetStore.chosenGroups`)
+    /// intersected with kana already graded at least once
+    /// (`fsrsState.reps > 0`) — see `WatchEligibleKanaPayload`'s doc for why
+    /// `reps > 0` is the right bar (the P2 presentation phase already
+    /// guarantees a never-graded card's first FSRS grade measures retention,
+    /// not first-encounter noise; the Watch quiz has no presentation UI of
+    /// its own, so it must stay off any card that hasn't cleared that bar
+    /// yet).
+    ///
+    /// Recomputed fresh from the current selection on EVERY call — this is
+    /// the single source of truth both `sendStateToWatch` (what to tell the
+    /// Watch is eligible) and `processWatchQuizBatch` (what to actually
+    /// accept for grading) resolve against, so a Watch that answered against
+    /// a stale copy of this set can never get a stale answer graded: the
+    /// receiving side re-derives the truth instead of trusting what the
+    /// Watch sent.
+    private func eligibleKanaFronts(cardRepository: CardRepository) async -> Set<String> {
+        let kanaRepo = KanaCardRepository(cardRepository: cardRepository)
+        let chosenGroups = StudySetStore.chosenGroups
+        let scoped = await kanaRepo.cardsForGroups(chosenGroups)
+        return Set(scoped.filter { $0.fsrsState.reps > 0 }.map(\.front))
     }
 
     // MARK: - Process Watch Results
@@ -163,7 +196,14 @@ final class WatchConnectivityManager: NSObject, ObservableObject {
         let kanaCards = await kanaRepo.allKanaCards()
         let cardByFront = Dictionary(kanaCards.map { ($0.front, $0) }, uniquingKeysWith: { first, _ in first })
 
-        var gradedCount = 0
+        // Re-derived from CURRENT phone-side truth, never trusted from the
+        // Watch — see `eligibleKanaFronts`'s doc. A Watch that answered
+        // against a stale copy (e.g. it was out of range while the learner
+        // changed groups, or while a card crossed reps 0 → 1 elsewhere) must
+        // not get that answer graded just because it made it into a batch.
+        let eligibleFronts = await eligibleKanaFronts(cardRepository: cardRepo)
+
+        var gradedEvents: [WatchQuizReviewBatch.Event] = []
         for event in batch.events {
             guard let card = cardByFront[event.targetCharacter] else {
                 // No matching kana card on this device — e.g. the learner
@@ -172,6 +212,18 @@ final class WatchConnectivityManager: NSObject, ObservableObject {
                 // event is logged, not silently dropped.
                 Logger.sync.warning(
                     "Watch quiz answer for \(event.targetCharacter) has no matching kana card — skipped"
+                )
+                continue
+            }
+
+            guard Self.isEventEligible(event, eligibleFronts: eligibleFronts) else {
+                // The card exists, but is outside the learner's current
+                // group selection or was never graded before (`reps == 0`)
+                // — grading it here would either quiz on an un-chosen group
+                // or reintroduce the first-grade noise the P2 presentation
+                // phase exists to remove. See `eligibleKanaFronts`.
+                Logger.sync.warning(
+                    "Watch quiz answer for \(event.targetCharacter) is not eligible for grading — skipped"
                 )
                 continue
             }
@@ -191,9 +243,10 @@ final class WatchConnectivityManager: NSObject, ObservableObject {
                 exerciseType: Self.watchQuizExerciseType,
                 surface: Self.watchSurface
             )
-            gradedCount += 1
+            gradedEvents.append(event)
         }
 
+        let gradedCount = gradedEvents.count
         Logger.sync.info(
             "Graded \(gradedCount)/\(batch.events.count) Watch quiz answers via gradeCard (surface=watch)"
         )
@@ -202,14 +255,18 @@ final class WatchConnectivityManager: NSObject, ObservableObject {
         // `WatchSessionResult` already drove, now fed from the graded
         // batch's own tallies instead of a separate message.
         //
-        // `gradedCount`, not `batch.events.count`: the watch draws from the
-        // whole hiragana set regardless of which groups were chosen on the
-        // phone, so answers with no matching card are the rule rather than
-        // the exception. Counting them would inflate `totalReviewsCompleted`
-        // with reviews that produced no ReviewLog — the same "counting
-        // reviews that did not happen" this change removes for the pitch
-        // drill.
-        let correctCount = batch.events.filter(\.isCorrect).count
+        // Both `correctCount` and `totalQuestions` (below) are derived from
+        // `gradedEvents`, NOT `batch.events`: an event can be present in the
+        // batch but never graded — no matching card, outside the chosen
+        // groups, or never-graded-before (`eligibleFronts` guard above) —
+        // and counting those would inflate `totalReviewsCompleted` /
+        // `correctCount` with reviews that produced no `ReviewLog`, the same
+        // "counting reviews that did not happen" this change removes for the
+        // pitch drill. Deriving both from the same `gradedEvents` list also
+        // keeps them consistent with each other (a correctCount that could
+        // exceed totalQuestions was a latent risk before this: the watch
+        // could send more "correct" events than cards actually got graded).
+        let correctCount = gradedEvents.filter(\.isCorrect).count
         processWatchResult(
             WatchSessionResult(
                 correctCount: correctCount,
@@ -219,6 +276,19 @@ final class WatchConnectivityManager: NSObject, ObservableObject {
                 xpEarned: batch.xpEarned
             )
         )
+    }
+
+    // MARK: - Eligibility guard
+
+    /// Whether `event` may be graded, given the `eligibleFronts` computed
+    /// FRESH from current phone-side state (see `eligibleKanaFronts`).
+    /// Extracted as a pure, `nonisolated` static function — no
+    /// `ModelContainer`/`CardRepository` involved — specifically so the
+    /// phone-side depth guard ("refuse to grade a card the Watch sent that
+    /// isn't eligible, even though the Watch itself thought it was") is
+    /// testable without a simulator.
+    nonisolated static func isEventEligible(_ event: WatchQuizReviewBatch.Event, eligibleFronts: Set<String>) -> Bool {
+        eligibleFronts.contains(event.targetCharacter)
     }
 
     // MARK: - Idempotency
@@ -254,6 +324,21 @@ extension WatchConnectivityManager: WCSessionDelegate {
             Logger.sync.error("WCSession activation failed: \(error.localizedDescription)")
         } else {
             Logger.sync.info("WCSession activated: \(activationState.rawValue)")
+            // Push current state (RPG counters + eligible-kana set) to the
+            // Watch as soon as the session activates. Without this,
+            // `sendStateToWatch()`'s only other call site was reactive
+            // (`processWatchResult`, itself reachable only after the Watch
+            // has ALREADY sent something) — so a fresh pairing, a fresh
+            // install, or a plain app relaunch would never push an
+            // eligible-kana set at all, leaving the Watch stuck on "Nothing
+            // to review here yet" even for a learner with plenty of graded
+            // kana on the phone. `sendStateToWatch()`'s own guards
+            // (`isPaired`, `isWatchAppInstalled`, `modelContainer` present)
+            // make this a safe no-op when there's no paired Watch or the
+            // container isn't set up yet.
+            Task { @MainActor in
+                sendStateToWatch()
+            }
         }
     }
 

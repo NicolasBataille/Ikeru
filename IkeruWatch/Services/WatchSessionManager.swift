@@ -23,6 +23,16 @@ final class WatchSessionManager: NSObject, ObservableObject {
     @Published private(set) var syncedLevel: Int = 1
     @Published private(set) var syncedDueCards: Int = 0
 
+    /// Kana characters the Watch quiz is allowed to draw from: the
+    /// learner's chosen groups intersected with kana already graded at
+    /// least once, synced from the iPhone — see `WatchEligibleKanaPayload`.
+    /// Starts empty (not "everything"), matching the honest-empty-state
+    /// requirement: a Watch that hasn't yet received applicationContext at
+    /// all (brand-new pairing, or launched before the iPhone ever synced)
+    /// must show "nothing to review" rather than quiz on unchosen/unseen
+    /// kana.
+    @Published private(set) var eligibleKanaCharacters: [String] = []
+
     /// Pending session results to send when connectivity is restored.
     private var pendingResults: [WatchSessionResult] = []
 
@@ -30,7 +40,7 @@ final class WatchSessionManager: NSObject, ObservableObject {
     /// restored — same queued-while-offline treatment as `pendingResults`.
     private var pendingReviewBatches: [WatchQuizReviewBatch] = []
 
-    private override init() {
+    override private init() {
         super.init()
     }
 
@@ -96,10 +106,11 @@ final class WatchSessionManager: NSObject, ObservableObject {
     /// Apply state synced from the iPhone. Called only on the main actor —
     /// the delegate callback hops here via `Task { @MainActor }`.
     @MainActor
-    func applySyncedState(xp: Int, level: Int, due: Int) {
+    func applySyncedState(xp: Int, level: Int, due: Int, eligibleKana: [String]) {
         self.syncedXP = xp
         self.syncedLevel = level
         self.syncedDueCards = due
+        self.eligibleKanaCharacters = eligibleKana
     }
 }
 
@@ -137,10 +148,17 @@ extension WatchSessionManager: WCSessionDelegate {
         let xp = payload.xp
         let level = payload.level
         let due = payload.dueCardCount
+        // Merged into the SAME dictionary as `WatchSyncPayload` on the
+        // sending side — see `WatchEligibleKanaPayload`'s doc. Missing key
+        // (older iPhone build, or context genuinely never included it) is
+        // treated as "nothing eligible", never as "everything eligible".
+        let eligibleKana = WatchEligibleKanaPayload.fromContext(applicationContext)?.characters ?? []
         Task { @MainActor in
-            WatchSessionManager.shared.applySyncedState(xp: xp, level: level, due: due)
+            WatchSessionManager.shared.applySyncedState(xp: xp, level: level, due: due, eligibleKana: eligibleKana)
         }
 
-        Logger.sync.info("Watch received state: level=\(payload.level), xp=\(payload.xp)")
+        Logger.sync.info(
+            "Watch received state: level=\(payload.level), xp=\(payload.xp), eligibleKana=\(eligibleKana.count)"
+        )
     }
 }

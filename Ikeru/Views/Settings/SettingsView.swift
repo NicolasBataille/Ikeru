@@ -43,16 +43,27 @@ struct SettingsView: View {
     @AppStorage(DailyTermSettings.hourKey) private var dailyTermHour: Int = DailyTermSettings.defaultHour
     @AppStorage(DailyTermSettings.minuteKey) private var dailyTermMinute: Int = DailyTermSettings.defaultMinute
 
-    // MARK: Session
-
-    /// Default session length in minutes — Home CTA + Étude → Compose initial value.
-
     // MARK: Backup
 
     @StateObject private var backupManager = CloudBackupManager()
     @State private var showRestoreConfirmation = false
     @State private var showExportShare = false
     @State private var exportURL: URL?
+
+    // MARK: Cloud sync (Supabase, lot 1 — push-only, opt-in)
+    //
+    // `CloudSyncCoordinator` is IkeruCore's push-only cloud backup (design
+    // spec `docs/design-specs/2026-08-10-cloud-sync-design.md`, distinct
+    // from the dormant CloudKit path above). Off by default — nothing
+    // leaves the device until this toggle is turned on, and turning it on
+    // is the only place in the app that constructs the coordinator today
+    // (no foreground/session-end/network-regain triggers are wired yet;
+    // that integration is out of this lot's scope, see the coordinator's
+    // doc comment).
+    @State private var cloudSyncCoordinator: CloudSyncCoordinator?
+    @AppStorage(CloudSyncPreferences.consentDefaultsKey) private var cloudSyncConsentEnabled = false
+    @AppStorage(CloudSyncPreferences.lastSuccessDefaultsKey) private var cloudSyncLastSuccessEpoch: Double = 0
+    @AppStorage(CloudSyncPreferences.lastAttemptDefaultsKey) private var cloudSyncLastAttemptEpoch: Double = 0
 
     // MARK: Profile management
 
@@ -92,6 +103,19 @@ struct SettingsView: View {
         if backupManager.isBackingUp || backupManager.isRestoring { return "Syncing" }
         if backupManager.lastBackupDate != nil { return "On" }
         return "Off"
+    }
+
+    /// Honest cloud-sync status (task item 5: "jamais synchronisé / à jour /
+    /// en attente", never a bare error). Reads the same `UserDefaults` keys
+    /// `CloudSyncCoordinator` writes on every attempt — `@AppStorage`
+    /// re-renders this automatically even though the coordinator writes
+    /// from a background actor, since both go through the same
+    /// `UserDefaults.standard` keys declared in `CloudSyncPreferences`.
+    private var cloudSyncStatusValue: LocalizedStringKey {
+        guard cloudSyncConsentEnabled else { return "Off" }
+        if cloudSyncLastSuccessEpoch > 0 { return "Up to date" }
+        if cloudSyncLastAttemptEpoch > 0 { return "Sync pending" }
+        return "Never synced"
     }
 
     /// Furigana's effective value — what conversations actually render, not
@@ -524,9 +548,65 @@ struct SettingsView: View {
                 }
             }
 
+            // Cloud sync is gated to dev builds until the trust surfaces catch
+            // up. `docs/privacy.html` and `PrivacyInfo.xcprivacy` still describe
+            // an app that keeps everything on device — which is true today only
+            // because nobody can reach this switch. Shipping a user-facing sync
+            // toggle before updating them would repeat the exact mistake this
+            // project already had to correct once, and it is a release blocker
+            // rather than a merge blocker. Spec lot 4 owns that work.
+            #if IKERU_DEV_TOOLS
+            cloudSyncToggleRow
+            #endif
+
             // Plan / Premium row intentionally omitted — does not exist in the app.
 
             languageRow
+        }
+    }
+
+    /// One row: toggle + inline honest status — cloud-sync lot 1. New
+    /// localization keys used here ("Cloud backup (beta)", "Never synced",
+    /// "Sync pending", "Up to date") are not yet in
+    /// `Localizable.xcstrings` — declared in this task's handoff notes
+    /// rather than added directly (out of this task's file perimeter).
+    private var cloudSyncToggleRow: some View {
+        reminderToggleRow(
+            jp: "クラウド",
+            label: "Cloud backup (beta)",
+            isOn: $cloudSyncConsentEnabled,
+            onToggleChange: { enabled in handleCloudSyncToggleChange(enabled) }
+        ) {
+            Text(cloudSyncStatusValue)
+                .ikeruScaledFont(13, design: .serif, relativeTo: .caption)
+                .foregroundStyle(Color.ikeruPrimaryAccent)
+        }
+    }
+
+    /// Lazily builds the coordinator over the live `ModelContainer` — never
+    /// constructed (so never touches Keychain/network) until the learner
+    /// interacts with the toggle at least once.
+    private func cloudSyncCoordinatorInstance() -> CloudSyncCoordinator {
+        if let cloudSyncCoordinator { return cloudSyncCoordinator }
+        let coordinator = CloudSyncCoordinator(modelContainer: modelContext.container)
+        cloudSyncCoordinator = coordinator
+        return coordinator
+    }
+
+    /// Turning ON records consent AND triggers the first push immediately
+    /// (fire-and-forget background `Task` — no loading screen, per the
+    /// design spec's local-first rule). Turning OFF only records consent;
+    /// no network call follows. This toggle is the app's only call site for
+    /// `CloudSyncCoordinator.syncNow()` — see that type's doc comment for
+    /// which triggers (foreground, session-end, network-regain) are not
+    /// wired yet.
+    private func handleCloudSyncToggleChange(_ enabled: Bool) {
+        let coordinator = cloudSyncCoordinatorInstance()
+        Task {
+            await coordinator.setConsent(enabled)
+            if enabled {
+                await coordinator.syncNow()
+            }
         }
     }
 
@@ -773,7 +853,121 @@ struct SettingsView: View {
         }
     }
 
-    // MARK: - Row primitives
+    // MARK: - Actions
+
+    private func saveName() {
+        guard isNameValid else { return }
+        Logger.ui.info("Updating display name from settings")
+        profileViewModel?.updateDisplayName(editingName)
+        withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) {
+            isEditingName = false
+        }
+    }
+
+    private func updateReviewReminder(enabled: Bool) {
+        if enabled {
+            Task {
+                let authorized = await NotificationManager.shared.requestAuthorization()
+                if authorized {
+                    await NotificationManager.shared.scheduleReviewReminder(
+                        hour: reviewReminderHour
+                    )
+                } else {
+                    reviewReminderEnabled = false
+                }
+            }
+        } else {
+            NotificationManager.shared.cancelReviewReminders()
+        }
+    }
+
+    private func updateDailyTermReminder(enabled: Bool) {
+        if enabled {
+            Task {
+                let authorized = await NotificationManager.shared.requestAuthorization()
+                if authorized {
+                    await NotificationManager.shared.scheduleDailyTermReminder(
+                        hour: dailyTermHour,
+                        minute: dailyTermMinute
+                    )
+                } else {
+                    dailyTermEnabled = false
+                }
+            }
+        } else {
+            NotificationManager.shared.cancelDailyTermReminder()
+        }
+    }
+
+    private func formattedTime(_ hour: Int, _ minute: Int) -> String {
+        String(format: "%02d:%02d", hour, minute)
+    }
+
+    private func updateWeeklyCheckIn(enabled: Bool) {
+        if enabled {
+            Task {
+                let authorized = await NotificationManager.shared.requestAuthorization()
+                if authorized {
+                    await NotificationManager.shared.scheduleWeeklyCheckIn(
+                        weekday: weeklyCheckInDay,
+                        hour: weeklyCheckInHour
+                    )
+                } else {
+                    weeklyCheckInEnabled = false
+                }
+            }
+        } else {
+            NotificationManager.shared.cancelWeeklyCheckIn()
+        }
+    }
+
+    private func makeRigClient() -> RigClient? {
+        guard let settings = RigSettingsStore().load(), settings.isConfigured else {
+            return nil
+        }
+        return RigClient(configuration: settings)
+    }
+
+    private func runPreWarmNow() {
+        guard !isPreWarming else { return }
+        guard let service = PreWarmFactory.make(
+            modelContainer: modelContext.container,
+            assetCache: assetCache
+        ) else {
+            toastManager.showError("Pre-warm unavailable: cache not ready")
+            return
+        }
+        isPreWarming = true
+        toastManager.showInfo("Pre-warming started")
+        Logger.cache.info("Manual pre-warm triggered from Settings")
+        Task { @MainActor in
+            defer { isPreWarming = false }
+            do {
+                try await service.enqueueUpcomingDueAudio(window: 86_400)
+                Logger.cache.info("Manual pre-warm done")
+                toastManager.showInfo("Pre-warm queued")
+                if preWarmNotify {
+                    await PreWarmNotifier.notifyBatchFinished()
+                }
+            } catch is CancellationError {
+                // Silently ignore cancellation.
+            } catch {
+                Logger.cache.warning("Manual pre-warm failed: \(error.localizedDescription)")
+                toastManager.showError("Pre-warm failed: \(error.localizedDescription)")
+            }
+        }
+    }
+}
+
+// MARK: - Row primitives
+//
+// Extracted from the main `SettingsView` body to keep `type_body_length`
+// under SwiftLint's threshold. `private` members declared here remain
+// visible to `SettingsView`'s own body because Swift's access control for
+// `private` is file-scoped, not declaration-scoped — any extension of the
+// same type in the same file shares access (SE-0169).
+
+extension SettingsView {
 
     @ViewBuilder
     private func section(
@@ -965,111 +1159,6 @@ struct SettingsView: View {
             return String(localized: String.LocalizationValue(key))
         }
         return ""
-    }
-
-    // MARK: - Actions
-
-    private func saveName() {
-        guard isNameValid else { return }
-        Logger.ui.info("Updating display name from settings")
-        profileViewModel?.updateDisplayName(editingName)
-        withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) {
-            isEditingName = false
-        }
-    }
-
-    private func updateReviewReminder(enabled: Bool) {
-        if enabled {
-            Task {
-                let authorized = await NotificationManager.shared.requestAuthorization()
-                if authorized {
-                    await NotificationManager.shared.scheduleReviewReminder(
-                        hour: reviewReminderHour
-                    )
-                } else {
-                    reviewReminderEnabled = false
-                }
-            }
-        } else {
-            NotificationManager.shared.cancelReviewReminders()
-        }
-    }
-
-    private func updateDailyTermReminder(enabled: Bool) {
-        if enabled {
-            Task {
-                let authorized = await NotificationManager.shared.requestAuthorization()
-                if authorized {
-                    await NotificationManager.shared.scheduleDailyTermReminder(
-                        hour: dailyTermHour,
-                        minute: dailyTermMinute
-                    )
-                } else {
-                    dailyTermEnabled = false
-                }
-            }
-        } else {
-            NotificationManager.shared.cancelDailyTermReminder()
-        }
-    }
-
-    private func formattedTime(_ hour: Int, _ minute: Int) -> String {
-        String(format: "%02d:%02d", hour, minute)
-    }
-
-    private func updateWeeklyCheckIn(enabled: Bool) {
-        if enabled {
-            Task {
-                let authorized = await NotificationManager.shared.requestAuthorization()
-                if authorized {
-                    await NotificationManager.shared.scheduleWeeklyCheckIn(
-                        weekday: weeklyCheckInDay,
-                        hour: weeklyCheckInHour
-                    )
-                } else {
-                    weeklyCheckInEnabled = false
-                }
-            }
-        } else {
-            NotificationManager.shared.cancelWeeklyCheckIn()
-        }
-    }
-
-    private func makeRigClient() -> RigClient? {
-        guard let settings = RigSettingsStore().load(), settings.isConfigured else {
-            return nil
-        }
-        return RigClient(configuration: settings)
-    }
-
-    private func runPreWarmNow() {
-        guard !isPreWarming else { return }
-        guard let service = PreWarmFactory.make(
-            modelContainer: modelContext.container,
-            assetCache: assetCache
-        ) else {
-            toastManager.showError("Pre-warm unavailable: cache not ready")
-            return
-        }
-        isPreWarming = true
-        toastManager.showInfo("Pre-warming started")
-        Logger.cache.info("Manual pre-warm triggered from Settings")
-        Task { @MainActor in
-            defer { isPreWarming = false }
-            do {
-                try await service.enqueueUpcomingDueAudio(window: 86_400)
-                Logger.cache.info("Manual pre-warm done")
-                toastManager.showInfo("Pre-warm queued")
-                if preWarmNotify {
-                    await PreWarmNotifier.notifyBatchFinished()
-                }
-            } catch is CancellationError {
-                // Silently ignore cancellation.
-            } catch {
-                Logger.cache.warning("Manual pre-warm failed: \(error.localizedDescription)")
-                toastManager.showError("Pre-warm failed: \(error.localizedDescription)")
-            }
-        }
     }
 }
 
