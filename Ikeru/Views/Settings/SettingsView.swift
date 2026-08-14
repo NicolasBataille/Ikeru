@@ -1,6 +1,7 @@
 import SwiftUI
 import Combine
 import IkeruCore
+import AuthenticationServices
 import os
 
 // MARK: - SettingsView
@@ -72,10 +73,34 @@ struct SettingsView: View {
     /// UI copy, never shown verbatim). Read here only to check for
     /// `CloudSyncCoordinator.pullFailureMessagePrefix`, which distinguishes
     /// "push succeeded, pull failed this cycle" from a full sync failure —
-    /// see `cloudSyncStatusValue`.
-    @AppStorage(CloudSyncPreferences.lastErrorDefaultsKey) private var cloudSyncLastError: String = ""
+    /// see `cloudSyncStatusValue`. Not `private`: also read from
+    /// `SettingsView+AppleSignIn.swift` (the reauth-banner check) — Swift's
+    /// `private` is file-scoped.
+    @AppStorage(CloudSyncPreferences.lastErrorDefaultsKey) var cloudSyncLastError: String = ""
     @State private var isDeletingCloudData = false
     @State private var showDeleteCloudDataConfirmation = false
+
+    // MARK: Sign in with Apple (lot 3)
+    // Not `private` — see `SettingsView+AppleSignIn.swift`'s header comment.
+    /// Loaded from `AnonymousIdentityManager.isLinkedToExternalIdentity()`
+    /// (`.task` below), NOT an `@AppStorage` mirror — that used to survive
+    /// an iCloud restore (empty Keychain) and keep claiming "Connected"
+    /// with no way to recover (Critique #1).
+    @State var isLinkedWithApple = false
+    /// Loaded from `AnonymousIdentityManager.hasEverHeldLinkedSession()`
+    /// (`.task` below) — the DURABLE half of the split `isLinkedWithApple`
+    /// above answers only the Keychain half of (2026-08 lot-3 round-2
+    /// remediation, IMPORTANT). `isLinkedWithApple` reads the Keychain,
+    /// which never migrates across devices; this reads `UserDefaults`,
+    /// which DOES restore from an iCloud backup. A device restored after
+    /// linking Apple elsewhere has `isLinkedWithApple == false` but
+    /// `hasEverHeldLinkedSessionOnThisDevice == true` — without this second
+    /// flag, `appleSignInBlock` falls straight to the ordinary
+    /// never-linked sign-in row, and the learner has no way to discover
+    /// that their progress is one tap away instead of gone.
+    @State var hasEverHeldLinkedSessionOnThisDevice = false
+    @State var isSigningInWithApple = false
+    @State var appleSignInErrorMessage: String?
 
     // MARK: Profile management
 
@@ -314,7 +339,7 @@ struct SettingsView: View {
         } message: {
             Text("Removes every cached audio file and image. Assets will be regenerated on next use.")
         }
-        .alert("Delete data from server?", isPresented: $showDeleteCloudDataConfirmation) {
+        .alert("Delete data from server?", isPresented: $showDeleteCloudDataConfirmation) { // catalog VALUES reworded for lot 3
             Button("Cancel", role: .cancel) { }
             Button("Delete", role: .destructive) {
                 deleteCloudDataFromServer()
@@ -323,6 +348,8 @@ struct SettingsView: View {
             Text("Permanently deletes your backed-up progress — profiles, cards, review history, and vocabulary — from the server. This cannot be undone. Data on this device stays untouched.")
         }
         .task {
+            isLinkedWithApple = await CloudSyncTriggers.shared.sharedIdentityManager.isLinkedToExternalIdentity()
+            hasEverHeldLinkedSessionOnThisDevice = await CloudSyncTriggers.shared.sharedIdentityManager.hasEverHeldLinkedSession()
             if CloudBackupManager.iCloudEnabled {
                 await backupManager.checkLastBackup()
             }
@@ -627,6 +654,8 @@ struct SettingsView: View {
             // same lot to describe exactly what this toggle sends.
             cloudBackupBlock
 
+            appleSignInBlock
+
             // Plan / Premium row intentionally omitted — does not exist in the app.
 
             languageRow
@@ -725,7 +754,10 @@ struct SettingsView: View {
     /// read-then-write between two different actors standing in for a real
     /// mutex — see that method's doc comment for the duplicate-`ReviewLog`
     /// failure mode this closes.
-    private func cloudSyncCoordinatorInstance() -> CloudSyncCoordinator {
+    ///
+    /// Not `private` — also called from `SettingsView+AppleSignIn.swift`
+    /// (to sync right after a successful Apple link, Mineur #7).
+    func cloudSyncCoordinatorInstance() -> CloudSyncCoordinator {
         CloudSyncTriggers.shared.sharedCoordinator(modelContainer: modelContext.container)
     }
 
@@ -760,11 +792,24 @@ struct SettingsView: View {
         isDeletingCloudData = true
         Task {
             do {
-                try await CloudDataDeletionService(modelContainer: modelContext.container).deleteAllCloudData()
+                // Shared `AnonymousIdentityManager` — see
+                // `CloudSyncTriggers.sharedIdentityManager`'s doc comment;
+                // same staleness reasoning as the Sign in with Apple fix.
+                try await CloudDataDeletionService(
+                    modelContainer: modelContext.container,
+                    identity: CloudSyncTriggers.shared.sharedIdentityManager
+                ).deleteAllCloudData()
                 isDeletingCloudData = false
                 cloudSyncConsentEnabled = false
                 cloudSyncLastSuccessEpoch = 0
                 cloudSyncLastAttemptEpoch = 0
+                isLinkedWithApple = false // deletion erases the account itself now (Apple identity included)
+                // The durable `wasLinked` marker is reset server-side by
+                // `CloudDataDeletionService.deleteAllCloudData()` itself
+                // (2026-08 lot-3 round-2 remediation, CRITIQUE item 4) — mirror
+                // that here so the reconnect row below doesn't keep inviting
+                // the learner back into an account that no longer exists.
+                hasEverHeldLinkedSessionOnThisDevice = false
                 // A stale "pull-failed"/"pull-degraded" error string must
                 // not outlive an account wipe: `CloudDataDeletionService`
                 // already resets the pull cursor and skip-tracker state —
@@ -1171,8 +1216,9 @@ extension SettingsView {
     }
 
     /// Tappable row. Pass `action: nil` for an informational (read-only) row.
+    /// Not `private` — used from `SettingsView+AppleSignIn.swift` too.
     @ViewBuilder
-    private func settingRow(
+    func settingRow(
         jp: String,
         label: LocalizedStringKey,
         value: String,
@@ -1355,6 +1401,10 @@ extension SettingsView {
         }
         return ""
     }
+
+    // Sign in with Apple UI (lot 3): `appleSignInBlock`, `appleSignInRow`,
+    // `handleAppleSignIn()` moved to `SettingsView+AppleSignIn.swift` — see
+    // that file's header comment for why.
 }
 
 // MARK: - Sub-page: Data & Storage Settings

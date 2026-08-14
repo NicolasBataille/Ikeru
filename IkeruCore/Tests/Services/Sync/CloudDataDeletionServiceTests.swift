@@ -27,12 +27,13 @@ struct CloudDataDeletionServiceTests {
         return try ModelContainer(for: schema, configurations: [config])
     }
 
-    private func makeSession(userID: UUID = UUID(), expiresIn: TimeInterval = 3600) -> SyncSession {
+    private func makeSession(userID: UUID = UUID(), expiresIn: TimeInterval = 3600, isAnonymous: Bool = true) -> SyncSession {
         SyncSession(
             userID: userID,
             accessToken: "access-\(UUID().uuidString)",
             refreshToken: "refresh-\(UUID().uuidString)",
-            expiresAt: Date().addingTimeInterval(expiresIn)
+            expiresAt: Date().addingTimeInterval(expiresIn),
+            isAnonymous: isAnonymous
         )
     }
 
@@ -53,7 +54,7 @@ struct CloudDataDeletionServiceTests {
         try seed(session, into: keychain)
 
         let authTransport = MockSupabaseAuthTransport()
-        let identity = AnonymousIdentityManager(transport: authTransport, keychain: keychain)
+        let identity = AnonymousIdentityManager(transport: authTransport, keychain: keychain, identityStore: MockSyncIdentityStore())
         let deletionTransport = MockCloudDeletionTransport()
         let service = CloudDataDeletionService(modelContainer: try makeContainer(), identity: identity, transport: deletionTransport)
 
@@ -74,7 +75,7 @@ struct CloudDataDeletionServiceTests {
         // ever backed up", so the service must return without either
         // calling the deletion endpoint or signing in.
         let authTransport = MockSupabaseAuthTransport(signInResult: .success(makeSession()))
-        let identity = AnonymousIdentityManager(transport: authTransport, keychain: keychain)
+        let identity = AnonymousIdentityManager(transport: authTransport, keychain: keychain, identityStore: MockSyncIdentityStore())
         let deletionTransport = MockCloudDeletionTransport()
         let service = CloudDataDeletionService(modelContainer: try makeContainer(), identity: identity, transport: deletionTransport)
 
@@ -100,7 +101,7 @@ struct CloudDataDeletionServiceTests {
             signInResult: .success(makeSession()),
             refreshResult: .failure(SyncAuthError.invalidResponse)
         )
-        let identity = AnonymousIdentityManager(transport: authTransport, keychain: keychain)
+        let identity = AnonymousIdentityManager(transport: authTransport, keychain: keychain, identityStore: MockSyncIdentityStore())
         let deletionTransport = MockCloudDeletionTransport()
         let service = CloudDataDeletionService(modelContainer: try makeContainer(), identity: identity, transport: deletionTransport)
 
@@ -128,7 +129,7 @@ struct CloudDataDeletionServiceTests {
         try seed(session, into: keychain)
 
         let authTransport = MockSupabaseAuthTransport()
-        let identity = AnonymousIdentityManager(transport: authTransport, keychain: keychain)
+        let identity = AnonymousIdentityManager(transport: authTransport, keychain: keychain, identityStore: MockSyncIdentityStore())
         let deletionTransport = MockCloudDeletionTransport(
             errorToThrow: CloudDeletionError.requestFailed(status: 500, body: "boom")
         )
@@ -151,7 +152,7 @@ struct CloudDataDeletionServiceTests {
         try seed(session, into: keychain)
 
         let authTransport = MockSupabaseAuthTransport(signInResult: .success(makeSession()))
-        let identity = AnonymousIdentityManager(transport: authTransport, keychain: keychain)
+        let identity = AnonymousIdentityManager(transport: authTransport, keychain: keychain, identityStore: MockSyncIdentityStore())
         let deletionTransport = MockCloudDeletionTransport()
         let service = CloudDataDeletionService(modelContainer: try makeContainer(), identity: identity, transport: deletionTransport)
 
@@ -165,6 +166,76 @@ struct CloudDataDeletionServiceTests {
         // created as a side effect of asking to be forgotten.
         #expect(deletionTransport.callCount == 1)
         #expect(authTransport.signInCallCount == 0)
+    }
+
+    // MARK: - 2026-08 lot-3 round-2 remediation, CRITIQUE: restored-device deletion
+
+    /// The core scenario the round-2 critique proved by probe: a learner
+    /// links Apple on device A, restores that backup onto device B (empty
+    /// Keychain, `wasLinked` restored to `true` via `UserDefaults`), then
+    /// taps "Delete my data from the server." Before this fix,
+    /// `existingSessionAccessToken() == nil` alone made this a silent
+    /// no-op success — `SettingsView` would show a green "your data has
+    /// been deleted" toast while the account, the Apple identity, and every
+    /// row survived untouched on the server. This is the regression test
+    /// for that: a device that has EVER held a linked session must get a
+    /// loud, attributable error instead of an unverified success claim.
+    @Test("CRITIQUE: restored device (empty Keychain, wasLinked marker true) throws reauthenticationRequired instead of a silent no-op success")
+    func restoredDeviceThrowsInsteadOfSilentNoOp() async throws {
+        let keychain = MockKeychainStore() // empty — exactly a fresh restore's Keychain state
+        let authTransport = MockSupabaseAuthTransport(signInResult: .success(makeSession()))
+        let identity = AnonymousIdentityManager(
+            transport: authTransport,
+            keychain: keychain,
+            identityStore: MockSyncIdentityStore(wasLinked: true) // the marker that DOES survive a restore
+        )
+        let deletionTransport = MockCloudDeletionTransport()
+        let service = CloudDataDeletionService(modelContainer: try makeContainer(), identity: identity, transport: deletionTransport)
+
+        await #expect(throws: SyncAuthError.reauthenticationRequired) {
+            try await service.deleteAllCloudData()
+        }
+
+        // No fabricated success, and definitely no accidental deletion
+        // request or fallback sign-in fired along the way.
+        #expect(deletionTransport.callCount == 0)
+        #expect(authTransport.signInCallCount == 0)
+    }
+
+    /// The mirror image, spelled out end-to-end (not just "the flag flipped
+    /// back to false"): after a genuinely SUCCESSFUL deletion of a
+    /// previously-linked account, this device must still be able to sync
+    /// anonymously afterward. Without resetting `wasLinked`,
+    /// `forgetSession()`'s own demotion guard would otherwise treat this
+    /// exact post-deletion state — empty Keychain, `wasLinked == true` —
+    /// as "a restored device whose real account is still out there," and
+    /// permanently lock the device out with `reauthenticationRequired` on
+    /// every future `currentSession()` call. That would be a learner who
+    /// asked to delete their account never being able to use cloud sync
+    /// again, on ANY account.
+    @Test("CRITIQUE item 4: after a successful deletion, this device can mint a fresh anonymous identity again (wasLinked marker was reset)")
+    func successfulDeletionAllowsFreshAnonymousSyncAfterward() async throws {
+        let session = makeSession(isAnonymous: false) // a LINKED session, as a restored-and-relinked device would have
+        let keychain = MockKeychainStore()
+        try seed(session, into: keychain)
+        let identityStore = MockSyncIdentityStore(wasLinked: true)
+
+        let authTransport = MockSupabaseAuthTransport()
+        let identity = AnonymousIdentityManager(transport: authTransport, keychain: keychain, identityStore: identityStore)
+        let deletionTransport = MockCloudDeletionTransport()
+        let service = CloudDataDeletionService(modelContainer: try makeContainer(), identity: identity, transport: deletionTransport)
+
+        try await service.deleteAllCloudData()
+        #expect(identityStore.wasLinked() == false, "the marker must be cleared once the account it protected no longer exists")
+
+        // The real proof: a fresh anonymous mint must now succeed instead
+        // of hitting the Critique #1 demotion guard.
+        let freshSession = makeSession()
+        authTransport.signInResult = .success(freshSession)
+        let token = try await identity.validAccessToken()
+
+        #expect(token == freshSession.accessToken)
+        #expect(authTransport.signInCallCount == 1)
     }
 
     // MARK: - CRITIQUE B, call site (a): markEverythingUnsynced
@@ -185,7 +256,7 @@ struct CloudDataDeletionServiceTests {
         try seed(session, into: keychain)
 
         let authTransport = MockSupabaseAuthTransport()
-        let identity = AnonymousIdentityManager(transport: authTransport, keychain: keychain)
+        let identity = AnonymousIdentityManager(transport: authTransport, keychain: keychain, identityStore: MockSyncIdentityStore())
         let deletionTransport = MockCloudDeletionTransport()
         let container = try makeContainer()
 

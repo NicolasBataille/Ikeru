@@ -41,6 +41,15 @@ public final class CloudSyncTriggers {
     /// unavailable → available edge, never on every `pathUpdateHandler` call.
     private var wasPathUnavailable = false
 
+    /// The ONE `AnonymousIdentityManager` instance `sharedCoordinator(...)`
+    /// wires into `CloudSyncCoordinator` below — see `sharedIdentityManager`'s
+    /// doc comment (lot 3, Mineur #7 remediation) for why every Apple-linking
+    /// call site (`SettingsView`, `AppleSignInFlow`) must go through THIS
+    /// instance rather than constructing a fresh `AnonymousIdentityManager()`
+    /// of their own. Built once, here, at singleton construction — same
+    /// lifetime as `coordinator`.
+    private let identityManager = AnonymousIdentityManager()
+
     private init() {}
 
     /// Call once, early in app launch, once the `ModelContainer` exists.
@@ -66,10 +75,34 @@ public final class CloudSyncTriggers {
     /// second instance left for it to fail to protect against.
     public func sharedCoordinator(modelContainer: ModelContainer) -> CloudSyncCoordinator {
         if let coordinator { return coordinator }
-        let created = CloudSyncCoordinator(modelContainer: modelContainer)
+        let created = CloudSyncCoordinator(modelContainer: modelContainer, identity: identityManager)
         coordinator = created
         return created
     }
+
+    /// The SAME `AnonymousIdentityManager` instance `sharedCoordinator(...)`
+    /// wires into `CloudSyncCoordinator` — Apple-linking call sites
+    /// (`SettingsView`'s Sign in with Apple row, `AppleSignInFlow`) must
+    /// obtain their identity manager from here, never from a freshly
+    /// constructed `AnonymousIdentityManager()` (lot 3, Mineur #7
+    /// remediation).
+    ///
+    /// `AnonymousIdentityManager` caches its loaded `SyncSession` in memory
+    /// (`cachedSession`, up to ~1h before its own freshness check forces a
+    /// reload) — two independent instances therefore do NOT observe each
+    /// other's writes until that cache naturally expires. Before this fix, a
+    /// tap on "Sign in with Apple" built its own `AnonymousIdentityManager()`,
+    /// linked the Apple identity through IT, and persisted the new session to
+    /// the Keychain — but `CloudSyncCoordinator`'s own, separate manager
+    /// instance kept serving its already-cached (old) anonymous session for
+    /// up to an hour, so the very next `syncNow()` (foreground trigger,
+    /// network regain, or the toggle itself) still pushed to the OLD
+    /// account. It converged eventually — the Keychain write was correct —
+    /// but "eventually" here meant up to an hour of the learner's fresh
+    /// progress silently going to the wrong place. Sharing one instance
+    /// means the coordinator sees the freshly linked session on its very
+    /// next call, same process, no cache staleness window at all.
+    public var sharedIdentityManager: AnonymousIdentityManager { identityManager }
 
     // MARK: - Trigger: foreground
 

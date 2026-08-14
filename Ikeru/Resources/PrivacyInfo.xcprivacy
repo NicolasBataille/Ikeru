@@ -4,7 +4,11 @@
   Rationale (kept in sync with docs/privacy.html — see item 1.3 of the
   2026-07-08 remediation plan; docs/privacy.html's "Cloud backup
   (optional)" section, added the same lot, describes this same set of
-  tables and the anonymous user_id in learner-facing language):
+  tables and the anonymous user_id in learner-facing language). Updated
+  for cloud-sync lot 3 (Sign in with Apple): docs/privacy.html's "Sign in
+  with Apple (optional)" bullet, in that same "Cloud backup (optional)"
+  section, is where the NSPrivacyCollectedDataTypeEmailAddress entry below
+  is explained to the learner:
 
   - Companion chat messages (CompanionChatMessage, via CompanionChatRepository)
     are persisted locally on-device via SwiftData. That local storage alone is
@@ -41,6 +45,32 @@
     name the learner typed in Settings, pushed verbatim in the `profiles`
     row's payload (see SyncPayloadBuilder.row(for: UserProfile)). Linked:
     true — pushed under the same user_id as every other row.
+  - NSPrivacyCollectedDataTypeEmailAddress (lot 3, Sign in with Apple —
+    AppleSignInFlow.swift, AnonymousIdentityManager.linkOrSignInWithApple):
+    signing in with Apple is opt-in and layered ON TOP of the anonymous
+    identity above, never a replacement requirement — the anonymous path
+    with no email stays the default. The app itself requests no scopes at
+    all (`request.requestedScopes = []` in AppleSignInFlow.swift — even
+    `.fullName` is deliberately not requested), and no line of Swift in
+    this repo reads, stores, or transmits an email string. What we have
+    NOT verified is what GoTrue (the Supabase auth server) does on its
+    side of the exchange when it receives the Apple identity token —
+    specifically whether it records an email address (the learner's real
+    one, or Apple's private relay address) into its own auth.users table.
+    That would require a real Apple ID sign-in on a real device to
+    observe, which has not been done yet. This entry is kept as a
+    deliberately conservative placeholder pending that verification:
+    under-declaring collected data is the dangerous mistake (App Review
+    rejection or worse, a misleading privacy label), while over-declaring
+    is merely cautious and can be walked back once confirmed. TODO before
+    relying on this comment as ground truth: perform a real Sign in with
+    Apple on-device, inspect the resulting auth.users row in Supabase, and
+    either confirm this entry (and tighten this comment to state what was
+    observed) or remove it if GoTrue turns out not to persist an email
+    here. Tracking: false — if collected at all, it would only ever be
+    used to authenticate the same learner across their own devices, never
+    for cross-app/cross-site tracking or ad targeting. Purpose:
+    AppFunctionality only.
   - NSPrivacyCollectedDataTypeProductInteraction: learning progress and
     exercise results — RPGState (xp, level, streaks, sessions/reviews
     completed), Card and VocabularyEntry spaced-repetition state (FSRS
@@ -106,6 +136,18 @@
 		<dict>
 			<key>NSPrivacyCollectedDataType</key>
 			<string>NSPrivacyCollectedDataTypeName</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<true/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+			</array>
+		</dict>
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypeEmailAddress</string>
 			<key>NSPrivacyCollectedDataTypeLinked</key>
 			<true/>
 			<key>NSPrivacyCollectedDataTypeTracking</key>

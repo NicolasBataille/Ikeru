@@ -6,6 +6,21 @@
 	<array>
 		<string>group.com.ikeru.shared</string>
 	</array>
+	<!-- Sign in with Apple (lot 3). "Default" is the plain capability, as
+	     opposed to the "Sign in with Apple at Work & School" variant, which
+	     this app has no use for.
+
+	     App-target only, deliberately: the widget and the watch app never
+	     authenticate. The watch reaches the server through its companion.
+
+	     ⚠️ CI signs automatically (`-allowProvisioningUpdates` + the ASC API
+	     key), so the provisioning profile has to be regenerated with this new
+	     capability on the first archive that carries it. Watch that first
+	     release — same caution the watch-app embedding needed. -->
+	<key>com.apple.developer.applesignin</key>
+	<array>
+		<string>Default</string>
+	</array>
 	<!-- iCloud entitlements commented out until Apple Developer account is fully activated.
 	     Uncomment once the paid membership is live and the iCloud container is created in the portal.
 	<key>com.apple.developer.icloud-services</key>

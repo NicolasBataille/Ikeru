@@ -18,6 +18,7 @@
 		1D49980FCB6299CCF998D5F4 /* WidgetSnapshotStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25A7130171295376EED78A07 /* WidgetSnapshotStore.swift */; };
 		606B578980D413E9E951ED2B /* WidgetSnapshotRefresher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E47B92BCD0BF85A100174BB /* WidgetSnapshotRefresher.swift */; };
 		F0D9E646BDB41F87A76B18D7 /* CloudSyncTriggers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 193512742B1558C97B04DAB5 /* CloudSyncTriggers.swift */; };
+		7E3AD687F271F9DAE9339B13 /* AppleSignInFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96023A4A80ACD1E81B295E07 /* AppleSignInFlow.swift */; };
 		88F3336D470E07CB8575027C /* WidgetDeepLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2324815C58F87A181CE08E7 /* WidgetDeepLink.swift */; };
 		5DB1F1D625EFFA31A5669DB5 /* WidgetDeepLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2324815C58F87A181CE08E7 /* WidgetDeepLink.swift */; };
 		0140648B5E3FFD4029D23F8E /* BilingualLabel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69C7077A729B04B8A3E50617 /* BilingualLabel.swift */; };
@@ -46,6 +47,7 @@
 		205D80613A068A92C245B81A /* DisplayModeToggleRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF87E7A18DDA1BE176F0B8CE /* DisplayModeToggleRow.swift */; };
 		4858E3B046D54B20A40347B8 /* TatamiEligibilityRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1C5552DA1C2410D97DEDAB8 /* TatamiEligibilityRow.swift */; };
 		24B1C98084294C7E17812BF1 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8CF84F59DAF36277A923CF3 /* SettingsView.swift */; };
+		39EAC50FBDB939F922F60B9F /* SettingsView+AppleSignIn.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DC17B04C68E47C3B6A0A6B5 /* SettingsView+AppleSignIn.swift */; };
 		2599E15EC556738138D16158 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E2839E6E122B09254AB7E515 /* Assets.xcassets */; };
 		A0D10F1CE0000000000B0001 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A0D10F1CE0000000000B0002 /* Assets.xcassets */; };
 		2A8442649FE4B865F041A3C3 /* FeatureTourControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E31012D5FE194F87406D24E5 /* FeatureTourControllerTests.swift */; };
@@ -429,6 +431,7 @@
 		B5EC7CD071A02DEB1F3611E0 /* ListeningViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListeningViewModelTests.swift; sourceTree = "<group>"; };
 		B5FD009AD0E461931F7476EE /* IkeruFlowLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IkeruFlowLayout.swift; sourceTree = "<group>"; };
 		B8CF84F59DAF36277A923CF3 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		1DC17B04C68E47C3B6A0A6B5 /* SettingsView+AppleSignIn.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SettingsView+AppleSignIn.swift"; sourceTree = "<group>"; };
 		B9AF377049118CA435404314 /* KanaGroupCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KanaGroupCard.swift; sourceTree = "<group>"; };
 		BAC8ABE7F4A5EEFD3D23AF3A /* TatamiToggle.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TatamiToggle.swift; sourceTree = "<group>"; };
 		BB5C6DA11F43D5B4C0018F24 /* HintChip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HintChip.swift; sourceTree = "<group>"; };
@@ -500,6 +503,7 @@
 		25A7130171295376EED78A07 /* WidgetSnapshotStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetSnapshotStore.swift; sourceTree = "<group>"; };
 		3E47B92BCD0BF85A100174BB /* WidgetSnapshotRefresher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetSnapshotRefresher.swift; sourceTree = "<group>"; };
 		193512742B1558C97B04DAB5 /* CloudSyncTriggers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudSyncTriggers.swift; sourceTree = "<group>"; };
+		96023A4A80ACD1E81B295E07 /* AppleSignInFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleSignInFlow.swift; sourceTree = "<group>"; };
 		A2324815C58F87A181CE08E7 /* WidgetDeepLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetDeepLink.swift; sourceTree = "<group>"; };
 		F75C1AD94292B42125242E1C /* StandByFlashcardWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StandByFlashcardWidget.swift; sourceTree = "<group>"; };
 		F8175DFE1144779F7DC87BB4 /* AppLocale.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppLocale.swift; sourceTree = "<group>"; };
@@ -901,6 +905,7 @@
 			isa = PBXGroup;
 			children = (
 				EEC26D21B28CD7D093350336 /* CloudBackupManager.swift */,
+				96023A4A80ACD1E81B295E07 /* AppleSignInFlow.swift */,
 				193512742B1558C97B04DAB5 /* CloudSyncTriggers.swift */,
 				AA8ABC5B44D456C6BD980427 /* DataExportManager.swift */,
 				94DFE0591021BC898110AB38 /* LiveActivityManager.swift */,
@@ -1025,6 +1030,7 @@
 				2E10FA2BDC5455704DB5EDE7 /* DeleteProfileSheet.swift */,
 				37FFFD4E2CCB71F726EE7A52 /* RigJobsView.swift */,
 				B8CF84F59DAF36277A923CF3 /* SettingsView.swift */,
+				1DC17B04C68E47C3B6A0A6B5 /* SettingsView+AppleSignIn.swift */,
 				AF87E7A18DDA1BE176F0B8CE /* DisplayModeToggleRow.swift */,
 				A1C5552DA1C2410D97DEDAB8 /* TatamiEligibilityRow.swift */,
 			);
@@ -1489,6 +1495,7 @@
 				103BD421BAABCD9C768A7A9C /* SessionViewModel+GradingFlow.swift in Sources */,
 				CFE29CF536DC3013F8990F51 /* SessionViewModel+Lifecycle.swift in Sources */,
 				24B1C98084294C7E17812BF1 /* SettingsView.swift in Sources */,
+				39EAC50FBDB939F922F60B9F /* SettingsView+AppleSignIn.swift in Sources */,
 				B2142C70A1C6014266FB9F2E /* ShadowingExerciseView.swift in Sources */,
 				D8EB495D638484D9EAB4DC02 /* ShadowingViewModel.swift in Sources */,
 				A8C2670E450109C4289456F5 /* ShortcutsManager.swift in Sources */,
@@ -1541,6 +1548,7 @@
 				2E7BEA1CF1869BC7DED6158B /* WidgetSnapshotStore.swift in Sources */,
 				606B578980D413E9E951ED2B /* WidgetSnapshotRefresher.swift in Sources */,
 				F0D9E646BDB41F87A76B18D7 /* CloudSyncTriggers.swift in Sources */,
+				7E3AD687F271F9DAE9339B13 /* AppleSignInFlow.swift in Sources */,
 				88F3336D470E07CB8575027C /* WidgetDeepLink.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
