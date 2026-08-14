@@ -9,6 +9,11 @@
 > have shipped (releases #16–#21); the old "first build / integration wiring" checklist
 > is obsolete and has been removed.
 
+> **Ce qui n'est pas testé ou pas couvert vit dans
+> [`docs/known-gaps.md`](docs/known-gaps.md)** — un registre `GAP-nn` prêt à être
+> confié à un agent. Ce fichier-ci porte le backlog *produit* (quoi construire) ;
+> l'autre porte les trous de *vérification* (ce qu'on ne sait pas encore).
+
 ## Top open debt (verified 2026-07-14)
 
 - [ ] **Learner telemetry for expert review** — spec written, not implemented:
