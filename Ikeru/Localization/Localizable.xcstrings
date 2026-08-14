@@ -12047,6 +12047,42 @@
         }
       }
     },
+    "Backed up, restore incomplete" : {
+      "extractionState" : "manual",
+      "comment" : "Cloud backup status row in Settings: shown when the last push succeeded and the pull itself succeeded, but some rows were left stuck or were permanently abandoned after repeated failures (a poison row) — the backup itself is fine, only the restore side is limping",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Backed up, restore incomplete"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sauvegardé, restauration incomplète"
+          }
+        }
+      }
+    },
+    "Backed up, will retry" : {
+      "extractionState" : "manual",
+      "comment" : "Cloud backup status row in Settings: shown when the last push succeeded but the pull/merge half of that sync cycle failed — the backup itself is fine, a retry (foreground or network-regain trigger) will pick the pull back up",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Backed up, will retry"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sauvegardé, nouvel essai prévu"
+          }
+        }
+      }
+    },
     "Backup pending" : {
       "extractionState" : "manual",
       "localizations" : {

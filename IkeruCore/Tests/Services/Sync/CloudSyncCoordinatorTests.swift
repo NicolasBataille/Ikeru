@@ -56,10 +56,59 @@ struct CloudSyncCoordinatorTests {
         return (manager, authTransport)
     }
 
+    /// A `MockSyncCursorStore` pre-seeded with a cursor for every pulled
+    /// table — the default `cursorStore` for every coordinator this suite
+    /// builds, INCLUDING this file's own CRITIQUE-B / identity
+    /// re-provisioning test below (which reaches rule 1 a different way —
+    /// by triggering `CloudSyncCoordinator.syncNow()`'s identity-change
+    /// check, not by starting cold — see that test's own comment).
+    ///
+    /// Without this, an unseeded `MockSyncCursorStore()` looks like a
+    /// genuine cold start to `SyncPullActor`'s rule 1
+    /// (`isColdStart = pullOrder.allSatisfy { cursor(forTable:) == nil }`),
+    /// and every delta-selection test here seeds a non-empty LOCAL store
+    /// against an (also unseeded, so "remote empty") `MockSyncPullTransport`
+    /// — exactly rule 1's "empty remote + populated local" trigger.
+    /// `syncNow()` correctly (CRITIQUE B's fix) marks every row unsynced
+    /// before push in that case — right for a genuine fresh/re-provisioned
+    /// account, but it silently defeated this suite's push-focused tests
+    /// (`cardsDeltaSelection` etc.) BEFORE this fixture was added: their
+    /// "already-synced" cards started reading as dirty again, because rule
+    /// 1 fired on every single one of them by fixture accident, not by
+    /// intent. Pre-seeding every table's cursor makes `isColdStart` false,
+    /// so rule 1 never fires here BY ACCIDENT — this suite tests delta
+    /// selection on an already-synced device, not rule 1 (that's
+    /// `SyncPullDivergenceTests`'s job at the `SyncPullActor` level; this
+    /// file's own re-provisioning test below is the coordinator-level
+    /// equivalent, reaching rule 1 deliberately through the identity-change
+    /// path rather than a bare fixture).
+    private static func makeSeededCursorStore() -> MockSyncCursorStore {
+        var cursors: [String: SyncCursorPosition] = [:]
+        for table in SyncPullActor.pullOrder {
+            cursors[table] = SyncCursorPosition(
+                timestamp: SyncJSON.iso8601String(Date(timeIntervalSince1970: 1)),
+                id: UUID()
+            )
+        }
+        return MockSyncCursorStore(cursors: cursors)
+    }
+
     private func makeCoordinator(
         container: ModelContainer,
         identity: AnonymousIdentityManager? = nil,
         dataTransport: MockSyncDataTransport = MockSyncDataTransport(),
+        pullTransport: MockSyncPullTransport = MockSyncPullTransport(),
+        cursorStore: MockSyncCursorStore = CloudSyncCoordinatorTests.makeSeededCursorStore(),
+        skipTracker: MockSyncSkipTracker = MockSyncSkipTracker(),
+        // A fresh, empty `MockSyncIdentityStore` by default — every test in
+        // this suite except the identity-re-provisioning one below hits the
+        // "nothing stored yet, just record it" branch on its single
+        // `syncNow()` call, which must NOT reset the (seeded, by default)
+        // cursor store — see `CloudSyncCoordinator.syncNow()`'s doc comment
+        // on that branch. If this default ever starts resetting cursors on
+        // a first call, most of this file's delta-selection tests break —
+        // that's the regression net for defect 1's fix.
+        identityStore: MockSyncIdentityStore = MockSyncIdentityStore(),
         consentStore: MockSyncConsentStore = MockSyncConsentStore(),
         minSyncInterval: TimeInterval = 60
     ) -> CloudSyncCoordinator {
@@ -67,6 +116,10 @@ struct CloudSyncCoordinatorTests {
             modelContainer: container,
             identity: identity ?? makeIdentityManager().manager,
             transport: dataTransport,
+            pullTransport: pullTransport,
+            cursorStore: cursorStore,
+            skipTracker: skipTracker,
+            identityStore: identityStore,
             consentStore: consentStore,
             minSyncInterval: minSyncInterval
         )
@@ -243,6 +296,212 @@ struct CloudSyncCoordinatorTests {
         #expect(second == .skippedThrottled)
     }
 
+    // MARK: - CRITIQUE B + identity re-provisioning: a device that HAS
+    // already synced (non-nil cursors) still re-seeds cards and logs, not
+    // just profiles/rpg_states, once its identity silently changes underneath
+    // it
+
+    @Test("Identity re-provisioning: seeded cursors + a changed user_id resets the cursors, so cards and logs — not just profiles/rpg_states — are still pushed to the new account")
+    func identityReprovisioningResetsSeededCursorsAndPushesCardsAndLogs() async throws {
+        let container = try makeContainer()
+        let profile = try seedProfile(in: container)
+        // BOTH already carry a `syncedAt` stamp — exactly what's left on
+        // disk by a device that fully synced under a PREVIOUS identity.
+        // Before defect 1's fix, `pushDirtyCards`/`pushDirtyReviewLogs`'s
+        // delta filters read these as "already synced" and pushed NEITHER
+        // of them once the identity changed — only `profiles`/`rpg_states`
+        // (pushed unconditionally) actually reached the new account.
+        let card = try seedCard(in: container, profile: profile, alreadySynced: true)
+        let log = try seedReviewLog(for: card, in: container, alreadySynced: true)
+
+        let dataTransport = MockSyncDataTransport()
+        // `makeSeededCursorStore()` — NON-nil cursors on every table, the
+        // shape a device that has genuinely already synced actually has.
+        // A bare `MockSyncCursorStore()` (this test's ORIGINAL fixture,
+        // before this fix) can never represent a rejected-refresh-token
+        // re-provisioning: that scenario always starts from an
+        // already-synced device, and `SyncPullActor`'s rule-1 cold-start
+        // guard (`isColdStart = pullOrder.allSatisfy { cursor(forTable:) == nil }`)
+        // cannot fire while any cursor is non-nil — bare cursors made this
+        // test pass for the wrong reason (a literal cold start), not
+        // because re-provisioning was actually being exercised.
+        let cursorStore = CloudSyncCoordinatorTests.makeSeededCursorStore()
+        // "Last known" identity from BEFORE the rejected refresh — a
+        // DIFFERENT id than the one `identity` below will report.
+        let previousUserID = UUID()
+        let identityStore = MockSyncIdentityStore(lastKnownUserID: previousUserID)
+        // A fresh `AnonymousIdentityManager` that signs in as a DIFFERENT
+        // user — standing in for `AnonymousIdentityManager` silently
+        // minting a new anonymous identity after its stored refresh token
+        // was rejected (that fallback itself is covered independently by
+        // `AnonymousIdentityManagerTests.rejectedRefreshFallsBackToSignIn`;
+        // this test only needs the OBSERVABLE end state that produces —
+        // "the identity manager now reports a user_id this device has
+        // never seen before").
+        let reprovisionedUserID = UUID()
+        let (identity, _) = makeIdentityManager(userID: reprovisionedUserID)
+
+        let coordinator = makeCoordinator(
+            container: container,
+            identity: identity,
+            dataTransport: dataTransport,
+            cursorStore: cursorStore,
+            identityStore: identityStore,
+            consentStore: MockSyncConsentStore(consentGiven: true)
+        )
+
+        let outcome = await coordinator.syncNow()
+
+        guard case .success(_, let pull) = outcome, pull == .seededFromLocal else {
+            Issue.record("Expected the identity mismatch to reset the cursors and produce a seeded-from-local pull, got \(outcome)")
+            return
+        }
+
+        #expect(dataTransport.rows(forTable: "profiles").count == 1)
+        // The actual regression this test exists for: BEFORE defect 1's
+        // fix, both of these were empty — seeded cursors meant rule 1
+        // could never fire at all, regardless of the identity change.
+        let pushedCardIDs = dataTransport.rows(forTable: "cards").compactMap { row -> String? in
+            guard case .string(let value) = row["id"] else { return nil }
+            return value
+        }
+        let pushedLogIDs = dataTransport.rows(forTable: "review_logs").compactMap { row -> String? in
+            guard case .string(let value) = row["id"] else { return nil }
+            return value
+        }
+        #expect(pushedCardIDs.contains(card.id.uuidString))
+        #expect(pushedLogIDs.contains(log.id.uuidString))
+
+        // The "remember the new id" half of the fix — not just "reset",
+        // but "reset AND stop comparing against the stale id forever after."
+        #expect(identityStore.lastKnownUserID() == reprovisionedUserID)
+    }
+
+    @Test("setConsent(false) does NOT mark local rows unsynced — server-side data is still correct, so nothing needs re-pushing")
+    func consentOffDoesNotMarkRowsUnsynced() async throws {
+        let container = try makeContainer()
+        let profile = try seedProfile(in: container)
+        let card = try seedCard(in: container, profile: profile, alreadySynced: true)
+
+        let coordinator = makeCoordinator(container: container, consentStore: MockSyncConsentStore(consentGiven: true))
+        await coordinator.setConsent(false)
+
+        let refetched = try fetchCard(id: card.id, in: container)
+        #expect(refetched?.syncedAt != nil)
+    }
+
+    // MARK: - Point E/F/G: a degraded-but-not-failed pull surfaces a
+    // visible status, distinct from both "up to date" and a pull failure
+
+    @Test("A pull that skips a row (poison, not yet dropped) records a pullDegradedMessagePrefix status, not silence")
+    func degradedPullSurfacesVisibleStatus() async throws {
+        let container = try makeContainer()
+        let profile = try seedProfile(in: container)
+        _ = try seedCard(in: container, profile: profile, alreadySynced: true)
+
+        let pullTransport = MockSyncPullTransport()
+        // An undecodable `cards` row — never applies, never a network
+        // error, exactly the "stuck table" `PullSummary.skippedRowCounts`
+        // exists to make visible. Before this wiring existed
+        // (`skippedRowCounts`/`permanentlyDroppedRowCounts` computed and
+        // read by nobody), a cycle like this one looked IDENTICAL to a
+        // clean one from `SettingsView`'s point of view.
+        let badRow: SyncRow = [
+            "id": .uuid(UUID()),
+            "profile_id": .null,
+            "payload": .object([:]),
+            "updated_at": .date(Date(timeIntervalSince1970: 1_701_000_000)),
+            "deleted_at": .null,
+            "server_updated_at": .string(SyncJSON.iso8601String(Date(timeIntervalSince1970: 1_701_000_000))),
+        ]
+        pullTransport.enqueueRows([badRow], forTable: "cards")
+
+        let coordinator = makeCoordinator(
+            container: container,
+            pullTransport: pullTransport,
+            consentStore: MockSyncConsentStore(consentGiven: true)
+        )
+
+        let outcome = await coordinator.syncNow()
+        guard case .success = outcome else {
+            Issue.record("Expected success (push still proceeds even though the pull was degraded), got \(outcome)")
+            return
+        }
+
+        let message = await coordinator.lastErrorMessage()
+        #expect(message?.hasPrefix(CloudSyncCoordinator.pullDegradedMessagePrefix) == true)
+        // Distinct from an outright pull failure — that prefix must NOT be
+        // the one that fired.
+        #expect(message?.hasPrefix(CloudSyncCoordinator.pullFailureMessagePrefix) != true)
+    }
+
+    // MARK: - IMPORTANT C: a consent revocation that lands mid-pull must
+    // still block the push that follows, and must not lose its cursor reset
+
+    @Test("IMPORTANT C: revoking consent WHILE a pull is in flight skips the push, and the deferred cursor reset still lands")
+    func consentRevokedMidPullSkipsPushAndStillResetsCursors() async throws {
+        let container = try makeContainer()
+        let profile = try seedProfile(in: container)
+        _ = try seedCard(in: container, profile: profile, alreadySynced: false)
+
+        let gate = PullGate()
+        // A real `profiles` row, returned ONCE `fetchRows("profiles", ...)`
+        // is released — this is what makes the reset-ordering assertion
+        // below meaningful rather than vacuous: the in-flight pull must
+        // ACTUALLY WRITE a fresh cursor for `profiles` after consent was
+        // revoked, so the test can prove that write gets wiped back out
+        // (deferred reset) rather than silently surviving (immediate
+        // reset racing an in-flight cycle — see `pendingCursorReset`'s doc
+        // comment for exactly this hazard).
+        let remoteProfile = UserProfile(displayName: "Remote")
+        remoteProfile.updatedAt = Date(timeIntervalSince1970: 2_000_000_000)
+        var profileRow = try SyncPayloadBuilder.row(for: remoteProfile)
+        profileRow["server_updated_at"] = .string(SyncJSON.iso8601String(remoteProfile.updatedAt))
+        let pullTransport = GatedPullTransport(gate: gate, rowsAfterRelease: ["profiles": [profileRow]])
+        let dataTransport = MockSyncDataTransport()
+        // Pre-seeded (NOT cold start) so the reset below is a meaningful
+        // assertion, not a no-op that would pass even without the fix —
+        // see `makeSeededCursorStore`'s doc comment for why an unseeded
+        // store would instead hit rule 1's early return, before this
+        // cycle's OWN per-table cursor writes could even be attempted.
+        let cursorStore = CloudSyncCoordinatorTests.makeSeededCursorStore()
+        let consentStore = MockSyncConsentStore(consentGiven: true)
+        let coordinator = CloudSyncCoordinator(
+            modelContainer: container,
+            identity: makeIdentityManager().manager,
+            transport: dataTransport,
+            pullTransport: pullTransport,
+            cursorStore: cursorStore,
+            skipTracker: MockSyncSkipTracker(),
+            consentStore: consentStore,
+            minSyncInterval: 0
+        )
+
+        let syncTask = Task { await coordinator.syncNow() }
+
+        // Wait until the pull is genuinely INSIDE a `fetchRows` call before
+        // revoking — proves this is a mid-pull revocation, not a race that
+        // happens to land before the pull even starts.
+        await gate.waitUntilFirstCall()
+        await coordinator.setConsent(false)
+        gate.release()
+
+        let outcome = await syncTask.value
+
+        #expect(outcome == .skippedConsentOff)
+        // The whole point: NOTHING left the device after consent was
+        // revoked. Before this fix, `syncNow()` only checked consent at
+        // entry, so a mid-cycle revocation didn't stop the 7 `pushDirty*`
+        // calls that follow the pull — data left the device after the
+        // learner had already said no.
+        #expect(dataTransport.calls.isEmpty)
+        // The deferred reset (`pendingCursorReset`) ran once the cycle
+        // finished — every table's pre-seeded cursor is gone.
+        for table in SyncPullActor.pullOrder {
+            #expect(cursorStore.cursor(forTable: table) == nil)
+        }
+    }
+
     // MARK: - Seeding helpers (MainActor: SwiftData's mainContext)
 
     private func seedProfile(in container: ModelContainer) throws -> UserProfile {
@@ -304,5 +563,106 @@ struct CloudSyncCoordinatorTests {
         var descriptor = FetchDescriptor<Card>(predicate: #Predicate { $0.id == id })
         descriptor.fetchLimit = 1
         return try context.fetch(descriptor).first
+    }
+}
+
+// MARK: - PullGate / GatedPullTransport
+
+/// Two one-shot signals a test can `await`, guarding a `SyncPullTransport`
+/// that deliberately suspends mid-call — the infrastructure
+/// `consentRevokedMidPullSkipsPushAndStillResetsCursors` (IMPORTANT C) needs
+/// to land a `setConsent(false)` call WHILE `syncNow()` is genuinely
+/// suspended inside a real pull, not merely before or after it. `@unchecked
+/// Sendable`: guarded entirely by `NSLock`, same justification as
+/// `MockSyncPullTransport`/`MockSyncDataTransport` elsewhere in this module.
+private final class PullGate: @unchecked Sendable {
+    private let lock = NSLock()
+    private var hasBeenCalled = false
+    private var calledContinuation: CheckedContinuation<Void, Never>?
+    private var isReleased = false
+    private var releaseContinuation: CheckedContinuation<Void, Never>?
+
+    /// Resumes once `GatedPullTransport.fetchRows` has been entered at
+    /// least once. Called by the test, from OUTSIDE the suspended
+    /// `syncNow()` task.
+    func waitUntilFirstCall() async {
+        let alreadyCalled: Bool = lock.withLock { hasBeenCalled }
+        if alreadyCalled { return }
+        await withCheckedContinuation { continuation in
+            lock.withLock {
+                if hasBeenCalled {
+                    continuation.resume()
+                } else {
+                    calledContinuation = continuation
+                }
+            }
+        }
+    }
+
+    /// Called by `GatedPullTransport.fetchRows` itself, the instant it's
+    /// entered — signals `waitUntilFirstCall()` and then blocks the CALLER
+    /// (the suspended `syncNow()` task) until `release()`.
+    func signalCalledThenWaitForRelease() async {
+        let toResume: CheckedContinuation<Void, Never>? = lock.withLock {
+            hasBeenCalled = true
+            let continuation = calledContinuation
+            calledContinuation = nil
+            return continuation
+        }
+        toResume?.resume()
+
+        let alreadyReleased: Bool = lock.withLock { isReleased }
+        if alreadyReleased { return }
+        await withCheckedContinuation { continuation in
+            lock.withLock {
+                if isReleased {
+                    continuation.resume()
+                } else {
+                    releaseContinuation = continuation
+                }
+            }
+        }
+    }
+
+    /// Releases every past and future call blocked in
+    /// `signalCalledThenWaitForRelease()` — called by the test once it has
+    /// done whatever it needed to do while the pull was suspended.
+    func release() {
+        let toResume: CheckedContinuation<Void, Never>? = lock.withLock {
+            isReleased = true
+            let continuation = releaseContinuation
+            releaseContinuation = nil
+            return continuation
+        }
+        toResume?.resume()
+    }
+}
+
+/// A `SyncPullTransport` whose every `fetchRows` call blocks on `gate` until
+/// released. After release, returns `rowsAfterRelease[table]` exactly ONCE
+/// per table (empty thereafter, and for any table not in that dictionary) —
+/// letting the test prove the in-flight pull actually WRITES a cursor after
+/// consent was revoked, not merely that it returned nothing. Used ONLY by
+/// IMPORTANT C's test — every other test in this file uses
+/// `MockSyncPullTransport`, which never blocks.
+private final class GatedPullTransport: SyncPullTransport, @unchecked Sendable {
+    let gate: PullGate
+    private let rowsAfterRelease: [String: [SyncRow]]
+    private let lock = NSLock()
+    private var consumedTables: Set<String> = []
+
+    init(gate: PullGate, rowsAfterRelease: [String: [SyncRow]] = [:]) {
+        self.gate = gate
+        self.rowsAfterRelease = rowsAfterRelease
+    }
+
+    func fetchRows(table: String, since: SyncCursorPosition?, limit: Int, accessToken: String) async throws -> [SyncRow] {
+        await gate.signalCalledThenWaitForRelease()
+        let alreadyConsumed: Bool = lock.withLock {
+            if consumedTables.contains(table) { return true }
+            consumedTables.insert(table)
+            return false
+        }
+        return alreadyConsumed ? [] : (rowsAfterRelease[table] ?? [])
     }
 }

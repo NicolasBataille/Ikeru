@@ -1,4 +1,5 @@
 import Foundation
+import SwiftData
 
 // MARK: - CloudDeletionTransport
 
@@ -111,15 +112,24 @@ public final class MockCloudDeletionTransport: CloudDeletionTransport, @unchecke
 /// valid token, call that function, then forget the session.
 public actor CloudDataDeletionService {
 
+    private let modelContainer: ModelContainer
     private let identity: AnonymousIdentityManager
     private let transport: any CloudDeletionTransport
+    private let cursorStore: any SyncCursorStore
+    private let skipTracker: any SyncSkipTracker
 
     public init(
+        modelContainer: ModelContainer,
         identity: AnonymousIdentityManager = AnonymousIdentityManager(),
-        transport: any CloudDeletionTransport = URLSessionCloudDeletionTransport()
+        transport: any CloudDeletionTransport = URLSessionCloudDeletionTransport(),
+        cursorStore: any SyncCursorStore = UserDefaultsSyncCursorStore(),
+        skipTracker: any SyncSkipTracker = UserDefaultsSyncSkipTracker()
     ) {
+        self.modelContainer = modelContainer
         self.identity = identity
         self.transport = transport
+        self.cursorStore = cursorStore
+        self.skipTracker = skipTracker
     }
 
     /// Deletes every server-side row tied to this device's anonymous
@@ -146,6 +156,45 @@ public actor CloudDataDeletionService {
         }
 
         try await transport.deleteAccount(accessToken: accessToken)
+
+        // Reset every pull cursor now that the server confirmed deletion —
+        // BEFORE `forgetSession()` below, deliberately (IMPORTANT 6
+        // remediation). Ordering matters here in the opposite direction
+        // from the session purge: if `forgetSession()` were to throw after
+        // this point, the server rows are already gone regardless, so
+        // cleared cursors are still the correct local state — whereas
+        // stale, non-nil cursors surviving next to an emptied server
+        // account is exactly the hazard this fixes. A leftover cursor from
+        // before the deletion means the NEXT pull (same device reusing a
+        // still-Keychain-valid identity, or a freshly re-provisioned one)
+        // would not look like a cold start to `SyncPullActor`
+        // (`isColdStart = pullOrder.allSatisfy { cursor(forTable:) == nil }`,
+        // `SyncPullActor.swift`), which disarms rule 1 — the guard that
+        // stops a genuinely empty cloud account from ever being read as
+        // "nothing to merge" for a device that still holds local data. This
+        // makes `resetAll()` here, not `SettingsView`, the place that
+        // guarantees this happens: any future second caller of this service
+        // inherits the same protection instead of having to remember it.
+        cursorStore.resetAll()
+        // `SyncSkipTracker` state must be reset alongside the cursor it's
+        // paired with — a strike count left over from before the deletion
+        // would let this now-empty account's first genuinely poison row
+        // inherit however many strikes the OLD account's row had racked up
+        // (see `SyncSkipTracker.resetAll()`'s doc comment).
+        skipTracker.resetAll()
+
+        // CRITIQUE B: mark every local row unsynced now, not just reset the
+        // cursors — without this, the NEXT opt-back-in push would see every
+        // row's `syncedAt` still pointing at the account that was just
+        // erased, read every one of them as "already synced", and push
+        // almost nothing (only `profiles`/`rpg_states`, pushed
+        // unconditionally). See `SyncModelActor.markEverythingUnsynced()`'s
+        // doc comment for the full failure mode. Runs after `cursorStore.resetAll()`
+        // (matching that call's own "server confirmed deletion" ordering
+        // rationale below) but, like it, before the Keychain session is
+        // forgotten — if this throws, the session survives so a retry can
+        // still reach this point.
+        try await SyncModelActor(modelContainer: modelContainer).markEverythingUnsynced()
 
         // Only purge the local Keychain session once the SERVER has
         // confirmed deletion succeeded. If this were purged first and the

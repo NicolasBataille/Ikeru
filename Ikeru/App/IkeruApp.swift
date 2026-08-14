@@ -164,6 +164,12 @@ struct IkeruApp: App {
                     await scheduleNotificationsFromSettings()
                     schedulePreWarmTask()
                     await WidgetSnapshotRefresher.refresh(modelContainer: modelContainer)
+                    // Cloud-sync push triggers (design spec §5.2): starts the
+                    // network-regain monitor now, and readies the coordinator
+                    // for the foreground trigger wired below in
+                    // onChange(of: scenePhase). syncNow() itself no-ops
+                    // without consent, so this is safe to start unconditionally.
+                    CloudSyncTriggers.shared.start(modelContainer: modelContainer)
                     if StoreRecoveryNotice.isPending() {
                         showStoreRecoveryNotice = true
                     }
@@ -192,6 +198,9 @@ struct IkeruApp: App {
                 Task { @MainActor in
                     await WidgetSnapshotRefresher.refresh(modelContainer: modelContainer)
                 }
+                // Cloud-sync foreground trigger (design spec §5.2). Detached
+                // internally — never awaited here, never delays this UI path.
+                CloudSyncTriggers.shared.triggerForegroundSync()
             }
         }
     }

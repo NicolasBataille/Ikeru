@@ -50,21 +50,30 @@ struct SettingsView: View {
     @State private var showExportShare = false
     @State private var exportURL: URL?
 
-    // MARK: Cloud backup (Supabase, lot 4 — push-only, opt-in, user-facing)
+    // MARK: Cloud backup (Supabase, lot 4 — opt-in, user-facing; pull/merge
+    // added in lot 2)
     //
-    // `CloudSyncCoordinator` is IkeruCore's push-only cloud backup (design
-    // spec `docs/design-specs/2026-08-10-cloud-sync-design.md`, distinct
-    // from the dormant CloudKit path above). Off by default — nothing
-    // leaves the device until this toggle is turned on, and turning it on
-    // is the only place in the app that constructs the coordinator today
-    // (no foreground/session-end/network-regain triggers are wired yet;
-    // that integration is out of this lot's scope, see the coordinator's
-    // doc comment). There is no pull/restore path — this is a one-way
-    // backup, never call it "sync" in anything the learner reads.
-    @State private var cloudSyncCoordinator: CloudSyncCoordinator?
+    // `CloudSyncCoordinator` is IkeruCore's cloud backup (design spec
+    // `docs/design-specs/2026-08-10-cloud-sync-design.md`, distinct from
+    // the dormant CloudKit path above). Off by default — nothing leaves the
+    // device until this toggle is turned on. This screen no longer
+    // constructs its own coordinator: `CloudSyncTriggers.shared` (wired
+    // from `IkeruApp` for the foreground/network-regain triggers) is the
+    // ONE shared instance, and `cloudSyncCoordinatorInstance()` below just
+    // asks it for that same instance — two independently-built coordinators
+    // over the same `ModelContainer` used to be able to run overlapping
+    // pulls and double-insert a `ReviewLog` (post-review fix; see
+    // `CloudSyncTriggers.sharedCoordinator(modelContainer:)`).
     @AppStorage(CloudSyncPreferences.consentDefaultsKey) private var cloudSyncConsentEnabled = false
     @AppStorage(CloudSyncPreferences.lastSuccessDefaultsKey) private var cloudSyncLastSuccessEpoch: Double = 0
     @AppStorage(CloudSyncPreferences.lastAttemptDefaultsKey) private var cloudSyncLastAttemptEpoch: Double = 0
+    /// Diagnostic message from the most recent failed attempt (see
+    /// `SyncConsentStore.lastErrorMessage()`'s doc comment — not localized
+    /// UI copy, never shown verbatim). Read here only to check for
+    /// `CloudSyncCoordinator.pullFailureMessagePrefix`, which distinguishes
+    /// "push succeeded, pull failed this cycle" from a full sync failure —
+    /// see `cloudSyncStatusValue`.
+    @AppStorage(CloudSyncPreferences.lastErrorDefaultsKey) private var cloudSyncLastError: String = ""
     @State private var isDeletingCloudData = false
     @State private var showDeleteCloudDataConfirmation = false
 
@@ -109,18 +118,53 @@ struct SettingsView: View {
     }
 
     /// Honest cloud-backup status ("never backed up / up to date / backup
-    /// pending", never a bare error, never the word "sync" — this is a
-    /// push-only backup, there is no restore path). Reads the same
+    /// pending", never a bare error, never the word "sync"). Reads the same
     /// `UserDefaults` keys `CloudSyncCoordinator` writes on every attempt —
     /// `@AppStorage` re-renders this automatically even though the
     /// coordinator writes from a background actor, since both go through
     /// the same `UserDefaults.standard` keys declared in
     /// `CloudSyncPreferences`.
+    ///
+    /// A successful push with a FAILED pull this cycle is its own state
+    /// (`pullFailedThisCycle` below), distinct from plain "up to date"
+    /// (CRITICAL fix — this used to be indistinguishable: a broken pull
+    /// left this row claiming everything was fine, indefinitely, because
+    /// the coordinator wiped the error slot on every successful push
+    /// regardless of the pull outcome). A pull that DID succeed but left
+    /// some rows stuck or permanently abandoned (a poison row — see
+    /// `SyncPullActor`'s poison-row policy) is a THIRD, calmer state
+    /// (`pullDegradedThisCycle`) — the point E/F/G observability fix: this
+    /// used to be computed and surfaced nowhere, so a table quietly stuck
+    /// forever was invisible from Settings. The label stays deliberately
+    /// calm in every case: the backup itself did succeed, so none of these
+    /// must read as an error.
     private var cloudSyncStatusValue: LocalizedStringKey {
         guard cloudSyncConsentEnabled else { return "Off" }
-        if cloudSyncLastSuccessEpoch > 0 { return "Up to date" }
+        if cloudSyncLastSuccessEpoch > 0 {
+            if pullFailedThisCycle { return "Backed up, will retry" }
+            if pullDegradedThisCycle { return "Backed up, restore incomplete" }
+            return "Up to date"
+        }
         if cloudSyncLastAttemptEpoch > 0 { return "Backup pending" }
         return "Never backed up"
+    }
+
+    /// Whether the most recently recorded error is specifically a pull
+    /// failure from an otherwise-successful sync cycle — see
+    /// `CloudSyncCoordinator.pullFailureMessagePrefix`'s doc comment for why
+    /// this is encoded as a prefix on the shared error string rather than a
+    /// second `UserDefaults` key.
+    private var pullFailedThisCycle: Bool {
+        cloudSyncLastError.hasPrefix(CloudSyncCoordinator.pullFailureMessagePrefix)
+    }
+
+    /// Whether the most recently recorded error is specifically the
+    /// "pull succeeded but left some rows stuck or permanently abandoned"
+    /// state — see `CloudSyncCoordinator.pullDegradedMessagePrefix`'s doc
+    /// comment. Mutually exclusive with `pullFailedThisCycle`: the
+    /// coordinator only ever writes one prefix (or none) per cycle.
+    private var pullDegradedThisCycle: Bool {
+        cloudSyncLastError.hasPrefix(CloudSyncCoordinator.pullDegradedMessagePrefix)
     }
 
     /// Whether backup has been turned on at least once. Derived from
@@ -659,23 +703,27 @@ struct SettingsView: View {
         .disabled(isDeletingCloudData)
     }
 
-    /// Lazily builds the coordinator over the live `ModelContainer` — never
-    /// constructed (so never touches Keychain/network) until the learner
-    /// interacts with the toggle at least once.
+    /// Returns the SAME `CloudSyncCoordinator` instance every other trigger
+    /// site uses — `CloudSyncTriggers.shared.sharedCoordinator(modelContainer:)`,
+    /// not a locally-built one. Building a second instance here used to let
+    /// this toggle's push race a foreground/network-regain push from
+    /// `CloudSyncTriggers`, with nothing but a non-atomic `UserDefaults`
+    /// read-then-write between two different actors standing in for a real
+    /// mutex — see that method's doc comment for the duplicate-`ReviewLog`
+    /// failure mode this closes.
     private func cloudSyncCoordinatorInstance() -> CloudSyncCoordinator {
-        if let cloudSyncCoordinator { return cloudSyncCoordinator }
-        let coordinator = CloudSyncCoordinator(modelContainer: modelContext.container)
-        cloudSyncCoordinator = coordinator
-        return coordinator
+        CloudSyncTriggers.shared.sharedCoordinator(modelContainer: modelContext.container)
     }
 
     /// Turning ON records consent AND triggers the first push immediately
     /// (fire-and-forget background `Task` — no loading screen, per the
-    /// design spec's local-first rule). Turning OFF only records consent;
-    /// no network call follows. This toggle is the app's only call site for
-    /// `CloudSyncCoordinator.syncNow()` — see that type's doc comment for
-    /// which triggers (foreground, session-end, network-regain) are not
-    /// wired yet.
+    /// design spec's local-first rule). Turning OFF only records consent
+    /// (and resets pull cursors — see `CloudSyncCoordinator.setConsent`'s
+    /// doc comment); no network call follows. This is only ONE of several
+    /// call sites for `CloudSyncCoordinator.syncNow()` — `CloudSyncTriggers`
+    /// also fires it on foreground and network-regain, which is exactly why
+    /// this now shares that type's single coordinator instance instead of
+    /// building its own (see `cloudSyncCoordinatorInstance()`).
     private func handleCloudSyncToggleChange(_ enabled: Bool) {
         let coordinator = cloudSyncCoordinatorInstance()
         Task {
@@ -698,11 +746,21 @@ struct SettingsView: View {
         isDeletingCloudData = true
         Task {
             do {
-                try await CloudDataDeletionService().deleteAllCloudData()
+                try await CloudDataDeletionService(modelContainer: modelContext.container).deleteAllCloudData()
                 isDeletingCloudData = false
                 cloudSyncConsentEnabled = false
                 cloudSyncLastSuccessEpoch = 0
                 cloudSyncLastAttemptEpoch = 0
+                // A stale "pull-failed"/"pull-degraded" error string must
+                // not outlive an account wipe: `CloudDataDeletionService`
+                // already resets the pull cursor and skip-tracker state —
+                // but that's LOCAL `UserDefaults` bookkeeping, not
+                // something that happens "server-side" (the server side of
+                // this is just the deleted rows themselves) — and this
+                // row's own status display has its own error slot that
+                // must not keep pointing at a failure from an identity
+                // that no longer exists.
+                cloudSyncLastError = ""
                 // The success path used to be entirely silent, which reads
                 // as "nothing happened" for an action whose whole point is
                 // that something irreversible did.
