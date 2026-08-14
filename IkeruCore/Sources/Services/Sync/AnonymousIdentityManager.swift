@@ -482,7 +482,12 @@ public actor AnonymousIdentityManager {
             let linked = try await transport.linkAppleIdentity(idToken: idToken, rawNonce: rawNonce, accessToken: accessToken)
 
             guard linked.userID == previousUserID else {
-                Logger.sync.fault("Cloud sync: Apple link_identity call returned a DIFFERENT user_id than requested (\(previousUserID, privacy: .public) → \(linked.userID, privacy: .public)) — refusing to adopt it.")
+                Logger.sync.fault(
+                    """
+                    Cloud sync: Apple link_identity call returned a DIFFERENT user_id than requested (\(previousUserID, privacy: .public) → \(linked.userID, privacy: .public)) \
+                    — refusing to adopt it.
+                    """
+                )
                 throw AppleLinkError.linkIdentityGuardTripped
             }
 

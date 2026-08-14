@@ -110,7 +110,7 @@ extension SettingsView {
             // automatic resume the code doesn't deliver.
             Text(
                 "Your progress stays on this device, and stays on your account on the server. Backup stops until you sign in again and turn Cloud backup back on.",
-                comment: "Explains that signing out is not destructive (local progress and the server account both survive) and that resuming backup takes two explicit steps: signing in again, then turning Cloud backup back on"
+                comment: "Sign-out confirmation: nothing is deleted, and resuming backup takes two steps"
             )
         }
     }
