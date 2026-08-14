@@ -180,15 +180,16 @@ l'image, pas par du travail sur nos tests.
 
 ## E. Dû par l'utilisateur (ne peut pas être fait par un agent)
 
-### GAP-11 — Suppression de profil sur device
-Supprimer un profil **actif**, puis un profil **non actif**. Guetter un nom vide
-pendant l'animation de disparition. C'est le seul risque de crash que la
-vérification statique ne peut pas trancher.
+**Vide au 2026-08-14** — les deux entrées de cette section ont été fermées lors
+de la passe device du jour. Section conservée : la prochaine livraison touchant
+à l'UI ou à un flux destructif en remettra.
 
-### ~~GAP-12 — Parcours de sauvegarde cloud sur device~~ — FERMÉ le 2026-08-14
-Exercé sur iPhone 14 Pro et corroboré en SQL des deux côtés. Activation → 46
-cartes, 74 journaux de révision, 17 mots, 20 rencontres, 1 profil, 1 état RPG
-montés ; **0 message de conversation**, confirmant que l'exclusion Sakura tient
-sur le chemin réel et pas seulement en test. Suppression → compte auth ET toutes
-les lignes à zéro. (Entrée conservée un temps pour mémoire du résultat ; à
-supprimer à la prochaine passe sur ce fichier.)
+*Fermé* — **GAP-11, suppression de profil** : les deux cas passent sur iPhone
+14 Pro. Non actif comme actif, aucun nom vide pendant l'animation, aucun crash,
+retour propre sur le profil habituel. À noter pour qui rejouera ce test : créer
+un profil l'**active immédiatement** (`ProfileViewModel.createProfile` pose
+l'actif et émet `displayModeDidChange` — délibéré, c'est la parade à l'héritage
+du mode d'affichage par un profil neuf). Tester le cas « non actif » demande
+donc de rebasculer d'abord.
+
+*Fermé* — **GAP-12, parcours de sauvegarde cloud** : voir plus haut.
