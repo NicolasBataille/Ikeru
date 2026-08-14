@@ -43,28 +43,27 @@ struct IkeruTabBar: View {
             }
         }
         .padding(.horizontal, 22)
-        // Measured, not guessed. Reference: a standard iOS tab bar is ~83pt
-        // total — ~49pt of content plus the ~34pt the system reserves for the
-        // home indicator. This bar sits inside the bottom safe area, so that
-        // 34pt is already accounted for and must NOT be padded a second time;
-        // doing exactly that (a 26pt bottom padding) is what made the bar
-        // ~120pt and left a band of dead space under the labels.
+        // MEASURED on an iPhone 14 Pro, not estimated. Instrumenting the bar
+        // with a GeometryReader and reading it off the device gave
+        // `height=76.33 safeBottom=34.0`, which settled two things at once:
         //
-        // This bar owns the bottom safe area (`MainTabView` hands it over), so
-        // these two values are the ENTIRE vertical budget — nothing is added
-        // underneath. 8 + ~41 content + 22 = ~71pt, flush to the physical
-        // bottom edge.
+        //  1. The bar DOES own the bottom safe area (`MainTabView` hands it
+        //     over) — `safeBottom=34` is its overlap into the home-indicator
+        //     region, not a second inset stacked underneath. At 76pt it was
+        //     already SHORTER than a standard iOS tab bar (~83pt).
+        //  2. So height was never the complaint. The content was ASYMMETRIC —
+        //     8pt of air above the icons against 22 + 3 below — and that
+        //     lopsidedness is what reads as "space under the icons". Three
+        //     earlier rounds shortened the bar; none touched the real problem.
         //
-        // The 22 is not decoration: it is the clearance the home indicator
-        // needs. That indicator draws roughly 8pt from the bottom, so labels
-        // must not come closer than about 20pt or they crowd it and sit in a
-        // region the system treats as its own for gestures.
+        // 12/14 balances it while keeping the labels clear of the home
+        // indicator, which draws ~8pt from the bottom edge.
         //
-        // If this ever needs revisiting, measure a screenshot rather than
-        // nudging values — three rounds were spent adjusting by feel, and two
-        // of them trimmed the wrong edge entirely.
-        .padding(.top, 8)
-        .padding(.bottom, 22)
+        // Rebalance from a fresh measurement if this changes. Those two numbers
+        // cost one instrumented build and were worth more than three rounds of
+        // adjusting by eye.
+        .padding(.top, 12)
+        .padding(.bottom, 14)
         .background(.ultraThinMaterial)
         .overlay(alignment: .top) {
             FusumaRail(opacity: 0.7)
