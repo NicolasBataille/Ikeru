@@ -49,6 +49,8 @@
 		4858E3B046D54B20A40347B8 /* TatamiEligibilityRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1C5552DA1C2410D97DEDAB8 /* TatamiEligibilityRow.swift */; };
 		24B1C98084294C7E17812BF1 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8CF84F59DAF36277A923CF3 /* SettingsView.swift */; };
 		39EAC50FBDB939F922F60B9F /* SettingsView+AppleSignIn.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DC17B04C68E47C3B6A0A6B5 /* SettingsView+AppleSignIn.swift */; };
+		A1D5701A0000000000000002 /* SettingsView+DataStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1D5701A0000000000000001 /* SettingsView+DataStorage.swift */; };
+		A1D5701A0000000000000004 /* SettingsView+DevTools.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1D5701A0000000000000003 /* SettingsView+DevTools.swift */; };
 		2599E15EC556738138D16158 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E2839E6E122B09254AB7E515 /* Assets.xcassets */; };
 		A0D10F1CE0000000000B0001 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A0D10F1CE0000000000B0002 /* Assets.xcassets */; };
 		2A8442649FE4B865F041A3C3 /* FeatureTourControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E31012D5FE194F87406D24E5 /* FeatureTourControllerTests.swift */; };
@@ -434,6 +436,8 @@
 		B5FD009AD0E461931F7476EE /* IkeruFlowLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IkeruFlowLayout.swift; sourceTree = "<group>"; };
 		B8CF84F59DAF36277A923CF3 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		1DC17B04C68E47C3B6A0A6B5 /* SettingsView+AppleSignIn.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SettingsView+AppleSignIn.swift"; sourceTree = "<group>"; };
+		A1D5701A0000000000000001 /* SettingsView+DataStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SettingsView+DataStorage.swift"; sourceTree = "<group>"; };
+		A1D5701A0000000000000003 /* SettingsView+DevTools.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SettingsView+DevTools.swift"; sourceTree = "<group>"; };
 		B9AF377049118CA435404314 /* KanaGroupCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KanaGroupCard.swift; sourceTree = "<group>"; };
 		BAC8ABE7F4A5EEFD3D23AF3A /* TatamiToggle.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TatamiToggle.swift; sourceTree = "<group>"; };
 		BB5C6DA11F43D5B4C0018F24 /* HintChip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HintChip.swift; sourceTree = "<group>"; };
@@ -1034,6 +1038,8 @@
 				37FFFD4E2CCB71F726EE7A52 /* RigJobsView.swift */,
 				B8CF84F59DAF36277A923CF3 /* SettingsView.swift */,
 				1DC17B04C68E47C3B6A0A6B5 /* SettingsView+AppleSignIn.swift */,
+				A1D5701A0000000000000001 /* SettingsView+DataStorage.swift */,
+				A1D5701A0000000000000003 /* SettingsView+DevTools.swift */,
 				AF87E7A18DDA1BE176F0B8CE /* DisplayModeToggleRow.swift */,
 				A1C5552DA1C2410D97DEDAB8 /* TatamiEligibilityRow.swift */,
 			);
@@ -1500,6 +1506,8 @@
 				CFE29CF536DC3013F8990F51 /* SessionViewModel+Lifecycle.swift in Sources */,
 				24B1C98084294C7E17812BF1 /* SettingsView.swift in Sources */,
 				39EAC50FBDB939F922F60B9F /* SettingsView+AppleSignIn.swift in Sources */,
+				A1D5701A0000000000000002 /* SettingsView+DataStorage.swift in Sources */,
+				A1D5701A0000000000000004 /* SettingsView+DevTools.swift in Sources */,
 				B2142C70A1C6014266FB9F2E /* ShadowingExerciseView.swift in Sources */,
 				D8EB495D638484D9EAB4DC02 /* ShadowingViewModel.swift in Sources */,
 				A8C2670E450109C4289456F5 /* ShortcutsManager.swift in Sources */,
