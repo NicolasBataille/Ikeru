@@ -33,6 +33,15 @@ final class WatchSessionManager: NSObject, ObservableObject {
     /// kana.
     @Published private(set) var eligibleKanaCharacters: [String] = []
 
+    /// The learner profile active on the iPhone as of the last received
+    /// applicationContext — stamped onto every outgoing
+    /// `WatchQuizReviewBatch` so the iPhone can tell which profile answered
+    /// (see `WatchQuizReviewBatch.profileId`). `nil` until the first context
+    /// arrives, or when the paired iPhone runs a build that predates the
+    /// stamp; a batch sent with `nil` is graded by the iPhone only when
+    /// mis-attribution is impossible there (a single profile on the device).
+    @Published private(set) var activeProfileId: UUID?
+
     /// Pending session results to send when connectivity is restored.
     private var pendingResults: [WatchSessionResult] = []
 
@@ -106,11 +115,12 @@ final class WatchSessionManager: NSObject, ObservableObject {
     /// Apply state synced from the iPhone. Called only on the main actor —
     /// the delegate callback hops here via `Task { @MainActor }`.
     @MainActor
-    func applySyncedState(xp: Int, level: Int, due: Int, eligibleKana: [String]) {
+    func applySyncedState(xp: Int, level: Int, due: Int, eligibleKana: [String], activeProfileId: UUID?) {
         self.syncedXP = xp
         self.syncedLevel = level
         self.syncedDueCards = due
         self.eligibleKanaCharacters = eligibleKana
+        self.activeProfileId = activeProfileId
     }
 }
 
@@ -153,8 +163,18 @@ extension WatchSessionManager: WCSessionDelegate {
         // (older iPhone build, or context genuinely never included it) is
         // treated as "nothing eligible", never as "everything eligible".
         let eligibleKana = WatchEligibleKanaPayload.fromContext(applicationContext)?.characters ?? []
+        // Same merged dictionary again — the iPhone's active profile id, so
+        // the batches this Watch sends back carry the provenance the iPhone
+        // needs to avoid grading them onto another profile's cards (GAP-17).
+        let profileId = WatchQuizReviewBatch.activeProfileId(fromContext: applicationContext)
         Task { @MainActor in
-            WatchSessionManager.shared.applySyncedState(xp: xp, level: level, due: due, eligibleKana: eligibleKana)
+            WatchSessionManager.shared.applySyncedState(
+                xp: xp,
+                level: level,
+                due: due,
+                eligibleKana: eligibleKana,
+                activeProfileId: profileId
+            )
         }
 
         Logger.sync.info(

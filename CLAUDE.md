@@ -38,7 +38,14 @@ dev        →  PR  →  master   (CI + TestFlight deploy)
 
 ## Build & tests
 
-- `cd IkeruCore && swift test --no-parallel --filter "..."` pour les suites Core (le full `swift test` SIGSEGV sur des suites legacy, voir le `--filter` du workflow pour le subset vert). `--no-parallel` reste requis pour les suites SwiftData. ⚠️ `LegacyStoreMigrationTests` (le round-trip V1→V2) doit tourner dans **son propre process** : `swift test --no-parallel --filter "LegacyStoreMigration"` séparément — ouvrir un container avec les snapshots V1 figés empoisonne le cache global entité↔classe de CoreData pour `RPGState`, et tout fetch V2 ultérieur dans le même process peut matérialiser la mauvaise classe (« Failed to cast model … »). Ni `.serialized` ni `--no-parallel` ne suffisent (l'empoisonnement survit à la fin de la suite). Le filtre CI principal ne matche volontairement pas ce nom.
+- `cd IkeruCore && swift test --no-parallel` fait tourner **toute** la suite Core (1250 tests / 174 suites verts au 2026-08-15). `--no-parallel` reste requis pour les suites SwiftData.
+  > Cette ligne disait « le full `swift test` SIGSEGV sur des suites legacy ».
+  > **C'était faux sur les deux points** : jamais de SIGSEGV (sortie 1), et rien
+  > de legacy — c'était `LocalGPUProviderTests`, qui construisait un vrai
+  > `NWBrowser` Bonjour via l'argument par défaut de `LocalGPUProvider()`.
+  > Corrigé (voir GAP-10). Ne pas réintroduire d'allowlist `--filter` : la CI
+  > utilise désormais une **denylist**, pour que toute suite nouvelle tourne par
+  > défaut au lieu d'être exclue en silence. ⚠️ `LegacyStoreMigrationTests` (le round-trip V1→V2) doit tourner dans **son propre process** : `swift test --no-parallel --filter "LegacyStoreMigration"` séparément — ouvrir un container avec les snapshots V1 figés empoisonne le cache global entité↔classe de CoreData pour `RPGState`, et tout fetch V2 ultérieur dans le même process peut matérialiser la mauvaise classe (« Failed to cast model … »). Ni `.serialized` ni `--no-parallel` ne suffisent (l'empoisonnement survit à la fin de la suite). Le filtre CI principal ne matche volontairement pas ce nom.
 - `xcodebuild build -project Ikeru.xcodeproj -scheme Ikeru -destination "generic/platform=iOS" -skipPackagePluginValidation CODE_SIGNING_ALLOWED=NO` pour valider la compile iOS sans signing.
 - Schemes : `Ikeru` (app), `IkeruWatch` (watchOS), `IkeruWidget` (widget extension).
 - watchOS est restreint : pas de `Vision` ni `AVAudioUnitTimePitch` — wrap les imports/usages dans `#if canImport(Vision)` ou `#if !os(watchOS)`.
@@ -109,7 +116,16 @@ GitHub Pages dès le merge sur `master`. `supabase/config.toml` fige la config
 (`verify_jwt = true`) pour que le redéploiement reproduise l'existant.
 
 Vérifier après déploiement : sans en-tête `Authorization` → 401, jeton bidon →
-401, `GET` → 405, appel authentifié → 200 avec le compte de lignes par table.
+401, `GET` sans jeton → **401** (mesuré le 2026-08-15 ; cette ligne annonçait
+405 — la passerelle rejette sur l'authentification **avant** de router la
+méthode, donc on n'atteint jamais le 405), appel authentifié → 200 avec le
+compte de lignes par table.
+
+Depuis le 2026-08-15 ce n'est plus à faire à la main :
+`.github/workflows/supabase-deploy-function.yml` redéploie sur `master` dès que
+`supabase/functions/**` bouge, puis rejoue l'assertion du 401. **Il ne fait rien
+tant que le secret `SUPABASE_ACCESS_TOKEN` n'existe pas** — il émet un
+avertissement et sort en 0 plutôt que de rougir à chaque push.
 
 ### Mise en pause du palier gratuit
 

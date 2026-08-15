@@ -212,8 +212,15 @@ GAP-15.)
 Mais le mécanisme livré porte trois défauts, relevés en relecture adversariale
 et **non corrigés** → GAP-17.
 
-### GAP-15 — Rien ne produit jamais de tombstone : une suppression ne se propage pas
-**Sévérité : haute (annulation silencieuse d'une action de l'apprenant).**
+### GAP-15 — ~~Rien ne produit jamais de tombstone~~ — **corrigé le 2026-08-15** (PR #86)
+**Sévérité : haute (annulation silencieuse d'une action de l'apprenant). Corrigé** :
+les suppressions sont désormais douces sur les 7 entités synchronisées, tous les
+chemins de lecture filtrent `deletedAt == nil`, et la relecture adversariale a
+trouvé en plus que le pull jetait les tombstones des 3 tables append-only quand la
+ligne existait déjà en local — prouvé par un test à deux conteneurs, corrigé.
+Historique d'origine conservé ci-dessous.
+
+**Le constat d'origine :**
 Constaté sur device le 2026-08-15, sur les vraies données.
 
 `deletedAt` n'est **jamais** positionné par une action utilisateur. Les seules
@@ -284,7 +291,89 @@ relèvent du même argument.
 ### GAP-17 — Le pont Watch → iPhone perd des nano-sessions et peut noter le mauvais profil
 **Sévérité : haute (perte de données + corruption inter-profils).** Trois
 défauts dans du code **déjà livré sur `dev`**, trouvés en relecture
-adversariale le 2026-08-15. Aucun n'est corrigé.
+adversariale le 2026-08-15. **Les trois sont corrigés** (PR `fix/gap-17-watch-bridge`) ;
+l'entrée est conservée parce que le raisonnement et ce qui reste non vérifié
+comptent plus que le diff.
+
+**Ce qui a été livré.**
+- Un **carnet de réception durable** (`Ikeru/Services/WatchQuizBatchInbox.swift`) :
+  le lot brut est écrit en `UserDefaults` dans le préfixe **synchrone** de la
+  réception, avant tout `await` ; la notation reprend ensuite, avec un point de
+  reprise (`nextEventIndex`) réécrit **autour de chaque réponse**. Rejeu au
+  lancement depuis `WatchConnectivityManager.activate`, et à chaque
+  `.ikeruActiveProfileDidChange`.
+  Le point de reprise avance **avant** le `gradeCard`, les compteurs seulement
+  **après** : c'est la règle « perdre une révision ment moins que d'en inventer
+  une », déjà appliquée à l'ordre `inbox.complete()` / bonus d'XP. La première
+  version faisait l'inverse (un seul checkpoint, après la note) et une mort
+  entre le `gradeCard` et son checkpoint faisait **re-noter** la réponse au
+  rejeu : un `ReviewLog` en double et une seconde transition FSRS pour une
+  seule réponse au poignet — onze notes pour une nano-session de dix, prouvé
+  par `WatchQuizBridgeTests.deathBetweenGradeAndCheckpointDoesNotDuplicate`
+  (rouge avant, vert après). Coût résiduel assumé : une mort en vol perd au
+  pire une révision, ou la décompte une de moins dans l'agrégat — jamais un
+  `ReviewLog` fabriqué.
+- Un **`profileId` optionnel** dans `WatchQuizReviewBatch`, capturé au
+  `startSession()` de la montre et transporté par l'`applicationContext`
+  existant. Lot d'un autre profil → **mis en file**, pas noté, pas jeté.
+- Les trois champs crédités (`totalQuestions`, `correctCount`, `xpEarned`)
+  dérivent maintenant du même décompte de ce qui a **réellement** été noté.
+
+**Le dilemme tranché (défaut 1).** Si `transferUserInfo` redélivrait un lot déjà
+remis au délégué, le correctif minimal (déplacer le marquage) suffirait ; s'il ne
+redélivre pas, seul le lot persisté sauve la mise. La doc Apple répond :
+`transferUserInfo(_:)` — *« Dictionaries sent using this method are queued on the
+other device and delivered in the order in which they were sent »* — la file vit
+sur l'appareil **récepteur** et se vide à la livraison ; `didReceiveUserInfo` est
+appelé *« when it successfully receives a data dictionary »*. C'est la
+**livraison** qui est acquittée, jamais le **traitement**, et rien ne redonne un
+dictionnaire déjà remis. Donc : persister à la réception. Le correctif reste
+juste sous l'hypothèse inverse — une redélivrance retombe sur la déduplication
+par `sessionId`, qui n'a pas bougé.
+
+**Ce qui n'est pas vérifié.** Aucun test sur montre réelle : le Simulateur ne
+transporte pas `transferUserInfo` (Apple le documente), donc toute la chaîne
+`sendQuizReviewBatch → didReceiveUserInfo` reste couverte par lecture de code et
+par des tests qui injectent le lot côté iPhone. La mort du processus est rejouée
+**au niveau de l'état persisté** (`WatchQuizBridgeTests`), pas en tuant un vrai
+processus iOS.
+
+**Ce qui reste ouvert, hors périmètre de ce correctif :**
+- `StudySetStore.chosenGroups` (`KanaPoolViewModel.swift:415`) reste une clé
+  `UserDefaults` **globale**, partagée par tous les profils. Ce n'est plus la
+  cause d'une corruption inter-profils depuis le `profileId`, mais ça reste une
+  préférence par profil rangée hors profil.
+- Le handler `didReceiveApplicationContext` de l'iPhone écrit
+  `state.totalReviewsCompleted = winner.totalReviews` — **dormant** : aucun
+  `updateApplicationContext` n'existe dans `IkeruWatch/`, la montre n'envoie
+  jamais de contexte. À supprimer ou à câbler, pas à laisser en l'état.
+- Un lot mis en file pour un profil qui ne redevient jamais actif finit par être
+  évincé (file plafonnée à 20, FIFO) ; un lot dont le profil a été supprimé est
+  jeté au premier drain. Perte bornée, assumée.
+- **Bascule de profil pendant la boucle de notation elle-même** (N `await
+  gradeCard`, une fenêtre bien plus large que celle refermée par la
+  re-vérification d'attribution). Les `ReviewLog` restent sur les bonnes cartes
+  — `gradeCard` résout par `id` — mais deux choses suivent le profil **actif** :
+  `CardRepository.swift:681` calcule la date d'échéance avec
+  `activeDesiredRetention()` (`:491`, qui fait `fetchActiveProfile()`), et
+  `processWatchResult` recrédite XP / `totalReviewsCompleted` sur le
+  `RPGState` actif en fin de course. Donc « `gradeCard(cardId:)` ne filtre que
+  par `id`/`deletedAt`, sans dépendance au profil actif » est faux : la
+  conclusion venait du prédicat de fetch (`:666`) seul. Impact borné (rétention
+  bornée par `FSRSService.desiredRetentionRange`, se corrige à la révision
+  suivante ; le compteur XP est le compteur non-autoritaire de GAP-13), correctif
+  hors périmètre (IkeruCore) : passer la rétention en paramètre, ou la figer au
+  début du drain.
+- **Côté montre**, deux pertes subsistent, antérieures à ce correctif et non
+  couvertes par le carnet côté iPhone : une nano-session abandonnée avant la
+  10ᵉ question n'est **jamais** envoyée (`WatchQuizViewModel.selectAnswer`
+  ne construit le lot que sur `isComplete`), et `WatchSessionManager
+  .pendingReviewBatches` est une file **en mémoire** — un lot mis en attente
+  parce que la session WC n'est pas encore activée disparaît si l'app de la
+  montre est tuée avant l'activation. Le pont est donc « rétréci », pas
+  « étanche ».
+
+Le constat d'origine, conservé :
 
 **1. CRITIQUE — une nano-session entière peut disparaître définitivement.**
 `Ikeru/Services/WatchConnectivityManager.swift:186` appelle
@@ -389,7 +478,7 @@ usage plus étroit — la relance « premier terme du jour » de `HomeView`
 rejeté (voir JOURNAL 2026-08-15) : ça aurait cassé la relance pour tout
 apprenant ayant déjà fait du drill kana avant sa première séance.
 
-**Résidu ouvert — un second consommateur, jamais examiné.** Ce raisonnement
+**Résidu — FERMÉ le 2026-08-15.** (Historique conservé, il est instructif.) Ce raisonnement
 n'a été tenu que pour *un* lecteur du vieux compteur. Il y en a **deux** :
 `Ikeru/Views/Home/HomeView.swift:769` (`evaluateCaughtUpExplainer`) garde
 aussi sur `vm.totalReviewsCompleted > 0` — et là c'est un **seuil**, pas une
@@ -409,6 +498,19 @@ ne le lit que » pour la transition 0 → >0 de la relance : incomplet, la
 ligne 769 le lit aussi. Ce qui le fermerait : passer ce garde-là sur
 `CardRepository.activeProfileReviewCount() > 0` (ou sur `hasAnyReviewLog`),
 et corriger le doc-comment.
+
+**Ce qui a changé** : `HomeViewModel` expose désormais `derivedReviewCount`,
+alimenté par `CardRepository.activeProfileReviewCount()` — la même source que
+`TatamiEligibilityRow`, donc les deux ne peuvent plus diverger. `HomeView`
+`evaluateCaughtUpExplainer` lit ce champ.
+
+⚠️ `evaluateFirstSessionDailyTermPrompt` (`HomeView.swift:~844`) **n'a
+délibérément pas basculé** : il ne teste pas un seuil mais une **transition**
+`0` → `>0` au fil d'une séance. Sur le compteur dérivé, un apprenant ayant
+drillé des kana avant sa première séance arriverait déjà à `>0`, et l'invite
+unique ne se déclencherait jamais pour lui. Les deux champs coexistent donc
+parce qu'ils répondent à deux questions différentes — c'est écrit sur chacun.
+
 
 ⚠️ Effet assumé : le chiffre affiché **a augmenté** d'un coup pour les
 apprenants existants (53 → ~74 dans le cas observé) et la porte Tatami s'est
@@ -440,17 +542,27 @@ survécu à deux passes. Ce n'est pas la panne SwiftData qui bloque `ProfileView
 (18 tests, SIGTRAP pré-existant sur l'hôte de test applicatif, sans rapport
 avec GAP-13) — c'est simplement une couverture qui n'existe pas.
 
-### GAP-14 — Le schéma serveur n'est pas reproductible depuis le repo
-**Sévérité : moyenne.** `supabase/migrations/` ne contient que la migration de
-clé composite du 2026-08-14. Les 8 tables, leurs politiques RLS, la colonne
-`server_updated_at` et ses triggers ont été appliqués directement sur le projet
-vivant et n'existent **nulle part** dans le dépôt. Un projet Supabase
-réinitialisé ne se reconstruit pas.
+### GAP-14 — ~~Le schéma serveur n'est pas reproductible depuis le repo~~ — **fermé le 2026-08-15**
+`supabase/migrations/20260810000000_baseline_schema.sql` porte désormais la
+définition des 8 tables, du trigger d'horloge serveur, des 32 politiques RLS et
+des index — **reconstruite par introspection du projet live** (`information_schema
+.columns`, `pg_policies`, `pg_indexes`, `pg_constraint`, `information_schema
+.triggers`, `pg_proc`), et non recopiée de mémoire.
 
-Ce qui le fermerait : `supabase db pull` pour aspirer le schéma existant dans
-`supabase/migrations/`, en vérifiant que le rejeu sur une base vierge redonne
-bien les 8 tables, les politiques et les triggers. À faire avant que le schéma
-ne bouge encore.
+Elle est datée **avant** la migration de clé composite pour qu'un rejeu déroule
+create-puis-alter dans l'ordre où l'histoire s'est réellement passée. Elle
+reproduit donc volontairement la clé primaire d'origine, sur `id` seul : c'est la
+migration suivante qui la transforme, et « corriger » ce fichier pour prendre de
+l'avance ferait échouer celle d'après.
+
+⚠️ Ce qui n'est **pas** vérifié : le fichier a été écrit *depuis* le projet live,
+il n'a **jamais été rejoué contre lui**. Avant de s'en servir pour une
+restauration, l'exécuter sur une base de branche. Tout est en `if not exists` et
+chaque politique est supprimée avant d'être recréée, donc un rejoué sur le projet
+existant devrait être sans effet — « devrait », pas « a été observé ».
+
+Hors périmètre, et c'est délibéré : le schéma `auth` et l'event trigger
+`rls_auto_enable` appartiennent à Supabase, pas à l'application.
 
 ### GAP-09 — Aucune cible de tests UI
 **Sévérité : moyenne.** L'infrastructure de fixtures par argument de lancement
@@ -458,11 +570,74 @@ existe, mais rien ne l'exerce. Aucun parcours utilisateur n'est testé de bout e
 bout.
 
 ### GAP-10 — La CI ne lance qu'un sous-ensemble filtré des tests Core
-**Sévérité : moyenne, contrainte externe.** Le filtre couvre ~40 motifs de suites
-sur 1015 cas `@Test`. Ce n'est **pas** du code non testé : c'est l'image
-`macos-15` dont la bibliothèque Swift Testing (1501) SIGSEGV sur une suite
-legacy, alors que la toolchain locale (1902) passe tout. Débloqué par un bump de
-l'image, pas par du travail sur nos tests.
+**Sévérité : relevée de moyenne à HAUTE le 2026-08-15, après mesure.** L'entrée
+disait « ~40 motifs sur 1015 cas `@Test` » sans jamais chiffrer ce qui échappe
+au filtre. C'est fait, contre les **vrais** identifiants de test
+(`swift test --list-tests`, 1253 tests) confrontés au regex `--filter` extrait
+de `ci.yml` :
+
+| | |
+|---|---:|
+| tests Core au total | 1253 |
+| **exécutés par la CI** | **666 (53 %)** |
+| **jamais exécutés** | **587 (47 %)** |
+
+Les plus grosses suites muettes : `IkeruThemeTests` (39), `PitchAccentServiceTests`
+(27), `PronunciationScorerTests` (22), `ContentLoadingServiceTests` (18),
+`ShadowingExerciseTests` (18), `KanjiGraphRepositoryTests` (16),
+`StrokeAccuracyServiceTests` (15), `KanaGroupTests` (13), `StrokeDataServiceTests`
+(13).
+
+⚠️ Un premier comptage avait donné « 106 des 177 suites » en comptant les
+déclarations `struct …Tests` à la regex. **Chiffre gonflé** : `--filter` matche
+l'identifiant complet, donc une suite imbriquée est couverte par son parent.
+Seul le comptage sur les identifiants réels vaut. Ne pas ressortir le premier.
+
+**Le défaut de conception compte plus que le pourcentage** : une *allowlist*
+échoue dans le mauvais sens. Toute suite **nouvelle** est exclue par défaut, en
+silence, jusqu'à ce que quelqu'un ajoute son nom à la main.
+
+### Résolu le 2026-08-15 — et trois affirmations tombent avec
+
+La sonde a nommé le coupable **au premier run**. Ce que le dépôt répétait,
+confronté à la mesure :
+
+| affirmé (registre + `ci.yml`) | mesuré |
+|---|---|
+| « SIGSEGV en cours de run » | sortie **1**, jamais 139 |
+| « une suite legacy », défaut de toolchain du runner | `LocalGPUProviderTests`, **écrite par nous** |
+| « la toolchain locale passe tout » | **non** — 48 issues en local aussi |
+| « débloqué par un bump de l'image » | débloqué par **un argument par défaut** |
+
+Cause réelle : `LocalGPUProvider()` sans argument fait défaut à
+`NWBonjourDiscovery()`, qui monte un vrai `NWBrowser` sur `_ikeruai._tcp`. Deux
+tests qui affirmaient des constantes emportaient le process sur un runner sans
+Bonjour. **Classé comme contrainte externe, c'était devenu le travail de
+personne** — c'est ça, la vraie leçon, pas le pourcentage.
+
+Une fois le crash corrigé, la suite complète a tourné pour la première fois :
+1253 tests, 177 suites — et a fait apparaître **48 issues cachées**, toutes dans
+`IkeruThemeTests`. Elles échouaient **aussi en local** : les jetons de design
+avaient bougé au redesign wabi-sabi (#22), les tests non, et rien ne le signalait
+puisqu'ils ne tournaient nulle part. Réconciliés en détecteurs de changement.
+
+La CI utilise désormais une **denylist**. Les trois suites exclues le sont pour
+une raison sans rapport — les round-trips de migration, qui doivent posséder
+leur process. Elles ne sont **délibérément pas** réintégrées sous prétexte qu'un
+run de sonde y a survécu : `CLAUDE.md` documente l'empoisonnement CoreData comme
+quelque chose qu'un fetch ultérieur **peut** rencontrer, pas **va**. Un run vert
+prouve que ça n'a pas tiré, pas que ça ne peut pas.
+
+### Résidu — l'entrée reste OUVERTE
+
+Le job `test` lance aussi les tests de la **cible app** via `xcodebuild`, et
+c'est **une seconde allowlist** : 17 lignes `-only-testing:`, avec exactement le
+même défaut d'échec-ouvert. Une nouvelle suite `IkeruTests` n'est pas lancée
+tant que personne n'ajoute sa ligne.
+
+Ce n'est pas chiffré ici, faute d'équivalent `--list-tests` pour `xcodebuild`.
+Le mesurer d'abord, comme pour Core — et ne pas fermer GAP-10 avant, sous peine
+de refaire exactement la dérive que cette entrée vient de documenter.
 
 ---
 

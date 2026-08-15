@@ -163,16 +163,31 @@ jobs:
       - name: Select Xcode
         run: sudo xcode-select -s "$(ls -d /Applications/Xcode*.app | sort -V | tail -1)/Contents/Developer"
 
-      - name: Run IkeruCore Tests (CI-safe allowlist)
-        # We can't run the *whole* IkeruCore suite here: the macos-15 runner's
-        # Xcode ships Swift Testing library 1501, which SIGSEGVs mid-run on a
-        # legacy suite that never surfaces on newer toolchains (local Swift
-        # 6.3.3 / library 1902 runs the full suite clean, so it's unbisectable
-        # locally). `swift test --skip …` reproduces the crash; an allowlist
-        # avoids it by never *executing* the crasher. So this stays a `--filter`
-        # allowlist of suites verified to pass on CI. Newly-fixed suites are
-        # added here after CI confirms they don't reintroduce the crash.
-        # Un-filtering fully is blocked on the runner toolchain, not our tests.
+      - name: Run IkeruCore Tests (everything but the migration suites)
+        # This step used to be a `--filter` ALLOWLIST of ~50 suite names, and
+        # the comment here justified it with three claims that were all wrong.
+        # Recorded so nobody re-derives them (2026-08-15, GAP-10):
+        #
+        #   "SIGSEGVs mid-run"        -> `swift test` exited 1, never 139.
+        #   "a legacy suite"          -> LocalGPUProviderTests, written by us.
+        #   "runs clean locally"      -> it did not; 48 issues locally too.
+        #
+        # The real cause was one default argument: `LocalGPUProvider()` with no
+        # arguments defaults `bonjourDiscovery` to `NWBonjourDiscovery()`, which
+        # stands up a live `NWBrowser`. Two tests asserting hardcoded strings
+        # took the whole process down on a runner with no Bonjour. Filed as an
+        # external constraint, it became nobody's job for months.
+        #
+        # It was never unbisectable — only unbisectable LOCALLY, which is a
+        # different claim. A one-off probe job on CI named it on its first run.
+        #
+        # Cost while it stood: 587 of 1253 Core tests (47%) never executed here.
+        #
+        # Now a DENYLIST, and that inversion is the point. An allowlist fails
+        # open in the wrong direction: every newly-written suite is excluded by
+        # default, silently, until someone remembers to add its name. A denylist
+        # runs new suites automatically and forces anything excluded to be named
+        # and justified right here.
         #
         # `--no-parallel` + a SEPARATE step for LegacyStoreMigration (below):
         # opening a container with the frozen V1 shapes (IkeruSchema.swift)
@@ -185,9 +200,20 @@ jobs:
         # "IkeruSchema" token does not match it. `--no-parallel` here still
         # guards the residual concurrent-model-loading race. Test-harness-only:
         # production builds exactly one container.
+        # The three excluded suites are NOT excluded for the Bonjour reason —
+        # they are the store-migration round-trips, which must each own their
+        # process (see the next steps). They are skipped here and run there.
+        #
+        # Deliberately NOT folded back in just because a probe run happened to
+        # survive them: CLAUDE.md documents the CoreData poisoning as something
+        # a later fetch *can* hit, not *will*. One green run is evidence it did
+        # not fire, not that it cannot. Local: 1250 tests / 174 suites green.
         run: |
           cd IkeruCore
-          swift test --no-parallel --filter "JLPTReadinessFormula|JLPTBackfill|ProgressServiceJLPTRebuild|SkillXPLedger|SessionEnd|ExerciseXP|ExerciseOutcome|DailyTerm|DefaultSessionPlanner|ExerciseUnlockService|LearnerSnapshot|CardDTOJLPTLevel|BackupServiceJLPTLevel|BackupServiceReviewLogFields|CloudSyncCoordinator|CloudSyncSignOut|CloudDataDeletion|AnonymousIdentityManager|AppleIdentityLinking|SupabaseAuthTransportRequestShape|SyncPayloadBuilder|SyncConsentStore|SyncCursorStore|SyncMergeRules|SyncPullDivergence|JSONValue|(^|[^a])CardRepository|ProgressService|MasteryLevel|DisplayModeAdvancedThresholdMonitor|IkeruSchema|PlannerService|KanaCardRepository|ContentSeedService|ReviewForecastService|KanaProgress|VocabularyItemMapper|VocabularyRecallOptionsBuilder|MultiTurnConversation|ChatMarkerParsing|ConversationService|AIRouter|Gemini|OpenAICompatible|ClaudeProvider|AIProvider|RetryAfterParsing|ReadingValidator|ContentRepository|FSRSService|VocabularyRepository|ThemePaletteService|LeechIntervention"
+          swift test --no-parallel \
+            --skip "LegacyStoreMigration" \
+            --skip "StoreMigrationV2V3" \
+            --skip "StoreMigrationV3V4"
 
       - name: Run Legacy-Store Migration Tests (own process)
         # See the previous step's comment: this suite must never share a
@@ -254,6 +280,7 @@ jobs:
             -only-testing:IkeruTests/KanaDrillViewModelTests \
             -only-testing:IkeruTests/SessionDecouplingTests \
             -only-testing:IkeruTests/WatchQuizEligibilityTests \
+            -only-testing:IkeruTests/WatchQuizBridgeTests \
             -only-testing:IkeruTests/NewCardPresentationTests \
             -only-testing:IkeruTests/KanaSessionEndToEndTests \
             -only-testing:IkeruTests/MasteryBookSnapshotStoreTests \
