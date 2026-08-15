@@ -183,6 +183,32 @@ final class WatchQuizBridgeTests {
         #expect(tally.xpEarned == 7 * WatchQuizReviewBatch.xpPerCorrectAnswer)
     }
 
+    @Test("a death cleanly between two answers still carries the counters across the replay")
+    func interruptionBetweenAnswersKeepsTheWholeAggregate() async {
+        let fronts: Set<String> = ["あ", "い", "う", "え", "お"]
+        let batch = makeBatch()
+
+        // The other durable state a relaunch can find: answer #3 fully
+        // finished — consumed AND counted — and nothing was in flight. Both
+        // of the grader's two checkpoints for it have landed, so
+        // `nextEventIndex` and `gradedCount` agree. Pinned separately from
+        // the in-flight case because this is the one where the aggregate
+        // still covers the whole nano-session: no answer is lost, and none
+        // is under-counted.
+        let inbox = makeInbox()
+        #expect(inbox.admit(batch))
+        inbox.recordProgress(sessionId: batch.sessionId, nextEventIndex: 3, gradedCount: 3, gradedCorrectCount: 3)
+
+        let recorder = GradeRecorder()
+        let grader = makeGrader(inbox: inbox, knownFronts: fronts, eligibleFronts: fronts, recorder: recorder)
+        let tally = await grader.grade(inbox.pending().first!)
+
+        #expect(recorder.graded.count == 7)
+        #expect(tally.gradedCount == 10)
+        #expect(tally.gradedCorrectCount == 8)
+        #expect(tally.xpEarned == 8 * WatchQuizReviewBatch.xpPerCorrectAnswer)
+    }
+
     /// Ten answers, all correct, each one identifiable by its index
     /// (`responseTimeMs`) so a re-graded answer is visible as a duplicate
     /// rather than hiding behind a repeated `targetCharacter`.
