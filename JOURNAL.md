@@ -23,6 +23,108 @@ raisonnement, les mesures, et les décisions.
 
 ---
 
+## 2026-08-15 — Hygiène du registre : GAP-13 fermé, GAP-02 requalifié
+
+Passe documentaire pure sur `docs/known-gaps.md` (sections GAP-02 et GAP-13
+uniquement) et ce journal — aucun changement de code. Un registre périmé fait
+prendre des décisions sur des faits faux ; cette session referme l'écart entre
+ce que le registre affirmait encore et ce que les sessions du jour avaient
+déjà changé.
+
+### Fait
+
+- **GAP-13 marqué fermé.** Vérifié dans le code, pas recopié depuis un
+  message : `grep totalReviewsCompleted` confirme que
+  `CardRepository.activeProfileReviewCount()` dérive bien le chiffre des
+  lignes `ReviewLog` (`deletedAt == nil`) du profil actif, et que les trois
+  sites d'affichage (`HomeViewModel.advancedThresholdSignals()`,
+  `TatamiEligibilityRow`, `DataExportManager`) le lisent tous — zéro résidu.
+  Le champ `RPGState.totalReviewsCompleted` **reste** incrémenté à la main à
+  trois endroits (`SessionRPGPersistence`, et deux chemins
+  `WatchConnectivityManager`) : ce n'est plus un défaut parce qu'il est
+  documenté non-autoritaire et gardé pour un usage plus étroit (la relance
+  « premier terme du jour »), pas parce que le site parallèle a disparu.
+  L'entrée dit maintenant explicitement les deux : ce qui a changé (dérivation
+  + rebranchement des 3 sites), l'effet assumé (le chiffre affiché a bondi
+  d'un coup pour les apprenants existants, 53→~74 dans le cas observé), et ce
+  qui reste non rejoué (le saut lui-même, sur l'appareil qui a servi au
+  constat).
+- **GAP-02 requalifié, pas fermé.** L'ancien intitulé (« le pull n'a jamais
+  tourné contre le vrai Supabase ») était devenu faux : la reproduction sur
+  device de GAP-15 (PR #86 — suppression de 風物詩, ligne serveur confirmée
+  vivante en SQL, bascule de l'interrupteur de sauvegarde, mot réapparu) a
+  fait tourner un vrai pull à froid contre le projet Supabase de production,
+  et `SyncPullActor+StandaloneTables` a bien réinséré la ligne. Réécrit pour
+  dire précisément ce que ce cas prouve (le chemin de pull s'exécute et
+  applique pour de vrai contre PostgREST) et ce qu'il ne prouve toujours pas
+  (une ligne, une page, un appel — ni pagination multi-pages, ni volumes/
+  latence réels, ni lignes empoisonnées GAP-03/04, ni fusion à deux appareils
+  GAP-01). Sévérité laissée à « moyenne » : la preuve gagnée est réelle mais
+  étroite, pas une fermeture.
+- Confirmé au passage, sans y toucher (hors périmètre de cette session) :
+  **GAP-08** a déjà été retiré comme faux constat et **GAP-17** ouvert à sa
+  place (`adbc220`, PR #87, 2026-08-15) — le pont Watch→iPhone existe bien en
+  production, avec trois vrais défauts non corrigés. Rien à changer ici, déjà
+  correct dans `docs/known-gaps.md`.
+
+### Testé
+
+- Chaque affirmation de GAP-13 vérifiée par lecture directe du code du jour
+  (pas confiance dans le message de la tâche) : `grep -rn
+  "totalReviewsCompleted"` sur tout le dépôt, `grep -rn
+  "activeProfileReviewCount"`, lecture du doc-comment de
+  `RPGState.totalReviewsCompleted` et de `CardRepository.swift:254-284`.
+  `grep -n "advancedThresholdSignals"` confirme aussi l'absence d'appelant
+  production, cohérent avec le commentaire déjà corrigé par la passe de
+  vérification de PR #85.
+- GAP-02 vérifié via `gh pr view 86 --json body,commits` : la section
+  « Reproduit sur appareil le 2026-08-15 » du corps de la PR est la source
+  primaire de la reproduction 風物詩 (pas une reformulation d'un rapport
+  d'agent). Confirmé aussi que cette reproduction est **antérieure** au fix
+  (elle documente le bug, pas la correction) — donc elle prouve que le pull
+  tourne et applique en réel, pas que le correctif de suppression douce a
+  lui-même été vérifié sur device (ça reste ouvert, territoire GAP-15).
+- **Pas testé** : aucun changement de code dans cette session, donc pas de
+  build ni de suite Swift Testing à faire tourner pour la modification
+  elle-même. `xcodebuild build` (iOS), `python3 scripts/i18n-lint.py` et
+  `swiftlint lint` ont quand même été rejoués après coup pour s'assurer que
+  le worktree reste vert (voir gate ci-dessous) — aucun n'était censé être
+  affecté par un changement purement Markdown, et aucun ne l'a été.
+
+### Écarté
+
+- **Fermer complètement GAP-02** (le supprimer du registre). Rejeté : la
+  preuve gagnée ne couvre qu'un seul cas trivial (une ligne, un appel, pas de
+  pagination). Le déclarer fermé aurait fait sauter la vérification de
+  pagination/volume/lignes empoisonnées que quelqu'un finira par devoir faire
+  — exactement le risque que la consigne de cette session pointait
+  explicitement.
+- **Toucher GAP-15 ou GAP-16** pour aligner leur formulation avec la nouvelle
+  preuve de GAP-02. Repéré comme tentant (GAP-15 dit encore « la démonstration
+  de bout en bout... n'a pas pu être jouée ») mais **hors périmètre** de
+  cette session (sections GAP-02/GAP-13 uniquement) — et en réalité pas
+  contradictoire : GAP-15 parle de vérifier que le *correctif* tient dans le
+  temps sur device, GAP-02 parle de savoir si le *mécanisme de pull* tourne
+  contre le vrai serveur. Ce sont deux questions différentes que la même
+  manipulation a partiellement éclairées chacune à sa façon. Signalé dans le
+  rapport plutôt que corrigé sur une intuition.
+- **Rouvrir GAP-08 ou modifier sa formulation.** Déjà correct : fermé le
+  2026-08-15 par un autre agent (PR #87), section D de `docs/known-gaps.md`
+  le dit explicitement et renvoie vers GAP-17. Rien à faire.
+
+### Ouvert
+
+- Le registre entier n'a été confronté au code **que** sur GAP-02/GAP-13 par
+  cette session ; deux autres agents en parallèle couvrent GAP-17 et
+  GAP-03/04/05. Aucune autre entrée n'a été passée en revue systématiquement
+  ici (GAP-06, GAP-07, GAP-09, GAP-10, GAP-14 non ré-auditées).
+- GAP-15 reste ouvert (sévérité haute) : le correctif de suppression douce
+  (PR #86) n'a jamais été vérifié de bout en bout sur un vrai appareil contre
+  le vrai serveur — seule la reproduction du *bug* l'a été, pas la
+  correction.
+
+---
+
 ## 2026-08-15 — GAP-15 : brancher le premier maillon des tombstones
 
 Le mécanisme de suppression synchronisée était complet **sauf son point de

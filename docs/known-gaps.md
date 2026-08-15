@@ -39,12 +39,38 @@ donc partager un compte entre deux appareils n'est pas possible aujourd'hui sans
 copier le jeton à la main. **Le lot 3 (Sign in with Apple) est ce qui rend ce
 test faisable proprement** — c'est un argument de plus pour le faire.
 
-### GAP-02 — Le pull n'a jamais tourné contre le vrai Supabase
-**Sévérité : moyenne.** Ce qui a été éprouvé en réel : l'auth anonyme, l'upsert
-et son idempotence, l'isolation RLS entre deux utilisateurs, la fonction de
-suppression, et la syntaxe du curseur composite (parcours d'un paquet d'ex æquo
-avec `limit=1`). Ce qui ne l'a **pas** été : `SyncPullActor` de bout en bout
-contre le vrai PostgREST — pagination réelle, volumes réels, latence réelle.
+### GAP-02 — Le pull a tourné contre le vrai Supabase, mais sur le cas le plus simple possible
+**Sévérité : moyenne — inchangée, requalifiée le 2026-08-15.** Ce qui était
+déjà éprouvé en réel : l'auth anonyme, l'upsert et son idempotence,
+l'isolation RLS entre deux utilisateurs, la fonction de suppression, et la
+syntaxe du curseur composite (parcours d'un paquet d'ex æquo avec `limit=1`).
+
+**Nouveau depuis le 2026-08-15** : `SyncPullActor` a tourné pour de vrai
+contre le vrai PostgREST — pas seulement contre `FakeSyncServer`. En
+reproduisant [GAP-15] sur device pour documenter cette PR (#86), une bascule
+de l'interrupteur de sauvegarde (`CloudSyncCoordinator.setConsent` →
+`cursorStore.resetAll()`) a remis le curseur à zéro et déclenché un pull à
+froid réel contre le projet Supabase de **production**. Constaté en boîte
+noire (le vocabulaire 風物詩, supprimé localement mais toujours vivant côté
+serveur — `deleted_at = null`, vérifié en SQL direct — est réapparu après le
+pull) et attribué par lecture du code à
+`SyncPullActor+StandaloneTables` (réinsertion inconditionnelle d'une ligne
+serveur absente en local). C'est la première confirmation que le chemin de
+pull s'exécute et applique correctement contre le vrai PostgREST, pas
+seulement en test.
+
+**Ce que ce cas ne couvre pas** : une ligne, une seule page, un seul appel —
+le scénario le plus simple que ce code puisse rencontrer. N'ont **toujours**
+jamais tourné en réel :
+- la **pagination sur plusieurs pages** (le curseur composite n'a jamais
+  affronté un vrai paquet d'ex æquo côté serveur, seulement le
+  `FakeSyncServer`) ;
+- les **volumes et la latence réels** (des centaines/milliers de lignes,
+  un vrai réseau) ;
+- les **lignes empoisonnées** ([GAP-03], [GAP-04]) — comportement lu dans le
+  code, jamais observé contre un vrai serveur ;
+- la **fusion** entre deux appareils sur le même compte ([GAP-01], toujours
+  bloquée par l'identité liée à l'appareil).
 
 Ce qui le fermerait : un script de fumée qui pousse ~2000 lignes, vide le store
 local, relance un pull complet et compare. Attention : ~2000 lignes poussées en
@@ -254,37 +280,56 @@ même**. Le commentaire des lignes 254-268 énonce le bon principe et ne
 l'applique qu'à deux champs sur trois.
 
 ### GAP-13 — « Révisions » et l'historique réel divergent, dans les deux sens
-**Sévérité : moyenne (porte pédagogique faussée).** Constaté sur device le
-2026-08-14 : le Tatami affichait **53 révisions** pendant que la sauvegarde
-cloud remontait **74 `ReviewLog`**. Ce ne sont pas deux mesures du même
-phénomène, ce sont deux compteurs alimentés par des chemins disjoints.
+**Fermé le 2026-08-15** (PR #85, `9297c8d`→`15dc7d3`, mergée `055cc40`).
+Constaté sur device le 2026-08-14 : le Tatami affichait **53 révisions**
+pendant que la sauvegarde cloud remontait **74 `ReviewLog`**. Ce n'étaient pas
+deux mesures du même phénomène, mais deux compteurs alimentés par des chemins
+disjoints — `KanaDrillViewModel` journalisait via `gradeCard` sans jamais
+toucher `RPGState.totalReviewsCompleted`, pendant que `WatchConnectivityManager`
+créditait ce même compteur sans produire de `ReviewLog` (c'était [GAP-08],
+depuis requalifié [GAP-17]).
 
-- **Journaux sans crédit** : `CardRepository.gradeCard` écrit un `ReviewLog` à
-  chaque carte notée, mais seul `SessionRPGPersistence` incrémente
-  `totalReviewsCompleted`. `KanaDrillViewModel` appelle `gradeCard` et ne touche
-  **jamais** l'état RPG (vérifié) — chaque kana révisé hors séance est donc
-  travaillé, journalisé, et jamais crédité.
-- **Crédit sans journal** : `WatchConnectivityManager` fait
-  `totalReviewsCompleted += result.totalQuestions` sans produire le moindre
-  `ReviewLog` (c'est [GAP-08]). La montre rapproche la porte sans rien apprendre
-  au planificateur.
+**Ce qui a changé** : `CardRepository.activeProfileReviewCount()` dérive
+désormais le chiffre directement des lignes `ReviewLog` du profil actif
+(`deletedAt == nil`) — vérifié par lecture, c'est une lecture pure sans
+cache, pas un troisième compteur qui pourrait rediverger. Les trois sites
+d'affichage sont rebranchés dessus (vérifié par `grep` sur le dépôt au
+2026-08-15, zéro résidu) : `HomeViewModel.advancedThresholdSignals()`,
+`TatamiEligibilityRow`, et le champ « Lifetime review count » de l'export
+JSON (`DataExportManager`).
 
-Pourquoi ça compte : ce compteur garde l'accès au mode Tatami (750 révisions) et
-s'affiche sous le libellé « COMPÉTENCE CUMULÉE ». Il sous-crédite le travail réel
-tout en étant gonflable par une surface qui ne laisse aucune trace FSRS.
+**Ce qui n'a PAS disparu** : `RPGState.totalReviewsCompleted` — le champ
+lui-même n'a **pas** été supprimé (la charge utile de synchro et le snapshot
+de sauvegarde locale en dépendent sans changement de schéma) et reste
+**incrémenté à la main à trois endroits** (`SessionRPGPersistence`, et deux
+chemins dans `WatchConnectivityManager` : `processWatchResult` legacy et
+`processWatchQuizBatch`, `grep totalReviewsCompleted` au 2026-08-15 confirme
+les trois écrivains, zéro de plus). Ce n'est plus un défaut : le champ est
+maintenant documenté comme non-autoritaire pour tout affichage
+(`RPGState.totalReviewsCompleted`'s doc comment) et gardé sciemment pour un
+usage plus étroit — la relance « premier terme du jour » de `HomeView`
+(`evaluateFirstSessionDailyTermPrompt`), qui a besoin de sa transition
+0 → >0, pas du chiffre dérivé. Le repointer sur `ReviewLog` a été envisagé et
+rejeté (voir JOURNAL 2026-08-15) : ça aurait cassé la relance pour tout
+apprenant ayant déjà fait du drill kana avant sa première séance.
 
-Ce qui le fermerait — **dériver le chiffre des `ReviewLog`** plutôt que maintenir
-un compteur parallèle. C'est le principe déjà retenu pour la synchro (règle 2 :
-`ReviewLog` fait autorité), ça supprime la divergence structurellement au lieu
-d'ajouter un troisième site d'incrémentation qui redivergera au prochain écran,
-et un appareil restauré depuis le cloud retrouve le bon chiffre tout seul.
-Ajouter l'incrément dans les drills marche aussi, mais laisse deux vérités
-côte à côte — exactement ce qui a produit ce bug.
+⚠️ Effet assumé : le chiffre affiché **a augmenté** d'un coup pour les
+apprenants existants (53 → ~74 dans le cas observé) et la porte Tatami s'est
+rapprochée. C'est une correction, pas un cadeau, mais c'est un changement de
+comportement sur une porte pédagogique.
 
-⚠️ Effet à assumer : le chiffre affiché **augmente** d'un coup pour les
-apprenants existants (53 → ~74 dans le cas observé) et la porte Tatami se
-rapproche. C'est une correction, pas un cadeau, mais c'est un changement de
-comportement sur une porte pédagogique — à annoncer, pas à glisser.
+**Ce qui reste non vérifié** : le saut 53→74 lui-même n'a jamais été rejoué
+sur l'appareil qui a servi au constat original — seule la couche `IkeruCore`
+est couverte par des tests unitaires (159 tests verts sur le filtre
+`RPG|Review|Session|Tatami|Mastery`, dont 3 nouveaux pour
+`activeProfileReviewCount`) ; les trois sites d'affichage côté app
+(`IkeruTests`) n'ont aucun test automatisé exécutable (panne SwiftData
+pré-existante sur l'hôte de test, documentée en tête de ce dépôt). La passe
+de vérification indépendante avant merge a aussi trouvé et corrigé un vrai
+rouge CI (`DataExportManagerTests`, fixture qui posait `totalReviewsCompleted:
+999` sans `ReviewLog` — correct pour l'ancien comportement, faux pour le
+nouveau) : c'est une preuve concrète, pas seulement théorique, que la
+dérivation change le résultat.
 
 ### GAP-14 — Le schéma serveur n'est pas reproductible depuis le repo
 **Sévérité : moyenne.** `supabase/migrations/` ne contient que la migration de
