@@ -23,6 +23,74 @@ raisonnement, les mesures, et les décisions.
 
 ---
 
+## 2026-08-15 — GAP-13 (vérification) : CI rouge trouvé + doc dormante corrigée
+
+Passe de vérification sur `fix/gap-13-derived-review-count` (PR #85), avant
+merge. Deux réparations poussées en plus du travail de l'implémenteur.
+
+### Fait
+
+- `655ab52` — `HomeViewModel.advancedThresholdSignals()` n'a **aucun
+  appelant en production** (`grep` sur tout le dépôt : zéro site
+  d'appel, app + Watch + tests). Le commentaire de 9297c8d et son message
+  de commit la listaient pourtant comme le premier des « trois sites
+  d'affichage rebranchés » à côté de `TatamiEligibilityRow` et
+  `DataExportManager` — c'est faux : la vraie porte Tatami
+  (`TatamiEligibilityRow`) calcule ses propres signaux indépendamment,
+  sans jamais appeler cette méthode. Le calcul lui-même (compteur dérivé)
+  reste correct et sans danger à garder — seul le commentaire prétendait
+  à tort qu'elle était branchée quelque part. Corrigé pour dire
+  explicitement « aucun appelant en production », sans supprimer le code
+  (les tests IkeruCore qui exercent `DisplayModeAdvancedThresholdMonitor`
+  passent par cette forme).
+- `<commit à suivre>` — `IkeruTests/DataExportManagerTests.swift`,
+  test `rpg.json is scoped to the active profile` : **cassait réellement
+  en CI** (`Test` job rouge sur PR #85, run 31886586406, job
+  95016706494 : `Expectation failed: (decoded.totalReviewsCompleted → 0)
+  == 999`). Le fixture posait `RPGState(totalReviewsCompleted: 999)` sans
+  aucune ligne `ReviewLog` — correct pour l'ancien comportement (miroir
+  direct de `RPGState`), faux pour le nouveau (dérivé de `ReviewLog`).
+  Réparé en donnant à chaque profil ses propres lignes `ReviewLog`
+  (3 pour A, 5 pour B) et en attendant `5`, pas `999` — l'intention
+  originale du test (pas de fuite inter-profil) est préservée : le
+  fixture échouerait encore contre l'ancien bug de scoping (lirait le
+  rpgA/cardA de l'autre profil) ET contre une régression qui relirait
+  `RPGState.totalReviewsCompleted` brut (lirait 999, pas 5).
+  C'est exactement le trou que le rapport de l'implémenteur avait déclaré
+  explicitement non vérifié (« aucun test automatisé côté app… IkeruTests
+  hors périmètre outillé ») — le trou existait bel et bien, avec un test
+  qui cassait déjà, juste jamais exécuté avant le push.
+
+### Testé
+
+- `xcodebuild test … -only-testing:IkeruTests/DataExportManagerTests` sur
+  simulateur (iPhone Air) : 12/12 verts après la réparation (rouge avant,
+  avec le message d'erreur ci-dessus reproduit localement).
+- Le sous-ensemble vert complet de la CI (les 16 suites `-only-testing`
+  listées dans `.github/workflows/ci.yml`) rejoué en local sur le même
+  simulateur : 122/122 verts.
+- Rebuild iOS complet après les deux commits : OK.
+- `swiftlint` (passe large + passe stricte diff `origin/dev...HEAD`) : OK
+  après chaque commit.
+- Chaîne d'appel `KanaDrillViewModel.gradeAnswer` → `cardRepository
+  .gradeCard(surface: "iphone.drill")` tracée via
+  `Ikeru/Views/Learning/Kana/KanaDrillModeSelector.swift` (instanciation
+  réelle) — confirme le scénario 2 (drill kana hors séance) en remontant
+  jusqu'à un tap apprenant, pas seulement jusqu'au commentaire qui
+  l'affirme.
+
+### Ouvert
+
+- Le saut 53→74 lui-même n'a pas été rejoué sur l'appareil qui a servi au
+  constat original (ni par l'implémenteur, ni par cette passe) — seul du
+  code assemblé à partir de fixtures synthétiques a été vérifié.
+- `HomeViewModel.advancedThresholdSignals()` reste du code mort en
+  production après cette passe (juste honnêtement documenté comme tel) —
+  soit le brancher sur Home, soit le supprimer au profit exclusif de
+  `TatamiEligibilityRow`, reste à trancher dans un futur ticket.
+
+---
+
 ## 2026-08-15 — GAP-13 : le compteur de révisions dérive maintenant de ReviewLog
 
 Device pass 2026-08-14 avait pris le Tatami en flagrant délit : 53 révisions
