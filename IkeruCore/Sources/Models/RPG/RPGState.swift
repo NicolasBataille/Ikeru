@@ -16,7 +16,30 @@ public final class RPGState {
     /// Current level
     public var level: Int
 
-    /// Total number of reviews completed across all sessions
+    /// Legacy, **non-authoritative** counter. Historically meant "total
+    /// number of reviews completed across all sessions", but it is only ever
+    /// incremented by `SessionRPGPersistence.persistState` — the main SRS
+    /// session's grading path — so any review graded elsewhere (notably the
+    /// kana drill, `KanaDrillViewModel` → `CardRepository.gradeCard`, which
+    /// never touches `RPGState`) is journaled to `ReviewLog` but never
+    /// counted here. That divergence (53 shown on-device vs. 74 real
+    /// `ReviewLog` rows, observed 2026-08-14) is GAP-13.
+    ///
+    /// **Do not read this field for anything display-facing** (the Tatami
+    /// eligibility gate, the "cumulative competence" figure, a data export's
+    /// review count, …) — use `CardRepository.activeProfileReviewCount()`
+    /// instead, which derives the true count from `ReviewLog` and cannot
+    /// diverge by construction. This field is kept only so the sync payload
+    /// / local backup snapshot shapes (`SyncPayloadBuilder`,
+    /// `BackupService.RPGSnapshot`) don't need a schema change, and because
+    /// `HomeViewModel`'s first-session-of-lifetime onboarding heuristic
+    /// (`HomeView.evaluateFirstSessionDailyTermPrompt`) still keys off its
+    /// 0 → >0 transition specifically at the end of a main SRS session — a
+    /// narrower question ("has this profile ever finished a session-mode
+    /// review") than the lifetime review count, which this field still
+    /// answers correctly for that one purpose. Still written by
+    /// `SessionRPGPersistence`; still merged by `SyncMergeRules.mergeCounters`
+    /// (`max()`, rule 3) alongside the other monotone counters.
     public var totalReviewsCompleted: Int
 
     /// JSON-encoded RPGAttribute array. Use `attributes`/`setAttributes(_:)` accessors.

@@ -251,6 +251,38 @@ public final class CardRepository: Sendable {
         await backgroundActor.activeProfileReviewLogs()
     }
 
+    /// **Authoritative lifetime review count** for the active profile —
+    /// the number of `ReviewLog` rows attached (via `Card.reviewLogs`) to
+    /// the active profile's cards, excluding soft-deleted rows
+    /// (`deletedAt != nil`).
+    ///
+    /// This is the fix for GAP-13 (2026-08): `RPGState.totalReviewsCompleted`
+    /// used to be maintained as a second, hand-incremented counter that only
+    /// `SessionRPGPersistence` ever bumped — so any review graded through a
+    /// path that doesn't go through the main SRS session (the kana drill's
+    /// `KanaDrillViewModel.gradeCard` calls, in particular) was journaled to
+    /// `ReviewLog` but never credited here, undercounting the figure the
+    /// Tatami-mode gate and the "cumulative competence" display read. Every
+    /// review, on every surface, always writes a `ReviewLog` in the same
+    /// `CardRepository.gradeCard` transaction — so counting those rows
+    /// directly removes the second counter instead of adding a third
+    /// increment site that would just as surely diverge again the next
+    /// time a new surface starts grading cards. `RPGState.totalReviewsCompleted`
+    /// itself is no longer authoritative for anything display-facing; see its
+    /// doc comment.
+    ///
+    /// Deliberately a plain read (no caching): it walks the same
+    /// already-faulted `activeProfileCards()` object graph
+    /// `activeProfileReviewLogs()` does (used today on every data-export
+    /// tap), and is called from bounded, low-frequency UI reads (Home
+    /// appearing, the Tatami-eligibility settings row) — not a hot loop. A
+    /// cached counter was considered and rejected: it would reintroduce
+    /// exactly the invalidation surface this fix removes (who bumps the
+    /// cache, and when does it get out of sync with `ReviewLog`?).
+    public func activeProfileReviewCount() async -> Int {
+        await backgroundActor.activeProfileReviewCount()
+    }
+
     /// Exercise outcomes (listening / shadowing) scoped to the **active
     /// profile only**, ordered by timestamp. Use this for anything that
     /// leaves the device (e.g. data export) so one profile's history never
@@ -689,6 +721,24 @@ actor CardModelActor {
             .flatMap { $0.reviewLogs ?? [] }
             .sorted { $0.timestamp < $1.timestamp }
             .map { $0.toDTO() }
+    }
+
+    /// Counts `ReviewLog` rows for the active profile's cards, excluding
+    /// soft-deleted rows. See `CardRepository.activeProfileReviewCount()`
+    /// for why this exists and why it isn't cached. Traverses the same
+    /// `activeProfileCards()` object graph as `activeProfileReviewLogs()`
+    /// above rather than a `#Predicate`-based `fetchCount` on `ReviewLog`
+    /// directly: scoping by profile needs a two-hop relationship
+    /// (`ReviewLog.card?.profile?.id`), and SwiftData's predicate macro does
+    /// not reliably support chaining an optional relationship through
+    /// another optional relationship — the single-hop predicates elsewhere
+    /// in this file (`$0.profile?.id == profileID` on `Card`) are as deep as
+    /// this codebase risks going.
+    func activeProfileReviewCount() -> Int {
+        activeProfileCards().reduce(0) { total, card in
+            let liveLogs = (card.reviewLogs ?? []).lazy.filter { $0.deletedAt == nil }.count
+            return total + liveLogs
+        }
     }
 
     /// Exercise outcomes (listening / shadowing) for the active profile only,

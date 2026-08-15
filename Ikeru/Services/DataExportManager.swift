@@ -80,10 +80,18 @@ final class DataExportManager {
         var rpgExport: RPGExport?
         if let profile = ActiveProfileResolver.fetchActiveProfile(in: context),
             let rpg = profile.rpgState {
+            // "Lifetime review count" (see the label in `writeContextJSON`)
+            // comes from `ReviewLog` (GAP-13), not `rpg.totalReviewsCompleted`
+            // — that field only ever credited the main SRS session, so an
+            // export taken by a learner who also uses the kana drill would
+            // otherwise ship a number visibly smaller than the review count
+            // in reviews.json above. See `RPGState.totalReviewsCompleted`'s
+            // doc comment.
+            let totalReviews = await cardRepo.activeProfileReviewCount()
             rpgExport = RPGExport(
                 xp: rpg.xp,
                 level: rpg.level,
-                totalReviewsCompleted: rpg.totalReviewsCompleted,
+                totalReviewsCompleted: totalReviews,
                 totalSessionsCompleted: rpg.totalSessionsCompleted,
                 attributes: rpg.attributes,
                 inventoryCount: rpg.lootInventory.count,

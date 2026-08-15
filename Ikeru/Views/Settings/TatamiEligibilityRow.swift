@@ -237,10 +237,16 @@ struct TatamiEligibilityRow: View {
 
         let context = modelContainer.mainContext
         let rpg = fetchActiveRPGState(in: context)
-        let reviews = rpg?.totalReviewsCompleted ?? 0
         let activeDays = rpg?.activeDaysCount ?? 0
 
+        // "Cumulative competence" reviews come from `ReviewLog` (GAP-13), not
+        // `RPGState.totalReviewsCompleted` — that field only ever credited
+        // the main SRS session and silently dropped every kana-drill review,
+        // undercounting this exact figure (53 shown vs. 74 real reviews,
+        // observed 2026-08-14). See `RPGState.totalReviewsCompleted`'s doc
+        // comment.
         let cardRepository = CardRepository(modelContainer: modelContainer)
+        let reviews = await cardRepository.activeProfileReviewCount()
         let allCards = await cardRepository.allCards()
         let masteryCount = allCards.filter { card in
             MasteryLevel.from(fsrsState: card.fsrsState).rawValue

@@ -63,6 +63,17 @@ final class SessionRPGPersistence {
     }
 
     /// Persists current RPG state to SwiftData.
+    ///
+    /// The `totalReviewsCompleted += 1` below is deliberately left as-is
+    /// (GAP-13, 2026-08) even though this field is no longer the
+    /// authoritative lifetime review count anywhere in the UI — see
+    /// `RPGState.totalReviewsCompleted`'s doc comment. Every display of a
+    /// lifetime review count now derives from `ReviewLog` via
+    /// `CardRepository.activeProfileReviewCount()`. This increment survives
+    /// only because `HomeViewModel.totalReviewsCompleted` still keys its
+    /// first-session-ever onboarding heuristic off this exact field's
+    /// 0 → >0 transition — a narrower, session-scoped question that this
+    /// increment still answers correctly.
     func persistState(xp: Int, level: Int) async {
         await withRPGState { state in
             state.xp = xp
