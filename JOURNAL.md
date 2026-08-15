@@ -92,9 +92,10 @@ déjà changé.
   11 suites) et `xcodebuild build … -destination generic/platform=iOS`
   (`BUILD SUCCEEDED`) — tous rejoués réellement, pas juste supposés verts.
 - **Pas testé** : `xcodebuild build` pour `IkeruWatch` (watchOS) n'a pas été
-  relancé cette session — aucun fichier watchOS n'est dans le diff, et le
-  build watchOS avait déjà tourné vert sur les sessions précédentes du jour
-  (GAP-15, GAP-13) sans qu'aucune n'ait touché à `docs/`.
+  relancé cette session — aucun fichier watchOS n'est dans le diff. Le build
+  watchOS avait déjà tourné vert plus tôt dans la journée sur la session
+  GAP-15 (« Build iOS + watchOS OK », PR #86) ; la session GAP-13 n'atteste
+  que l'iOS (« Build iOS complet : OK »), pas le watchOS.
 
 ### Écarté
 
