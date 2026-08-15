@@ -23,6 +23,147 @@ raisonnement, les mesures, et les décisions.
 
 ---
 
+## 2026-08-15 — Remédiation des 8 défauts du corpus Tatoeba (317 → 239 phrases)
+
+Suite à une relecture adverse de `feat/sentence-corpus` qui a trouvé 8 défauts
+réels (D1–D8, voir la consigne de mission). Corrigés à la racine, pas à la
+main. Commits `6e66a79`, `febabf4`, `81c0de4`, `cedc3ed`.
+
+### Fait
+
+- **D1 (le plus grave, `6e66a79`)** — `build_known_lexicon` coupait la
+  terminaison verbale sans plancher de longueur : tout mot bundle de 2 signes
+  finissant en `VERB_ENDINGS`/い produisait un radical d'**un seul kanji**
+  (五つ → 五, 聞く → 聞), qui matchait ensuite n'importe quel composé partageant
+  ce kanji. Mesuré sur la table `vocabulary` : 74 radicaux produits par
+  l'ancienne règle, dont **53 à un seul caractère** — la majorité de la
+  classe, pas un cas limite. Correctif : `len(stem) >= 2`. Preuve rejouée
+  après régénération : `五つ`/`四つ`/`二つ`/`聞く`/`出る`/`入る`/`見る` — 0 ligne
+  dont le japonais ne contient pas littéralement le mot déclaré.
+- **D2+D3 (`6e66a79`)** — créé `scripts/tatoeba/blocklist.json`, liste par
+  `ja_id` avec raison en clair, appliquée avant tout autre filtre (nouvelle
+  étape `0b. blocklist` du funnel, −5). `sentences.json` reste 100 % généré.
+- **D4 (`6e66a79`)** — `REGISTER_PATTERNS` ne couvrait pas `〜てくれ` brut
+  (書くものをくれ。 glosé au vouvoiement). Ajouté `くれ[。！]?$` — sûr car
+  くれる/くれます ne finissent jamais par `くれ` seul.
+- **D6 (`6e66a79`)** — le funnel dédoublonnait le japonais et le sac de tokens
+  mais jamais le français : 10 groupes de phrases partageaient la glose
+  française d'une autre phrase du même mot (新聞 ×3, 小さい ×3, etc.). Ajouté
+  une passe post-cap sur `(vocabulary_word, french)` (−10, pas de
+  réattribution du slot libéré — corpus plus petit, pas plus grand).
+- **Piège de régénération non listé dans la consigne, trouvé par l'advisor
+  avant d'écrire quoi que ce soit** — `load_bundle`'s "already bundled" lisait
+  TOUTE la table `sentences`, y compris les 317 lignes `tatoeba` du run
+  précédent. Régénérer contre un bundle qui contient déjà les imports aurait
+  rejeté tout le corpus en cours de régénération à l'étape "not already
+  bundled". Corrigé : exclut `source = 'tatoeba'`, NULL-safe, tolérant à un
+  bundle sans colonne `source` (frais de `generate_content_bundles.py`).
+- **D5 (`febabf4`)** — `validate()` ne comparait les doublons qu'À L'INTÉRIEUR
+  du JSON malgré une docstring promettant un échec bruyant sur "a duplicate".
+  Rejoué : injecter `りんごを一つください。` (déjà présente comme ligne `ikeru`
+  id 1) contre le code d'avant → **exit 0, phrase insérée deux fois** (vérifié
+  contre `git show HEAD~2` avant de toucher au fichier). Corrigé en comparant
+  aussi contre `SELECT japanese FROM sentences WHERE source IS NULL OR
+  source <> 'tatoeba'` (exclut les lignes `tatoeba` du run précédent — sinon
+  le script ne serait plus idempotent contre lui-même). Test
+  `scripts/tatoeba/test_apply_tatoeba_sentences.py` (unittest, sous-processus
+  contre une copie jetable du vrai bundle — le nom à tiret empêche un
+  `import`), 4 tests, rejoue le scénario D5 + régression doublon-intra-JSON +
+  cas nominal + re-run idempotent.
+- **D7 (`febabf4`)** — la docstring affirmait « a second run leaves the bundle
+  byte-identical » : faux avant correctif (réallocation de pages SQLite après
+  DELETE+INSERT). Ajouté un `VACUUM` après chaque `COMMIT` (impossible dans
+  une transaction, donc après, pas avant). **Mesuré** sur 3 exécutions
+  consécutives : `.dump` strictement identique, fichier `.sqlite` diffère de
+  **3 octets exactement** (`cmp -l`) — tous dans l'en-tête SQLite (file
+  change counter, schema cookie, version-valid-for), que le moteur incrémente
+  à chaque écriture qu'il fait lui-même, VACUUM compris. Docstring corrigée
+  pour dire cette vérité précise plutôt que « byte-identical » ou l'inverse.
+- **D8 (3 commentaires, répartis sur `6e66a79`/`febabf4`/`cedc3ed`)** —
+  vérifiés un par un dans le code avant réécriture, pas devinés :
+  `ContentRepository.fetchSentences` (pas `ContentDatabaseActor`, qui existe
+  mais n'est pas la classe portant la méthode) ; `VocabularyExamplesView`
+  utilise `.prefix(2)`, pas un `ForEach` de la liste entière, et — confirmé
+  par son propre commentaire daté 2026-08-15 — n'est atteinte par aucune
+  navigation ; `SessionComposer`/`LeechInterventionService` appellent bien
+  `vocabularyByLevel` mais `VocabularyItemMapper` jette `exampleSentences` en
+  route, donc même ce chemin-là ne rend jamais les phrases. `README.md`
+  entièrement retapé (funnel, seuils, couverture) contre les chiffres
+  mesurés de la régénération.
+
+### Testé
+
+- `xcodebuild build` iOS (`generic/platform=iOS`, sans signing) : **BUILD
+  SUCCEEDED**.
+- `swift test --no-parallel --filter "Content|Sentence"` (IkeruCore) :
+  **119/119** verts.
+- `swiftlint-diff-filter.py origin/dev` sur les 3 fichiers `.swift` touchés
+  par toute la branche (aucun par mes commits — je n'ai touché que
+  Python/JSON/Markdown/SQLite) : 0 violation sur lignes touchées.
+- `i18n-lint.py --baseline` : 0 NEW (26 total, tous en baseline).
+- **Rejeu D1** : requêtes SQL confirmant qu'aucune ligne filée sous
+  一つ/二つ/三つ/四つ/五つ ne contient un autre de ces mots, et qu'aucune ligne
+  sous 聞く/出る/入る/見る ne contient 聞こえ/出来/入れ/見せ — **0 résultat**
+  sur les 4 requêtes.
+- **Rejeu D5** : `test_apply_tatoeba_sentences.py`, 4/4 verts ; confirmé de
+  plus que le même scénario contre le code d'avant fix (`git show
+  a755a5c:scripts/apply-tatoeba-sentences.py`, le HEAD de départ de cette
+  mission, copié hors du repo de travail) produit bien `exit 0` + phrase
+  dupliquée (2 lignes identiques en base) — preuve que le test attrape
+  réellement le bug rapporté, pas juste qu'il passe.
+- **Idempotence** : 3 applications consécutives, VACUUM après chacune, `.dump`
+  identique (`diff` vide), `.sqlite` diffère de 3 octets d'en-tête SQLite —
+  mesuré avec `cmp -l`, pas supposé.
+- **Non-régression** : les 96 phrases `ikeru` et les 6 autres tables
+  (`vocabulary`, `kanji`, `kana`, `grammar_points`, `radicals`,
+  `kanji_radical_edges`) comparées ligne à ligne à `origin/dev` — identiques
+  au caractère près, aucune n'a bougé.
+- **Pas vérifié** : rendu à l'écran (aucun simulateur lancé — de toute façon,
+  la table `sentences` n'a aucun lecteur atteignable aujourd'hui, D8).
+
+### Écarté
+
+- **Rejoindre `feat/sentence-corpus` en changeant de branche dans le
+  worktree.** `git worktree` refuse de checkouter deux fois la même branche
+  (`feat/sentence-corpus` était déjà checkoutée dans le repo principal). Le
+  worktree était déjà positionné sur le même SHA (`a755a5c`) sous un nom de
+  branche différent (`worktree-agent-…`) — travaillé dessus tel quel, poussé
+  vers `origin/feat/sentence-corpus` via `git push origin HEAD:...` plutôt que
+  de tenter un changement de branche.
+- **Refaire refluer les slots libérés par le dédoublonnage français (D6) vers
+  d'autres candidats.** Aurait exigé de dédoublonner *avant* l'assignation du
+  cap plutôt qu'après, avec un filtrage `taken-french` par mot dans la boucle
+  d'assignation. Choisi la passe post-cap : plus simple, auditable dans le
+  funnel comme une étape de plus, au prix de ne pas récupérer les 10 phrases
+  perdues. Les deux options se défendent ; ne pas faire les deux à moitié.
+- **Patcher les 3 octets d'en-tête SQLite restants pour un diff nul.** Le
+  file-change-counter, le schema-cookie et le version-valid-for sont
+  incrémentés par le moteur lui-même à chaque écriture (VACUUM inclus) — les
+  patcher à la main après coup troquerait une garantie réelle (contenu
+  identique, vérifié par `.dump`) contre une garantie cosmétique.
+- **Corriger les 4 gloses françaises infidèles (D3) plutôt que les retirer.**
+  Explicitement exclu par la consigne : le texte d'attribution promet du
+  verbatim Tatoeba, réécrire une glose le rendrait faux une deuxième fois.
+
+### Ouvert
+
+- **`AttributionView.swift` cite encore « 317 »** (commentaire Swift, pas une
+  chaîne affichée — `Localizable.xcstrings` n'a aucune occurrence). Fichier
+  explicitement interdit de modification pour cette mission (déjà en cours de
+  correction ailleurs, risque de conflit). Signalé, pas corrigé — 239 est le
+  chiffre exact désormais.
+- **Grammaire manquante** : 21 (`なければならない`), 24 (`つもり`), 26 (`方`),
+  31 (`けど / が`) n'ont aucun exemple importé (27/31 au lieu de 28/31 avant
+  le fix — un point de moins, coût mesuré de D1/D6, pas caché).
+- **83 mots du bundle sans aucun exemple** (compteurs 四つ…九つ, jours de la
+  semaine hors lundi/vendredi, termes de famille, nourriture, quelques
+  verbes) — nécessiteraient des phrases écrites à la main, aucun filtre ne
+  peut les faire apparaître dans Tatoeba sous les contraintes kanji du
+  bundle.
+- **`n5-content.sqlite` n'a toujours aucun lecteur atteignable en prod**
+  (confirmé indépendamment ici, cf. entrée précédente du 2026-08-15) — reste
+  une décision de câblage produit, hors du périmètre de cette mission.
+
 ## 2026-08-15 — Vérification du corpus Tatoeba : données SÛR, câblage plus mort que rapporté
 
 Vérification indépendante de `feat/sentence-corpus` (branche `verify/sentence-corpus`,
