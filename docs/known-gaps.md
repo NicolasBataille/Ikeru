@@ -39,12 +39,41 @@ donc partager un compte entre deux appareils n'est pas possible aujourd'hui sans
 copier le jeton à la main. **Le lot 3 (Sign in with Apple) est ce qui rend ce
 test faisable proprement** — c'est un argument de plus pour le faire.
 
-### GAP-02 — Le pull n'a jamais tourné contre le vrai Supabase
-**Sévérité : moyenne.** Ce qui a été éprouvé en réel : l'auth anonyme, l'upsert
-et son idempotence, l'isolation RLS entre deux utilisateurs, la fonction de
-suppression, et la syntaxe du curseur composite (parcours d'un paquet d'ex æquo
-avec `limit=1`). Ce qui ne l'a **pas** été : `SyncPullActor` de bout en bout
-contre le vrai PostgREST — pagination réelle, volumes réels, latence réelle.
+### GAP-02 — Le pull a tourné contre le vrai Supabase, mais sur le cas le plus simple possible
+**Sévérité : moyenne — inchangée, requalifiée le 2026-08-15.** Ce qui était
+déjà éprouvé en réel : l'auth anonyme, l'upsert et son idempotence,
+l'isolation RLS entre deux utilisateurs, la fonction de suppression, et la
+syntaxe du curseur composite (parcours d'un paquet d'ex æquo avec `limit=1`).
+
+**Nouveau depuis le 2026-08-15** : `SyncPullActor` a tourné pour de vrai
+contre le vrai PostgREST — pas seulement contre `FakeSyncServer`. En
+reproduisant [GAP-15] sur device pour documenter cette PR (#86), une bascule
+de l'interrupteur de sauvegarde (`CloudSyncCoordinator.setConsent` →
+`cursorStore.resetAll()`) a remis le curseur à zéro et déclenché un pull à
+froid réel contre le projet Supabase de **production**. Constaté en boîte
+noire (le vocabulaire 風物詩, supprimé localement mais toujours vivant côté
+serveur — `deleted_at = null`, vérifié en SQL direct — est réapparu après le
+pull) et attribué par lecture du code à
+`SyncPullActor+StandaloneTables` (réinsertion inconditionnelle d'une ligne
+serveur absente en local). C'est la première confirmation que le chemin de
+pull s'exécute et applique **fidèlement ce que le serveur affirme** contre
+le vrai PostgREST, pas seulement en test. (« Fidèlement », pas
+« correctement » : ce qui a été observé, c'est la réinsertion d'une ligne
+que l'apprenant avait supprimée — le pull faisait son travail, c'est le
+bug de GAP-15. Ne pas relire cette phrase plus tard comme « le pull a été
+vérifié correct ».)
+
+**Ce que ce cas ne couvre pas** : une ligne, une seule page, un seul appel —
+le scénario le plus simple que ce code puisse rencontrer. N'ont **toujours**
+jamais tourné en réel :
+- la **pagination sur plusieurs pages** (le curseur composite n'a jamais
+  affronté un vrai paquet d'ex æquo côté serveur, seulement le
+  `FakeSyncServer`) ;
+- les **volumes et la latence réels** (des centaines/milliers de lignes,
+  un vrai réseau) ;
+- les **lignes empoisonnées** ([GAP-03], [GAP-04]) — comportement lu dans le
+  code, jamais observé contre un vrai serveur ;
+- la **fusion** entre deux appareils sur le même compte ([GAP-01]).
 
 Ce qui le fermerait : un script de fumée qui pousse ~2000 lignes, vide le store
 local, relance un pull complet et compare. Attention : ~2000 lignes poussées en
@@ -254,37 +283,118 @@ même**. Le commentaire des lignes 254-268 énonce le bon principe et ne
 l'applique qu'à deux champs sur trois.
 
 ### GAP-13 — « Révisions » et l'historique réel divergent, dans les deux sens
-**Sévérité : moyenne (porte pédagogique faussée).** Constaté sur device le
-2026-08-14 : le Tatami affichait **53 révisions** pendant que la sauvegarde
-cloud remontait **74 `ReviewLog`**. Ce ne sont pas deux mesures du même
-phénomène, ce sont deux compteurs alimentés par des chemins disjoints.
+**Fermé pour l'affichage le 2026-08-15** (PR #85, `9297c8d`→`15dc7d3`,
+mergée `055cc40`) — **un résidu reste ouvert** sur un second consommateur du
+vieux compteur, voir « Résidu » en fin d'entrée (relecture adversariale du
+2026-08-15). Constaté sur device le 2026-08-14 : le Tatami affichait **53 révisions**
+pendant que la sauvegarde cloud remontait **74 `ReviewLog`**. Ce n'étaient pas
+deux mesures du même phénomène, mais deux compteurs alimentés par des chemins
+disjoints — `KanaDrillViewModel` journalisait via `gradeCard` sans jamais
+toucher `RPGState.totalReviewsCompleted`, pendant que `WatchConnectivityManager`
+créditait ce même compteur sans produire de `ReviewLog` (c'était [GAP-08],
+depuis requalifié [GAP-17]).
 
-- **Journaux sans crédit** : `CardRepository.gradeCard` écrit un `ReviewLog` à
-  chaque carte notée, mais seul `SessionRPGPersistence` incrémente
-  `totalReviewsCompleted`. `KanaDrillViewModel` appelle `gradeCard` et ne touche
-  **jamais** l'état RPG (vérifié) — chaque kana révisé hors séance est donc
-  travaillé, journalisé, et jamais crédité.
-- **Crédit sans journal** : `WatchConnectivityManager` fait
-  `totalReviewsCompleted += result.totalQuestions` sans produire le moindre
-  `ReviewLog` (c'est [GAP-08]). La montre rapproche la porte sans rien apprendre
-  au planificateur.
+**Ce qui a changé** : `CardRepository.activeProfileReviewCount()` dérive
+désormais le chiffre directement des lignes `ReviewLog` du profil actif
+(`deletedAt == nil`) — vérifié par lecture, c'est une lecture pure sans
+cache, pas un troisième compteur qui pourrait rediverger. Trois call sites
+sont rebranchés dessus (vérifié par `grep` sur le dépôt au 2026-08-15, zéro
+résidu) : `TatamiEligibilityRow` et le champ « Lifetime review count » de
+l'export JSON (`DataExportManager`) sont deux **vrais sites d'affichage** —
+un apprenant voit le chiffre dérivé sur l'un ou l'autre. Le troisième,
+`HomeViewModel.advancedThresholdSignals()`, n'en est **pas un** : un
+verificateur sur PR #85 (`655ab52`) a déjà constaté par `grep` qu'aucun
+chemin de production n'appelle cette méthode — `TatamiEligibilityRow` calcule
+ses propres `reviews`/`mastery`/`activeDays` indépendamment plutôt que de
+passer par elle. Elle reste dans le code (API publique de `HomeViewModel`,
+exercée indirectement par les tests `IkeruCore` sur
+`DisplayModeAdvancedThresholdMonitor`) mais aucune action d'apprenant ne
+l'atteint aujourd'hui ; la brancher sur Home, ou la supprimer au profit de
+`TatamiEligibilityRow`, reste un suivi non résolu.
 
-Pourquoi ça compte : ce compteur garde l'accès au mode Tatami (750 révisions) et
-s'affiche sous le libellé « COMPÉTENCE CUMULÉE ». Il sous-crédite le travail réel
-tout en étant gonflable par une surface qui ne laisse aucune trace FSRS.
+**Ce qui n'a PAS disparu** : `RPGState.totalReviewsCompleted` — le champ
+lui-même n'a **pas** été supprimé (la charge utile de synchro et le snapshot
+de sauvegarde locale en dépendent sans changement de schéma) et reste écrit
+à la main. **Deux** sites l'**incrémentent** (`+=`) :
+`Ikeru/ViewModels/Session/SessionRPGPersistence.swift:84` (`+= 1` par carte
+notée) et `Ikeru/Services/WatchConnectivityManager.swift:147`
+(`+= result.totalQuestions`, dans `processWatchResult`). ⚠️ Une rédaction
+antérieure de cette entrée comptait `processWatchQuizBatch` comme un
+troisième incrément : **faux**, il n'écrit pas le champ, il appelle
+`processWatchResult` (`:269`) — c'est le même écrivain, pas un deuxième.
+Le troisième site réel est d'une autre nature et n'était pas listé :
+`WatchConnectivityManager.swift:410` **écrase** le champ
+(`state.totalReviewsCompleted = winner.totalReviews`, avec `xp` et `level`)
+depuis un `WatchSyncPayload` reçu de la montre, dans
+`session(_:didReceiveApplicationContext:)` — donc **non monotone**, il peut
+faire *baisser* le compteur. Aucun code de la montre n'appelle
+`updateApplicationContext` aujourd'hui (`grep` sur `IkeruWatch/` : seul
+l'iPhone en émet, la montre ne fait que du `transferUserInfo`), donc ce
+chemin est dormant pour une montre à jour ; il reste atteignable par une
+vieille build de montre **et** seulement si l'horloge de la montre est en
+avance sur celle du téléphone (`SyncConflictResolver` compare des
+horodatages et le payload local est estampillé `Date()` à la réception).
+Territoire [GAP-17], pas corrigé ici.
 
-Ce qui le fermerait — **dériver le chiffre des `ReviewLog`** plutôt que maintenir
-un compteur parallèle. C'est le principe déjà retenu pour la synchro (règle 2 :
-`ReviewLog` fait autorité), ça supprime la divergence structurellement au lieu
-d'ajouter un troisième site d'incrémentation qui redivergera au prochain écran,
-et un appareil restauré depuis le cloud retrouve le bon chiffre tout seul.
-Ajouter l'incrément dans les drills marche aussi, mais laisse deux vérités
-côte à côte — exactement ce qui a produit ce bug.
+Ce n'est plus un défaut d'affichage : le champ est
+documenté comme non-autoritaire pour tout affichage
+(`RPGState.totalReviewsCompleted`'s doc comment) et gardé sciemment pour un
+usage plus étroit — la relance « premier terme du jour » de `HomeView`
+(`evaluateFirstSessionDailyTermPrompt`), qui a besoin de sa transition
+0 → >0, pas du chiffre dérivé. Le repointer sur `ReviewLog` a été envisagé et
+rejeté (voir JOURNAL 2026-08-15) : ça aurait cassé la relance pour tout
+apprenant ayant déjà fait du drill kana avant sa première séance.
 
-⚠️ Effet à assumer : le chiffre affiché **augmente** d'un coup pour les
-apprenants existants (53 → ~74 dans le cas observé) et la porte Tatami se
-rapproche. C'est une correction, pas un cadeau, mais c'est un changement de
-comportement sur une porte pédagogique — à annoncer, pas à glisser.
+**Résidu ouvert — un second consommateur, jamais examiné.** Ce raisonnement
+n'a été tenu que pour *un* lecteur du vieux compteur. Il y en a **deux** :
+`Ikeru/Views/Home/HomeView.swift:769` (`evaluateCaughtUpExplainer`) garde
+aussi sur `vm.totalReviewsCompleted > 0` — et là c'est un **seuil**, pas une
+transition, donc l'arbitrage rendu pour la relance ne s'y applique pas :
+dériver de `ReviewLog` y serait strictement meilleur. Conséquence concrète,
+sur `dev` : un apprenant qui ne travaille qu'au drill kana (Explorer →
+Kana) journalise des `ReviewLog` sans jamais toucher `RPGState`, donc reste
+à `totalReviewsCompleted == 0` indéfiniment ; quand il a entamé tous ses
+kana et que rien n'est dû (`todayKind == .empty`), l'explication « tout est
+à jour » de Sakura — écrite précisément pour lui (« un apprenant frais qui
+vient d'enchaîner tout son set fait face à un cul-de-sac silencieux ») — ne
+se déclenche **jamais**. C'est le symptôme « journaux sans crédit »
+d'origine, survivant dans une surface que la fermeture n'a pas énumérée.
+Le doc-comment de `HomeViewModel.totalReviewsCompleted`
+(`Ikeru/ViewModels/HomeViewModel.swift:56-71`) affirme d'ailleurs que « Home
+ne le lit que » pour la transition 0 → >0 de la relance : incomplet, la
+ligne 769 le lit aussi. Ce qui le fermerait : passer ce garde-là sur
+`CardRepository.activeProfileReviewCount() > 0` (ou sur `hasAnyReviewLog`),
+et corriger le doc-comment.
+
+⚠️ Effet assumé : le chiffre affiché **a augmenté** d'un coup pour les
+apprenants existants (53 → ~74 dans le cas observé) et la porte Tatami s'est
+rapprochée. C'est une correction, pas un cadeau, mais c'est un changement de
+comportement sur une porte pédagogique.
+
+**Ce qui reste non vérifié** : le saut 53→74 lui-même n'a jamais été rejoué
+sur l'appareil qui a servi au constat original. Côté tests, la couverture
+est inégale entre les call sites : `IkeruCore` est couvert
+(160 tests verts sur le filtre `RPG|Review|Session|Tatami|Mastery` au
+2026-08-15 — l'entrée disait 159, recompté depuis, dont 3
+nouveaux pour `activeProfileReviewCount`), et **`DataExportManager` a un
+test app-target exécutable en CI** (`DataExportManagerTests`, 12/12 verts) —
+c'est d'ailleurs ce test qui a attrapé un vrai rouge en CI pendant la
+vérification (fixture posant `totalReviewsCompleted: 999` sans `ReviewLog`,
+correct pour l'ancien comportement, faux pour le nouveau) : une preuve
+concrète, pas seulement théorique, que la dérivation change le résultat.
+En revanche, ni `HomeViewModel.advancedThresholdSignals()` ni
+`TatamiEligibilityRow` ne sont exercés par un test app-target pour ce
+chemin précis : `HomeViewModelTests` existe (15 `@Test`) mais ne teste ni
+`advancedThresholdSignals()` ni `activeProfileReviewCount` — et n'est de
+toute façon **pas** dans le sous-ensemble `-only-testing` que la CI lance
+(`.github/workflows/ci.yml`) ; `TatamiEligibilityRow` n'a aucun fichier de
+test du tout. Le résidu ci-dessus (`evaluateCaughtUpExplainer`) n'est
+atteignable par **aucune** cible de test : c'est une `private func` d'une
+`View` SwiftUI, et il n'existe pas de cible de tests UI ([GAP-09]) — il ne
+peut être établi que par lecture, ce qui est exactement pourquoi il a
+survécu à deux passes. Ce n'est pas la panne SwiftData qui bloque `ProfileViewModelTests`
+(18 tests, SIGTRAP pré-existant sur l'hôte de test applicatif, sans rapport
+avec GAP-13) — c'est simplement une couverture qui n'existe pas.
 
 ### GAP-14 — Le schéma serveur n'est pas reproductible depuis le repo
 **Sévérité : moyenne.** `supabase/migrations/` ne contient que la migration de
