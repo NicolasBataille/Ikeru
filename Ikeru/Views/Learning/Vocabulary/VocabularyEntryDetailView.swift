@@ -9,6 +9,15 @@ struct VocabularyEntryDetailView: View {
     let entryId: UUID
     let modelContainer: ModelContainer
 
+    /// Called after this sheet deletes the entry, so whoever owns the list
+    /// can drop it. The dictionary keeps its rows in a cached array that
+    /// only `VocabularyDictionaryViewModel` writes to; deleting straight
+    /// through the repository from here left that array stale, so the word
+    /// stayed on screen until the whole tab was left and re-entered — and
+    /// tapping the ghost row reopened this sheet on an id that no longer
+    /// resolved. Same shape as `AddVocabularyWordView`'s completion.
+    let onDelete: () -> Void
+
     @Environment(\.dismiss) private var dismiss
     @State private var entry: VocabularyEntryDTO?
     @State private var encounters: [VocabularyEncounterDTO] = []
@@ -36,6 +45,17 @@ struct VocabularyEntryDetailView: View {
                         .padding(.horizontal, IkeruTheme.Spacing.lg)
                         .padding(.top, IkeruTheme.Spacing.lg)
                     }
+                } else if hasLoaded {
+                    // Loaded, and the word is not there. Reachable from a
+                    // stale list row (the dictionary caches its entries, so
+                    // a row can outlive its entry by a frame or two) — this
+                    // used to render an empty sheet with nothing but a title,
+                    // which reads as a broken screen rather than as a word
+                    // that is simply gone.
+                    missingState
+                } else {
+                    ProgressView()
+                        .tint(Color.ikeruPrimaryAccent)
                 }
             }
             .navigationTitle("Word Detail")
@@ -51,6 +71,7 @@ struct VocabularyEntryDetailView: View {
                 Button("Delete", role: .destructive) {
                     Task {
                         await repo.deleteEntry(by: entryId)
+                        onDelete()
                         dismiss()
                     }
                 }
@@ -243,6 +264,20 @@ struct VocabularyEntryDetailView: View {
     }
 
     // MARK: - Delete
+
+    private var missingState: some View {
+        VStack(spacing: IkeruTheme.Spacing.md) {
+            Image(systemName: "questionmark.circle")
+                .font(.system(size: 40, weight: .ultraLight))
+                .foregroundStyle(Color.ikeruTextTertiary)
+
+            Text("This word is no longer in your dictionary.")
+                .font(.system(size: 15))
+                .foregroundStyle(Color.ikeruTextSecondary)
+                .multilineTextAlignment(.center)
+        }
+        .padding(.horizontal, IkeruTheme.Spacing.xl)
+    }
 
     private var deleteSection: some View {
         Button(role: .destructive) {

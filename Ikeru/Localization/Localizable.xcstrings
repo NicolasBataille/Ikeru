@@ -12835,6 +12835,23 @@
           }
         }
       }
+    },
+    "This word is no longer in your dictionary." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This word is no longer in your dictionary."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce mot n'est plus dans ton dictionnaire."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

@@ -49,7 +49,9 @@ struct VocabularyDictionaryView: View {
             VocabularyEntryDetailView(
                 entryId: entry.id,
                 modelContainer: modelContext.container
-            )
+            ) {
+                Task { await viewModel?.loadData() }
+            }
         }
         .sheet(isPresented: $showAddWord) {
             AddVocabularyWordView(modelContainer: modelContext.container) {
