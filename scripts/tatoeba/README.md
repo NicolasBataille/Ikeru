@@ -88,7 +88,7 @@ a beginner will meet again (テーブル, よろしく, どうぞ) from an idiom
 (`きり` 57, `いたずら` 58, `ぐあい` 2).
 
 **Katakana allowlist, not a name blocklist.** Blocklisting Tatoeba's cast is an
-endless game. The funnel instead allowlists ~66 everyday loanwords, hand-picked
+endless game. The funnel instead allowlists 65 everyday loanwords, hand-picked
 from the katakana actually present in the candidate set. Alcohol and tobacco
 (ビール, ワイン, アルコール, タバコ) and coarse register (バカ, ケチ, ナンパ)
 are deliberately left out.
