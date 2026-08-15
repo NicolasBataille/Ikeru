@@ -23,6 +23,90 @@ raisonnement, les mesures, et les décisions.
 
 ---
 
+## 2026-08-15 — GAP-13 : le compteur de révisions dérive maintenant de ReviewLog
+
+Device pass 2026-08-14 avait pris le Tatami en flagrant délit : 53 révisions
+affichées côté app, 74 lignes `ReviewLog` réelles remontées par la sauvegarde
+cloud pour le même profil. Deux compteurs alimentés par des chemins disjoints.
+
+### Fait
+
+- `9297c8d` — `CardRepository.activeProfileReviewCount()` : dérive le
+  « compétence cumulée »/seuil Tatami directement des lignes `ReviewLog` du
+  profil actif (`deletedAt == nil`), au lieu de lire
+  `RPGState.totalReviewsCompleted` (compteur à la main, jamais touché par le
+  drill kana → `KanaDrillViewModel` → `CardRepository.gradeCard`). Rebranché
+  sur `HomeViewModel.advancedThresholdSignals()`, `TatamiEligibilityRow`, et
+  le champ « Lifetime review count » de l'export JSON. Volontairement une
+  lecture pure, pas un compteur mis en cache (le coût mesuré est celui d'une
+  traversée déjà faite ailleurs à chaque tap d'export ; un cache aurait
+  juste réintroduit une nouvelle surface d'invalidation).
+- `f5c3253` — correction des commentaires du premier commit : le champ
+  `RPGState.totalReviewsCompleted` a en réalité **trois** écrivains (session
+  principale, et deux chemins Watch dans `WatchConnectivityManager`), pas un
+  seul comme écrit initialement. Le relecteur (advisor) a chopé l'erreur
+  avant push — corrigé avant de committer, avec la référence exacte
+  (commit f020439) qui a rendu le chemin `processWatchQuizBatch` cohérent
+  avec `ReviewLog`.
+- `RPGState.totalReviewsCompleted` : gardé (pas supprimé — la charge utile de
+  synchro et le snapshot de sauvegarde locale en dépendent), mais documenté
+  comme non-autoritaire pour tout affichage. Toujours écrit par
+  `SessionRPGPersistence` : sert encore de signal (imparfait) pour la
+  relance ponctuelle « premier terme du jour » de `HomeView`, une question
+  plus étroite (« ce profil a-t-il fini une session ») que le compteur de
+  révisions affiché.
+
+### Testé
+
+- `swift test --no-parallel --filter "RPG|Review|Session|Tatami|Mastery"` —
+  159 tests verts, dont 3 nouveaux dans
+  `CardRepositoryTests.swift` (`CardRepository — activeProfileReviewCount
+  (GAP-13)`) : somme multi-surface, exclusion des lignes soft-deleted,
+  scoping multi-profil.
+- Build iOS complet (`xcodebuild … -destination generic/platform=iOS`) :
+  OK.
+- `i18n-lint.py` : OK, aucune nouvelle violation (aucun texte visible
+  modifié).
+- `swiftlint` — passe stricte sur les lignes touchées : OK.
+- **Pas vérifié sur device/simulateur** : les trois sites d'affichage
+  modifiés (`HomeViewModel`, `TatamiEligibilityRow`, `DataExportManager`)
+  n'ont aucun test automatisé côté app (IkeruTests) et le saut 53→74 n'a
+  pas été rejoué en réel — seule la couche Core (IkeruCore) est couverte
+  par des tests unitaires.
+
+### Écarté
+
+- Ajouter l'incrément manquant dans `KanaDrillViewModel` (troisième site
+  d'incrémentation) : rejeté explicitement — recrée la même classe de bug
+  à la prochaine surface qui grade des cartes sans passer par
+  `SessionRPGPersistence`.
+- Repointer `HomeViewModel.totalReviewsCompleted` (utilisé pour la relance
+  « premier jour ») sur le même compteur dérivé que le Tatami : rejeté après
+  avoir tracé son unique usage (`HomeView.evaluateFirstSessionDailyTermPrompt`,
+  transition 0→>0 avant/après une session). Le dériver aurait cassé la
+  relance pour tout apprenant ayant fait du drill kana avant sa première
+  session — cas très probable — puisque le compteur dérivé serait déjà >0
+  en entrant dans cette session.
+- Filtrer `deletedAt` au niveau `Card` (en plus de `ReviewLog`) dans la
+  requête de comptage : laissé à `activeProfileCards()` (site GAP-15) plutôt
+  que dupliqué ici — si GAP-15 fait porter le filtre à ce niveau, mon
+  comptage en hérite automatiquement sans changement de code.
+
+### Ouvert
+
+- `WatchConnectivityManager.processWatchResult` (chemin legacy, message
+  `WatchSessionResult` direct — vieux build Watch) bombe toujours
+  `RPGState.totalReviewsCompleted` sans `ReviewLog` correspondant pour un
+  drill `.kanaQuiz`. Cette inflation ne remonte plus nulle part côté
+  affichage depuis ce fix (plus personne ne lit ce champ pour l'UI), mais
+  le champ lui-même reste incohérent avec l'historique réel côté sync —
+  territoire GAP-08, signalé, pas touché ici.
+- Aucune vérification device pour la correction elle-même (53→74 reproduit
+  uniquement via les tests Core synthétiques, pas rejoué sur l'appareil qui
+  a servi au constat initial).
+
+---
+
 ## 2026-08-15 — Passe device : deux correctifs UI, et un mécanisme entier qui ne se déclenche jamais
 
 Session partie sur GAP-01 (fusion à deux clients). Ce test-là n'a pas eu lieu ;
