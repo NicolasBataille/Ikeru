@@ -35,7 +35,12 @@ struct AttributionView: View {
                 .font(.ikeruBody)
                 .foregroundStyle(.ikeruTextSecondary)
 
-            Text("Vocabulary, kanji readings and grammar notes are original content written for Ikeru. Most example sentences come from the Tatoeba corpus, credited below.")
+            // "kanji readings" was in this sentence until 2026-08-15, and it
+            // was false — they are KANJIDIC-derived (see the note on
+            // `Attribution.all`). This is the line a learner actually READS;
+            // fixing only the source comment would have left the claim on
+            // screen and the correction where nobody looks.
+            Text("Vocabulary and grammar notes are original content written for Ikeru. Kanji readings come from KANJIDIC, and most example sentences from the Tatoeba corpus — both credited below.")
                 .font(.ikeruCaption)
                 .foregroundStyle(.ikeruTextSecondary)
         }
@@ -110,7 +115,7 @@ struct Attribution: Identifiable {
     /// re-running that diff — crediting a source you did not use is its own
     /// kind of false claim.
     ///
-    /// Example sentences are no longer all Ikeru's: 317 of them come from
+    /// Example sentences are no longer all Ikeru's: 239 of the 335 come from
     /// Tatoeba under CC BY 2.0 FR (`scripts/tatoeba/`), which requires
     /// attribution — hence the entry below. Provenance is recorded per row in
     /// the content bundle (`sentences.source`), so the two sets stay
