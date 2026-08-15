@@ -41,6 +41,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 DEFAULT_DB = REPO_ROOT / "Ikeru" / "Resources" / "ContentBundles" / "n5-content.sqlite"
 DEFAULT_OUT = Path(__file__).resolve().parent / "sentences.json"
 TOKENIZER_SOURCE = Path(__file__).resolve().parent / "tokenize-japanese.swift"
+BLOCKLIST_PATH = Path(__file__).resolve().parent / "blocklist.json"
 
 # MARK: - Thresholds (every one of these is justified in README.md)
 
@@ -49,7 +50,10 @@ MAX_CHARS = 18             # above this, sentences pile up clauses and proper no
 MAX_UNKNOWN_TOKENS = 2     # i+1 tolerance, measured against a 206-word bundle
 MIN_UNKNOWN_DOC_FREQ = 150 # an unknown word must still be common corpus-wide
 GLUE_DOC_FREQ_RATIO = 0.002  # hiragana token seen in ≥0.2% of jpn → grammatical glue
-MAX_PER_VOCAB_WORD = 5     # the one production reader ForEach-es this list
+MAX_PER_VOCAB_WORD = 5     # VocabularyExamplesView shows Self.examplesPerWord (2) of these
+                           # via .prefix(2); that view is unreached from navigation today
+                           # (verified 2026-08-15, see its own doc comment) — the cap keeps
+                           # the data sane for whichever reader eventually reaches it
 
 # MARK: - Character classes
 
@@ -100,6 +104,7 @@ REGISTER_PATTERNS = [
     re.compile(r"じゃねぇ|てめぇ|やがっ|くそ|"
                r"ちくしょう|ばかやろ"),  # じゃねぇ, てめぇ, 〜やがっ, くそ…
     re.compile(r"ろ[。！]?$"),          # 〜しろ / 見ろ (plain imperative)
+    re.compile(r"くれ[。！]?$"),        # 〜てくれ (blunt imperative "give/do for me")
 ]
 TOPIC_BLOCKLIST_JA = re.compile(
     r"死|殺|戦争|酒|酔|ビール|ワイン|"
@@ -204,12 +209,42 @@ def load_bundle(db_path: Path) -> tuple[set[str], list[tuple[int, str, str]], se
             (row[0], row[1], row[2] or "")
             for row in conn.execute("SELECT id, word, reading FROM vocabulary ORDER BY id")
         ]
-        existing = {row[0] for row in conn.execute("SELECT japanese FROM sentences")}
+        # "Already bundled" must mean Ikeru's own 96, not a previous run of this
+        # very script: the bundle normally already holds the last generation's
+        # imported rows (`source = 'tatoeba'`) by the time this runs again.
+        # Counting those as "existing" would make stage 6 reject the whole
+        # corpus it is regenerating, rather than only the hand-written ones.
+        # `source` may not exist yet on a bundle fresh out of
+        # generate_content_bundles.py — in that case every row is Ikeru's.
+        columns = {row[1] for row in conn.execute("PRAGMA table_info(sentences)")}
+        if "source" in columns:
+            existing = {
+                row[0] for row in conn.execute(
+                    "SELECT japanese FROM sentences WHERE source IS NULL OR source <> 'tatoeba'"
+                )
+            }
+        else:
+            existing = {row[0] for row in conn.execute("SELECT japanese FROM sentences")}
     finally:
         conn.close()
     if not kanji or not vocab:
         raise BuildError("content bundle has no kanji or no vocabulary — wrong file?")
     return kanji, vocab, existing
+
+
+def load_blocklist(path: Path) -> dict[int, str]:
+    """Per-ja_id rejections that no structural filter can express.
+
+    See ``blocklist.json`` for the reasons. ``sentences.json`` stays fully
+    generated — this is the one hand-maintained input to the funnel, and it
+    exists precisely so a rejection like "this French mistranslates that
+    Japanese" never has to be hand-patched into the generated output instead.
+    """
+    if not path.exists():
+        raise BuildError(f"missing blocklist: {path}")
+    with path.open(encoding="utf-8") as handle:
+        data = json.load(handle)
+    return {int(key): reason for key, reason in data.items() if key != "_comment"}
 
 
 # MARK: - Tokenisation
@@ -263,6 +298,23 @@ def build_known_lexicon(
       歩く's reading あるく made every ある in the corpus look like "to walk".
     - A stem must contain a kanji. Kana stems are too short to be a word: 重い →
       おも matched おもしろい, 長い → なが matched ながら.
+    - A stem must be at least two characters. Any two-character word ending in
+      a VERB_ENDINGS/い character reduces to a *one-kanji* stem, and a single
+      kanji is not a word boundary — it is a radical shared by every compound
+      built on it. 五つ (いつつ, "five [things]") stemmed to bare 五, which then
+      matched every unrelated 五-compound: the sentence for 五時 ("5 o'clock")
+      got filed under 五つ, and 五つ/四つ/二つ ended up **entirely** wrong
+      (verified 2026-08-15 against the pre-fix bundle: 100% of their examples
+      were composed of the wrong word). The same one-kanji-stem bug hit verbs:
+      見る → 見 matched 見せて ("to show"), 出る → 出 matched 出来ます ("to be
+      able to"), 入る → 入 matched 入れましょう ("to make [coffee]"), 聞く → 聞
+      matched 聞こえる ("to be audible"). Requiring `len(stem) >= 2` drops stem
+      matching for every two-character bundle word (聞く, 見る, 出る, 入る, 行く,
+      来る, 買う, …) — their conjugated forms (聞きます, 見ています…) stop
+      matching via the stem rule and can still match via `vocabulary_in`'s
+      token-boundary rule (rule 1), just not via a bare stem prefix. That is a
+      real cost in coverage, accepted because the stem rule was producing wrong
+      answers, not merely missing ones.
     """
     exact: set[str] = set()
     all_stems: set[str] = set()
@@ -274,7 +326,7 @@ def build_known_lexicon(
         stems: set[str] = set()
         if len(word) >= 2 and (word[-1] == "い" or word[-1] in VERB_ENDINGS):
             stem = word[:-1]
-            if KANJI_RE.search(stem):
+            if len(stem) >= 2 and KANJI_RE.search(stem):
                 stems.add(stem)
         by_word[word] = stems
         all_stems |= stems
@@ -459,6 +511,7 @@ def run(exports: Path, db_path: Path, verbose: bool) -> dict:
     fra = load_sentences(exports / "fra_sentences.tsv")
     links = load_links(exports / "jpn-fra_links.tsv", jpn, fra)
     kanji, vocab, existing_japanese = load_bundle(db_path)
+    blocklist = load_blocklist(BLOCKLIST_PATH)
 
     funnel: list[tuple[str, int, int]] = []   # (stage, kept pairs, dropped pairs)
 
@@ -468,6 +521,13 @@ def run(exports: Path, db_path: Path, verbose: bool) -> dict:
             print(f"  {stage:<28}{kept:>7} kept  {dropped:>7} dropped", file=sys.stderr)
 
     record("0. jpn↔fra pairs", len(links), 0)
+
+    # -- Stage 0b: hand-reviewed rejections that no structural filter below can
+    # express (an ungrammatical sentence, a mistranslated pairing). See
+    # blocklist.json for the reason behind each ja_id.
+    blocked = sum(1 for ja_id, _ in links if ja_id in blocklist)
+    links = [(ja_id, fr_id) for ja_id, fr_id in links if ja_id not in blocklist]
+    record("0b. blocklist", len(links), blocked)
 
     # -- Stage 1..5: per-sentence Japanese filters, counted separately.
     reasons = collections.Counter()
@@ -585,11 +645,12 @@ def run(exports: Path, db_path: Path, verbose: bool) -> dict:
 
     # -- Stage 10: file each sentence under one word, rarest word first.
     #
-    # The schema allows a single `vocabulary_word` per row and the production
-    # reader is "examples for word W", so the assignment decides which words
-    # actually gain examples. Serving the scarcest words first turns the same
-    # pool into far wider coverage than "longest match wins" — and the cap
-    # keeps any one word from flooding the view that ForEach-es this list.
+    # The schema allows a single `vocabulary_word` per row and the query shape
+    # is "examples for word W" (`ContentRepository.fetchSentences`), so the
+    # assignment decides which words actually gain examples. Serving the
+    # scarcest words first turns the same pool into far wider coverage than
+    # "longest match wins" — and the cap keeps any one word from flooding
+    # whichever reader eventually renders this list (see MAX_PER_VOCAB_WORD).
     candidates: dict[str, list[dict]] = collections.defaultdict(list)
     for row in distinct:
         for word in row["words"]:
@@ -627,6 +688,26 @@ def run(exports: Path, db_path: Path, verbose: bool) -> dict:
         for row in distinct if row["ja_id"] in assigned
     ]
     record("8. cap per vocabulary word", len(selected), len(distinct) - len(selected))
+
+    # -- Stage 9: drop rows that repeat another sentence's French under the
+    # same vocabulary word. Stage 7 dedupes the Japanese and its token bag,
+    # but never the French gloss — Tatoeba links several distinct Japanese
+    # sentences to the same translation often enough that, once filed under
+    # one word, they read as the same example card copy-pasted three times
+    # (新聞 had 「日本語の新聞はありますか。」 glossed identically thrice). This
+    # runs after the cap, so a dropped duplicate's slot is not backfilled —
+    # a smaller, distinct-per-card corpus, not a bigger one.
+    by_word_french: dict[tuple[str, str], list[dict]] = collections.defaultdict(list)
+    for row in selected:
+        by_word_french[(row["vocabulary_word"], row["french"])].append(row)
+    deduped_selected: list[dict] = []
+    dropped = 0
+    for rows in by_word_french.values():
+        rows.sort(key=quality)
+        deduped_selected.append(rows[0])
+        dropped += len(rows) - 1
+    record("9. french dedup per word", len(deduped_selected), dropped)
+    selected = deduped_selected
 
     selected.sort(key=lambda row: row["ja_id"])
 
