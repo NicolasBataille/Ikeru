@@ -109,7 +109,16 @@ GitHub Pages dès le merge sur `master`. `supabase/config.toml` fige la config
 (`verify_jwt = true`) pour que le redéploiement reproduise l'existant.
 
 Vérifier après déploiement : sans en-tête `Authorization` → 401, jeton bidon →
-401, `GET` → 405, appel authentifié → 200 avec le compte de lignes par table.
+401, `GET` sans jeton → **401** (mesuré le 2026-08-15 ; cette ligne annonçait
+405 — la passerelle rejette sur l'authentification **avant** de router la
+méthode, donc on n'atteint jamais le 405), appel authentifié → 200 avec le
+compte de lignes par table.
+
+Depuis le 2026-08-15 ce n'est plus à faire à la main :
+`.github/workflows/supabase-deploy-function.yml` redéploie sur `master` dès que
+`supabase/functions/**` bouge, puis rejoue l'assertion du 401. **Il ne fait rien
+tant que le secret `SUPABASE_ACCESS_TOKEN` n'existe pas** — il émet un
+avertissement et sort en 0 plutôt que de rougir à chaque push.
 
 ### Mise en pause du palier gratuit
 
