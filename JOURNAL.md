@@ -23,6 +23,98 @@ raisonnement, les mesures, et les décisions.
 
 ---
 
+## 2026-08-15 — Passe device : deux correctifs UI, et un mécanisme entier qui ne se déclenche jamais
+
+Session partie sur GAP-01 (fusion à deux clients). Ce test-là n'a pas eu lieu ;
+la session a trouvé autre chose, de plus grave, en essayant de le préparer.
+
+### Fait
+
+- `593af5b` — **« Export data » ouvre la vraie feuille de partage.** Le code
+  présentait une feuille dont le seul contenu était un `ShareLink` nu : un
+  petit lien bleu échoué sur un fond gris plein écran, à deux feuilles de
+  profondeur pour sauvegarder un fichier. `ShareLink` est une **vue qu'on
+  tape**, pas une commande — inutilisable quand l'URL n'existe qu'après un
+  export asynchrone, d'où la feuille bidon qui ne servait qu'à héberger un
+  bouton. Remplacé par un `UIActivityViewController` enveloppé, qui lui est
+  impératif. Son `completionWithItemsHandler` pilote le nettoyage du fichier
+  temporaire, y compris quand l'apprenant annule ou balaie la feuille — ce que
+  `.sheet(onDismiss:)` seul ne couvrait pas.
+- `ba6427f` — **Suppression de vocabulaire : deux défauts.** (1) Deux
+  écrivains pour un invariant : la liste rend un tableau en cache que seul
+  `VocabularyDictionaryViewModel` écrit, mais la fiche détail appelait
+  `repo.deleteEntry(by:)` directement, dans son dos — le mot restait à l'écran
+  jusqu'à ce qu'on quitte l'onglet. (2) `if let entry, hasLoaded` n'avait
+  **aucun `else`** : taper la ligne fantôme rouvrait la fiche sur un id mort et
+  rendait un écran vide. Corrigés par une closure de complétion (même forme que
+  `AddVocabularyWordView`) et un état « ce mot n'est plus dans ton dictionnaire ».
+- Throttle : `handleCloudSyncToggleChange` passe désormais
+  `ignoringThrottle: true` — voir GAP-16.
+- `docs/known-gaps.md` : **GAP-15** (tombstones jamais produits) et **GAP-16**.
+
+### Testé
+
+- Sur iPhone 14 Pro réel, build installé en mise à jour : feuille de partage
+  vérifiée par l'utilisateur (« c'est good »).
+- État serveur lu en SQL à chaque étape, pas déduit.
+- **Pas vérifié** : la résurrection de bout en bout des 15 kana. Le test exigeait
+  qu'une synchro tourne, et c'est précisément ce que GAP-16 empêchait. La
+  résurrection reste établie par lecture du code
+  (`SyncPullActor+StandaloneTables.swift:71-88` réinsère sans condition toute
+  ligne serveur absente en local), pas par observation. À rejouer.
+- **Pas vérifié** : le correctif de suppression de vocabulaire sur device —
+  installé, retour utilisateur non recueilli.
+
+### La trouvaille
+
+En cherchant comment tester la moitié « suppression » de GAP-01, constat que
+l'app **ne sait pas produire de tombstone** : `deletedAt` n'est jamais écrit
+que par le pull. Tout le reste du mécanisme existe — sérialisation des 8
+tables, règles de fusion, application au pull, tests contre le `FakeSyncServer`.
+Un mécanisme complet dont le premier maillon n'est branché nulle part.
+
+Les tests ne pouvaient pas le voir : **ils fournissent eux-mêmes les tombstones
+en entrée**. C'est la même famille que le bug de clé primaire de la veille —
+un défaut qui vit dans l'écart entre le faux serveur et la réalité, pas dans le
+code testé. Deux fois en deux jours ; ce n'est plus une coïncidence, c'est une
+limite de la façon dont ce lot a été validé.
+
+**Sans preuve chiffrée, et c'est la deuxième leçon de la session.** J'ai
+d'abord cru tenir un exhibit : 17 lignes serveur contre 2 sur l'iPhone. Faux.
+Les 15 « manquantes » sont des entrées kana avec `isInDictionary = false`, et
+`VocabularyRepository.allEntries()` filtre sur `isInDictionary == true`
+(`:248`) — elles sont présentes des deux côtés, simplement masquées de la
+liste. **J'avais compté ce qu'une vue affichait, pas des lignes.** Le constat
+tient toujours, mais par lecture du code seulement.
+
+### Écarté
+
+- **Connexion Apple sur simulateur** — abandonnée après échec. Le vrai
+  diagnostic est venu des logs (`ASAuthorizationError` code 1000), pas du
+  message affiché (« Vérifiez votre connexion », trompeur ici) :
+  `MobileMeAccounts` n'existe pas, le simulateur n'a aucun compte Apple. La
+  connexion iCloud sur simulateur est capricieuse, on n'a pas insisté.
+- **Console `devicectl --console`** — ne capture pas `os_log`, seulement
+  stdout/stderr. Zéro ligne. Ne pas y retourner pour lire des logs d'app sur
+  device.
+- **Le plan « désinstaller/réinstaller »** — écarté au profit de la bascule de
+  l'interrupteur, qui remet aussi les curseurs à zéro sans risque d'effacement
+  local. Bon choix sur le principe ; c'est GAP-16 qui l'a rendu inopérant.
+- **Purge kana volontaire** — hypothèse pour expliquer les 15 entrées
+  manquantes. Réfutée : aucune purge de vocabulaire dans le code. La cause de
+  leur disparition locale reste **inconnue**.
+
+### Ouvert
+
+- **Une démonstration de bout en bout de GAP-15** manque encore : supprimer un
+  vrai mot du dictionnaire, réinitialiser le curseur, le voir revenir. Le
+  téléphone est justement dans cet état armé — la bascule de l'interrupteur a
+  remis les curseurs à zéro et la synchro throttlée ne l'a jamais consommé.
+- **GAP-15**, le chantier tombstones : 8 types d'entités, tous les chemins de
+  lecture à filtrer, une purge différée. Pas une rustine.
+- **GAP-01** reste ouvert : la fusion à deux clients n'a toujours jamais tourné.
+  Le blocage est la connexion Apple sur un second appareil.
+
 ## 2026-08-14/15 — Comptes Apple : de la clé primaire au bouton qui ne réagissait pas
 
 ### Fait

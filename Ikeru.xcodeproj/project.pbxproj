@@ -90,6 +90,7 @@
 		53CA5BB295FDB9CBF8535BE8 /* IkeruCore in Frameworks */ = {isa = PBXBuildFile; productRef = F1FCE9F34C02B01EDB2461B7 /* IkeruCore */; };
 		553E0E281A012BF7C569A6D1 /* IkeruCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24AB1AB1DDE2D5EE0D52DA0C /* IkeruCard.swift */; };
 		56C0FAA75C6A9BDAD06FC62E /* ToastView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCAD9A4831D219D1C4FC0037 /* ToastView.swift */; };
+		A1D5701A0000000000000006 /* ShareSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1D5701A0000000000000005 /* ShareSheet.swift */; };
 		588F16A9AD56FA5DE5DDB103 /* ImmersiveSessionViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E415FB60B6790A37E7C422E7 /* ImmersiveSessionViewTests.swift */; };
 		58BECF1D8B55499034C3F5AA /* IkeruButtonStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 631CDAB692FF8F02FB5E77FD /* IkeruButtonStyle.swift */; };
 		590241F0210BFF8E0D27403B /* IkeruTabBar+Rail.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01AF19EF339E6EF510BEBC0A /* IkeruTabBar+Rail.swift */; };
@@ -462,6 +463,7 @@
 		C74A6E53252537F2C1769743 /* PagedLearningStack.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PagedLearningStack.swift; sourceTree = "<group>"; };
 		C8AB076B8A600D63B3107B9F /* PitchAccentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PitchAccentView.swift; sourceTree = "<group>"; };
 		CCAD9A4831D219D1C4FC0037 /* ToastView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToastView.swift; sourceTree = "<group>"; };
+		A1D5701A0000000000000005 /* ShareSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareSheet.swift; sourceTree = "<group>"; };
 		D08B33E031522EEA0E701C84 /* ConversationViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationViewModel.swift; sourceTree = "<group>"; };
 		D08D4F4B23347E79AF13DD74 /* MountainGlyph.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MountainGlyph.swift; sourceTree = "<group>"; };
 		D11E7E1000000000A001A001 /* DailyTermViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DailyTermViewModel.swift; path = Ikeru/ViewModels/DailyTermViewModel.swift; sourceTree = SOURCE_ROOT; };
@@ -744,6 +746,7 @@
 			children = (
 				B170DFDB39696AD5FC63DB5B /* Layout */,
 				E919265431000718FFB5D4FB /* Theme */,
+				A1D5701A0000000000000005 /* ShareSheet.swift */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -1518,6 +1521,7 @@
 				E7B9345F359AC06220E9D59D /* TestFixtures.swift in Sources */,
 				09A4F7F1DA62FBF986A78C5F /* ToastManager.swift in Sources */,
 				56C0FAA75C6A9BDAD06FC62E /* ToastView.swift in Sources */,
+				A1D5701A0000000000000006 /* ShareSheet.swift in Sources */,
 				5EC80A870F68AC6CFA91C0BF /* VocabularyDetailSheet.swift in Sources */,
 				E24AC6D0ED18D4CFC60A620A /* VocabularyDictionaryView.swift in Sources */,
 				678EBB6CB1EC67C38071F0BC /* VocabularyDictionaryViewModel.swift in Sources */,
