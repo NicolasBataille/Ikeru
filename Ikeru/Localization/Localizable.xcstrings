@@ -12890,6 +12890,24 @@
           }
         }
       }
+    },
+    "Read the licence" : {
+      "comment" : "AttributionView — link to each source's licence text",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Read the licence"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lire la licence"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

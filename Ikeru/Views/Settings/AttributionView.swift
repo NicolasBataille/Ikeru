@@ -74,6 +74,26 @@ struct AttributionView: View {
             Text(item.description)
                 .font(.ikeruCaption)
                 .foregroundStyle(.ikeruTextSecondary)
+
+            // The EDRDG licence does not merely permit a link, it asks for one:
+            // "provide copies of the documentation and licence files … Where the
+            // application packaging does not provide for the inclusion of such
+            // files (e.g. with iPhone applications), it is sufficient to provide
+            // links". We are exactly that case, so this row is a compliance
+            // requirement for KANJIDIC, not decoration. It is offered for the
+            // other sources too — the same courtesy costs nothing.
+            if let licenceURL = item.licenceURL {
+                Link(destination: licenceURL) {
+                    HStack(spacing: 4) {
+                        Text("Read the licence")
+                        Image(systemName: "arrow.up.right")
+                            .font(.system(size: 10, weight: .semibold))
+                    }
+                    .font(.ikeruCaption)
+                    .foregroundStyle(Color.ikeruPrimaryAccent)
+                }
+                .padding(.top, 2)
+            }
         }
         .tatamiRoom(.standard)
     }
@@ -86,6 +106,11 @@ struct Attribution: Identifiable {
     let name: String
     let author: String
     let license: String
+    /// Where the licence text itself can be read. Optional so a source without
+    /// a canonical online licence page does not have to invent one — but the
+    /// EDRDG licence explicitly asks for this link on apps that cannot bundle
+    /// the documentation files, which is every iOS app.
+    let licenceURL: URL?
     /// Typed as `LocalizedStringKey` (not `String`) so the literals below
     /// resolve against the string catalog when rendered via `Text(_:)`
     /// instead of falling into the verbatim initializer — see CLAUDE.md.
@@ -128,6 +153,7 @@ struct Attribution: Identifiable {
             name: "KANJIDIC",
             author: "Electronic Dictionary Research and Development Group",
             license: "CC BY-SA 4.0",
+            licenceURL: URL(string: "https://www.edrdg.org/edrdg/licence.html"),
             description: "Kanji readings and meanings in the content bundle are derived from the KANJIDIC database, maintained by the EDRDG at Monash University."
         ),
         Attribution(
@@ -135,6 +161,7 @@ struct Attribution: Identifiable {
             name: "KanjiVG",
             author: "Ulrich Apel",
             license: "CC BY-SA 3.0",
+            licenceURL: URL(string: "https://creativecommons.org/licenses/by-sa/3.0/"),
             description: "Stroke order data for kanji characters. Provides the vector paths used in stroke order animations and tracing exercises."
         ),
         Attribution(
@@ -142,6 +169,7 @@ struct Attribution: Identifiable {
             name: "Noto Serif JP",
             author: "Google Fonts",
             license: "SIL OFL 1.1",
+            licenceURL: URL(string: "https://openfontlicense.org"),
             description: "Japanese serif typeface bundled with the app, used to render kanji and Japanese text on every device."
         ),
         Attribution(
@@ -149,6 +177,7 @@ struct Attribution: Identifiable {
             name: "Tatoeba",
             author: "Tatoeba contributors — tatoeba.org",
             license: "CC BY 2.0 FR",
+            licenceURL: URL(string: "https://creativecommons.org/licenses/by/2.0/fr/"),
             description: "Japanese example sentences reproduced unchanged from Tatoeba; French lightly normalized (spacing, apostrophes). Its audio is licensed separately, per contributor, unused."
         ),
         Attribution(
@@ -156,6 +185,7 @@ struct Attribution: Identifiable {
             name: "VOICEVOX：四国めたん",
             author: "VOICEVOX / Hiroshiba",
             license: "VOICEVOX Terms (credit required)",
+            licenceURL: URL(string: "https://voicevox.hiroshiba.jp/term/"),
             description: "Pronunciation audio for kana, vocabulary, and example sentences is pre-generated with the free VOICEVOX speech engine (voice: 四国めたん) and bundled for offline playback — no setup required."
         ),
     ]
