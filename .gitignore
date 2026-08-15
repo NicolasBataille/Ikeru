@@ -70,3 +70,40 @@ wiki-vault/
 # Python bytecode (scripts/)
 __pycache__/
 *.pyc
+
+# ---------------------------------------------------------------------------
+# Internal working documents — kept on disk, out of the public repo
+# ---------------------------------------------------------------------------
+# This repository is public as a portfolio. What belongs here is the app and
+# what someone needs to build it; planning notes, progress tracking, review
+# transcripts and design screenshots are working artifacts, not source.
+#
+# These files still exist locally and are still written to — they are simply
+# not published. Untracked 2026-08-15; `docs/` alone was 111 MB, and `_bmad/`
+# (646 files of agent tooling unrelated to the app) had been committed by
+# accident.
+#
+# ⚠️ Untracking does NOT unpublish: every one of these remains in the git
+# history and can be recovered with `git log`. Removing them from history
+# would mean a rewrite — new SHAs, a force-push to a public repo, and every
+# SHA reference in JOURNAL.md and the merged PRs broken. Deliberately not done.
+#
+# docs/privacy.html is the exception that must STAY tracked: GitHub Pages
+# serves it, and it is the privacy-policy URL declared to the App Store.
+
+_bmad/
+app-review-notes/
+app-review-notes-2/
+docs/screenshots/
+docs/design-specs/
+docs/design-review/
+docs/reviews/
+docs/known-gaps.md
+docs/E2E_TEST_PLAN.md
+docs/market-research.json
+docs/AUTH_SETUP.md
+docs/CI-SETUP.md
+JOURNAL.md
+TODO.md
+CREW.md
+CLAUDE.md
