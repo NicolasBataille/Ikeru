@@ -45,7 +45,11 @@ dev        →  PR  →  master   (CI + TestFlight deploy)
   > `NWBrowser` Bonjour via l'argument par défaut de `LocalGPUProvider()`.
   > Corrigé (voir GAP-10). Ne pas réintroduire d'allowlist `--filter` : la CI
   > utilise désormais une **denylist**, pour que toute suite nouvelle tourne par
-  > défaut au lieu d'être exclue en silence. ⚠️ `LegacyStoreMigrationTests` (le round-trip V1→V2) doit tourner dans **son propre process** : `swift test --no-parallel --filter "LegacyStoreMigration"` séparément — ouvrir un container avec les snapshots V1 figés empoisonne le cache global entité↔classe de CoreData pour `RPGState`, et tout fetch V2 ultérieur dans le même process peut matérialiser la mauvaise classe (« Failed to cast model … »). Ni `.serialized` ni `--no-parallel` ne suffisent (l'empoisonnement survit à la fin de la suite). Le filtre CI principal ne matche volontairement pas ce nom.
+  > défaut au lieu d'être exclue en silence.
+- ⚠️ **Les trois suites de migration doivent tourner chacune dans son propre process** : `LegacyStoreMigration` (round-trip V1→V2), `StoreMigrationV2V3`, `StoreMigrationV3V4`. Ouvrir un container avec les snapshots V1 figés empoisonne le cache global entité↔classe de CoreData pour `RPGState`, et tout fetch ultérieur dans le même process **peut** matérialiser la mauvaise classe (« Failed to cast model … »). Ni `.serialized` ni `--no-parallel` ne suffisent : l'empoisonnement survit à la fin de la suite. La denylist de la CI les exclut du run principal et leur donne un step chacune.
+  > « Peut », pas « va ». Un run complet qui les avale sans planter prouve que
+  > ça n'a pas tiré, pas que ça ne peut pas — ne pas les réintégrer sur la foi
+  > d'un run vert.
 - `xcodebuild build -project Ikeru.xcodeproj -scheme Ikeru -destination "generic/platform=iOS" -skipPackagePluginValidation CODE_SIGNING_ALLOWED=NO` pour valider la compile iOS sans signing.
 - Schemes : `Ikeru` (app), `IkeruWatch` (watchOS), `IkeruWidget` (widget extension).
 - watchOS est restreint : pas de `Vision` ni `AVAudioUnitTimePitch` — wrap les imports/usages dans `#if canImport(Vision)` ou `#if !os(watchOS)`.
@@ -99,15 +103,25 @@ corps vide et garde le jeton dans le Trousseau de l'appareil.
   donc supprimer l'utilisateur auth efface tout, y compris une table ajoutée
   plus tard.
 
-### Fonction Edge : à redéployer à la main
+### Fonction Edge : redéployée par la CI, **si le secret existe**
 
-`supabase/functions/delete-account` **n'est pas redéployée automatiquement** —
-pas de step CI (il faudrait un secret `SUPABASE_ACCESS_TOKEN`). Après toute
-modification du fichier, ou si le projet Supabase est réinitialisé :
+`.github/workflows/supabase-deploy-function.yml` redéploie
+`supabase/functions/delete-account` sur `master` dès que `supabase/functions/**`
+ou `config.toml` bouge, puis rejoue l'assertion du 401.
+
+⚠️ **Il ne fait rien tant que le secret `SUPABASE_ACCESS_TOKEN` n'existe pas.**
+Il émet un avertissement et sort en 0 plutôt que de rougir à chaque push — un
+workflow rouge en permanence apprend à ignorer le rouge. Tant que le secret est
+absent, c'est donc toujours à faire à la main, et le repli est :
 
 ```bash
 supabase functions deploy delete-account --project-ref aiayzlarixlogcoyswna
 ```
+
+(Un access token Supabase est **au niveau du compte**, pas du projet : il porte
+sur toute l'organisation. C'est le seul mécanisme du CLI pour déployer une
+fonction — révocable à tout moment, le job repasse alors en avertissement sans
+rien casser.)
 
 Ne pas l'oublier : `docs/privacy.html` **promet** la suppression des données
 serveur. Si la fonction est absente, le bouton renvoie 404 pendant que la
@@ -120,12 +134,6 @@ Vérifier après déploiement : sans en-tête `Authorization` → 401, jeton bid
 405 — la passerelle rejette sur l'authentification **avant** de router la
 méthode, donc on n'atteint jamais le 405), appel authentifié → 200 avec le
 compte de lignes par table.
-
-Depuis le 2026-08-15 ce n'est plus à faire à la main :
-`.github/workflows/supabase-deploy-function.yml` redéploie sur `master` dès que
-`supabase/functions/**` bouge, puis rejoue l'assertion du 401. **Il ne fait rien
-tant que le secret `SUPABASE_ACCESS_TOKEN` n'existe pas** — il émet un
-avertissement et sort en 0 plutôt que de rougir à chaque push.
 
 ### Mise en pause du palier gratuit
 
