@@ -254,6 +254,7 @@ jobs:
             -only-testing:IkeruTests/KanaDrillViewModelTests \
             -only-testing:IkeruTests/SessionDecouplingTests \
             -only-testing:IkeruTests/WatchQuizEligibilityTests \
+            -only-testing:IkeruTests/WatchQuizBridgeTests \
             -only-testing:IkeruTests/NewCardPresentationTests \
             -only-testing:IkeruTests/KanaSessionEndToEndTests \
             -only-testing:IkeruTests/MasteryBookSnapshotStoreTests \

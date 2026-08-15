@@ -39,22 +39,94 @@ public struct WatchQuizReviewBatch: Codable, Sendable {
     /// One entry per question answered in the nano-session, in answer order.
     public let events: [Event]
 
-    /// Total XP this nano-session is worth. Applied once as an aggregate
-    /// bump to `RPGState.xp` — a Watch-specific bonus mechanic, unchanged
-    /// from before this chantier. NOT awarded per-event via `gradeCard`:
-    /// the iPhone kana drill (`KanaDrillViewModel`) awards zero XP for
-    /// grading a card at all — XP there is a main-session-only mechanic
-    /// (see `SessionRPGPersistence`) — so per-event XP here would create a
-    /// *new* inconsistency, not fix the existing one. Documented as an open
-    /// question in the chantier notes rather than silently resolved either
-    /// way.
+    /// Which learner profile was active on the iPhone when the Watch STARTED
+    /// this nano-session — the batch's provenance stamp (GAP-17 defect 2).
+    ///
+    /// Everything the iPhone does with a batch resolves through the
+    /// *currently* active profile (`CardRepository.activeProfileCards()`,
+    /// itself keyed off `UserProfile.activeProfileIDDefaultsKey`), so without
+    /// this stamp a nano-session answered under profile A and delivered after
+    /// a profile switch mutates **B's** FSRS state and fabricates `ReviewLog`
+    /// rows for reviews B never did. The overlap is the likely case, not the
+    /// edge case: the chosen-kana-group selection
+    /// (`StudySetStore.chosenGroups`) is a single global `UserDefaults` key
+    /// shared by every profile, so two profiles are usually quizzed on the
+    /// same characters.
+    ///
+    /// Optional on purpose, and it must stay optional: a Watch build that
+    /// predates this field sends a dictionary without the key, and a
+    /// non-optional property would fail to decode it — turning "old Watch
+    /// app not yet updated" into silent data loss. `nil` therefore means
+    /// "unstamped, provenance unknown", and the iPhone resolves it by
+    /// counting profiles rather than guessing: exactly one live profile on
+    /// the device makes mis-attribution impossible, so the batch is graded;
+    /// with several profiles it cannot be attributed to any of them and is
+    /// dropped (see `WatchQuizBatchAttribution`).
+    ///
+    /// Carried to the Watch on the same `applicationContext` dictionary as
+    /// the RPG state and the eligible-kana set, under
+    /// `activeProfileContextKey`.
+    public let profileId: UUID?
+
+    /// XP this nano-session claims to be worth, as computed **by the Watch**
+    /// from its own tally (`WatchQuizViewModel`: one `xpPerCorrectAnswer`
+    /// per correct answer).
+    ///
+    /// **Not authoritative, and deliberately not applied as sent.** The
+    /// iPhone re-derives the amount from the answers it actually graded and
+    /// treats this value only as a ceiling (`min`), because the two counts
+    /// can legitimately differ: an answer can reach the phone and never be
+    /// graded — no matching card, a kana group deselected between the quiz
+    /// and the delivery, a card that never cleared `reps > 0`. Crediting the
+    /// claim as-is awarded a full nano-session's XP for zero graded reviews
+    /// and zero `ReviewLog` rows (GAP-17 defect 3); the ceiling additionally
+    /// guarantees a Watch build can never be talked into inflating XP beyond
+    /// what it claimed for the whole session.
+    ///
+    /// Still sent on the wire, and still required by `Codable`, because an
+    /// **older iPhone build** paired with a newer Watch decodes this field
+    /// and would reject a batch without it. XP remains an aggregate,
+    /// Watch-specific bonus rather than a per-`gradeCard` award: the iPhone
+    /// kana drill awards no XP for grading a card at all (XP is a
+    /// main-session mechanic, see `SessionRPGPersistence`), so per-event XP
+    /// here would create a *new* inconsistency instead of fixing one.
     public let xpEarned: Int
 
-    public init(sessionId: UUID = UUID(), events: [Event], xpEarned: Int) {
+    /// XP awarded per correct answer in a Watch nano-session. Lives here,
+    /// not in `WatchQuizViewModel`, so the Watch's claim and the iPhone's
+    /// re-derivation are computed by the same rule instead of two constants
+    /// that can drift apart.
+    public static let xpPerCorrectAnswer = 5
+
+    /// XP for `correctAnswers` correct answers, by the single shared rule.
+    public static func xp(forCorrectAnswers correctAnswers: Int) -> Int {
+        max(0, correctAnswers) * xpPerCorrectAnswer
+    }
+
+    /// Key the iPhone merges the active profile id (a UUID string) under, in
+    /// the SAME `applicationContext` dictionary that already carries
+    /// `WatchSyncPayload` and `WatchEligibleKanaPayload` — application
+    /// context keeps only the latest dictionary a session sent, so a second
+    /// `updateApplicationContext` call would replace the others rather than
+    /// add to them (see `WatchEligibleKanaPayload`'s doc for the full
+    /// reasoning).
+    public static let activeProfileContextKey = "watchActiveProfileId"
+
+    /// Reads the active profile id out of a received applicationContext.
+    /// `nil` when the key is absent (an iPhone build predating GAP-17, or a
+    /// context never received at all) — the Watch then sends unstamped
+    /// batches, which the iPhone handles as described on `profileId`.
+    public static func activeProfileId(fromContext dict: [String: Any]) -> UUID? {
+        guard let raw = dict[activeProfileContextKey] as? String else { return nil }
+        return UUID(uuidString: raw)
+    }
+
+    public init(sessionId: UUID = UUID(), events: [Event], xpEarned: Int, profileId: UUID? = nil) {
         self.kind = Self.messageKind
         self.sessionId = sessionId
         self.events = events
         self.xpEarned = xpEarned
+        self.profileId = profileId
     }
 
     /// A single graded kana quiz question.
@@ -105,6 +177,15 @@ public struct WatchQuizReviewBatch: Codable, Sendable {
     // MARK: - Dictionary Conversion
 
     /// Converts to a dictionary suitable for `WCSession.transferUserInfo`.
+    ///
+    /// `transferUserInfo` accepts property-list values only, and `NSNull`
+    /// isn't one — passing one is a hard exception, not a soft failure. The
+    /// synthesized `Codable` encoder already omits a nil `profileId`
+    /// (optionals encode via `encodeIfPresent`), so no null should ever
+    /// reach the dictionary; the filter below makes that a guarantee rather
+    /// than a property of the compiler's synthesis, since the payload now
+    /// carries an optional field. `WatchQuizReviewBatchWireTests` pins both
+    /// halves.
     public func toDictionary() -> [String: Any] {
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
@@ -112,7 +193,7 @@ public struct WatchQuizReviewBatch: Codable, Sendable {
               let dict = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
             return [:]
         }
-        return dict
+        return dict.filter { !($0.value is NSNull) }
     }
 
     /// Parses from a WCSession userInfo dictionary. Returns `nil` for any

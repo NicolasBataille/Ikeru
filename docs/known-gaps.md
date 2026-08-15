@@ -211,7 +211,57 @@ relèvent du même argument.
 ### GAP-17 — Le pont Watch → iPhone perd des nano-sessions et peut noter le mauvais profil
 **Sévérité : haute (perte de données + corruption inter-profils).** Trois
 défauts dans du code **déjà livré sur `dev`**, trouvés en relecture
-adversariale le 2026-08-15. Aucun n'est corrigé.
+adversariale le 2026-08-15. **Les trois sont corrigés** (PR `fix/gap-17-watch-bridge`) ;
+l'entrée est conservée parce que le raisonnement et ce qui reste non vérifié
+comptent plus que le diff.
+
+**Ce qui a été livré.**
+- Un **carnet de réception durable** (`Ikeru/Services/WatchQuizBatchInbox.swift`) :
+  le lot brut est écrit en `UserDefaults` dans le préfixe **synchrone** de la
+  réception, avant tout `await` ; la notation reprend ensuite, avec un point de
+  reprise (`nextEventIndex`) réécrit **après chaque réponse**. Une mort du
+  processus coûte au pire la note en vol, plus la nano-session entière.
+  Rejeu au lancement depuis `WatchConnectivityManager.activate`, et à chaque
+  `.ikeruActiveProfileDidChange`.
+- Un **`profileId` optionnel** dans `WatchQuizReviewBatch`, capturé au
+  `startSession()` de la montre et transporté par l'`applicationContext`
+  existant. Lot d'un autre profil → **mis en file**, pas noté, pas jeté.
+- Les trois champs crédités (`totalQuestions`, `correctCount`, `xpEarned`)
+  dérivent maintenant du même décompte de ce qui a **réellement** été noté.
+
+**Le dilemme tranché (défaut 1).** Si `transferUserInfo` redélivrait un lot déjà
+remis au délégué, le correctif minimal (déplacer le marquage) suffirait ; s'il ne
+redélivre pas, seul le lot persisté sauve la mise. La doc Apple répond :
+`transferUserInfo(_:)` — *« Dictionaries sent using this method are queued on the
+other device and delivered in the order in which they were sent »* — la file vit
+sur l'appareil **récepteur** et se vide à la livraison ; `didReceiveUserInfo` est
+appelé *« when it successfully receives a data dictionary »*. C'est la
+**livraison** qui est acquittée, jamais le **traitement**, et rien ne redonne un
+dictionnaire déjà remis. Donc : persister à la réception. Le correctif reste
+juste sous l'hypothèse inverse — une redélivrance retombe sur la déduplication
+par `sessionId`, qui n'a pas bougé.
+
+**Ce qui n'est pas vérifié.** Aucun test sur montre réelle : le Simulateur ne
+transporte pas `transferUserInfo` (Apple le documente), donc toute la chaîne
+`sendQuizReviewBatch → didReceiveUserInfo` reste couverte par lecture de code et
+par des tests qui injectent le lot côté iPhone. La mort du processus est rejouée
+**au niveau de l'état persisté** (`WatchQuizBridgeTests`), pas en tuant un vrai
+processus iOS.
+
+**Ce qui reste ouvert, hors périmètre de ce correctif :**
+- `StudySetStore.chosenGroups` (`KanaPoolViewModel.swift:415`) reste une clé
+  `UserDefaults` **globale**, partagée par tous les profils. Ce n'est plus la
+  cause d'une corruption inter-profils depuis le `profileId`, mais ça reste une
+  préférence par profil rangée hors profil.
+- Le handler `didReceiveApplicationContext` de l'iPhone écrit
+  `state.totalReviewsCompleted = winner.totalReviews` — **dormant** : aucun
+  `updateApplicationContext` n'existe dans `IkeruWatch/`, la montre n'envoie
+  jamais de contexte. À supprimer ou à câbler, pas à laisser en l'état.
+- Un lot mis en file pour un profil qui ne redevient jamais actif finit par être
+  évincé (file plafonnée à 20, FIFO) ; un lot dont le profil a été supprimé est
+  jeté au premier drain. Perte bornée, assumée.
+
+Le constat d'origine, conservé :
 
 **1. CRITIQUE — une nano-session entière peut disparaître définitivement.**
 `Ikeru/Services/WatchConnectivityManager.swift:186` appelle

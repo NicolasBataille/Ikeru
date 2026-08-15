@@ -30,15 +30,22 @@ final class WatchConnectivityManager: NSObject, ObservableObject {
     private static let watchQuizExerciseType = "kana.quiz"
     private static let watchSurface = "watch"
 
-    /// Bounded, persisted set of `WatchQuizReviewBatch.sessionId` values
-    /// already graded — `transferUserInfo` delivery is guaranteed but not
-    /// documented as exactly-once, and a redelivered batch (e.g. a relaunch
-    /// racing delivery) must not grade the same answers twice. Persisted
-    /// (not just in-memory) because the redelivery this guards against can
-    /// happen across a relaunch. Capped so it can't grow unbounded over the
-    /// life of an install.
-    private static let processedBatchIdsKey = "WatchConnectivityManager.processedBatchIds"
-    private static let processedBatchIdsCap = 200
+    /// Durable queue of received-but-not-yet-graded Watch nano-sessions, and
+    /// the bounded set of session ids already graded (idempotency). See
+    /// `WatchQuizBatchInbox` for why reception must persist the batch itself
+    /// rather than just a "processed" flag.
+    private let inbox = WatchQuizBatchInbox()
+
+    /// Serializes inbox drains. Every drain is chained behind the previous
+    /// one so two triggers (a delivery landing while the launch replay is
+    /// still running, say) can't grade the same queued batch concurrently —
+    /// the `await`s inside a drain are exactly the interleaving points that
+    /// would otherwise allow it.
+    private var drainTask: Task<Void, Never>?
+
+    /// Whether the profile-change observer is already registered, so a
+    /// second `activate(modelContainer:)` doesn't stack a duplicate.
+    private var isObservingProfileChanges = false
 
     override private init() {
         super.init()
@@ -50,6 +57,16 @@ final class WatchConnectivityManager: NSObject, ObservableObject {
     /// - Parameter container: The SwiftData model container for persisting received data.
     func activate(modelContainer: ModelContainer) {
         self.modelContainer = modelContainer
+        // Launch-time replay: anything the inbox still holds is a
+        // nano-session that was received but never finished grading — most
+        // likely because the process died mid-loop last time. This is the
+        // production call site that makes the durable inbox mean something;
+        // without it, persisting at reception would just be a write nobody
+        // reads. Called BEFORE the `WCSession.isSupported()` guard on
+        // purpose: a queued batch must still be replayed on a device where
+        // WatchConnectivity is unavailable or the session fails to activate.
+        observeProfileChanges()
+        scheduleWatchQuizDrain()
         guard WCSession.isSupported() else {
             Logger.sync.info("WatchConnectivity not supported on this device")
             return
@@ -61,6 +78,24 @@ final class WatchConnectivityManager: NSObject, ObservableObject {
         Logger.sync.info("WatchConnectivity session activated")
     }
 
+    /// Re-drains the inbox when the learner switches profile: a batch parked
+    /// as `deferUntilProfileActive` becomes gradable the moment its own
+    /// profile is active again, and waiting for the next cold launch to
+    /// notice would strand real reviews for days.
+    private func observeProfileChanges() {
+        guard !isObservingProfileChanges else { return }
+        isObservingProfileChanges = true
+        NotificationCenter.default.addObserver(
+            forName: .ikeruActiveProfileDidChange,
+            object: nil,
+            queue: .main
+        ) { _ in
+            Task { @MainActor in
+                WatchConnectivityManager.shared.scheduleWatchQuizDrain()
+            }
+        }
+    }
+
     // MARK: - Send State to Watch
 
     /// Sends the current RPG state to the Watch via applicationContext.
@@ -70,6 +105,11 @@ final class WatchConnectivityManager: NSObject, ObservableObject {
 
         let context = container.mainContext
         guard let state = ActiveProfileResolver.fetchActiveRPGState(in: context) else { return }
+        // Told to the Watch so it can stamp the nano-sessions it sends back
+        // with the profile that answered them (GAP-17 defect 2). Read here,
+        // on the same context and at the same moment as the RPG state and
+        // the eligible-kana set, so all three describe one profile.
+        let activeProfileId = ActiveProfileResolver.fetchActiveProfile(in: context)?.id
 
         let cardRepo = CardRepository(modelContainer: container)
         Task { @MainActor in
@@ -89,6 +129,9 @@ final class WatchConnectivityManager: NSObject, ObservableObject {
             let eligibleCharacters = await eligibleKanaFronts(cardRepository: cardRepo)
             var contextDict = payload.toDictionary()
             contextDict[WatchEligibleKanaPayload.contextKey] = Array(eligibleCharacters)
+            if let activeProfileId {
+                contextDict[WatchQuizReviewBatch.activeProfileContextKey] = activeProfileId.uuidString
+            }
 
             do {
                 try session.updateApplicationContext(contextDict)
@@ -160,30 +203,95 @@ final class WatchConnectivityManager: NSObject, ObservableObject {
         sendStateToWatch()
     }
 
-    /// Processes a batch of individually-graded kana quiz answers from the
-    /// Watch: grades each one through `CardRepository.gradeCard` — the same
-    /// path the iPhone kana quiz uses — so it produces a real `ReviewLog`
-    /// (FSRS scheduling, confusion-pair `answeredValue`, provenance) instead
-    /// of only moving XP counters. Idempotent: a batch whose `sessionId` was
-    /// already processed is skipped entirely.
+    /// Takes delivery of a batch of individually-graded kana quiz answers
+    /// from the Watch, by writing it to the durable inbox — and nothing
+    /// else. Grading happens in `drainWatchQuizInbox`, which the caller
+    /// schedules right after.
+    ///
+    /// **This split is the fix, not an organisational nicety.** Reception is
+    /// a synchronous, suspension-free prefix, so the batch is durable before
+    /// the first `await`; grading is a long chain of suspension points, each
+    /// of which the process can die at. The previous revision instead marked
+    /// the batch "processed" up front and then graded, so a death mid-loop
+    /// left the nano-session marked done with zero `ReviewLog` rows and
+    /// nothing anywhere to replay it from — the comment there reasoned about
+    /// exactly this danger but only guarded the `modelContainer` check, a
+    /// fraction of the real window. See `WatchQuizBatchInbox` for why no
+    /// redelivery would have saved it.
+    ///
+    /// Idempotent: a `sessionId` already graded, or already queued, is
+    /// refused here (see `WatchQuizBatchInbox.admit`).
     ///
     /// Call path this exercises, for a reviewer to re-trace without a build:
     /// `WatchQuizViewModel.selectAnswer` → `WatchSessionManager
     /// .sendQuizReviewBatch` → `transferUserInfo` → `WatchConnectivityManager
-    /// .session(_:didReceiveUserInfo:)` → `processWatchQuizBatch` →
+    /// .session(_:didReceiveUserInfo:)` → `receiveWatchQuizBatch` (durable
+    /// queue) → `scheduleWatchQuizDrain` → `gradePendingBatch` →
     /// `KanaCardRepository.allKanaCards()` (character → `CardDTO` lookup) →
     /// `CardRepository.gradeCard(surface: "watch")` → `ReviewLog`.
-    private func processWatchQuizBatch(_ batch: WatchQuizReviewBatch) async {
-        guard !isBatchAlreadyProcessed(batch.sessionId) else {
-            Logger.sync.info("Ignoring already-processed Watch quiz batch \(batch.sessionId)")
+    func receiveWatchQuizBatch(_ batch: WatchQuizReviewBatch) {
+        guard inbox.admit(batch) else {
+            Logger.sync.info("Ignoring already-received Watch quiz batch \(batch.sessionId)")
             return
         }
-        // Marked processed only once we know we can actually attempt
-        // grading (`modelContainer` present) — marking it earlier and then
-        // bailing on a nil container would drop the batch forever instead
-        // of leaving it eligible for a later retry/redelivery.
+        Logger.sync.info("Queued Watch quiz batch \(batch.sessionId) with \(batch.events.count) answers")
+    }
+
+    /// Grades every batch the inbox holds, oldest first, and empties it as it
+    /// goes. Chained behind any drain already running (see `drainTask`).
+    ///
+    /// A nil `modelContainer` returns without touching the queue: the
+    /// batches stay pending and the next trigger — at the very least the
+    /// `activate(modelContainer:)` of the next launch — retries them. That
+    /// is the same reasoning the previous revision applied to its
+    /// "processed" marker, now extended to the whole grading window instead
+    /// of only the container check.
+    func scheduleWatchQuizDrain() {
+        let previous = drainTask
+        drainTask = Task { @MainActor [weak self] in
+            await previous?.value
+            await self?.drainWatchQuizInbox()
+        }
+    }
+
+    private func drainWatchQuizInbox() async {
         guard let container = modelContainer else { return }
-        markBatchProcessed(batch.sessionId)
+        let queued = inbox.pending()
+        guard !queued.isEmpty else { return }
+        Logger.sync.info("Draining \(queued.count) pending Watch quiz batch(es)")
+        for entry in queued {
+            await gradePendingBatch(entry, container: container)
+        }
+    }
+
+    /// Grades one queued nano-session, resuming at `entry.nextEventIndex`.
+    private func gradePendingBatch(_ entry: PendingWatchQuizBatch, container: ModelContainer) async {
+        let batch = entry.batch
+        let context = container.mainContext
+        let liveProfileIds = Set(Self.liveProfiles(in: context).map(\.id))
+        let attribution = WatchQuizBatchInbox.attribution(
+            batchProfileId: batch.profileId,
+            activeProfileId: ActiveProfileResolver.fetchActiveProfile(in: context)?.id,
+            liveProfileIds: liveProfileIds
+        )
+        switch attribution {
+        case .grade:
+            break
+        case .deferUntilProfileActive:
+            // Kept, not graded: see `WatchQuizBatchAttribution`. Re-tried on
+            // the next profile switch and on every launch.
+            Logger.sync.info(
+                "Watch quiz batch \(batch.sessionId) belongs to another profile — kept queued until it is active"
+            )
+            return
+        case .discardUnattributable, .discardOrphaned:
+            Logger.sync.error(
+                "Discarding Watch quiz batch \(batch.sessionId): \(attribution.rawValue)"
+            )
+            inbox.complete(batch.sessionId)
+            return
+        }
+
         let cardRepo = CardRepository(modelContainer: container)
         let kanaRepo = KanaCardRepository(cardRepository: cardRepo)
 
@@ -203,112 +311,81 @@ final class WatchConnectivityManager: NSObject, ObservableObject {
         // not get that answer graded just because it made it into a batch.
         let eligibleFronts = await eligibleKanaFronts(cardRepository: cardRepo)
 
-        var gradedEvents: [WatchQuizReviewBatch.Event] = []
-        for event in batch.events {
-            guard let card = cardByFront[event.targetCharacter] else {
-                // No matching kana card on this device — e.g. the learner
-                // hasn't chosen that kana group yet, or purged an unstarted
-                // one. Skip rather than crash or grade the wrong card; the
-                // event is logged, not silently dropped.
-                Logger.sync.warning(
-                    "Watch quiz answer for \(event.targetCharacter) has no matching kana card — skipped"
+        let grader = WatchQuizBatchGrader(
+            inbox: inbox,
+            cardIdByFront: cardByFront.mapValues(\.id),
+            eligibleFronts: eligibleFronts,
+            gradeAnswer: { cardId, event in
+                // Same grade-mapping thresholds as the iPhone quiz
+                // (`DrillUtilities.mapQuizResultToGrade`), so a wrist answer
+                // and a phone answer with the same outcome/latency get the
+                // same FSRS grade.
+                let grade = mapQuizResultToGrade(correct: event.isCorrect, responseTimeMs: event.responseTimeMs)
+                await cardRepo.gradeCard(
+                    cardId: cardId,
+                    grade: grade,
+                    responseTimeMs: event.responseTimeMs,
+                    now: event.answeredAt,
+                    answeredValue: event.answeredCharacter,
+                    exerciseType: Self.watchQuizExerciseType,
+                    surface: Self.watchSurface
                 )
-                continue
             }
-
-            guard Self.isEventEligible(event, eligibleFronts: eligibleFronts) else {
-                // The card exists, but is outside the learner's current
-                // group selection or was never graded before (`reps == 0`)
-                // — grading it here would either quiz on an un-chosen group
-                // or reintroduce the first-grade noise the P2 presentation
-                // phase exists to remove. See `eligibleKanaFronts`.
-                Logger.sync.warning(
-                    "Watch quiz answer for \(event.targetCharacter) is not eligible for grading — skipped"
-                )
-                continue
-            }
-
-            // Same grade-mapping thresholds as the iPhone quiz
-            // (`DrillUtilities.mapQuizResultToGrade`), so a wrist answer and
-            // a phone answer with the same outcome/latency get the same
-            // FSRS grade.
-            let grade = mapQuizResultToGrade(correct: event.isCorrect, responseTimeMs: event.responseTimeMs)
-
-            await cardRepo.gradeCard(
-                cardId: card.id,
-                grade: grade,
-                responseTimeMs: event.responseTimeMs,
-                now: event.answeredAt,
-                answeredValue: event.answeredCharacter,
-                exerciseType: Self.watchQuizExerciseType,
-                surface: Self.watchSurface
-            )
-            gradedEvents.append(event)
-        }
-
-        let gradedCount = gradedEvents.count
-        Logger.sync.info(
-            "Graded \(gradedCount)/\(batch.events.count) Watch quiz answers via gradeCard (surface=watch)"
         )
+        let tally = await grader.grade(entry)
+
+        Logger.sync.info(
+            "Graded \(tally.gradedCount)/\(batch.events.count) Watch quiz answers via gradeCard (surface=watch)"
+        )
+
+        // Removed from the queue and marked processed BEFORE the aggregate
+        // bump, not after. Two non-atomic stores are involved (the inbox in
+        // `UserDefaults`, the RPG counters in SwiftData) and one of the two
+        // orders has to be chosen: dying in this window then costs one
+        // nano-session's XP bump, whereas the reverse order would re-apply
+        // XP and `totalReviewsCompleted` on replay for reviews that happened
+        // once. Losing a bonus is a smaller lie than inventing progression,
+        // and the `ReviewLog` rows — the part the scheduler and every
+        // ReviewLog-derived count read — are already durable at this point
+        // either way.
+        inbox.complete(batch.sessionId)
 
         // Aggregate XP / review-count bump — same legacy mechanic
         // `WatchSessionResult` already drove, now fed from the graded
         // batch's own tallies instead of a separate message.
         //
-        // Both `correctCount` and `totalQuestions` (below) are derived from
-        // `gradedEvents`, NOT `batch.events`: an event can be present in the
-        // batch but never graded — no matching card, outside the chosen
-        // groups, or never-graded-before (`eligibleFronts` guard above) —
-        // and counting those would inflate `totalReviewsCompleted` /
-        // `correctCount` with reviews that produced no `ReviewLog`, the same
-        // "counting reviews that did not happen" this change removes for the
-        // pitch drill. Deriving both from the same `gradedEvents` list also
-        // keeps them consistent with each other (a correctCount that could
-        // exceed totalQuestions was a latent risk before this: the watch
-        // could send more "correct" events than cards actually got graded).
-        let correctCount = gradedEvents.filter(\.isCorrect).count
+        // All THREE fields are derived from what was actually graded, not
+        // from what the Watch sent: an event can be present in the batch and
+        // never graded — no matching card, outside the chosen groups, or
+        // never-graded-before (`eligibleFronts` guard above). Counting those
+        // would inflate `totalReviewsCompleted` / `correctCount` with
+        // reviews that produced no `ReviewLog`, the same "counting reviews
+        // that did not happen" this path removes for the pitch drill.
+        //
+        // `xpEarned` was the field that still escaped that rule (GAP-17
+        // defect 3): deselecting a kana group between the quiz and the
+        // delivery produced zero graded answers, zero `ReviewLog` rows —
+        // and a full nano-session's XP anyway. All three now come from the
+        // same tally (`WatchQuizBatchTally`).
         processWatchResult(
             WatchSessionResult(
-                correctCount: correctCount,
-                totalQuestions: gradedCount,
+                correctCount: tally.gradedCorrectCount,
+                totalQuestions: tally.gradedCount,
                 drillType: .kanaQuiz,
                 completedAt: batch.events.last?.answeredAt ?? Date(),
-                xpEarned: batch.xpEarned
+                xpEarned: tally.xpEarned
             )
         )
     }
 
-    // MARK: - Eligibility guard
-
-    /// Whether `event` may be graded, given the `eligibleFronts` computed
-    /// FRESH from current phone-side state (see `eligibleKanaFronts`).
-    /// Extracted as a pure, `nonisolated` static function — no
-    /// `ModelContainer`/`CardRepository` involved — specifically so the
-    /// phone-side depth guard ("refuse to grade a card the Watch sent that
-    /// isn't eligible, even though the Watch itself thought it was") is
-    /// testable without a simulator.
-    nonisolated static func isEventEligible(_ event: WatchQuizReviewBatch.Event, eligibleFronts: Set<String>) -> Bool {
-        eligibleFronts.contains(event.targetCharacter)
+    /// Every profile that hasn't been tombstoned. Used to decide whether an
+    /// unstamped or foreign-stamped batch can be attributed at all — see
+    /// `WatchQuizBatchInbox.attribution`.
+    private static func liveProfiles(in context: ModelContext) -> [UserProfile] {
+        let descriptor = FetchDescriptor<UserProfile>(predicate: #Predicate { $0.deletedAt == nil })
+        return (try? context.fetch(descriptor)) ?? []
     }
 
-    // MARK: - Idempotency
-
-    private func isBatchAlreadyProcessed(_ sessionId: UUID) -> Bool {
-        processedBatchIds().contains(sessionId.uuidString)
-    }
-
-    private func markBatchProcessed(_ sessionId: UUID) {
-        var ids = processedBatchIds()
-        ids.append(sessionId.uuidString)
-        if ids.count > Self.processedBatchIdsCap {
-            ids.removeFirst(ids.count - Self.processedBatchIdsCap)
-        }
-        UserDefaults.standard.set(ids, forKey: Self.processedBatchIdsKey)
-    }
-
-    private func processedBatchIds() -> [String] {
-        UserDefaults.standard.stringArray(forKey: Self.processedBatchIdsKey) ?? []
-    }
 }
 
 // MARK: - WCSessionDelegate
@@ -363,7 +440,15 @@ extension WatchConnectivityManager: WCSessionDelegate {
     ) {
         if let batch = WatchQuizReviewBatch.fromDictionary(userInfo) {
             Task { @MainActor in
-                await processWatchQuizBatch(batch)
+                // `receiveWatchQuizBatch` is the SYNCHRONOUS prefix of this
+                // hop: it persists the batch before the first suspension
+                // point, so the nano-session survives a process death at any
+                // `await` inside the drain that follows. It also makes two
+                // interleaved delivery `Task`s for the same `sessionId`
+                // collapse into one grading pass, since the second one finds
+                // the first's entry already queued.
+                receiveWatchQuizBatch(batch)
+                scheduleWatchQuizDrain()
             }
             return
         }
