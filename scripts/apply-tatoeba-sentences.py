@@ -18,15 +18,34 @@ two become impossible to tell apart, and the attribution in
 ``sentences.english`` is left NULL on imported rows. The English half of a
 Tatoeba pair is a *different* link that would have to be joined, deduplicated
 and quality-filtered on its own, and nothing in the app reads
-``sentences.english`` today — the only production reader of this table is
-``ContentDatabaseActor.fetchSentences``, which selects ``japanese`` alone. A
-column with no reader does not justify a second import.
+``sentences.english`` today. The query shape that reads this table at all is
+``ContentRepository.fetchSentences`` (private, selects ``japanese`` alone),
+called from ``vocabularyForKanji``, ``sentencesForVocabulary`` and
+``vocabularyByLevel`` — but as of 2026-08-15 no reachable navigation path
+renders what those return: ``VocabularyExamplesView``/``KanjiStudyView`` are
+unreached from any navigation path (see that view's own doc comment), and the
+``vocabularyByLevel`` callers (``SessionComposer``, ``LeechInterventionService``)
+never look at ``exampleSentences`` — ``VocabularyItemMapper`` drops it when
+mapping. A column with no reader does not justify a second import.
 
-The script is idempotent: every run deletes the rows it previously wrote
-(``source = 'tatoeba'``) and re-inserts them with deterministic ids, so a
-second run leaves the bundle byte-identical. It fails loudly — a duplicate, a
-vocabulary word that matches no row, or an id collision aborts the transaction
-rather than leaving the bundle half-written.
+The script is idempotent in content: every run deletes the rows it previously
+wrote (``source = 'tatoeba'``) and re-inserts them with deterministic ids, so
+a second run's ``.dump`` is identical to the first's — measured, not assumed
+(see ``JOURNAL.md``). The on-disk *bytes* are a different question: without a
+VACUUM, SQLite reallocates pages differently after every DELETE+INSERT, which
+matters because this file is a binary committed to git — a no-op re-run would
+otherwise produce a several-hundred-KB diff indistinguishable from a real
+content change. The script VACUUMs after every non-dry-run commit to close
+that gap. It closes it to 3 bytes, not to zero: even after VACUUM, two runs
+over identical content still differ in SQLite's own bookkeeping — the file
+change counter, schema cookie and "version-valid-for" fields in the file
+header, which the engine bumps on every write it performs, VACUUM included.
+Getting from there to a literal zero-byte diff would mean patching those
+fields by hand after the fact, which trades a real guarantee (content is
+identical, verified by ``.dump``) for a cosmetic one. It fails loudly — a
+duplicate (including one that only clashes with the bundle's non-Tatoeba
+rows), a vocabulary word that matches no row, or an id collision aborts the
+transaction rather than leaving the bundle half-written.
 
 Run order when regenerating the bundle from scratch:
 
@@ -100,7 +119,23 @@ def load_payload(path: Path) -> list[dict]:
     return rows
 
 
-def validate(rows: list[dict], known_words: set[str], source_name: str) -> None:
+def validate(
+    conn: sqlite3.Connection, rows: list[dict], known_words: set[str], source_name: str
+) -> None:
+    # The in-JSON check below only catches a duplicate *within this file* —
+    # build-corpus.py already guarantees that. It says nothing about a
+    # sentence injected straight into sentences.json that happens to repeat
+    # one of the bundle's own hand-written rows. That must be checked against
+    # the bundle itself: rows this script is about to DELETE (source =
+    # 'tatoeba') don't count as a clash — they are what this run replaces —
+    # but everything else does, including rows not yet stamped with a source
+    # at all (a bundle fresh out of generate_content_bundles.py).
+    existing_japanese = {
+        row[0] for row in conn.execute(
+            "SELECT japanese FROM sentences WHERE source IS NULL OR source <> ?",
+            (SOURCE_TATOEBA,),
+        )
+    }
     seen_japanese: set[str] = set()
     seen_ja_ids: set[int] = set()
     for row in rows:
@@ -110,6 +145,11 @@ def validate(rows: list[dict], known_words: set[str], source_name: str) -> None:
         japanese = row["japanese"]
         if japanese in seen_japanese:
             raise ApplyError(f"{source_name}: duplicate japanese sentence {japanese!r}")
+        if japanese in existing_japanese:
+            raise ApplyError(
+                f"{source_name}: japanese sentence {japanese!r} already exists in the "
+                f"bundle outside the imported Tatoeba rows — it would be inserted twice"
+            )
         seen_japanese.add(japanese)
         ja_id = row["tatoeba_ja_id"]
         if not isinstance(ja_id, int) or not isinstance(row["tatoeba_fr_id"], int):
@@ -242,7 +282,7 @@ def main(argv: list[str]) -> int:
         ]
 
         known_words = {row[0] for row in conn.execute("SELECT word FROM vocabulary")}
-        validate(rows, known_words, args.source.name)
+        validate(conn, rows, known_words, args.source.name)
 
         deleted, inserted = apply(conn, rows)
         verify(conn, expected=len(rows))
@@ -255,8 +295,22 @@ def main(argv: list[str]) -> int:
             conn.execute("ROLLBACK")
         else:
             conn.execute("COMMIT")
+            # VACUUM cannot run inside a transaction (SQLite rejects it), so it
+            # has to happen here, after COMMIT — and it has to happen at all,
+            # because this file is a binary committed to git. Without it, a
+            # no-op re-run (same corpus, same bundle) still reallocates pages
+            # on DELETE+INSERT and produces a several-hundred-KB diff that is
+            # indistinguishable from a real content change.
+            conn.execute("VACUUM")
     except (ApplyError, sqlite3.Error, json.JSONDecodeError) as error:
-        conn.execute("ROLLBACK")
+        # COMMIT may already have succeeded before VACUUM raised, in which
+        # case there is no open transaction left to roll back and this itself
+        # would raise "cannot rollback - no transaction is active" — masking
+        # the real error. Swallow only that.
+        try:
+            conn.execute("ROLLBACK")
+        except sqlite3.OperationalError:
+            pass
         print(f"error: {error}", file=sys.stderr)
         return 1
     finally:
