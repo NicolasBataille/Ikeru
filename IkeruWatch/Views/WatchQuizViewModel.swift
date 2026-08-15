@@ -75,6 +75,15 @@ final class WatchQuizViewModel {
     /// replayed `transferUserInfo` delivery so it's never graded twice.
     private var sessionId = UUID()
 
+    /// The iPhone profile that was active when this nano-session STARTED,
+    /// captured at `startSession()` rather than read at send time: the
+    /// learner can switch profiles on the phone mid-quiz, and the answers
+    /// belong to whoever was active when the questions were drawn (the pool
+    /// itself came from that profile's eligible-kana set). Sent as
+    /// `WatchQuizReviewBatch.profileId` — see that field for what the iPhone
+    /// does when it's `nil`.
+    private var sessionProfileId: UUID?
+
     /// When the current question was shown — start of the response-time
     /// clock for `WatchQuizReviewBatch.Event.responseTimeMs`.
     private var questionShownAt = Date()
@@ -104,6 +113,7 @@ final class WatchQuizViewModel {
         questionResults = []
         events = []
         sessionId = UUID()
+        sessionProfileId = WatchSessionManager.shared.activeProfileId
         lastAnswerResult = nil
         lastAnsweredId = nil
 
@@ -182,7 +192,11 @@ final class WatchQuizViewModel {
                 let batch = WatchQuizReviewBatch(
                     sessionId: sessionId,
                     events: events,
-                    xpEarned: correctCount * 5
+                    // Same rule the iPhone re-derives the credited amount
+                    // with — see `WatchQuizReviewBatch.xpEarned`, which is a
+                    // ceiling there, not the credited value.
+                    xpEarned: WatchQuizReviewBatch.xp(forCorrectAnswers: correctCount),
+                    profileId: sessionProfileId
                 )
                 WatchSessionManager.shared.sendQuizReviewBatch(batch)
             }

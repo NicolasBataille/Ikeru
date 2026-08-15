@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		00C45E3806F4F41DF942E46A /* WatchConnectivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6DF718512A3E4A694744447 /* WatchConnectivityManager.swift */; };
+		A17F00170001B2C3D4E50001 /* WatchQuizBatchInbox.swift in Sources */ = {isa = PBXBuildFile; fileRef = A17F00170001B2C3D4E50002 /* WatchQuizBatchInbox.swift */; };
 		A95406495EFFFCC424EB90C6 /* IkeruPlatformTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5E4550783515A4C00B4F420 /* IkeruPlatformTheme.swift */; };
 		C53BD84DE873400AE9DEA38E /* IkeruPlatformTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5E4550783515A4C00B4F420 /* IkeruPlatformTheme.swift */; };
 		28B37E098311948228BF4E93 /* WatchQuizReviewBatch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CE0935138803421F534B3E2 /* WatchQuizReviewBatch.swift */; };
@@ -45,6 +46,7 @@
 		1F267C7F06B849E143C9F872 /* ProfileViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF20C958BD43ABB601BE2B23 /* ProfileViewModelTests.swift */; };
 		66025CCA5210488E965338E1 /* OnboardingRestoreDecisionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 095E73A3C30741AA92AE2679 /* OnboardingRestoreDecisionTests.swift */; };
 		5E0BF588C3EB3D42BC303616 /* WatchQuizEligibilityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E796541FBC07BFA7A916626 /* WatchQuizEligibilityTests.swift */; };
+		A17F00170001B2C3D4E50003 /* WatchQuizBridgeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A17F00170001B2C3D4E50004 /* WatchQuizBridgeTests.swift */; };
 		205D80613A068A92C245B81A /* DisplayModeToggleRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF87E7A18DDA1BE176F0B8CE /* DisplayModeToggleRow.swift */; };
 		4858E3B046D54B20A40347B8 /* TatamiEligibilityRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1C5552DA1C2410D97DEDAB8 /* TatamiEligibilityRow.swift */; };
 		24B1C98084294C7E17812BF1 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8CF84F59DAF36277A923CF3 /* SettingsView.swift */; };
@@ -427,6 +429,7 @@
 		AF20C958BD43ABB601BE2B23 /* ProfileViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileViewModelTests.swift; sourceTree = "<group>"; };
 		095E73A3C30741AA92AE2679 /* OnboardingRestoreDecisionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingRestoreDecisionTests.swift; sourceTree = "<group>"; };
 		6E796541FBC07BFA7A916626 /* WatchQuizEligibilityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchQuizEligibilityTests.swift; sourceTree = "<group>"; };
+		A17F00170001B2C3D4E50004 /* WatchQuizBridgeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchQuizBridgeTests.swift; sourceTree = "<group>"; };
 		AF5EE898AF9C8846B82F6918 /* DensityAware.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DensityAware.swift; sourceTree = "<group>"; };
 		AF87E7A18DDA1BE176F0B8CE /* DisplayModeToggleRow.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DisplayModeToggleRow.swift; sourceTree = "<group>"; };
 		A1C5552DA1C2410D97DEDAB8 /* TatamiEligibilityRow.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TatamiEligibilityRow.swift; sourceTree = "<group>"; };
@@ -460,6 +463,7 @@
 		C4EB5EA8CFACFEDD72045EB3 /* FontExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FontExtensions.swift; sourceTree = "<group>"; };
 		C682D70A5C43E544AC5BF0B3 /* ChatBubbleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatBubbleView.swift; sourceTree = "<group>"; };
 		C6DF718512A3E4A694744447 /* WatchConnectivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchConnectivityManager.swift; sourceTree = "<group>"; };
+		A17F00170001B2C3D4E50002 /* WatchQuizBatchInbox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchQuizBatchInbox.swift; sourceTree = "<group>"; };
 		C74A6E53252537F2C1769743 /* PagedLearningStack.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PagedLearningStack.swift; sourceTree = "<group>"; };
 		C8AB076B8A600D63B3107B9F /* PitchAccentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PitchAccentView.swift; sourceTree = "<group>"; };
 		CCAD9A4831D219D1C4FC0037 /* ToastView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToastView.swift; sourceTree = "<group>"; };
@@ -815,6 +819,7 @@
 				AF20C958BD43ABB601BE2B23 /* ProfileViewModelTests.swift */,
 				095E73A3C30741AA92AE2679 /* OnboardingRestoreDecisionTests.swift */,
 				6E796541FBC07BFA7A916626 /* WatchQuizEligibilityTests.swift */,
+				A17F00170001B2C3D4E50004 /* WatchQuizBridgeTests.swift */,
 				6554CA8A229ACD1B1EAF84B9 /* RigJobsViewModelTests.swift */,
 				DB8329720757C93EEDE0EF41 /* SessionIntegrationTests.swift */,
 				8908562DCE1E539972918E03 /* SessionViewModelTests.swift */,
@@ -924,6 +929,7 @@
 				67E6BCA0F6A747DEBD77A73B /* StoreRecovery.swift */,
 				CB179E7EDE1B414288B9D925 /* StoreRecoveryNotice.swift */,
 				C6DF718512A3E4A694744447 /* WatchConnectivityManager.swift */,
+				A17F00170001B2C3D4E50002 /* WatchQuizBatchInbox.swift */,
 				3E47B92BCD0BF85A100174BB /* WidgetSnapshotRefresher.swift */,
 			);
 			path = Services;
@@ -1358,6 +1364,7 @@
 				1F267C7F06B849E143C9F872 /* ProfileViewModelTests.swift in Sources */,
 				66025CCA5210488E965338E1 /* OnboardingRestoreDecisionTests.swift in Sources */,
 				5E0BF588C3EB3D42BC303616 /* WatchQuizEligibilityTests.swift in Sources */,
+				A17F00170001B2C3D4E50003 /* WatchQuizBridgeTests.swift in Sources */,
 				EEC2FC135D0B9B16BB75E3CA /* RigJobsViewModelTests.swift in Sources */,
 				7F007D67BD6304542673C64D /* SessionIntegrationTests.swift in Sources */,
 				96B7AA4DDFCB52A92BA246C3 /* SessionViewModelTests.swift in Sources */,
@@ -1536,6 +1543,7 @@
 				334374E0095383949D5C6B13 /* VocabularyRecallView.swift in Sources */,
 				96318E447330C86C4B8FF75B /* VocabularyStudyViewModel.swift in Sources */,
 				00C45E3806F4F41DF942E46A /* WatchConnectivityManager.swift in Sources */,
+				A17F00170001B2C3D4E50001 /* WatchQuizBatchInbox.swift in Sources */,
 				28B37E098311948228BF4E93 /* WatchQuizReviewBatch.swift in Sources */,
 				2AA536BAF9CC5DBFF182C177 /* WatchEligibleKanaPayload.swift in Sources */,
 				A00ED71AC785B8E955FF9A08 /* WordDefinitionView.swift in Sources */,
