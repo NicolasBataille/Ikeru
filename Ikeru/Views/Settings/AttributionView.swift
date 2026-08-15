@@ -35,7 +35,7 @@ struct AttributionView: View {
                 .font(.ikeruBody)
                 .foregroundStyle(.ikeruTextSecondary)
 
-            Text("Vocabulary, kanji readings, grammar notes, and example sentences are original content written for Ikeru.")
+            Text("Vocabulary, kanji readings and grammar notes are original content written for Ikeru. Most example sentences come from the Tatoeba corpus, credited below.")
                 .font(.ikeruCaption)
                 .foregroundStyle(.ikeruTextSecondary)
         }
@@ -88,11 +88,16 @@ struct Attribution: Identifiable {
 
     /// Resources actually used by the shipped content bundle and app.
     ///
-    /// Kept intentionally short: kanji readings/meanings/radicals,
-    /// vocabulary, and example sentences are hand-authored for Ikeru
-    /// (see `scripts/generate-content-bundle.swift`) rather than imported
-    /// from JMdict, KANJIDIC/RADKFILE, or the Tatoeba corpus, so those are
-    /// not credited here.
+    /// Kanji readings/meanings/radicals and vocabulary are still hand-authored
+    /// for Ikeru (see `scripts/generate-content-bundle.swift`) rather than
+    /// imported from JMdict or KANJIDIC/RADKFILE, so those are not credited.
+    ///
+    /// Example sentences are no longer all Ikeru's: 317 of them come from
+    /// Tatoeba under CC BY 2.0 FR (`scripts/tatoeba/`), which requires
+    /// attribution — hence the entry below. Provenance is recorded per row in
+    /// the content bundle (`sentences.source`), so the two sets stay
+    /// distinguishable. Tatoeba *audio* is licensed separately, per
+    /// contributor, and none of it is bundled.
     @MainActor
     static let all: [Attribution] = [
         Attribution(
@@ -108,6 +113,13 @@ struct Attribution: Identifiable {
             author: "Google Fonts",
             license: "SIL OFL 1.1",
             description: "Japanese serif typeface bundled with the app, used to render kanji and Japanese text on every device."
+        ),
+        Attribution(
+            id: "tatoeba",
+            name: "Tatoeba",
+            author: "Tatoeba contributors — tatoeba.org",
+            license: "CC BY 2.0 FR",
+            description: "Most Japanese example sentences and their French translations come from the Tatoeba collaborative corpus, reproduced unchanged. No Tatoeba audio is used: it is licensed separately, contributor by contributor."
         ),
         Attribution(
             id: "voicevox",

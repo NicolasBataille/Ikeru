@@ -11507,24 +11507,6 @@
         }
       }
     },
-    "Vocabulary, kanji readings, grammar notes, and example sentences are original content written for Ikeru." : {
-      "comment" : "AttributionView header note clarifying content provenance",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Vocabulary, kanji readings, grammar notes, and example sentences are original content written for Ikeru."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Le vocabulaire, les lectures de kanji, les notes de grammaire et les phrases d'exemple sont un contenu original rédigé pour Ikeru."
-          }
-        }
-      }
-    },
     "Stroke order data for kanji characters. Provides the vector paths used in stroke order animations and tracing exercises." : {
       "comment" : "AttributionView — KanjiVG entry description",
       "extractionState" : "manual",
@@ -12849,6 +12831,42 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ce mot n'est plus dans ton dictionnaire."
+          }
+        }
+      }
+    },
+    "Vocabulary, kanji readings and grammar notes are original content written for Ikeru. Most example sentences come from the Tatoeba corpus, credited below." : {
+      "comment" : "AttributionView header note clarifying content provenance",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vocabulary, kanji readings and grammar notes are original content written for Ikeru. Most example sentences come from the Tatoeba corpus, credited below."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le vocabulaire, les lectures de kanji et les notes de grammaire sont un contenu original rédigé pour Ikeru. La plupart des phrases d'exemple proviennent du corpus Tatoeba, crédité ci-dessous."
+          }
+        }
+      }
+    },
+    "Most Japanese example sentences and their French translations come from the Tatoeba collaborative corpus, reproduced unchanged. No Tatoeba audio is used: it is licensed separately, contributor by contributor." : {
+      "comment" : "AttributionView — Tatoeba entry description",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Most Japanese example sentences and their French translations come from the Tatoeba collaborative corpus, reproduced unchanged. No Tatoeba audio is used: it is licensed separately, contributor by contributor."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La plupart des phrases d'exemple japonaises et leurs traductions françaises proviennent du corpus collaboratif Tatoeba, reproduites telles quelles. Aucun audio Tatoeba n'est utilisé : il est sous licence distincte, contributeur par contributeur."
           }
         }
       }

@@ -11,6 +11,15 @@ struct VocabularyExamplesView: View {
     /// Maximum items shown before "Show more" is required.
     private static let initialDisplayLimit = 5
 
+    /// Example sentences shown per word on this summary card.
+    ///
+    /// The content bundle now carries up to six examples per word (Tatoeba
+    /// import, `scripts/tatoeba/`), where it used to carry one. This view is a
+    /// glance at the words behind a kanji, not the place to read them all —
+    /// unbounded, five cards would stack thirty caption lines. The full list
+    /// lives in `VocabularyStudyView`, behind its own disclosure.
+    private static let examplesPerWord = 2
+
     @State private var showAll = false
 
     private var displayedVocabulary: [Vocabulary] {
@@ -66,7 +75,7 @@ struct VocabularyExamplesView: View {
                 .foregroundStyle(Color(hex: IkeruTheme.Colors.primaryAccent))
 
             if !vocab.exampleSentences.isEmpty {
-                ForEach(vocab.exampleSentences, id: \.self) { sentence in
+                ForEach(vocab.exampleSentences.prefix(Self.examplesPerWord), id: \.self) { sentence in
                     Text(sentence)
                         .ikeruScaledFont(IkeruTheme.Typography.Size.caption, relativeTo: .caption2)
                         .foregroundStyle(
