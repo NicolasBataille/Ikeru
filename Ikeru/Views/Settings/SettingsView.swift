@@ -296,6 +296,9 @@ struct SettingsView: View {
                 .presentationDetents([.medium])
                 .presentationBackground(.ultraThinMaterial)
         }
+        // Presents the SYSTEM share sheet, not a sheet *containing* a share
+        // control — see `ShareSheet`'s doc comment for why `ShareLink` cannot
+        // do this job when the URL only exists after an async export.
         .sheet(isPresented: $showExportShare, onDismiss: {
             if let url = exportURL {
                 DataExportManager().cleanup(url: url)
@@ -303,7 +306,8 @@ struct SettingsView: View {
             }
         }) {
             if let url = exportURL {
-                ShareLink(item: url)
+                ShareSheet(items: [url]) { showExportShare = false }
+                    .ignoresSafeArea()
             }
         }
         .sheet(item: $profileToDelete) { profile in
