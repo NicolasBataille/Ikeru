@@ -713,7 +713,9 @@ struct HomeView: View {
             plannerService: planner,
             cardRepository: repo,
             modelContainer: container,
-            contentRepository: Self.makeContentRepository()
+            contentRepository: Self.makeContentRepository(
+                language: ContentLanguage(locale: appLocale.currentLocale)
+            )
         )
     }
 
@@ -722,12 +724,19 @@ struct HomeView: View {
     /// never stood one up before). Fail-safe: a missing resource logs and
     /// returns nil so the session still starts; the audio drills just get an
     /// empty vocabulary pool rather than crashing.
-    private static func makeContentRepository() -> ContentRepository? {
+    ///
+    /// - Parameter language: Which language the bundle serves its glosses in,
+    ///   resolved here from `AppLocale` — Core must not read `Locale.current`,
+    ///   which ignores the in-app language override (CLAUDE.md › Localisation).
+    ///   Like `DailyTermViewModel`'s locale, it is captured once when the view
+    ///   models are built: switching language mid-session keeps the session's
+    ///   content in the previous language until the models are rebuilt.
+    private static func makeContentRepository(language: ContentLanguage) -> ContentRepository? {
         guard let url = Bundle.main.url(forResource: "n5-content", withExtension: "sqlite") else {
             Logger.ui.error("n5-content.sqlite not found in bundle — audio drills will have no content")
             return nil
         }
-        return ContentRepository(bundleURL: url)
+        return ContentRepository(bundleURL: url, language: language)
     }
 
     private func startSession() {

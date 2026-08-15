@@ -79,6 +79,10 @@ struct ExerciseTransitionContainer: View {
     /// this pass's scope. Mirrors the existing per-screen pattern already
     /// used by `HomeView.makeContentRepository()` / `EtudeView.makeContentRepository()`
     /// — read-only bundle, so a second connection is redundant but not unsafe.
+    ///
+    /// Stays in the default (English) content language: kana stroke traces are
+    /// SVG path data, with no localizable text at all. A `static let` could not
+    /// read `AppLocale` anyway.
     private static let kanaContentRepository: ContentRepository? = {
         guard let url = Bundle.main.url(forResource: "n5-content", withExtension: "sqlite") else {
             Logger.ui.error("n5-content.sqlite not found in bundle — new-card stroke trace disabled")

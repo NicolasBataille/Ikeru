@@ -49,6 +49,7 @@ import SQLite3
 ///     word TEXT,
 ///     reading TEXT,
 ///     meaning TEXT,
+///     meaning_fr TEXT,        -- French gloss (see below)
 ///     kanji_character TEXT,   -- nullable FK
 ///     jlpt_level TEXT
 /// );
@@ -57,6 +58,7 @@ import SQLite3
 ///     id INTEGER PRIMARY KEY,
 ///     japanese TEXT,
 ///     english TEXT,
+///     french TEXT,            -- French translation (no reader yet, see below)
 ///     vocabulary_word TEXT    -- FK for lookup
 /// );
 ///
@@ -64,19 +66,46 @@ import SQLite3
 ///     id INTEGER PRIMARY KEY,
 ///     jlpt_level TEXT,
 ///     title TEXT,
+///     title_fr TEXT,
 ///     explanation TEXT,
-///     examples TEXT           -- JSON array
+///     explanation_fr TEXT,
+///     examples TEXT,          -- JSON array
+///     examples_fr TEXT        -- JSON array
 /// );
 /// ```
+///
+/// ## Language
+///
+/// Learner-facing glosses exist in English (authoritative, every row) and
+/// French (`_fr` columns, written by `scripts/apply-content-fr.py`). The
+/// language is fixed at construction — Core never reads `Locale.current`, the
+/// app target resolves it from `AppLocale` and passes it in.
+///
+/// Two safeguards, both handled here so no caller has to think about them:
+///
+/// - **Per-row fallback**: a French column that is NULL, blank, or an empty
+///   JSON array (`[]`) serves the English value instead. A field of English
+///   text beats a blank field on screen.
+/// - **Older bundles**: a bundle predating the French columns is detected via
+///   `PRAGMA table_info` and queried in English, rather than failing to
+///   prepare and returning nothing.
+///
+/// `sentences.french` is populated but has no reader: `fetchSentences` only
+/// serves the Japanese, and nothing in the app reads `sentences.english`
+/// today either. The data is in place for a future consumer.
 public final class ContentRepository: Sendable {
 
     /// The background actor performing thread-safe SQLite operations.
     private let actor: ContentDatabaseActor
 
     /// Creates a ContentRepository with the given SQLite bundle URL.
-    /// - Parameter bundleURL: Path to the .sqlite file. Must be accessible for reading.
-    public init(bundleURL: URL) {
-        self.actor = ContentDatabaseActor(bundleURL: bundleURL)
+    /// - Parameters:
+    ///   - bundleURL: Path to the .sqlite file. Must be accessible for reading.
+    ///   - language: Language for learner-facing glosses. Defaults to
+    ///     `.english`, the bundle's authoritative language — an unwired
+    ///     caller gets complete content, never a silent locale guess.
+    public init(bundleURL: URL, language: ContentLanguage = .english) {
+        self.actor = ContentDatabaseActor(bundleURL: bundleURL, language: language)
     }
 
     // MARK: - Kanji Queries
@@ -200,11 +229,17 @@ private let SQLITE_TRANSIENT = unsafeBitCast(-1, to: sqlite3_destructor_type.sel
 actor ContentDatabaseActor {
 
     private let bundleURL: URL
+    private let language: ContentLanguage
     private nonisolated(unsafe) var db: OpaquePointer?
     private let decoder = JSONDecoder()
 
-    init(bundleURL: URL) {
+    /// Column names per table, read once via `PRAGMA table_info` and cached —
+    /// used to tell a French-capable bundle from an older English-only one.
+    private var columnCache: [String: Set<String>] = [:]
+
+    init(bundleURL: URL, language: ContentLanguage = .english) {
         self.bundleURL = bundleURL
+        self.language = language
     }
 
     // MARK: - Database Lifecycle
@@ -238,8 +273,11 @@ actor ContentDatabaseActor {
     func kanjiByLevel(_ level: JLPTLevel) -> [Kanji] {
         guard openIfNeeded() else { return [] }
 
+        let meanings = localizedColumn(
+            english: "meanings", french: "meanings_fr", table: "kanji", qualifier: "k."
+        )
         let sql = """
-            SELECT k.character, k.on_readings, k.kun_readings, k.meanings,
+            SELECT k.character, k.on_readings, k.kun_readings, \(meanings),
                    k.jlpt_level, k.stroke_count, k.stroke_order_svg
             FROM kanji k WHERE k.jlpt_level = ?
             """
@@ -347,7 +385,8 @@ actor ContentDatabaseActor {
         guard openIfNeeded() else { return [] }
 
         let sql = """
-            SELECT v.id, v.word, v.reading, v.meaning, v.kanji_character, v.jlpt_level
+            SELECT v.id, v.word, v.reading, \(vocabularyMeaningColumn),
+                   v.kanji_character, v.jlpt_level
             FROM vocabulary v WHERE v.kanji_character = ?
             """
 
@@ -390,7 +429,8 @@ actor ContentDatabaseActor {
         guard openIfNeeded() else { return [] }
 
         let sql = """
-            SELECT v.id, v.word, v.reading, v.meaning, v.kanji_character, v.jlpt_level
+            SELECT v.id, v.word, v.reading, \(vocabularyMeaningColumn),
+                   v.kanji_character, v.jlpt_level
             FROM vocabulary v WHERE v.jlpt_level = ?
             """
 
@@ -430,8 +470,15 @@ actor ContentDatabaseActor {
     func grammarPointsByLevel(_ level: JLPTLevel) -> [GrammarPoint] {
         guard openIfNeeded() else { return [] }
 
+        let title = localizedColumn(english: "title", french: "title_fr", table: "grammar_points")
+        let explanation = localizedColumn(
+            english: "explanation", french: "explanation_fr", table: "grammar_points"
+        )
+        let examples = localizedColumn(
+            english: "examples", french: "examples_fr", table: "grammar_points"
+        )
         let sql = """
-            SELECT id, jlpt_level, title, explanation, examples
+            SELECT id, jlpt_level, \(title), \(explanation), \(examples)
             FROM grammar_points WHERE jlpt_level = ?
             """
 
@@ -535,6 +582,66 @@ actor ContentDatabaseActor {
             results.append(radical)
         }
         return results
+    }
+
+    // MARK: - Language Helpers
+
+    /// Column names of `table`, cached after the first `PRAGMA table_info`.
+    /// An unknown or missing table yields an empty set, which makes
+    /// `localizedColumn` degrade to the English column.
+    private func columnNames(of table: String) -> Set<String> {
+        if let cached = columnCache[table] { return cached }
+
+        var names: Set<String> = []
+        var stmt: OpaquePointer?
+        if sqlite3_prepare_v2(db, "PRAGMA table_info(\(table))", -1, &stmt, nil) == SQLITE_OK {
+            while sqlite3_step(stmt) == SQLITE_ROW {
+                names.insert(columnText(stmt, 1))
+            }
+        } else {
+            Logger.content.error("Failed to read schema of table \(table)")
+        }
+        sqlite3_finalize(stmt)
+
+        columnCache[table] = names
+        return names
+    }
+
+    /// The localized `vocabulary.meaning` expression, shared by the two
+    /// vocabulary queries so they can never drift apart on language.
+    private var vocabularyMeaningColumn: String {
+        localizedColumn(
+            english: "meaning", french: "meaning_fr", table: "vocabulary", qualifier: "v."
+        )
+    }
+
+    /// SQL expression serving the localized value of a column, with an
+    /// explicit per-row fallback to English.
+    ///
+    /// In English, or against a bundle whose French column doesn't exist, this
+    /// is just the English column. In French it becomes a `CASE` that treats
+    /// NULL, blank and `'[]'` (an empty JSON array — how a missing
+    /// `meanings_fr` / `examples_fr` would show up) as "not translated" and
+    /// serves the English value for that row.
+    /// - Parameters:
+    ///   - english: The authoritative column name.
+    ///   - french: The `_fr` column name.
+    ///   - table: Table the columns belong to, for the schema probe.
+    ///   - qualifier: Table alias prefix used in the query (e.g. `"v."`).
+    /// - Returns: An expression to splice into a SELECT list.
+    private func localizedColumn(
+        english: String,
+        french: String,
+        table: String,
+        qualifier: String = ""
+    ) -> String {
+        let englishColumn = qualifier + english
+        guard language == .french, columnNames(of: table).contains(french) else {
+            return englishColumn
+        }
+        let frenchColumn = qualifier + french
+        return "CASE WHEN TRIM(COALESCE(\(frenchColumn), '')) IN ('', '[]') "
+            + "THEN \(englishColumn) ELSE \(frenchColumn) END"
     }
 
     // MARK: - Private Helpers
