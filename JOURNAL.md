@@ -23,6 +23,130 @@ raisonnement, les mesures, et les décisions.
 
 ---
 
+## 2026-08-15 — Relecture adversariale PR #90 : GAP-13 avait un second consommateur, GAP-15 est périmée
+
+Troisième passe sur `docs/registry-hygiene`. Les deux précédentes ont validé
+le contenu de la PR ; celle-ci cherchait ce qu'elles n'avaient pas regardé.
+Deux vrais défauts, l'un dans ma section, l'autre pas.
+
+### Fait
+
+- **GAP-13 — l'énumération des écrivains était fausse dans les deux sens.**
+  L'entrée disait « incrémenté à la main à trois endroits :
+  `SessionRPGPersistence`, `processWatchResult` legacy et
+  `processWatchQuizBatch` ». Vérifié ligne à ligne :
+  `processWatchQuizBatch` **n'écrit pas** le champ — il appelle
+  `processWatchResult` (`WatchConnectivityManager.swift:269`), c'est le même
+  écrivain compté deux fois. Il n'y a que **deux** `+=`
+  (`SessionRPGPersistence.swift:84`, `WatchConnectivityManager.swift:147`).
+  Le troisième site réel n'était listé nulle part et n'est pas un
+  incrément : `WatchConnectivityManager.swift:410` **écrase** `xp`, `level`
+  et `totalReviewsCompleted` depuis un `WatchSyncPayload` reçu, dans
+  `session(_:didReceiveApplicationContext:)` — donc **non monotone**, il
+  peut faire baisser le compteur. « `grep` confirme trois écrivains, zéro de
+  plus » comptait des occurrences du symbole, pas des écritures : la
+  famille de défaut n°3 du dépôt, refaite dans le document qui la
+  documente. Entrée corrigée.
+- **GAP-13 — un second consommateur du vieux compteur, jamais examiné.** La
+  fermeture justifie la survie de `RPGState.totalReviewsCompleted` par *un*
+  usage (`HomeView.evaluateFirstSessionDailyTermPrompt`, transition 0 → >0).
+  Il y en a deux : `HomeView.swift:769` (`evaluateCaughtUpExplainer`) garde
+  aussi sur `vm.totalReviewsCompleted > 0`, mais en **seuil**, pas en
+  transition — l'arbitrage rendu pour la relance ne s'y applique donc pas,
+  et y dériver de `ReviewLog` serait strictement meilleur. Conséquence
+  vivante sur `dev` : un apprenant qui ne travaille qu'au drill kana reste à
+  0 pour toujours, donc l'explication « tout est à jour » de Sakura — écrite
+  mot pour mot pour cet apprenant-là — ne se déclenche jamais. C'est le
+  symptôme « journaux sans crédit » d'origine, survivant dans une surface
+  que la fermeture n'a pas énumérée. GAP-13 repassée de « Fermé » à « fermé
+  pour l'affichage, résidu ouvert ».
+- GAP-02 : « le pull s'exécute et applique **correctement** » resserré en
+  « applique **fidèlement ce que le serveur affirme** ». Ce qui a été observé
+  est la réinsertion d'une ligne supprimée par l'apprenant : le pull faisait
+  son travail, mais « correctement » se fera citer plus tard comme « pull
+  vérifié correct ».
+- Recomptage : 160 tests sur le filtre `RPG|Review|Session|Tatami|Mastery`,
+  pas 159.
+
+### Testé
+
+- Lecture ligne à ligne, pas `grep` seul : `WatchConnectivityManager.swift`
+  131-149 (`processWatchResult`), 240-278 (`processWatchQuizBatch` →
+  délégation), 381-419 (`didReceiveApplicationContext` → écrasement),
+  `WatchSyncService.swift:134-155` (`SyncConflictResolver`, comparaison
+  d'horodatages).
+- **Dormance du site `:410` mesurée, pas supposée** : `grep -rn
+  "updateApplicationContext\|WatchSyncPayload(" ` ne trouve d'émetteur que
+  côté iPhone (`WatchConnectivityManager.swift:78/94`) ; `IkeruWatch/` ne
+  fait que du `transferUserInfo`. Donc aucune montre à jour ne peut
+  atteindre ce chemin. **Nuance gardée dans l'entrée** : une vieille build de
+  montre pourrait, et seulement si son horloge est en avance (le payload
+  local est estampillé `Date()` à la réception, donc le distant ne gagne que
+  s'il est plus récent).
+- Vérifié aussi ce qui **tenait**, pour ne pas le re-vérifier une 4ᵉ fois :
+  `activeProfileReviewCount()` dérive bien des `ReviewLog` non tombstonés
+  (`CardRepository.swift:772-777`) ; les 3 call sites annoncés sont les bons ;
+  `DataExportManagerTests` est bien dans le `-only-testing` de la CI
+  (`ci.yml:264`) et `HomeViewModelTests` bien absent ; `JOURNAL.md` est
+  purement additif (`git diff --numstat` = 183 ajouts / 0 suppression, ordre
+  antéchronologique respecté) ; **aucun affichage du compteur périmé côté
+  montre** (`grep totalReviews IkeruWatch/` = un commentaire, rien de rendu).
+- **Pas testé** : rien à exécuter, PR documentaire. Diff `.swift` = 0 fichier,
+  donc le gate strict `swiftlint-diff-filter.py` reste vide par construction.
+  `i18n-lint` rejoué (0 nouvelle violation), catalogue non touché.
+
+### Écarté
+
+- **Écrire un test qui échoue pour prouver le résidu.** Impossible sans
+  bricoler : `evaluateCaughtUpExplainer` est une `private func` d'une `View`
+  SwiftUI, et il n'existe aucune cible de tests UI ([GAP-09]). Un test au
+  niveau `HomeViewModel` prouverait la divergence du compteur (déjà prouvée
+  par `CardRepositoryTests`), pas le fait que la vue soit privée du signal.
+  Ajouter du Swift à une PR documentaire ferait en plus passer le gate
+  SwiftLint de « vide » à « vivant » sur des lignes sans rapport. Le défaut
+  est établi par lecture, `fichier:ligne` — c'est la preuve disponible.
+- **Corriger `HomeView.swift:769`, le doc-comment de
+  `HomeViewModel.totalReviewsCompleted` et celui de `RPGState`.** Fichiers de
+  code, PR documentaire, et `WatchConnectivityManager.swift` appartient à
+  l'agent GAP-17. Décrit précisément dans GAP-13 pour que la correction soit
+  mécanique, pas fait ici.
+
+### Ouvert
+
+- **⚠️ GAP-15 est périmée dans son texte, et l'a été validée deux fois.**
+  Son corps affirme encore : « `deletedAt` n'est **jamais** positionné par
+  une action utilisateur », « les seules affectations de ce champ dans tout
+  le dépôt sont dans le *pull* », « toutes les suppressions de l'app sont des
+  `modelContext.delete()` durs : profil (`ProfileViewModel:173`), vocabulaire
+  (`VocabularyRepository:259`), carte (`CardRepository:519`) ». **Les trois
+  sites cités font aujourd'hui l'inverse** :
+  `VocabularyRepository.swift:284` (`entry.tombstone(at:)` + cascade
+  encounters), `CardRepository.swift:576` (`card.tombstone(at:)` + cascade
+  logs), `ProfileDeletion.swift:60-71` (le graphe entier), via
+  `SoftDeletable.tombstone(at:)` (`SoftDelete.swift:59`). C'est PR #86 —
+  l'entrée de journal **juste en dessous de celle-ci**. Le « Ce qui le
+  fermerait » de GAP-15 décrit donc un chantier déjà livré. GAP-15 doit
+  rester **ouverte** (le correctif n'a pas été vérifié de bout en bout sur
+  device, c'est vrai), mais pour cette raison-là uniquement : son constat,
+  lui, est faux. La passe d'hygiène l'a explicitement envisagée puis écartée
+  comme « pas contradictoire » — un raisonnement juste sur la sévérité et
+  faux sur les faits. **Section GAP-15 non éditée : hors périmètre
+  (GAP-02/GAP-13), et aucun agent du lot ne la possède** — à confier.
+- `RPGState.totalReviewsCompleted`'s doc comment
+  (`IkeruCore/.../RPGState.swift:18-41`) annonce « three independent call
+  sites hand-increment it » puis liste en 2ᵉ puce `KanaDrillViewModel`, dont
+  la même puce dit qu'il « never touches `RPGState` at all ». La liste énumère
+  les chemins qui produisent des révisions, pas les écrivains, et omet
+  `:410`. Elle renvoie aussi à « GAP-08's territory » alors que le registre
+  marque désormais GAP-08 « entrée FAUSSE ». Fichier de code, non touché.
+- Le bandeau de `docs/known-gaps.md` (« vérifiées dans le code au
+  2026-08-14 ») n'a pas bougé alors que deux entrées ont été revérifiées le
+  15 ; et la convention du fichier (« une entrée fermée est supprimée d'ici »)
+  a maintenant trois exceptions (GAP-08, GAP-16, GAP-13). Ligne d'en-tête
+  hors périmètre : à trancher globalement, pas entrée par entrée.
+
+---
+
 ## 2026-08-15 — Vérification PR #90 (hygiène du registre) : un site d'affichage fantôme corrigé
 
 ### Fait
