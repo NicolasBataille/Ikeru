@@ -23,6 +23,97 @@ raisonnement, les mesures, et les décisions.
 
 ---
 
+## 2026-08-15 — GAP-15 : brancher le premier maillon des tombstones
+
+Le mécanisme de suppression synchronisée était complet **sauf son point de
+départ**. `SyncPayloadBuilder` sérialise `deleted_at`, la règle de fusion 4 fait
+gagner un tombstone quel que soit l'horodatage, le pull applique les tombstones
+distants et exclut les lignes supprimées du rejeu FSRS — le tout couvert par des
+tests contre `FakeSyncServer`. Mais **aucun chemin de production ne posait jamais
+`deletedAt`** : toutes les suppressions étaient des `modelContext.delete()` durs,
+qui effacent la ligne locale et ne laissent donc *rien* à pousser. Résultat
+observé sur appareil : 風物詩 supprimé, ligne serveur toujours vivante
+(`deleted_at = null`), et retour du mot dès que le curseur de pull rembobinait
+(sauvegarde cloud off/on → `resetAll()`).
+
+Les tests de divergence existants ne l'ont pas vu pour une raison qui mérite
+d'être écrite : leur fixture `deleteCard` posait `card.deletedAt` **à la main**.
+Le test fournissait lui-même l'entrée que la production n'a jamais produite.
+C'est le deuxième piège de cette forme dans ce dépôt.
+
+### Fait
+
+- Suppression douce pour les 7 entités synchronisées : `deletedAt` + `updatedAt`
+  au lieu de détruire la ligne (`SoftDeletable.tombstone(at:)`, idempotent pour
+  ne pas réécrire une date de suppression antérieure).
+- Cascades **à la main** : SwiftData ne déclenche une `deleteRule: .cascade` que
+  sur un vrai `delete(_:)`. Carte → ses `ReviewLog` ; entrée de vocabulaire →
+  ses `VocabularyEncounter` ; profil → cartes + leurs logs + `RPGState` +
+  `ExerciseOutcomeLog` (`ProfileDeletion.tombstoneGraph`).
+- Filtrage `deletedAt == nil` sur **tous** les chemins de lecture inventoriés,
+  y compris les traversées de relations (`profile.cards`, `card.reviewLogs`,
+  `entry.encounters`) qu'aucun `#Predicate` n'atteint.
+- `SyncModelActor` : les 3 tables « append-only » sélectionnaient sur
+  `syncedAt == nil`. Un log cascade-tombstoné déjà poussé n'aurait **jamais**
+  vu son tombstone partir. Passées à `isDirty`, dont la clause
+  `deletedAt > syncedAt` couvre exactement ce cas.
+
+### Testé
+
+- `SyncPullDivergenceTombstoneTests` (10 tests, Core), tous branchés sur les
+  **vrais points d'entrée** (`VocabularyRepository.deleteEntry`,
+  `CardRepository.deleteCard`, `ProfileDeletion.tombstoneGraph`) — aucun ne pose
+  `deletedAt` à la main. Vérifiés comme **mordants**, pas seulement verts : en
+  remettant temporairement le `delete()` dur, 4 tests tombent ; en remettant
+  `syncedAt == nil` sur `pushDirtyReviewLogs`, le test du push tombe ; en
+  retirant un seul filtre de lecture (`allEntries`), le test d'inventaire tombe.
+- Filtre CI Core complet : 647 tests verts. Build iOS + watchOS OK. i18n-lint OK
+  (catalogue non touché).
+- **PAS testé** : `ProfileViewModel.deleteProfile` lui-même. Les 18 tests de
+  `IkeruTests/ProfileViewModelTests` SIGTRAPent dans SwiftData sur l'hôte de test
+  applicatif — panne **pré-existante**, documentée en tête de ce fichier, et la
+  raison pour laquelle la CI ne les lance pas. Ils compilent
+  (`build-for-testing` OK) mais ne s'exécutent pas. C'est précisément pourquoi
+  la cascade a été extraite dans `IkeruCore/ProfileDeletion` : la partie la plus
+  risquée du chantier serait sinon restée sans test exécutable nulle part.
+- **PAS testé** : aucune vérification SQL réelle contre Supabase cette session
+  (pas d'appareil dans la boucle). La preuve s'arrête au `FakeSyncServer`.
+
+### Écarté
+
+- **Purge différée des tombstones.** Aucun signal d'acquittement par appareil
+  sur lequel la conditionner, et aucune pression mesurée (données à l'échelle
+  d'un apprenant, quelques Mo/an). La règle 4 + la rétention serveur rendent une
+  purge locale plutôt inutile que dangereuse, mais « plutôt » ne suffit pas pour
+  du code qu'on n'a pas de moyen de valider.
+- **Tombstoner `CompanionChatMessage`.** Ni poussé ni tiré (vérifié : aucun
+  `pushDirtyCompanion*`, aucune ligne dans `SyncPayloadBuilder`), donc aucun
+  vecteur de résurrection — et un tombstone *conserverait* sur l'appareil le
+  texte que l'apprenant vient de demander d'effacer. Suppression dure gardée,
+  pour la vie privée autant que pour la simplicité.
+- **`MnemonicService` / `AssetCache`.** Caches, pas des données d'apprenant, et
+  `MnemonicCache` ne porte même pas de `deletedAt` — le convertir demanderait un
+  changement de schéma que le chantier interdit.
+- **Réparer `CloudBackupManager.applySnapshot`.** `iCloudEnabled` est un `false`
+  en dur : `backup` comme `restore` sortent sur `.iCloudUnavailable` bien avant
+  d'atteindre SwiftData, donc cette suppression dure est **injoignable en
+  production**. La convertir n'est pas non plus une ligne : la boucle réinsère
+  ensuite des cartes portant les **ids d'origine**, donc tombstoner au lieu de
+  supprimer laisserait deux lignes pour un même `id` (pas de contrainte
+  `.unique`) — pire que le défaut dormant. Laissée telle quelle avec un
+  commentaire précis au point de suppression.
+- **Réparer `TestFixtures.wipeAll`.** Outil dev derrière `IKERU_DEV_TOOLS`, dont
+  l'intention *est* de simuler une installation neuve.
+
+### Ouvert
+
+- Si `CloudBackupManager.iCloudEnabled` passe un jour à `true`, `applySnapshot`
+  doit être réécrit **avant** (mise à jour en place des cartes présentes dans le
+  snapshot, tombstone de celles qui en sont absentes).
+- Les tombstones s'accumulent sans purge. À revoir si la taille du store devient
+  un sujet.
+- `ProfileViewModelTests` reste inexécutable. Tant que ça dure, toute logique de
+  suppression qu'on met dans ce view model est sans filet.
 ## 2026-08-15 — GAP-13 (vérification) : CI rouge trouvé + doc dormante corrigée
 
 Passe de vérification sur `fix/gap-13-derived-review-count` (PR #85), avant

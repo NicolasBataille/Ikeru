@@ -46,9 +46,11 @@ public final class ExerciseOutcomeLog {
     // `docs/design-specs/2026-08-10-cloud-sync-design.md` §5.1).
     // `ExerciseOutcomeLog` is append-only per spec §3 (conflict-free by
     // construction), but it still needs `updatedAt`/`syncedAt` to drive the
-    // push delta — `deletedAt` is carried for schema symmetry even though an
-    // outcome log is never expected to be soft-deleted in practice. Nothing
-    // reads or writes any of the three yet; that wiring is a later lot.
+    // push delta. `deletedAt` is NOT decorative: outcome logs are tombstoned
+    // when their profile is deleted (`ProfileViewModel.deleteProfile` — they
+    // are scoped by a scalar `profileID` and never cascaded by SwiftData),
+    // which is why `SyncModelActor.pushDirtyExerciseOutcomeLogs` selects on
+    // `isDirty` rather than `syncedAt == nil` — see the note there.
 
     /// Local modification clock. Defaults to the Unix epoch at the property
     /// level so the `.lightweight` V3→V4 migration can backfill existing

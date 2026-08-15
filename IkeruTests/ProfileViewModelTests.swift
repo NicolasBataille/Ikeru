@@ -210,24 +210,54 @@ struct ProfileViewModelTests {
         let keptCardID = keptCard.id
         let keptRPGStateID = try #require(toKeep.rpgState?.id)
 
+        let deletedCardID = deletedCard.id
+        let deletedProfileID = toDelete.id
+
         viewModel.deleteProfile(toDelete)
 
-        // The other profile's own row still exists...
-        let remainingProfiles = try context.fetch(FetchDescriptor<UserProfile>())
-        #expect(remainingProfiles.count == 1)
-        #expect(remainingProfiles.first?.id == toKeep.id)
+        // Deletion is a tombstone now, not a hard delete (GAP-15): the rows
+        // survive carrying `deletedAt` so the deletion has something to push,
+        // and every read path filters them out. So these assertions ask "what
+        // is still LIVE", which is what they always meant.
+        let liveProfiles = try context.fetch(
+            FetchDescriptor<UserProfile>(predicate: #Predicate { $0.deletedAt == nil })
+        )
+        #expect(liveProfiles.count == 1)
+        #expect(liveProfiles.first?.id == toKeep.id)
 
         // ...its card survived, untouched...
-        let remainingCards = try context.fetch(FetchDescriptor<Card>())
-        #expect(remainingCards.count == 1)
-        #expect(remainingCards.first?.id == keptCardID)
+        let liveCards = try context.fetch(
+            FetchDescriptor<Card>(predicate: #Predicate { $0.deletedAt == nil })
+        )
+        #expect(liveCards.count == 1)
+        #expect(liveCards.first?.id == keptCardID)
 
         // ...and its RPG progress survived, untouched.
-        let remainingRPGStates = try context.fetch(FetchDescriptor<RPGState>())
-        #expect(remainingRPGStates.count == 1)
-        #expect(remainingRPGStates.first?.id == keptRPGStateID)
-        #expect(remainingRPGStates.first?.xp == 500)
-        #expect(remainingRPGStates.first?.level == 7)
+        let liveRPGStates = try context.fetch(
+            FetchDescriptor<RPGState>(predicate: #Predicate { $0.deletedAt == nil })
+        )
+        #expect(liveRPGStates.count == 1)
+        #expect(liveRPGStates.first?.id == keptRPGStateID)
+        #expect(liveRPGStates.first?.xp == 500)
+        #expect(liveRPGStates.first?.level == 7)
+
+        // And the other half of the same invariant: the deleted profile's own
+        // graph really is tombstoned, not merely hidden. Without this the
+        // cascade could silently stop at the profile row and leave its cards
+        // and RPG state live — pushed to the server, resurrectable on any
+        // device that pulls them.
+        let deletedProfileRow = try #require(
+            try context.fetch(
+                FetchDescriptor<UserProfile>(predicate: #Predicate { $0.id == deletedProfileID })
+            ).first
+        )
+        #expect(deletedProfileRow.deletedAt != nil)
+        let deletedCardRow = try #require(
+            try context.fetch(
+                FetchDescriptor<Card>(predicate: #Predicate { $0.id == deletedCardID })
+            ).first
+        )
+        #expect(deletedCardRow.deletedAt != nil, "the profile's cards were not cascade-tombstoned")
     }
 
     @Test("Deleting the active profile switches to a remaining profile")
@@ -261,8 +291,14 @@ struct ProfileViewModelTests {
         #expect(viewModel.hasProfile == true)
         #expect(viewModel.allProfiles.count == 1)
         #expect(viewModel.currentProfile?.id == solo.id)
-        let stillThere = try context.fetch(FetchDescriptor<UserProfile>())
+        let stillThere = try context.fetch(
+            FetchDescriptor<UserProfile>(predicate: #Predicate { $0.deletedAt == nil })
+        )
         #expect(stillThere.count == 1)
+        // The refusal must not tombstone it either — a "refused" delete that
+        // silently stamps `deletedAt` would push a deletion to the server for
+        // a profile the app still shows.
+        #expect(stillThere.first?.deletedAt == nil)
     }
 
     @Test("switchProfile posts .displayModeDidChange so the cached display mode is re-read")
@@ -307,7 +343,7 @@ struct ProfileViewModelTests {
         #expect(flag.value == true)
     }
 
-    @Test("Deleting a profile removes its ExerciseOutcomeLog rows (no orphans)")
+    @Test("Deleting a profile tombstones its ExerciseOutcomeLog rows (no orphans, no resurrection)")
     func deleteProfileRemovesOutcomes() throws {
         let context = try makeModelContext()
         let viewModel = ProfileViewModel(modelContext: context)
@@ -317,19 +353,31 @@ struct ProfileViewModelTests {
         let target = try #require(viewModel.allProfiles.first { $0.displayName == "A" })
         let keep = try #require(viewModel.allProfiles.first { $0.displayName == "B" })
 
-        // ExerciseOutcomeLog is scalar-scoped (no cascade), so deleteProfile
-        // must remove the deleted profile's rows explicitly.
+        // ExerciseOutcomeLog is scalar-scoped (no SwiftData cascade), so
+        // deleteProfile must handle the deleted profile's rows explicitly.
         context.insert(ExerciseOutcomeLog(skill: .listening, accuracy: 1.0, profileID: target.id))
         context.insert(ExerciseOutcomeLog(skill: .speaking, accuracy: 0.8, profileID: target.id))
         context.insert(ExerciseOutcomeLog(skill: .listening, accuracy: 0.0, profileID: keep.id))
         try context.save()
 
+        let targetID = target.id
         viewModel.deleteProfile(target)
 
-        let remaining = try context.fetch(FetchDescriptor<ExerciseOutcomeLog>())
-        // Only the surviving profile's single outcome remains.
-        #expect(remaining.count == 1)
-        #expect(remaining.first?.profileID == keep.id)
+        // Live rows: only the surviving profile's single outcome.
+        let live = try context.fetch(
+            FetchDescriptor<ExerciseOutcomeLog>(predicate: #Predicate { $0.deletedAt == nil })
+        )
+        #expect(live.count == 1)
+        #expect(live.first?.profileID == keep.id)
+
+        // And the deleted profile's rows carry a tombstone rather than having
+        // vanished (GAP-15): a hard delete left the server copies alive and
+        // they came back on the next pull that rewound its cursor.
+        let orphans = try context.fetch(
+            FetchDescriptor<ExerciseOutcomeLog>(predicate: #Predicate { $0.profileID == targetID })
+        )
+        #expect(orphans.count == 2)
+        #expect(orphans.allSatisfy { $0.deletedAt != nil })
     }
 
     @Test("Deleting a profile removes its MasteryBookSnapshotStore baseline (chantier #45h)")

@@ -34,10 +34,14 @@ public final class UserProfile: Identifiable {
     // MARK: - Cloud sync (schema-only, lot 0)
     //
     // Added by `IkeruSchemaV4` (cloud-sync lot 0, see
-    // `docs/design-specs/2026-08-10-cloud-sync-design.md` §5.1). Nothing
-    // reads or writes these yet — no repository bumps `updatedAt` on
-    // mutation, nothing sets `deletedAt`, nothing sets `syncedAt`. That
-    // wiring is a later lot; this lot only adds the columns.
+    // `docs/design-specs/2026-08-10-cloud-sync-design.md` §5.1).
+    // `deletedAt` IS written in production: `ProfileViewModel.deleteProfile`
+    // tombstones the profile and hand-cascades to `cards` (+ their review
+    // logs), `rpgState` and the profile's `ExerciseOutcomeLog` rows — see
+    // `SoftDeletable`. `syncedAt` is written by `SyncModelActor`. `updatedAt`
+    // is bumped by the tombstone but still not by ordinary field mutations
+    // (profiles are pushed unconditionally every cycle, so that gap is
+    // harmless here — see `SyncModelActor.pushAllProfiles`).
 
     /// Local modification clock. Defaults to the Unix epoch at the property
     /// level so the `.lightweight` V3→V4 migration can backfill existing

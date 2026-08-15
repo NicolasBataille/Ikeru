@@ -347,7 +347,12 @@ struct IkeruApp: App {
             let context = modelContainer.mainContext
             guard let state = ActiveProfileResolver.fetchActiveRPGState(in: context),
                   state.acknowledgedUnlocks.isEmpty else { return }
-            let fetchedCards: [Card] = (try? context.fetch(FetchDescriptor<Card>())) ?? []
+            // Tombstoned cards excluded: a deleted card must not push a
+            // threshold over the line and silently pre-acknowledge an unlock
+            // the learner would then never see fire.
+            let fetchedCards: [Card] = (try? context.fetch(
+                FetchDescriptor<Card>(predicate: #Predicate { $0.deletedAt == nil })
+            )) ?? []
             let cards: [CardDTO] = fetchedCards.map { card in
                 CardDTO(
                     id: card.id,
@@ -399,7 +404,12 @@ struct IkeruApp: App {
             guard let state = ActiveProfileResolver.fetchActiveRPGState(in: context),
                   state.jlptBackfillVersion == 0 else { return }
 
-            let fetchedCards: [Card] = (try? context.fetch(FetchDescriptor<Card>())) ?? []
+            // Tombstoned cards excluded: no point tagging a JLPT level onto a
+            // card the learner deleted, and the readiness score this feeds
+            // must not count it.
+            let fetchedCards: [Card] = (try? context.fetch(
+                FetchDescriptor<Card>(predicate: #Predicate { $0.deletedAt == nil })
+            )) ?? []
             let dtos: [CardDTO] = fetchedCards.map { card in
                 CardDTO(
                     id: card.id,
@@ -451,7 +461,8 @@ struct IkeruApp: App {
     @MainActor
     private func scheduleNotificationsFromSettings() async {
         let context = modelContainer.mainContext
-        let descriptor = FetchDescriptor<UserProfile>()
+        // A tombstoned profile must not keep scheduling reminders.
+        let descriptor = FetchDescriptor<UserProfile>(predicate: #Predicate { $0.deletedAt == nil })
         guard let profile = try? context.fetch(descriptor).first else { return }
 
         let settings = profile.settings

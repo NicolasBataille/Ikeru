@@ -792,7 +792,7 @@ private struct PlacementStep: View {
             activeProfileID: { ActiveProfileResolver.activeProfileID() },
             profileCreatedAt: { id in
                 let descriptor = FetchDescriptor<UserProfile>(
-                    predicate: #Predicate { $0.id == id }
+                    predicate: #Predicate { $0.id == id && $0.deletedAt == nil }
                 )
                 return (try? container.mainContext.fetch(descriptor))?.first?.createdAt
             }
