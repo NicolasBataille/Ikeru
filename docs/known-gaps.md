@@ -131,6 +131,76 @@ Ce qui le fermerait : produire des `ReviewLog` côté montre et les remonter via
 `WatchConnectivity` (`transferUserInfo`, file d'attente garantie), puis les
 appliquer côté iPhone.
 
+### GAP-15 — Rien ne produit jamais de tombstone : une suppression ne se propage pas
+**Sévérité : haute (annulation silencieuse d'une action de l'apprenant).**
+Constaté sur device le 2026-08-15, sur les vraies données.
+
+`deletedAt` n'est **jamais** positionné par une action utilisateur. Les seules
+affectations de ce champ dans tout le dépôt sont dans le *pull*
+(`SyncPullActor*.swift`), qui ne fait que recopier ce que le serveur a dit.
+Toutes les suppressions de l'app sont des `modelContext.delete()` durs :
+profil (`ProfileViewModel:173`), entrée de vocabulaire
+(`VocabularyRepository:259`), carte (`CardRepository:519`).
+
+Une ligne supprimée disparaît donc de l'appareil pendant que le serveur la
+conserve avec `deleted_at = null`. Elle ne revient pas tout de suite —
+seulement parce que le curseur de pull a déjà dépassé son `server_updated_at`,
+donc elle n'est plus redistribuée. **Le curseur est remis à zéro** au
+changement d'identité, à la réinstallation, et à toute bascule de
+l'interrupteur de sauvegarde (`CloudSyncCoordinator.setConsent` →
+`cursorStore.resetAll()`). Au pull suivant, `SyncPullActor+StandaloneTables`
+réinsère toute ligne serveur absente en local, sans condition — la suppression
+est annulée.
+
+Mesuré :
+
+| | |
+|---|---|
+| Serveur | 17 `vocabulary_entries`, toutes `deleted_at = null`, toutes du push initial du 2026-08-14 17:48 |
+| iPhone | **2** entrées — exactement les 2 non-kana (風物詩, ポカヨケ) |
+
+Les 15 entrées kana ont disparu localement sans que le serveur en soit
+informé. L'apprenant n'a rien fait de particulier : elles étaient là au push
+initial, elles n'y sont plus.
+
+⚠️ **Le mécanisme de tombstone existe pourtant de bout en bout** —
+`SyncPayloadBuilder` sérialise `deleted_at` pour les 8 tables, les règles de
+fusion le gèrent, le pull l'applique, et tout ça est couvert par des tests
+contre le `FakeSyncServer`. C'est un mécanisme complet dont **aucun chemin de
+production ne déclenche jamais le premier maillon**. Les tests ne pouvaient pas
+le voir : ils fournissent eux-mêmes les tombstones en entrée.
+
+Ce qui le fermerait : faire écrire `deletedAt` aux sites de suppression plutôt
+que de détruire la ligne, et filtrer les lignes tombstonées à la lecture. C'est
+un chantier à part entière (8 types d'entités, toutes les requêtes de lecture,
+une purge différée) — pas une rustine.
+
+Non fermé faute de temps sur cette session : la démonstration de bout en bout
+(couper/rallumer la sauvegarde, puis observer les 15 kana revenir) n'a pas pu
+être jouée, parce que la bascule ne déclenchait aucune synchro — voir GAP-16,
+qui est la raison pour laquelle le test n'a pas eu lieu.
+
+### GAP-16 — Rallumer la sauvegarde pouvait ne rien faire, en silence
+**Sévérité : moyenne. Corrigé le 2026-08-15**, entrée conservée parce que le
+symptôme est instructif.
+
+`handleCloudSyncToggleChange` appelait `syncNow()` sans `ignoringThrottle:
+true`. Le throttle de 60 s existe pour brider les déclencheurs de fond
+(passage au premier plan, retour du réseau) — pas une action explicite de
+l'apprenant. Rallumer l'interrupteur moins d'une minute après n'importe quelle
+autre tentative renvoyait donc `.skippedThrottled` et ne faisait **rien**,
+pendant que la ligne d'état affichait « à jour » : une affirmation sur une
+synchro qui n'a jamais tourné.
+
+Observé sur device : consent off → on, puis aucune écriture serveur (dernière
+écriture `cards`/`review_logs`/`vocabulary_entries` : la veille à 17:48).
+
+Le chemin de restauration à l'onboarding passait déjà `ignoringThrottle: true`,
+avec un commentaire expliquant exactement ce raisonnement. Un seul des deux
+appelants avait été corrigé — la leçon générale : quand on documente pourquoi
+un appel doit contourner une protection, vérifier **tous** les appels qui
+relèvent du même argument.
+
 ### GAP-13 — « Révisions » et l'historique réel divergent, dans les deux sens
 **Sévérité : moyenne (porte pédagogique faussée).** Constaté sur device le
 2026-08-14 : le Tatami affichait **53 révisions** pendant que la sauvegarde

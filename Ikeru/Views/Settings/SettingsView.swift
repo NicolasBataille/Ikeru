@@ -797,7 +797,17 @@ struct SettingsView: View {
         Task {
             await coordinator.setConsent(enabled)
             if enabled {
-                await coordinator.syncNow()
+                // `ignoringThrottle: true` for the same reason the onboarding
+                // restore passes it (see `CloudSyncCoordinator.syncNow`'s doc
+                // comment): flipping this switch is an explicit, one-shot
+                // learner action, not one of the background triggers the 60s
+                // throttle exists to rate-limit. Without it, turning backup
+                // back on within a minute of any other sync attempt returned
+                // `.skippedThrottled` and did nothing at all — while the row
+                // above went on reporting "Up to date", which is a claim
+                // about a sync that never ran. Observed on device
+                // 2026-08-15: consent off → on produced zero server writes.
+                await coordinator.syncNow(ignoringThrottle: true)
             }
         }
     }
