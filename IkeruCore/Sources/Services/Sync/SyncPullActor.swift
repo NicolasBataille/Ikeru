@@ -709,6 +709,24 @@ actor SyncPullActor {
                 // `SyncModelActor.pushAllRPGStates` (which pushes
                 // unconditionally, not by delta) and permanently litter the
                 // server with a junk row per affected device.
+                //
+                // GAP-04 (`docs/known-gaps.md`): this branch can run TWICE
+                // in the SAME page when the server holds two `rpg_states`
+                // rows for one profile (a reinstalled device's fresh push
+                // landing next to an earlier device generation's still-live
+                // row) — each remote row re-adopts THIS SAME local
+                // `RPGState`, id-flipping it once per row. Verified
+                // (`SyncPullDivergenceTests+RPGStateOrphan.swift`) to
+                // stabilize to exactly one local row in one cycle, with
+                // every counter preserved by `mergeRPGState`'s `max()` —
+                // but the OTHER remote row's server-side id is never
+                // adopted by anything again, and nothing ever deletes it:
+                // one orphaned `rpg_states` row survives server-side per
+                // affected profile. Decision (2026-08-15): accept this —
+                // no counter is ever at risk, and a server-side cleanup job
+                // is more moving parts than a cosmetic, unreachable row
+                // justifies. Revisit only if `rpg_states` ever grows an
+                // admin-facing view that would surface the orphan.
                 orphanState.id = common.id
                 mergeRPGState(orphanState, remoteCounters: remoteCounters, common: common)
             } else {
