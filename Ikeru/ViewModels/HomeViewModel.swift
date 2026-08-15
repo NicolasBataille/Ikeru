@@ -55,15 +55,19 @@ public final class HomeViewModel {
     /// **Not** the lifetime review count shown anywhere to the learner —
     /// despite the name, this mirrors `RPGState.totalReviewsCompleted`
     /// verbatim (see that field's doc comment for why it's non-authoritative
-    /// as of GAP-13), kept exactly as-is on purpose: Home only reads it
-    /// (before vs. after a session) to detect the narrower "has this profile
-    /// ever finished a main SRS session" 0 → >0 transition, which drives the
-    /// one-time daily-term prompt. Re-deriving it from `ReviewLog` (like
-    /// `advancedThresholdSignals()` now does for the Tatami gate) would break
-    /// that prompt for any learner who did a kana drill before their first
-    /// session — a very common order — since their review count would
-    /// already be >0 walking into the session. Any DISPLAY of a lifetime
-    /// review count must go through `CardRepository.activeProfileReviewCount()`.
+    /// as of GAP-13, and for the full list of what writes it), kept exactly
+    /// as-is on purpose: Home only reads it (before vs. after a session) to
+    /// detect a "has this profile's session/Watch counter moved past 0" 0 →
+    /// >0 transition, which drives the one-time daily-term prompt. This is
+    /// an approximation, not a precise "first session" signal even today —
+    /// e.g. a Watch quiz result can also move it — but re-deriving it from
+    /// `ReviewLog` (like `advancedThresholdSignals()` now does for the
+    /// Tatami gate) would make it strictly worse for the common case: any
+    /// learner who did a kana drill before their first session (a very
+    /// likely order) would walk into that first session with the derived
+    /// count already >0, so the prompt would never fire for them at all.
+    /// Any DISPLAY of a lifetime review count must go through
+    /// `CardRepository.activeProfileReviewCount()`.
     public private(set) var totalReviewsCompleted: Int = 0
 
     /// Estimated card count for the next session preview.

@@ -257,19 +257,19 @@ public final class CardRepository: Sendable {
     /// (`deletedAt != nil`).
     ///
     /// This is the fix for GAP-13 (2026-08): `RPGState.totalReviewsCompleted`
-    /// used to be maintained as a second, hand-incremented counter that only
-    /// `SessionRPGPersistence` ever bumped — so any review graded through a
-    /// path that doesn't go through the main SRS session (the kana drill's
-    /// `KanaDrillViewModel.gradeCard` calls, in particular) was journaled to
-    /// `ReviewLog` but never credited here, undercounting the figure the
-    /// Tatami-mode gate and the "cumulative competence" display read. Every
-    /// review, on every surface, always writes a `ReviewLog` in the same
-    /// `CardRepository.gradeCard` transaction — so counting those rows
-    /// directly removes the second counter instead of adding a third
-    /// increment site that would just as surely diverge again the next
-    /// time a new surface starts grading cards. `RPGState.totalReviewsCompleted`
-    /// itself is no longer authoritative for anything display-facing; see its
-    /// doc comment.
+    /// used to be maintained as a second, hand-incremented counter with
+    /// several independent writers (see that field's doc comment for the
+    /// full list) that don't all agree with `ReviewLog` — most visibly, the
+    /// kana drill's `KanaDrillViewModel.gradeCard` calls journal to
+    /// `ReviewLog` but never touch `RPGState` at all, undercounting the
+    /// figure the Tatami-mode gate and the "cumulative competence" display
+    /// read. Every review, on every surface, always writes a `ReviewLog` in
+    /// the same `CardRepository.gradeCard` transaction — so counting those
+    /// rows directly removes the divergence instead of adding yet another
+    /// hand-incremented site that would just as surely disagree with the
+    /// others eventually. `RPGState.totalReviewsCompleted` itself is no
+    /// longer authoritative for anything display-facing; see its doc
+    /// comment.
     ///
     /// Deliberately a plain read (no caching): it walks the same
     /// already-faulted `activeProfileCards()` object graph

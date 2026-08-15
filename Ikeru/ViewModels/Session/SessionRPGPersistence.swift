@@ -67,13 +67,16 @@ final class SessionRPGPersistence {
     /// The `totalReviewsCompleted += 1` below is deliberately left as-is
     /// (GAP-13, 2026-08) even though this field is no longer the
     /// authoritative lifetime review count anywhere in the UI — see
-    /// `RPGState.totalReviewsCompleted`'s doc comment. Every display of a
-    /// lifetime review count now derives from `ReviewLog` via
+    /// `RPGState.totalReviewsCompleted`'s doc comment for the full list of
+    /// writers (this one, plus two in `WatchConnectivityManager`). Every
+    /// display of a lifetime review count now derives from `ReviewLog` via
     /// `CardRepository.activeProfileReviewCount()`. This increment survives
     /// only because `HomeViewModel.totalReviewsCompleted` still keys its
-    /// first-session-ever onboarding heuristic off this exact field's
-    /// 0 → >0 transition — a narrower, session-scoped question that this
-    /// increment still answers correctly.
+    /// first-session-ever onboarding heuristic off this field's 0 → >0
+    /// transition — an approximation, not an exact one even before this fix
+    /// (a Watch result can also move it), but still the least-bad signal
+    /// available without reintroducing the Tatami-gate divergence this fix
+    /// removes.
     func persistState(xp: Int, level: Int) async {
         await withRPGState { state in
             state.xp = xp

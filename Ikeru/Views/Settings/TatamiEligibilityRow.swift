@@ -240,11 +240,12 @@ struct TatamiEligibilityRow: View {
         let activeDays = rpg?.activeDaysCount ?? 0
 
         // "Cumulative competence" reviews come from `ReviewLog` (GAP-13), not
-        // `RPGState.totalReviewsCompleted` — that field only ever credited
-        // the main SRS session and silently dropped every kana-drill review,
-        // undercounting this exact figure (53 shown vs. 74 real reviews,
-        // observed 2026-08-14). See `RPGState.totalReviewsCompleted`'s doc
-        // comment.
+        // `RPGState.totalReviewsCompleted` — that field's hand-incremented
+        // writers can undercount against the real review history (most
+        // visibly, the kana drill never touches it at all), which is exactly
+        // this figure's bug (53 shown vs. 74 real reviews, observed
+        // 2026-08-14). See `RPGState.totalReviewsCompleted`'s doc comment
+        // for the full list of writers.
         let cardRepository = CardRepository(modelContainer: modelContainer)
         let reviews = await cardRepository.activeProfileReviewCount()
         let allCards = await cardRepository.allCards()

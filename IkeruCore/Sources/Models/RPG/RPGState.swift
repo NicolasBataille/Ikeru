@@ -17,13 +17,28 @@ public final class RPGState {
     public var level: Int
 
     /// Legacy, **non-authoritative** counter. Historically meant "total
-    /// number of reviews completed across all sessions", but it is only ever
-    /// incremented by `SessionRPGPersistence.persistState` — the main SRS
-    /// session's grading path — so any review graded elsewhere (notably the
-    /// kana drill, `KanaDrillViewModel` → `CardRepository.gradeCard`, which
-    /// never touches `RPGState`) is journaled to `ReviewLog` but never
-    /// counted here. That divergence (53 shown on-device vs. 74 real
-    /// `ReviewLog` rows, observed 2026-08-14) is GAP-13.
+    /// number of reviews completed across all sessions", but three
+    /// independent call sites hand-increment it and can drift out of sync
+    /// with the real review history in `ReviewLog`:
+    /// - `SessionRPGPersistence.persistState` — the main SRS session's
+    ///   grading path — bumps it by 1 per card graded, with a matching
+    ///   `ReviewLog` row.
+    /// - `KanaDrillViewModel` → `CardRepository.gradeCard` (the kana drill)
+    ///   writes a `ReviewLog` row but **never touches `RPGState` at all** —
+    ///   this is the gap GAP-13 fixes: 53 shown on-device vs. 74 real
+    ///   `ReviewLog` rows for the same profile, observed 2026-08-14.
+    /// - `WatchConnectivityManager.processWatchResult` bumps it by
+    ///   `result.totalQuestions` for a `.kanaQuiz` drill result. As of
+    ///   commit f020439 the primary Watch path
+    ///   (`processWatchQuizBatch`) grades each answer through
+    ///   `CardRepository.gradeCard(surface: "watch")` first — producing a
+    ///   real `ReviewLog` — and only then calls `processWatchResult` with a
+    ///   count derived from what actually got graded, so that path is
+    ///   journal-consistent. A *direct* `WatchSessionResult` message
+    ///   (`WatchConnectivityManager.swift`'s doc comment: "a legacy
+    ///   aggregate-only … or an old Watch build") still bumps the counter
+    ///   with **no matching `ReviewLog`** — GAP-08's territory, not fixed
+    ///   here.
     ///
     /// **Do not read this field for anything display-facing** (the Tatami
     /// eligibility gate, the "cumulative competence" figure, a data export's
@@ -34,12 +49,10 @@ public final class RPGState {
     /// `BackupService.RPGSnapshot`) don't need a schema change, and because
     /// `HomeViewModel`'s first-session-of-lifetime onboarding heuristic
     /// (`HomeView.evaluateFirstSessionDailyTermPrompt`) still keys off its
-    /// 0 → >0 transition specifically at the end of a main SRS session — a
-    /// narrower question ("has this profile ever finished a session-mode
-    /// review") than the lifetime review count, which this field still
-    /// answers correctly for that one purpose. Still written by
-    /// `SessionRPGPersistence`; still merged by `SyncMergeRules.mergeCounters`
-    /// (`max()`, rule 3) alongside the other monotone counters.
+    /// 0 → >0 transition after a main SRS session specifically. Still
+    /// written by `SessionRPGPersistence` and `WatchConnectivityManager`;
+    /// still merged by `SyncMergeRules.mergeCounters` (`max()`, rule 3)
+    /// alongside the other monotone counters.
     public var totalReviewsCompleted: Int
 
     /// JSON-encoded RPGAttribute array. Use `attributes`/`setAttributes(_:)` accessors.
