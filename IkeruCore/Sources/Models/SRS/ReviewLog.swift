@@ -72,9 +72,12 @@ public final class ReviewLog {
     // `docs/design-specs/2026-08-10-cloud-sync-design.md` §5.1). `ReviewLog`
     // is append-only per spec §3 (conflict-free by construction), but it
     // still needs `updatedAt`/`syncedAt` to drive the push delta —
-    // `deletedAt` is carried for schema symmetry even though a review log is
-    // never expected to be soft-deleted in practice. Nothing reads or writes
-    // any of the three yet; that wiring is a later lot.
+    // `deletedAt` is NOT decorative: a review log is tombstoned when its card
+    // is (`CardModelActor.deleteCard`, or a profile deletion cascading
+    // through its cards), so the deleted card's history stops counting
+    // locally and stops being replayable by merge rule 2 elsewhere. That is
+    // also why `SyncModelActor.pushDirtyReviewLogs` selects on `isDirty`
+    // rather than `syncedAt == nil` — see the note there.
 
     /// Local modification clock. Defaults to the Unix epoch at the property
     /// level so the `.lightweight` V3→V4 migration can backfill existing

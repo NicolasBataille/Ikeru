@@ -282,7 +282,27 @@ final class CloudBackupManager: ObservableObject {
             rpg.lootBoxesData = snapshot.rpgState.lootBoxesData
         }
 
-        // Restore cards: delete existing cards, then re-create from snapshot
+        // Restore cards: delete existing cards, then re-create from snapshot.
+        //
+        // ⚠️ This is the ONE remaining hard delete of a synced entity, and it
+        // is left hard deliberately. Two reasons:
+        //
+        //  1. It is unreachable today. `iCloudEnabled` is a hard-coded
+        //     `false`, so `container` is always nil and both `backup` and
+        //     `restore` bail with `.iCloudUnavailable` long before reaching
+        //     this function. Nothing in production runs this line.
+        //  2. Converting it is not a one-liner. The loop below re-inserts
+        //     cards carrying the snapshot's ORIGINAL ids; tombstoning instead
+        //     of deleting would leave the store with two rows sharing one
+        //     `id` (there is no `.unique` attribute on `Card.id`), which is
+        //     worse than the dormant bug. A correct version has to update
+        //     matching cards in place and tombstone only the ones absent from
+        //     the snapshot.
+        //
+        // So: if `iCloudEnabled` is ever flipped to `true`, this must be
+        // rewritten first — cards wiped here leave no `deleted_at` behind and
+        // would be re-inserted by the next Supabase pull that rewinds its
+        // cursor. Tracked as an open item on the GAP-15 tombstone work.
         let existingCards = (try? context.fetch(FetchDescriptor<Card>())) ?? []
         for card in existingCards {
             context.delete(card)

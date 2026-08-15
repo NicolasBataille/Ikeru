@@ -417,9 +417,11 @@ actor CardModelActor {
     }
 
     /// Fetches the currently-active UserProfile, or the oldest as a fallback.
+    /// Both lookups exclude tombstoned profiles — see the identical helper in
+    /// `VocabularyModelActor` for why the fallback in particular must filter.
     private func fetchActiveProfile() -> UserProfile? {
         if let id = activeProfileID() {
-            let predicate = #Predicate<UserProfile> { $0.id == id }
+            let predicate = #Predicate<UserProfile> { $0.id == id && $0.deletedAt == nil }
             var descriptor = FetchDescriptor<UserProfile>(predicate: predicate)
             descriptor.fetchLimit = 1
             if let profile = (try? modelContext.fetch(descriptor))?.first {
@@ -427,6 +429,7 @@ actor CardModelActor {
             }
         }
         var descriptor = FetchDescriptor<UserProfile>(
+            predicate: #Predicate { $0.deletedAt == nil },
             sortBy: [SortDescriptor(\.createdAt, order: .forward)]
         )
         descriptor.fetchLimit = 1
@@ -435,9 +438,15 @@ actor CardModelActor {
 
     /// Returns cards belonging to the active profile (including legacy
     /// orphans with `profile == nil`, once migrated). See `attachOrphanCards`.
+    ///
+    /// Tombstoned cards are filtered in memory: `profile.cards` is a
+    /// SwiftData relationship, so no `#Predicate` applies to it. This one
+    /// traversal feeds `allCards()`, `activeProfileReviewLogs()` and the data
+    /// export, so missing it would leak deleted cards into three surfaces at
+    /// once.
     private func activeProfileCards() -> [Card] {
         guard let profile = fetchActiveProfile() else { return [] }
-        return profile.cards ?? []
+        return (profile.cards ?? []).filter { $0.deletedAt == nil }
     }
 
     /// The active profile's `desiredRetention`, clamped to
@@ -486,7 +495,7 @@ actor CardModelActor {
     }
 
     func card(by id: UUID) -> CardDTO? {
-        let predicate = #Predicate<Card> { $0.id == id }
+        let predicate = #Predicate<Card> { $0.id == id && $0.deletedAt == nil }
         let descriptor = FetchDescriptor(predicate: predicate)
         let results = (try? modelContext.fetch(descriptor)) ?? []
         return results.first?.toDTO()
@@ -501,7 +510,10 @@ actor CardModelActor {
     /// Safe to call on every launch — no-op once all cards have a profile.
     func attachOrphanCards() throws {
         guard let fallback = fetchActiveProfile() else { return }
-        let predicate = #Predicate<Card> { $0.profile == nil }
+        // Tombstoned orphans stay orphans: re-attaching a deleted card to a
+        // profile would put it back in `activeProfileCards()`'s reach the
+        // moment anything stopped filtering.
+        let predicate = #Predicate<Card> { $0.profile == nil && $0.deletedAt == nil }
         let descriptor = FetchDescriptor(predicate: predicate)
         guard let orphans = try? modelContext.fetch(descriptor), !orphans.isEmpty else { return }
         for card in orphans { card.profile = fallback }
@@ -509,20 +521,36 @@ actor CardModelActor {
         Logger.srs.info("Attached \(orphans.count) orphan cards to profile: \(fallback.displayName)")
     }
 
+    /// Soft-deletes a card: stamps `deletedAt`/`updatedAt` instead of
+    /// destroying the row, so the deletion is something the push can carry
+    /// (`deleted_at`) and a later pull can never undo. A hard delete left the
+    /// server row alive with `deleted_at = null`; any pull-cursor rewind
+    /// re-inserted the card.
+    ///
+    /// Cascades to the card's review logs by hand — the `@Relationship`'s
+    /// `.cascade` rule only fires on a real `modelContext.delete(_:)`. Two
+    /// reasons this matters: `allReviewLogs(from:to:)` fetches `ReviewLog`
+    /// directly (no card traversal to filter on), so orphaned logs would keep
+    /// feeding statistics for a card the learner deleted; and a live log left
+    /// on the server is exactly the material merge rule 2 replays from.
     func deleteCard(by id: UUID) throws {
-        let predicate = #Predicate<Card> { $0.id == id }
+        let predicate = #Predicate<Card> { $0.id == id && $0.deletedAt == nil }
         let descriptor = FetchDescriptor(predicate: predicate)
         guard let cards = try? modelContext.fetch(descriptor),
               let card = cards.first else {
             return
         }
-        modelContext.delete(card)
+        let now = Date()
+        card.tombstone(at: now)
+        for log in card.reviewLogs ?? [] {
+            log.tombstone(at: now)
+        }
         try modelContext.save()
-        Logger.srs.debug("Deleted card: \(card.front)")
+        Logger.srs.debug("Tombstoned card: \(card.front)")
     }
 
     func setJLPTLevel(_ level: JLPTLevel?, for cardId: UUID) throws {
-        let predicate = #Predicate<Card> { $0.id == cardId }
+        let predicate = #Predicate<Card> { $0.id == cardId && $0.deletedAt == nil }
         let descriptor = FetchDescriptor(predicate: predicate)
         guard let cards = try? modelContext.fetch(descriptor),
               let card = cards.first else {
@@ -543,7 +571,7 @@ actor CardModelActor {
     func dueCards(before date: Date) -> [CardDTO] {
         guard let profileID = fetchActiveProfile()?.id else { return [] }
         let predicate = #Predicate<Card> {
-            $0.profile?.id == profileID && $0.dueDate < date
+            $0.profile?.id == profileID && $0.dueDate < date && $0.deletedAt == nil
         }
         let descriptor = FetchDescriptor(predicate: predicate)
         let results = (try? modelContext.fetch(descriptor)) ?? []
@@ -556,7 +584,7 @@ actor CardModelActor {
     func dueCardsSortedByDueDate(before date: Date) -> [CardDTO] {
         guard let profileID = fetchActiveProfile()?.id else { return [] }
         let predicate = #Predicate<Card> {
-            $0.profile?.id == profileID && $0.dueDate < date
+            $0.profile?.id == profileID && $0.dueDate < date && $0.deletedAt == nil
         }
         let descriptor = FetchDescriptor<Card>(
             predicate: predicate,
@@ -572,7 +600,7 @@ actor CardModelActor {
     func leechCards() -> [CardDTO] {
         guard let profileID = fetchActiveProfile()?.id else { return [] }
         let predicate = #Predicate<Card> {
-            $0.profile?.id == profileID && $0.leechFlag
+            $0.profile?.id == profileID && $0.leechFlag && $0.deletedAt == nil
         }
         let descriptor = FetchDescriptor(predicate: predicate)
         let results = (try? modelContext.fetch(descriptor)) ?? []
@@ -586,7 +614,7 @@ actor CardModelActor {
         guard let profileID = fetchActiveProfile()?.id else { return [] }
         let raw = type.rawValue
         let predicate = #Predicate<Card> {
-            $0.profile?.id == profileID && $0.typeRawValue == raw
+            $0.profile?.id == profileID && $0.typeRawValue == raw && $0.deletedAt == nil
         }
         let descriptor = FetchDescriptor(predicate: predicate)
         let results = (try? modelContext.fetch(descriptor)) ?? []
@@ -603,7 +631,7 @@ actor CardModelActor {
         exerciseType: String? = nil,
         surface: String? = nil
     ) throws {
-        let predicate = #Predicate<Card> { $0.id == cardId }
+        let predicate = #Predicate<Card> { $0.id == cardId && $0.deletedAt == nil }
         let descriptor = FetchDescriptor(predicate: predicate)
         guard let cards = try? modelContext.fetch(descriptor),
               let card = cards.first else {
@@ -660,19 +688,20 @@ actor CardModelActor {
 
     func reviewLogs(for cardId: UUID) -> [ReviewLogDTO] {
         // Fetch via the card's relationship for reliability
-        let predicate = #Predicate<Card> { $0.id == cardId }
+        let predicate = #Predicate<Card> { $0.id == cardId && $0.deletedAt == nil }
         let descriptor = FetchDescriptor(predicate: predicate)
         guard let cards = try? modelContext.fetch(descriptor),
               let card = cards.first,
               let logs = card.reviewLogs else {
             return []
         }
-        return logs.map { $0.toDTO() }
+        // Relationship traversal — filtered in memory, no predicate applies.
+        return logs.filter { $0.deletedAt == nil }.map { $0.toDTO() }
     }
 
     func allReviewLogs(from startDate: Date, to endDate: Date) -> [ReviewLogDTO] {
         let predicate = #Predicate<ReviewLog> {
-            $0.timestamp >= startDate && $0.timestamp <= endDate
+            $0.timestamp >= startDate && $0.timestamp <= endDate && $0.deletedAt == nil
         }
         let descriptor = FetchDescriptor(predicate: predicate)
         let results = (try? modelContext.fetch(descriptor)) ?? []
@@ -684,11 +713,17 @@ actor CardModelActor {
     /// rather than fetching every log in the store — so no other profile's
     /// history is reachable. Orphan logs whose card was deleted are omitted
     /// (they can't be attributed to a profile, so they never leak into exports).
+    /// Broken into statements rather than one chain on purpose: adding the
+    /// `deletedAt` filter to the fluent `flatMap → sorted → map` pushed the
+    /// expression past the type-checker's budget ("unable to type-check this
+    /// expression in reasonable time"). Same behaviour, annotated steps.
     func activeProfileReviewLogs() -> [ReviewLogDTO] {
-        activeProfileCards()
-            .flatMap { $0.reviewLogs ?? [] }
-            .sorted { $0.timestamp < $1.timestamp }
-            .map { $0.toDTO() }
+        let logs: [ReviewLog] = activeProfileCards().flatMap { $0.reviewLogs ?? [] }
+        // Relationship traversal — tombstoned logs are invisible to any
+        // `#Predicate`, so they are dropped here.
+        let live: [ReviewLog] = logs.filter { $0.deletedAt == nil }
+        let ordered: [ReviewLog] = live.sorted { $0.timestamp < $1.timestamp }
+        return ordered.map { $0.toDTO() }
     }
 
     /// Exercise outcomes (listening / shadowing) for the active profile only,
@@ -699,7 +734,7 @@ actor CardModelActor {
     func activeProfileExerciseOutcomes() -> [ExerciseOutcomeLogDTO] {
         guard let profileID = fetchActiveProfile()?.id else { return [] }
         let descriptor = FetchDescriptor<ExerciseOutcomeLog>(
-            predicate: #Predicate { $0.profileID == profileID },
+            predicate: #Predicate { $0.profileID == profileID && $0.deletedAt == nil },
             sortBy: [SortDescriptor(\.timestamp, order: .forward)]
         )
         let logs = (try? modelContext.fetch(descriptor)) ?? []
@@ -735,7 +770,9 @@ actor CardModelActor {
         guard let profileID = fetchActiveProfile()?.id else { return 0 }
         let raw = skill.rawValue
         var descriptor = FetchDescriptor<ExerciseOutcomeLog>(
-            predicate: #Predicate { $0.profileID == profileID && $0.skillRawValue == raw },
+            predicate: #Predicate {
+                $0.profileID == profileID && $0.skillRawValue == raw && $0.deletedAt == nil
+            },
             sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
         )
         descriptor.fetchLimit = limit
@@ -753,6 +790,7 @@ actor CardModelActor {
         let descriptor = FetchDescriptor<ExerciseOutcomeLog>(
             predicate: #Predicate {
                 $0.profileID == profileID && $0.skillRawValue == raw && $0.timestamp >= cutoff
+                    && $0.deletedAt == nil
             }
         )
         let logs = (try? modelContext.fetch(descriptor)) ?? []

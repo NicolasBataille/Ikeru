@@ -41,7 +41,11 @@ public final class ProfileViewModel {
     /// Fetches all profiles and selects the active one from persisted id.
     /// Falls back to the oldest profile on cold launch and persists that choice.
     public func loadProfile() {
+        // Tombstoned profiles are excluded everywhere: they must not appear in
+        // the switcher, must not be re-selectable, and must not count towards
+        // `deleteProfile`'s "never delete the last profile" guard.
         let descriptor = FetchDescriptor<UserProfile>(
+            predicate: #Predicate { $0.deletedAt == nil },
             sortBy: [SortDescriptor(\.createdAt, order: .forward)]
         )
         let profiles = (try? modelContext.fetch(descriptor)) ?? []
@@ -114,8 +118,24 @@ public final class ProfileViewModel {
         Logger.ui.info("Switched to profile: \(profile.displayName)")
     }
 
-    /// Deletes a profile. Cascades to RPGState + cards (+ their ReviewLogs)
-    /// via the SwiftData relationship rule declared on `UserProfile`.
+    /// Soft-deletes a profile: stamps `deletedAt`/`updatedAt` on the profile
+    /// and, **by hand**, on everything the old hard delete used to cascade to.
+    ///
+    /// The cascade is manual now and that is the whole subtlety of this
+    /// method. `UserProfile` declares `@Relationship(deleteRule: .cascade)`
+    /// for `cards` and `rpgState`, and `Card` declares one for `reviewLogs` —
+    /// but SwiftData only runs a delete rule on a real
+    /// `modelContext.delete(_:)`. Stamping `deletedAt` on the profile alone
+    /// would leave its cards, review logs and RPG state fully live: still
+    /// pushed by `SyncModelActor`, still counted by anything that fetches
+    /// `Card`/`ReviewLog` directly rather than through the profile. So this
+    /// walks the same graph the delete rule used to walk, plus
+    /// `ExerciseOutcomeLog` (scoped by a scalar `profileID`, never cascaded
+    /// even before).
+    ///
+    /// Visible behaviour is unchanged: the profile disappears from the
+    /// switcher, its data stops counting, and now it also stays gone after a
+    /// pull-cursor reset instead of being re-inserted from the server.
     ///
     /// Deleting the *last* remaining profile is refused: this app has no
     /// signed-out state, and driving the user back to onboarding after a
@@ -147,17 +167,14 @@ public final class ProfileViewModel {
         // dictionary genuinely per-profile needs a schema migration
         // (IkeruSchemaV3) — flagging for a follow-up task.
         //
-        // ExerciseOutcomeLog is scoped by a scalar `profileID` (not a
-        // relationship), so it does NOT cascade with the profile the way Card /
-        // ReviewLog / RPGState do — delete its rows explicitly so no orphaned
-        // outcome history lingers after the profile is gone.
+        // The SwiftData half of the cascade — cards, their review logs, the
+        // RPG state, and the scalar-scoped ExerciseOutcomeLog rows — lives in
+        // `ProfileDeletion.tombstoneGraph` so it can actually be exercised by
+        // a test (see that function's doc comment: this file's own test suite
+        // cannot be run today). It does not save; the single `save()` below
+        // commits the whole cascade atomically.
         let deletedID = profile.id
-        let outcomeDescriptor = FetchDescriptor<ExerciseOutcomeLog>(
-            predicate: #Predicate { $0.profileID == deletedID }
-        )
-        if let outcomes = try? modelContext.fetch(outcomeDescriptor) {
-            for outcome in outcomes { modelContext.delete(outcome) }
-        }
+        ProfileDeletion.tombstoneGraph(of: profile, in: modelContext)
 
         // Same reasoning for the per-profile UserDefaults onboarding flags
         // (swipe tutorial, first-session daily-term prompt) — they're keyed by
@@ -170,7 +187,6 @@ public final class ProfileViewModel {
         // with the SwiftData delete below and would otherwise linger forever.
         MasteryBookSnapshotStore.clear(profileID: deletedID)
 
-        modelContext.delete(profile)
         do {
             try modelContext.save()
             allProfiles.removeAll { $0.id == profile.id }

@@ -223,7 +223,9 @@ struct DeleteProfileSheet: View {
 
     @MainActor
     private func loadSummary() async {
-        let cards = profile.cards ?? []
+        // Relationship traversal — no `#Predicate` reaches it, so filter here
+        // or already-deleted cards inflate the "N cards" the sheet warns about.
+        let cards = (profile.cards ?? []).filter { $0.deletedAt == nil }
         let rpg = profile.rpgState
         let created = profile.createdAt
         let days = max(0, Calendar.current.dateComponents([.day], from: created, to: Date()).day ?? 0)

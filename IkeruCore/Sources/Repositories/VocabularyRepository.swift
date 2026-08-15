@@ -171,9 +171,13 @@ actor VocabularyModelActor {
         return id
     }
 
+    /// Both lookups exclude tombstoned profiles. The *fallback* is the one
+    /// that matters: without the filter, deleting the active profile would
+    /// leave the "oldest profile" fallback resolving straight back to the
+    /// deleted one, and its cards/settings would keep driving the app.
     private func fetchActiveProfile() -> UserProfile? {
         if let id = activeProfileID() {
-            let predicate = #Predicate<UserProfile> { $0.id == id }
+            let predicate = #Predicate<UserProfile> { $0.id == id && $0.deletedAt == nil }
             var descriptor = FetchDescriptor<UserProfile>(predicate: predicate)
             descriptor.fetchLimit = 1
             if let profile = (try? modelContext.fetch(descriptor))?.first {
@@ -181,6 +185,7 @@ actor VocabularyModelActor {
             }
         }
         var descriptor = FetchDescriptor<UserProfile>(
+            predicate: #Predicate { $0.deletedAt == nil },
             sortBy: [SortDescriptor(\.createdAt, order: .forward)]
         )
         descriptor.fetchLimit = 1
@@ -205,8 +210,16 @@ actor VocabularyModelActor {
         meaning: String,
         jlptLevel: JLPTLevel?
     ) -> VocabularyEntryDTO {
-        // If a pre-tracked entry exists, promote it to dictionary
-        let predicate = #Predicate<VocabularyEntry> { $0.word == word }
+        // If a pre-tracked entry exists, promote it to dictionary.
+        //
+        // `deletedAt == nil` is load-bearing, not defensive: re-adding a word
+        // the learner previously deleted must mint a NEW entry, never revive
+        // the tombstoned one. Merge rule 4 (`SyncMergeRules.resolveWinner`)
+        // lets a tombstone win regardless of timestamp, so a revived row would
+        // be silently re-deleted by the next pull that carries the old
+        // `deleted_at` — the word would vanish again for no visible reason.
+        // See `SoftDeletable`'s "never un-tombstone" note.
+        let predicate = #Predicate<VocabularyEntry> { $0.word == word && $0.deletedAt == nil }
         let descriptor = FetchDescriptor(predicate: predicate)
         if let existing = (try? modelContext.fetch(descriptor))?.first {
             existing.isInDictionary = true
@@ -231,34 +244,49 @@ actor VocabularyModelActor {
     }
 
     func entry(by id: UUID) -> VocabularyEntryDTO? {
-        let predicate = #Predicate<VocabularyEntry> { $0.id == id }
+        let predicate = #Predicate<VocabularyEntry> { $0.id == id && $0.deletedAt == nil }
         let descriptor = FetchDescriptor(predicate: predicate)
         let results = (try? modelContext.fetch(descriptor)) ?? []
         return results.first?.toDTO()
     }
 
     func entry(byWord word: String) -> VocabularyEntryDTO? {
-        let predicate = #Predicate<VocabularyEntry> { $0.word == word }
+        let predicate = #Predicate<VocabularyEntry> { $0.word == word && $0.deletedAt == nil }
         let descriptor = FetchDescriptor(predicate: predicate)
         let results = (try? modelContext.fetch(descriptor)) ?? []
         return results.first?.toDTO()
     }
 
     func allEntries() -> [VocabularyEntryDTO] {
-        let predicate = #Predicate<VocabularyEntry> { $0.isInDictionary == true }
+        let predicate = #Predicate<VocabularyEntry> { $0.isInDictionary == true && $0.deletedAt == nil }
         let descriptor = FetchDescriptor(predicate: predicate, sortBy: [SortDescriptor(\.createdAt, order: .reverse)])
         let results = (try? modelContext.fetch(descriptor)) ?? []
         return results.map { $0.toDTO() }
     }
 
+    /// Soft-deletes an entry: stamps `deletedAt`/`updatedAt` instead of
+    /// destroying the row, so the deletion has something to push
+    /// (`deleted_at`) and survives a pull-cursor reset. A hard delete here
+    /// left the server row intact with `deleted_at = null`, and the entry
+    /// came back the next time the cursor rewound.
+    ///
+    /// Cascades to the entry's encounters by hand. The `@Relationship`'s
+    /// `.cascade` rule only fires on a real `modelContext.delete(_:)`, so
+    /// without this loop the encounters would stay live — visible to
+    /// `SyncModelActor.pushDirtyVocabularyEncounters` and, on the pull side,
+    /// re-materialising an encounter list for a word that no longer exists.
     func deleteEntry(by id: UUID) {
-        let predicate = #Predicate<VocabularyEntry> { $0.id == id }
+        let predicate = #Predicate<VocabularyEntry> { $0.id == id && $0.deletedAt == nil }
         let descriptor = FetchDescriptor(predicate: predicate)
         guard let entries = try? modelContext.fetch(descriptor),
               let entry = entries.first else { return }
-        modelContext.delete(entry)
+        let now = Date()
+        entry.tombstone(at: now)
+        for encounter in entry.encounters ?? [] {
+            encounter.tombstone(at: now)
+        }
         try? modelContext.save()
-        Logger.vocabulary.debug("Deleted vocab entry: \(entry.word)")
+        Logger.vocabulary.debug("Tombstoned vocab entry: \(entry.word)")
     }
 
     // MARK: - Encounter Logging
@@ -268,7 +296,7 @@ actor VocabularyModelActor {
         source: EncounterSource,
         contextSnippet: String
     ) {
-        let predicate = #Predicate<VocabularyEntry> { $0.id == entryId }
+        let predicate = #Predicate<VocabularyEntry> { $0.id == entryId && $0.deletedAt == nil }
         let descriptor = FetchDescriptor(predicate: predicate)
         guard let entries = try? modelContext.fetch(descriptor),
               let entry = entries.first else {
@@ -292,8 +320,10 @@ actor VocabularyModelActor {
         source: EncounterSource,
         contextSnippet: String
     ) {
-        // Find or create the entry
-        let predicate = #Predicate<VocabularyEntry> { $0.word == word }
+        // Find or create the entry. A tombstoned entry is NOT reused — see
+        // `addEntry`'s comment: reviving it would be undone by the next pull.
+        // Re-encountering a deleted word starts a fresh (pre-tracked) entry.
+        let predicate = #Predicate<VocabularyEntry> { $0.word == word && $0.deletedAt == nil }
         let descriptor = FetchDescriptor(predicate: predicate)
         let existing = (try? modelContext.fetch(descriptor))?.first
 
@@ -314,8 +344,12 @@ actor VocabularyModelActor {
         try? modelContext.save()
     }
 
+    /// Encounters for an entry. Filtered in memory as well as in the
+    /// predicate: `entry.encounters` is a SwiftData *relationship*, which no
+    /// `#Predicate` reaches — a tombstoned encounter would otherwise still
+    /// show up in the detail sheet's history list.
     func encounters(for entryId: UUID) -> [VocabularyEncounterDTO] {
-        let predicate = #Predicate<VocabularyEntry> { $0.id == entryId }
+        let predicate = #Predicate<VocabularyEntry> { $0.id == entryId && $0.deletedAt == nil }
         let descriptor = FetchDescriptor(predicate: predicate)
         guard let entries = try? modelContext.fetch(descriptor),
               let entry = entries.first,
@@ -323,6 +357,7 @@ actor VocabularyModelActor {
             return []
         }
         return encounters
+            .filter { $0.deletedAt == nil }
             .sorted { $0.timestamp > $1.timestamp }
             .map { $0.toDTO() }
     }
@@ -330,7 +365,9 @@ actor VocabularyModelActor {
     // MARK: - Drill Queries
 
     func dueEntries(before date: Date) -> [VocabularyEntryDTO] {
-        let predicate = #Predicate<VocabularyEntry> { $0.isInDictionary == true && $0.dueDate < date }
+        let predicate = #Predicate<VocabularyEntry> {
+            $0.isInDictionary == true && $0.dueDate < date && $0.deletedAt == nil
+        }
         let descriptor = FetchDescriptor(predicate: predicate)
         let results = (try? modelContext.fetch(descriptor)) ?? []
         return results.map { $0.toDTO() }
@@ -342,7 +379,7 @@ actor VocabularyModelActor {
         responseTimeMs: Int,
         now: Date
     ) {
-        let predicate = #Predicate<VocabularyEntry> { $0.id == entryId }
+        let predicate = #Predicate<VocabularyEntry> { $0.id == entryId && $0.deletedAt == nil }
         let descriptor = FetchDescriptor(predicate: predicate)
         guard let entries = try? modelContext.fetch(descriptor),
               let entry = entries.first else {
@@ -398,7 +435,10 @@ extension VocabularyEntry {
             lapseCount: lapseCount,
             isInDictionary: isInDictionary,
             createdAt: createdAt,
-            encounterCount: encounters?.count ?? 0
+            // Tombstoned encounters are excluded: this count is rendered in
+            // the dictionary list, and a relationship traversal sees deleted
+            // rows that no `#Predicate` filtered out.
+            encounterCount: (encounters ?? []).filter { $0.deletedAt == nil }.count
         )
     }
 }

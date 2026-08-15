@@ -115,18 +115,28 @@ actor SyncModelActor {
         return dirty.count
     }
 
-    // MARK: - Append-only tables — delta selection is EXACT here
+    // MARK: - Append-only tables — append-only in CONTENT, not in lifetime
     //
     // `review_logs` / `vocabulary_encounters` / `exercise_outcome_logs` rows
-    // are created once and never mutated afterward (design spec §3) — every
-    // instance's `init` sets `updatedAt = Date()` and `syncedAt = nil` at
-    // creation and nothing ever touches either field again except this
-    // actor. `syncedAt == nil` therefore identifies exactly the rows never
-    // yet pushed, with no staleness gap.
+    // are created once and their *payload* is never mutated afterward (design
+    // spec §3). They used to be selected with `syncedAt == nil` on the
+    // strength of that — "never pushed" being the only way such a row could
+    // be dirty.
+    //
+    // That stopped being true the moment deletions became tombstones. These
+    // rows are now cascade-tombstoned when their parent goes (a card's review
+    // logs, an entry's encounters, a profile's outcome logs), which is a
+    // mutation of an already-pushed row. Under `syncedAt == nil` such a
+    // tombstone would NEVER be pushed: the row reads as "already synced", the
+    // server keeps `deleted_at = null`, and the deleted card's review history
+    // comes back on the next device that pulls it — the exact resurrection
+    // this whole change exists to close, just one table deeper. They use the
+    // same `isDirty` rule as `cards`/`vocabulary_entries` now, whose
+    // `deletedAt > syncedAt` clause catches precisely this case.
 
     func pushDirtyReviewLogs(using transport: any SyncDataTransport, accessToken: String) async throws -> Int {
         let all = try modelContext.fetch(FetchDescriptor<ReviewLog>())
-        let dirty = all.filter { $0.syncedAt == nil }
+        let dirty = all.filter { isDirty(updatedAt: $0.updatedAt, deletedAt: $0.deletedAt, syncedAt: $0.syncedAt) }
         guard !dirty.isEmpty else { return 0 }
         for batch in dirty.chunked(into: Self.batchSize) {
             let rows = try batch.map { try SyncPayloadBuilder.row(for: $0) }
@@ -139,7 +149,7 @@ actor SyncModelActor {
 
     func pushDirtyVocabularyEncounters(using transport: any SyncDataTransport, accessToken: String) async throws -> Int {
         let all = try modelContext.fetch(FetchDescriptor<VocabularyEncounter>())
-        let dirty = all.filter { $0.syncedAt == nil }
+        let dirty = all.filter { isDirty(updatedAt: $0.updatedAt, deletedAt: $0.deletedAt, syncedAt: $0.syncedAt) }
         guard !dirty.isEmpty else { return 0 }
         for batch in dirty.chunked(into: Self.batchSize) {
             let rows = try batch.map { try SyncPayloadBuilder.row(for: $0) }
@@ -152,7 +162,7 @@ actor SyncModelActor {
 
     func pushDirtyExerciseOutcomeLogs(using transport: any SyncDataTransport, accessToken: String) async throws -> Int {
         let all = try modelContext.fetch(FetchDescriptor<ExerciseOutcomeLog>())
-        let dirty = all.filter { $0.syncedAt == nil }
+        let dirty = all.filter { isDirty(updatedAt: $0.updatedAt, deletedAt: $0.deletedAt, syncedAt: $0.syncedAt) }
         guard !dirty.isEmpty else { return 0 }
         for batch in dirty.chunked(into: Self.batchSize) {
             let rows = try batch.map { try SyncPayloadBuilder.row(for: $0) }

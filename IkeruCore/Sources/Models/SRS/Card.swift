@@ -68,10 +68,14 @@ public final class Card {
     // MARK: - Cloud sync (schema-only, lot 0)
     //
     // Added by `IkeruSchemaV4` (cloud-sync lot 0, see
-    // `docs/design-specs/2026-08-10-cloud-sync-design.md` §5.1). Nothing
-    // reads or writes these yet — no repository bumps `updatedAt` on
-    // mutation, nothing sets `deletedAt`, nothing sets `syncedAt`. That
-    // wiring is a later lot; this lot only adds the columns.
+    // `docs/design-specs/2026-08-10-cloud-sync-design.md` §5.1).
+    // `deletedAt` IS written in production: `CardModelActor.deleteCard`
+    // tombstones the card (and cascades to its `reviewLogs`) instead of
+    // hard-deleting it — see `SoftDeletable`. `syncedAt` is written by
+    // `SyncModelActor` on a successful push. `updatedAt` is bumped by the
+    // tombstone but still NOT by ordinary field mutations (e.g. FSRS state
+    // after a grade) — that gap is declared in `SyncModelActor`'s
+    // "cards / vocabulary_entries" note and is not closed here.
 
     /// Local modification clock. Defaults to the Unix epoch at the property
     /// level so the `.lightweight` V3→V4 migration can backfill existing

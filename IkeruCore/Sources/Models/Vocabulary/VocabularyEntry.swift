@@ -60,10 +60,14 @@ public final class VocabularyEntry {
     // MARK: - Cloud sync (schema-only, lot 0)
     //
     // Added by `IkeruSchemaV4` (cloud-sync lot 0, see
-    // `docs/design-specs/2026-08-10-cloud-sync-design.md` §5.1). Nothing
-    // reads or writes these yet — no repository bumps `updatedAt` on
-    // mutation, nothing sets `deletedAt`, nothing sets `syncedAt`. That
-    // wiring is a later lot; this lot only adds the columns.
+    // `docs/design-specs/2026-08-10-cloud-sync-design.md` §5.1).
+    // `deletedAt` IS written in production: `VocabularyModelActor.deleteEntry`
+    // tombstones the entry (and cascades to its `encounters`) instead of
+    // hard-deleting it — see `SoftDeletable`, including why a re-added word
+    // gets a NEW entry rather than reviving this one. `syncedAt` is written
+    // by `SyncModelActor`. `updatedAt` is bumped by the tombstone but still
+    // not by ordinary field mutations — the staleness gap declared in
+    // `SyncModelActor` is unchanged.
 
     /// Local modification clock. Defaults to the Unix epoch at the property
     /// level so the `.lightweight` V3→V4 migration can backfill existing

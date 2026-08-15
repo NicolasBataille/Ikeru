@@ -37,17 +37,23 @@ enum ActiveProfileResolver {
     /// Resolves the active `UserProfile` in the given context.
     /// If no id is persisted, falls back to the first profile (by createdAt) and
     /// persists that choice so the next call is stable.
+    /// Both lookups skip tombstoned profiles. Without the filter on the
+    /// *fallback*, deleting the active profile would immediately resolve
+    /// straight back to it (the persisted id lookup misses, the "oldest
+    /// profile" fallback finds the deleted row) and the whole app would keep
+    /// running on a profile the learner just deleted.
     static func fetchActiveProfile(in context: ModelContext) -> UserProfile? {
         if let id = activeProfileID() {
-            let predicate = #Predicate<UserProfile> { $0.id == id }
+            let predicate = #Predicate<UserProfile> { $0.id == id && $0.deletedAt == nil }
             var descriptor = FetchDescriptor<UserProfile>(predicate: predicate)
             descriptor.fetchLimit = 1
             if let profile = (try? context.fetch(descriptor))?.first {
                 return profile
             }
         }
-        // Fallback: oldest profile, persist its id.
+        // Fallback: oldest live profile, persist its id.
         var descriptor = FetchDescriptor<UserProfile>(
+            predicate: #Predicate { $0.deletedAt == nil },
             sortBy: [SortDescriptor(\.createdAt, order: .forward)]
         )
         descriptor.fetchLimit = 1

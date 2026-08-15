@@ -169,7 +169,7 @@ struct MainTabView: View {
             profileCreatedAt: { id in
                 let context = container.mainContext
                 let descriptor = FetchDescriptor<UserProfile>(
-                    predicate: #Predicate { $0.id == id }
+                    predicate: #Predicate { $0.id == id && $0.deletedAt == nil }
                 )
                 return (try? context.fetch(descriptor))?.first?.createdAt
             }
