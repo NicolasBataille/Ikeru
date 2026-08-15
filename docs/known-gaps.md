@@ -57,39 +57,83 @@ volume de test, pas un excès.
 ## B. Synchro cloud — résidus assumés dans le code
 
 ### GAP-03 — Une ligne dont l'horodatage serveur est illisible retente sans fin
-**Sévérité : basse.** `SyncPullActor.swift` (~:150 et ~:207). Si une ligne en
-tête de page a un `id` valide mais un `server_updated_at` absent ou non
-parsable, elle n'est jamais abandonnée de force : le curseur ne peut pas être
-posé sur une position qu'on ne sait pas lire. Choix assumé et commenté
-(« mieux vaut caler que fabriquer une position »), **mais aucun test ne le
-couvre**.
+**Sévérité : basse. Documenté et testé le 2026-08-15, comportement inchangé.**
+`SyncPullActor+StuckRowResolution.swift`'s `resolveStuckRow` (~L106). Si une
+ligne qui bloque la progression du curseur a un `id` valide mais un
+`server_updated_at` **absent, ou présent avec un type autre que `string`**,
+elle n'est jamais abandonnée de force : `resolveStuckRow` ne peut construire
+de `SyncCursorPosition` que depuis une valeur `.string` (stockée verbatim, cf.
+`SyncCursorPosition`'s doc comment). Choix assumé et commenté (« mieux vaut
+caler que fabriquer une position »).
 
-Pourquoi c'est laissé : le cas suppose une écriture serveur anormale (le trigger
-remplit toujours la colonne). Le risque est un blocage de table, pas une perte.
+Précision par rapport à la formulation d'origine (« absent ou non parsable ») :
+le garde-fou de `resolveStuckRow` teste uniquement `case .string(...)? =
+row["server_updated_at"]` — il ne PARSE jamais la valeur comme une date. Une
+chaîne présente mais sémantiquement invalide (ex. `"not-a-timestamp"`)
+satisfait donc ce garde et **est** abandonnée de force après
+`poisonDropThreshold` cycles, contrairement au cas « absent »/« non-string »
+ci-dessus — et cette valeur invalide est alors stockée verbatim comme
+curseur, ce qui ferait échouer la requête `or=` du prochain fetch réel
+(Postgres ne peut pas la caster en `timestamptz`) : un échec bruyant, pas une
+perte silencieuse, et atteignable seulement sous la même précondition
+« écriture serveur anormale » citée ci-dessous.
 
-Ce qui le fermerait : décider si on veut un compteur borné là aussi, ou au
-minimum écrire le test qui documente le comportement actuel.
+Pourquoi c'est laissé : le cas suppose une écriture serveur anormale (le
+trigger remplit toujours la colonne). Le risque reste un blocage de table (le
+pull réessaie indéfiniment, sans planter ni bloquer les autres tables de
+`pullOrder`), pas une perte. Décision : pas de compteur borné supplémentaire
+— la fenêtre de risque est déjà bornée en amont par la précondition
+« écriture serveur anormale ».
+
+Fermé par les tests : `SyncPullDivergenceTests+UnresolvableCursorRow.swift`
+(4 scénarios — tête de page avec clé absente, tête de page avec `.null`,
+milieu de page avec preuve que les lignes saines derrière ne sont pas
+perdues, et la clarification « chaîne invalide mais typée string » ci-dessus).
 
 ### GAP-04 — Adoption d'id `RPGState` : une ligne serveur orpheline permanente
-**Sévérité : basse.** `SyncPullActor.swift:705`. Après un pull échoué suivi d'un
-push réussi, un appareil réinstallé peut pousser un `RPGState` neuf alors que le
-serveur en détient déjà un pour le même profil. Le pull suivant les délivre tous
-les deux : l'un fusionne, l'autre déclenche la branche d'adoption d'id. Le
-système **se stabilise** (vérifié : pas de boucle) au prix d'une ligne serveur
-orpheline par profil touché, et d'un changement d'identifiant sur un `@Model`
-déjà persisté. Aucun compteur n'est perdu (fusion par `max()`).
+**Sévérité : basse. Documenté et testé le 2026-08-15, comportement inchangé.**
+`SyncPullActor.swift`'s `applyRPGStateRows`, branche d'adoption d'id (~L696-713).
+Après un pull échoué suivi d'un push réussi, un appareil réinstallé peut
+pousser un `RPGState` neuf alors que le serveur en détient déjà un pour le
+même profil. Le pull suivant les délivre tous les deux : l'un fusionne,
+l'autre déclenche la branche d'adoption d'id. Le système **se stabilise en UN
+seul cycle** (vérifié par test, y compris un second cycle à vide qui ne
+recrée rien et ne boucle pas) au prix d'une ligne serveur orpheline par
+profil touché, et d'un changement d'identifiant sur un `@Model` déjà
+persisté. Aucun compteur n'est perdu : le `RPGState` final porte le `max()`
+des trois sources (l'état local d'origine + les deux lignes serveur),
+vérifié champ par champ par le test.
 
-Ce qui le fermerait : soit accepter et documenter, soit un nettoyage serveur des
-`rpg_states` orphelins.
+Décision : **accepter** l'orpheline plutôt que construire un nettoyage
+serveur — son coût est une ligne inatteignable par profil concerné (aucune
+perte de XP/niveau/streak, la fusion `max()` couvre déjà ça), sur un projet
+sans UI admin qui l'exposerait ; un job de nettoyage serait plus de surface
+que le problème ne le justifie.
+
+Fermé par le test : `SyncPullDivergenceTests+RPGStateOrphan.swift`.
 
 ### GAP-05 — `ISO8601DateFormatter` tronque à la milliseconde
-**Sévérité : informative.** Le serveur renvoie 6 chiffres de microsecondes ;
-`…22.968936+00:00` et `…22.968999+00:00` donnent le **même** `Date`. Analysé :
-conséquence possible = redélivrance de la queue d'une même milliseconde, jamais
-de perte, parce que le curseur est toujours posé sur une ligne réellement
-présente dans la page donc strictement en avant. La branche `eq` du filtre
-utilise la **chaîne verbatim**, jamais un `Date` re-sérialisé — c'est ce qui
-protège.
+**Sévérité : informative. Analyse reconfirmée et verrouillée par test le
+2026-08-15 — comportement inchangé, comme demandé.** Le serveur renvoie 6
+chiffres de microsecondes ; `…22.968936+00:00` et `…22.968999+00:00` donnent
+le **même** `Date` — reconfirmé empiriquement pour cette tâche (un
+`ISO8601DateFormatter` autonome retourne le même `timeIntervalSince1970` pour
+les deux chaînes). Analysé : conséquence possible = redélivrance de la queue
+d'une même milliseconde, jamais de perte, parce que le curseur est toujours
+posé sur une ligne réellement présente dans la page donc strictement en
+avant. La branche `eq` du filtre utilise la **chaîne verbatim**, jamais un
+`Date` re-sérialisé — c'est ce qui protège.
+
+Verrouillé par test contre un transport qui filtre en pleine précision par
+comparaison de **chaîne** (ce que fait réellement Postgres côté serveur — à
+la différence de `FakeSyncServer`, qui re-parse `since.timestamp` en `Date`
+pour son propre filtrage et partagerait donc le même angle mort, le rendant
+impropre à prouver quoi que ce soit sur ce risque précis) :
+`SyncPullDivergenceTests+MillisecondTruncation.swift` — confirme la
+troncature elle-même, que `advanceCursor` peut retenir la ligne
+chronologiquement la plus ancienne des deux lors d'une égalité par
+troncature, et qu'un cycle suivant redélivre bien l'autre ligne sans rien
+perdre ni dupliquer.
 
 À ne pas « corriger » sans refaire l'analyse : c'est le genre de détail qu'on
 casse en croyant l'améliorer.
