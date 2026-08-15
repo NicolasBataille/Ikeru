@@ -570,11 +570,46 @@ existe, mais rien ne l'exerce. Aucun parcours utilisateur n'est testé de bout e
 bout.
 
 ### GAP-10 — La CI ne lance qu'un sous-ensemble filtré des tests Core
-**Sévérité : moyenne, contrainte externe.** Le filtre couvre ~40 motifs de suites
-sur 1015 cas `@Test`. Ce n'est **pas** du code non testé : c'est l'image
-`macos-15` dont la bibliothèque Swift Testing (1501) SIGSEGV sur une suite
-legacy, alors que la toolchain locale (1902) passe tout. Débloqué par un bump de
-l'image, pas par du travail sur nos tests.
+**Sévérité : relevée de moyenne à HAUTE le 2026-08-15, après mesure.** L'entrée
+disait « ~40 motifs sur 1015 cas `@Test` » sans jamais chiffrer ce qui échappe
+au filtre. C'est fait, contre les **vrais** identifiants de test
+(`swift test --list-tests`, 1253 tests) confrontés au regex `--filter` extrait
+de `ci.yml` :
+
+| | |
+|---|---:|
+| tests Core au total | 1253 |
+| **exécutés par la CI** | **666 (53 %)** |
+| **jamais exécutés** | **587 (47 %)** |
+
+Les plus grosses suites muettes : `IkeruThemeTests` (39), `PitchAccentServiceTests`
+(27), `PronunciationScorerTests` (22), `ContentLoadingServiceTests` (18),
+`ShadowingExerciseTests` (18), `KanjiGraphRepositoryTests` (16),
+`StrokeAccuracyServiceTests` (15), `KanaGroupTests` (13), `StrokeDataServiceTests`
+(13).
+
+⚠️ Un premier comptage avait donné « 106 des 177 suites » en comptant les
+déclarations `struct …Tests` à la regex. **Chiffre gonflé** : `--filter` matche
+l'identifiant complet, donc une suite imbriquée est couverte par son parent.
+Seul le comptage sur les identifiants réels vaut. Ne pas ressortir le premier.
+
+**Le défaut de conception compte plus que le pourcentage** : une *allowlist*
+échoue dans le mauvais sens. Toute suite **nouvelle** est exclue par défaut, en
+silence, jusqu'à ce que quelqu'un ajoute son nom à la main. On peut écrire des
+tests qui ne tourneront jamais sans qu'aucun signal ne le dise.
+
+**Ce qui a été admis trop vite** : « débloqué par un bump de l'image, pas par du
+travail sur nos tests » supposait que la suite fautive est intouchable. Elle
+n'a jamais été identifiée. Le commentaire de `ci.yml` dit « unbisectable
+**localement** » — exact — mais l'entrée avait glissé vers « unbisectable »,
+ce qui n'est pas la même affirmation. Ça se bisecte très bien **là où ça
+reproduit** : sur le runner.
+
+Un job sonde temporaire et non bloquant (`core-tests-crasher-probe`) lance la
+suite complète en série et rapporte le dernier test démarré avant le SIGSEGV,
+plus les tests démarrés qui n'ont jamais rendu de verdict. Une fois le coupable
+nommé : inverser l'allowlist en **quarantaine nommée**, pour que les nouvelles
+suites soient couvertes par défaut. Supprimer la sonde à ce moment-là.
 
 ---
 

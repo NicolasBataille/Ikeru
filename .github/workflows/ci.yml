@@ -270,6 +270,73 @@ jobs:
             -only-testing:IkeruTests/StoreRecoveryNoticeTests \
             CODE_SIGNING_ALLOWED=NO
 
+  core-tests-crasher-probe:
+    name: Probe (temporary) — which suite SIGSEGVs on the runner
+    runs-on: macos-15
+    needs: lint
+    # TEMPORARY, DIAGNOSTIC, AND DELIBERATELY NON-BLOCKING (see GAP-10).
+    #
+    # The `test` job above runs a `--filter` ALLOWLIST because the runner's
+    # Swift Testing library SIGSEGVs mid-run on some suite. The standing
+    # comment there calls that suite "unbisectable locally" — true, and it
+    # quietly became "unbisectable", which is not the same claim. It has
+    # never been bisected HERE, where it actually reproduces.
+    #
+    # Cost of that gap, measured 2026-08-15 against real test IDs rather than
+    # estimated: 587 of 1253 Core tests (47%) are never executed by CI. An
+    # allowlist also fails open in the wrong direction — every NEW suite is
+    # excluded by default, silently, until someone adds its name by hand.
+    #
+    # This job runs the whole suite once, serially, and reports the last test
+    # it started before dying. `continue-on-error` means it can never turn the
+    # build red. DELETE IT once the crasher is named and the `test` job is
+    # inverted to a named quarantine.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s "$(ls -d /Applications/Xcode*.app | sort -V | tail -1)/Contents/Developer"
+
+      - name: Report the toolchain (the crash is toolchain-specific)
+        run: swift --version
+
+      - name: Run the FULL Core suite and name the last test standing
+        run: |
+          cd IkeruCore
+          set +e
+          # --no-parallel so "the last test started" is unambiguous rather
+          # than one of N interleaved candidates.
+          swift test --no-parallel 2>&1 | tee /tmp/full-core.log
+          STATUS=${PIPESTATUS[0]}
+          set -e
+          echo "::group::exit status"
+          echo "swift test exited ${STATUS} (139 = SIGSEGV, 0 = the crash is gone)"
+          echo "::endgroup::"
+          echo "::group::last 40 lines before death"
+          tail -40 /tmp/full-core.log
+          echo "::endgroup::"
+          echo "::group::last 25 tests STARTED (the crasher is at the bottom)"
+          grep -o 'Test [^ ]* started' /tmp/full-core.log | tail -25
+          echo "::endgroup::"
+          echo "::group::started but never recorded a result — prime suspects"
+          # A suite that starts and never passes/fails is the one that took
+          # the process down with it.
+          grep -oE '^..Test "?[^"]+"? started' /tmp/full-core.log \
+            | sed -E 's/^..Test "?([^"]+)"? started.*/\1/' | sort -u > /tmp/started.txt
+          grep -oE '^..Test "?[^"]+"? (passed|failed|skipped)' /tmp/full-core.log \
+            | sed -E 's/^..Test "?([^"]+)"? (passed|failed|skipped).*/\1/' | sort -u > /tmp/finished.txt
+          comm -23 /tmp/started.txt /tmp/finished.txt
+          echo "::endgroup::"
+
+      - name: Keep the full log for download
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: full-core-test-log
+          path: /tmp/full-core.log
+          retention-days: 7
+
   device-build-check:
     name: Device Build (no signing)
     runs-on: macos-15
