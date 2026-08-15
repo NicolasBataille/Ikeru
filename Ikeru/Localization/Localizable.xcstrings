@@ -11473,24 +11473,6 @@
         }
       }
     },
-    "Vocabulary, kanji readings, grammar notes, and example sentences are original content written for Ikeru." : {
-      "comment" : "AttributionView header note clarifying content provenance",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Vocabulary, kanji readings, grammar notes, and example sentences are original content written for Ikeru."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Le vocabulaire, les lectures de kanji, les notes de grammaire et les phrases d'exemple sont un contenu original rédigé pour Ikeru."
-          }
-        }
-      }
-    },
     "Stroke order data for kanji characters. Provides the vector paths used in stroke order animations and tracing exercises." : {
       "comment" : "AttributionView — KanjiVG entry description",
       "extractionState" : "manual",
@@ -12851,6 +12833,60 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kana, kanji, grammaire et conversation — des bases de débutant complètes, un pas à la fois, à ton rythme."
+          }
+        }
+      }
+    },
+    "Japanese example sentences reproduced unchanged from Tatoeba; French lightly normalized (spacing, apostrophes). Its audio is licensed separately, per contributor, unused." : {
+      "comment" : "AttributionView — Tatoeba entry description",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Japanese example sentences reproduced unchanged from Tatoeba; French lightly normalized (spacing, apostrophes). Its audio is licensed separately, per contributor, unused."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les phrases d'exemple japonaises sont reproduites telles quelles depuis Tatoeba ; le français est légèrement normalisé (espaces, apostrophes). Son audio est sous licence distincte, par contributeur, non utilisé."
+          }
+        }
+      }
+    },
+    "Kanji readings and meanings in the content bundle are derived from the KANJIDIC database, maintained by the EDRDG at Monash University." : {
+      "comment" : "AttributionView — KANJIDIC entry description",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kanji readings and meanings in the content bundle are derived from the KANJIDIC database, maintained by the EDRDG at Monash University."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les lectures et les sens des kanji du contenu embarqué sont dérivés de la base KANJIDIC, maintenue par l'EDRDG à l'université Monash."
+          }
+        }
+      }
+    },
+    "Vocabulary and grammar notes are original content written for Ikeru. Kanji readings come from KANJIDIC, and most example sentences from the Tatoeba corpus — both credited below." : {
+      "comment" : "AttributionView — header, provenance summary",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vocabulary and grammar notes are original content written for Ikeru. Kanji readings come from KANJIDIC, and most example sentences from the Tatoeba corpus — both credited below."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le vocabulaire et les notes de grammaire sont écrits pour Ikeru. Les lectures des kanji viennent de KANJIDIC, et la plupart des phrases d'exemple du corpus Tatoeba — les deux sont crédités ci-dessous."
           }
         }
       }
