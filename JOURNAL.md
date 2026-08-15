@@ -23,6 +23,109 @@ raisonnement, les mesures, et les décisions.
 
 ---
 
+## 2026-08-15 — Corpus de phrases : 96 → 413, importées de Tatoeba
+
+La review pédagogique disait « le moteur est bon, il manque les meubles ». Le
+meuble le plus vide était le corpus : 96 phrases pour quatre surfaces (écoute,
+shadowing, lecture, construction). Ce chantier construit le corpus ; il ne
+branche pas les quatre surfaces.
+
+### Fait
+
+Deux commits, `764e52e` (l'entonnoir de sélection) et `7d580be` (l'import,
+l'attribution et le garde-fou d'affichage), plus `style:` pour la longueur de
+ligne.
+
+- `scripts/tatoeba/build-corpus.py` : entonnoir de sélection sur les exports
+  Tatoeba, 43 689 paires jp↔fr → **317 phrases retenues**. Chaque seuil est
+  justifié dans `scripts/tatoeba/README.md`.
+- `scripts/apply-tatoeba-sentences.py` : applicateur idempotent (supprime
+  `source='tatoeba'` puis réinsère, ids déterministes à partir de 10 001).
+- `sentences` gagne `source`, `tatoeba_ja_id`, `tatoeba_fr_id` — sans traçabilité
+  par ligne, plus personne ne démêle le CC BY du contenu maison dans six mois.
+- `AttributionView` crédite Tatoeba (CC BY 2.0 FR) **et** cesse d'affirmer que
+  toutes les phrases d'exemple sont originales : c'était vrai avant ce commit,
+  faux après. Les deux chaînes sont dans le catalogue en fr et en.
+
+### Mesures
+
+Le plancher « aucun kanji hors des 90 » ne garde que 2 515 paires sur 43 689,
+mais ce n'est **pas** un critère suffisant : `きりがない` le passe. Empilé
+au-dessus : longueur 6–18, allowlist katakana (トム seul est dans 201 paires
+candidates), registre, i+1 lexical, ancrage sur un mot du bundle, dédoublonnage,
+plafond de 5 par mot. Détail chiffré par étage dans le README.
+
+Couverture : **126 mots sur 206** ont maintenant au moins un exemple (contre 96),
+28 des 31 points de grammaire sont exercés. Les 80 mots restants (compteurs
+六つ…九つ, `兄`/`姉`/`弟`/`妹`, `魚`/`野菜`/`卵`, `泳ぐ`) sont simplement absents
+des phrases courtes à kanji restreints — aucun filtre ne les fera apparaître,
+il faudrait les écrire à la main.
+
+### Testé
+
+- `xcodebuild build` iOS : vert.
+- `swift test --no-parallel --filter "Content|Sentence|Listening|Shadowing|Reading"` :
+  159 tests verts.
+- `i18n-lint` : 0 nouvelle violation. `swiftlint-diff-filter` : 0 sur les lignes
+  touchées.
+- Idempotence de l'applicateur vérifiée pour de vrai : trois exécutions
+  successives, hash SHA-256 du contenu de `sentences` identique
+  (`6357530de104f2f3`), 96 `ikeru` + 317 `tatoeba` = 413.
+- `apply-content-fr.py` re-joué après l'import : vert. Il abortait sans le patch
+  de portée — son contrôle de complétude lisait les lignes importées comme des
+  trous de traduction.
+- **Pas** vérifié : le rendu à l'écran (fr et en) d'`AttributionView` et de la
+  carte kanji sur simulateur. Les clés du catalogue correspondent exactement aux
+  littéraux Swift (vérifié par script), mais personne n'a regardé la page.
+- **Pas** vérifié : la fidélité jp↔fr ligne à ligne des 317 traductions. Quelques
+  paires dérivent (`分かりますか。` ↔ « Pouvez-vous répondre à cela ? »). Rien n'a
+  été réécrit — la licence porte sur ce que les contributeurs ont écrit.
+
+### Écarté
+
+- **Segmentation par sous-chaînes.** Première version : un mot du bundle est
+  « présent » s'il est sous-chaîne de la phrase. Résultat, `分かりません` classé
+  sous `分` (minute). Remplacé par le segmenteur `NLTokenizer` d'Apple (helper
+  Swift, zéro dépendance) + alignement sur les frontières de tokens.
+- **Lectures kana comme formes cherchables.** Deuxième piège, plus vicieux :
+  `歩く` a pour lecture `あるく`, donc son radical `ある` faisait passer tout
+  `ある` du corpus pour « marcher ». Même famille : `重い`→`おも` matchait
+  `おもしろい`, `長い`→`なが` matchait `ながら`. Les radicaux doivent contenir un
+  kanji ; une lecture ne compte que si le mot s'écrit déjà en kana.
+- **Blocklist de noms propres.** Tatoeba est saturé de トム/メアリー/pays. Une
+  blocklist est un jeu sans fin ; l'allowlist de ~66 emprunts katakana relus à la
+  main règle le problème d'un coup et se défend.
+- **Importer l'anglais de Tatoeba dans `sentences.english`.** Un second lien à
+  joindre, dédoublonner et filtrer, pour une colonne que **personne ne lit** en
+  production. NULL, et c'est dit.
+- **Lever le plafond de 5 pour gonfler le compte.** 321 phrases passent tous les
+  filtres et ne tombent que sur ce plafond. Les garder n'aurait allongé que la
+  fiche de vocabulaire. La quantité n'était pas l'objectif.
+
+### Ouvert
+
+- **Les quatre surfaces affamées ne lisent toujours pas cette table.** Vérifié
+  ligne à ligne : `ListeningDrillHost` passe `passages: []` en dur,
+  `SentenceConstructionViewModel` appelle `generateExercises(from: [])` et tombe
+  sur des templates codés en dur dans `SentenceValidationService`,
+  `ReadingPassageViewModel.buildSamplePassage` a ses phrases en dur,
+  `ShadowingViewModel` ne consomme que du vocabulaire. Le **seul** lecteur en
+  production de `sentences` est `ContentDatabaseActor.fetchSentences`
+  (`SELECT japanese … WHERE vocabulary_word = ?`), servi aux fiches vocabulaire
+  et kanji. Les 317 lignes y sont donc bien vivantes — mais le corpus ne nourrit
+  pas encore ce qui l'attendait. C'est un chantier de câblage, pas de données.
+- **`sentences.french` n'a toujours aucun lecteur.** L'import la remplit pour les
+  317 nouvelles comme elle l'était pour les 96. Le jour où une surface affiche la
+  traduction, elle est prête.
+- **Pas de clip VOICEVOX pour les nouvelles phrases.** `AudioService.playTTS`
+  retombe sur la synthèse on-device. Re-jouer `scripts/generate-audio.py` pour
+  les embarquer.
+- L'affichage de la fiche kanji est plafonné à 2 exemples par mot
+  (`VocabularyExamplesView.examplesPerWord`) : sans ça, 5 cartes × 6 phrases
+  empilaient 30 lignes de légende là où il y en avait 5.
+
+---
+
 ## 2026-08-15 — Relecture adversariale PR #90 : GAP-13 avait un second consommateur, GAP-15 est périmée
 
 Troisième passe sur `docs/registry-hygiene`. Les deux précédentes ont validé
