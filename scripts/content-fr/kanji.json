@@ -1,0 +1,586 @@
+[
+  {
+    "character": "一",
+    "meanings_fr": [
+      "un"
+    ]
+  },
+  {
+    "character": "七",
+    "meanings_fr": [
+      "sept"
+    ]
+  },
+  {
+    "character": "万",
+    "meanings_fr": [
+      "dix mille"
+    ]
+  },
+  {
+    "character": "三",
+    "meanings_fr": [
+      "trois"
+    ]
+  },
+  {
+    "character": "上",
+    "meanings_fr": [
+      "haut",
+      "au-dessus"
+    ]
+  },
+  {
+    "character": "下",
+    "meanings_fr": [
+      "bas",
+      "en dessous"
+    ]
+  },
+  {
+    "character": "中",
+    "meanings_fr": [
+      "milieu",
+      "intérieur"
+    ]
+  },
+  {
+    "character": "九",
+    "meanings_fr": [
+      "neuf"
+    ]
+  },
+  {
+    "character": "二",
+    "meanings_fr": [
+      "deux"
+    ]
+  },
+  {
+    "character": "五",
+    "meanings_fr": [
+      "cinq"
+    ]
+  },
+  {
+    "character": "人",
+    "meanings_fr": [
+      "personne"
+    ]
+  },
+  {
+    "character": "今",
+    "meanings_fr": [
+      "maintenant"
+    ]
+  },
+  {
+    "character": "休",
+    "meanings_fr": [
+      "repos"
+    ]
+  },
+  {
+    "character": "何",
+    "meanings_fr": [
+      "quoi"
+    ]
+  },
+  {
+    "character": "先",
+    "meanings_fr": [
+      "précédent",
+      "avant"
+    ]
+  },
+  {
+    "character": "入",
+    "meanings_fr": [
+      "entrer"
+    ]
+  },
+  {
+    "character": "八",
+    "meanings_fr": [
+      "huit"
+    ]
+  },
+  {
+    "character": "六",
+    "meanings_fr": [
+      "six"
+    ]
+  },
+  {
+    "character": "円",
+    "meanings_fr": [
+      "cercle",
+      "yen"
+    ]
+  },
+  {
+    "character": "出",
+    "meanings_fr": [
+      "sortir",
+      "sortie"
+    ]
+  },
+  {
+    "character": "分",
+    "meanings_fr": [
+      "minute",
+      "partie",
+      "comprendre"
+    ]
+  },
+  {
+    "character": "前",
+    "meanings_fr": [
+      "avant",
+      "devant"
+    ]
+  },
+  {
+    "character": "北",
+    "meanings_fr": [
+      "nord"
+    ]
+  },
+  {
+    "character": "十",
+    "meanings_fr": [
+      "dix"
+    ]
+  },
+  {
+    "character": "千",
+    "meanings_fr": [
+      "mille"
+    ]
+  },
+  {
+    "character": "半",
+    "meanings_fr": [
+      "moitié"
+    ]
+  },
+  {
+    "character": "南",
+    "meanings_fr": [
+      "sud"
+    ]
+  },
+  {
+    "character": "友",
+    "meanings_fr": [
+      "ami"
+    ]
+  },
+  {
+    "character": "古",
+    "meanings_fr": [
+      "vieux"
+    ]
+  },
+  {
+    "character": "右",
+    "meanings_fr": [
+      "droite"
+    ]
+  },
+  {
+    "character": "名",
+    "meanings_fr": [
+      "nom"
+    ]
+  },
+  {
+    "character": "四",
+    "meanings_fr": [
+      "quatre"
+    ]
+  },
+  {
+    "character": "国",
+    "meanings_fr": [
+      "pays"
+    ]
+  },
+  {
+    "character": "土",
+    "meanings_fr": [
+      "terre",
+      "sol"
+    ]
+  },
+  {
+    "character": "外",
+    "meanings_fr": [
+      "extérieur"
+    ]
+  },
+  {
+    "character": "多",
+    "meanings_fr": [
+      "nombreux",
+      "beaucoup"
+    ]
+  },
+  {
+    "character": "大",
+    "meanings_fr": [
+      "grand",
+      "vaste"
+    ]
+  },
+  {
+    "character": "天",
+    "meanings_fr": [
+      "cieux",
+      "ciel"
+    ]
+  },
+  {
+    "character": "女",
+    "meanings_fr": [
+      "femme",
+      "féminin"
+    ]
+  },
+  {
+    "character": "子",
+    "meanings_fr": [
+      "enfant"
+    ]
+  },
+  {
+    "character": "学",
+    "meanings_fr": [
+      "étudier",
+      "apprendre"
+    ]
+  },
+  {
+    "character": "安",
+    "meanings_fr": [
+      "bon marché",
+      "paisible"
+    ]
+  },
+  {
+    "character": "小",
+    "meanings_fr": [
+      "petit",
+      "minuscule"
+    ]
+  },
+  {
+    "character": "少",
+    "meanings_fr": [
+      "peu",
+      "un peu"
+    ]
+  },
+  {
+    "character": "山",
+    "meanings_fr": [
+      "montagne"
+    ]
+  },
+  {
+    "character": "川",
+    "meanings_fr": [
+      "rivière"
+    ]
+  },
+  {
+    "character": "左",
+    "meanings_fr": [
+      "gauche"
+    ]
+  },
+  {
+    "character": "年",
+    "meanings_fr": [
+      "année"
+    ]
+  },
+  {
+    "character": "後",
+    "meanings_fr": [
+      "après",
+      "derrière"
+    ]
+  },
+  {
+    "character": "手",
+    "meanings_fr": [
+      "main"
+    ]
+  },
+  {
+    "character": "新",
+    "meanings_fr": [
+      "nouveau"
+    ]
+  },
+  {
+    "character": "日",
+    "meanings_fr": [
+      "jour",
+      "soleil"
+    ]
+  },
+  {
+    "character": "時",
+    "meanings_fr": [
+      "temps",
+      "heure"
+    ]
+  },
+  {
+    "character": "書",
+    "meanings_fr": [
+      "écrire",
+      "livre"
+    ]
+  },
+  {
+    "character": "月",
+    "meanings_fr": [
+      "mois",
+      "lune"
+    ]
+  },
+  {
+    "character": "木",
+    "meanings_fr": [
+      "arbre",
+      "bois"
+    ]
+  },
+  {
+    "character": "本",
+    "meanings_fr": [
+      "livre",
+      "origine"
+    ]
+  },
+  {
+    "character": "来",
+    "meanings_fr": [
+      "venir"
+    ]
+  },
+  {
+    "character": "東",
+    "meanings_fr": [
+      "est"
+    ]
+  },
+  {
+    "character": "校",
+    "meanings_fr": [
+      "école"
+    ]
+  },
+  {
+    "character": "母",
+    "meanings_fr": [
+      "mère"
+    ]
+  },
+  {
+    "character": "毎",
+    "meanings_fr": [
+      "chaque"
+    ]
+  },
+  {
+    "character": "気",
+    "meanings_fr": [
+      "esprit",
+      "humeur",
+      "air"
+    ]
+  },
+  {
+    "character": "水",
+    "meanings_fr": [
+      "eau"
+    ]
+  },
+  {
+    "character": "火",
+    "meanings_fr": [
+      "feu"
+    ]
+  },
+  {
+    "character": "父",
+    "meanings_fr": [
+      "père"
+    ]
+  },
+  {
+    "character": "生",
+    "meanings_fr": [
+      "vie",
+      "naissance",
+      "cru"
+    ]
+  },
+  {
+    "character": "男",
+    "meanings_fr": [
+      "homme",
+      "masculin"
+    ]
+  },
+  {
+    "character": "白",
+    "meanings_fr": [
+      "blanc"
+    ]
+  },
+  {
+    "character": "百",
+    "meanings_fr": [
+      "cent"
+    ]
+  },
+  {
+    "character": "空",
+    "meanings_fr": [
+      "ciel",
+      "vide"
+    ]
+  },
+  {
+    "character": "立",
+    "meanings_fr": [
+      "se tenir debout"
+    ]
+  },
+  {
+    "character": "聞",
+    "meanings_fr": [
+      "entendre",
+      "demander",
+      "écouter"
+    ]
+  },
+  {
+    "character": "花",
+    "meanings_fr": [
+      "fleur"
+    ]
+  },
+  {
+    "character": "行",
+    "meanings_fr": [
+      "aller",
+      "conduite"
+    ]
+  },
+  {
+    "character": "西",
+    "meanings_fr": [
+      "ouest"
+    ]
+  },
+  {
+    "character": "見",
+    "meanings_fr": [
+      "voir",
+      "regarder"
+    ]
+  },
+  {
+    "character": "話",
+    "meanings_fr": [
+      "parler",
+      "converser"
+    ]
+  },
+  {
+    "character": "語",
+    "meanings_fr": [
+      "langue",
+      "mot"
+    ]
+  },
+  {
+    "character": "読",
+    "meanings_fr": [
+      "lire"
+    ]
+  },
+  {
+    "character": "買",
+    "meanings_fr": [
+      "acheter"
+    ]
+  },
+  {
+    "character": "車",
+    "meanings_fr": [
+      "voiture",
+      "véhicule"
+    ]
+  },
+  {
+    "character": "金",
+    "meanings_fr": [
+      "or",
+      "argent"
+    ]
+  },
+  {
+    "character": "長",
+    "meanings_fr": [
+      "long",
+      "chef"
+    ]
+  },
+  {
+    "character": "間",
+    "meanings_fr": [
+      "intervalle",
+      "entre"
+    ]
+  },
+  {
+    "character": "雨",
+    "meanings_fr": [
+      "pluie"
+    ]
+  },
+  {
+    "character": "電",
+    "meanings_fr": [
+      "électricité"
+    ]
+  },
+  {
+    "character": "食",
+    "meanings_fr": [
+      "manger",
+      "nourriture"
+    ]
+  },
+  {
+    "character": "飲",
+    "meanings_fr": [
+      "boire"
+    ]
+  },
+  {
+    "character": "高",
+    "meanings_fr": [
+      "haut",
+      "grand",
+      "cher"
+    ]
+  }
+]

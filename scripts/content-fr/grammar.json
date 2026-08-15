@@ -1,0 +1,312 @@
+[
+  {
+    "id": 1,
+    "title_fr": "は (particule de thème)",
+    "explanation_fr": "Marque le thème de la phrase. Se prononce « wa » quand elle est utilisée comme particule.",
+    "examples_fr": [
+      "私は学生です。 — Je suis étudiant(e).",
+      "今日は月曜日です。 — Aujourd'hui, c'est lundi.",
+      "東京は大きいです。 — Tokyo est grand."
+    ]
+  },
+  {
+    "id": 2,
+    "title_fr": "です / ます (forme polie)",
+    "explanation_fr": "Terminaisons polies de phrase. です suit les noms et les adjectifs, ます suit les verbes.",
+    "examples_fr": [
+      "学生です。 — (Je suis) étudiant(e).",
+      "食べます。 — (Je) mange.",
+      "きれいです。 — (C'est) joli."
+    ]
+  },
+  {
+    "id": 3,
+    "title_fr": "を (particule de complément d'objet direct)",
+    "explanation_fr": "Marque le complément d'objet direct d'un verbe transitif. Se prononce « o ».",
+    "examples_fr": [
+      "水を飲みます。 — Je bois de l'eau.",
+      "本を読みます。 — Je lis un livre.",
+      "映画を見ます。 — Je regarde un film."
+    ]
+  },
+  {
+    "id": 4,
+    "title_fr": "に (direction, temps, lieu)",
+    "explanation_fr": "Indique la direction d'un mouvement, un moment précis dans le temps, ou le lieu où se trouve quelque chose.",
+    "examples_fr": [
+      "学校に行きます。 — Je vais à l'école.",
+      "六時に起きます。 — Je me lève à six heures.",
+      "椅子の上に猫がいます。 — Il y a un chat sur la chaise."
+    ]
+  },
+  {
+    "id": 5,
+    "title_fr": "で (lieu de l'action, moyen)",
+    "explanation_fr": "Marque le lieu où se déroule une action, ou le moyen/l'outil utilisé.",
+    "examples_fr": [
+      "学校で勉強します。 — J'étudie à l'école.",
+      "バスで行きます。 — J'y vais en bus.",
+      "日本語で話してください。 — Parlez en japonais, s'il vous plaît."
+    ]
+  },
+  {
+    "id": 6,
+    "title_fr": "が (particule de sujet)",
+    "explanation_fr": "Marque le sujet grammatical, en particulier avec les verbes d'existence (ある/いる) et pour introduire une information nouvelle.",
+    "examples_fr": [
+      "猫がいます。 — Il y a un chat.",
+      "水があります。 — Il y a de l'eau.",
+      "誰が来ましたか。 — Qui est venu ?"
+    ]
+  },
+  {
+    "id": 7,
+    "title_fr": "も (aussi)",
+    "explanation_fr": "Remplace は, が ou を pour exprimer « aussi » ou « également ».",
+    "examples_fr": [
+      "私も学生です。 — Moi aussi, je suis étudiant(e).",
+      "これも美味しいです。 — Ceci est délicieux aussi.",
+      "田中さんも行きます。 — Tanaka ira aussi."
+    ]
+  },
+  {
+    "id": 8,
+    "title_fr": "の (possessif, complément du nom)",
+    "explanation_fr": "Relie deux noms pour indiquer la possession, l'appartenance, ou pour modifier un nom.",
+    "examples_fr": [
+      "私の本。 — Mon livre.",
+      "日本の食べ物。 — La nourriture japonaise.",
+      "大学の先生。 — Un professeur d'université."
+    ]
+  },
+  {
+    "id": 9,
+    "title_fr": "と (et, avec, citation)",
+    "explanation_fr": "Relie des noms (« et »), indique un compagnon (« avec »), ou marque une citation.",
+    "examples_fr": [
+      "パンと卵を食べました。 — J'ai mangé du pain et des œufs.",
+      "友達と行きます。 — J'y vais avec un ami / une amie.",
+      "先生は「静かに」と言いました。 — Le professeur a dit « Silence »."
+    ]
+  },
+  {
+    "id": 10,
+    "title_fr": "か (particule interrogative)",
+    "explanation_fr": "Placée en fin de phrase, elle forme une question.",
+    "examples_fr": [
+      "学生ですか。 — Êtes-vous étudiant(e) ?",
+      "何を食べますか。 — Que mangez-vous ?",
+      "明日は休みですか。 — Est-ce que demain est un jour de congé ?"
+    ]
+  },
+  {
+    "id": 11,
+    "title_fr": "から / まで (depuis / jusqu'à)",
+    "explanation_fr": "から marque un point de départ (« depuis »), まで marque un point d'arrivée (« jusqu'à »).",
+    "examples_fr": [
+      "九時から五時まで働きます。 — Je travaille de neuf heures à dix-sept heures.",
+      "東京から大阪まで電車で行きます。 — Je vais de Tokyo à Osaka en train.",
+      "朝から雨が降っています。 — Il pleut depuis ce matin."
+    ]
+  },
+  {
+    "id": 12,
+    "title_fr": "よ / ね (particules de fin de phrase)",
+    "explanation_fr": "よ affirme une information que ton interlocuteur ignore peut-être. ね recherche une confirmation ou un accord.",
+    "examples_fr": [
+      "これは美味しいですよ。 — C'est délicieux, vous savez.",
+      "今日は暑いですね。 — Il fait chaud aujourd'hui, n'est-ce pas ?",
+      "明日テストがありますよ。 — Il y a un test demain, vous savez."
+    ]
+  },
+  {
+    "id": 13,
+    "title_fr": "ない (forme négative)",
+    "explanation_fr": "Forme négative des verbes. Pour les adjectifs en -i, remplace い par くない. Pour les adjectifs en -na et les noms, ajoute じゃない.",
+    "examples_fr": [
+      "食べない。 — (Je) ne mange pas.",
+      "高くない。 — Pas cher.",
+      "学生じゃない。 — (Je) ne suis pas étudiant(e)."
+    ]
+  },
+  {
+    "id": 14,
+    "title_fr": "ません / ではありません (négation polie)",
+    "explanation_fr": "Terminaisons négatives polies. ません pour les verbes ; ではありません (ou じゃありません) pour les noms et les adjectifs.",
+    "examples_fr": [
+      "食べません。 — (Je) ne mange pas.",
+      "学生ではありません。 — (Je) ne suis pas étudiant(e).",
+      "分かりません。 — (Je) ne comprends pas."
+    ]
+  },
+  {
+    "id": 15,
+    "title_fr": "ました / でした (forme passée)",
+    "explanation_fr": "Passé en forme polie. ました pour les verbes ; でした pour les noms et les adjectifs en -na.",
+    "examples_fr": [
+      "食べました。 — (J'ai) mangé.",
+      "学生でした。 — (J'étais) étudiant(e).",
+      "楽しかったです。 — (C'était) amusant."
+    ]
+  },
+  {
+    "id": 16,
+    "title_fr": "Forme en て (connecteur verbal)",
+    "explanation_fr": "La forme en て relie des verbes entre eux, sert à faire des demandes (〜てください) et décrit des états en cours (〜ている).",
+    "examples_fr": [
+      "食べてください。 — Mangez, s'il vous plaît.",
+      "本を読んでいます。 — (Je) suis en train de lire un livre.",
+      "朝起きて、顔を洗って、朝ご飯を食べます。 — Je me lève, je me lave le visage et je prends mon petit-déjeuner."
+    ]
+  },
+  {
+    "id": 17,
+    "title_fr": "ている (état en cours, action habituelle)",
+    "explanation_fr": "Exprime une action en cours, une action habituelle, ou un état résultant d'une action.",
+    "examples_fr": [
+      "今、食べています。 — Je suis en train de manger maintenant.",
+      "東京に住んでいます。 — J'habite à Tokyo.",
+      "窓が開いています。 — La fenêtre est ouverte."
+    ]
+  },
+  {
+    "id": 18,
+    "title_fr": "たい (vouloir faire ~)",
+    "explanation_fr": "Exprime le désir du locuteur. Attache たい au radical du verbe (la forme en ます sans ます).",
+    "examples_fr": [
+      "日本に行きたいです。 — Je veux aller au Japon.",
+      "水が飲みたいです。 — Je veux boire de l'eau.",
+      "新しいゲームを買いたいです。 — Je veux acheter un nouveau jeu."
+    ]
+  },
+  {
+    "id": 19,
+    "title_fr": "てもいい (permission)",
+    "explanation_fr": "Exprime la permission — « puis-je ? », « il est permis de ». Attache てもいい à la forme en て.",
+    "examples_fr": [
+      "写真を撮ってもいいですか。 — Puis-je prendre une photo ?",
+      "ここに座ってもいいですか。 — Puis-je m'asseoir ici ?",
+      "帰ってもいいですよ。 — Vous pouvez rentrer chez vous."
+    ]
+  },
+  {
+    "id": 20,
+    "title_fr": "てはいけない (interdiction)",
+    "explanation_fr": "Exprime l'interdiction — « il ne faut pas ». Attache てはいけない à la forme en て.",
+    "examples_fr": [
+      "ここで食べてはいけません。 — Vous ne devez pas manger ici.",
+      "写真を撮ってはいけません。 — Vous ne devez pas prendre de photos.",
+      "遅く来てはいけません。 — Vous ne devez pas arriver en retard."
+    ]
+  },
+  {
+    "id": 21,
+    "title_fr": "なければならない (obligation)",
+    "explanation_fr": "Exprime l'obligation — « devoir », « il faut que ». Se forme à partir du radical négatif + ければならない.",
+    "examples_fr": [
+      "勉強しなければなりません。 — Je dois étudier.",
+      "薬を飲まなければなりません。 — Je dois prendre mon médicament.",
+      "早く起きなければなりません。 — Je dois me lever tôt."
+    ]
+  },
+  {
+    "id": 22,
+    "title_fr": "ましょう (faisons ~)",
+    "explanation_fr": "Forme volitive polie exprimant une suggestion — « faisons ~ ».",
+    "examples_fr": [
+      "食べましょう。 — Mangeons.",
+      "一緒に行きましょう。 — Allons-y ensemble.",
+      "休みましょう。 — Faisons une pause."
+    ]
+  },
+  {
+    "id": 23,
+    "title_fr": "たことがある (expérience passée)",
+    "explanation_fr": "Exprime une expérience passée — « avoir déjà fait ~ ». Utilise la forme en た + ことがある.",
+    "examples_fr": [
+      "日本に行ったことがあります。 — Je suis déjà allé(e) au Japon.",
+      "寿司を食べたことがありますか。 — Avez-vous déjà mangé des sushis ?",
+      "富士山を見たことがあります。 — J'ai déjà vu le mont Fuji."
+    ]
+  },
+  {
+    "id": 24,
+    "title_fr": "つもり (intention)",
+    "explanation_fr": "Exprime l'intention ou le projet du locuteur. Forme du dictionnaire + つもり.",
+    "examples_fr": [
+      "明日勉強するつもりです。 — J'ai l'intention d'étudier demain.",
+      "来年日本に行くつもりです。 — Je prévois d'aller au Japon l'année prochaine.",
+      "週末に映画を見るつもりです。 — Je prévois de regarder un film ce week-end."
+    ]
+  },
+  {
+    "id": 25,
+    "title_fr": "あげる / もらう / くれる (donner et recevoir)",
+    "explanation_fr": "Trois verbes pour donner et recevoir : あげる (je donne), もらう (je reçois), くれる (quelqu'un me donne).",
+    "examples_fr": [
+      "友達にプレゼントをあげました。 — J'ai offert un cadeau à un ami / une amie.",
+      "友達にプレゼントをもらいました。 — J'ai reçu un cadeau d'un ami / une amie.",
+      "母が本をくれました。 — Ma mère m'a donné un livre."
+    ]
+  },
+  {
+    "id": 26,
+    "title_fr": "方 (かた) (comment faire ~)",
+    "explanation_fr": "Attache 方 (かた) au radical du verbe pour exprimer « comment faire ~ ».",
+    "examples_fr": [
+      "この漢字の読み方を教えてください。 — Apprenez-moi comment lire ce kanji, s'il vous plaît.",
+      "使い方が分かりません。 — Je ne comprends pas comment l'utiliser.",
+      "作り方は簡単です。 — La façon de le préparer est simple."
+    ]
+  },
+  {
+    "id": 27,
+    "title_fr": "すぎる (trop)",
+    "explanation_fr": "S'attache au radical d'un verbe ou d'un adjectif pour signifier « trop / excessivement ».",
+    "examples_fr": [
+      "食べすぎました。 — J'ai trop mangé.",
+      "この本は難しすぎます。 — Ce livre est trop difficile.",
+      "高すぎます。 — C'est trop cher."
+    ]
+  },
+  {
+    "id": 28,
+    "title_fr": "ながら (tout en faisant ~)",
+    "explanation_fr": "Exprime deux actions simultanées. Radical du verbe + ながら.",
+    "examples_fr": [
+      "音楽を聞きながら勉強します。 — J'étudie tout en écoutant de la musique.",
+      "歩きながら話しましょう。 — Parlons tout en marchant.",
+      "テレビを見ながら食べます。 — Je mange tout en regardant la télévision."
+    ]
+  },
+  {
+    "id": 29,
+    "title_fr": "この / その / あの / どの (démonstratifs)",
+    "explanation_fr": "これ/この (ceci/ce, près du locuteur), それ/その (cela/ce, près de l'interlocuteur), あれ/あの (cela/ce là-bas), どれ/どの (lequel/quel).",
+    "examples_fr": [
+      "この本は面白いです。 — Ce livre est intéressant.",
+      "その靴はいくらですか。 — Combien coûtent ces chaussures ?",
+      "あの山は富士山です。 — Cette montagne là-bas, c'est le mont Fuji."
+    ]
+  },
+  {
+    "id": 30,
+    "title_fr": "ここ / そこ / あそこ / どこ (mots de lieu)",
+    "explanation_fr": "ここ (ici), そこ (là, près de l'interlocuteur), あそこ (là-bas), どこ (où).",
+    "examples_fr": [
+      "ここは図書館です。 — Ici, c'est la bibliothèque.",
+      "トイレはどこですか。 — Où sont les toilettes ?",
+      "あそこに猫がいます。 — Il y a un chat là-bas."
+    ]
+  },
+  {
+    "id": 31,
+    "title_fr": "けど / が (mais, cependant)",
+    "explanation_fr": "Conjonctions signifiant « mais » ou « cependant ». が est plus formel ; けど est plus familier.",
+    "examples_fr": [
+      "日本語は難しいですが、楽しいです。 — Le japonais est difficile, mais amusant.",
+      "高いけど、買います。 — C'est cher, mais je vais l'acheter.",
+      "行きたいですが、時間がありません。 — Je veux y aller, mais je n'ai pas le temps."
+    ]
+  }
+]
