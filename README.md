@@ -48,8 +48,8 @@ That is JLPT N5 and no further. N4 and beyond are not in the app, and the
 onboarding copy says so.
 
 Known gaps — what is untested, unverified, or knowingly deferred — are tracked
-in [`docs/known-gaps.md`](docs/known-gaps.md), one entry per gap, with severity
-and what would close it. It is kept deliberately unflattering.
+in a register kept outside this repository, one entry per gap, with severity and
+what would close it. It is kept deliberately unflattering.
 
 ---
 
@@ -116,9 +116,13 @@ Two traps worth knowing before you run the tests:
   cd IkeruCore && swift test --no-parallel --filter "LegacyStoreMigration"
   ```
 
-Conventions, gotchas and the branch flow are in
-[`CLAUDE.md`](CLAUDE.md); the running engineering log — including the dead ends,
-which are the useful part — is in [`JOURNAL.md`](JOURNAL.md).
+Branch flow is two-stage: feature branches open a PR against `dev`, which CI
+validates without deploying; `master` is release-only, and every push to it
+spends a TestFlight build.
+
+The wider conventions, the engineering log and the gap register are working
+documents kept outside this repository — they are notes to ourselves, not part
+of the app.
 
 ---
 
