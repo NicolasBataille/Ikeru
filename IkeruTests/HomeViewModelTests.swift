@@ -4,7 +4,8 @@ import SwiftData
 @testable import Ikeru
 @testable import IkeruCore
 
-@Suite("HomeViewModel")
+// GAP-10: cross-suite SwiftData isolation — see SwiftDataTestIsolation.swift.
+@Suite("HomeViewModel", .swiftDataIsolated)
 @MainActor
 struct HomeViewModelTests {
 
@@ -12,7 +13,7 @@ struct HomeViewModelTests {
 
     private func makeContainer() throws -> ModelContainer {
         let schema = Schema([UserProfile.self, Card.self, ReviewLog.self, RPGState.self])
-        let config = ModelConfiguration(isStoredInMemoryOnly: true)
+        let config = ModelConfiguration(UUID().uuidString, isStoredInMemoryOnly: true)
         // Clear any active-profile id leaked from a prior test run; the
         // resolver persists it in UserDefaults which crosses test boundaries.
         ActiveProfileResolver.setActiveProfileID(nil)

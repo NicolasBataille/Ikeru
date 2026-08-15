@@ -461,7 +461,35 @@ public final class SessionViewModel {
     /// If no cards were reviewed (the user abandoned immediately), the summary
     /// screen has nothing meaningful to display — skip it and return directly
     /// to the home screen via `dismissSession()`.
-    public func endSession() {
+    ///
+    /// `async` (GAP-10, 2026-08-16): the Live-Activity-end and
+    /// newly-unlocked bookkeeping below used to run as two untracked,
+    /// un-awaited `Task { }` blocks. Harmless in production — the app opens
+    /// exactly one `ModelContainer` for its whole lifetime, so a detached
+    /// task touching it a few milliseconds after this function returns is
+    /// indistinguishable from touching it synchronously. But the app test
+    /// target crashed the whole `xcodebuild test` runner: each test builds
+    /// and discards its OWN in-memory `ModelContainer`, and these detached
+    /// tasks routinely outlived the test that spawned them — still running
+    /// (and fetching/saving `RPGState` through `SessionRPGPersistence`)
+    /// once a LATER, unrelated test's container was current. SwiftData's
+    /// process-global backing-data bookkeeping isn't safe against that:
+    /// confirmed via `xcrun xcresulttool export diagnostics` crash reports
+    /// and the simulator's unified log, all showing the identical fatal
+    /// error `SwiftData/BackingData.swift:940: Never access a full future
+    /// backing data`, with the accessed `PersistentIdentifier`'s Core Data
+    /// store UUID never matching the store the crashing access expected —
+    /// i.e. a stale reference from a different (already-gone) container.
+    /// Making this `async` and awaiting both calls directly keeps them
+    /// off the critical synchronous path that mutates `@Observable` state
+    /// just below (SwiftUI still sees that state change immediately — the
+    /// synchronous prefix of an `async` function runs eagerly, before its
+    /// first suspension point) while ensuring the function genuinely
+    /// doesn't return until the SwiftData work is done, so nothing is left
+    /// running against a container the caller may be about to release.
+    /// The one production call site (`ActiveSessionView`'s "End Session"
+    /// button) now wraps this in `Task { await ... }` itself.
+    public func endSession() async {
         Logger.ui.info(
             "Session ended early: \(self.reviewedCount)/\(self.sessionQueue.count) reviewed, \(self.xpEarned) XP"
         )
@@ -479,28 +507,28 @@ public final class SessionViewModel {
             return
         }
 
-        // End Live Activity
-        Task {
-            await liveActivity.end(
-                elapsedSeconds: Int(elapsedTime),
-                completedCount: reviewedCount,
-                // Exercise-list length, matching updateActivity / finishSessionIfNeeded.
-                // On an abandoned mixed SRS + drill session, sessionQueue.count
-                // (SRS-only) would under-report and make completedCount > totalCount.
-                totalCount: sessionExercises.count,
-                xpEarned: xpEarned,
-                streakCount: consecutiveCorrect
-            )
-        }
-
-        // Mark as complete by jumping to end of queue
+        // Mark as complete by jumping to end of queue. Done before the
+        // awaits below so the synchronous state change is observed by
+        // SwiftUI immediately, matching the original fire-and-forget timing.
         currentIndex = sessionQueue.count
         currentExerciseIndex = sessionExercises.count
         isPaused = false
         showAbandonConfirmation = false
         stopTimer()
 
-        Task { await processNewlyUnlocked() }
+        // End Live Activity.
+        await liveActivity.end(
+            elapsedSeconds: Int(elapsedTime),
+            completedCount: reviewedCount,
+            // Exercise-list length, matching updateActivity / finishSessionIfNeeded.
+            // On an abandoned mixed SRS + drill session, sessionQueue.count
+            // (SRS-only) would under-report and make completedCount > totalCount.
+            totalCount: sessionExercises.count,
+            xpEarned: xpEarned,
+            streakCount: consecutiveCorrect
+        )
+
+        await processNewlyUnlocked()
     }
 
     /// After the session ends, compute the new `LearnerSnapshot` and grant

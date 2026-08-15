@@ -270,7 +270,7 @@ struct SessionIntegrationTests {
         await vm.gradeAndAdvance(grade: .hard)
 
         // End session early
-        vm.endSession()
+        await vm.endSession()
 
         #expect(vm.isSessionComplete == true)
         #expect(vm.reviewedCount == 2)
@@ -351,7 +351,7 @@ struct SessionIntegrationTests {
         // First session
         await vm.startSession()
         await vm.gradeAndAdvance(grade: .good)
-        vm.endSession()
+        await vm.endSession()
         vm.dismissSession()
 
         #expect(vm.isActive == false)

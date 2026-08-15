@@ -178,7 +178,7 @@ struct ActiveSessionView: View {
 
                 VStack(spacing: IkeruTheme.Spacing.sm) {
                     Button {
-                        viewModel.endSession()
+                        Task { await viewModel.endSession() }
                         showPauseOverlay = false
                     } label: {
                         Text("End Session")

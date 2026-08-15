@@ -18,6 +18,43 @@ final class AssetCacheHolder {
 @main
 struct IkeruApp: App {
 
+    // MARK: - Test-host detection
+
+    /// True when this process is the app-hosted test target's TEST HOST
+    /// (`xcodebuild test -scheme Ikeru`) rather than a real launch.
+    /// `XCTestConfigurationFilePath` is the standard, widely-used signal for
+    /// this (set by the XCTest launcher regardless of whether the actual
+    /// tests are written with XCTest or Swift Testing — Swift Testing is
+    /// hosted through the same XCTest bridge under `xcodebuild test`).
+    ///
+    /// Why this matters (GAP-10, 2026-08-16): `IkeruTests` builds and tears
+    /// down its OWN in-memory `ModelContainer` per test, but `xcodebuild
+    /// test` still launches this REAL `App` as the test host — its full
+    /// SwiftUI scene, including the `.task { }` below, genuinely mounts and
+    /// runs. That `.task` opens a SECOND, real `ModelContainer` (line
+    /// ~`makeModelContainer` in `init()`) and spawns three background
+    /// `Task`s that fetch/mutate `RPGState` through
+    /// `ActiveProfileResolver.fetchActiveRPGState(in:)` — which reads the
+    /// active-profile id from `UserDefaults.standard`, the SAME store every
+    /// test's `ActiveProfileResolver.setActiveProfileID(_:)` writes to. So
+    /// for the whole test run, the real app's own container and every
+    /// test's ephemeral container are both alive in one process, both
+    /// touching a `RPGState` entity, racing on shared `UserDefaults` state.
+    /// That's the concrete mechanism behind the crash this flag fixes:
+    /// `xcodebuild test` runs on this same simulator, with `-resultBundlePath`
+    /// + `xcrun xcresulttool export diagnostics`, repeatedly produced
+    /// `SwiftData/BackingData.swift:940: Fatal error: Never access a full
+    /// future backing data`, where the accessed `PersistentIdentifier`'s
+    /// Core Data store UUID never matched the store the crashing access
+    /// expected — i.e. a `RPGState` reference from one container touched
+    /// while a different container was current. Skipping this app's own
+    /// startup machinery under test removes that second, uncontrolled actor
+    /// from the process entirely; each test's `ModelContainer` is then the
+    /// only one that ever exists.
+    static var isRunningUnderXCTest: Bool {
+        ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
+    }
+
     // MARK: - Pre-warm constants
 
     /// BGTaskScheduler identifier — must match `BGTaskSchedulerPermittedIdentifiers` in Info.plist.
@@ -164,6 +201,10 @@ struct IkeruApp: App {
             .environment(\.assetCache, assetCache)
             .toastOverlay()
             .task {
+                    // GAP-10: skip the app's own startup machinery when this
+                    // process is IkeruTests' test host, not a real launch —
+                    // see `isRunningUnderXCTest`'s doc comment.
+                    guard !Self.isRunningUnderXCTest else { return }
                     initializeProfileViewModel()
                     NotificationManager.shared.registerAsDelegate()
                     WatchConnectivityManager.shared.activate(modelContainer: modelContainer)

@@ -4,7 +4,8 @@ import SwiftData
 @testable import Ikeru
 @testable import IkeruCore
 
-@Suite("SessionViewModel — Adaptive Sessions")
+// GAP-10: cross-suite SwiftData isolation — see SwiftDataTestIsolation.swift.
+@Suite("SessionViewModel — Adaptive Sessions", .swiftDataIsolated)
 @MainActor
 struct AdaptiveSessionViewModelTests {
 
@@ -12,7 +13,7 @@ struct AdaptiveSessionViewModelTests {
 
     private func makeContainer() throws -> ModelContainer {
         let schema = Schema([UserProfile.self, Card.self, ReviewLog.self, RPGState.self])
-        let config = ModelConfiguration(isStoredInMemoryOnly: true)
+        let config = ModelConfiguration(UUID().uuidString, isStoredInMemoryOnly: true)
         return try ModelContainer(for: schema, configurations: [config])
     }
 

@@ -4,7 +4,8 @@ import SwiftData
 @testable import Ikeru
 @testable import IkeruCore
 
-@Suite("ProfileViewModel")
+// GAP-10: cross-suite SwiftData isolation — see SwiftDataTestIsolation.swift.
+@Suite("ProfileViewModel", .swiftDataIsolated)
 @MainActor
 struct ProfileViewModelTests {
 
@@ -41,7 +42,7 @@ struct ProfileViewModelTests {
         // frozen (nested snapshot types) — a container opened at V3 would
         // bind this file's live-type fetches to the wrong entity identity.
         let schema = Schema(versionedSchema: IkeruSchemaV4.self)
-        let config = ModelConfiguration(isStoredInMemoryOnly: true)
+        let config = ModelConfiguration(UUID().uuidString, isStoredInMemoryOnly: true)
         let container = try ModelContainer(for: schema, configurations: [config])
         return container.mainContext
     }

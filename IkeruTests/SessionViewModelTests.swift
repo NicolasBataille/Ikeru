@@ -355,7 +355,7 @@ struct SessionViewModelTests {
         await vm.gradeAndAdvance(grade: .good)
         await vm.gradeAndAdvance(grade: .good)
 
-        vm.endSession()
+        await vm.endSession()
 
         #expect(vm.isSessionComplete == true)
         #expect(vm.reviewedCount == 2) // Only 2 were actually reviewed

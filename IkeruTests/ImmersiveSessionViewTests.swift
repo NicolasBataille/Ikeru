@@ -4,7 +4,8 @@ import SwiftData
 @testable import Ikeru
 @testable import IkeruCore
 
-@Suite("Immersive Session Mode")
+// GAP-10: cross-suite SwiftData isolation — see SwiftDataTestIsolation.swift.
+@Suite("Immersive Session Mode", .swiftDataIsolated)
 @MainActor
 struct ImmersiveSessionViewTests {
 
@@ -12,7 +13,7 @@ struct ImmersiveSessionViewTests {
 
     private func makeContainer() throws -> ModelContainer {
         let schema = Schema([UserProfile.self, Card.self, ReviewLog.self, RPGState.self])
-        let config = ModelConfiguration(isStoredInMemoryOnly: true)
+        let config = ModelConfiguration(UUID().uuidString, isStoredInMemoryOnly: true)
         return try ModelContainer(for: schema, configurations: [config])
     }
 
@@ -91,7 +92,7 @@ struct ImmersiveSessionViewTests {
         let vm = makeViewModel(container: container)
 
         await vm.startSession()
-        vm.endSession()
+        await vm.endSession()
 
         #expect(vm.isTimerRunning == false)
     }
@@ -295,7 +296,7 @@ struct ImmersiveSessionViewTests {
         let xpBeforeAbandon = vm.xpEarned
         let reviewedBeforeAbandon = vm.reviewedCount
 
-        vm.endSession()
+        await vm.endSession()
 
         #expect(vm.xpEarned == xpBeforeAbandon)
         #expect(vm.reviewedCount == reviewedBeforeAbandon)
@@ -408,7 +409,7 @@ struct ImmersiveSessionViewTests {
 
         // Abandon after 2 of 5 exercises
         vm.pauseSession()
-        vm.endSession()
+        await vm.endSession()
 
         #expect(vm.reviewedCount == 2)
         #expect(vm.xpEarned == 20)
