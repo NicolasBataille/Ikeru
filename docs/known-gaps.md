@@ -181,15 +181,25 @@ serveur.
 Règle à ne pas casser : **le jour où on pousse du contenu de conversation, cet
 opt-in doit exister d'abord.** C'est un consentement distinct de la sauvegarde.
 
-### GAP-07 — La fonction Edge n'est pas redéployée automatiquement
-**Sévérité : moyenne (piège silencieux).** `supabase/config.toml` fige la config
-et `CLAUDE.md` documente la commande, mais il n'y a **pas de step CI** (il
-faudrait un secret `SUPABASE_ACCESS_TOKEN`). Si le projet Supabase est
-réinitialisé, la suppression casse en 404 pendant que `privacy.html` continue de
-la promettre.
+### GAP-07 — ~~La fonction Edge n'est pas redéployée automatiquement~~ — **fermée le 2026-08-15**
+`.github/workflows/supabase-deploy-function.yml` (`a35b3c4`) redéploie sur
+`master` dès que `supabase/functions/**` ou `config.toml` bouge, puis vérifie
+que la fonction rejette toujours un appel sans jeton. Le secret
+`SUPABASE_ACCESS_TOKEN` a été créé par le propriétaire le même jour — c'était
+la moitié qu'aucun agent ne pouvait faire.
 
-Ce qui le fermerait : un job GitHub Actions sur `master` avec le secret, calqué
-sur l'exemple officiel `supabase/setup-cli`.
+**Ce qui n'est PAS couvert, et ne le sera pas** : le job assère le *gate*, pas
+la *suppression*. Prouver que la suppression fonctionne demanderait de créer un
+vrai utilisateur et de détruire ses données en production — pas le travail
+d'une CI. Le 401-sans-jeton est le plus petit contrôle qui attraperait un
+`verify_jwt = false`.
+
+**Jamais observé** : le job n'a pas encore tourné avec le secret en place. Le
+workflow ne vit que sur `dev` pour l'instant ; un `workflow_dispatch` n'apparaît
+que si le fichier existe sur la branche par défaut (`master`). Premier vrai
+passage à la prochaine release. Si ce step rougit, lire l'erreur avant de
+supposer que le token est mauvais : un token Supabase est **au niveau du
+compte**, donc il expire ou se révoque indépendamment du projet.
 
 ---
 
