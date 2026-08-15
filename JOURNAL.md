@@ -23,6 +23,78 @@ raisonnement, les mesures, et les décisions.
 
 ---
 
+## 2026-08-15 — Relecture adverse du corpus Tatoeba : ~20 lignes mal classées, une contradiction de licence
+
+Troisième passe sur `feat/sentence-corpus` (`c99acad`), en relecture adverse.
+Les 317 phrases ont été lues **toutes**, pas échantillonnées. Le corpus tient ;
+les défauts restants sont des lignes à retirer et deux gardes à ajouter.
+
+### Fait
+
+- `scripts/tatoeba/check-corpus-invariants.py` (branche `review/sentence-corpus`) :
+  trois invariants du corpus, **deux rouges** sur le bundle livré. Écrit pour
+  prouver les défauts, pas pour tamponner du vert.
+
+### Testé
+
+- **11 lignes sont classées sous un mot que la phrase ne contient pas** :
+  五時 sous 五つ, 二人 sous 二つ, 四月一日 sous 四つ, 一人/一日/一休み sous 一つ,
+  高校生 sous 高い. Cause : `build_known_lexicon` traite tout mot de 2 signes
+  finissant par une kana godan comme conjugable — つ est dans `VERB_ENDINGS`,
+  donc 五つ produit le radical d'un seul kanji 五, qui préfixe tous les composés
+  numériques. Même mécanique pour 聞こえ×3 sous 聞く, 出来ます/出して sous 出る,
+  入れましょう sous 入る, 見せて sous 見る. ~20 lignes au total.
+- **10 groupes de phrases partagent la traduction française d'une autre phrase
+  du même mot** — l'entonnoir dédoublonne le japonais et le sac de tokens,
+  jamais le français.
+- **`apply-tatoeba-sentences.py` n'échoue PAS** quand une phrase importée
+  duplique une des 96 phrases maison : JSON trafiqué avec 「りんごを一つください。」
+  → exit 0, 414 lignes, la phrase deux fois sous 一つ avec deux français
+  différents. L'invariant « pas de japonais en double » a deux propriétaires
+  (`build-corpus.py` au build, `apply-*.py` à l'application) et aucun ne le tient
+  de bout en bout.
+- Re-vérifié indépendamment (exports Tatoeba re-téléchargés) : japonais
+  identique caractère pour caractère sur les 317, 0 paire absente de
+  `jpn-fra_links.tsv`, plancher des 90 kanji à **0 violation**, longueurs 6–18
+  respectées, 96 phrases `ikeru` + 6 autres tables identiques à `origin/dev`,
+  allowlist katakana = 65 comme annoncé, `AttributionView` atteignable
+  (Réglages → 情報 → 謝辞).
+- Idempotence : **logiquement** oui (`.dump` identique), **pas** « byte-identical »
+  comme l'affirme la docstring — ~12 Ko sur 5 pages diffèrent à chaque
+  exécution (réallocation SQLite). Le bundle étant un binaire committé, chaque
+  ré-exécution produit un diff git parasite.
+- Perf : `fetchSentences` est un N+1 sur une table sans index sur
+  `vocabulary_word` ; 206 recherches passent de 1,6 ms à 4,1 ms (96 → 413
+  lignes). Les deux appelants vivants (`SessionComposer.vocabularyPool`,
+  `LeechInterventionService` ×2 niveaux) **jettent** `exampleSentences`.
+- **Pas vérifié** : rendu à l'écran (aucun simulateur), et pour cause — voir
+  ci-dessous.
+
+### Écarté
+
+- **Corriger les glosses françaises fausses** (また来てください → « J'espère que
+  tu vas rappeler », 分かりますか → « Pouvez-vous répondre à cela ? »). Réécrire
+  la traduction contredirait le texte d'attribution qui promet du verbatim :
+  ces lignes se retirent, elles ne se rafistolent pas.
+- **Rebrancher une surface.** Déjà remonté par la passe précédente ; rien à
+  ajouter sinon un chiffre : avec le `prefix(2)` de `VocabularyExamplesView`,
+  **208 des 317 lignes importées ne pourraient jamais s'afficher** même la vue
+  rebranchée, et l'ordre d'affichage (rowid) favorise les plus vieilles lignes
+  de l'ère Tanaka — `quality()` ordonne la sélection, rien n'ordonne l'affichage.
+
+### Ouvert
+
+- **Contradiction de licence à trancher.** `AttributionView.swift:92` cite
+  `scripts/generate-content-bundle.swift` comme preuve que kanji/radicaux sont
+  écrits maison — or l'en-tête de ce fichier (l. 3–9) revendique KANJIDIC et
+  RADKFILE en **CC BY-SA 4.0** et Tatoeba en CC BY 2.0. Ce script est un
+  générateur de démo mort (15 mots de vocabulaire en dur) ; le vrai est
+  `generate_content_bundles.py` (« original compositions »). Dépôt public,
+  App Store : il faut repointer le commentaire ET corriger ou supprimer
+  l'en-tête mensonger.
+
+---
+
 ## 2026-08-15 — Vérification du corpus Tatoeba : données SÛR, câblage plus mort que rapporté
 
 Vérification indépendante de `feat/sentence-corpus` (branche `verify/sentence-corpus`,
