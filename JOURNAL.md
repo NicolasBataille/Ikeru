@@ -23,6 +23,107 @@ raisonnement, les mesures, et les décisions.
 
 ---
 
+## 2026-08-15 (soir) — Le dépôt racontait plusieurs choses fausses sur lui-même
+
+Session « ne t'arrête pas tant qu'il reste des GAP ». Le fil conducteur n'était
+pas prévu : à chaque fois qu'une affirmation du dépôt a été **mesurée** au lieu
+d'être relue, elle s'est révélée fausse. Sept PR mergées : `b332754` (#94),
+`4ae6401` (#96), `a35b3c4` (#98), `886d8a5` (#95), `a08f5f3` (#100),
+`e53ef3a` (#99), `80a782d` (#97).
+
+### Fait
+
+**Provenance KANJIDIC — l'écran d'attribution mentait.** Il affirmait que les
+lectures de kanji étaient « original content written for Ikeru ». Diff contre
+les fichiers amont : **63/63 lectures kun pointées byte-identiques** à la
+convention okurigana de KANJIDIC (`み.つ`, `みっ.つ`), ordre des on-yomi
+reproduit sur **89/90** kanji. KANJIDIC (EDRDG, CC BY-SA 4.0) est crédité.
+**RADKFILE ne l'est PAS**, sur la même preuve : 36/90 seulement, avec des
+écarts systématiques (八/九 chez nous vs les radicaux en ハ de RADKFILE).
+Deux générateurs morts qui affirmaient un pipeline d'import inexistant sont
+supprimés — l'un était l'*autorité* que citait le commentaire mensonger.
+
+**GAP-10 — 47 % des tests Core ne tournaient jamais.** Mesuré sur les vrais
+identifiants (`--list-tests`, 1253 tests) confrontés au regex `--filter` réel :
+666 exécutés, **587 jamais**. Cause : `LocalGPUProvider()` sans argument fait
+défaut à `NWBonjourDiscovery()`, qui monte un vrai `NWBrowser`. Deux tests
+affirmant des constantes emportaient le process. CI passée de **666 à 1250**
+tests, et l'allowlist inversée en **denylist**.
+
+**GAP-07** — la fonction Edge se redéploie via `.github/workflows/supabase-deploy-function.yml`.
+Secret `SUPABASE_ACCESS_TOKEN` créé par l'utilisateur le jour même.
+
+**Promesse recadrée** — « A path from curious to fluent » → « From your first
+kana to JLPT N5 ». Le bundle, c'est 90 kanji / 206 mots / 31 points de
+grammaire. **README créé** : le dépôt est public comme vitrine et n'en avait
+aucun.
+
+### Testé
+
+- **CI, chiffres lus dans le log du job**, pas une coche verte : 1250 tests /
+  174 suites, puis 140 tests / 17 suites côté app.
+- **La commande exacte que la CI lance**, rejouée en local avant de la
+  committer — pas une approximation.
+- **Fonction Edge sondée en direct** : POST sans en-tête, jeton bidon et GET
+  répondent tous **401**.
+- **Corpus revérifié par moi**, pas cru sur rapport : 96 phrases `ikeru` et les
+  6 autres tables **hash identique** à `origin/dev`.
+- **Non vérifié, et ça compte** : aucun rendu à l'écran (aucune vue n'affiche
+  ces phrases), la fidélité jp↔fr des 239 phrases une par une, et le
+  `20260810000000_baseline_schema.sql` n'a **jamais été rejoué** contre le
+  projet — il a été écrit *depuis* lui.
+
+### Écarté
+
+- **« GET → 405 » dans CLAUDE.md** : faux, c'est 401. La passerelle rejette sur
+  l'authentification **avant** de router la méthode, donc le 405 est
+  inatteignable.
+- **Fusionner les suites de migration dans le run principal** parce qu'un run
+  de sonde y a survécu : refusé. L'empoisonnement CoreData est documenté comme
+  quelque chose qu'un fetch **peut** rencontrer, pas **va**. Un run vert prouve
+  que ça n'a pas tiré, pas que ça ne peut pas.
+- **Recopier la valeur d'implémentation dans les 48 assertions de thème** :
+  refusé. 48 tautologies auraient été pires que supprimer le fichier. Chaque
+  écart trié « redesign volontaire » vs « vrai bug », propriété des échelles
+  Spacing/Radius vérifiée **avant** de toucher aux chiffres.
+- **Une requête `instr(japanese, vocabulary_word)=0` pour valider D1** : fausse
+  alerte de ma part — elle signale les conjugaisons légitimes (`大きい` sous
+  「大きすぎるわ。」). Le test étroit est le bon.
+- **Merger le README en premier** : il créditait Tatoeba et décrivait la
+  provenance par ligne, vrais sur la branche corpus, **faux sur `dev`**. Mis en
+  brouillon jusqu'au merge de #99. Une PR dont l'argument est « tout est
+  vérifié » qui publie une affirmation fausse, c'était l'ironie complète.
+
+### Le motif, écrit noir sur blanc
+
+Trois affirmations ont survécu des mois parce qu'elles étaient **plausibles et
+jamais mesurées**. Pire : « unbisectable **localement** » (exact) avait glissé
+vers « unbisectable » (faux). Classé comme contrainte externe, un défaut d'une
+ligne est devenu le travail de personne.
+
+Deux contradictions de doc introduites **par moi, aujourd'hui** (`a08f5f3`) :
+une correction déposée *sous* l'affirmation qu'elle contredit n'est pas une
+correction. Le lecteur s'arrête en haut de la section.
+
+### Ouvert
+
+- **`SRS.burned` / `Rarity.legendary`** — le lien de couleur « palier ultime »
+  a sauté au redesign wabi-sabi. Décision de design, revient au propriétaire.
+- **Share-alike KANJIDIC** — CC BY-**SA** est du partage à l'identique. Savoir
+  si l'obligation atteint le binaire est juridique, pas technique. Avant
+  l'App Store, pas avant un merge.
+- **GAP-10 reste OUVERTE** : le step app-target est une **seconde allowlist**
+  (17 lignes `-only-testing:`), même défaut d'échec-ouvert, pas encore chiffrée
+  faute d'équivalent `--list-tests` pour `xcodebuild`.
+- **Les 335 phrases n'ont aucun lecteur.** `VocabularyExamplesView` n'est
+  atteinte par aucune navigation ; les deux appelants vivants de
+  `fetchSentences` exécutent la requête et **jettent** le résultat. C'est de la
+  donnée prête, pas une fonctionnalité — le câblage est la suite naturelle.
+- **GAP-01** toujours bloquée : demande un second appareil avec un compte Apple.
+- **README en anglais** alors que le reste de la doc est en français.
+
+---
+
 ## 2026-08-15 — Remédiation des 8 défauts du corpus Tatoeba (317 → 239 phrases)
 
 Suite à une relecture adverse de `feat/sentence-corpus` qui a trouvé 8 défauts
