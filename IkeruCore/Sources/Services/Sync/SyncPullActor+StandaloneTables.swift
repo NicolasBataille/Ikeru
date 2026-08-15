@@ -116,7 +116,16 @@ extension SyncPullActor {
             // Append-only, same reasoning as `SyncPullActor.applyReviewLogRows`
             // — including counting a redelivery in `alreadyPresent`, not
             // `applied` (see `PullSummary.alreadyPresentRowCounts`).
-            if try fetchOne(VocabularyEncounter.self, id: common.id) != nil {
+            if let existing = try fetchOne(VocabularyEncounter.self, id: common.id) {
+                // …except a tombstone, which is the one field an append-only
+                // row can legitimately gain later. See the equivalent branch
+                // in `SyncPullActor.applyReviewLogRows` for the full story
+                // and the two-container reproduction. Only nil → non-nil.
+                if existing.deletedAt == nil, let remoteDeletedAt = common.deletedAt {
+                    existing.deletedAt = remoteDeletedAt
+                    existing.updatedAt = max(existing.updatedAt, common.updatedAt)
+                    existing.syncedAt = common.updatedAt
+                }
                 alreadyPresent += 1
                 outcomes.append(.applied)
                 continue
@@ -184,7 +193,14 @@ extension SyncPullActor {
             // Append-only, same reasoning as `SyncPullActor.applyReviewLogRows`
             // — including counting a redelivery in `alreadyPresent`, not
             // `applied` (see `PullSummary.alreadyPresentRowCounts`).
-            if try fetchOne(ExerciseOutcomeLog.self, id: common.id) != nil {
+            if let existing = try fetchOne(ExerciseOutcomeLog.self, id: common.id) {
+                // …except a tombstone — same exception, same reasoning as
+                // `SyncPullActor.applyReviewLogRows`. Only nil → non-nil.
+                if existing.deletedAt == nil, let remoteDeletedAt = common.deletedAt {
+                    existing.deletedAt = remoteDeletedAt
+                    existing.updatedAt = max(existing.updatedAt, common.updatedAt)
+                    existing.syncedAt = common.updatedAt
+                }
                 alreadyPresent += 1
                 outcomes.append(.applied)
                 continue

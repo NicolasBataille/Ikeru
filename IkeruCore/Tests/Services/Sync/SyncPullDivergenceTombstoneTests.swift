@@ -457,4 +457,79 @@ struct SyncPullDivergenceTombstoneTests {
         #expect(await repo.dueCards(before: Date().addingTimeInterval(86_400 * 3650)).isEmpty)
         #expect(await repo.card(by: card.id) == nil)
     }
+
+    // MARK: - Test 10: a tombstone reaches a SECOND device
+
+    /// Every other test in this suite runs one device against the server. That
+    /// is the blind spot this one closes, and it found a real defect: the
+    /// append-only tables (`review_logs`, `vocabulary_encounters`,
+    /// `exercise_outcome_logs`) short-circuited on "this id already exists
+    /// locally" *before* looking at `deleted_at`, so a tombstone pushed by one
+    /// device was received by the other and thrown away.
+    ///
+    /// The visible damage was not the row itself but what reads it:
+    /// `CardModelActor.allReviewLogs(from:to:)` fetches `ReviewLog` directly
+    /// rather than walking the card, and feeds progress stats and the weekly
+    /// check-in. On device B the card died and its review log lived on —
+    /// forever crediting work toward a card the learner had deleted. Measured
+    /// before the fix: `cards=0 logs=1`.
+    ///
+    /// Two containers, one `FakeSyncServer`, and an ORDINARY incremental pull
+    /// on B — no cursor reset. The reset is what the other tests lean on; this
+    /// path has to work without one.
+    @Test("A card deletion tombstones its review log on a second device")
+    func tombstoneReachesSecondDevice() async throws {
+        let server = FakeSyncServer()
+
+        // ── Device A: a graded card, pushed.
+        let deviceA = try makeContainer()
+        try seedProfile(into: deviceA)
+        let repoA = CardRepository(modelContainer: deviceA)
+        let card = await repoA.createCard(front: "犬", back: "dog", type: .vocabulary)
+        await repoA.gradeCard(cardId: card.id, grade: .good, responseTimeMs: 500)
+        try await pushEverything(container: deviceA, server: server)
+
+        // ── Device B: pulls that state.
+        let deviceB = try makeContainer()
+        let cursorsB = MockSyncCursorStore()
+        let skipsB = MockSyncSkipTracker()
+        let pullB = SyncPullActor(modelContainer: deviceB)
+        _ = try await pullB.pullAll(
+            transport: server,
+            cursorStore: cursorsB,
+            skipTracker: skipsB,
+            accessToken: "token"
+        )
+
+        let repoB = CardRepository(modelContainer: deviceB)
+        #expect(await repoB.card(by: card.id) != nil, "B never received the card")
+        let logsOnB = await repoB.allReviewLogs(
+            from: Date.distantPast,
+            to: Date.distantFuture
+        )
+        #expect(logsOnB.count == 1, "B never received the review log")
+
+        // ── A deletes the card; both tombstones go up.
+        await repoA.deleteCard(by: card.id)
+        try await pushEverything(container: deviceA, server: server)
+
+        // ── B pulls again. Incremental: the cursor is wherever the first pull
+        //    left it. This is the ordinary, everyday case.
+        _ = try await pullB.pullAll(
+            transport: server,
+            cursorStore: cursorsB,
+            skipTracker: skipsB,
+            accessToken: "token"
+        )
+
+        #expect(await repoB.card(by: card.id) == nil, "the card outlived its deletion on B")
+        let logsAfter = await repoB.allReviewLogs(
+            from: Date.distantPast,
+            to: Date.distantFuture
+        )
+        #expect(
+            logsAfter.isEmpty,
+            "B kept the review log of a deleted card — it keeps feeding progress stats forever"
+        )
+    }
 }

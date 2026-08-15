@@ -944,7 +944,28 @@ actor SyncPullActor {
             // work, so it's counted separately in `alreadyPresent` rather
             // than in `applied` (see `PullSummary.alreadyPresentRowCounts`'s
             // doc comment).
-            if try fetchOne(ReviewLog.self, id: common.id) != nil {
+            if let existing = try fetchOne(ReviewLog.self, id: common.id) {
+                // …with ONE exception, and it is the reason this branch is
+                // not a plain `continue`: a **tombstone** is the only field
+                // an append-only row can legitimately change after
+                // creation. Skipping the row wholesale meant a deletion
+                // pushed by another device was received and thrown away —
+                // the log outlived the card it belonged to, and
+                // `CardModelActor.allReviewLogs(from:to:)` (which reads
+                // `ReviewLog` directly, without going through the card)
+                // kept feeding it into progress stats and the weekly
+                // check-in forever. Reproduced across two containers
+                // against one `FakeSyncServer`: `cards=0 logs=1`.
+                //
+                // Only ever nil → non-nil. A local tombstone is never
+                // un-set by a remote row that still looks alive (merge
+                // rule 4: a deletion does not get resurrected by a stale
+                // peer that has not seen it yet).
+                if existing.deletedAt == nil, let remoteDeletedAt = common.deletedAt {
+                    existing.deletedAt = remoteDeletedAt
+                    existing.updatedAt = max(existing.updatedAt, common.updatedAt)
+                    existing.syncedAt = common.updatedAt
+                }
                 alreadyPresent += 1
                 outcomes.append(.applied)
                 continue
