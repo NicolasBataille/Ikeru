@@ -15,7 +15,9 @@ final class AssetCacheHolder {
     private init() {}
 }
 
-@main
+// GAP-10 (2026-08-16): `@main` moved to `IkeruMain.swift`, which picks
+// between this real app and an empty test-host `App` based on
+// `isRunningUnderXCTest` below — see that file's doc comment for why.
 struct IkeruApp: App {
 
     // MARK: - Test-host detection
@@ -27,30 +29,33 @@ struct IkeruApp: App {
     /// tests are written with XCTest or Swift Testing — Swift Testing is
     /// hosted through the same XCTest bridge under `xcodebuild test`).
     ///
-    /// Why this matters (GAP-10, 2026-08-16): `IkeruTests` builds and tears
+    /// Why this exists (GAP-10, 2026-08-16): `IkeruTests` builds and tears
     /// down its OWN in-memory `ModelContainer` per test, but `xcodebuild
-    /// test` still launches this REAL `App` as the test host — its full
-    /// SwiftUI scene, including the `.task { }` below, genuinely mounts and
-    /// runs. That `.task` opens a SECOND, real `ModelContainer` (line
-    /// ~`makeModelContainer` in `init()`) and spawns three background
-    /// `Task`s that fetch/mutate `RPGState` through
-    /// `ActiveProfileResolver.fetchActiveRPGState(in:)` — which reads the
-    /// active-profile id from `UserDefaults.standard`, the SAME store every
-    /// test's `ActiveProfileResolver.setActiveProfileID(_:)` writes to. So
-    /// for the whole test run, the real app's own container and every
-    /// test's ephemeral container are both alive in one process, both
-    /// touching a `RPGState` entity, racing on shared `UserDefaults` state.
-    /// That's the concrete mechanism behind the crash this flag fixes:
-    /// `xcodebuild test` runs on this same simulator, with `-resultBundlePath`
-    /// + `xcrun xcresulttool export diagnostics`, repeatedly produced
-    /// `SwiftData/BackingData.swift:940: Fatal error: Never access a full
-    /// future backing data`, where the accessed `PersistentIdentifier`'s
-    /// Core Data store UUID never matched the store the crashing access
-    /// expected — i.e. a `RPGState` reference from one container touched
-    /// while a different container was current. Skipping this app's own
-    /// startup machinery under test removes that second, uncontrolled actor
-    /// from the process entirely; each test's `ModelContainer` is then the
-    /// only one that ever exists.
+    /// test` still launches this REAL `App` as the test host, so its full
+    /// SwiftUI scene — including the `.task { }` below — genuinely mounts
+    /// and runs unless gated.
+    ///
+    /// CORRECTION (2026-08-16, same day): an earlier version of this comment
+    /// claimed this gate FIXED the `SwiftData/BackingData.swift:940: Fatal
+    /// error: Never access a full future backing data` crash by removing
+    /// `IkeruApp`'s own second `ModelContainer` from the process. That claim
+    /// was measured and falsified, not just doubted: `@main` was moved to
+    /// `IkeruMain.swift`, which swaps in an empty `TestHostApp` (no
+    /// `ModelContainer`, no `.task`, no `IkeruApp` instance at all) whenever
+    /// `isRunningUnderXCTest` is true. `HomeViewModelTests
+    /// .loadDataLoadsRPGState()`, run alone, still crashed with the
+    /// IDENTICAL fatal error afterwards — proof this app's own container was
+    /// never the (or at least not the only) cause. The real mechanism is
+    /// still not identified; see GAP-10's final report for the measured
+    /// evidence (two distinct crash signatures, `ModelContainer(` reachable
+    /// only from this file per a repo-wide grep, contradicting evidence
+    /// against a background-actor/mainContext race).
+    ///
+    /// This gate is kept anyway as ordinary test hygiene — the app-hosted
+    /// test target should not run this app's real startup side effects
+    /// (background task registration, launch animation, profile
+    /// initialization) as an accidental by-product of hosting tests — not as
+    /// a fix for the SwiftData crash.
     static var isRunningUnderXCTest: Bool {
         ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
     }

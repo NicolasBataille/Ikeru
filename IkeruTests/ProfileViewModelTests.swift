@@ -38,6 +38,28 @@ struct ProfileViewModelTests {
         // that explains the full matrix — flagging for a dedicated follow-up
         // rather than guessing further.
         //
+        // GAP-10 (2026-08-16), symbolicated proof this suite's crash is a
+        // DIFFERENT bug from HomeViewModelTests's, not the same one wearing
+        // two faces: `xcrun xcresulttool export diagnostics` +
+        // `~/Library/Logs/DiagnosticReports/Ikeru-*.ips` on a crash from
+        // `updatesDisplayName()` shows `EXC_BREAKPOINT`/`SIGTRAP`, faulting
+        // thread stack (innermost first) `SwiftData + 645672` →
+        // `SwiftData + 594444` → `SwiftData + 643760` →
+        // `ProfileViewModel.loadProfile()` → `ProfileViewModel.init
+        // (modelContext:)` — i.e. a trap inside SwiftData's own internals on
+        // this class's very FIRST `modelContext.fetch` call, synchronously
+        // inside `init`, no relationship faulting, no background actor
+        // involved, and (unlike HomeViewModelTests) NO
+        // "Fatal error: ..." text printed anywhere — a silent trap, not an
+        // assertion with a message. HomeViewModelTests's crash is instead an
+        // explicit `SwiftData/BackingData.swift:940: Fatal error: Never
+        // access a full future backing data` with two mismatched Core Data
+        // store UUIDs in the message, hit via `ActiveProfileResolver
+        // .fetchActiveRPGState` → `profile.rpgState` relationship fault,
+        // well after other SwiftData work has already happened successfully.
+        // Different signal, different call shape, different SwiftData
+        // subsystem — treat these as two separate open bugs, not one.
+        //
         // V4, not V3 (2026-08-13, cloud-sync lot 0): `IkeruSchemaV3` is now
         // frozen (nested snapshot types) — a container opened at V3 would
         // bind this file's live-type fetches to the wrong entity identity.

@@ -45,6 +45,7 @@
 		1EB643DBDF51CC4C61434B2C /* SerifNumeral.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2F1FF648DFD4B06ACB9D5A1 /* SerifNumeral.swift */; };
 		1F267C7F06B849E143C9F872 /* ProfileViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF20C958BD43ABB601BE2B23 /* ProfileViewModelTests.swift */; };
 		A1A254F4399FCAF28991E699 /* SwiftDataTestIsolation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 126E3ADE979F27EB90B29DD9 /* SwiftDataTestIsolation.swift */; };
+		1DC1D7EBFF2B4495BB773DA7 /* IkeruMain.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF4A317A0B46448EB6DBD142 /* IkeruMain.swift */; };
 		66025CCA5210488E965338E1 /* OnboardingRestoreDecisionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 095E73A3C30741AA92AE2679 /* OnboardingRestoreDecisionTests.swift */; };
 		5E0BF588C3EB3D42BC303616 /* WatchQuizEligibilityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E796541FBC07BFA7A916626 /* WatchQuizEligibilityTests.swift */; };
 		A17F00170001B2C3D4E50003 /* WatchQuizBridgeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A17F00170001B2C3D4E50004 /* WatchQuizBridgeTests.swift */; };
@@ -522,6 +523,7 @@
 		E725C72DE5BC3FCCF6797E99 /* ListeningExerciseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListeningExerciseView.swift; sourceTree = "<group>"; };
 		EBEFE3A537DA4FB93E2E2B46 /* GradeButtonsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GradeButtonsView.swift; sourceTree = "<group>"; };
 		EBF0809FE4E8A651003BFFB1 /* IkeruApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IkeruApp.swift; sourceTree = "<group>"; };
+		BF4A317A0B46448EB6DBD142 /* IkeruMain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IkeruMain.swift; sourceTree = "<group>"; };
 		EE1A80BA49474D4CC1E391C8 /* VocabularyEntryDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VocabularyEntryDetailView.swift; sourceTree = "<group>"; };
 		EEC26D21B28CD7D093350336 /* CloudBackupManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudBackupManager.swift; sourceTree = "<group>"; };
 		67E6BCA0F6A747DEBD77A73B /* StoreRecovery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreRecovery.swift; sourceTree = "<group>"; };
@@ -1136,6 +1138,7 @@
 			children = (
 				C4A0D04EAEE23A91CAFB3F5F /* ActiveProfileResolver.swift */,
 				EBF0809FE4E8A651003BFFB1 /* IkeruApp.swift */,
+				BF4A317A0B46448EB6DBD142 /* IkeruMain.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -1536,6 +1539,7 @@
 				4CC1293E4E5E5F24872B7EB6 /* HomeView.swift in Sources */,
 				6DA42A5338F4B35DF64928BF /* HomeViewModel.swift in Sources */,
 				4EAB9553B308C0E627182D2D /* IkeruApp.swift in Sources */,
+				1DC1D7EBFF2B4495BB773DA7 /* IkeruMain.swift in Sources */,
 				58BECF1D8B55499034C3F5AA /* IkeruButtonStyle.swift in Sources */,
 				553E0E281A012BF7C569A6D1 /* IkeruCard.swift in Sources */,
 				2E5911B53C819317FDC49F64 /* IkeruFlowLayout.swift in Sources */,
