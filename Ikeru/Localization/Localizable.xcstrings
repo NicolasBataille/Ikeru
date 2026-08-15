@@ -1721,23 +1721,6 @@
         }
       }
     },
-    "A path from curious to fluent" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "A path from curious to fluent"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Un chemin de curieux à courant"
-          }
-        }
-      }
-    },
     "About" : {
       "comment" : "Settings section header",
       "extractionState" : "stale",
@@ -4572,23 +4555,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Marquer"
-          }
-        }
-      }
-    },
-    "Master kana, kanji, grammar, and conversation — one step at a time, at your own pace." : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Master kana, kanji, grammar, and conversation — one step at a time, at your own pace."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Maîtrise les kana, kanji, la grammaire et la conversation — un pas à la fois, à ton rythme."
           }
         }
       }
@@ -12849,6 +12815,42 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ce mot n'est plus dans ton dictionnaire."
+          }
+        }
+      }
+    },
+    "From your first kana to JLPT N5" : {
+      "comment" : "OnboardingTourView — page 1 subtitle",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "From your first kana to JLPT N5"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "De tes premiers kana au JLPT N5"
+          }
+        }
+      }
+    },
+    "Kana, kanji, grammar, and conversation — a complete beginner's foundation, one step at a time, at your own pace." : {
+      "comment" : "OnboardingTourView — page 1 description",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kana, kanji, grammar, and conversation — a complete beginner's foundation, one step at a time, at your own pace."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kana, kanji, grammaire et conversation — des bases de débutant complètes, un pas à la fois, à ton rythme."
           }
         }
       }
