@@ -23,6 +23,82 @@ raisonnement, les mesures, et les décisions.
 
 ---
 
+## 2026-08-15 — Le contenu N5 passe en français (423 entrées), et une leçon sur les copies de travail partagées
+
+### Fait
+
+- `cb41377` — **traductions françaises du contenu N5 + script d'application.**
+  206 gloses de vocabulaire, 96 phrases, 31 points de grammaire (titre,
+  explication, 93 exemples), 90 séries de sens de kanji, versées dans des
+  colonnes `_fr` du bundle `n5-content.sqlite` par
+  `scripts/apply-content-fr.py` — idempotent, et qui **échoue bruyamment**
+  (entrée sans ligne correspondante, ou ligne sans traduction) plutôt que de
+  laisser un trou invisible jusqu'à l'écran.
+- `765dd7b` — **lecture par langue dans `ContentRepository`.** Nouveau
+  `ContentLanguage`, passé au constructeur ; repli par ligne vers l'anglais
+  quand la colonne française est NULL / vide / `'[]'` ; bundles antérieurs
+  aux colonnes `_fr` détectés par `PRAGMA table_info` au lieu d'échouer à
+  préparer la requête.
+
+**Pourquoi traduire nous-mêmes plutôt qu'importer JMdict** — vérifié en source
+brute : la licence EDRDG ne couvre, pour JMdict, que « les composants japonais
+et anglais » ; les équivalents dans les autres langues, **le français
+nommément**, sont « couverts par un copyright distinct détenu par les
+compilateurs de ce matériel ». Statut non résolu, dépôt public : on traduit
+notre propre anglais, en s'appuyant sur le japonais. Le raisonnement est
+recopié dans `scripts/content-fr/README.md` pour que personne ne « simplifie »
+plus tard en important des gloses tierces.
+
+### Testé
+
+- Build iOS (`xcodebuild`, generic/iOS, sans signing) : **succès**.
+- `swift test --filter "Content|Vocabulary|Kanji|Grammar"` : **146 tests
+  verts**, dont 11 nouveaux qui ciblent le repli (colonne NULL, chaîne vide,
+  tableau JSON vide, bundle sans colonnes `_fr`) — c'est le repli qui protège
+  l'écran, pas la sélection.
+- `i18n-lint` : 0 nouvelle violation. SwiftLint : 0 erreur, et le gate strict
+  sur les lignes touchées est vert.
+- **Pas vérifié sur device ni simulateur** : aucune capture de l'app en
+  français avec le contenu traduit. Le chemin `AppLocale → ContentLanguage →
+  SQL` n'est prouvé que par les tests unitaires.
+- **Le français lui-même n'a pas été relu par un tiers humain.** Une passe de
+  cohérence inter-fichiers a été faite (registre, glossaire, typographie) ;
+  elle laisse des arbitrages ouverts, listés dans la PR.
+
+### Écarté
+
+- **Les espaces insécables avant `? ! : ;`** : mesuré, les 763 chaînes FR du
+  catalogue de l'app n'en contiennent **aucun**. En mettre dans le contenu
+  seul créerait une incohérence app ↔ contenu. À faire partout d'un coup, ou
+  pas du tout.
+- **Câbler `AppLocale` dans les deux autres dépôts de contenu** : celui
+  d'Explore ne sert que `readingLookup` (japonais des deux côtés), celui des
+  tracés kana ne sert que du SVG. Aucune glose n'en sort ; le commentaire le
+  dit sur place.
+- **Traduire `radicals.meaning`** : aucun fichier de traduction n'existe pour
+  cette table, et inventer des gloses ici aurait été exactement ce que le
+  chantier cherche à éviter. Reste en anglais, signalé.
+
+### Ouvert
+
+- **Le travail a été détruit une fois en cours de route** : la copie de travail
+  `/Users/batum/Projects/Ikeru` est partagée entre plusieurs sessions
+  simultanées ; l'une d'elles a changé de branche et nettoyé les fichiers non
+  suivis, emportant les JSON de traduction (non commités) et les colonnes du
+  bundle. Récupéré depuis une copie de travail hors dépôt, puis **prouvé
+  identique** à l'original par 485 comparaisons contre un instantané du SQLite
+  pris après la première application. Depuis, la suite s'est faite dans un
+  `git worktree` isolé — la copie principale a été rendue intacte à l'autre
+  session. **Leçon : commiter et pousser tôt ; sur cette machine, seul un
+  commit poussé est durable.**
+- Le contenu servi est figé à la construction du dépôt : changer de langue en
+  cours de session garde l'ancienne jusqu'à reconstruction des view models
+  (même comportement que `DailyTermViewModel`).
+- `sentences.french` est peuplée mais n'a **aucun lecteur** — rien ne lit
+  `sentences.english` non plus aujourd'hui.
+- Doublon `34` / `200` (今年 ことし) confirmé côté données, pas côté
+  traduction : à nettoyer dans le SQLite s'il n'est pas voulu.
+
 ## 2026-08-15 — Passe device : deux correctifs UI, et un mécanisme entier qui ne se déclenche jamais
 
 Session partie sur GAP-01 (fusion à deux clients). Ce test-là n'a pas eu lieu ;
