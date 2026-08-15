@@ -165,5 +165,5 @@ Full policy: <https://nicolasbataille.github.io/Ikeru/privacy.html>
 
 Public beta on TestFlight, not yet on the App Store. The repository is public as
 a portfolio — it is a real app under active development, not a finished
-artefact, and `docs/known-gaps.md` is the honest inventory of where it isn't
-done.
+artefact, and there is a register of where it isn't done, kept honestly and kept
+out of this repo.
