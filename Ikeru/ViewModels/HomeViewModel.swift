@@ -306,6 +306,17 @@ public final class HomeViewModel {
     /// SRS session and undercounted kana-drill reviews. Active days still
     /// reads `RPGState` (that counter has no equivalent divergence — see its
     /// own doc comment). Safe to call on the main actor.
+    ///
+    /// **No production call site as of GAP-13 (2026-08).** This method is
+    /// NOT the live Tatami-mode eligibility gate — `TatamiEligibilityRow`
+    /// computes its own `reviews`/`mastery`/`activeDays` independently
+    /// (see that file) rather than calling this one. It is kept (and its
+    /// review source fixed alongside the rest of GAP-13) because it is
+    /// public API on `HomeViewModel` and `IkeruCore/Tests` exercises the
+    /// `DisplayModeAdvancedThresholdMonitor` logic it wraps directly — but
+    /// wiring it into Home, or deleting it in favor of always going through
+    /// `TatamiEligibilityRow`, is unresolved follow-up, not something this
+    /// fix should be read as having shipped.
     public func advancedThresholdSignals() async -> AdvancedThresholdSignals {
         let context = modelContainer.mainContext
         let rpg = ActiveProfileResolver.fetchActiveRPGState(in: context)
