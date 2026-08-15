@@ -82,6 +82,18 @@ final class WatchConnectivityManager: NSObject, ObservableObject {
     /// as `deferUntilProfileActive` becomes gradable the moment its own
     /// profile is active again, and waiting for the next cold launch to
     /// notice would strand real reviews for days.
+    ///
+    /// Also re-pushes state to the Watch. Without this, `WatchSessionManager
+    /// .activeProfileId` (and the eligible-kana set it's sent alongside)
+    /// only refreshes on the next reactive trigger — the next
+    /// `processWatchResult`, or the next session activation — so a learner
+    /// who switches profile on the phone and immediately starts a wrist quiz
+    /// would answer questions from the OLD profile's eligible pool, stamped
+    /// with the OLD profile id. Harmless by construction (the batch would
+    /// just defer until that profile is active again — see
+    /// `WatchQuizBatchAttribution`), but it silently parks real wrist work
+    /// that could have been graded immediately. `sendStateToWatch()`'s own
+    /// guards make this a safe no-op when there's no paired Watch.
     private func observeProfileChanges() {
         guard !isObservingProfileChanges else { return }
         isObservingProfileChanges = true
@@ -92,6 +104,7 @@ final class WatchConnectivityManager: NSObject, ObservableObject {
         ) { _ in
             Task { @MainActor in
                 WatchConnectivityManager.shared.scheduleWatchQuizDrain()
+                WatchConnectivityManager.shared.sendStateToWatch()
             }
         }
     }
@@ -310,6 +323,30 @@ final class WatchConnectivityManager: NSObject, ObservableObject {
         // changed groups, or while a card crossed reps 0 → 1 elsewhere) must
         // not get that answer graded just because it made it into a batch.
         let eligibleFronts = await eligibleKanaFronts(cardRepository: cardRepo)
+
+        // Re-check attribution: `allKanaCards()`/`eligibleKanaFronts()` above
+        // each suspend, and both are scoped to whichever profile is active
+        // WHEN THEY RUN (`CardRepository.allCards()` →
+        // `activeProfileCards()`) — not the profile the first attribution
+        // check above verified. A profile switch landing in that window
+        // would otherwise build `cardByFront`/`eligibleFronts` against the
+        // NEW profile while grading the OLD profile's batch: the exact
+        // cross-profile corruption this whole mechanism exists to prevent,
+        // just narrowed from "any time between quiz and delivery" to this
+        // one `await` pair. Bail without completing — the batch stays
+        // queued and the next drain (profile switch back, or next launch)
+        // re-attributes it correctly.
+        let recheck = WatchQuizBatchInbox.attribution(
+            batchProfileId: batch.profileId,
+            activeProfileId: ActiveProfileResolver.fetchActiveProfile(in: context)?.id,
+            liveProfileIds: liveProfileIds
+        )
+        guard recheck == .grade else {
+            Logger.sync.info(
+                "Watch quiz batch \(batch.sessionId): active profile changed mid-drain — deferring re-check"
+            )
+            return
+        }
 
         let grader = WatchQuizBatchGrader(
             inbox: inbox,

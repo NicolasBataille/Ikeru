@@ -184,8 +184,8 @@ public struct WatchQuizReviewBatch: Codable, Sendable {
     /// (optionals encode via `encodeIfPresent`), so no null should ever
     /// reach the dictionary; the filter below makes that a guarantee rather
     /// than a property of the compiler's synthesis, since the payload now
-    /// carries an optional field. `WatchQuizReviewBatchWireTests` pins both
-    /// halves.
+    /// carries an optional field. The wire-compatibility section of
+    /// `WatchQuizBridgeTests` pins both halves.
     public func toDictionary() -> [String: Any] {
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
