@@ -99,15 +99,25 @@ corps vide et garde le jeton dans le Trousseau de l'appareil.
   donc supprimer l'utilisateur auth efface tout, y compris une table ajoutée
   plus tard.
 
-### Fonction Edge : à redéployer à la main
+### Fonction Edge : redéployée par la CI, **si le secret existe**
 
-`supabase/functions/delete-account` **n'est pas redéployée automatiquement** —
-pas de step CI (il faudrait un secret `SUPABASE_ACCESS_TOKEN`). Après toute
-modification du fichier, ou si le projet Supabase est réinitialisé :
+`.github/workflows/supabase-deploy-function.yml` redéploie
+`supabase/functions/delete-account` sur `master` dès que `supabase/functions/**`
+ou `config.toml` bouge, puis rejoue l'assertion du 401.
+
+⚠️ **Il ne fait rien tant que le secret `SUPABASE_ACCESS_TOKEN` n'existe pas.**
+Il émet un avertissement et sort en 0 plutôt que de rougir à chaque push — un
+workflow rouge en permanence apprend à ignorer le rouge. Tant que le secret est
+absent, c'est donc toujours à faire à la main, et le repli est :
 
 ```bash
 supabase functions deploy delete-account --project-ref aiayzlarixlogcoyswna
 ```
+
+(Un access token Supabase est **au niveau du compte**, pas du projet : il porte
+sur toute l'organisation. C'est le seul mécanisme du CLI pour déployer une
+fonction — révocable à tout moment, le job repasse alors en avertissement sans
+rien casser.)
 
 Ne pas l'oublier : `docs/privacy.html` **promet** la suppression des données
 serveur. Si la fonction est absente, le bouton renvoie 404 pendant que la
@@ -120,12 +130,6 @@ Vérifier après déploiement : sans en-tête `Authorization` → 401, jeton bid
 405 — la passerelle rejette sur l'authentification **avant** de router la
 méthode, donc on n'atteint jamais le 405), appel authentifié → 200 avec le
 compte de lignes par table.
-
-Depuis le 2026-08-15 ce n'est plus à faire à la main :
-`.github/workflows/supabase-deploy-function.yml` redéploie sur `master` dès que
-`supabase/functions/**` bouge, puis rejoue l'assertion du 401. **Il ne fait rien
-tant que le secret `SUPABASE_ACCESS_TOKEN` n'existe pas** — il émet un
-avertissement et sort en 0 plutôt que de rougir à chaque push.
 
 ### Mise en pause du palier gratuit
 
