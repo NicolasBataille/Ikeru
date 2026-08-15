@@ -440,17 +440,27 @@ survécu à deux passes. Ce n'est pas la panne SwiftData qui bloque `ProfileView
 (18 tests, SIGTRAP pré-existant sur l'hôte de test applicatif, sans rapport
 avec GAP-13) — c'est simplement une couverture qui n'existe pas.
 
-### GAP-14 — Le schéma serveur n'est pas reproductible depuis le repo
-**Sévérité : moyenne.** `supabase/migrations/` ne contient que la migration de
-clé composite du 2026-08-14. Les 8 tables, leurs politiques RLS, la colonne
-`server_updated_at` et ses triggers ont été appliqués directement sur le projet
-vivant et n'existent **nulle part** dans le dépôt. Un projet Supabase
-réinitialisé ne se reconstruit pas.
+### GAP-14 — ~~Le schéma serveur n'est pas reproductible depuis le repo~~ — **fermé le 2026-08-15**
+`supabase/migrations/20260810000000_baseline_schema.sql` porte désormais la
+définition des 8 tables, du trigger d'horloge serveur, des 32 politiques RLS et
+des index — **reconstruite par introspection du projet live** (`information_schema
+.columns`, `pg_policies`, `pg_indexes`, `pg_constraint`, `information_schema
+.triggers`, `pg_proc`), et non recopiée de mémoire.
 
-Ce qui le fermerait : `supabase db pull` pour aspirer le schéma existant dans
-`supabase/migrations/`, en vérifiant que le rejeu sur une base vierge redonne
-bien les 8 tables, les politiques et les triggers. À faire avant que le schéma
-ne bouge encore.
+Elle est datée **avant** la migration de clé composite pour qu'un rejeu déroule
+create-puis-alter dans l'ordre où l'histoire s'est réellement passée. Elle
+reproduit donc volontairement la clé primaire d'origine, sur `id` seul : c'est la
+migration suivante qui la transforme, et « corriger » ce fichier pour prendre de
+l'avance ferait échouer celle d'après.
+
+⚠️ Ce qui n'est **pas** vérifié : le fichier a été écrit *depuis* le projet live,
+il n'a **jamais été rejoué contre lui**. Avant de s'en servir pour une
+restauration, l'exécuter sur une base de branche. Tout est en `if not exists` et
+chaque politique est supprimée avant d'être recréée, donc un rejoué sur le projet
+existant devrait être sans effet — « devrait », pas « a été observé ».
+
+Hors périmètre, et c'est délibéré : le schéma `auth` et l'event trigger
+`rls_auto_enable` appartiennent à Supabase, pas à l'application.
 
 ### GAP-09 — Aucune cible de tests UI
 **Sévérité : moyenne.** L'infrastructure de fixtures par argument de lancement
