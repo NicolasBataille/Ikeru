@@ -122,14 +122,22 @@ sur l'exemple officiel `supabase/setup-cli`.
 
 ## D. Hors synchro
 
-### GAP-08 — La Watch ne produit aucun historique FSRS
-**Sévérité : moyenne.** Vérifié : aucun `ReviewLog(` dans `IkeruWatch/`. Les
-nano-sessions de la montre font travailler l'apprenant sans que ça alimente la
-mémorisation à long terme — l'effort est réel, la trace n'existe pas.
+### GAP-08 — ~~La Watch ne produit aucun historique FSRS~~ — **entrée FAUSSE, voir GAP-17**
+**Fermé le 2026-08-15 : le constat d'origine était erroné.** Il s'appuyait sur
+« aucun `ReviewLog(` dans `IkeruWatch/` » — une preuve cherchée au mauvais
+endroit. Par conception c'est l'**iPhone** qui écrit les journaux :
+`Shared/WatchQuizReviewBatch.swift` transporte les événements et
+`WatchConnectivityManager.processWatchQuizBatch` les note via
+`CardRepository.gradeCard(surface: "watch")`. La chaîne complète a été retracée
+et elle est vivante sur `dev`.
 
-Ce qui le fermerait : produire des `ReviewLog` côté montre et les remonter via
-`WatchConnectivity` (`transferUserInfo`, file d'attente garantie), puis les
-appliquer côté iPhone.
+Leçon, la deuxième du même jour : **une absence constatée dans un fichier ne
+prouve rien tant qu'on n'a pas vérifié que le mécanisme devait s'y trouver.**
+(L'autre : compter ce qu'une vue affiche n'est pas compter des lignes — voir
+GAP-15.)
+
+Mais le mécanisme livré porte trois défauts, relevés en relecture adversariale
+et **non corrigés** → GAP-17.
 
 ### GAP-15 — Rien ne produit jamais de tombstone : une suppression ne se propage pas
 **Sévérité : haute (annulation silencieuse d'une action de l'apprenant).**
@@ -199,6 +207,51 @@ avec un commentaire expliquant exactement ce raisonnement. Un seul des deux
 appelants avait été corrigé — la leçon générale : quand on documente pourquoi
 un appel doit contourner une protection, vérifier **tous** les appels qui
 relèvent du même argument.
+
+### GAP-17 — Le pont Watch → iPhone perd des nano-sessions et peut noter le mauvais profil
+**Sévérité : haute (perte de données + corruption inter-profils).** Trois
+défauts dans du code **déjà livré sur `dev`**, trouvés en relecture
+adversariale le 2026-08-15. Aucun n'est corrigé.
+
+**1. CRITIQUE — une nano-session entière peut disparaître définitivement.**
+`Ikeru/Services/WatchConnectivityManager.swift:186` appelle
+`markBatchProcessed(batch.sessionId)` — écriture **synchrone** en
+`UserDefaults` — *avant* la boucle de notation et ses N points de suspension.
+Si iOS tue le processus (jetsam, arrêt forcé) pendant l'un de ces `await`, le
+lot est marqué « traité » avec **zéro `ReviewLog` écrit**, et toute
+redélivrance est rejetée. Dix révisions réelles → aucun historique, pour
+toujours.
+
+Ce qui rend le défaut notable : le commentaire des lignes 181-184 montre que
+l'auteur a raisonné sur **exactement ce danger** (« marking it earlier … would
+drop the batch forever ») et n'a déplacé le marquage que derrière le garde
+`modelContainer`, laissant la fenêtre bien plus large des `await` sans
+protection. Le commentaire décrit une intention que le code ne tient qu'au
+tiers.
+
+Correction minimale : un `Set<UUID>` en mémoire pour la déduplication des
+`Task` entrelacés, et l'écriture `UserDefaults` **après** la sauvegarde du
+contexte. Correction complète : persister le lot brut à la réception et
+rejouer au lancement ce qui n'a pas été noté.
+
+**2. IMPORTANT — un lot répondu sous le profil A est noté sur les cartes de B.**
+`WatchQuizReviewBatch` ne porte **aucun identifiant de profil**. À la
+réception, `allKanaCards()` → `activeProfileCards()` résout les caractères sur
+le profil **actif au moment de la livraison**. Bascule de profil entre le quiz
+et la livraison → état FSRS de B muté et `ReviewLog` fabriqués pour des
+révisions que B n'a jamais faites. Aggravant : `StudySetStore.chosenGroups`
+(`KanaPoolViewModel.swift:415`) lit une clé `UserDefaults` **globale**, pas par
+profil — le recouvrement de caractères est donc le cas probable, pas le cas
+limite. Correction : porter un `profileId` dans le lot et abandonner (ou
+mettre en file) si le profil actif ne correspond pas.
+
+**3. IMPORTANT — XP crédité pour des réponses explicitement non notées.**
+`WatchConnectivityManager.swift:276` re-dérive soigneusement `correctCount` et
+`totalQuestions` des événements réellement notés, mais passe
+`xpEarned: batch.xpEarned` tel quel. Désélectionner un groupe kana entre le
+quiz et la livraison → 0 révision notée, 0 `ReviewLog`, et **50 XP quand
+même**. Le commentaire des lignes 254-268 énonce le bon principe et ne
+l'applique qu'à deux champs sur trois.
 
 ### GAP-13 — « Révisions » et l'historique réel divergent, dans les deux sens
 **Sévérité : moyenne (porte pédagogique faussée).** Constaté sur device le

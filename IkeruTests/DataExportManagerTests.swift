@@ -196,6 +196,29 @@ struct DataExportManagerTests {
         profileB.rpgState = rpgB
         context.insert(rpgB)
 
+        // `totalReviewsCompleted` in the export is GAP-13's ReviewLog-derived
+        // count (`CardRepository.activeProfileReviewCount()`), not a mirror of
+        // `RPGState.totalReviewsCompleted` — the two intentionally diverge (see
+        // that field's doc comment). So the fixture needs real `ReviewLog` rows
+        // per profile, distinct in count from each other AND from each
+        // profile's `RPGState` counter (42 / 999), so this test still fails
+        // against both the old cross-profile leak (would read A's 3 rows or
+        // A's rpgA.totalReviewsCompleted) and a regression back to reading
+        // `RPGState.totalReviewsCompleted` directly (would read 999, not 5).
+        let cardA = Card(front: "甲", back: "A", type: .kanji, dueDate: Date())
+        cardA.profile = profileA
+        context.insert(cardA)
+        for _ in 0..<3 {
+            context.insert(ReviewLog(card: cardA, grade: .good, responseTimeMs: 100))
+        }
+
+        let cardB = Card(front: "乙", back: "B", type: .kanji, dueDate: Date())
+        cardB.profile = profileB
+        context.insert(cardB)
+        for _ in 0..<5 {
+            context.insert(ReviewLog(card: cardB, grade: .good, responseTimeMs: 100))
+        }
+
         try context.save()
 
         // Active profile = B, the SECOND-inserted profile. This deliberately
@@ -214,7 +237,7 @@ struct DataExportManagerTests {
         let decoded = try decoder().decode(DecodedRPG.self, from: Data(contentsOf: rpgURL))
         #expect(decoded.xp == 9_000)
         #expect(decoded.level == 42)
-        #expect(decoded.totalReviewsCompleted == 999)
+        #expect(decoded.totalReviewsCompleted == 5)
         #expect(decoded.xp != rpgA.xp)
         #expect(decoded.level != rpgA.level)
     }

@@ -1,0 +1,826 @@
+[
+  {
+    "id": 1,
+    "meaning_fr": "un (objet)"
+  },
+  {
+    "id": 2,
+    "meaning_fr": "deux (objets)"
+  },
+  {
+    "id": 3,
+    "meaning_fr": "trois (objets)"
+  },
+  {
+    "id": 4,
+    "meaning_fr": "quatre (objets)"
+  },
+  {
+    "id": 5,
+    "meaning_fr": "cinq (objets)"
+  },
+  {
+    "id": 6,
+    "meaning_fr": "six (objets)"
+  },
+  {
+    "id": 7,
+    "meaning_fr": "sept (objets)"
+  },
+  {
+    "id": 8,
+    "meaning_fr": "huit (objets)"
+  },
+  {
+    "id": 9,
+    "meaning_fr": "neuf (objets)"
+  },
+  {
+    "id": 10,
+    "meaning_fr": "dix"
+  },
+  {
+    "id": 11,
+    "meaning_fr": "cent"
+  },
+  {
+    "id": 12,
+    "meaning_fr": "mille"
+  },
+  {
+    "id": 13,
+    "meaning_fr": "dix mille"
+  },
+  {
+    "id": 14,
+    "meaning_fr": "le yen ; le cercle"
+  },
+  {
+    "id": 15,
+    "meaning_fr": "lundi"
+  },
+  {
+    "id": 16,
+    "meaning_fr": "mardi"
+  },
+  {
+    "id": 17,
+    "meaning_fr": "mercredi"
+  },
+  {
+    "id": 18,
+    "meaning_fr": "jeudi"
+  },
+  {
+    "id": 19,
+    "meaning_fr": "vendredi"
+  },
+  {
+    "id": 20,
+    "meaning_fr": "samedi"
+  },
+  {
+    "id": 21,
+    "meaning_fr": "dimanche"
+  },
+  {
+    "id": 22,
+    "meaning_fr": "aujourd'hui"
+  },
+  {
+    "id": 23,
+    "meaning_fr": "demain"
+  },
+  {
+    "id": 24,
+    "meaning_fr": "hier"
+  },
+  {
+    "id": 25,
+    "meaning_fr": "maintenant"
+  },
+  {
+    "id": 26,
+    "meaning_fr": "le matin"
+  },
+  {
+    "id": 27,
+    "meaning_fr": "midi ; la journée"
+  },
+  {
+    "id": 28,
+    "meaning_fr": "la nuit ; le soir"
+  },
+  {
+    "id": 29,
+    "meaning_fr": "tous les jours"
+  },
+  {
+    "id": 30,
+    "meaning_fr": "tous les matins"
+  },
+  {
+    "id": 31,
+    "meaning_fr": "toutes les semaines"
+  },
+  {
+    "id": 32,
+    "meaning_fr": "tous les mois"
+  },
+  {
+    "id": 33,
+    "meaning_fr": "tous les ans"
+  },
+  {
+    "id": 34,
+    "meaning_fr": "cette année"
+  },
+  {
+    "id": 35,
+    "meaning_fr": "l'année dernière"
+  },
+  {
+    "id": 36,
+    "meaning_fr": "l'année prochaine"
+  },
+  {
+    "id": 37,
+    "meaning_fr": "ce mois-ci"
+  },
+  {
+    "id": 38,
+    "meaning_fr": "le mois dernier"
+  },
+  {
+    "id": 39,
+    "meaning_fr": "le mois prochain"
+  },
+  {
+    "id": 40,
+    "meaning_fr": "cette semaine"
+  },
+  {
+    "id": 41,
+    "meaning_fr": "la semaine dernière"
+  },
+  {
+    "id": 42,
+    "meaning_fr": "la semaine prochaine"
+  },
+  {
+    "id": 43,
+    "meaning_fr": "le temps ; l'heure"
+  },
+  {
+    "id": 44,
+    "meaning_fr": "demi"
+  },
+  {
+    "id": 45,
+    "meaning_fr": "la minute"
+  },
+  {
+    "id": 46,
+    "meaning_fr": "du matin ; le matin"
+  },
+  {
+    "id": 47,
+    "meaning_fr": "de l'après-midi ; l'après-midi"
+  },
+  {
+    "id": 48,
+    "meaning_fr": "la montagne"
+  },
+  {
+    "id": 49,
+    "meaning_fr": "la rivière"
+  },
+  {
+    "id": 50,
+    "meaning_fr": "le temps (qu'il fait)"
+  },
+  {
+    "id": 51,
+    "meaning_fr": "la pluie"
+  },
+  {
+    "id": 52,
+    "meaning_fr": "la fleur"
+  },
+  {
+    "id": 53,
+    "meaning_fr": "le ciel"
+  },
+  {
+    "id": 54,
+    "meaning_fr": "l'eau"
+  },
+  {
+    "id": 55,
+    "meaning_fr": "l'arbre"
+  },
+  {
+    "id": 56,
+    "meaning_fr": "la contemplation des fleurs de cerisier"
+  },
+  {
+    "id": 57,
+    "meaning_fr": "la personne"
+  },
+  {
+    "id": 58,
+    "meaning_fr": "le/la Japonais(e)"
+  },
+  {
+    "id": 59,
+    "meaning_fr": "le garçon"
+  },
+  {
+    "id": 60,
+    "meaning_fr": "la fille"
+  },
+  {
+    "id": 61,
+    "meaning_fr": "l'homme"
+  },
+  {
+    "id": 62,
+    "meaning_fr": "la femme"
+  },
+  {
+    "id": 63,
+    "meaning_fr": "l'enfant ; les enfants"
+  },
+  {
+    "id": 64,
+    "meaning_fr": "l'ami(e)"
+  },
+  {
+    "id": 65,
+    "meaning_fr": "le père (forme polie)"
+  },
+  {
+    "id": 66,
+    "meaning_fr": "la mère (forme polie)"
+  },
+  {
+    "id": 67,
+    "meaning_fr": "le père (forme neutre)"
+  },
+  {
+    "id": 68,
+    "meaning_fr": "la mère (forme neutre)"
+  },
+  {
+    "id": 69,
+    "meaning_fr": "le grand frère (forme neutre)"
+  },
+  {
+    "id": 70,
+    "meaning_fr": "la grande sœur (forme neutre)"
+  },
+  {
+    "id": 71,
+    "meaning_fr": "le petit frère"
+  },
+  {
+    "id": 72,
+    "meaning_fr": "la petite sœur"
+  },
+  {
+    "id": 73,
+    "meaning_fr": "la famille"
+  },
+  {
+    "id": 74,
+    "meaning_fr": "l'étudiant(e)"
+  },
+  {
+    "id": 75,
+    "meaning_fr": "l'université"
+  },
+  {
+    "id": 76,
+    "meaning_fr": "l'étudiant(e) universitaire"
+  },
+  {
+    "id": 77,
+    "meaning_fr": "l'école"
+  },
+  {
+    "id": 78,
+    "meaning_fr": "le professeur"
+  },
+  {
+    "id": 79,
+    "meaning_fr": "le livre"
+  },
+  {
+    "id": 80,
+    "meaning_fr": "le japonais"
+  },
+  {
+    "id": 81,
+    "meaning_fr": "l'anglais"
+  },
+  {
+    "id": 82,
+    "meaning_fr": "l'étude"
+  },
+  {
+    "id": 83,
+    "meaning_fr": "manger"
+  },
+  {
+    "id": 84,
+    "meaning_fr": "boire"
+  },
+  {
+    "id": 85,
+    "meaning_fr": "la nourriture"
+  },
+  {
+    "id": 86,
+    "meaning_fr": "la boisson"
+  },
+  {
+    "id": 87,
+    "meaning_fr": "le thé"
+  },
+  {
+    "id": 88,
+    "meaning_fr": "le riz ; le repas"
+  },
+  {
+    "id": 89,
+    "meaning_fr": "le pain"
+  },
+  {
+    "id": 90,
+    "meaning_fr": "la viande"
+  },
+  {
+    "id": 91,
+    "meaning_fr": "le poisson"
+  },
+  {
+    "id": 92,
+    "meaning_fr": "les légumes"
+  },
+  {
+    "id": 93,
+    "meaning_fr": "les fruits"
+  },
+  {
+    "id": 94,
+    "meaning_fr": "l'œuf"
+  },
+  {
+    "id": 95,
+    "meaning_fr": "le petit-déjeuner"
+  },
+  {
+    "id": 96,
+    "meaning_fr": "le déjeuner"
+  },
+  {
+    "id": 97,
+    "meaning_fr": "le dîner"
+  },
+  {
+    "id": 98,
+    "meaning_fr": "voir ; regarder"
+  },
+  {
+    "id": 99,
+    "meaning_fr": "entendre ; demander ; écouter"
+  },
+  {
+    "id": 100,
+    "meaning_fr": "lire"
+  },
+  {
+    "id": 101,
+    "meaning_fr": "écrire"
+  },
+  {
+    "id": 102,
+    "meaning_fr": "parler"
+  },
+  {
+    "id": 103,
+    "meaning_fr": "aller"
+  },
+  {
+    "id": 104,
+    "meaning_fr": "venir"
+  },
+  {
+    "id": 105,
+    "meaning_fr": "sortir"
+  },
+  {
+    "id": 106,
+    "meaning_fr": "entrer"
+  },
+  {
+    "id": 107,
+    "meaning_fr": "acheter"
+  },
+  {
+    "id": 108,
+    "meaning_fr": "se reposer ; prendre un jour de congé"
+  },
+  {
+    "id": 109,
+    "meaning_fr": "se tenir debout"
+  },
+  {
+    "id": 110,
+    "meaning_fr": "comprendre"
+  },
+  {
+    "id": 111,
+    "meaning_fr": "sortir (faire une sortie)"
+  },
+  {
+    "id": 112,
+    "meaning_fr": "marcher"
+  },
+  {
+    "id": 113,
+    "meaning_fr": "courir"
+  },
+  {
+    "id": 114,
+    "meaning_fr": "nager"
+  },
+  {
+    "id": 115,
+    "meaning_fr": "faire ; créer"
+  },
+  {
+    "id": 116,
+    "meaning_fr": "utiliser"
+  },
+  {
+    "id": 117,
+    "meaning_fr": "attendre"
+  },
+  {
+    "id": 118,
+    "meaning_fr": "tenir ; avoir"
+  },
+  {
+    "id": 119,
+    "meaning_fr": "habiter ; résider"
+  },
+  {
+    "id": 120,
+    "meaning_fr": "connaître"
+  },
+  {
+    "id": 121,
+    "meaning_fr": "penser"
+  },
+  {
+    "id": 122,
+    "meaning_fr": "dire"
+  },
+  {
+    "id": 123,
+    "meaning_fr": "rencontrer"
+  },
+  {
+    "id": 124,
+    "meaning_fr": "rentrer"
+  },
+  {
+    "id": 125,
+    "meaning_fr": "enseigner ; indiquer"
+  },
+  {
+    "id": 126,
+    "meaning_fr": "ouvrir"
+  },
+  {
+    "id": 127,
+    "meaning_fr": "fermer"
+  },
+  {
+    "id": 128,
+    "meaning_fr": "commencer (intransitif)"
+  },
+  {
+    "id": 129,
+    "meaning_fr": "finir ; se terminer"
+  },
+  {
+    "id": 130,
+    "meaning_fr": "grand"
+  },
+  {
+    "id": 131,
+    "meaning_fr": "petit"
+  },
+  {
+    "id": 132,
+    "meaning_fr": "haut ; grand ; cher"
+  },
+  {
+    "id": 133,
+    "meaning_fr": "bon marché ; pas cher"
+  },
+  {
+    "id": 134,
+    "meaning_fr": "nouveau"
+  },
+  {
+    "id": 135,
+    "meaning_fr": "vieux (pour les objets)"
+  },
+  {
+    "id": 136,
+    "meaning_fr": "long"
+  },
+  {
+    "id": 137,
+    "meaning_fr": "blanc"
+  },
+  {
+    "id": 138,
+    "meaning_fr": "nombreux ; abondant"
+  },
+  {
+    "id": 139,
+    "meaning_fr": "peu nombreux ; peu abondant"
+  },
+  {
+    "id": 140,
+    "meaning_fr": "bon"
+  },
+  {
+    "id": 141,
+    "meaning_fr": "mauvais"
+  },
+  {
+    "id": 142,
+    "meaning_fr": "chaud (climat)"
+  },
+  {
+    "id": 143,
+    "meaning_fr": "froid (climat)"
+  },
+  {
+    "id": 144,
+    "meaning_fr": "doux (climat)"
+  },
+  {
+    "id": 145,
+    "meaning_fr": "frais ; rafraîchissant"
+  },
+  {
+    "id": 146,
+    "meaning_fr": "tôt ; rapide"
+  },
+  {
+    "id": 147,
+    "meaning_fr": "lent ; en retard"
+  },
+  {
+    "id": 148,
+    "meaning_fr": "proche ; près"
+  },
+  {
+    "id": 149,
+    "meaning_fr": "loin ; lointain"
+  },
+  {
+    "id": 150,
+    "meaning_fr": "large ; spacieux"
+  },
+  {
+    "id": 151,
+    "meaning_fr": "étroit ; exigu"
+  },
+  {
+    "id": 152,
+    "meaning_fr": "lourd"
+  },
+  {
+    "id": 153,
+    "meaning_fr": "léger (poids)"
+  },
+  {
+    "id": 154,
+    "meaning_fr": "lumineux"
+  },
+  {
+    "id": 155,
+    "meaning_fr": "sombre"
+  },
+  {
+    "id": 156,
+    "meaning_fr": "difficile"
+  },
+  {
+    "id": 157,
+    "meaning_fr": "facile"
+  },
+  {
+    "id": 158,
+    "meaning_fr": "intéressant ; drôle"
+  },
+  {
+    "id": 159,
+    "meaning_fr": "amusant ; agréable"
+  },
+  {
+    "id": 160,
+    "meaning_fr": "occupé"
+  },
+  {
+    "id": 161,
+    "meaning_fr": "en forme ; énergique"
+  },
+  {
+    "id": 162,
+    "meaning_fr": "calme"
+  },
+  {
+    "id": 163,
+    "meaning_fr": "célèbre"
+  },
+  {
+    "id": 164,
+    "meaning_fr": "important ; précieux"
+  },
+  {
+    "id": 165,
+    "meaning_fr": "pratique"
+  },
+  {
+    "id": 166,
+    "meaning_fr": "le pays"
+  },
+  {
+    "id": 167,
+    "meaning_fr": "le Japon"
+  },
+  {
+    "id": 168,
+    "meaning_fr": "le pays étranger"
+  },
+  {
+    "id": 169,
+    "meaning_fr": "la maison ; le foyer"
+  },
+  {
+    "id": 170,
+    "meaning_fr": "la pièce"
+  },
+  {
+    "id": 171,
+    "meaning_fr": "l'entreprise"
+  },
+  {
+    "id": 172,
+    "meaning_fr": "l'hôpital"
+  },
+  {
+    "id": 173,
+    "meaning_fr": "la gare"
+  },
+  {
+    "id": 174,
+    "meaning_fr": "le magasin"
+  },
+  {
+    "id": 175,
+    "meaning_fr": "la banque"
+  },
+  {
+    "id": 176,
+    "meaning_fr": "au-dessus ; le dessus"
+  },
+  {
+    "id": 177,
+    "meaning_fr": "en dessous ; le dessous"
+  },
+  {
+    "id": 178,
+    "meaning_fr": "l'intérieur ; le milieu"
+  },
+  {
+    "id": 179,
+    "meaning_fr": "la droite"
+  },
+  {
+    "id": 180,
+    "meaning_fr": "la gauche"
+  },
+  {
+    "id": 181,
+    "meaning_fr": "devant ; avant"
+  },
+  {
+    "id": 182,
+    "meaning_fr": "derrière ; l'arrière"
+  },
+  {
+    "id": 183,
+    "meaning_fr": "le nord"
+  },
+  {
+    "id": 184,
+    "meaning_fr": "le sud"
+  },
+  {
+    "id": 185,
+    "meaning_fr": "l'est"
+  },
+  {
+    "id": 186,
+    "meaning_fr": "l'ouest"
+  },
+  {
+    "id": 187,
+    "meaning_fr": "dehors"
+  },
+  {
+    "id": 188,
+    "meaning_fr": "le train"
+  },
+  {
+    "id": 189,
+    "meaning_fr": "la voiture"
+  },
+  {
+    "id": 190,
+    "meaning_fr": "le vélo"
+  },
+  {
+    "id": 191,
+    "meaning_fr": "le nom"
+  },
+  {
+    "id": 192,
+    "meaning_fr": "l'argent"
+  },
+  {
+    "id": 193,
+    "meaning_fr": "le téléphone"
+  },
+  {
+    "id": 194,
+    "meaning_fr": "la photo"
+  },
+  {
+    "id": 195,
+    "meaning_fr": "le film"
+  },
+  {
+    "id": 196,
+    "meaning_fr": "la musique"
+  },
+  {
+    "id": 197,
+    "meaning_fr": "la lettre"
+  },
+  {
+    "id": 198,
+    "meaning_fr": "le journal"
+  },
+  {
+    "id": 199,
+    "meaning_fr": "quoi"
+  },
+  {
+    "id": 200,
+    "meaning_fr": "cette année"
+  },
+  {
+    "id": 201,
+    "meaning_fr": "exister (inanimé)"
+  },
+  {
+    "id": 202,
+    "meaning_fr": "exister (animé)"
+  },
+  {
+    "id": 203,
+    "meaning_fr": "s'il vous plaît (demande polie)"
+  },
+  {
+    "id": 204,
+    "meaning_fr": "excusez-moi ; pardon"
+  },
+  {
+    "id": 205,
+    "meaning_fr": "merci"
+  },
+  {
+    "id": 206,
+    "meaning_fr": "ça va ; d'accord"
+  }
+]

@@ -61,9 +61,13 @@ public final class ReviewLog {
     public var exerciseType: String?
 
     /// Where the review was graded from: `"iphone.session"` (main SRS
-    /// session), `"iphone.drill"` (kana drill flashcard/quiz), or `"watch"`.
-    /// Nothing writes `"watch"` yet — no Watch call site persists a
-    /// `ReviewLog` today — so it is reserved, not currently observed.
+    /// session), `"iphone.drill"` (kana drill flashcard/quiz), or `"watch"`
+    /// (the Watch kana quiz — `WatchConnectivityManager.processWatchQuizBatch`
+    /// grades each answer through the same `CardRepository.gradeCard` path
+    /// as the other two surfaces, since chantier #46 / commit f020439; this
+    /// doc comment used to claim nothing wrote `"watch"`, which stopped
+    /// being true as of that commit — corrected 2026-08 while investigating
+    /// GAP-13).
     public var surface: String?
 
     // MARK: - Cloud sync (schema-only, lot 0)
