@@ -152,15 +152,32 @@ l'interrupteur de sauvegarde (`CloudSyncCoordinator.setConsent` →
 réinsère toute ligne serveur absente en local, sans condition — la suppression
 est annulée.
 
-⚠️ **Pas d'exhibit mesuré — une première tentative était fausse.** L'écart
-apparent « 17 lignes serveur contre 2 sur l'iPhone » relevé d'abord n'en est
-pas un : les 15 lignes manquantes sont des entrées kana avec
-`isInDictionary = false`, et `VocabularyRepository.allEntries()` filtre sur
-`isInDictionary == true` (`:248`). Elles sont présentes des deux côtés, juste
-masquées de la liste. Compter ce qu'une vue affiche n'est pas compter des
-lignes. Le constat ci-dessus reste établi **par lecture du code**, pas par
-observation : il manque encore une démonstration de bout en bout (supprimer un
-vrai mot du dictionnaire, réinitialiser le curseur, le voir revenir).
+**Démontré de bout en bout sur device le 2026-08-15** (iPhone 14 Pro, vraies
+données) :
+
+1. Suppression de 風物詩 dans le dictionnaire → disparaît immédiatement de la
+   liste. Vérifié en SQL juste après : la ligne serveur est **toujours là**,
+   `deleted_at = null`, `server_updated_at` inchangé depuis la veille 17:48.
+   La suppression n'a laissé aucune trace côté serveur.
+2. Redémarrage à froid de l'app → le mot reste absent. Normal : le curseur de
+   pull est déjà au-delà de cette ligne, elle n'est plus redistribuée.
+3. Sauvegarde cloud coupée puis rallumée (= `cursorStore.resetAll()`, puis une
+   vraie synchro depuis le correctif de GAP-16) → **風物詩 est réapparu dans le
+   dictionnaire.**
+
+Une suppression volontaire de l'apprenant, annulée en silence par une bascule
+d'interrupteur. C'est la forme utilisateur du défaut ; la forme grave est la
+même chose au retour d'une réinstallation ou d'un changement d'identité, où
+c'est *tout* l'historique supprimé qui revient d'un coup.
+
+⚠️ **Une première tentative d'exhibit était fausse** — gardé ici parce que
+l'erreur est instructive. L'écart apparent « 17 lignes serveur contre 2 sur
+l'iPhone » n'en était pas un : les 15 lignes « manquantes » sont des entrées
+kana avec `isInDictionary = false`, et `VocabularyRepository.allEntries()`
+filtre sur `isInDictionary == true` (`:248`). Elles étaient présentes des deux
+côtés, simplement masquées de la liste. **Compter ce qu'une vue affiche n'est
+pas compter des lignes** — la démonstration ci-dessus porte sur une ligne
+précise dont on sait qu'elle a été supprimée.
 
 ⚠️ **Le mécanisme de tombstone existe pourtant de bout en bout** —
 `SyncPayloadBuilder` sérialise `deleted_at` pour les 8 tables, les règles de

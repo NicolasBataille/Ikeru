@@ -57,13 +57,15 @@ la session a trouvé autre chose, de plus grave, en essayant de le préparer.
 - Sur iPhone 14 Pro réel, build installé en mise à jour : feuille de partage
   vérifiée par l'utilisateur (« c'est good »).
 - État serveur lu en SQL à chaque étape, pas déduit.
-- **Pas vérifié** : la résurrection de bout en bout des 15 kana. Le test exigeait
-  qu'une synchro tourne, et c'est précisément ce que GAP-16 empêchait. La
-  résurrection reste établie par lecture du code
-  (`SyncPullActor+StandaloneTables.swift:71-88` réinsère sans condition toute
-  ligne serveur absente en local), pas par observation. À rejouer.
-- **Pas vérifié** : le correctif de suppression de vocabulaire sur device —
-  installé, retour utilisateur non recueilli.
+- **Résurrection vérifiée sur device** (voir ci-dessous). La même manip vérifie
+  du même coup le correctif de GAP-16 : la bascule déclenche désormais une vraie
+  synchro, alors qu'elle ne faisait rien avant.
+- **Correctif de suppression de vocabulaire vérifié sur device** : le mot quitte
+  la liste immédiatement, sans changer d'onglet.
+- Piège de méthode qui a coûté un tour : `devicectl device install` pendant que
+  l'app tourne **ne remplace pas le processus en cours**. Deux observations ont
+  été faites sur l'ancien binaire avant qu'on s'en aperçoive. Toujours
+  `--terminate-existing` (ou relancer) après une installation de test.
 
 ### La trouvaille
 
@@ -79,13 +81,22 @@ un défaut qui vit dans l'écart entre le faux serveur et la réalité, pas dans
 code testé. Deux fois en deux jours ; ce n'est plus une coïncidence, c'est une
 limite de la façon dont ce lot a été validé.
 
-**Sans preuve chiffrée, et c'est la deuxième leçon de la session.** J'ai
-d'abord cru tenir un exhibit : 17 lignes serveur contre 2 sur l'iPhone. Faux.
-Les 15 « manquantes » sont des entrées kana avec `isInDictionary = false`, et
-`VocabularyRepository.allEntries()` filtre sur `isInDictionary == true`
-(`:248`) — elles sont présentes des deux côtés, simplement masquées de la
-liste. **J'avais compté ce qu'une vue affichait, pas des lignes.** Le constat
-tient toujours, mais par lecture du code seulement.
+**Démontré sur device**, après un faux départ. Séquence finale : supprimer
+風物詩 → il disparaît ; SQL → la ligne serveur est toujours là, `deleted_at =
+null` ; redémarrage à froid → toujours absent (le curseur est au-delà) ;
+sauvegarde coupée/rallumée → **le mot revient**. Une suppression volontaire
+annulée par une bascule d'interrupteur.
+
+Le faux départ vaut d'être écrit. J'avais cru tenir un exhibit — 17 lignes
+serveur contre 2 sur l'iPhone — et il ne valait rien : les 15 « manquantes »
+sont des entrées kana avec `isInDictionary = false`, que
+`VocabularyRepository.allEntries()` filtre (`:248`). **J'avais compté ce qu'une
+vue affichait, pas des lignes.** L'exhibit correct porte sur une ligne unique
+dont je savais qu'elle venait d'être supprimée.
+
+Autre raccourci faux corrigé en route : « aucune écriture serveur donc aucune
+synchro ». **Un pull ne laisse aucune trace côté serveur** — l'absence
+d'écriture ne prouvait que l'absence de *push*.
 
 ### Écarté
 
@@ -106,10 +117,9 @@ tient toujours, mais par lecture du code seulement.
 
 ### Ouvert
 
-- **Une démonstration de bout en bout de GAP-15** manque encore : supprimer un
-  vrai mot du dictionnaire, réinitialiser le curseur, le voir revenir. Le
-  téléphone est justement dans cet état armé — la bascule de l'interrupteur a
-  remis les curseurs à zéro et la synchro throttlée ne l'a jamais consommé.
+- **風物詩 est revenu dans le dictionnaire de l'utilisateur** à l'issue du test.
+  À resupprimer quand le chantier tombstones sera fait — sinon il reviendra à
+  chaque reset de curseur.
 - **GAP-15**, le chantier tombstones : 8 types d'entités, tous les chemins de
   lecture à filtrer, une purge différée. Pas une rustine.
 - **GAP-01** reste ouvert : la fusion à deux clients n'a toujours jamais tourné.
