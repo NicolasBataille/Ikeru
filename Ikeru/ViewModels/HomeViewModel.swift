@@ -70,6 +70,27 @@ public final class HomeViewModel {
     /// `CardRepository.activeProfileReviewCount()`.
     public private(set) var totalReviewsCompleted: Int = 0
 
+    /// The lifetime review count derived from `ReviewLog` — the honest one.
+    ///
+    /// Exists alongside `totalReviewsCompleted` above because the two answer
+    /// genuinely different questions, and collapsing them would break one of
+    /// the two callers:
+    ///
+    /// - a **transition** (`0` → `>0` across one session) wants the RPG
+    ///   counter, for the reason spelled out above: a learner who drilled
+    ///   kana before their first session would already be `>0` here, so the
+    ///   one-time prompt keyed on it would never fire for them;
+    /// - a **threshold** (`> 0`, "has this learner ever reviewed anything")
+    ///   wants this one. On the RPG counter the answer is wrong for exactly
+    ///   the learner GAP-13 was about — kana-drill-only work journals
+    ///   `ReviewLog` rows without ever touching `RPGState`, so they sit at
+    ///   `0` forever.
+    ///
+    /// Concretely, the bug this closes: someone working only through
+    /// Explore → Kana finishes their whole set, nothing is due, and the
+    /// "all caught up" explainer written precisely for them never appears.
+    public private(set) var derivedReviewCount: Int = 0
+
     /// Estimated card count for the next session preview.
     public private(set) var sessionPreviewCardCount: Int = 0
 
@@ -364,6 +385,7 @@ public final class HomeViewModel {
         // chooser instead of silently receiving cards.
         await refreshStudySetGate()
         await loadRPGState()
+        await loadDerivedReviewCount()
         await loadDueCardCount()
         await loadKanjiLearnedCount()
         await loadKanaProgress()
@@ -455,6 +477,13 @@ public final class HomeViewModel {
     private func loadDueCardCount() async {
         let dueCards = await cardRepository.dueCards(before: Date())
         dueCardCount = dueCards.count
+    }
+
+    /// Refreshes `derivedReviewCount` from `ReviewLog`. A pure read, no
+    /// cache — the same source `TatamiEligibilityRow` uses, so the two can
+    /// never drift apart the way the hand-incremented counter did.
+    private func loadDerivedReviewCount() async {
+        derivedReviewCount = await cardRepository.activeProfileReviewCount()
     }
 
     private func loadKanjiLearnedCount() async {
