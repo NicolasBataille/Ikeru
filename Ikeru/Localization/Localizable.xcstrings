@@ -12853,20 +12853,20 @@
         }
       }
     },
-    "Japanese example sentences and their French translations, reproduced unchanged from the Tatoeba corpus. Its audio is licensed separately, per contributor, and none is used." : {
+    "Japanese example sentences reproduced unchanged from Tatoeba; French lightly normalized (spacing, apostrophes). Its audio is licensed separately, per contributor, unused." : {
       "comment" : "AttributionView — Tatoeba entry description",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Japanese example sentences and their French translations, reproduced unchanged from the Tatoeba corpus. Its audio is licensed separately, per contributor, and none is used."
+            "value" : "Japanese example sentences reproduced unchanged from Tatoeba; French lightly normalized (spacing, apostrophes). Its audio is licensed separately, per contributor, unused."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Les phrases d'exemple japonaises et leurs traductions françaises, reproduites telles quelles depuis le corpus Tatoeba. Son audio est sous licence distincte, par contributeur, et n'est pas utilisé."
+            "value" : "Les phrases d'exemple japonaises sont reproduites telles quelles depuis Tatoeba ; le français est légèrement normalisé (espaces, apostrophes). Son audio est sous licence distincte, par contributeur, non utilisé."
           }
         }
       }

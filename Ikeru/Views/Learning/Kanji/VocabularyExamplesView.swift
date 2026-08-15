@@ -16,8 +16,15 @@ struct VocabularyExamplesView: View {
     /// The content bundle now carries up to six examples per word (Tatoeba
     /// import, `scripts/tatoeba/`), where it used to carry one. This view is a
     /// glance at the words behind a kanji, not the place to read them all —
-    /// unbounded, five cards would stack thirty caption lines. The full list
-    /// lives in `VocabularyStudyView`, behind its own disclosure.
+    /// unbounded, five cards would stack thirty caption lines.
+    ///
+    /// ⚠️ Neither this view nor its host `KanjiStudyView` is reached from any
+    /// navigation path today (verified 2026-08-15: no call site outside their
+    /// own files and tests — `ExploreView` dropped the kanji tile in the
+    /// beginner-first rework). `VocabularyStudyView` is a different, also
+    /// unreached view backed by an unrelated `VocabularyExercise` model, not
+    /// a fallback for the "full list". The `sentences` table this feeds has
+    /// no live reader; fixing that is a wiring decision, not a content one.
     private static let examplesPerWord = 2
 
     @State private var showAll = false

@@ -23,6 +23,121 @@ raisonnement, les mesures, et les décisions.
 
 ---
 
+## 2026-08-15 — Vérification du corpus Tatoeba : données SÛR, câblage plus mort que rapporté
+
+Vérification indépendante de `feat/sentence-corpus` (branche `verify/sentence-corpus`,
+même HEAD `34d8cd7`). Corpus et licence tiennent la route ; la revendication
+« aucune ligne dormante » de l'entrée précédente est fausse — pas seulement
+`sentences.french`, la table entière n'a **aucun** lecteur atteignable.
+
+### Fait
+
+- `Ikeru/Views/Settings/AttributionView.swift` + `Localizable.xcstrings` :
+  la description Tatoeba affirmait « reproduced unchanged » pour le français
+  aussi — faux, `normalise_french()` réécrit 98/317 traductions (espace
+  insécable fine U+202F → espace, apostrophe courbe → droite). Reformulé pour
+  ne garantir l'inchangé que sur le japonais et nommer la normalisation
+  française. Édition chirurgicale de la clé (une seule, en place, déjà en fin
+  de fichier — pas de tri).
+- `Ikeru/Views/Learning/Kanji/VocabularyExamplesView.swift` : commentaire
+  corrigé — il prétendait que « la liste complète vit dans
+  `VocabularyStudyView` ». Faux sur deux plans : ce n'est pas un modèle
+  compatible (`VocabularyStudyView` consomme `VocabularyExercise`/
+  `ExampleSentence`, pas `Vocabulary`/`[String]`), et surtout aucune des deux
+  vues n'est jamais instanciée en dehors de son propre fichier et de ses
+  tests.
+
+### Testé
+
+- Les quatre commandes rejouées, vertes : `xcodebuild build` iOS, `swift test
+  --no-parallel --filter "Content|Sentence|Listening|Shadowing|Reading"` (159
+  tests), `i18n-lint --baseline` (0 NEW), `swiftlint-diff-filter origin/dev`
+  post-commit (0 violation sur les lignes touchées).
+- `git diff --stat` sur `Localizable.xcstrings` : petit et propre à chaque
+  étape (36 lignes pour l'import, 3 pour ce correctif) — pas de réécriture du
+  catalogue.
+- Régénéré les trois exports Tatoeba (`jpn_sentences`, `fra_sentences`,
+  `jpn-fra_links.tsv`) et comparé caractère pour caractère aux 317 lignes de
+  `sentences.json` : **0 écart sur le japonais**, **0 paire absente du fichier
+  de liens officiel**. Confirme « le japonais est intact ».
+  98/317 écarts sur le français, tous typographiques (documentés dans
+  `normalise_french()`, docstring honnête) — d'où le correctif d'attribution
+  ci-dessus.
+  `french` : 98 lignes diffèrent de la source Tatoeba après cette normalisation.
+- Les 96 phrases `ikeru` originales : `SELECT * FROM sentences WHERE
+  source='ikeru'` comparé ligne à ligne à `origin/dev` — identique au
+  caractère près. Les 6 autres tables du bundle (`vocabulary`, `kanji`,
+  `kana`, `grammar_points`, `radicals`, `kanji_radical_edges`) : identiques
+  aussi. Aucune régression.
+- Plancher kanji : vérifié sur les 317 lignes avec le vrai jeu de 90 kanji du
+  bundle (pas celui du rapport) — **0 violation**. Longueur 6–18 : respectée
+  sur les 317. 0 orphelin `vocabulary_word`. 126/206 mots couverts, comme
+  annoncé.
+- Idempotence : ré-exécuté `apply-tatoeba-sentences.py` sur une copie, contenu
+  logique de `sentences` identique avant/après (`SELECT *` diff vide) ; le
+  fichier `.sqlite` brut diffère de quelques octets (réallocation de pages
+  SQLite après DELETE+INSERT, bénin). Testé l'échec bruyant : un
+  `vocabulary_word` inventé fait avorter avec le bon message et un rollback
+  complet (comparé octet pour octet avant/après).
+- 15 phrases tirées au hasard, lues japonais + français en main : aucune
+  fausse, aucune vulgaire. Deux ou trois dépassent la grammaire N5 stricte
+  (どうですか rejeté en tête de phrase, できるだけ+なさい, un particule
+  droppée à l'oral — ちょっと水買ってくる) mais restent lisibles ; conforme à
+  l'aveu déjà fait dans le rapport (« le filtre mesure le vocabulaire, pas la
+  grammaire »).
+- **Pas vérifié** : rendu à l'écran (aucun simulateur lancé, comme
+  l'entrée précédente).
+
+### Écarté
+
+- **Corriger la donnée française plutôt que le texte d'attribution.**
+  `normalise_french()` est une décision défendable et documentée (fait
+  correspondre la ponctuation aux 96 phrases maison) — le bug n'est pas là,
+  il est dans la phrase qui prétend le contraire.
+- **Rebrancher moi-même une surface qui lit `sentences`.** Un choix produit
+  délibéré (voir `ExploreView.swift`, commentaire du rework « beginner-first » :
+  la tuile kanji/étude-vocabulaire a été retirée volontairement de la nav)
+  déborde largement une vérification de corpus.
+
+### Ouvert — correction du rapport précédent
+
+**`sentences` (les 413 lignes, les 96 `ikeru` incluses) n'a aujourd'hui
+AUCUN lecteur atteignable en production, pas seulement `.french`.**
+`fetchSentences` (`SELECT japanese …`) n'est appelé que par
+`vocabularyForKanji` et `vocabularyByLevel` :
+
+- `vocabularyForKanji` alimente `Vocabulary.exampleSentences`, consommé par
+  `VocabularyExamplesView`, hébergée par `KanjiStudyView` — **aucun site
+  d'appel** en dehors de `KanjiStudyView.swift` lui-même et de
+  `IkeruTests/KanjiStudyView{,Model}*Tests.swift`. `ExploreView.swift` le dit
+  noir sur blanc : le rework « beginner-first » a retiré la grille Étude (11
+  tuiles, 9 mortes) au profit de 3 lignes (kana, dictionnaire perso, Sakura) —
+  aucune n'ouvre `KanjiStudyView`.
+- `vocabularyByLevel` alimente aussi `VocabularyItemMapper.map`, dont le
+  commentaire dit explicitement « `exampleSentences` … intentionally
+  dropped » — les phrases sont chargées puis jetées avant d'atteindre
+  Shadowing/Listening. Le seul autre appelant, `LeechInterventionService`,
+  les utilise pour échantillonner des distracteurs de quiz, jamais pour les
+  afficher.
+- `sentencesForVocabulary` (le wrapper public) n'a **aucun appelant** en
+  dehors de `ContentRepository.swift`.
+- `VocabularyStudyView` (`Ikeru/Views/Learning/Reading/`), citée dans le
+  rapport précédent comme second lecteur, ne l'est pas : elle affiche un
+  `VocabularyExercise`/`ExampleSentence` sans rapport avec `Vocabulary`, et
+  n'a elle-même aucun site d'appel — `VocabularyStudyViewModel.loadVocabulary`
+  n'est jamais invoquée.
+
+Le rapport du sélectionneur écrivait : « Vérifié par requête réelle :
+食べる/天気/電話 renvoient 6 phrases chacun. […] aucune ligne dormante. » La
+requête SQL réussit, c'est vrai — mais un `JOIN` qui aboutit n'est pas un
+apprenant qui voit la phrase. C'est exactement le piège que ce dépôt s'est
+déjà fait prendre quatre fois. Le corpus est solide ; l'affirmation de
+« lecteur en production » ne l'était pas. Rebrancher une surface (ou
+restaurer un accès à `KanjiStudyView`) est une décision produit qui déborde
+cette vérification — remontée à l'orchestrateur.
+
+---
+
 ## 2026-08-15 — Corpus de phrases : 96 → 413, importées de Tatoeba
 
 La review pédagogique disait « le moteur est bon, il manque les meubles ». Le
