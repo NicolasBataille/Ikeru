@@ -69,8 +69,7 @@ jamais tourné en réel :
   un vrai réseau) ;
 - les **lignes empoisonnées** ([GAP-03], [GAP-04]) — comportement lu dans le
   code, jamais observé contre un vrai serveur ;
-- la **fusion** entre deux appareils sur le même compte ([GAP-01], toujours
-  bloquée par l'identité liée à l'appareil).
+- la **fusion** entre deux appareils sur le même compte ([GAP-01]).
 
 Ce qui le fermerait : un script de fumée qui pousse ~2000 lignes, vide le store
 local, relance un pull complet et compare. Attention : ~2000 lignes poussées en
@@ -319,17 +318,24 @@ rapprochée. C'est une correction, pas un cadeau, mais c'est un changement de
 comportement sur une porte pédagogique.
 
 **Ce qui reste non vérifié** : le saut 53→74 lui-même n'a jamais été rejoué
-sur l'appareil qui a servi au constat original — seule la couche `IkeruCore`
-est couverte par des tests unitaires (159 tests verts sur le filtre
-`RPG|Review|Session|Tatami|Mastery`, dont 3 nouveaux pour
-`activeProfileReviewCount`) ; les trois sites d'affichage côté app
-(`IkeruTests`) n'ont aucun test automatisé exécutable (panne SwiftData
-pré-existante sur l'hôte de test, documentée en tête de ce dépôt). La passe
-de vérification indépendante avant merge a aussi trouvé et corrigé un vrai
-rouge CI (`DataExportManagerTests`, fixture qui posait `totalReviewsCompleted:
-999` sans `ReviewLog` — correct pour l'ancien comportement, faux pour le
-nouveau) : c'est une preuve concrète, pas seulement théorique, que la
-dérivation change le résultat.
+sur l'appareil qui a servi au constat original. Côté tests, la couverture
+est inégale entre les trois sites d'affichage : `IkeruCore` est couvert
+(159 tests verts sur le filtre `RPG|Review|Session|Tatami|Mastery`, dont 3
+nouveaux pour `activeProfileReviewCount`), et **`DataExportManager` a un
+test app-target exécutable en CI** (`DataExportManagerTests`, 12/12 verts) —
+c'est d'ailleurs ce test qui a attrapé un vrai rouge en CI pendant la
+vérification (fixture posant `totalReviewsCompleted: 999` sans `ReviewLog`,
+correct pour l'ancien comportement, faux pour le nouveau) : une preuve
+concrète, pas seulement théorique, que la dérivation change le résultat.
+En revanche, ni `HomeViewModel.advancedThresholdSignals()` ni
+`TatamiEligibilityRow` ne sont exercés par un test app-target pour ce
+chemin précis : `HomeViewModelTests` existe (15 `@Test`) mais ne teste ni
+`advancedThresholdSignals()` ni `activeProfileReviewCount` — et n'est de
+toute façon **pas** dans le sous-ensemble `-only-testing` que la CI lance
+(`.github/workflows/ci.yml`) ; `TatamiEligibilityRow` n'a aucun fichier de
+test du tout. Ce n'est pas la panne SwiftData qui bloque `ProfileViewModelTests`
+(18 tests, SIGTRAP pré-existant sur l'hôte de test applicatif, sans rapport
+avec GAP-13) — c'est simplement une couverture qui n'existe pas.
 
 ### GAP-14 — Le schéma serveur n'est pas reproductible depuis le repo
 **Sévérité : moyenne.** `supabase/migrations/` ne contient que la migration de

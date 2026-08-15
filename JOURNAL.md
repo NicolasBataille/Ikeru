@@ -84,12 +84,17 @@ déjà changé.
   (elle documente le bug, pas la correction) — donc elle prouve que le pull
   tourne et applique en réel, pas que le correctif de suppression douce a
   lui-même été vérifié sur device (ça reste ouvert, territoire GAP-15).
-- **Pas testé** : aucun changement de code dans cette session, donc pas de
-  build ni de suite Swift Testing à faire tourner pour la modification
-  elle-même. `xcodebuild build` (iOS), `python3 scripts/i18n-lint.py` et
-  `swiftlint lint` ont quand même été rejoués après coup pour s'assurer que
-  le worktree reste vert (voir gate ci-dessous) — aucun n'était censé être
-  affecté par un changement purement Markdown, et aucun ne l'a été.
+- Aucun changement de code dans cette session : la modification elle-même
+  n'a rien à faire tourner. Le worktree a quand même été revalidé après
+  coup pour ne pas juste supposer qu'un changement Markdown est sans effet :
+  `python3 scripts/i18n-lint.py` (0 nouvelle violation), `swiftlint lint`
+  (0 erreur), `swift test --no-parallel --filter "Sync"` (105 tests verts,
+  11 suites) et `xcodebuild build … -destination generic/platform=iOS`
+  (`BUILD SUCCEEDED`) — tous rejoués réellement, pas juste supposés verts.
+- **Pas testé** : `xcodebuild build` pour `IkeruWatch` (watchOS) n'a pas été
+  relancé cette session — aucun fichier watchOS n'est dans le diff, et le
+  build watchOS avait déjà tourné vert sur les sessions précédentes du jour
+  (GAP-15, GAP-13) sans qu'aucune n'ait touché à `docs/`.
 
 ### Écarté
 
@@ -116,8 +121,18 @@ déjà changé.
 
 - Le registre entier n'a été confronté au code **que** sur GAP-02/GAP-13 par
   cette session ; deux autres agents en parallèle couvrent GAP-17 et
-  GAP-03/04/05. Aucune autre entrée n'a été passée en revue systématiquement
-  ici (GAP-06, GAP-07, GAP-09, GAP-10, GAP-14 non ré-auditées).
+  GAP-03/04/05. GAP-06, GAP-07, GAP-09, GAP-10, GAP-14 ont été spot-vérifiées
+  (grep/recherche fichiers, pas de relecture entière) et semblent toujours
+  correctes — pas de réécriture, hors périmètre de toute façon.
+- **GAP-01 semble périmée**, repéré en marge de GAP-02 mais **non corrigé**
+  (hors périmètre — section A, pas GAP-02/GAP-13) : son texte dit que le lot 3
+  (Sign in with Apple) « rend ce test faisable » comme s'il restait à faire,
+  alors que `AnonymousIdentityManager.linkOrSignInWithApple` existe déjà sur
+  `dev` (PR #78, mergée 2026-08-14) — ce qui devrait débloquer précisément le
+  partage de compte entre deux appareils que GAP-01 dit indisponible
+  aujourd'hui. Le test à deux appareils reste non fait, ça, c'est probablement
+  toujours vrai ; c'est la justification du blocage qui a l'air datée.
+  Signalé, pas touché.
 - GAP-15 reste ouvert (sévérité haute) : le correctif de suppression douce
   (PR #86) n'a jamais été vérifié de bout en bout sur un vrai appareil contre
   le vrai serveur — seule la reproduction du *bug* l'a été, pas la
