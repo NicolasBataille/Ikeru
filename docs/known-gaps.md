@@ -570,11 +570,74 @@ existe, mais rien ne l'exerce. Aucun parcours utilisateur n'est testé de bout e
 bout.
 
 ### GAP-10 — La CI ne lance qu'un sous-ensemble filtré des tests Core
-**Sévérité : moyenne, contrainte externe.** Le filtre couvre ~40 motifs de suites
-sur 1015 cas `@Test`. Ce n'est **pas** du code non testé : c'est l'image
-`macos-15` dont la bibliothèque Swift Testing (1501) SIGSEGV sur une suite
-legacy, alors que la toolchain locale (1902) passe tout. Débloqué par un bump de
-l'image, pas par du travail sur nos tests.
+**Sévérité : relevée de moyenne à HAUTE le 2026-08-15, après mesure.** L'entrée
+disait « ~40 motifs sur 1015 cas `@Test` » sans jamais chiffrer ce qui échappe
+au filtre. C'est fait, contre les **vrais** identifiants de test
+(`swift test --list-tests`, 1253 tests) confrontés au regex `--filter` extrait
+de `ci.yml` :
+
+| | |
+|---|---:|
+| tests Core au total | 1253 |
+| **exécutés par la CI** | **666 (53 %)** |
+| **jamais exécutés** | **587 (47 %)** |
+
+Les plus grosses suites muettes : `IkeruThemeTests` (39), `PitchAccentServiceTests`
+(27), `PronunciationScorerTests` (22), `ContentLoadingServiceTests` (18),
+`ShadowingExerciseTests` (18), `KanjiGraphRepositoryTests` (16),
+`StrokeAccuracyServiceTests` (15), `KanaGroupTests` (13), `StrokeDataServiceTests`
+(13).
+
+⚠️ Un premier comptage avait donné « 106 des 177 suites » en comptant les
+déclarations `struct …Tests` à la regex. **Chiffre gonflé** : `--filter` matche
+l'identifiant complet, donc une suite imbriquée est couverte par son parent.
+Seul le comptage sur les identifiants réels vaut. Ne pas ressortir le premier.
+
+**Le défaut de conception compte plus que le pourcentage** : une *allowlist*
+échoue dans le mauvais sens. Toute suite **nouvelle** est exclue par défaut, en
+silence, jusqu'à ce que quelqu'un ajoute son nom à la main.
+
+### Résolu le 2026-08-15 — et trois affirmations tombent avec
+
+La sonde a nommé le coupable **au premier run**. Ce que le dépôt répétait,
+confronté à la mesure :
+
+| affirmé (registre + `ci.yml`) | mesuré |
+|---|---|
+| « SIGSEGV en cours de run » | sortie **1**, jamais 139 |
+| « une suite legacy », défaut de toolchain du runner | `LocalGPUProviderTests`, **écrite par nous** |
+| « la toolchain locale passe tout » | **non** — 48 issues en local aussi |
+| « débloqué par un bump de l'image » | débloqué par **un argument par défaut** |
+
+Cause réelle : `LocalGPUProvider()` sans argument fait défaut à
+`NWBonjourDiscovery()`, qui monte un vrai `NWBrowser` sur `_ikeruai._tcp`. Deux
+tests qui affirmaient des constantes emportaient le process sur un runner sans
+Bonjour. **Classé comme contrainte externe, c'était devenu le travail de
+personne** — c'est ça, la vraie leçon, pas le pourcentage.
+
+Une fois le crash corrigé, la suite complète a tourné pour la première fois :
+1253 tests, 177 suites — et a fait apparaître **48 issues cachées**, toutes dans
+`IkeruThemeTests`. Elles échouaient **aussi en local** : les jetons de design
+avaient bougé au redesign wabi-sabi (#22), les tests non, et rien ne le signalait
+puisqu'ils ne tournaient nulle part. Réconciliés en détecteurs de changement.
+
+La CI utilise désormais une **denylist**. Les trois suites exclues le sont pour
+une raison sans rapport — les round-trips de migration, qui doivent posséder
+leur process. Elles ne sont **délibérément pas** réintégrées sous prétexte qu'un
+run de sonde y a survécu : `CLAUDE.md` documente l'empoisonnement CoreData comme
+quelque chose qu'un fetch ultérieur **peut** rencontrer, pas **va**. Un run vert
+prouve que ça n'a pas tiré, pas que ça ne peut pas.
+
+### Résidu — l'entrée reste OUVERTE
+
+Le job `test` lance aussi les tests de la **cible app** via `xcodebuild`, et
+c'est **une seconde allowlist** : 17 lignes `-only-testing:`, avec exactement le
+même défaut d'échec-ouvert. Une nouvelle suite `IkeruTests` n'est pas lancée
+tant que personne n'ajoute sa ligne.
+
+Ce n'est pas chiffré ici, faute d'équivalent `--list-tests` pour `xcodebuild`.
+Le mesurer d'abord, comme pour Core — et ne pas fermer GAP-10 avant, sous peine
+de refaire exactement la dérive que cette entrée vient de documenter.
 
 ---
 
