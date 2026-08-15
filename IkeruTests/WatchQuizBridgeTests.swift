@@ -66,12 +66,14 @@ final class WatchQuizBridgeTests {
     }
 
     /// Records every answer the grader actually grades, and snapshots the
-    /// inbox's DURABLE state at the moment each grade is about to happen —
-    /// which is exactly the state a process death at that instant would
-    /// leave behind.
+    /// inbox's DURABLE state while each grade is in flight — which is exactly
+    /// the state a process death at that instant would leave behind, whether
+    /// it lands just before `gradeCard` or just after it returns (the two are
+    /// deliberately indistinguishable on disk; see `WatchQuizBatchGrader
+    /// .grade`).
     private final class GradeRecorder {
         var graded: [String] = []
-        var checkpointBeforeEachGrade: [PendingWatchQuizBatch] = []
+        var checkpointDuringEachGrade: [PendingWatchQuizBatch] = []
     }
 
     private func makeGrader(
@@ -86,7 +88,7 @@ final class WatchQuizBridgeTests {
             eligibleFronts: eligibleFronts,
             gradeAnswer: { _, event in
                 if let entry = inbox.pending().first {
-                    recorder.checkpointBeforeEachGrade.append(entry)
+                    recorder.checkpointDuringEachGrade.append(entry)
                 }
                 recorder.graded.append(event.targetCharacter)
             }
@@ -134,11 +136,13 @@ final class WatchQuizBridgeTests {
         _ = await firstGrader.grade(firstInbox.pending().first!)
         #expect(firstRecorder.graded.count == 10)
 
-        // "The process died just as answer #4 was about to be graded." That
-        // instant's persisted state is the 4th captured checkpoint: three
-        // answers already have their ReviewLog, the rest do not.
-        let crashState = firstRecorder.checkpointBeforeEachGrade[3]
-        #expect(crashState.nextEventIndex == 3)
+        // "The process died with answer #4's `gradeCard` in flight." That
+        // instant's persisted state is the 4th captured checkpoint: answer #4
+        // is already consumed (`nextEventIndex == 4`) but not yet counted
+        // (`gradedCount == 3`), because the resume point moves before the
+        // side effect and the counters only after it.
+        let crashState = firstRecorder.checkpointDuringEachGrade[3]
+        #expect(crashState.nextEventIndex == 4)
         #expect(crashState.gradedCount == 3)
 
         // Relaunch: a fresh inbox holding exactly that state.
@@ -163,14 +167,110 @@ final class WatchQuizBridgeTests {
         )
         let tally = await replayGrader.grade(replayInbox.pending().first!)
 
-        // Only the seven un-graded answers are re-sent to `gradeCard`: the
-        // three already-written ReviewLogs are not duplicated, and their FSRS
-        // transitions are not re-applied.
-        #expect(replayRecorder.graded.count == 7)
-        // …while the aggregate still covers the whole nano-session, because
-        // the counters were carried across the interruption.
-        #expect(tally.gradedCount == 10)
-        #expect(tally.gradedCorrectCount == 8)
+        // Only the six answers past the resume point are re-sent to
+        // `gradeCard`: the already-written ReviewLogs are not duplicated and
+        // their FSRS transitions are not re-applied — including answer #4's,
+        // which may or may not have landed before the crash. That ambiguity
+        // is resolved in the losing direction on purpose.
+        #expect(replayRecorder.graded.count == 6)
+        // The counters carried across the interruption cover the rest of the
+        // nano-session: 9 of 10, under-counting the interrupted answer rather
+        // than re-grading it. `ReviewLog` — the authoritative record — holds
+        // either 9 or 10 rows depending on where exactly the crash landed;
+        // neither is more than the learner actually answered.
+        #expect(tally.gradedCount == 9)
+        #expect(tally.gradedCorrectCount == 7)
+        #expect(tally.xpEarned == 7 * WatchQuizReviewBatch.xpPerCorrectAnswer)
+    }
+
+    /// Ten answers, all correct, each one identifiable by its index
+    /// (`responseTimeMs`) so a re-graded answer is visible as a duplicate
+    /// rather than hiding behind a repeated `targetCharacter`.
+    private func makeIndexedBatch() -> WatchQuizReviewBatch {
+        let fronts = ["あ", "い", "う", "え", "お"]
+        let events = (0..<10).map { index in
+            WatchQuizReviewBatch.Event(
+                targetCharacter: fronts[index % fronts.count],
+                answeredCharacter: fronts[index % fronts.count],
+                isCorrect: true,
+                responseTimeMs: index,
+                answeredAt: Date(timeIntervalSince1970: 1_700_000_000 + Double(index))
+            )
+        }
+        return WatchQuizReviewBatch(
+            events: events,
+            xpEarned: WatchQuizReviewBatch.xp(forCorrectAnswers: 10),
+            profileId: nil
+        )
+    }
+
+    @Test("a death AFTER a gradeCard returns, before its checkpoint, must not re-grade that answer")
+    func deathBetweenGradeAndCheckpointDoesNotDuplicate() async {
+        let fronts: Set<String> = ["あ", "い", "う", "え", "お"]
+        let batch = makeIndexedBatch()
+
+        // Pass 1. The snapshot taken INSIDE `gradeAnswer` is the durable
+        // state at the instant that answer's `gradeCard` has just returned:
+        // the `ReviewLog` row exists, and whatever the inbox holds right now
+        // is all a relaunch would find.
+        let inbox = makeInbox()
+        #expect(inbox.admit(batch))
+        var firstPassGraded: [Int] = []
+        var stateWhenGradeReturned: [PendingWatchQuizBatch] = []
+        let firstGrader = WatchQuizBatchGrader(
+            inbox: inbox,
+            cardIdByFront: Dictionary(uniqueKeysWithValues: fronts.map { ($0, UUID()) }),
+            eligibleFronts: fronts,
+            gradeAnswer: { _, event in
+                firstPassGraded.append(event.responseTimeMs)
+                if let entry = inbox.pending().first { stateWhenGradeReturned.append(entry) }
+            }
+        )
+        _ = await firstGrader.grade(inbox.pending().first!)
+        #expect(firstPassGraded == Array(0..<10))
+
+        // "Answer #4 (index 3) was written to the store, then the process was
+        // jetsammed before the grader could checkpoint it."
+        let crashIndex = 3
+        let crashState = stateWhenGradeReturned[crashIndex]
+        let gradedBeforeCrash = Array(firstPassGraded.prefix(crashIndex + 1))
+
+        // Relaunch on exactly that persisted state.
+        let replayName = "\(suiteName).crashAfterGrade"
+        let replayInbox = WatchQuizBatchInbox(defaults: UserDefaults(suiteName: replayName)!)
+        defer { UserDefaults.standard.removePersistentDomain(forName: replayName) }
+        #expect(replayInbox.admit(batch))
+        replayInbox.recordProgress(
+            sessionId: batch.sessionId,
+            nextEventIndex: crashState.nextEventIndex,
+            gradedCount: crashState.gradedCount,
+            gradedCorrectCount: crashState.gradedCorrectCount
+        )
+        var replayGraded: [Int] = []
+        let replayGrader = WatchQuizBatchGrader(
+            inbox: replayInbox,
+            cardIdByFront: Dictionary(uniqueKeysWithValues: fronts.map { ($0, UUID()) }),
+            eligibleFronts: fronts,
+            gradeAnswer: { _, event in replayGraded.append(event.responseTimeMs) }
+        )
+        let tally = await replayGrader.grade(replayInbox.pending().first!)
+
+        // The load-bearing assertion: across the crash and the replay, no
+        // answer reaches `gradeCard` twice. A duplicate here is a duplicate
+        // `ReviewLog` row AND a second FSRS transition for one wrist answer —
+        // exactly what `PendingWatchQuizBatch`'s doc says the progress fields
+        // exist to prevent, and the opposite of the "losing a bonus is a
+        // smaller lie than inventing progression" rule this same drain
+        // applies when ordering `inbox.complete()` against the XP bump.
+        let allGraded = gradedBeforeCrash + replayGraded
+        #expect(
+            Set(allGraded).count == allGraded.count,
+            "answer(s) graded twice across the crash: \(allGraded)"
+        )
+        #expect(allGraded.count <= batch.events.count)
+
+        // And the aggregate never claims MORE reviews than were written.
+        #expect(tally.gradedCount <= allGraded.count)
     }
 
     // MARK: - Scenario 2: the happy path has not regressed

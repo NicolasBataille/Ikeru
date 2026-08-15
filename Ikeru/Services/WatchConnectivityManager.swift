@@ -16,8 +16,14 @@ final class WatchConnectivityManager: NSObject, ObservableObject {
     private var session: WCSession?
     private var modelContainer: ModelContainer?
 
-    /// Pending session results received from Watch (queued while offline).
-    @Published private(set) var pendingResults: [WatchSessionResult] = []
+    // A `@Published private(set) var pendingResults: [WatchSessionResult]`
+    // used to sit here, documented as "pending session results received from
+    // Watch (queued while offline)". Nothing ever appended to it, read it or
+    // observed it — the queue it advertised did not exist. Removed rather
+    // than left in place: in a file whose whole subject is "the Watch bridge
+    // loses nano-sessions", a comment promising a retry queue is the kind of
+    // thing an audit reads as coverage. The retry queue that does exist is
+    // `WatchQuizBatchInbox`, and it is on disk.
 
     // MARK: - ReviewLog provenance (chantier #46)
     //

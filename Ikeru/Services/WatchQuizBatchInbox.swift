@@ -23,14 +23,21 @@ struct PendingWatchQuizBatch: Codable, Sendable {
     let receivedAt: Date
 
     /// Index of the next `batch.events` entry to consider. Everything before
-    /// it has already been either graded (a `ReviewLog` exists) or
-    /// deliberately skipped (no matching card / not eligible).
+    /// it has been **consumed**: graded (a `ReviewLog` exists), deliberately
+    /// skipped (no matching card / not eligible), or — for at most the one
+    /// answer a process death interrupted — attempted and abandoned. An
+    /// answer is consumed *before* its `gradeCard` runs, never after, so a
+    /// replay can lose one review but can never write one twice; see
+    /// `WatchQuizBatchGrader.grade`.
     var nextEventIndex: Int
 
     /// How many events before `nextEventIndex` actually produced a
     /// `ReviewLog`. Carried across a replay so the final aggregate
-    /// (`totalQuestions`) counts the whole nano-session, not just the part
-    /// graded after the last relaunch.
+    /// (`totalQuestions`) counts the whole nano-session and not just the part
+    /// graded after the last relaunch — minus, at most, the single answer a
+    /// death caught between its `gradeCard` and its counting checkpoint,
+    /// which the deliberate ordering above under-counts rather than
+    /// re-grades.
     var gradedCount: Int
 
     /// How many of those were correct — same reason.
@@ -199,9 +206,11 @@ struct WatchQuizBatchInbox {
         return true
     }
 
-    /// Persists how far grading got for `sessionId`. Called after **each**
-    /// graded answer so a process death costs at most the one `gradeCard`
-    /// that was in flight, not the whole prefix.
+    /// Persists how far grading got for `sessionId`.
+    ///
+    /// Called **twice** per gradable answer by `WatchQuizBatchGrader.grade`:
+    /// once to consume the answer *before* `gradeCard` runs, once to count it
+    /// *after*. See that method for why the resume point has to move first.
     func recordProgress(
         sessionId: UUID,
         nextEventIndex: Int,
@@ -340,29 +349,75 @@ struct WatchQuizBatchGrader {
     }
 
     /// Grades `entry` from its recorded resume point to the end, checkpointing
-    /// progress in the inbox after **every** answer, and returns what the
+    /// progress in the inbox around **every** answer, and returns what the
     /// nano-session is worth.
     ///
     /// Resuming (rather than restarting) is what keeps a replay honest: the
     /// answers before `nextEventIndex` already have their `ReviewLog` rows,
     /// and re-grading them would duplicate both the rows and their FSRS
     /// transitions. The counters are carried across the interruption too, so
-    /// the aggregate covers the whole nano-session and not just the part
-    /// graded since the last relaunch.
+    /// the aggregate covers as much of the nano-session as was actually
+    /// counted, not just the part graded since the last relaunch.
+    ///
+    /// ## Why the resume point moves BEFORE the grade
+    ///
+    /// `gradeCard` and the inbox are two non-atomic stores, so one of the two
+    /// orders has to be chosen — the same dilemma `WatchConnectivityManager
+    /// .gradePendingBatch` settles for `inbox.complete()` vs the XP bump, and
+    /// it is settled the same way here: **losing a review is a smaller lie
+    /// than inventing one.**
+    ///
+    /// Checkpointing after the grade meant a death in the window between
+    /// `gradeCard` returning and the checkpoint landing left the answer's
+    /// `ReviewLog` written but not consumed — so the relaunch re-graded it:
+    /// a duplicate `ReviewLog` row and a second FSRS transition for one wrist
+    /// answer, which is exactly what `PendingWatchQuizBatch`'s progress fields
+    /// exist to prevent (pinned by `WatchQuizBridgeTests
+    /// .deathBetweenGradeAndCheckpointDoesNotDuplicate`, which produced
+    /// eleven grades for a ten-answer session).
+    ///
+    /// Consuming the answer first makes the two crash windows both fall on
+    /// the safe side, and makes them indistinguishable on replay:
+    /// - death before `gradeCard` finishes → the answer is skipped on replay.
+    ///   One wrist review lost; nothing counted for it either.
+    /// - death after `gradeCard`, before the counting checkpoint → the
+    ///   `ReviewLog` stands (and it is the authoritative record — see
+    ///   `CardRepository.activeProfileReviewCount`), while the aggregate
+    ///   under-counts it by one review and 5 XP.
+    ///
+    /// Neither fabricates a review the learner never did.
     func grade(_ entry: PendingWatchQuizBatch) async -> WatchQuizBatchTally {
         let batch = entry.batch
         var nextEventIndex = entry.nextEventIndex
         var gradedCount = entry.gradedCount
         var gradedCorrectCount = entry.gradedCorrectCount
 
+        func checkpoint() {
+            inbox.recordProgress(
+                sessionId: batch.sessionId,
+                nextEventIndex: nextEventIndex,
+                gradedCount: gradedCount,
+                gradedCorrectCount: gradedCorrectCount
+            )
+        }
+
         while nextEventIndex < batch.events.count {
             let event = batch.events[nextEventIndex]
-            switch disposition(for: event) {
+            let disposition = disposition(for: event)
+
+            // Consume the answer BEFORE the side effect (see above). For a
+            // skip this is the only checkpoint the answer needs; for a grade
+            // it is the one that makes a replay at-most-once.
+            nextEventIndex += 1
+            checkpoint()
+
+            switch disposition {
             case .grade:
                 if let cardId = cardIdByFront[event.targetCharacter] {
                     await gradeAnswer(cardId, event)
                     gradedCount += 1
                     if event.isCorrect { gradedCorrectCount += 1 }
+                    checkpoint()
                 }
             case .skipNoCard:
                 // e.g. the learner hasn't chosen that kana group yet, or
@@ -376,17 +431,6 @@ struct WatchQuizBatchGrader {
                     "Watch quiz answer for \(event.targetCharacter) is not eligible for grading — skipped"
                 )
             }
-
-            nextEventIndex += 1
-            // Checkpointed after EVERY answer, graded or skipped: a process
-            // death now costs at most the single grade that was in flight,
-            // instead of the whole nano-session (GAP-17 defect 1).
-            inbox.recordProgress(
-                sessionId: batch.sessionId,
-                nextEventIndex: nextEventIndex,
-                gradedCount: gradedCount,
-                gradedCorrectCount: gradedCorrectCount
-            )
         }
 
         return WatchQuizBatchTally(
