@@ -554,3 +554,134 @@ struct CardRepositoryMultiProfileScopingTests {
         #expect(vocab.map(\.front) == ["Other-not-due"])
     }
 }
+
+// MARK: - activeProfileReviewCount (GAP-13)
+
+/// Verifies `CardRepository.activeProfileReviewCount()` — the fix for the
+/// "Révisions et l'historique réel divergent" defect (2026-08-14 device
+/// pass): `RPGState.totalReviewsCompleted` was hand-incremented only by the
+/// main SRS session, so a review graded through any other surface (the kana
+/// drill, in particular) was journaled to `ReviewLog` and never counted —
+/// 53 shown on-device vs. 74 real `ReviewLog` rows for the same profile.
+/// `activeProfileReviewCount()` derives the figure straight from
+/// `ReviewLog` instead, so it cannot diverge by construction regardless of
+/// which surface graded the card.
+@Suite("CardRepository — activeProfileReviewCount (GAP-13)")
+struct CardRepositoryReviewCountTests {
+
+    private func makeTestContainer() throws -> ModelContainer {
+        let schema = Schema([UserProfile.self, Card.self, ReviewLog.self, RPGState.self])
+        let config = ModelConfiguration(isStoredInMemoryOnly: true)
+        return try ModelContainer(for: schema, configurations: [config])
+    }
+
+    @Test("Sums reviews across every surface/exerciseType — the exact gap RPGState.totalReviewsCompleted left open")
+    @MainActor
+    func countsEveryReviewRegardlessOfSurface() async throws {
+        let container = try makeTestContainer()
+        let context = container.mainContext
+        context.insert(UserProfile(displayName: "Learner"))
+        try context.save()
+
+        let repository = CardRepository(modelContainer: container)
+        let sessionCard = await repository.createCard(front: "日", back: "day", type: .kanji)
+        let drillCard = await repository.createCard(front: "あ", back: "a", type: .vocabulary)
+
+        // Graded via the main SRS session path — the only surface that ever
+        // touched `RPGState.totalReviewsCompleted` before this fix.
+        await repository.gradeCard(
+            cardId: sessionCard.id, grade: .good, responseTimeMs: 1000,
+            exerciseType: "kanjiStudy", surface: "iphone.session"
+        )
+        await repository.gradeCard(
+            cardId: sessionCard.id, grade: .easy, responseTimeMs: 900,
+            exerciseType: "kanjiStudy", surface: "iphone.session"
+        )
+
+        // Graded via the kana drill path — this is what `RPGState` silently
+        // dropped: `KanaDrillViewModel` calls `CardRepository.gradeCard`
+        // directly and never touches RPG state.
+        await repository.gradeCard(
+            cardId: drillCard.id, grade: .good, responseTimeMs: 700,
+            answeredValue: "あ", exerciseType: "kana.quiz", surface: "iphone.drill"
+        )
+        await repository.gradeCard(
+            cardId: drillCard.id, grade: .good, responseTimeMs: 650,
+            answeredValue: "あ", exerciseType: "kana.quiz", surface: "iphone.drill"
+        )
+        await repository.gradeCard(
+            cardId: drillCard.id, grade: .good, responseTimeMs: 600,
+            answeredValue: "あ", exerciseType: "kana.quiz", surface: "iphone.drill"
+        )
+
+        let count = await repository.activeProfileReviewCount()
+        #expect(count == 5)
+
+        // Cross-check against the raw per-card logs so this test would fail
+        // loudly (not just silently pass a coincidence) if the aggregate
+        // ever drifted from the ground truth again.
+        let sessionLogs = await repository.reviewLogs(for: sessionCard.id)
+        let drillLogs = await repository.reviewLogs(for: drillCard.id)
+        #expect(sessionLogs.count + drillLogs.count == 5)
+    }
+
+    @Test("Excludes soft-deleted ReviewLog rows (deletedAt != nil)")
+    @MainActor
+    func excludesSoftDeletedLogs() async throws {
+        let container = try makeTestContainer()
+        let context = container.mainContext
+        context.insert(UserProfile(displayName: "Learner"))
+        try context.save()
+
+        let repository = CardRepository(modelContainer: container)
+        let card = await repository.createCard(front: "日", back: "day", type: .kanji)
+
+        await repository.gradeCard(cardId: card.id, grade: .good, responseTimeMs: 1000)
+        await repository.gradeCard(cardId: card.id, grade: .good, responseTimeMs: 1000)
+        await repository.gradeCard(cardId: card.id, grade: .good, responseTimeMs: 1000)
+
+        // No soft-delete API exists on the repository yet (that's GAP-15's
+        // territory) — reach into the store directly to simulate a future
+        // caller tombstoning one row, exactly like the sync layer would.
+        let logs = try context.fetch(FetchDescriptor<ReviewLog>())
+        #expect(logs.count == 3)
+        logs.first?.deletedAt = Date()
+        try context.save()
+
+        let count = await repository.activeProfileReviewCount()
+        #expect(count == 2)
+    }
+
+    @Test("Scoped to the resolved active profile only, excluding the other profile's reviews")
+    @MainActor
+    func scopedToActiveProfileOnly() async throws {
+        let container = try makeTestContainer()
+        let context = container.mainContext
+
+        let older = UserProfile(displayName: "Active")
+        older.createdAt = Date(timeIntervalSince1970: 0)
+        let newer = UserProfile(displayName: "Other")
+        newer.createdAt = Date(timeIntervalSince1970: 3600)
+        context.insert(older)
+        context.insert(newer)
+
+        let activeCard = Card(front: "Active-card", back: "1", type: .kanji)
+        activeCard.profile = older
+        let otherCard = Card(front: "Other-card", back: "2", type: .kanji)
+        otherCard.profile = newer
+        context.insert(activeCard)
+        context.insert(otherCard)
+        try context.save()
+
+        let repository = CardRepository(modelContainer: container)
+        await repository.gradeCard(cardId: activeCard.id, grade: .good, responseTimeMs: 1000)
+        await repository.gradeCard(cardId: activeCard.id, grade: .good, responseTimeMs: 1000)
+        await repository.gradeCard(cardId: otherCard.id, grade: .good, responseTimeMs: 1000)
+
+        // "Active" is the older profile, so it resolves as active via the
+        // documented oldest-profile fallback (no UserDefaults key written —
+        // see `CardRepositoryMultiProfileScopingTests`'s doc comment for why).
+        let count = await repository.activeProfileReviewCount()
+        #expect(count == 2)
+    }
+}

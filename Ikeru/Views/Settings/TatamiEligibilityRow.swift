@@ -237,10 +237,17 @@ struct TatamiEligibilityRow: View {
 
         let context = modelContainer.mainContext
         let rpg = fetchActiveRPGState(in: context)
-        let reviews = rpg?.totalReviewsCompleted ?? 0
         let activeDays = rpg?.activeDaysCount ?? 0
 
+        // "Cumulative competence" reviews come from `ReviewLog` (GAP-13), not
+        // `RPGState.totalReviewsCompleted` — that field's hand-incremented
+        // writers can undercount against the real review history (most
+        // visibly, the kana drill never touches it at all), which is exactly
+        // this figure's bug (53 shown vs. 74 real reviews, observed
+        // 2026-08-14). See `RPGState.totalReviewsCompleted`'s doc comment
+        // for the full list of writers.
         let cardRepository = CardRepository(modelContainer: modelContainer)
+        let reviews = await cardRepository.activeProfileReviewCount()
         let allCards = await cardRepository.allCards()
         let masteryCount = allCards.filter { card in
             MasteryLevel.from(fsrsState: card.fsrsState).rawValue

@@ -52,9 +52,22 @@ public final class HomeViewModel {
     /// Number of kanji cards the user has learned (reviewed at least once).
     public private(set) var kanjiLearnedCount: Int = 0
 
-    /// Lifetime review count for the active profile's `RPGState`. Home reads
-    /// this (before vs. after a session) to detect the learner's first-ever
-    /// completed session, which drives the one-time daily-term prompt.
+    /// **Not** the lifetime review count shown anywhere to the learner —
+    /// despite the name, this mirrors `RPGState.totalReviewsCompleted`
+    /// verbatim (see that field's doc comment for why it's non-authoritative
+    /// as of GAP-13, and for the full list of what writes it), kept exactly
+    /// as-is on purpose: Home only reads it (before vs. after a session) to
+    /// detect a "has this profile's session/Watch counter moved past 0" 0 →
+    /// >0 transition, which drives the one-time daily-term prompt. This is
+    /// an approximation, not a precise "first session" signal even today —
+    /// e.g. a Watch quiz result can also move it — but re-deriving it from
+    /// `ReviewLog` (like `advancedThresholdSignals()` now does for the
+    /// Tatami gate) would make it strictly worse for the common case: any
+    /// learner who did a kana drill before their first session (a very
+    /// likely order) would walk into that first session with the derived
+    /// count already >0, so the prompt would never fire for them at all.
+    /// Any DISPLAY of a lifetime review count must go through
+    /// `CardRepository.activeProfileReviewCount()`.
     public private(set) var totalReviewsCompleted: Int = 0
 
     /// Estimated card count for the next session preview.
@@ -287,12 +300,27 @@ public final class HomeViewModel {
     }
 
     /// Returns the current threshold signals for the active profile.
-    /// Reads `RPGState` for total reviews / active days and the card
-    /// repository for the mastered-card count. Safe to call on the main actor.
+    /// Reviews come from `CardRepository.activeProfileReviewCount()` — the
+    /// `ReviewLog`-derived, cross-surface count (GAP-13) — not from
+    /// `RPGState.totalReviewsCompleted`, which only ever credited the main
+    /// SRS session and undercounted kana-drill reviews. Active days still
+    /// reads `RPGState` (that counter has no equivalent divergence — see its
+    /// own doc comment). Safe to call on the main actor.
+    ///
+    /// **No production call site as of GAP-13 (2026-08).** This method is
+    /// NOT the live Tatami-mode eligibility gate — `TatamiEligibilityRow`
+    /// computes its own `reviews`/`mastery`/`activeDays` independently
+    /// (see that file) rather than calling this one. It is kept (and its
+    /// review source fixed alongside the rest of GAP-13) because it is
+    /// public API on `HomeViewModel` and `IkeruCore/Tests` exercises the
+    /// `DisplayModeAdvancedThresholdMonitor` logic it wraps directly — but
+    /// wiring it into Home, or deleting it in favor of always going through
+    /// `TatamiEligibilityRow`, is unresolved follow-up, not something this
+    /// fix should be read as having shipped.
     public func advancedThresholdSignals() async -> AdvancedThresholdSignals {
         let context = modelContainer.mainContext
         let rpg = ActiveProfileResolver.fetchActiveRPGState(in: context)
-        let reviews = rpg?.totalReviewsCompleted ?? 0
+        let reviews = await cardRepository.activeProfileReviewCount()
         let activeDays = rpg?.activeDaysCount ?? 0
         let allCards = await cardRepository.allCards()
         let masteryCount = allCards.filter { card in
