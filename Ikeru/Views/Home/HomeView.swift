@@ -766,7 +766,16 @@ struct HomeView: View {
               vm.todayKind == .empty,
               !vm.restDayActive,
               !vm.needsStudySetChoice,
-              vm.totalReviewsCompleted > 0,
+              // A THRESHOLD ("has this learner ever reviewed anything"), so it
+              // reads the `ReviewLog`-derived count, not `RPGState`. GAP-13's
+              // residual: on the RPG counter this was wrong for exactly the
+              // learner this explainer exists for — kana-drill-only work
+              // journals ReviewLog rows without ever touching RPGState, so
+              // they stayed at 0 forever and never saw it.
+              // `evaluateFirstSessionDailyTermPrompt` below deliberately does
+              // NOT switch: it keys on a 0 → >0 TRANSITION, where the derived
+              // count would already be >0 and the prompt would never fire.
+              vm.derivedReviewCount > 0,
               !showFirstSessionDailyTermPrompt,   // never stack on the daily-term alert
               let profileID = ActiveProfileResolver.activeProfileID(),
               !OnboardingFlags.hasSeenCaughtUpExplainer(profileID: profileID)

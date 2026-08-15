@@ -212,8 +212,15 @@ GAP-15.)
 Mais le mécanisme livré porte trois défauts, relevés en relecture adversariale
 et **non corrigés** → GAP-17.
 
-### GAP-15 — Rien ne produit jamais de tombstone : une suppression ne se propage pas
-**Sévérité : haute (annulation silencieuse d'une action de l'apprenant).**
+### GAP-15 — ~~Rien ne produit jamais de tombstone~~ — **corrigé le 2026-08-15** (PR #86)
+**Sévérité : haute (annulation silencieuse d'une action de l'apprenant). Corrigé** :
+les suppressions sont désormais douces sur les 7 entités synchronisées, tous les
+chemins de lecture filtrent `deletedAt == nil`, et la relecture adversariale a
+trouvé en plus que le pull jetait les tombstones des 3 tables append-only quand la
+ligne existait déjà en local — prouvé par un test à deux conteneurs, corrigé.
+Historique d'origine conservé ci-dessous.
+
+**Le constat d'origine :**
 Constaté sur device le 2026-08-15, sur les vraies données.
 
 `deletedAt` n'est **jamais** positionné par une action utilisateur. Les seules
@@ -471,7 +478,7 @@ usage plus étroit — la relance « premier terme du jour » de `HomeView`
 rejeté (voir JOURNAL 2026-08-15) : ça aurait cassé la relance pour tout
 apprenant ayant déjà fait du drill kana avant sa première séance.
 
-**Résidu ouvert — un second consommateur, jamais examiné.** Ce raisonnement
+**Résidu — FERMÉ le 2026-08-15.** (Historique conservé, il est instructif.) Ce raisonnement
 n'a été tenu que pour *un* lecteur du vieux compteur. Il y en a **deux** :
 `Ikeru/Views/Home/HomeView.swift:769` (`evaluateCaughtUpExplainer`) garde
 aussi sur `vm.totalReviewsCompleted > 0` — et là c'est un **seuil**, pas une
@@ -491,6 +498,19 @@ ne le lit que » pour la transition 0 → >0 de la relance : incomplet, la
 ligne 769 le lit aussi. Ce qui le fermerait : passer ce garde-là sur
 `CardRepository.activeProfileReviewCount() > 0` (ou sur `hasAnyReviewLog`),
 et corriger le doc-comment.
+
+**Ce qui a changé** : `HomeViewModel` expose désormais `derivedReviewCount`,
+alimenté par `CardRepository.activeProfileReviewCount()` — la même source que
+`TatamiEligibilityRow`, donc les deux ne peuvent plus diverger. `HomeView`
+`evaluateCaughtUpExplainer` lit ce champ.
+
+⚠️ `evaluateFirstSessionDailyTermPrompt` (`HomeView.swift:~844`) **n'a
+délibérément pas basculé** : il ne teste pas un seuil mais une **transition**
+`0` → `>0` au fil d'une séance. Sur le compteur dérivé, un apprenant ayant
+drillé des kana avant sa première séance arriverait déjà à `>0`, et l'invite
+unique ne se déclencherait jamais pour lui. Les deux champs coexistent donc
+parce qu'ils répondent à deux questions différentes — c'est écrit sur chacun.
+
 
 ⚠️ Effet assumé : le chiffre affiché **a augmenté** d'un coup pour les
 apprenants existants (53 → ~74 dans le cas observé) et la porte Tatami s'est
