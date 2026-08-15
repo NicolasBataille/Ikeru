@@ -12853,20 +12853,20 @@
         }
       }
     },
-    "Most Japanese example sentences and their French translations come from the Tatoeba collaborative corpus, reproduced unchanged. No Tatoeba audio is used: it is licensed separately, contributor by contributor." : {
+    "Japanese example sentences and their French translations, reproduced unchanged from the Tatoeba corpus. Its audio is licensed separately, per contributor, and none is used." : {
       "comment" : "AttributionView — Tatoeba entry description",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Most Japanese example sentences and their French translations come from the Tatoeba collaborative corpus, reproduced unchanged. No Tatoeba audio is used: it is licensed separately, contributor by contributor."
+            "value" : "Japanese example sentences and their French translations, reproduced unchanged from the Tatoeba corpus. Its audio is licensed separately, per contributor, and none is used."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "La plupart des phrases d'exemple japonaises et leurs traductions françaises proviennent du corpus collaboratif Tatoeba, reproduites telles quelles. Aucun audio Tatoeba n'est utilisé : il est sous licence distincte, contributeur par contributeur."
+            "value" : "Les phrases d'exemple japonaises et leurs traductions françaises, reproduites telles quelles depuis le corpus Tatoeba. Son audio est sous licence distincte, par contributeur, et n'est pas utilisé."
           }
         }
       }

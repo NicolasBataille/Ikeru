@@ -119,7 +119,7 @@ struct Attribution: Identifiable {
             name: "Tatoeba",
             author: "Tatoeba contributors — tatoeba.org",
             license: "CC BY 2.0 FR",
-            description: "Most Japanese example sentences and their French translations come from the Tatoeba collaborative corpus, reproduced unchanged. No Tatoeba audio is used: it is licensed separately, contributor by contributor."
+            description: "Japanese example sentences and their French translations, reproduced unchanged from the Tatoeba corpus. Its audio is licensed separately, per contributor, and none is used."
         ),
         Attribution(
             id: "voicevox",
