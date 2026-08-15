@@ -152,16 +152,15 @@ l'interrupteur de sauvegarde (`CloudSyncCoordinator.setConsent` →
 réinsère toute ligne serveur absente en local, sans condition — la suppression
 est annulée.
 
-Mesuré :
-
-| | |
-|---|---|
-| Serveur | 17 `vocabulary_entries`, toutes `deleted_at = null`, toutes du push initial du 2026-08-14 17:48 |
-| iPhone | **2** entrées — exactement les 2 non-kana (風物詩, ポカヨケ) |
-
-Les 15 entrées kana ont disparu localement sans que le serveur en soit
-informé. L'apprenant n'a rien fait de particulier : elles étaient là au push
-initial, elles n'y sont plus.
+⚠️ **Pas d'exhibit mesuré — une première tentative était fausse.** L'écart
+apparent « 17 lignes serveur contre 2 sur l'iPhone » relevé d'abord n'en est
+pas un : les 15 lignes manquantes sont des entrées kana avec
+`isInDictionary = false`, et `VocabularyRepository.allEntries()` filtre sur
+`isInDictionary == true` (`:248`). Elles sont présentes des deux côtés, juste
+masquées de la liste. Compter ce qu'une vue affiche n'est pas compter des
+lignes. Le constat ci-dessus reste établi **par lecture du code**, pas par
+observation : il manque encore une démonstration de bout en bout (supprimer un
+vrai mot du dictionnaire, réinitialiser le curseur, le voir revenir).
 
 ⚠️ **Le mécanisme de tombstone existe pourtant de bout en bout** —
 `SyncPayloadBuilder` sérialise `deleted_at` pour les 8 tables, les règles de

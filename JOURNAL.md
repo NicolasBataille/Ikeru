@@ -79,9 +79,13 @@ un défaut qui vit dans l'écart entre le faux serveur et la réalité, pas dans
 code testé. Deux fois en deux jours ; ce n'est plus une coïncidence, c'est une
 limite de la façon dont ce lot a été validé.
 
-Preuve chiffrée : 17 entrées serveur toutes `deleted_at = null`, 2 sur
-l'iPhone — exactement les 2 non-kana (風物詩, ポカヨケ). Les 15 kana ont disparu
-localement sans que le serveur l'apprenne.
+**Sans preuve chiffrée, et c'est la deuxième leçon de la session.** J'ai
+d'abord cru tenir un exhibit : 17 lignes serveur contre 2 sur l'iPhone. Faux.
+Les 15 « manquantes » sont des entrées kana avec `isInDictionary = false`, et
+`VocabularyRepository.allEntries()` filtre sur `isInDictionary == true`
+(`:248`) — elles sont présentes des deux côtés, simplement masquées de la
+liste. **J'avais compté ce qu'une vue affichait, pas des lignes.** Le constat
+tient toujours, mais par lecture du code seulement.
 
 ### Écarté
 
@@ -102,9 +106,10 @@ localement sans que le serveur l'apprenne.
 
 ### Ouvert
 
-- **Cause des 15 entrées kana disparues localement.** Rien dans le code ne les
-  supprime. À élucider — c'est peut-être une perte de données locale, pas
-  seulement une suppression non propagée.
+- **Une démonstration de bout en bout de GAP-15** manque encore : supprimer un
+  vrai mot du dictionnaire, réinitialiser le curseur, le voir revenir. Le
+  téléphone est justement dans cet état armé — la bascule de l'interrupteur a
+  remis les curseurs à zéro et la synchro throttlée ne l'a jamais consommé.
 - **GAP-15**, le chantier tombstones : 8 types d'entités, tous les chemins de
   lecture à filtrer, une purge différée. Pas une rustine.
 - **GAP-01** reste ouvert : la fusion à deux clients n'a toujours jamais tourné.
