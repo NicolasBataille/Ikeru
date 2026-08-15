@@ -2,10 +2,22 @@
 """
 Generate SQLite content bundles for the Ikeru Japanese learning app.
 
-Data Sources (all public domain / CC-licensed factual data):
+Data Sources:
+- Kanji readings and meanings: DERIVED FROM KANJIDIC (EDRDG, CC BY-SA 4.0).
+  This header used to say "original compositions", and that was false. Measured
+  2026-08-15: all 63 dotted kun readings below are byte-identical to KANJIDIC's
+  okurigana convention, and the on-readings reproduce its ordering in 89 of 90
+  kanji. The entries here are a hand-trimmed SUBSET of KANJIDIC (its affix-
+  marked forms such as `ひと-` were dropped), which is a curation of KANJIDIC,
+  not an independent authoring of it. Credited in AttributionView. CC BY-SA is
+  share-alike — do not restore the "original compositions" wording.
+- Radical decompositions: Ikeru's own, NOT RADKFILE. Same measurement: only 36
+  of 90 match RADKFILE, with systematic divergence (八/九 here vs RADKFILE's
+  ハ-shaped radicals). Do not credit RADKFILE without re-running that diff.
 - JLPT N5 kanji list (factual list, not copyrightable)
-- CJK radical data (Unicode standard, public)
-- Common vocabulary and example sentences (original compositions)
+- Vocabulary and the 96 original example sentences (original compositions).
+  A further 317 sentences come from Tatoeba and are applied separately by
+  scripts/apply-tatoeba-sentences.py — they are not generated here.
 
 Usage:
     python3 scripts/generate_content_bundles.py

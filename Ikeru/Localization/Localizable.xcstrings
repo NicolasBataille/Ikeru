@@ -12870,6 +12870,24 @@
           }
         }
       }
+    },
+    "Kanji readings and meanings in the content bundle are derived from the KANJIDIC database, maintained by the EDRDG at Monash University." : {
+      "comment" : "AttributionView — KANJIDIC entry description",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kanji readings and meanings in the content bundle are derived from the KANJIDIC database, maintained by the EDRDG at Monash University."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les lectures et les sens des kanji du contenu embarqué sont dérivés de la base KANJIDIC, maintenue par l'EDRDG à l'université Monash."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

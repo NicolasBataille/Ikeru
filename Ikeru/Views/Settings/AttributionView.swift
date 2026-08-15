@@ -88,9 +88,27 @@ struct Attribution: Identifiable {
 
     /// Resources actually used by the shipped content bundle and app.
     ///
-    /// Kanji readings/meanings/radicals and vocabulary are still hand-authored
-    /// for Ikeru (see `scripts/generate-content-bundle.swift`) rather than
-    /// imported from JMdict or KANJIDIC/RADKFILE, so those are not credited.
+    /// The bundle is built by `scripts/generate_content_bundles.py`. Two other
+    /// generators in `scripts/` are dead demo stubs; the headers claiming they
+    /// import KANJIDIC/RADKFILE describe neither the shipped data nor a live
+    /// pipeline, and this comment used to cite one of them as its authority.
+    ///
+    /// Kanji readings and meanings ARE derived from KANJIDIC, and are credited
+    /// below. That was measured, not assumed, on 2026-08-15: all 63 dotted kun
+    /// readings in the bundle are byte-identical to KANJIDIC's okurigana
+    /// convention (`み.つ`, `みっ.つ`), and the on-readings reproduce its own
+    /// ordering in 89 of 90 kanji. The bundle trims KANJIDIC's affix-marked
+    /// entries (`ひと-`, `うわ-`) and keeps a subset — a curation of KANJIDIC
+    /// is still derived from it. CC BY-SA 4.0 is share-alike; whether that
+    /// reaches the app binary is an open question filed against the App Store
+    /// task, and crediting the source is right either way.
+    ///
+    /// Radicals are NOT credited to RADKFILE, on the same evidence: only 36 of
+    /// 90 decompositions match it, and the misses are systematic (the bundle
+    /// writes 八 and 九 where RADKFILE writes its own ハ-shaped radicals).
+    /// Vocabulary remains hand-authored. Do not add a RADKFILE entry without
+    /// re-running that diff — crediting a source you did not use is its own
+    /// kind of false claim.
     ///
     /// Example sentences are no longer all Ikeru's: 317 of them come from
     /// Tatoeba under CC BY 2.0 FR (`scripts/tatoeba/`), which requires
@@ -100,6 +118,13 @@ struct Attribution: Identifiable {
     /// contributor, and none of it is bundled.
     @MainActor
     static let all: [Attribution] = [
+        Attribution(
+            id: "kanjidic",
+            name: "KANJIDIC",
+            author: "Electronic Dictionary Research and Development Group",
+            license: "CC BY-SA 4.0",
+            description: "Kanji readings and meanings in the content bundle are derived from the KANJIDIC database, maintained by the EDRDG at Monash University."
+        ),
         Attribution(
             id: "kanjivg",
             name: "KanjiVG",
