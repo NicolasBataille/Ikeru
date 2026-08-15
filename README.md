@@ -37,8 +37,12 @@ The shipped content bundle is, exactly:
 | kana | 142 |
 | vocabulary | 206 |
 | grammar points | 31 |
-| example sentences | 96 |
+| example sentences | 335 |
 | bundled audio clips | 572 |
+
+Of those sentences, 96 are Ikeru's own and 239 come from Tatoeba. The bundled
+audio covers the original set; the imported sentences fall back to on-device
+speech synthesis until the clips are regenerated.
 
 That is JLPT N5 and no further. N4 and beyond are not in the app, and the
 onboarding copy says so.
