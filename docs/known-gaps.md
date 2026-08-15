@@ -291,11 +291,20 @@ depuis requalifié [GAP-17]).
 **Ce qui a changé** : `CardRepository.activeProfileReviewCount()` dérive
 désormais le chiffre directement des lignes `ReviewLog` du profil actif
 (`deletedAt == nil`) — vérifié par lecture, c'est une lecture pure sans
-cache, pas un troisième compteur qui pourrait rediverger. Les trois sites
-d'affichage sont rebranchés dessus (vérifié par `grep` sur le dépôt au
-2026-08-15, zéro résidu) : `HomeViewModel.advancedThresholdSignals()`,
-`TatamiEligibilityRow`, et le champ « Lifetime review count » de l'export
-JSON (`DataExportManager`).
+cache, pas un troisième compteur qui pourrait rediverger. Trois call sites
+sont rebranchés dessus (vérifié par `grep` sur le dépôt au 2026-08-15, zéro
+résidu) : `TatamiEligibilityRow` et le champ « Lifetime review count » de
+l'export JSON (`DataExportManager`) sont deux **vrais sites d'affichage** —
+un apprenant voit le chiffre dérivé sur l'un ou l'autre. Le troisième,
+`HomeViewModel.advancedThresholdSignals()`, n'en est **pas un** : un
+verificateur sur PR #85 (`655ab52`) a déjà constaté par `grep` qu'aucun
+chemin de production n'appelle cette méthode — `TatamiEligibilityRow` calcule
+ses propres `reviews`/`mastery`/`activeDays` indépendamment plutôt que de
+passer par elle. Elle reste dans le code (API publique de `HomeViewModel`,
+exercée indirectement par les tests `IkeruCore` sur
+`DisplayModeAdvancedThresholdMonitor`) mais aucune action d'apprenant ne
+l'atteint aujourd'hui ; la brancher sur Home, ou la supprimer au profit de
+`TatamiEligibilityRow`, reste un suivi non résolu.
 
 **Ce qui n'a PAS disparu** : `RPGState.totalReviewsCompleted` — le champ
 lui-même n'a **pas** été supprimé (la charge utile de synchro et le snapshot

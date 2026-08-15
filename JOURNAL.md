@@ -23,6 +23,71 @@ raisonnement, les mesures, et les décisions.
 
 ---
 
+## 2026-08-15 — Vérification PR #90 (hygiène du registre) : un site d'affichage fantôme corrigé
+
+### Fait
+
+- Rejoué la PR #90 (`docs/registry-hygiene`) de bout en bout : builds iOS,
+  watchOS et IkeruWidget (`xcodebuild build`, les trois `BUILD SUCCEEDED`),
+  `swift test --no-parallel --filter "Sync"` (105/105, 11 suites),
+  `swift test --no-parallel --filter "RPG|Review|Session|Tatami|Mastery"`
+  (160/160 — la PR annonçait 159, écart d'une unité sans conséquence),
+  `python3 scripts/i18n-lint.py` (0 nouvelle violation), `swiftlint lint`
+  (0 erreur). Diff Swift dans la PR : zéro fichier, donc le gate strict
+  post-commit (`swiftlint-diff-filter.py`) est vide par construction — vérifié
+  en comptant `git diff --name-only origin/dev...HEAD -- '*.swift'` (0 ligne).
+  `Localizable.xcstrings` : zéro ligne de diff, aucun risque de tri
+  accidentel.
+- **Un défaut réel trouvé et corrigé** dans la section GAP-13 de
+  `docs/known-gaps.md` : le texte de fermeture listait
+  `HomeViewModel.advancedThresholdSignals()` comme un des « trois sites
+  d'affichage » rebranchés sur `activeProfileReviewCount()`, au même titre que
+  `TatamiEligibilityRow` et `DataExportManager`. Faux — `grep` sur tout le
+  dépôt (app, Watch, tests) ne trouve aucun appelant de cette méthode en
+  dehors d'elle-même et d'un commentaire de doc. C'est exactement le défaut
+  qu'un vérificateur précédent avait déjà signalé et corrigé **dans le code**
+  sur PR #85 (commit `655ab52`, « flag advancedThresholdSignals() as having
+  no production caller ») — la passe d'hygiène du registre l'a fait
+  réapparaître en résumant PR #85 dans `known-gaps.md` sans reporter cette
+  correction. Réécrit pour ne compter que les deux vrais sites d'affichage et
+  expliquer pourquoi le troisième n'en est pas un (SHA `655ab52` cité comme
+  source).
+
+### Testé
+
+- `activeProfileReviewCount()` dérive bien des `ReviewLog` (lecture directe
+  de `CardRepository.swift:254-284`), aucun troisième site
+  d'incrémentation caché : `grep -rn totalReviewsCompleted` sur tout le
+  dépôt confirme exactement les trois écrivains à la main que la PR annonce
+  (`SessionRPGPersistence` ligne 84, `WatchConnectivityManager` lignes 147 et
+  410) et pas un de plus.
+- GAP-02 : `gh pr view 86` confirme la section « Reproduit sur appareil » du
+  corps de la PR — reproduction réelle, antérieure au fix, contre le vrai
+  Supabase de production. La distinction éprouvé/non-éprouvé (une ligne, un
+  appel vs. pagination/volumes/lignes empoisonnées/fusion) est fidèle à ce
+  que cette reproduction prouve et ne prouve pas.
+- JOURNAL : entrée du 2026-08-15 (« Hygiène du registre ») ajoutée en tête
+  sans écraser aucune entrée existante — vérifié avec `git diff` (zéro ligne
+  `-` hors en-tête diff).
+
+### Écarté
+
+- Rouvrir ou toucher GAP-01, GAP-15, GAP-16 : signalés par l'implémenteur
+  comme hors périmètre (sections dont je ne suis pas propriétaire ici non
+  plus), pas de raison de les toucher en plus.
+
+### Ouvert
+
+- La couverture de test inégale entre les trois sites d'affichage (notée par
+  la PR elle-même) reste un vrai trou, indépendant du site fantôme corrigé
+  ici : `TatamiEligibilityRow` n'a aucun fichier de test, et
+  `HomeViewModelTests` ne teste pas le chemin `advancedThresholdSignals()`
+  qu'il expose (même si cette méthode n'a pas d'appelant production, elle
+  reste une API publique testée indirectement seulement via
+  `DisplayModeAdvancedThresholdMonitor`).
+
+---
+
 ## 2026-08-15 — Hygiène du registre : GAP-13 fermé, GAP-02 requalifié
 
 Passe documentaire pure sur `docs/known-gaps.md` (sections GAP-02 et GAP-13
