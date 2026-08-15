@@ -64,8 +64,11 @@ merge. Deux réparations poussées en plus du travail de l'implémenteur.
 ### Testé
 
 - `xcodebuild test … -only-testing:IkeruTests/DataExportManagerTests` sur
-  simulateur (iPhone Air) : 12/12 verts après la réparation (rouge avant,
-  avec le message d'erreur ci-dessus reproduit localement).
+  simulateur (iPhone Air) : 12/12 verts après la réparation. Le rouge
+  n'a été observé QUE sur la CI (run 31886586406, job 95016706494) avant
+  correction — diagnostiqué en lisant le fixture et le log CI, pas
+  rejoué en local avant la réparation (donc pas de « rouge confirmé en
+  local » à revendiquer ici, seulement le vert après coup).
 - Le sous-ensemble vert complet de la CI (les 16 suites `-only-testing`
   listées dans `.github/workflows/ci.yml`) rejoué en local sur le même
   simulateur : 122/122 verts.
