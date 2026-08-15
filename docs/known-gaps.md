@@ -595,21 +595,49 @@ Seul le comptage sur les identifiants réels vaut. Ne pas ressortir le premier.
 
 **Le défaut de conception compte plus que le pourcentage** : une *allowlist*
 échoue dans le mauvais sens. Toute suite **nouvelle** est exclue par défaut, en
-silence, jusqu'à ce que quelqu'un ajoute son nom à la main. On peut écrire des
-tests qui ne tourneront jamais sans qu'aucun signal ne le dise.
+silence, jusqu'à ce que quelqu'un ajoute son nom à la main.
 
-**Ce qui a été admis trop vite** : « débloqué par un bump de l'image, pas par du
-travail sur nos tests » supposait que la suite fautive est intouchable. Elle
-n'a jamais été identifiée. Le commentaire de `ci.yml` dit « unbisectable
-**localement** » — exact — mais l'entrée avait glissé vers « unbisectable »,
-ce qui n'est pas la même affirmation. Ça se bisecte très bien **là où ça
-reproduit** : sur le runner.
+### Résolu le 2026-08-15 — et trois affirmations tombent avec
 
-Un job sonde temporaire et non bloquant (`core-tests-crasher-probe`) lance la
-suite complète en série et rapporte le dernier test démarré avant le SIGSEGV,
-plus les tests démarrés qui n'ont jamais rendu de verdict. Une fois le coupable
-nommé : inverser l'allowlist en **quarantaine nommée**, pour que les nouvelles
-suites soient couvertes par défaut. Supprimer la sonde à ce moment-là.
+La sonde a nommé le coupable **au premier run**. Ce que le dépôt répétait,
+confronté à la mesure :
+
+| affirmé (registre + `ci.yml`) | mesuré |
+|---|---|
+| « SIGSEGV en cours de run » | sortie **1**, jamais 139 |
+| « une suite legacy », défaut de toolchain du runner | `LocalGPUProviderTests`, **écrite par nous** |
+| « la toolchain locale passe tout » | **non** — 48 issues en local aussi |
+| « débloqué par un bump de l'image » | débloqué par **un argument par défaut** |
+
+Cause réelle : `LocalGPUProvider()` sans argument fait défaut à
+`NWBonjourDiscovery()`, qui monte un vrai `NWBrowser` sur `_ikeruai._tcp`. Deux
+tests qui affirmaient des constantes emportaient le process sur un runner sans
+Bonjour. **Classé comme contrainte externe, c'était devenu le travail de
+personne** — c'est ça, la vraie leçon, pas le pourcentage.
+
+Une fois le crash corrigé, la suite complète a tourné pour la première fois :
+1253 tests, 177 suites — et a fait apparaître **48 issues cachées**, toutes dans
+`IkeruThemeTests`. Elles échouaient **aussi en local** : les jetons de design
+avaient bougé au redesign wabi-sabi (#22), les tests non, et rien ne le signalait
+puisqu'ils ne tournaient nulle part. Réconciliés en détecteurs de changement.
+
+La CI utilise désormais une **denylist**. Les trois suites exclues le sont pour
+une raison sans rapport — les round-trips de migration, qui doivent posséder
+leur process. Elles ne sont **délibérément pas** réintégrées sous prétexte qu'un
+run de sonde y a survécu : `CLAUDE.md` documente l'empoisonnement CoreData comme
+quelque chose qu'un fetch ultérieur **peut** rencontrer, pas **va**. Un run vert
+prouve que ça n'a pas tiré, pas que ça ne peut pas.
+
+### Résidu — l'entrée reste OUVERTE
+
+Le job `test` lance aussi les tests de la **cible app** via `xcodebuild`, et
+c'est **une seconde allowlist** : 17 lignes `-only-testing:`, avec exactement le
+même défaut d'échec-ouvert. Une nouvelle suite `IkeruTests` n'est pas lancée
+tant que personne n'ajoute sa ligne.
+
+Ce n'est pas chiffré ici, faute d'équivalent `--list-tests` pour `xcodebuild`.
+Le mesurer d'abord, comme pour Core — et ne pas fermer GAP-10 avant, sous peine
+de refaire exactement la dérive que cette entrée vient de documenter.
 
 ---
 
