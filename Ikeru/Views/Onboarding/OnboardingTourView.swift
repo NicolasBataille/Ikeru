@@ -29,8 +29,14 @@ struct OnboardingTourView: View {
             kanji: "\u{9053}",
             romaji: "michi",
             title: "Your Journey",
-            subtitle: "A path from curious to fluent",
-            description: "Master kana, kanji, grammar, and conversation — one step at a time, at your own pace."
+            // Scoped deliberately to N5, and not to fluency. The shipped
+            // bundle is 90 kanji, 206 words and 31 grammar points — the JLPT
+            // N5 perimeter. "A path from curious to fluent" promised a
+            // destination no content in this app reaches, on the very first
+            // screen a learner sees. Widen this line when the content widens,
+            // not before.
+            subtitle: "From your first kana to JLPT N5",
+            description: "Kana, kanji, grammar, and conversation — a complete beginner's foundation, one step at a time, at your own pace."
         ),
         OnboardingPage(
             id: 1,

@@ -103,9 +103,20 @@ def apply_table(
     columns: dict[str, str],
     json_columns: frozenset[str],
     source: str,
+    scope: str = "",
 ) -> int:
-    """Write one table's translations. Returns the number of rows updated."""
-    known_keys = {row[0] for row in conn.execute(f"SELECT {key_column} FROM {table}")}
+    """Write one table's translations. Returns the number of rows updated.
+
+    ``scope`` narrows the rows this file is expected to cover. Only the
+    ``sentences`` table needs it: since the Tatoeba import
+    (``scripts/apply-tatoeba-sentences.py``) the table also holds rows that
+    arrive with their French already attached, and the completeness check below
+    would otherwise read them as translation holes and abort.
+    """
+    query = f"SELECT {key_column} FROM {table}"
+    if scope:
+        query += f" WHERE {scope}"
+    known_keys = {row[0] for row in conn.execute(query)}
 
     seen: set = set()
     updated = 0
@@ -185,6 +196,10 @@ def main(argv: list[str]) -> int:
             "key_field": "id",
             "columns": {"french": "french"},
             "json_columns": frozenset(),
+            # Only Ikeru's own sentences are translated here; the Tatoeba
+            # import brings its French with it. A bundle predating that import
+            # has no `source` column at all, hence the PRAGMA guard below.
+            "scope": "source IS NULL OR source = 'ikeru'",
         },
         {
             "table": "grammar_points",
@@ -220,6 +235,9 @@ def main(argv: list[str]) -> int:
                     added.append(f"{plan['table']}.{column}")
 
             entries = load_entries(args.source / plan["file"])
+            scope = plan.get("scope", "")
+            if scope and "source" not in existing_columns(conn, plan["table"]):
+                scope = ""   # bundle predates the Tatoeba import: every row is Ikeru's
             updated = apply_table(
                 conn,
                 table=plan["table"],
@@ -229,6 +247,7 @@ def main(argv: list[str]) -> int:
                 columns=plan["columns"],
                 json_columns=plan["json_columns"],
                 source=plan["file"],
+                scope=scope,
             )
             for column in plan["columns"]:
                 verify_no_holes(conn, plan["table"], column)

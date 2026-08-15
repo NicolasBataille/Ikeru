@@ -7,10 +7,14 @@
 #
 # Only the Edge Function config lives here on purpose. The database schema is
 # NOT declared in this file: the 8 sync tables, their RLS policies, and the
-# `server_updated_at` triggers were applied via migrations against the live
-# project, and re-declaring them here would create a second source of truth
-# that drifts. If the schema ever needs to be reproducible from the repo too,
-# that is `supabase db pull` into `supabase/migrations/` — a separate job.
+# `server_updated_at` triggers live in `supabase/migrations/` instead, and
+# re-declaring them here would create a second source of truth that drifts.
+#
+# (This comment used to end "if the schema ever needs to be reproducible from
+# the repo too, that is a separate job". It was done on 2026-08-15 — see
+# `supabase/migrations/20260810000000_baseline_schema.sql`, reconstructed by
+# introspecting the live project. That baseline has never been REPLAYED
+# against the project, only written from it.)
 
 project_id = "aiayzlarixlogcoyswna"
 
