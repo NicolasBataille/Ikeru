@@ -105,11 +105,140 @@ public struct DefaultSessionPlanner: SessionPlanner {
             plan = composeHome(inputs: inputs)
         case .studyCustom(let types, let levels):
             plan = composeStudy(inputs: inputs, types: types, levels: levels)
+        case .caughtUp(let offer):
+            plan = composeCaughtUp(inputs: inputs, offer: offer)
         }
         Logger.learningLoop.info(
             "session.composed source=\(String(describing: inputs.source), privacy: .public) duration=\(inputs.durationMinutes)"
         )
         return plan
+    }
+
+    // MARK: - Caught up (nothing due)
+
+    /// Maximum cards in a caught-up session, whichever offer was chosen.
+    ///
+    /// A learner here has *already* finished their reviews for the day. This
+    /// is extra, opted-into work, so the cap is deliberately below a normal
+    /// session's: the point is a satisfying short round, not a second
+    /// full session that turns "caught up" into a treadmill. Ten is a
+    /// judgement call, not a measurement — revisit against real usage.
+    public static let caughtUpSessionCap = 10
+
+    /// Composes the session a learner asked for when nothing was due.
+    ///
+    /// Returns an EMPTY plan when the chosen pool is empty (every card
+    /// mastered and nothing left to discover). That is not a failure to
+    /// paper over: `SessionComposer` turns an empty plan into `nil`, and the
+    /// caller keeps showing the proposal instead of opening a blank session.
+    /// The offer's availability is computed up front by
+    /// `caughtUpAvailability(cards:)` so the UI never offers a button that
+    /// cannot produce anything.
+    private func composeCaughtUp(
+        inputs: SessionPlannerInputs,
+        offer: SessionPlannerInputs.CaughtUpOffer
+    ) -> SessionPlan {
+        let totalSec = inputs.durationMinutes * 60
+        let exercises: [ExerciseItem]
+        switch offer {
+        case .deepen:
+            exercises = composeDeepen(cards: inputs.availableCards, secondsBudget: totalSec)
+        case .discover:
+            exercises = composeDiscover(cards: inputs.availableCards, secondsBudget: totalSec)
+        }
+        return finalize(exercises: exercises)
+    }
+
+    /// "Approfondir": started cards that are NOT yet due, weakest first.
+    ///
+    /// Ordering is by ascending retrievability — the card closest to being
+    /// forgotten comes first. Sorting by due date instead would surface the
+    /// cards the scheduler is already most confident about, which is the
+    /// opposite of "push further on what you know". Retrievability is the
+    /// scheduler's own estimate, so this reuses the model rather than
+    /// inventing a second notion of "weak".
+    ///
+    /// Cards already due are excluded on purpose: if any existed, the learner
+    /// would not be on this screen, and including them would let a caught-up
+    /// session silently become the normal one.
+    private func composeDeepen(
+        cards: [CardDTO],
+        secondsBudget: Int,
+        now: Date = Date()
+    ) -> [ExerciseItem] {
+        let started: [CardDTO] = cards.filter { $0.fsrsState.reps > 0 && $0.dueDate > now }
+        var scored: [(card: CardDTO, retrievability: Double)] = []
+        scored.reserveCapacity(started.count)
+        for card in started {
+            scored.append((card, FSRSService.retrievability(for: card.fsrsState, now: now)))
+        }
+        scored.sort { lhs, rhs in
+            if lhs.retrievability != rhs.retrievability {
+                return lhs.retrievability < rhs.retrievability
+            }
+            return lhs.card.front < rhs.card.front
+        }
+
+        return takeWithinBudget(scored.map(\.card), secondsBudget: secondsBudget)
+    }
+
+    /// "Découvrir": cards never reviewed, in curriculum order.
+    ///
+    /// Reuses `pickNewContent`'s ordering rule (kana curriculum first, then
+    /// alphabetical) so discovery introduces content in the same sequence the
+    /// normal drip would — a learner who discovers ahead is not put on a
+    /// different track from one who waits.
+    ///
+    /// The "announced as new" half of the owner's decision is NOT implemented
+    /// here: `NewCardPresentationScheduler` already inserts an ungraded
+    /// presentation phase before every `reps == 0` card, and `SessionComposer`
+    /// applies it to every plan. Reimplementing it here would give new cards
+    /// two different introductions depending on how the session started.
+    private func composeDiscover(cards: [CardDTO], secondsBudget: Int) -> [ExerciseItem] {
+        let candidates = cards
+            .filter { $0.fsrsState.reps == 0 }
+            .sorted { lhs, rhs in
+                let li = Self.kanaCurriculumIndex[lhs.front] ?? Int.max
+                let ri = Self.kanaCurriculumIndex[rhs.front] ?? Int.max
+                return li != ri ? li < ri : lhs.front < rhs.front
+            }
+
+        return takeWithinBudget(candidates, secondsBudget: secondsBudget)
+    }
+
+    /// Fills from an already-ordered list until the time budget or the
+    /// caught-up cap runs out, whichever comes first.
+    private func takeWithinBudget(_ ordered: [CardDTO], secondsBudget: Int) -> [ExerciseItem] {
+        var items: [ExerciseItem] = []
+        var spent = 0
+        for card in ordered {
+            if items.count >= Self.caughtUpSessionCap { break }
+            let duration = Self.reviewDurationSeconds(for: card)
+            if spent + duration > secondsBudget { break }
+            items.append(.srsReview(card))
+            spent += duration
+        }
+        return items
+    }
+
+    /// Which caught-up offers can actually produce a session, given the pool.
+    ///
+    /// Exposed so the Home proposal can hide an offer instead of showing a
+    /// button that does nothing — a silent no-op on tap is the defect this
+    /// whole change exists to remove, and it would be ironic to reintroduce
+    /// it one layer up.
+    public static func caughtUpAvailability(
+        cards: [CardDTO],
+        now: Date = Date()
+    ) -> Set<SessionPlannerInputs.CaughtUpOffer> {
+        var offers: Set<SessionPlannerInputs.CaughtUpOffer> = []
+        if cards.contains(where: { $0.fsrsState.reps > 0 && $0.dueDate > now }) {
+            offers.insert(.deepen)
+        }
+        if cards.contains(where: { $0.fsrsState.reps == 0 }) {
+            offers.insert(.discover)
+        }
+        return offers
     }
 
     // MARK: - Home

@@ -237,22 +237,111 @@ struct HomeView: View {
 
     // MARK: - Quiet state (when no cards due)
 
-    private var quietState: some View {
-        HStack(spacing: 10) {
-            Image(systemName: "checkmark.seal")
-                .font(.system(size: 14, weight: .medium))
-                .foregroundStyle(Color.ikeruSuccess)
-            Text("All caught up — enjoy the calm")
-                .font(.ikeruCaption)
-                .foregroundStyle(Color.ikeruTextTertiary)
+    /// What a learner sees when nothing is due.
+    ///
+    /// Until 2026-08-16 this was a dead end: a "All caught up — enjoy the
+    /// calm" badge, no CTA, and every other way into a session silently did
+    /// nothing. The owner's decision was that the app must never leave the
+    /// learner in front of emptiness, but that the filling must be **explicit
+    /// and presented** — a session that fills itself without saying so stays
+    /// the defect.
+    ///
+    /// So the badge keeps its place (finishing your reviews IS worth
+    /// acknowledging) and two offers appear under it. Each is shown only when
+    /// its pool can actually produce a session, so no button is ever inert.
+    /// When neither can, the badge stands alone exactly as before — that is
+    /// the one case where "caught up" is genuinely a full stop.
+    private func quietState(_ vm: HomeViewModel) -> some View {
+        VStack(alignment: .leading, spacing: IkeruTheme.Spacing.sm) {
+            HStack(spacing: 10) {
+                Image(systemName: "checkmark.seal")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(Color.ikeruSuccess)
+                Text("All caught up — enjoy the calm")
+                    .font(.ikeruCaption)
+                    .foregroundStyle(Color.ikeruTextTertiary)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+            .background {
+                Rectangle().fill(.ultraThinMaterial)
+                    .overlay(Rectangle().strokeBorder(TatamiTokens.goldDim.opacity(0.5), lineWidth: 0.6))
+            }
+            .sumiCorners(color: TatamiTokens.goldDim, size: 5, weight: 0.9)
+
+            if !vm.caughtUpOffers.isEmpty {
+                Text("Want to keep going? Nothing is due, so this is extra.")
+                    .font(.ikeruCaption)
+                    .foregroundStyle(Color.ikeruTextTertiary)
+                    .padding(.top, 2)
+
+                if vm.caughtUpOffers.contains(.deepen) {
+                    caughtUpOfferButton(
+                        offer: .deepen,
+                        symbol: "arrow.down.heart",
+                        title: "Go deeper",
+                        subtitle: "Practise what you already know, weakest first"
+                    )
+                }
+                if vm.caughtUpOffers.contains(.discover) {
+                    caughtUpOfferButton(
+                        offer: .discover,
+                        symbol: "sparkles",
+                        title: "Discover something new",
+                        subtitle: "Meet content you haven't seen yet"
+                    )
+                }
+            }
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
-        .background {
-            Rectangle().fill(.ultraThinMaterial)
-                .overlay(Rectangle().strokeBorder(TatamiTokens.goldDim.opacity(0.5), lineWidth: 0.6))
+        // `.contain`, and load-bearing: an identifier on a bare VStack is not
+        // exposed as an element at all, so `otherElements["home.caughtUpProposal"]`
+        // never resolved and the UI test died on its first assertion while the
+        // proposal was plainly on screen (measured 2026-08-16, screenshot in
+        // the PR). `.contain` publishes the container while leaving the two
+        // offer buttons individually addressable — `.combine` would have
+        // merged them into one element and broken the taps.
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("home.caughtUpProposal")
+    }
+
+    /// One caught-up offer. Both offers share this so they read as a pair of
+    /// equals — neither is the "real" button with the other as a consolation.
+    private func caughtUpOfferButton(
+        offer: SessionPlannerInputs.CaughtUpOffer,
+        symbol: String,
+        title: LocalizedStringKey,
+        subtitle: LocalizedStringKey
+    ) -> some View {
+        Button {
+            startCaughtUpSession(offer)
+        } label: {
+            HStack(spacing: 10) {
+                Image(systemName: symbol)
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundStyle(Color.ikeruPrimaryAccent)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(title)
+                        .font(.ikeruBody)
+                        .foregroundStyle(.white)
+                    Text(subtitle)
+                        .font(.ikeruCaption)
+                        .foregroundStyle(Color.ikeruTextTertiary)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(Color.ikeruTextTertiary)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
+            .background {
+                Rectangle().fill(.ultraThinMaterial)
+                    .overlay(Rectangle().strokeBorder(TatamiTokens.goldDim.opacity(0.5), lineWidth: 0.6))
+            }
+            .sumiCorners(color: TatamiTokens.goldDim, size: 5, weight: 0.9)
         }
-        .sumiCorners(color: TatamiTokens.goldDim, size: 5, weight: 0.9)
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("home.caughtUp.\(offer.rawValue)")
     }
 
     // MARK: - Choose-your-kana CTA (soft study-set gate)
@@ -445,7 +534,7 @@ struct HomeView: View {
                 // practice, so the session always matches what they chose.
                 chooseKanaCTA
             } else if vm.todayKind == .empty {
-                quietState
+                quietState(vm)
             } else {
                 // Hero CTA — speaks the shared .primary ink-block language
                 // (owner feedback: every gold action should look like ONE
@@ -749,6 +838,33 @@ struct HomeView: View {
             // an empty plan must never show a hollow "0 cards / 0% recall" summary.
             let started = await svm.startSession()
             showSession = started
+            if !started {
+                // Nothing composable. Rather than the old silent no-op, land
+                // the learner on the proposal: refreshing recomputes
+                // `todayKind` and `caughtUpOffers`, so Home swaps the CTA for
+                // the approfondir/découvrir pair on the next frame.
+                Logger.ui.info("startSession produced nothing — falling back to the caught-up proposal")
+                await viewModel?.loadData()
+            }
+        }
+    }
+
+    /// Starts one of the two caught-up offers.
+    ///
+    /// Mirrors `startSession()`'s honesty rule: only present the session if
+    /// one actually started. The pool can empty between the proposal being
+    /// rendered and the tap (another device syncing a review, say), and in
+    /// that case the right answer is to refresh the proposal, not to open a
+    /// hollow session.
+    private func startCaughtUpSession(_ offer: SessionPlannerInputs.CaughtUpOffer) {
+        guard let svm = sessionViewModel else { return }
+        reviewsBeforeSession = viewModel?.totalReviewsCompleted ?? 0
+        Task {
+            let started = await svm.startCaughtUpSession(offer: offer)
+            showSession = started
+            if !started {
+                await viewModel?.loadData()
+            }
         }
     }
 

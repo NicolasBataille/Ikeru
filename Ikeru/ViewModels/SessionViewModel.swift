@@ -307,8 +307,6 @@ public final class SessionViewModel {
 
     // MARK: - Adaptive Session State
 
-    /// Preview of the upcoming session (exercise breakdown, estimated time, skill split).
-    public internal(set) var sessionPreview: SessionPreview = .empty
 
     /// The most recent leech event detected during this session, if any.
     public internal(set) var lastLeechEvent: LeechEvent?
