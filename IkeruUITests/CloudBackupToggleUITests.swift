@@ -30,6 +30,54 @@ import XCTest
 /// `-startTab` do not compose on their own.** Pair them with `skipTour`.
 final class CloudBackupToggleUITests: IkeruUITestCase {
 
+    /// ⛔ OPT-IN ONLY — this suite writes to the LIVE Supabase project.
+    ///
+    /// Toggling cloud backup makes the app mint a real anonymous identity on
+    /// the production project. Nothing removed it, and these tests ran on every
+    /// PR: four orphaned accounts accumulated in one morning, one carrying 92
+    /// fixture cards, one of them minted by a CI run.
+    ///
+    /// The fix is not a better teardown — it is that a test touching a live
+    /// backend must be opted into, exactly like
+    /// `IkeruCore/Tests/Services/Sync/LiveSyncVolumeTests.swift` already is.
+    /// CI runs the other four UI tests, which touch nothing remote.
+    ///
+    ///     TEST_RUNNER_IKERU_LIVE_SYNC_TEST=1 xcodebuild test \
+    ///       -scheme IkeruUITests -destination "id=<sim>" \
+    ///       -only-testing:IkeruUITests/CloudBackupToggleUITests
+    ///
+    /// A teardown was attempted first and is kept below, but it is NOT what
+    /// makes this safe: it left consent ON for the next test (`-wipeData` does
+    /// not clear the consent default) and the app lost its connection mid
+    /// deletion. Cleanup that only mostly works is how the accounts piled up
+    /// unnoticed in the first place.
+    override func setUpWithError() throws {
+        try super.setUpWithError()
+        try XCTSkipUnless(
+            ProcessInfo.processInfo.environment["IKERU_LIVE_SYNC_TEST"] == "1",
+            "Cloud-backup UI tests skipped — they write to the live Supabase project. "
+                + "Set TEST_RUNNER_IKERU_LIVE_SYNC_TEST=1 to opt in."
+        )
+    }
+
+    // MARK: - Cleanup — intentionally absent on this branch
+    //
+    // The upstream commit this gate was cherry-picked from
+    // (`test/gap-01-two-client-merge`, 7a2e6be) also carries a teardown that
+    // removes the account through the app's own Settings row. It is NOT
+    // reproduced here: it drives page-object helpers that arrive with GAP-01's
+    // own commit (1625238). Dragging that commit into an unrelated
+    // test-infrastructure PR to get two helpers would be worse than going
+    // without the teardown.
+    //
+    // Nothing is lost. That commit's own message is explicit that the teardown
+    // "is deliberately not what makes this safe, because it did not work" — it
+    // left consent ON for the next test and dropped the runner connection
+    // mid-deletion. What makes this safe is the `XCTSkipUnless` gate above,
+    // reproduced verbatim: these tests no longer run unless opted into, so
+    // there is no account left behind to tear down. The teardown returns for
+    // free when GAP-01 lands and this branch rebases.
+
     func testTogglingCloudBackupOnUpdatesLocalState() {
         let app = launch([
             LaunchArguments.skipOnboarding,

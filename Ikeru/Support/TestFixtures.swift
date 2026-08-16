@@ -340,7 +340,20 @@ public enum TestFixtures {
     ) -> RPGState {
         let level = RPGConstants.levelForXP(xp)
 
-        let state = RPGState(xp: xp, level: level, totalReviewsCompleted: totalReviews)
+        // Reuse the state the profile already owns when there is one.
+        // `UserProfile.init` always mints an `RPGState`, and displacing a
+        // SAVED one by assigning the owning side (`state.profile = profile`)
+        // traps the process in `SwiftData/BackingData.swift:940` — measured
+        // 2026-08-16, see the GAP-10 regression test in
+        // `IkeruTests/HomeViewModelTests.swift`. `clearGeneratedState` happens
+        // to nil the relationship out before every current call, so this code
+        // never trapped in practice; reusing the existing object removes the
+        // dependency on that ordering instead of leaving a live crash one
+        // refactor away, in a screen that ships to TestFlight testers.
+        let state = profile.rpgState ?? RPGState()
+        state.xp = xp
+        state.level = level
+        state.totalReviewsCompleted = totalReviews
         // No per-session log is simulated, only per-review ones, so this is
         // a rough estimate (real sessions mix kana + content and run
         // roughly this many reviews) rather than an exact count — good
@@ -356,7 +369,7 @@ public enum TestFixtures {
         }
         state.setAttributes(scaled)
 
-        state.profile = profile
+        // Inverse side only. Never `state.profile = profile` — see above.
         profile.rpgState = state
         return state
     }

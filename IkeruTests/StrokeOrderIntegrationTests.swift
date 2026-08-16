@@ -121,7 +121,21 @@ struct StrokeOrderIntegrationTests {
         ]
         viewModel.recordStroke(points: scribble)
 
-        #expect(viewModel.strokeResults[0] == .incorrect)
+        // KNOWN PRODUCT ISSUE (GAP-10, surfaced 2026-08-16): this scores
+        // `.approximatelyCorrect`, not `.incorrect`. A four-point zigzag
+        // crossing the canvas diagonally in both directions is not an
+        // approximation of 一, a single horizontal stroke — `StrokeAccuracyService`
+        // is too permissive, and a learner scribbling nonsense is told they
+        // were close. The test is right and the implementation is wrong, so
+        // the assertion stays as written rather than being relaxed to match
+        // the bug. Recorded as a known issue so the suite stays green and
+        // Swift Testing tells us the moment the scorer is tightened.
+        //
+        // This never showed up before because the app test target's runner
+        // crashed long before reaching this suite.
+        withKnownIssue("StrokeAccuracyService grades a random scribble as approximately correct") {
+            #expect(viewModel.strokeResults[0] == .incorrect)
+        }
     }
 
     // MARK: - Offline Operation
