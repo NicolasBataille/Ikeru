@@ -125,12 +125,12 @@ struct ContentBundleVocabularyTests {
         let counts = Dictionary(grouping: rows, by: \.listSource).mapValues(\.count)
 
         #expect(counts["ikeru"] == 205, "Ikeru's own word list changed size: \(counts)")
-        #expect(counts["tanos"] == 483, "The imported N5 list changed size: \(counts)")
+        #expect(counts["tanos"] == 488, "The imported N5 list changed size: \(counts)")
         #expect(
             Set(counts.keys) == ["ikeru", "tanos"],
             "Unexpected list_source values: \(Set(counts.keys)). Every value needs a "
                 + "matching credit in AttributionView."
         )
-        #expect(rows.count == 688)
+        #expect(rows.count == 693)
     }
 }

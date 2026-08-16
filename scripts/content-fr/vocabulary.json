@@ -818,5 +818,1957 @@
   {
     "word": "大丈夫",
     "meaning_fr": "ça va ; d'accord"
+  },
+  {
+    "word": "あさって",
+    "meaning_fr": "après-demain"
+  },
+  {
+    "word": "あそこ",
+    "meaning_fr": "là-bas"
+  },
+  {
+    "word": "あちら",
+    "meaning_fr": "là-bas (forme polie) ; par là"
+  },
+  {
+    "word": "あっち",
+    "meaning_fr": "là-bas (forme familière) ; par là"
+  },
+  {
+    "word": "あなた",
+    "meaning_fr": "toi ; vous"
+  },
+  {
+    "word": "あの",
+    "meaning_fr": "ce / cette (éloigné)"
+  },
+  {
+    "word": "あびる",
+    "meaning_fr": "prendre (une douche) ; se baigner dans"
+  },
+  {
+    "word": "あまり",
+    "meaning_fr": "pas très ; pas beaucoup (avec une négation)"
+  },
+  {
+    "word": "あれ",
+    "meaning_fr": "cela (là-bas) ; celui-là"
+  },
+  {
+    "word": "いいえ",
+    "meaning_fr": "non"
+  },
+  {
+    "word": "いかが",
+    "meaning_fr": "comment (forme polie)"
+  },
+  {
+    "word": "いくつ",
+    "meaning_fr": "combien (de choses) ; quel âge"
+  },
+  {
+    "word": "いくら",
+    "meaning_fr": "combien (prix)"
+  },
+  {
+    "word": "いす",
+    "meaning_fr": "la chaise"
+  },
+  {
+    "word": "いちばん",
+    "meaning_fr": "le plus ; numéro un"
+  },
+  {
+    "word": "いつ",
+    "meaning_fr": "quand"
+  },
+  {
+    "word": "いつも",
+    "meaning_fr": "toujours"
+  },
+  {
+    "word": "いろいろ",
+    "meaning_fr": "varié ; divers"
+  },
+  {
+    "word": "ええ",
+    "meaning_fr": "oui (forme familière)"
+  },
+  {
+    "word": "おいしい",
+    "meaning_fr": "délicieux ; bon (au goût)"
+  },
+  {
+    "word": "おなか",
+    "meaning_fr": "le ventre ; l'estomac"
+  },
+  {
+    "word": "おばあさん",
+    "meaning_fr": "la grand-mère ; la dame âgée"
+  },
+  {
+    "word": "おまわりさん",
+    "meaning_fr": "le policier"
+  },
+  {
+    "word": "おもしろい",
+    "meaning_fr": "intéressant ; drôle"
+  },
+  {
+    "word": "お兄さん",
+    "meaning_fr": "le grand frère (forme polie)"
+  },
+  {
+    "word": "お姉さん",
+    "meaning_fr": "la grande sœur (forme polie)"
+  },
+  {
+    "word": "お弁当",
+    "meaning_fr": "le bento ; le panier-repas"
+  },
+  {
+    "word": "お手洗い",
+    "meaning_fr": "les toilettes"
+  },
+  {
+    "word": "お皿",
+    "meaning_fr": "l'assiette"
+  },
+  {
+    "word": "お菓子",
+    "meaning_fr": "les sucreries ; les friandises"
+  },
+  {
+    "word": "お酒",
+    "meaning_fr": "l'alcool ; le saké"
+  },
+  {
+    "word": "お風呂",
+    "meaning_fr": "le bain"
+  },
+  {
+    "word": "かかる",
+    "meaning_fr": "prendre (du temps) ; coûter (de l'argent)"
+  },
+  {
+    "word": "かぎ",
+    "meaning_fr": "la clé ; la serrure"
+  },
+  {
+    "word": "かける",
+    "meaning_fr": "accrocher (quelque chose) ; passer (un appel)"
+  },
+  {
+    "word": "かばん",
+    "meaning_fr": "le sac"
+  },
+  {
+    "word": "かわいい",
+    "meaning_fr": "mignon"
+  },
+  {
+    "word": "きれい",
+    "meaning_fr": "joli ; propre"
+  },
+  {
+    "word": "ください",
+    "meaning_fr": "donnez-moi, s'il vous plaît"
+  },
+  {
+    "word": "ここ",
+    "meaning_fr": "ici"
+  },
+  {
+    "word": "こちら",
+    "meaning_fr": "par ici (forme polie) ; celui-ci"
+  },
+  {
+    "word": "こっち",
+    "meaning_fr": "par ici (forme familière)"
+  },
+  {
+    "word": "この",
+    "meaning_fr": "ce / cette (proche)"
+  },
+  {
+    "word": "これ",
+    "meaning_fr": "ceci ; celui-ci"
+  },
+  {
+    "word": "こんな",
+    "meaning_fr": "ce genre de"
+  },
+  {
+    "word": "さあ",
+    "meaning_fr": "allons ; eh bien (hésitation)"
+  },
+  {
+    "word": "さ来年",
+    "meaning_fr": "dans deux ans"
+  },
+  {
+    "word": "しかし",
+    "meaning_fr": "cependant ; mais"
+  },
+  {
+    "word": "しょうゆ",
+    "meaning_fr": "la sauce soja"
+  },
+  {
+    "word": "すぐに",
+    "meaning_fr": "tout de suite ; immédiatement"
+  },
+  {
+    "word": "する",
+    "meaning_fr": "faire"
+  },
+  {
+    "word": "せっけん",
+    "meaning_fr": "le savon"
+  },
+  {
+    "word": "そこ",
+    "meaning_fr": "là"
+  },
+  {
+    "word": "そちら",
+    "meaning_fr": "par là (poli) ; celui-là"
+  },
+  {
+    "word": "そっち",
+    "meaning_fr": "par là (familier) ; celui-là"
+  },
+  {
+    "word": "その",
+    "meaning_fr": "ce/cette (près de l'interlocuteur)"
+  },
+  {
+    "word": "そば",
+    "meaning_fr": "à côté ; près"
+  },
+  {
+    "word": "それ",
+    "meaning_fr": "cela ; celui-là"
+  },
+  {
+    "word": "それから",
+    "meaning_fr": "et ensuite ; après cela"
+  },
+  {
+    "word": "それでは",
+    "meaning_fr": "eh bien ; dans ce cas (soutenu)"
+  },
+  {
+    "word": "たいへん",
+    "meaning_fr": "très ; difficile (situation)"
+  },
+  {
+    "word": "たくさん",
+    "meaning_fr": "beaucoup"
+  },
+  {
+    "word": "たて",
+    "meaning_fr": "la verticale"
+  },
+  {
+    "word": "たばこ",
+    "meaning_fr": "la cigarette ; le tabac"
+  },
+  {
+    "word": "たぶん",
+    "meaning_fr": "probablement ; peut-être"
+  },
+  {
+    "word": "だんだん",
+    "meaning_fr": "peu à peu ; progressivement"
+  },
+  {
+    "word": "ちゃわん",
+    "meaning_fr": "le bol à riz ; la tasse à thé"
+  },
+  {
+    "word": "ちょうど",
+    "meaning_fr": "exactement ; juste"
+  },
+  {
+    "word": "ちょっと",
+    "meaning_fr": "un peu ; un instant"
+  },
+  {
+    "word": "つける",
+    "meaning_fr": "allumer (une lampe, un appareil) ; attacher"
+  },
+  {
+    "word": "つまらない",
+    "meaning_fr": "ennuyeux ; sans intérêt"
+  },
+  {
+    "word": "できる",
+    "meaning_fr": "pouvoir ; être achevé"
+  },
+  {
+    "word": "では",
+    "meaning_fr": "eh bien ; dans ce cas (poli)"
+  },
+  {
+    "word": "でも",
+    "meaning_fr": "mais ; pourtant"
+  },
+  {
+    "word": "とても",
+    "meaning_fr": "très"
+  },
+  {
+    "word": "とり肉",
+    "meaning_fr": "le poulet (viande)"
+  },
+  {
+    "word": "どう",
+    "meaning_fr": "comment"
+  },
+  {
+    "word": "どうして",
+    "meaning_fr": "pourquoi"
+  },
+  {
+    "word": "どうぞ",
+    "meaning_fr": "je vous en prie ; tenez"
+  },
+  {
+    "word": "どうも",
+    "meaning_fr": "merci ; vraiment"
+  },
+  {
+    "word": "どこ",
+    "meaning_fr": "où"
+  },
+  {
+    "word": "どちら",
+    "meaning_fr": "par là (poli) ; lequel"
+  },
+  {
+    "word": "どっち",
+    "meaning_fr": "par où (familier) ; lequel"
+  },
+  {
+    "word": "どなた",
+    "meaning_fr": "qui (poli)"
+  },
+  {
+    "word": "どの",
+    "meaning_fr": "quel/quelle (devant un nom)"
+  },
+  {
+    "word": "どれ",
+    "meaning_fr": "lequel (parmi trois ou plus)"
+  },
+  {
+    "word": "なぜ",
+    "meaning_fr": "pourquoi"
+  },
+  {
+    "word": "など",
+    "meaning_fr": "etc. ; et ainsi de suite"
+  },
+  {
+    "word": "なる",
+    "meaning_fr": "devenir"
+  },
+  {
+    "word": "はい",
+    "meaning_fr": "oui"
+  },
+  {
+    "word": "はく",
+    "meaning_fr": "mettre ; porter (chaussures, pantalon)"
+  },
+  {
+    "word": "はし",
+    "meaning_fr": "les baguettes"
+  },
+  {
+    "word": "ふろ",
+    "meaning_fr": "le bain"
+  },
+  {
+    "word": "ほか",
+    "meaning_fr": "autre ; le reste"
+  },
+  {
+    "word": "ほんとう",
+    "meaning_fr": "la vérité ; vrai"
+  },
+  {
+    "word": "まずい",
+    "meaning_fr": "mauvais au goût ; désagréable"
+  },
+  {
+    "word": "また",
+    "meaning_fr": "de nouveau ; aussi"
+  },
+  {
+    "word": "まだ",
+    "meaning_fr": "encore ; pas encore"
+  },
+  {
+    "word": "まっすぐ",
+    "meaning_fr": "droit ; tout droit"
+  },
+  {
+    "word": "みんな",
+    "meaning_fr": "tout le monde ; tous"
+  },
+  {
+    "word": "もう",
+    "meaning_fr": "déjà ; encore"
+  },
+  {
+    "word": "もう一度",
+    "meaning_fr": "encore une fois ; à nouveau"
+  },
+  {
+    "word": "もっと",
+    "meaning_fr": "plus ; davantage"
+  },
+  {
+    "word": "やる",
+    "meaning_fr": "faire (familier)"
+  },
+  {
+    "word": "ゆっくりと",
+    "meaning_fr": "lentement ; sans se presser"
+  },
+  {
+    "word": "よく",
+    "meaning_fr": "souvent ; bien"
+  },
+  {
+    "word": "より、ほう",
+    "meaning_fr": "plus que (structure comparative)"
+  },
+  {
+    "word": "りっぱ",
+    "meaning_fr": "magnifique ; remarquable"
+  },
+  {
+    "word": "アパート",
+    "meaning_fr": "l'appartement"
+  },
+  {
+    "word": "エレベーター",
+    "meaning_fr": "l'ascenseur"
+  },
+  {
+    "word": "カップ",
+    "meaning_fr": "la tasse"
+  },
+  {
+    "word": "カメラ",
+    "meaning_fr": "l'appareil photo"
+  },
+  {
+    "word": "カレンダー",
+    "meaning_fr": "le calendrier"
+  },
+  {
+    "word": "カレー",
+    "meaning_fr": "le curry"
+  },
+  {
+    "word": "ギター",
+    "meaning_fr": "la guitare"
+  },
+  {
+    "word": "クラス",
+    "meaning_fr": "la classe (à l'école)"
+  },
+  {
+    "word": "グラム",
+    "meaning_fr": "le gramme"
+  },
+  {
+    "word": "コップ",
+    "meaning_fr": "le verre ; le gobelet"
+  },
+  {
+    "word": "コピーする",
+    "meaning_fr": "copier ; photocopier"
+  },
+  {
+    "word": "コート",
+    "meaning_fr": "le manteau"
+  },
+  {
+    "word": "コーヒー",
+    "meaning_fr": "le café"
+  },
+  {
+    "word": "シャツ",
+    "meaning_fr": "la chemise"
+  },
+  {
+    "word": "シャワー",
+    "meaning_fr": "la douche"
+  },
+  {
+    "word": "スカート",
+    "meaning_fr": "la jupe"
+  },
+  {
+    "word": "ストーブ",
+    "meaning_fr": "le chauffage d'appoint"
+  },
+  {
+    "word": "スプーン",
+    "meaning_fr": "la cuillère"
+  },
+  {
+    "word": "スポーツ",
+    "meaning_fr": "le sport"
+  },
+  {
+    "word": "スリッパ",
+    "meaning_fr": "les pantoufles"
+  },
+  {
+    "word": "ズボン",
+    "meaning_fr": "le pantalon"
+  },
+  {
+    "word": "セーター",
+    "meaning_fr": "le pull"
+  },
+  {
+    "word": "ゼロ",
+    "meaning_fr": "zéro"
+  },
+  {
+    "word": "タクシー",
+    "meaning_fr": "le taxi"
+  },
+  {
+    "word": "テスト",
+    "meaning_fr": "le test"
+  },
+  {
+    "word": "テレビ",
+    "meaning_fr": "la télévision"
+  },
+  {
+    "word": "テーブル",
+    "meaning_fr": "la table"
+  },
+  {
+    "word": "テープ",
+    "meaning_fr": "la bande (magnétique) ; le ruban adhésif"
+  },
+  {
+    "word": "テープレコーダー",
+    "meaning_fr": "le magnétophone"
+  },
+  {
+    "word": "デパート",
+    "meaning_fr": "le grand magasin"
+  },
+  {
+    "word": "トイレ",
+    "meaning_fr": "les toilettes"
+  },
+  {
+    "word": "ドア",
+    "meaning_fr": "la porte"
+  },
+  {
+    "word": "ナイフ",
+    "meaning_fr": "le couteau"
+  },
+  {
+    "word": "ニュース",
+    "meaning_fr": "les informations ; les nouvelles"
+  },
+  {
+    "word": "ネクタイ",
+    "meaning_fr": "la cravate"
+  },
+  {
+    "word": "ノート",
+    "meaning_fr": "le cahier"
+  },
+  {
+    "word": "ハンカチ",
+    "meaning_fr": "le mouchoir"
+  },
+  {
+    "word": "バス",
+    "meaning_fr": "le bus"
+  },
+  {
+    "word": "バター",
+    "meaning_fr": "le beurre"
+  },
+  {
+    "word": "パーティー",
+    "meaning_fr": "la fête ; la soirée"
+  },
+  {
+    "word": "フィルム",
+    "meaning_fr": "la pellicule (photo)"
+  },
+  {
+    "word": "フォーク",
+    "meaning_fr": "la fourchette"
+  },
+  {
+    "word": "プール",
+    "meaning_fr": "la piscine"
+  },
+  {
+    "word": "ベッド",
+    "meaning_fr": "le lit"
+  },
+  {
+    "word": "ペット",
+    "meaning_fr": "l'animal de compagnie"
+  },
+  {
+    "word": "ペン",
+    "meaning_fr": "le stylo"
+  },
+  {
+    "word": "ページ",
+    "meaning_fr": "la page"
+  },
+  {
+    "word": "ホテル",
+    "meaning_fr": "l'hôtel"
+  },
+  {
+    "word": "ボタン",
+    "meaning_fr": "le bouton"
+  },
+  {
+    "word": "ボールペン",
+    "meaning_fr": "le stylo à bille"
+  },
+  {
+    "word": "ポケット",
+    "meaning_fr": "la poche"
+  },
+  {
+    "word": "ポスト",
+    "meaning_fr": "la boîte aux lettres"
+  },
+  {
+    "word": "マッチ",
+    "meaning_fr": "l'allumette"
+  },
+  {
+    "word": "メートル",
+    "meaning_fr": "le mètre"
+  },
+  {
+    "word": "ラジオ",
+    "meaning_fr": "la radio"
+  },
+  {
+    "word": "レコード",
+    "meaning_fr": "le disque (vinyle)"
+  },
+  {
+    "word": "レストラン",
+    "meaning_fr": "le restaurant"
+  },
+  {
+    "word": "ワイシャツ",
+    "meaning_fr": "la chemise"
+  },
+  {
+    "word": "一",
+    "meaning_fr": "un"
+  },
+  {
+    "word": "一人",
+    "meaning_fr": "une personne ; seul"
+  },
+  {
+    "word": "一日",
+    "meaning_fr": "une journée ; toute la journée"
+  },
+  {
+    "word": "一昨年",
+    "meaning_fr": "il y a deux ans"
+  },
+  {
+    "word": "一昨日",
+    "meaning_fr": "avant-hier"
+  },
+  {
+    "word": "一月",
+    "meaning_fr": "un mois"
+  },
+  {
+    "word": "一緒",
+    "meaning_fr": "ensemble"
+  },
+  {
+    "word": "七",
+    "meaning_fr": "sept"
+  },
+  {
+    "word": "七日",
+    "meaning_fr": "le sept (du mois) ; sept jours"
+  },
+  {
+    "word": "万年筆",
+    "meaning_fr": "le stylo-plume"
+  },
+  {
+    "word": "丈夫",
+    "meaning_fr": "solide ; en bonne santé"
+  },
+  {
+    "word": "三",
+    "meaning_fr": "trois"
+  },
+  {
+    "word": "三日",
+    "meaning_fr": "le trois (du mois) ; trois jours"
+  },
+  {
+    "word": "上げる",
+    "meaning_fr": "lever (quelque chose) ; donner"
+  },
+  {
+    "word": "上手",
+    "meaning_fr": "doué ; habile"
+  },
+  {
+    "word": "上着",
+    "meaning_fr": "la veste"
+  },
+  {
+    "word": "下手",
+    "meaning_fr": "maladroit ; peu doué"
+  },
+  {
+    "word": "両親",
+    "meaning_fr": "les parents"
+  },
+  {
+    "word": "並ぶ",
+    "meaning_fr": "s'aligner ; faire la queue"
+  },
+  {
+    "word": "並べる",
+    "meaning_fr": "aligner (quelque chose) ; disposer"
+  },
+  {
+    "word": "乗る",
+    "meaning_fr": "monter (dans un véhicule) ; prendre"
+  },
+  {
+    "word": "九",
+    "meaning_fr": "neuf"
+  },
+  {
+    "word": "九日",
+    "meaning_fr": "le neuf (du mois) ; neuf jours"
+  },
+  {
+    "word": "二",
+    "meaning_fr": "deux"
+  },
+  {
+    "word": "二人",
+    "meaning_fr": "deux personnes"
+  },
+  {
+    "word": "二十日",
+    "meaning_fr": "le vingt (du mois) ; vingt jours"
+  },
+  {
+    "word": "二十歳",
+    "meaning_fr": "vingt ans"
+  },
+  {
+    "word": "二日",
+    "meaning_fr": "le deux (du mois) ; deux jours"
+  },
+  {
+    "word": "五",
+    "meaning_fr": "cinq"
+  },
+  {
+    "word": "五日",
+    "meaning_fr": "le cinq (du mois) ; cinq jours"
+  },
+  {
+    "word": "交差点",
+    "meaning_fr": "le carrefour"
+  },
+  {
+    "word": "交番",
+    "meaning_fr": "le poste de police de quartier"
+  },
+  {
+    "word": "今晩",
+    "meaning_fr": "ce soir"
+  },
+  {
+    "word": "今朝",
+    "meaning_fr": "ce matin"
+  },
+  {
+    "word": "仕事",
+    "meaning_fr": "le travail ; l'emploi"
+  },
+  {
+    "word": "休み",
+    "meaning_fr": "le repos ; le jour de congé"
+  },
+  {
+    "word": "低い",
+    "meaning_fr": "bas ; petit (de taille)"
+  },
+  {
+    "word": "体",
+    "meaning_fr": "le corps"
+  },
+  {
+    "word": "作文",
+    "meaning_fr": "la rédaction"
+  },
+  {
+    "word": "借りる",
+    "meaning_fr": "emprunter"
+  },
+  {
+    "word": "傘",
+    "meaning_fr": "le parapluie"
+  },
+  {
+    "word": "働く",
+    "meaning_fr": "travailler"
+  },
+  {
+    "word": "兄弟",
+    "meaning_fr": "les frères et sœurs"
+  },
+  {
+    "word": "先",
+    "meaning_fr": "devant ; le bout"
+  },
+  {
+    "word": "入れる",
+    "meaning_fr": "mettre dedans ; insérer"
+  },
+  {
+    "word": "入口",
+    "meaning_fr": "l'entrée"
+  },
+  {
+    "word": "全部",
+    "meaning_fr": "tout ; la totalité"
+  },
+  {
+    "word": "八",
+    "meaning_fr": "huit"
+  },
+  {
+    "word": "八日",
+    "meaning_fr": "le huit (du mois) ; huit jours"
+  },
+  {
+    "word": "八百屋",
+    "meaning_fr": "le marchand de légumes ; le primeur"
+  },
+  {
+    "word": "公園",
+    "meaning_fr": "le parc"
+  },
+  {
+    "word": "六",
+    "meaning_fr": "six"
+  },
+  {
+    "word": "六日",
+    "meaning_fr": "le six (du mois) ; six jours"
+  },
+  {
+    "word": "冬",
+    "meaning_fr": "l'hiver"
+  },
+  {
+    "word": "冷たい",
+    "meaning_fr": "froid (au toucher)"
+  },
+  {
+    "word": "冷蔵庫",
+    "meaning_fr": "le réfrigérateur"
+  },
+  {
+    "word": "出す",
+    "meaning_fr": "sortir (quelque chose) ; envoyer (une lettre)"
+  },
+  {
+    "word": "出口",
+    "meaning_fr": "la sortie"
+  },
+  {
+    "word": "切る",
+    "meaning_fr": "couper"
+  },
+  {
+    "word": "切手",
+    "meaning_fr": "le timbre"
+  },
+  {
+    "word": "切符",
+    "meaning_fr": "le billet"
+  },
+  {
+    "word": "初めて",
+    "meaning_fr": "pour la première fois"
+  },
+  {
+    "word": "動物",
+    "meaning_fr": "l'animal"
+  },
+  {
+    "word": "勤める",
+    "meaning_fr": "travailler (pour une entreprise)"
+  },
+  {
+    "word": "医者",
+    "meaning_fr": "le médecin"
+  },
+  {
+    "word": "十日",
+    "meaning_fr": "le dix (du mois) ; dix jours"
+  },
+  {
+    "word": "半分",
+    "meaning_fr": "la moitié"
+  },
+  {
+    "word": "危ない",
+    "meaning_fr": "dangereux"
+  },
+  {
+    "word": "厚い",
+    "meaning_fr": "épais"
+  },
+  {
+    "word": "取る",
+    "meaning_fr": "prendre ; ramasser"
+  },
+  {
+    "word": "口",
+    "meaning_fr": "la bouche"
+  },
+  {
+    "word": "台所",
+    "meaning_fr": "la cuisine"
+  },
+  {
+    "word": "同じ",
+    "meaning_fr": "même ; identique"
+  },
+  {
+    "word": "向こう",
+    "meaning_fr": "là-bas ; l'autre côté"
+  },
+  {
+    "word": "吸う",
+    "meaning_fr": "aspirer ; fumer (une cigarette)"
+  },
+  {
+    "word": "吹く",
+    "meaning_fr": "souffler (vent)"
+  },
+  {
+    "word": "呼ぶ",
+    "meaning_fr": "appeler ; inviter"
+  },
+  {
+    "word": "咲く",
+    "meaning_fr": "fleurir"
+  },
+  {
+    "word": "問題",
+    "meaning_fr": "le problème ; la question (d'un exercice)"
+  },
+  {
+    "word": "喫茶店",
+    "meaning_fr": "le café ; le salon de thé"
+  },
+  {
+    "word": "四",
+    "meaning_fr": "quatre"
+  },
+  {
+    "word": "四日",
+    "meaning_fr": "le quatre (du mois) ; quatre jours"
+  },
+  {
+    "word": "困る",
+    "meaning_fr": "être ennuyé ; ne pas savoir quoi faire"
+  },
+  {
+    "word": "図書館",
+    "meaning_fr": "la bibliothèque"
+  },
+  {
+    "word": "地下鉄",
+    "meaning_fr": "le métro"
+  },
+  {
+    "word": "地図",
+    "meaning_fr": "la carte (géographique)"
+  },
+  {
+    "word": "塩",
+    "meaning_fr": "le sel"
+  },
+  {
+    "word": "声",
+    "meaning_fr": "la voix"
+  },
+  {
+    "word": "売る",
+    "meaning_fr": "vendre"
+  },
+  {
+    "word": "夏",
+    "meaning_fr": "l'été"
+  },
+  {
+    "word": "夏休み",
+    "meaning_fr": "les vacances d'été"
+  },
+  {
+    "word": "夕方",
+    "meaning_fr": "le soir ; le crépuscule"
+  },
+  {
+    "word": "夕飯",
+    "meaning_fr": "le dîner ; le repas du soir"
+  },
+  {
+    "word": "外国人",
+    "meaning_fr": "l'étranger(ère)"
+  },
+  {
+    "word": "大きな",
+    "meaning_fr": "grand"
+  },
+  {
+    "word": "大人",
+    "meaning_fr": "l'adulte"
+  },
+  {
+    "word": "大使館",
+    "meaning_fr": "l'ambassade"
+  },
+  {
+    "word": "大勢",
+    "meaning_fr": "beaucoup de monde ; la foule"
+  },
+  {
+    "word": "大好き",
+    "meaning_fr": "adorer ; aimer beaucoup"
+  },
+  {
+    "word": "太い",
+    "meaning_fr": "épais ; gros"
+  },
+  {
+    "word": "奥さん",
+    "meaning_fr": "l'épouse (de quelqu'un d'autre)"
+  },
+  {
+    "word": "女",
+    "meaning_fr": "la femme"
+  },
+  {
+    "word": "好き",
+    "meaning_fr": "aimer ; apprécier"
+  },
+  {
+    "word": "嫌",
+    "meaning_fr": "désagréable ; déplaisant"
+  },
+  {
+    "word": "嫌い",
+    "meaning_fr": "ne pas aimer ; détester"
+  },
+  {
+    "word": "字引",
+    "meaning_fr": "le dictionnaire"
+  },
+  {
+    "word": "家庭",
+    "meaning_fr": "le foyer ; la famille"
+  },
+  {
+    "word": "宿題",
+    "meaning_fr": "les devoirs"
+  },
+  {
+    "word": "寝る",
+    "meaning_fr": "dormir ; se coucher"
+  },
+  {
+    "word": "封筒",
+    "meaning_fr": "l'enveloppe"
+  },
+  {
+    "word": "小さな",
+    "meaning_fr": "petit"
+  },
+  {
+    "word": "少し",
+    "meaning_fr": "un peu"
+  },
+  {
+    "word": "居る",
+    "meaning_fr": "être (personnes, animaux) ; être présent"
+  },
+  {
+    "word": "差す",
+    "meaning_fr": "ouvrir (un parapluie) ; briller (lumière)"
+  },
+  {
+    "word": "帽子",
+    "meaning_fr": "le chapeau ; la casquette"
+  },
+  {
+    "word": "年",
+    "meaning_fr": "l'année"
+  },
+  {
+    "word": "座る",
+    "meaning_fr": "s'asseoir"
+  },
+  {
+    "word": "庭",
+    "meaning_fr": "le jardin ; la cour"
+  },
+  {
+    "word": "廊下",
+    "meaning_fr": "le couloir ; le corridor"
+  },
+  {
+    "word": "建物",
+    "meaning_fr": "le bâtiment"
+  },
+  {
+    "word": "引く",
+    "meaning_fr": "tirer ; consulter (un dictionnaire)"
+  },
+  {
+    "word": "弱い",
+    "meaning_fr": "faible"
+  },
+  {
+    "word": "強い",
+    "meaning_fr": "fort"
+  },
+  {
+    "word": "弾く",
+    "meaning_fr": "jouer (d'un instrument à cordes ou à clavier)"
+  },
+  {
+    "word": "後",
+    "meaning_fr": "après ; plus tard"
+  },
+  {
+    "word": "御飯",
+    "meaning_fr": "le riz (cuit) ; le repas"
+  },
+  {
+    "word": "忘れる",
+    "meaning_fr": "oublier"
+  },
+  {
+    "word": "意味",
+    "meaning_fr": "le sens ; la signification"
+  },
+  {
+    "word": "戸",
+    "meaning_fr": "la porte"
+  },
+  {
+    "word": "所",
+    "meaning_fr": "l'endroit ; le lieu"
+  },
+  {
+    "word": "手",
+    "meaning_fr": "la main"
+  },
+  {
+    "word": "押す",
+    "meaning_fr": "pousser ; appuyer sur"
+  },
+  {
+    "word": "掃除",
+    "meaning_fr": "le ménage ; le nettoyage"
+  },
+  {
+    "word": "授業",
+    "meaning_fr": "le cours"
+  },
+  {
+    "word": "撮る",
+    "meaning_fr": "prendre (une photo)"
+  },
+  {
+    "word": "教室",
+    "meaning_fr": "la salle de classe"
+  },
+  {
+    "word": "散歩",
+    "meaning_fr": "la promenade"
+  },
+  {
+    "word": "文章",
+    "meaning_fr": "le texte ; l'écrit"
+  },
+  {
+    "word": "料理",
+    "meaning_fr": "la cuisine ; le plat"
+  },
+  {
+    "word": "方",
+    "meaning_fr": "la personne (forme polie) ; la façon de faire"
+  },
+  {
+    "word": "旅行",
+    "meaning_fr": "le voyage"
+  },
+  {
+    "word": "明い",
+    "meaning_fr": "lumineux ; gai"
+  },
+  {
+    "word": "映画館",
+    "meaning_fr": "le cinéma (salle)"
+  },
+  {
+    "word": "春",
+    "meaning_fr": "le printemps"
+  },
+  {
+    "word": "昨夜",
+    "meaning_fr": "la nuit dernière ; hier soir"
+  },
+  {
+    "word": "昼御飯",
+    "meaning_fr": "le déjeuner"
+  },
+  {
+    "word": "時々",
+    "meaning_fr": "parfois ; de temps en temps"
+  },
+  {
+    "word": "時計",
+    "meaning_fr": "l'horloge ; la montre"
+  },
+  {
+    "word": "晩",
+    "meaning_fr": "le soir"
+  },
+  {
+    "word": "晩御飯",
+    "meaning_fr": "le dîner"
+  },
+  {
+    "word": "晴れ",
+    "meaning_fr": "le beau temps ; le ciel dégagé"
+  },
+  {
+    "word": "晴れる",
+    "meaning_fr": "se dégager (ciel) ; s'éclaircir"
+  },
+  {
+    "word": "暇",
+    "meaning_fr": "le temps libre ; libre (pas occupé)"
+  },
+  {
+    "word": "曇り",
+    "meaning_fr": "le temps nuageux"
+  },
+  {
+    "word": "曇る",
+    "meaning_fr": "se couvrir (ciel) ; devenir nuageux"
+  },
+  {
+    "word": "曲る",
+    "meaning_fr": "tourner ; se courber"
+  },
+  {
+    "word": "服",
+    "meaning_fr": "les vêtements"
+  },
+  {
+    "word": "朝御飯",
+    "meaning_fr": "le petit déjeuner"
+  },
+  {
+    "word": "本棚",
+    "meaning_fr": "l'étagère à livres"
+  },
+  {
+    "word": "机",
+    "meaning_fr": "le bureau (meuble)"
+  },
+  {
+    "word": "村",
+    "meaning_fr": "le village"
+  },
+  {
+    "word": "横",
+    "meaning_fr": "le côté"
+  },
+  {
+    "word": "橋",
+    "meaning_fr": "le pont"
+  },
+  {
+    "word": "次",
+    "meaning_fr": "le suivant ; le prochain"
+  },
+  {
+    "word": "欲しい",
+    "meaning_fr": "vouloir (quelque chose)"
+  },
+  {
+    "word": "歌",
+    "meaning_fr": "la chanson"
+  },
+  {
+    "word": "歌う",
+    "meaning_fr": "chanter"
+  },
+  {
+    "word": "止まる",
+    "meaning_fr": "s'arrêter"
+  },
+  {
+    "word": "歯",
+    "meaning_fr": "la dent"
+  },
+  {
+    "word": "死ぬ",
+    "meaning_fr": "mourir"
+  },
+  {
+    "word": "毎晩",
+    "meaning_fr": "tous les soirs"
+  },
+  {
+    "word": "汚い",
+    "meaning_fr": "sale ; en désordre"
+  },
+  {
+    "word": "池",
+    "meaning_fr": "l'étang"
+  },
+  {
+    "word": "洋服",
+    "meaning_fr": "les vêtements (à l'occidentale)"
+  },
+  {
+    "word": "洗う",
+    "meaning_fr": "laver"
+  },
+  {
+    "word": "洗濯",
+    "meaning_fr": "la lessive"
+  },
+  {
+    "word": "海",
+    "meaning_fr": "la mer"
+  },
+  {
+    "word": "消える",
+    "meaning_fr": "s'éteindre ; disparaître"
+  },
+  {
+    "word": "消す",
+    "meaning_fr": "éteindre (qch) ; effacer"
+  },
+  {
+    "word": "渡す",
+    "meaning_fr": "remettre ; passer (qch)"
+  },
+  {
+    "word": "渡る",
+    "meaning_fr": "traverser"
+  },
+  {
+    "word": "温い",
+    "meaning_fr": "tiède"
+  },
+  {
+    "word": "漢字",
+    "meaning_fr": "le kanji ; le caractère chinois"
+  },
+  {
+    "word": "灰皿",
+    "meaning_fr": "le cendrier"
+  },
+  {
+    "word": "無くす",
+    "meaning_fr": "perdre (qch)"
+  },
+  {
+    "word": "煩い",
+    "meaning_fr": "bruyant ; agaçant"
+  },
+  {
+    "word": "熱い",
+    "meaning_fr": "chaud (au toucher)"
+  },
+  {
+    "word": "牛乳",
+    "meaning_fr": "le lait (de vache)"
+  },
+  {
+    "word": "牛肉",
+    "meaning_fr": "le bœuf (viande)"
+  },
+  {
+    "word": "物",
+    "meaning_fr": "la chose ; l'objet"
+  },
+  {
+    "word": "犬",
+    "meaning_fr": "le chien"
+  },
+  {
+    "word": "猫",
+    "meaning_fr": "le chat"
+  },
+  {
+    "word": "玄関",
+    "meaning_fr": "l'entrée (d'une maison)"
+  },
+  {
+    "word": "甘い",
+    "meaning_fr": "sucré"
+  },
+  {
+    "word": "生まれる",
+    "meaning_fr": "naître"
+  },
+  {
+    "word": "生徒",
+    "meaning_fr": "l'élève"
+  },
+  {
+    "word": "男",
+    "meaning_fr": "l'homme"
+  },
+  {
+    "word": "町",
+    "meaning_fr": "la ville ; le quartier"
+  },
+  {
+    "word": "留学生",
+    "meaning_fr": "l'étudiant(e) étranger(ère)"
+  },
+  {
+    "word": "番号",
+    "meaning_fr": "le numéro"
+  },
+  {
+    "word": "疲れる",
+    "meaning_fr": "se fatiguer"
+  },
+  {
+    "word": "病気",
+    "meaning_fr": "la maladie"
+  },
+  {
+    "word": "痛い",
+    "meaning_fr": "douloureux"
+  },
+  {
+    "word": "登る",
+    "meaning_fr": "grimper ; monter"
+  },
+  {
+    "word": "白",
+    "meaning_fr": "le blanc (couleur)"
+  },
+  {
+    "word": "皆さん",
+    "meaning_fr": "tout le monde (poli)"
+  },
+  {
+    "word": "目",
+    "meaning_fr": "l'œil"
+  },
+  {
+    "word": "眼鏡",
+    "meaning_fr": "les lunettes"
+  },
+  {
+    "word": "着く",
+    "meaning_fr": "arriver"
+  },
+  {
+    "word": "着る",
+    "meaning_fr": "porter (un vêtement)"
+  },
+  {
+    "word": "短い",
+    "meaning_fr": "court"
+  },
+  {
+    "word": "砂糖",
+    "meaning_fr": "le sucre"
+  },
+  {
+    "word": "磨く",
+    "meaning_fr": "brosser (les dents) ; polir"
+  },
+  {
+    "word": "私",
+    "meaning_fr": "je ; moi"
+  },
+  {
+    "word": "秋",
+    "meaning_fr": "l'automne"
+  },
+  {
+    "word": "窓",
+    "meaning_fr": "la fenêtre"
+  },
+  {
+    "word": "答える",
+    "meaning_fr": "répondre"
+  },
+  {
+    "word": "箱",
+    "meaning_fr": "la boîte"
+  },
+  {
+    "word": "紅茶",
+    "meaning_fr": "le thé noir"
+  },
+  {
+    "word": "紙",
+    "meaning_fr": "le papier"
+  },
+  {
+    "word": "細い",
+    "meaning_fr": "fin (étroit) ; mince"
+  },
+  {
+    "word": "終る",
+    "meaning_fr": "se terminer ; prendre fin"
+  },
+  {
+    "word": "結婚",
+    "meaning_fr": "le mariage"
+  },
+  {
+    "word": "結構",
+    "meaning_fr": "très bien ; non merci"
+  },
+  {
+    "word": "絵",
+    "meaning_fr": "l'image ; le dessin"
+  },
+  {
+    "word": "緑",
+    "meaning_fr": "le vert"
+  },
+  {
+    "word": "締める",
+    "meaning_fr": "nouer ; attacher (une ceinture, une cravate)"
+  },
+  {
+    "word": "練習",
+    "meaning_fr": "l'entraînement"
+  },
+  {
+    "word": "置く",
+    "meaning_fr": "poser ; placer"
+  },
+  {
+    "word": "習う",
+    "meaning_fr": "apprendre (auprès d'un professeur)"
+  },
+  {
+    "word": "耳",
+    "meaning_fr": "l'oreille"
+  },
+  {
+    "word": "背",
+    "meaning_fr": "le dos ; la taille (stature)"
+  },
+  {
+    "word": "背広",
+    "meaning_fr": "le costume"
+  },
+  {
+    "word": "脱ぐ",
+    "meaning_fr": "enlever (un vêtement, des chaussures)"
+  },
+  {
+    "word": "自分",
+    "meaning_fr": "soi-même"
+  },
+  {
+    "word": "自動車",
+    "meaning_fr": "la voiture ; l'automobile"
+  },
+  {
+    "word": "色",
+    "meaning_fr": "la couleur"
+  },
+  {
+    "word": "花瓶",
+    "meaning_fr": "le vase"
+  },
+  {
+    "word": "若い",
+    "meaning_fr": "jeune"
+  },
+  {
+    "word": "茶色",
+    "meaning_fr": "le marron"
+  },
+  {
+    "word": "荷物",
+    "meaning_fr": "les bagages ; le colis"
+  },
+  {
+    "word": "葉書",
+    "meaning_fr": "la carte postale"
+  },
+  {
+    "word": "薄い",
+    "meaning_fr": "fin (peu épais) ; léger (goût, couleur)"
+  },
+  {
+    "word": "薬",
+    "meaning_fr": "le médicament"
+  },
+  {
+    "word": "要る",
+    "meaning_fr": "avoir besoin de ; être nécessaire"
+  },
+  {
+    "word": "見せる",
+    "meaning_fr": "montrer"
+  },
+  {
+    "word": "見る  観る",
+    "meaning_fr": "voir ; regarder"
+  },
+  {
+    "word": "覚える",
+    "meaning_fr": "mémoriser ; retenir"
+  },
+  {
+    "word": "角",
+    "meaning_fr": "le coin (de la rue)"
+  },
+  {
+    "word": "言葉",
+    "meaning_fr": "le mot ; la langue"
+  },
+  {
+    "word": "話",
+    "meaning_fr": "la conversation ; l'histoire"
+  },
+  {
+    "word": "誕生日",
+    "meaning_fr": "l'anniversaire"
+  },
+  {
+    "word": "誰",
+    "meaning_fr": "qui"
+  },
+  {
+    "word": "警官",
+    "meaning_fr": "le policier"
+  },
+  {
+    "word": "豚肉",
+    "meaning_fr": "le porc (viande)"
+  },
+  {
+    "word": "財布",
+    "meaning_fr": "le portefeuille ; le porte-monnaie"
+  },
+  {
+    "word": "買い物",
+    "meaning_fr": "les courses"
+  },
+  {
+    "word": "貸す",
+    "meaning_fr": "prêter"
+  },
+  {
+    "word": "貼る",
+    "meaning_fr": "coller"
+  },
+  {
+    "word": "賑やか",
+    "meaning_fr": "animé ; plein de vie"
+  },
+  {
+    "word": "質問",
+    "meaning_fr": "la question"
+  },
+  {
+    "word": "赤",
+    "meaning_fr": "le rouge (couleur)"
+  },
+  {
+    "word": "赤い",
+    "meaning_fr": "rouge"
+  },
+  {
+    "word": "起きる",
+    "meaning_fr": "se lever ; se réveiller"
+  },
+  {
+    "word": "足",
+    "meaning_fr": "le pied ; la jambe"
+  },
+  {
+    "word": "辛い",
+    "meaning_fr": "épicé ; piquant (goût)"
+  },
+  {
+    "word": "辞書",
+    "meaning_fr": "le dictionnaire"
+  },
+  {
+    "word": "辺",
+    "meaning_fr": "les environs ; le coin"
+  },
+  {
+    "word": "近く",
+    "meaning_fr": "à proximité ; les environs"
+  },
+  {
+    "word": "返す",
+    "meaning_fr": "rendre (quelque chose) ; restituer"
+  },
+  {
+    "word": "速い",
+    "meaning_fr": "rapide (vitesse)"
+  },
+  {
+    "word": "遊ぶ",
+    "meaning_fr": "jouer ; s'amuser"
+  },
+  {
+    "word": "道",
+    "meaning_fr": "la route ; la rue"
+  },
+  {
+    "word": "違う",
+    "meaning_fr": "être différent ; être faux"
+  },
+  {
+    "word": "郵便局",
+    "meaning_fr": "la poste"
+  },
+  {
+    "word": "鉛筆",
+    "meaning_fr": "le crayon"
+  },
+  {
+    "word": "門",
+    "meaning_fr": "le portail"
+  },
+  {
+    "word": "閉まる",
+    "meaning_fr": "se fermer ; être fermé"
+  },
+  {
+    "word": "開く",
+    "meaning_fr": "s'ouvrir"
+  },
+  {
+    "word": "降りる",
+    "meaning_fr": "descendre (d'un véhicule) ; descendre (un escalier)"
+  },
+  {
+    "word": "降る",
+    "meaning_fr": "tomber (pluie, neige)"
+  },
+  {
+    "word": "階段",
+    "meaning_fr": "l'escalier"
+  },
+  {
+    "word": "隣",
+    "meaning_fr": "à côté ; voisin"
+  },
+  {
+    "word": "雑誌",
+    "meaning_fr": "le magazine"
+  },
+  {
+    "word": "雪",
+    "meaning_fr": "la neige"
+  },
+  {
+    "word": "零",
+    "meaning_fr": "le zéro"
+  },
+  {
+    "word": "電気",
+    "meaning_fr": "l'électricité ; la lumière (lampe)"
+  },
+  {
+    "word": "青",
+    "meaning_fr": "le bleu"
+  },
+  {
+    "word": "青い",
+    "meaning_fr": "bleu"
+  },
+  {
+    "word": "靴",
+    "meaning_fr": "les chaussures"
+  },
+  {
+    "word": "靴下",
+    "meaning_fr": "les chaussettes"
+  },
+  {
+    "word": "頭",
+    "meaning_fr": "la tête"
+  },
+  {
+    "word": "頼む",
+    "meaning_fr": "demander (un service) ; commander"
+  },
+  {
+    "word": "風",
+    "meaning_fr": "le vent"
+  },
+  {
+    "word": "風邪",
+    "meaning_fr": "le rhume"
+  },
+  {
+    "word": "飛ぶ",
+    "meaning_fr": "voler (dans les airs)"
+  },
+  {
+    "word": "飛行機",
+    "meaning_fr": "l'avion"
+  },
+  {
+    "word": "食堂",
+    "meaning_fr": "la cantine ; la salle à manger"
+  },
+  {
+    "word": "飴",
+    "meaning_fr": "le bonbon"
+  },
+  {
+    "word": "鳥",
+    "meaning_fr": "l'oiseau"
+  },
+  {
+    "word": "鳴く",
+    "meaning_fr": "chanter (oiseau) ; crier (animal)"
+  },
+  {
+    "word": "黄色",
+    "meaning_fr": "le jaune"
+  },
+  {
+    "word": "黄色い",
+    "meaning_fr": "jaune"
+  },
+  {
+    "word": "黒",
+    "meaning_fr": "le noir"
+  },
+  {
+    "word": "黒い",
+    "meaning_fr": "noir"
+  },
+  {
+    "word": "鼻",
+    "meaning_fr": "le nez"
+  },
+  {
+    "word": "よい",
+    "meaning_fr": "bon (registre soutenu)"
+  },
+  {
+    "word": "じゃあ",
+    "meaning_fr": "eh bien ; dans ce cas (familier)"
+  },
+  {
+    "word": "そして",
+    "meaning_fr": "et puis ; et"
+  },
+  {
+    "word": "キロ",
+    "meaning_fr": "le kilo (kilogramme ou kilomètre)"
+  },
+  {
+    "word": "キログラム",
+    "meaning_fr": "le kilogramme"
+  },
+  {
+    "word": "キロメートル",
+    "meaning_fr": "le kilomètre"
+  },
+  {
+    "word": "ラジカセ",
+    "meaning_fr": "le radiocassette"
+  },
+  {
+    "word": "丸い",
+    "meaning_fr": "rond ; sphérique"
+  },
+  {
+    "word": "円い",
+    "meaning_fr": "rond (circulaire, plat)"
+  },
+  {
+    "word": "伯母さん",
+    "meaning_fr": "la tante (sœur aînée d'un parent)"
+  },
+  {
+    "word": "叔母さん",
+    "meaning_fr": "la tante (sœur cadette d'un parent)"
+  },
+  {
+    "word": "伯父",
+    "meaning_fr": "l'oncle (frère aîné d'un parent)"
+  },
+  {
+    "word": "叔父",
+    "meaning_fr": "l'oncle (frère cadet d'un parent)"
+  },
+  {
+    "word": "初め",
+    "meaning_fr": "le début (dans le temps) ; au départ"
+  },
+  {
+    "word": "始め",
+    "meaning_fr": "le commencement (d'une action)"
+  },
+  {
+    "word": "河",
+    "meaning_fr": "le fleuve"
   }
 ]

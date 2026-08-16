@@ -1643,7 +1643,7 @@
     {
       "word": "あさって",
       "reading": "あさって",
-      "meaning": "",
+      "meaning": "the day after tomorrow",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -1651,7 +1651,7 @@
     {
       "word": "あそこ",
       "reading": "あそこ",
-      "meaning": "",
+      "meaning": "over there",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -1659,7 +1659,7 @@
     {
       "word": "あちら",
       "reading": "あちら",
-      "meaning": "",
+      "meaning": "over there (polite); that way",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -1667,7 +1667,7 @@
     {
       "word": "あっち",
       "reading": "あっち",
-      "meaning": "",
+      "meaning": "over there (casual); that way",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -1675,7 +1675,7 @@
     {
       "word": "あなた",
       "reading": "あなた",
-      "meaning": "",
+      "meaning": "you",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -1683,7 +1683,7 @@
     {
       "word": "あの",
       "reading": "あの",
-      "meaning": "",
+      "meaning": "that (over there)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -1691,7 +1691,7 @@
     {
       "word": "あびる",
       "reading": "あびる",
-      "meaning": "",
+      "meaning": "to take (a shower); to bathe in",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -1699,7 +1699,7 @@
     {
       "word": "あまり",
       "reading": "あまり",
-      "meaning": "",
+      "meaning": "not very; not much (with a negative)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -1707,15 +1707,15 @@
     {
       "word": "あれ",
       "reading": "あれ",
-      "meaning": "",
+      "meaning": "that one (over there)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
     },
     {
-      "word": "いい/よい",
-      "reading": "いい/よい",
-      "meaning": "",
+      "word": "よい",
+      "reading": "よい",
+      "meaning": "good (formal)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -1723,7 +1723,7 @@
     {
       "word": "いいえ",
       "reading": "いいえ",
-      "meaning": "",
+      "meaning": "no",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -1731,7 +1731,7 @@
     {
       "word": "いかが",
       "reading": "いかが",
-      "meaning": "",
+      "meaning": "how (polite)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -1739,7 +1739,7 @@
     {
       "word": "いくつ",
       "reading": "いくつ",
-      "meaning": "",
+      "meaning": "how many; how old",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -1747,7 +1747,7 @@
     {
       "word": "いくら",
       "reading": "いくら",
-      "meaning": "",
+      "meaning": "how much (price)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -1755,7 +1755,7 @@
     {
       "word": "いす",
       "reading": "いす",
-      "meaning": "",
+      "meaning": "chair",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -1763,7 +1763,7 @@
     {
       "word": "いちばん",
       "reading": "いちばん",
-      "meaning": "",
+      "meaning": "the most; number one",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -1771,7 +1771,7 @@
     {
       "word": "いつ",
       "reading": "いつ",
-      "meaning": "",
+      "meaning": "when",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -1779,7 +1779,7 @@
     {
       "word": "いつも",
       "reading": "いつも",
-      "meaning": "",
+      "meaning": "always",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -1787,7 +1787,7 @@
     {
       "word": "いろいろ",
       "reading": "いろいろ",
-      "meaning": "",
+      "meaning": "various",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -1795,7 +1795,7 @@
     {
       "word": "ええ",
       "reading": "ええ",
-      "meaning": "",
+      "meaning": "yes (casual)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -1803,7 +1803,7 @@
     {
       "word": "おいしい",
       "reading": "おいしい",
-      "meaning": "",
+      "meaning": "delicious; tasty",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -1811,7 +1811,7 @@
     {
       "word": "おなか",
       "reading": "おなか",
-      "meaning": "",
+      "meaning": "stomach; belly",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -1819,7 +1819,7 @@
     {
       "word": "おばあさん",
       "reading": "おばあさん",
-      "meaning": "",
+      "meaning": "grandmother; elderly woman",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -1827,7 +1827,7 @@
     {
       "word": "おまわりさん",
       "reading": "おまわりさん",
-      "meaning": "",
+      "meaning": "police officer",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -1835,7 +1835,7 @@
     {
       "word": "おもしろい",
       "reading": "おもしろい",
-      "meaning": "",
+      "meaning": "interesting; funny",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -1843,7 +1843,7 @@
     {
       "word": "お兄さん",
       "reading": "おにいさん",
-      "meaning": "",
+      "meaning": "older brother (polite)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -1851,7 +1851,7 @@
     {
       "word": "お姉さん",
       "reading": "おねえさん",
-      "meaning": "",
+      "meaning": "older sister (polite)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -1859,7 +1859,7 @@
     {
       "word": "お弁当",
       "reading": "おべんとう",
-      "meaning": "",
+      "meaning": "boxed lunch",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -1867,7 +1867,7 @@
     {
       "word": "お手洗い",
       "reading": "おてあらい",
-      "meaning": "",
+      "meaning": "toilet; restroom",
       "kanji_character": "手",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -1875,7 +1875,7 @@
     {
       "word": "お皿",
       "reading": "おさら",
-      "meaning": "",
+      "meaning": "plate; dish",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -1883,7 +1883,7 @@
     {
       "word": "お菓子",
       "reading": "おかし",
-      "meaning": "",
+      "meaning": "sweets; snacks",
       "kanji_character": "子",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -1891,7 +1891,7 @@
     {
       "word": "お酒",
       "reading": "おさけ",
-      "meaning": "",
+      "meaning": "alcohol; sake",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -1899,7 +1899,7 @@
     {
       "word": "お風呂",
       "reading": "おふろ",
-      "meaning": "",
+      "meaning": "bath",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -1907,7 +1907,7 @@
     {
       "word": "かかる",
       "reading": "かかる",
-      "meaning": "",
+      "meaning": "to take (time); to cost (money)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -1915,7 +1915,7 @@
     {
       "word": "かぎ",
       "reading": "かぎ",
-      "meaning": "",
+      "meaning": "key; lock",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -1923,7 +1923,7 @@
     {
       "word": "かける",
       "reading": "かける",
-      "meaning": "",
+      "meaning": "to hang (something); to make (a phone call)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -1931,7 +1931,7 @@
     {
       "word": "かばん",
       "reading": "かばん",
-      "meaning": "",
+      "meaning": "bag",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -1939,7 +1939,7 @@
     {
       "word": "かわいい",
       "reading": "かわいい",
-      "meaning": "",
+      "meaning": "cute",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -1947,7 +1947,7 @@
     {
       "word": "きれい",
       "reading": "きれい",
-      "meaning": "",
+      "meaning": "pretty; clean",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -1955,7 +1955,7 @@
     {
       "word": "ください",
       "reading": "ください",
-      "meaning": "",
+      "meaning": "please give me",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -1963,7 +1963,7 @@
     {
       "word": "ここ",
       "reading": "ここ",
-      "meaning": "",
+      "meaning": "here",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -1971,7 +1971,7 @@
     {
       "word": "こちら",
       "reading": "こちら",
-      "meaning": "",
+      "meaning": "this way (polite); this one",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -1979,7 +1979,7 @@
     {
       "word": "こっち",
       "reading": "こっち",
-      "meaning": "",
+      "meaning": "this way (casual)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -1987,7 +1987,7 @@
     {
       "word": "この",
       "reading": "この",
-      "meaning": "",
+      "meaning": "this",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -1995,7 +1995,7 @@
     {
       "word": "これ",
       "reading": "これ",
-      "meaning": "",
+      "meaning": "this one",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2003,7 +2003,7 @@
     {
       "word": "こんな",
       "reading": "こんな",
-      "meaning": "",
+      "meaning": "this kind of",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2011,7 +2011,7 @@
     {
       "word": "さあ",
       "reading": "さあ",
-      "meaning": "",
+      "meaning": "come on; well (hesitation)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2019,7 +2019,7 @@
     {
       "word": "さ来年",
       "reading": "さらいねん",
-      "meaning": "",
+      "meaning": "the year after next",
       "kanji_character": "来",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2027,7 +2027,7 @@
     {
       "word": "しかし",
       "reading": "しかし",
-      "meaning": "",
+      "meaning": "however; but",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2035,15 +2035,15 @@
     {
       "word": "しょうゆ",
       "reading": "しょうゆ",
-      "meaning": "",
+      "meaning": "soy sauce",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
     },
     {
-      "word": "じゃ/じゃあ",
-      "reading": "じゃ/じゃあ",
-      "meaning": "",
+      "word": "じゃあ",
+      "reading": "じゃあ",
+      "meaning": "well then; in that case (casual)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2051,7 +2051,7 @@
     {
       "word": "すぐに",
       "reading": "すぐに",
-      "meaning": "",
+      "meaning": "immediately; right away",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2059,7 +2059,7 @@
     {
       "word": "する",
       "reading": "する",
-      "meaning": "",
+      "meaning": "to do",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2067,15 +2067,15 @@
     {
       "word": "せっけん",
       "reading": "せっけん",
-      "meaning": "",
+      "meaning": "soap",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
     },
     {
-      "word": "そうして/そして",
-      "reading": "そうして/そして",
-      "meaning": "",
+      "word": "そして",
+      "reading": "そして",
+      "meaning": "and then; and",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2083,7 +2083,7 @@
     {
       "word": "そこ",
       "reading": "そこ",
-      "meaning": "",
+      "meaning": "there",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2091,7 +2091,7 @@
     {
       "word": "そちら",
       "reading": "そちら",
-      "meaning": "",
+      "meaning": "that way (polite); that one",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2099,7 +2099,7 @@
     {
       "word": "そっち",
       "reading": "そっち",
-      "meaning": "",
+      "meaning": "that way (casual); that one",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2107,7 +2107,7 @@
     {
       "word": "その",
       "reading": "その",
-      "meaning": "",
+      "meaning": "that (near the listener)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2115,7 +2115,7 @@
     {
       "word": "そば",
       "reading": "そば",
-      "meaning": "",
+      "meaning": "beside; near",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2123,7 +2123,7 @@
     {
       "word": "それ",
       "reading": "それ",
-      "meaning": "",
+      "meaning": "that one",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2131,7 +2131,7 @@
     {
       "word": "それから",
       "reading": "それから",
-      "meaning": "",
+      "meaning": "and then; after that",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2139,7 +2139,7 @@
     {
       "word": "それでは",
       "reading": "それでは",
-      "meaning": "",
+      "meaning": "well then; in that case (formal)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2147,7 +2147,7 @@
     {
       "word": "たいへん",
       "reading": "たいへん",
-      "meaning": "",
+      "meaning": "very; tough (situation)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2155,7 +2155,7 @@
     {
       "word": "たくさん",
       "reading": "たくさん",
-      "meaning": "",
+      "meaning": "a lot; many",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2163,7 +2163,7 @@
     {
       "word": "たて",
       "reading": "たて",
-      "meaning": "",
+      "meaning": "vertical (direction)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2171,7 +2171,7 @@
     {
       "word": "たばこ",
       "reading": "たばこ",
-      "meaning": "",
+      "meaning": "cigarette; tobacco",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2179,7 +2179,7 @@
     {
       "word": "たぶん",
       "reading": "たぶん",
-      "meaning": "",
+      "meaning": "probably; maybe",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2187,7 +2187,7 @@
     {
       "word": "だんだん",
       "reading": "だんだん",
-      "meaning": "",
+      "meaning": "gradually; little by little",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2195,7 +2195,7 @@
     {
       "word": "ちゃわん",
       "reading": "ちゃわん",
-      "meaning": "",
+      "meaning": "rice bowl; teacup",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2203,7 +2203,7 @@
     {
       "word": "ちょうど",
       "reading": "ちょうど",
-      "meaning": "",
+      "meaning": "exactly; just",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2211,7 +2211,7 @@
     {
       "word": "ちょっと",
       "reading": "ちょっと",
-      "meaning": "",
+      "meaning": "a little; a moment",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2219,7 +2219,7 @@
     {
       "word": "つける",
       "reading": "つける",
-      "meaning": "",
+      "meaning": "to turn on (a light, a device); to attach",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2227,7 +2227,7 @@
     {
       "word": "つまらない",
       "reading": "つまらない",
-      "meaning": "",
+      "meaning": "boring; dull",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2235,7 +2235,7 @@
     {
       "word": "できる",
       "reading": "できる",
-      "meaning": "",
+      "meaning": "to be able to; to be completed",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2243,7 +2243,7 @@
     {
       "word": "では",
       "reading": "では",
-      "meaning": "",
+      "meaning": "well then; in that case (polite)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2251,7 +2251,7 @@
     {
       "word": "でも",
       "reading": "でも",
-      "meaning": "",
+      "meaning": "but; however",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2259,7 +2259,7 @@
     {
       "word": "とても",
       "reading": "とても",
-      "meaning": "",
+      "meaning": "very",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2267,7 +2267,7 @@
     {
       "word": "とり肉",
       "reading": "とりにく",
-      "meaning": "",
+      "meaning": "chicken (meat)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2275,7 +2275,7 @@
     {
       "word": "どう",
       "reading": "どう",
-      "meaning": "",
+      "meaning": "how",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2283,7 +2283,7 @@
     {
       "word": "どうして",
       "reading": "どうして",
-      "meaning": "",
+      "meaning": "why",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2291,7 +2291,7 @@
     {
       "word": "どうぞ",
       "reading": "どうぞ",
-      "meaning": "",
+      "meaning": "please (go ahead); here you are",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2299,7 +2299,7 @@
     {
       "word": "どうも",
       "reading": "どうも",
-      "meaning": "",
+      "meaning": "thanks; really",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2307,7 +2307,7 @@
     {
       "word": "どこ",
       "reading": "どこ",
-      "meaning": "",
+      "meaning": "where",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2315,7 +2315,7 @@
     {
       "word": "どちら",
       "reading": "どちら",
-      "meaning": "",
+      "meaning": "which way (polite); which one",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2323,7 +2323,7 @@
     {
       "word": "どっち",
       "reading": "どっち",
-      "meaning": "",
+      "meaning": "which way (casual); which one",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2331,7 +2331,7 @@
     {
       "word": "どなた",
       "reading": "どなた",
-      "meaning": "",
+      "meaning": "who (polite)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2339,7 +2339,7 @@
     {
       "word": "どの",
       "reading": "どの",
-      "meaning": "",
+      "meaning": "which (before a noun)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2347,7 +2347,7 @@
     {
       "word": "どれ",
       "reading": "どれ",
-      "meaning": "",
+      "meaning": "which one (of three or more)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2355,7 +2355,7 @@
     {
       "word": "なぜ",
       "reading": "なぜ",
-      "meaning": "",
+      "meaning": "why",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2363,7 +2363,7 @@
     {
       "word": "など",
       "reading": "など",
-      "meaning": "",
+      "meaning": "et cetera; and so on",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2371,7 +2371,7 @@
     {
       "word": "なる",
       "reading": "なる",
-      "meaning": "",
+      "meaning": "to become",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2379,7 +2379,7 @@
     {
       "word": "はい",
       "reading": "はい",
-      "meaning": "",
+      "meaning": "yes",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2387,7 +2387,7 @@
     {
       "word": "はく",
       "reading": "はく",
-      "meaning": "",
+      "meaning": "to put on; to wear (shoes, trousers)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2395,7 +2395,7 @@
     {
       "word": "はし",
       "reading": "はし",
-      "meaning": "",
+      "meaning": "chopsticks",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2403,7 +2403,7 @@
     {
       "word": "ふろ",
       "reading": "ふろ",
-      "meaning": "",
+      "meaning": "bath",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2411,7 +2411,7 @@
     {
       "word": "ほか",
       "reading": "ほか",
-      "meaning": "",
+      "meaning": "other; the rest",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2419,7 +2419,7 @@
     {
       "word": "ほんとう",
       "reading": "ほんとう",
-      "meaning": "",
+      "meaning": "truth; real",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2427,7 +2427,7 @@
     {
       "word": "まずい",
       "reading": "まずい",
-      "meaning": "",
+      "meaning": "bad-tasting (food); unpleasant",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2435,7 +2435,7 @@
     {
       "word": "また",
       "reading": "また",
-      "meaning": "",
+      "meaning": "again; also",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2443,7 +2443,7 @@
     {
       "word": "まだ",
       "reading": "まだ",
-      "meaning": "",
+      "meaning": "still; not yet",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2451,7 +2451,7 @@
     {
       "word": "まっすぐ",
       "reading": "まっすぐ",
-      "meaning": "",
+      "meaning": "straight; straight ahead",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2459,7 +2459,7 @@
     {
       "word": "みんな",
       "reading": "みんな",
-      "meaning": "",
+      "meaning": "everyone; all",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2467,7 +2467,7 @@
     {
       "word": "もう",
       "reading": "もう",
-      "meaning": "",
+      "meaning": "already; more",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2475,7 +2475,7 @@
     {
       "word": "もう一度",
       "reading": "もういちど",
-      "meaning": "",
+      "meaning": "one more time; again",
       "kanji_character": "一",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2483,7 +2483,7 @@
     {
       "word": "もっと",
       "reading": "もっと",
-      "meaning": "",
+      "meaning": "more",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2491,7 +2491,7 @@
     {
       "word": "やる",
       "reading": "やる",
-      "meaning": "",
+      "meaning": "to do (informal)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2499,7 +2499,7 @@
     {
       "word": "ゆっくりと",
       "reading": "ゆっくりと",
-      "meaning": "",
+      "meaning": "slowly; unhurriedly",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2507,7 +2507,7 @@
     {
       "word": "よく",
       "reading": "よく",
-      "meaning": "",
+      "meaning": "often; well",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2515,7 +2515,7 @@
     {
       "word": "より、ほう",
       "reading": "より、ほう",
-      "meaning": "",
+      "meaning": "more than (comparison pattern)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2523,7 +2523,7 @@
     {
       "word": "りっぱ",
       "reading": "りっぱ",
-      "meaning": "",
+      "meaning": "splendid; impressive",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2531,7 +2531,7 @@
     {
       "word": "アパート",
       "reading": "あぱーと",
-      "meaning": "",
+      "meaning": "apartment",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2539,7 +2539,7 @@
     {
       "word": "エレベーター",
       "reading": "えれべーたー",
-      "meaning": "",
+      "meaning": "elevator",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2547,7 +2547,7 @@
     {
       "word": "カップ",
       "reading": "かっぷ",
-      "meaning": "",
+      "meaning": "cup",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2555,7 +2555,7 @@
     {
       "word": "カメラ",
       "reading": "かめら",
-      "meaning": "",
+      "meaning": "camera",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2563,7 +2563,7 @@
     {
       "word": "カレンダー",
       "reading": "かれんだー",
-      "meaning": "",
+      "meaning": "calendar",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2571,23 +2571,31 @@
     {
       "word": "カレー",
       "reading": "かれー",
-      "meaning": "",
+      "meaning": "curry",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
     },
     {
-      "word": "キロ/キログラム",
-      "reading": "きろ/きろぐらむ",
-      "meaning": "",
+      "word": "キロ",
+      "reading": "きろ",
+      "meaning": "kilo (kilogram or kilometre)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
     },
     {
-      "word": "キロ/キロメートル",
-      "reading": "きろ/きろめーとる",
-      "meaning": "",
+      "word": "キログラム",
+      "reading": "きろぐらむ",
+      "meaning": "kilogram",
+      "kanji_character": null,
+      "jlpt_level": "n5",
+      "list_source": "tanos"
+    },
+    {
+      "word": "キロメートル",
+      "reading": "きろめーとる",
+      "meaning": "kilometre",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2595,7 +2603,7 @@
     {
       "word": "ギター",
       "reading": "ぎたー",
-      "meaning": "",
+      "meaning": "guitar",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2603,7 +2611,7 @@
     {
       "word": "クラス",
       "reading": "くらす",
-      "meaning": "",
+      "meaning": "class (at school)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2611,7 +2619,7 @@
     {
       "word": "グラム",
       "reading": "ぐらむ",
-      "meaning": "",
+      "meaning": "gram",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2619,7 +2627,7 @@
     {
       "word": "コップ",
       "reading": "こっぷ",
-      "meaning": "",
+      "meaning": "glass; tumbler",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2627,7 +2635,7 @@
     {
       "word": "コピーする",
       "reading": "こぴーする",
-      "meaning": "",
+      "meaning": "to copy; to photocopy",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2635,7 +2643,7 @@
     {
       "word": "コート",
       "reading": "こーと",
-      "meaning": "",
+      "meaning": "coat",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2643,7 +2651,7 @@
     {
       "word": "コーヒー",
       "reading": "こーひー",
-      "meaning": "",
+      "meaning": "coffee",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2651,7 +2659,7 @@
     {
       "word": "シャツ",
       "reading": "しゃつ",
-      "meaning": "",
+      "meaning": "shirt",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2659,7 +2667,7 @@
     {
       "word": "シャワー",
       "reading": "しゃわー",
-      "meaning": "",
+      "meaning": "shower",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2667,7 +2675,7 @@
     {
       "word": "スカート",
       "reading": "すかーと",
-      "meaning": "",
+      "meaning": "skirt",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2675,7 +2683,7 @@
     {
       "word": "ストーブ",
       "reading": "すとーぶ",
-      "meaning": "",
+      "meaning": "heater (for a room)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2683,7 +2691,7 @@
     {
       "word": "スプーン",
       "reading": "すぷーん",
-      "meaning": "",
+      "meaning": "spoon",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2691,7 +2699,7 @@
     {
       "word": "スポーツ",
       "reading": "すぽーつ",
-      "meaning": "",
+      "meaning": "sport",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2699,7 +2707,7 @@
     {
       "word": "スリッパ",
       "reading": "すりっぱ",
-      "meaning": "",
+      "meaning": "slippers",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2707,7 +2715,7 @@
     {
       "word": "ズボン",
       "reading": "ずぼん",
-      "meaning": "",
+      "meaning": "trousers; pants",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2715,7 +2723,7 @@
     {
       "word": "セーター",
       "reading": "せーたー",
-      "meaning": "",
+      "meaning": "sweater",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2723,7 +2731,7 @@
     {
       "word": "ゼロ",
       "reading": "ぜろ",
-      "meaning": "",
+      "meaning": "zero",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2731,7 +2739,7 @@
     {
       "word": "タクシー",
       "reading": "たくしー",
-      "meaning": "",
+      "meaning": "taxi",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2739,7 +2747,7 @@
     {
       "word": "テスト",
       "reading": "てすと",
-      "meaning": "",
+      "meaning": "test",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2747,7 +2755,7 @@
     {
       "word": "テレビ",
       "reading": "てれび",
-      "meaning": "",
+      "meaning": "television; TV",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2755,7 +2763,7 @@
     {
       "word": "テーブル",
       "reading": "てーぶる",
-      "meaning": "",
+      "meaning": "table",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2763,7 +2771,7 @@
     {
       "word": "テープ",
       "reading": "てーぷ",
-      "meaning": "",
+      "meaning": "tape (recording or adhesive)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2771,7 +2779,7 @@
     {
       "word": "テープレコーダー",
       "reading": "てーぷれこーだー",
-      "meaning": "",
+      "meaning": "tape recorder",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2779,7 +2787,7 @@
     {
       "word": "デパート",
       "reading": "でぱーと",
-      "meaning": "",
+      "meaning": "department store",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2787,7 +2795,7 @@
     {
       "word": "トイレ",
       "reading": "といれ",
-      "meaning": "",
+      "meaning": "toilet; restroom",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2795,7 +2803,7 @@
     {
       "word": "ドア",
       "reading": "どあ",
-      "meaning": "",
+      "meaning": "door",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2803,7 +2811,7 @@
     {
       "word": "ナイフ",
       "reading": "ないふ",
-      "meaning": "",
+      "meaning": "knife",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2811,7 +2819,7 @@
     {
       "word": "ニュース",
       "reading": "にゅーす",
-      "meaning": "",
+      "meaning": "news",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2819,7 +2827,7 @@
     {
       "word": "ネクタイ",
       "reading": "ねくたい",
-      "meaning": "",
+      "meaning": "necktie",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2827,7 +2835,7 @@
     {
       "word": "ノート",
       "reading": "のーと",
-      "meaning": "",
+      "meaning": "notebook",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2835,7 +2843,7 @@
     {
       "word": "ハンカチ",
       "reading": "はんかち",
-      "meaning": "",
+      "meaning": "handkerchief",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2843,7 +2851,7 @@
     {
       "word": "バス",
       "reading": "ばす",
-      "meaning": "",
+      "meaning": "bus",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2851,7 +2859,7 @@
     {
       "word": "バター",
       "reading": "ばたー",
-      "meaning": "",
+      "meaning": "butter",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2859,7 +2867,7 @@
     {
       "word": "パーティー",
       "reading": "ぱーてぃー",
-      "meaning": "",
+      "meaning": "party",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2867,7 +2875,7 @@
     {
       "word": "フィルム",
       "reading": "ふぃるむ",
-      "meaning": "",
+      "meaning": "film (for a camera)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2875,7 +2883,7 @@
     {
       "word": "フォーク",
       "reading": "ふぉーく",
-      "meaning": "",
+      "meaning": "fork",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2883,7 +2891,7 @@
     {
       "word": "プール",
       "reading": "ぷーる",
-      "meaning": "",
+      "meaning": "swimming pool",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2891,7 +2899,7 @@
     {
       "word": "ベッド",
       "reading": "べっど",
-      "meaning": "",
+      "meaning": "bed",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2899,7 +2907,7 @@
     {
       "word": "ペット",
       "reading": "ぺっと",
-      "meaning": "",
+      "meaning": "pet",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2907,7 +2915,7 @@
     {
       "word": "ペン",
       "reading": "ぺん",
-      "meaning": "",
+      "meaning": "pen",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2915,7 +2923,7 @@
     {
       "word": "ページ",
       "reading": "ぺーじ",
-      "meaning": "",
+      "meaning": "page",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2923,7 +2931,7 @@
     {
       "word": "ホテル",
       "reading": "ほてる",
-      "meaning": "",
+      "meaning": "hotel",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2931,7 +2939,7 @@
     {
       "word": "ボタン",
       "reading": "ぼたん",
-      "meaning": "",
+      "meaning": "button",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2939,7 +2947,7 @@
     {
       "word": "ボールペン",
       "reading": "ぼーるぺん",
-      "meaning": "",
+      "meaning": "ballpoint pen",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2947,7 +2955,7 @@
     {
       "word": "ポケット",
       "reading": "ぽけっと",
-      "meaning": "",
+      "meaning": "pocket",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2955,7 +2963,7 @@
     {
       "word": "ポスト",
       "reading": "ぽすと",
-      "meaning": "",
+      "meaning": "mailbox; postbox",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2963,7 +2971,7 @@
     {
       "word": "マッチ",
       "reading": "まっち",
-      "meaning": "",
+      "meaning": "match (for lighting a fire)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2971,7 +2979,7 @@
     {
       "word": "メートル",
       "reading": "めーとる",
-      "meaning": "",
+      "meaning": "meter (unit of length)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2979,15 +2987,15 @@
     {
       "word": "ラジオ",
       "reading": "らじお",
-      "meaning": "",
+      "meaning": "radio",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
     },
     {
-      "word": "ラジカセ / ラジオカセット",
-      "reading": "らじかせ / らじおかせっと",
-      "meaning": "",
+      "word": "ラジカセ",
+      "reading": "らじかせ",
+      "meaning": "radio cassette player",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -2995,7 +3003,7 @@
     {
       "word": "レコード",
       "reading": "れこーど",
-      "meaning": "",
+      "meaning": "record (vinyl)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3003,7 +3011,7 @@
     {
       "word": "レストラン",
       "reading": "れすとらん",
-      "meaning": "",
+      "meaning": "restaurant",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3011,7 +3019,7 @@
     {
       "word": "ワイシャツ",
       "reading": "わいしゃつ",
-      "meaning": "",
+      "meaning": "dress shirt",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3019,7 +3027,7 @@
     {
       "word": "一",
       "reading": "いち",
-      "meaning": "",
+      "meaning": "one",
       "kanji_character": "一",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3027,7 +3035,7 @@
     {
       "word": "一人",
       "reading": "ひとり",
-      "meaning": "",
+      "meaning": "one person; alone",
       "kanji_character": "一",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3035,7 +3043,7 @@
     {
       "word": "一日",
       "reading": "いちにち",
-      "meaning": "",
+      "meaning": "one day; all day",
       "kanji_character": "一",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3043,7 +3051,7 @@
     {
       "word": "一昨年",
       "reading": "おととし",
-      "meaning": "",
+      "meaning": "the year before last",
       "kanji_character": "一",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3051,7 +3059,7 @@
     {
       "word": "一昨日",
       "reading": "おととい",
-      "meaning": "",
+      "meaning": "the day before yesterday",
       "kanji_character": "一",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3059,7 +3067,7 @@
     {
       "word": "一月",
       "reading": "いちげつ",
-      "meaning": "",
+      "meaning": "one month",
       "kanji_character": "一",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3067,7 +3075,7 @@
     {
       "word": "一緒",
       "reading": "いっしょ",
-      "meaning": "",
+      "meaning": "together",
       "kanji_character": "一",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3075,7 +3083,7 @@
     {
       "word": "七",
       "reading": "しち",
-      "meaning": "",
+      "meaning": "seven",
       "kanji_character": "七",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3083,7 +3091,7 @@
     {
       "word": "七日",
       "reading": "なのか",
-      "meaning": "",
+      "meaning": "the seventh (of the month); seven days",
       "kanji_character": "七",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3091,7 +3099,7 @@
     {
       "word": "万年筆",
       "reading": "まんねんひつ",
-      "meaning": "",
+      "meaning": "fountain pen",
       "kanji_character": "万",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3099,7 +3107,7 @@
     {
       "word": "丈夫",
       "reading": "じょうぶ",
-      "meaning": "",
+      "meaning": "sturdy; healthy",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3107,7 +3115,7 @@
     {
       "word": "三",
       "reading": "さん",
-      "meaning": "",
+      "meaning": "three",
       "kanji_character": "三",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3115,7 +3123,7 @@
     {
       "word": "三日",
       "reading": "みっか",
-      "meaning": "",
+      "meaning": "the third (of the month); three days",
       "kanji_character": "三",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3123,7 +3131,7 @@
     {
       "word": "上げる",
       "reading": "あげる",
-      "meaning": "",
+      "meaning": "to raise (something); to give",
       "kanji_character": "上",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3131,7 +3139,7 @@
     {
       "word": "上手",
       "reading": "じょうず",
-      "meaning": "",
+      "meaning": "good at; skillful",
       "kanji_character": "上",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3139,7 +3147,7 @@
     {
       "word": "上着",
       "reading": "うわぎ",
-      "meaning": "",
+      "meaning": "jacket; outer garment",
       "kanji_character": "上",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3147,7 +3155,7 @@
     {
       "word": "下手",
       "reading": "へた",
-      "meaning": "",
+      "meaning": "bad at; unskillful",
       "kanji_character": "下",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3155,7 +3163,7 @@
     {
       "word": "両親",
       "reading": "りょうしん",
-      "meaning": "",
+      "meaning": "parents",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3163,7 +3171,7 @@
     {
       "word": "並ぶ",
       "reading": "ならぶ",
-      "meaning": "",
+      "meaning": "to line up (by oneself); to queue",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3171,15 +3179,23 @@
     {
       "word": "並べる",
       "reading": "ならべる",
-      "meaning": "",
+      "meaning": "to line up (something); to arrange",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
     },
     {
-      "word": "丸い/円い",
+      "word": "丸い",
       "reading": "まるい",
-      "meaning": "",
+      "meaning": "round; spherical",
+      "kanji_character": null,
+      "jlpt_level": "n5",
+      "list_source": "tanos"
+    },
+    {
+      "word": "円い",
+      "reading": "まるい",
+      "meaning": "round (circular, flat)",
       "kanji_character": "円",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3187,7 +3203,7 @@
     {
       "word": "乗る",
       "reading": "のる",
-      "meaning": "",
+      "meaning": "to get on (a vehicle); to ride",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3195,7 +3211,7 @@
     {
       "word": "九",
       "reading": "きゅう",
-      "meaning": "",
+      "meaning": "nine",
       "kanji_character": "九",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3203,7 +3219,7 @@
     {
       "word": "九日",
       "reading": "ここのか",
-      "meaning": "",
+      "meaning": "the ninth (of the month); nine days",
       "kanji_character": "九",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3211,7 +3227,7 @@
     {
       "word": "二",
       "reading": "に",
-      "meaning": "",
+      "meaning": "two",
       "kanji_character": "二",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3219,7 +3235,7 @@
     {
       "word": "二人",
       "reading": "ふたり",
-      "meaning": "",
+      "meaning": "two people",
       "kanji_character": "二",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3227,7 +3243,7 @@
     {
       "word": "二十日",
       "reading": "はつか",
-      "meaning": "",
+      "meaning": "the twentieth (of the month); twenty days",
       "kanji_character": "二",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3235,7 +3251,7 @@
     {
       "word": "二十歳",
       "reading": "はたち",
-      "meaning": "",
+      "meaning": "twenty years old",
       "kanji_character": "二",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3243,7 +3259,7 @@
     {
       "word": "二日",
       "reading": "ふつか",
-      "meaning": "",
+      "meaning": "the second (of the month); two days",
       "kanji_character": "二",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3251,7 +3267,7 @@
     {
       "word": "五",
       "reading": "ご",
-      "meaning": "",
+      "meaning": "five",
       "kanji_character": "五",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3259,7 +3275,7 @@
     {
       "word": "五日",
       "reading": "いつか",
-      "meaning": "",
+      "meaning": "the fifth (of the month); five days",
       "kanji_character": "五",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3267,7 +3283,7 @@
     {
       "word": "交差点",
       "reading": "こうさてん",
-      "meaning": "",
+      "meaning": "intersection; crossroads",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3275,7 +3291,7 @@
     {
       "word": "交番",
       "reading": "こうばん",
-      "meaning": "",
+      "meaning": "police box (neighborhood police station)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3283,7 +3299,7 @@
     {
       "word": "今晩",
       "reading": "こんばん",
-      "meaning": "",
+      "meaning": "this evening; tonight",
       "kanji_character": "今",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3291,7 +3307,7 @@
     {
       "word": "今朝",
       "reading": "けさ",
-      "meaning": "",
+      "meaning": "this morning",
       "kanji_character": "今",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3299,7 +3315,7 @@
     {
       "word": "仕事",
       "reading": "しごと",
-      "meaning": "",
+      "meaning": "work; job",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3307,23 +3323,39 @@
     {
       "word": "休み",
       "reading": "やすみ",
-      "meaning": "",
+      "meaning": "rest; day off",
       "kanji_character": "休",
       "jlpt_level": "n5",
       "list_source": "tanos"
     },
     {
-      "word": "伯母さん/叔母さん",
+      "word": "伯母さん",
       "reading": "おばさん",
-      "meaning": "",
+      "meaning": "aunt (parent's older sister)",
       "kanji_character": "母",
       "jlpt_level": "n5",
       "list_source": "tanos"
     },
     {
-      "word": "伯父/叔父",
+      "word": "叔母さん",
+      "reading": "おばさん",
+      "meaning": "aunt (parent's younger sister)",
+      "kanji_character": "母",
+      "jlpt_level": "n5",
+      "list_source": "tanos"
+    },
+    {
+      "word": "伯父",
       "reading": "おじ",
-      "meaning": "",
+      "meaning": "uncle (parent's older brother)",
+      "kanji_character": "父",
+      "jlpt_level": "n5",
+      "list_source": "tanos"
+    },
+    {
+      "word": "叔父",
+      "reading": "おじ",
+      "meaning": "uncle (parent's younger brother)",
       "kanji_character": "父",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3331,7 +3363,7 @@
     {
       "word": "低い",
       "reading": "ひくい",
-      "meaning": "",
+      "meaning": "low; short (in height)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3339,7 +3371,7 @@
     {
       "word": "体",
       "reading": "からだ",
-      "meaning": "",
+      "meaning": "body",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3347,7 +3379,7 @@
     {
       "word": "作文",
       "reading": "さくぶん",
-      "meaning": "",
+      "meaning": "composition; essay",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3355,7 +3387,7 @@
     {
       "word": "借りる",
       "reading": "かりる",
-      "meaning": "",
+      "meaning": "to borrow",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3363,7 +3395,7 @@
     {
       "word": "傘",
       "reading": "かさ",
-      "meaning": "",
+      "meaning": "umbrella",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3371,7 +3403,7 @@
     {
       "word": "働く",
       "reading": "はたらく",
-      "meaning": "",
+      "meaning": "to work",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3379,7 +3411,7 @@
     {
       "word": "兄弟",
       "reading": "きょうだい",
-      "meaning": "",
+      "meaning": "siblings; brothers",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3387,7 +3419,7 @@
     {
       "word": "先",
       "reading": "さき",
-      "meaning": "",
+      "meaning": "ahead; tip (end)",
       "kanji_character": "先",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3395,7 +3427,7 @@
     {
       "word": "入れる",
       "reading": "いれる",
-      "meaning": "",
+      "meaning": "to put in; to insert",
       "kanji_character": "入",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3403,7 +3435,7 @@
     {
       "word": "入口",
       "reading": "いりぐち",
-      "meaning": "",
+      "meaning": "entrance",
       "kanji_character": "入",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3411,7 +3443,7 @@
     {
       "word": "全部",
       "reading": "ぜんぶ",
-      "meaning": "",
+      "meaning": "all; everything",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3419,7 +3451,7 @@
     {
       "word": "八",
       "reading": "はち",
-      "meaning": "",
+      "meaning": "eight",
       "kanji_character": "八",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3427,7 +3459,7 @@
     {
       "word": "八日",
       "reading": "ようか",
-      "meaning": "",
+      "meaning": "the eighth (of the month); eight days",
       "kanji_character": "八",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3435,7 +3467,7 @@
     {
       "word": "八百屋",
       "reading": "やおや",
-      "meaning": "",
+      "meaning": "greengrocer; vegetable shop",
       "kanji_character": "八",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3443,7 +3475,7 @@
     {
       "word": "公園",
       "reading": "こうえん",
-      "meaning": "",
+      "meaning": "park",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3451,7 +3483,7 @@
     {
       "word": "六",
       "reading": "ろく",
-      "meaning": "",
+      "meaning": "six",
       "kanji_character": "六",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3459,7 +3491,7 @@
     {
       "word": "六日",
       "reading": "むいか",
-      "meaning": "",
+      "meaning": "the sixth (of the month); six days",
       "kanji_character": "六",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3467,7 +3499,7 @@
     {
       "word": "冬",
       "reading": "ふゆ",
-      "meaning": "",
+      "meaning": "winter",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3475,7 +3507,7 @@
     {
       "word": "冷たい",
       "reading": "つめたい",
-      "meaning": "",
+      "meaning": "cold (to the touch)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3483,7 +3515,7 @@
     {
       "word": "冷蔵庫",
       "reading": "れいぞうこ",
-      "meaning": "",
+      "meaning": "refrigerator",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3491,7 +3523,7 @@
     {
       "word": "出す",
       "reading": "だす",
-      "meaning": "",
+      "meaning": "to take out; to send (a letter)",
       "kanji_character": "出",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3499,7 +3531,7 @@
     {
       "word": "出口",
       "reading": "でぐち",
-      "meaning": "",
+      "meaning": "exit",
       "kanji_character": "出",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3507,7 +3539,7 @@
     {
       "word": "切る",
       "reading": "きる",
-      "meaning": "",
+      "meaning": "to cut",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3515,7 +3547,7 @@
     {
       "word": "切手",
       "reading": "きって",
-      "meaning": "",
+      "meaning": "postage stamp",
       "kanji_character": "手",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3523,15 +3555,23 @@
     {
       "word": "切符",
       "reading": "きっぷ",
-      "meaning": "",
+      "meaning": "ticket",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
     },
     {
-      "word": "初め/始め",
+      "word": "初め",
       "reading": "はじめ",
-      "meaning": "",
+      "meaning": "the beginning (in time); at first",
+      "kanji_character": null,
+      "jlpt_level": "n5",
+      "list_source": "tanos"
+    },
+    {
+      "word": "始め",
+      "reading": "はじめ",
+      "meaning": "the start (of an action)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3539,7 +3579,7 @@
     {
       "word": "初めて",
       "reading": "はじめて",
-      "meaning": "",
+      "meaning": "for the first time",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3547,7 +3587,7 @@
     {
       "word": "動物",
       "reading": "どうぶつ",
-      "meaning": "",
+      "meaning": "animal",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3555,7 +3595,7 @@
     {
       "word": "勤める",
       "reading": "つとめる",
-      "meaning": "",
+      "meaning": "to work (for a company)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3563,7 +3603,7 @@
     {
       "word": "医者",
       "reading": "いしゃ",
-      "meaning": "",
+      "meaning": "doctor",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3571,15 +3611,15 @@
     {
       "word": "十日",
       "reading": "とおか",
-      "meaning": "",
+      "meaning": "the tenth (of the month); ten days",
       "kanji_character": "十",
       "jlpt_level": "n5",
       "list_source": "tanos"
     },
     {
       "word": "半分",
-      "reading": "はんぷん",
-      "meaning": "",
+      "reading": "はんぶん",
+      "meaning": "half",
       "kanji_character": "半",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3587,7 +3627,7 @@
     {
       "word": "危ない",
       "reading": "あぶない",
-      "meaning": "",
+      "meaning": "dangerous",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3595,7 +3635,7 @@
     {
       "word": "厚い",
       "reading": "あつい",
-      "meaning": "",
+      "meaning": "thick",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3603,7 +3643,7 @@
     {
       "word": "取る",
       "reading": "とる",
-      "meaning": "",
+      "meaning": "to take; to pick up",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3611,7 +3651,7 @@
     {
       "word": "口",
       "reading": "くち",
-      "meaning": "",
+      "meaning": "mouth",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3619,7 +3659,7 @@
     {
       "word": "台所",
       "reading": "だいどころ",
-      "meaning": "",
+      "meaning": "kitchen",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3627,7 +3667,7 @@
     {
       "word": "同じ",
       "reading": "おなじ",
-      "meaning": "",
+      "meaning": "same",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3635,7 +3675,7 @@
     {
       "word": "向こう",
       "reading": "むこう",
-      "meaning": "",
+      "meaning": "over there; the other side",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3643,7 +3683,7 @@
     {
       "word": "吸う",
       "reading": "すう",
-      "meaning": "",
+      "meaning": "to breathe in; to smoke (a cigarette)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3651,7 +3691,7 @@
     {
       "word": "吹く",
       "reading": "ふく",
-      "meaning": "",
+      "meaning": "to blow (of wind)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3659,7 +3699,7 @@
     {
       "word": "呼ぶ",
       "reading": "よぶ",
-      "meaning": "",
+      "meaning": "to call; to invite",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3667,7 +3707,7 @@
     {
       "word": "咲く",
       "reading": "さく",
-      "meaning": "",
+      "meaning": "to bloom",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3675,7 +3715,7 @@
     {
       "word": "問題",
       "reading": "もんだい",
-      "meaning": "",
+      "meaning": "problem; question (on a test)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3683,7 +3723,7 @@
     {
       "word": "喫茶店",
       "reading": "きっさてん",
-      "meaning": "",
+      "meaning": "coffee shop; tearoom",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3691,7 +3731,7 @@
     {
       "word": "四",
       "reading": "よん",
-      "meaning": "",
+      "meaning": "four",
       "kanji_character": "四",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3699,7 +3739,7 @@
     {
       "word": "四日",
       "reading": "よっか",
-      "meaning": "",
+      "meaning": "the fourth (of the month); four days",
       "kanji_character": "四",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3707,7 +3747,7 @@
     {
       "word": "困る",
       "reading": "こまる",
-      "meaning": "",
+      "meaning": "to be troubled; to be at a loss",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3715,7 +3755,7 @@
     {
       "word": "図書館",
       "reading": "としょかん",
-      "meaning": "",
+      "meaning": "library",
       "kanji_character": "書",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3723,7 +3763,7 @@
     {
       "word": "地下鉄",
       "reading": "ちかてつ",
-      "meaning": "",
+      "meaning": "subway",
       "kanji_character": "下",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3731,7 +3771,7 @@
     {
       "word": "地図",
       "reading": "ちず",
-      "meaning": "",
+      "meaning": "map",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3739,7 +3779,7 @@
     {
       "word": "塩",
       "reading": "しお",
-      "meaning": "",
+      "meaning": "salt",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3747,7 +3787,7 @@
     {
       "word": "声",
       "reading": "こえ",
-      "meaning": "",
+      "meaning": "voice",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3755,7 +3795,7 @@
     {
       "word": "売る",
       "reading": "うる",
-      "meaning": "",
+      "meaning": "to sell",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3763,7 +3803,7 @@
     {
       "word": "夏",
       "reading": "なつ",
-      "meaning": "",
+      "meaning": "summer",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3771,7 +3811,7 @@
     {
       "word": "夏休み",
       "reading": "なつやすみ",
-      "meaning": "",
+      "meaning": "summer vacation",
       "kanji_character": "休",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3779,15 +3819,15 @@
     {
       "word": "夕方",
       "reading": "ゆうがた",
-      "meaning": "",
+      "meaning": "evening; dusk",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
     },
     {
       "word": "夕飯",
-      "reading": "ゆうしょく",
-      "meaning": "",
+      "reading": "ゆうはん",
+      "meaning": "dinner; evening meal",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3795,7 +3835,7 @@
     {
       "word": "外国人",
       "reading": "がいこくじん",
-      "meaning": "",
+      "meaning": "foreigner",
       "kanji_character": "外",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3803,7 +3843,7 @@
     {
       "word": "大きな",
       "reading": "おおきな",
-      "meaning": "",
+      "meaning": "big",
       "kanji_character": "大",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3811,7 +3851,7 @@
     {
       "word": "大人",
       "reading": "おとな",
-      "meaning": "",
+      "meaning": "adult",
       "kanji_character": "大",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3819,7 +3859,7 @@
     {
       "word": "大使館",
       "reading": "たいしかん",
-      "meaning": "",
+      "meaning": "embassy",
       "kanji_character": "大",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3827,7 +3867,7 @@
     {
       "word": "大勢",
       "reading": "おおぜい",
-      "meaning": "",
+      "meaning": "many people; a crowd",
       "kanji_character": "大",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3835,7 +3875,7 @@
     {
       "word": "大好き",
       "reading": "だいすき",
-      "meaning": "",
+      "meaning": "to love; to like very much",
       "kanji_character": "大",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3843,7 +3883,7 @@
     {
       "word": "太い",
       "reading": "ふとい",
-      "meaning": "",
+      "meaning": "thick; fat",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3851,7 +3891,7 @@
     {
       "word": "奥さん",
       "reading": "おくさん",
-      "meaning": "",
+      "meaning": "wife (someone else's)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3859,7 +3899,7 @@
     {
       "word": "女",
       "reading": "おんな",
-      "meaning": "",
+      "meaning": "woman",
       "kanji_character": "女",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3867,7 +3907,7 @@
     {
       "word": "好き",
       "reading": "すき",
-      "meaning": "",
+      "meaning": "to like; to be fond of",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3875,7 +3915,7 @@
     {
       "word": "嫌",
       "reading": "いや",
-      "meaning": "",
+      "meaning": "unpleasant; disliked",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3883,7 +3923,7 @@
     {
       "word": "嫌い",
       "reading": "きらい",
-      "meaning": "",
+      "meaning": "to dislike; to hate",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3891,7 +3931,7 @@
     {
       "word": "字引",
       "reading": "じびき",
-      "meaning": "",
+      "meaning": "dictionary",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3899,7 +3939,7 @@
     {
       "word": "家庭",
       "reading": "かてい",
-      "meaning": "",
+      "meaning": "home; household",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3907,7 +3947,7 @@
     {
       "word": "宿題",
       "reading": "しゅくだい",
-      "meaning": "",
+      "meaning": "homework",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3915,7 +3955,7 @@
     {
       "word": "寝る",
       "reading": "ねる",
-      "meaning": "",
+      "meaning": "to sleep; to go to bed",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3923,7 +3963,7 @@
     {
       "word": "封筒",
       "reading": "ふうとう",
-      "meaning": "",
+      "meaning": "envelope",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3931,7 +3971,7 @@
     {
       "word": "小さな",
       "reading": "ちいさな",
-      "meaning": "",
+      "meaning": "small",
       "kanji_character": "小",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3939,7 +3979,7 @@
     {
       "word": "少し",
       "reading": "すこし",
-      "meaning": "",
+      "meaning": "a little; a bit",
       "kanji_character": "少",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3947,23 +3987,23 @@
     {
       "word": "居る",
       "reading": "いる",
-      "meaning": "",
+      "meaning": "to be (animate); to be present",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
     },
     {
-      "word": "川/河",
+      "word": "河",
       "reading": "かわ",
-      "meaning": "",
-      "kanji_character": "川",
+      "meaning": "river (large)",
+      "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
     },
     {
       "word": "差す",
       "reading": "さす",
-      "meaning": "",
+      "meaning": "to put up (an umbrella); to shine (of light)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3971,7 +4011,7 @@
     {
       "word": "帽子",
       "reading": "ぼうし",
-      "meaning": "",
+      "meaning": "hat; cap",
       "kanji_character": "子",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3979,7 +4019,7 @@
     {
       "word": "年",
       "reading": "ねん",
-      "meaning": "",
+      "meaning": "year",
       "kanji_character": "年",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3987,7 +4027,7 @@
     {
       "word": "座る",
       "reading": "すわる",
-      "meaning": "",
+      "meaning": "to sit down",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -3995,7 +4035,7 @@
     {
       "word": "庭",
       "reading": "にわ",
-      "meaning": "",
+      "meaning": "garden; yard",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4003,7 +4043,7 @@
     {
       "word": "廊下",
       "reading": "ろうか",
-      "meaning": "",
+      "meaning": "corridor; hallway",
       "kanji_character": "下",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4011,7 +4051,7 @@
     {
       "word": "建物",
       "reading": "たてもの",
-      "meaning": "",
+      "meaning": "building",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4019,7 +4059,7 @@
     {
       "word": "引く",
       "reading": "ひく",
-      "meaning": "",
+      "meaning": "to pull; to look up (in a dictionary)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4027,7 +4067,7 @@
     {
       "word": "弱い",
       "reading": "よわい",
-      "meaning": "",
+      "meaning": "weak",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4035,7 +4075,7 @@
     {
       "word": "強い",
       "reading": "つよい",
-      "meaning": "",
+      "meaning": "strong",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4043,7 +4083,7 @@
     {
       "word": "弾く",
       "reading": "ひく",
-      "meaning": "",
+      "meaning": "to play (a stringed or keyboard instrument)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4051,7 +4091,7 @@
     {
       "word": "後",
       "reading": "あと",
-      "meaning": "",
+      "meaning": "after; later",
       "kanji_character": "後",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4059,7 +4099,7 @@
     {
       "word": "御飯",
       "reading": "ごはん",
-      "meaning": "",
+      "meaning": "cooked rice; meal",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4067,7 +4107,7 @@
     {
       "word": "忘れる",
       "reading": "わすれる",
-      "meaning": "",
+      "meaning": "to forget",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4075,7 +4115,7 @@
     {
       "word": "意味",
       "reading": "いみ",
-      "meaning": "",
+      "meaning": "meaning; sense",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4083,7 +4123,7 @@
     {
       "word": "戸",
       "reading": "と",
-      "meaning": "",
+      "meaning": "door",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4091,7 +4131,7 @@
     {
       "word": "所",
       "reading": "ところ",
-      "meaning": "",
+      "meaning": "place; spot",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4099,7 +4139,7 @@
     {
       "word": "手",
       "reading": "て",
-      "meaning": "",
+      "meaning": "hand",
       "kanji_character": "手",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4107,7 +4147,7 @@
     {
       "word": "押す",
       "reading": "おす",
-      "meaning": "",
+      "meaning": "to push; to press",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4115,7 +4155,7 @@
     {
       "word": "掃除",
       "reading": "そうじ",
-      "meaning": "",
+      "meaning": "cleaning",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4123,7 +4163,7 @@
     {
       "word": "授業",
       "reading": "じゅぎょう",
-      "meaning": "",
+      "meaning": "class; lesson",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4131,7 +4171,7 @@
     {
       "word": "撮る",
       "reading": "とる",
-      "meaning": "",
+      "meaning": "to take (a photo)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4139,7 +4179,7 @@
     {
       "word": "教室",
       "reading": "きょうしつ",
-      "meaning": "",
+      "meaning": "classroom",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4147,7 +4187,7 @@
     {
       "word": "散歩",
       "reading": "さんぽ",
-      "meaning": "",
+      "meaning": "walk; stroll",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4155,7 +4195,7 @@
     {
       "word": "文章",
       "reading": "ぶんしょう",
-      "meaning": "",
+      "meaning": "text; piece of writing",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4163,7 +4203,7 @@
     {
       "word": "料理",
       "reading": "りょうり",
-      "meaning": "",
+      "meaning": "cooking; dish",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4171,7 +4211,7 @@
     {
       "word": "方",
       "reading": "かた",
-      "meaning": "",
+      "meaning": "person (polite); way of doing",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4179,7 +4219,7 @@
     {
       "word": "旅行",
       "reading": "りょこう",
-      "meaning": "",
+      "meaning": "trip; travel",
       "kanji_character": "行",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4187,7 +4227,7 @@
     {
       "word": "明い",
       "reading": "あかるい",
-      "meaning": "",
+      "meaning": "bright; cheerful",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4195,7 +4235,7 @@
     {
       "word": "映画館",
       "reading": "えいがかん",
-      "meaning": "",
+      "meaning": "movie theater",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4203,7 +4243,7 @@
     {
       "word": "春",
       "reading": "はる",
-      "meaning": "",
+      "meaning": "spring (season)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4211,7 +4251,7 @@
     {
       "word": "昨夜",
       "reading": "さくや",
-      "meaning": "",
+      "meaning": "last night",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4219,7 +4259,7 @@
     {
       "word": "昼御飯",
       "reading": "ひるごはん",
-      "meaning": "",
+      "meaning": "lunch",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4227,7 +4267,7 @@
     {
       "word": "時々",
       "reading": "ときどき",
-      "meaning": "",
+      "meaning": "sometimes",
       "kanji_character": "時",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4235,7 +4275,7 @@
     {
       "word": "時計",
       "reading": "とけい",
-      "meaning": "",
+      "meaning": "clock; watch",
       "kanji_character": "時",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4243,7 +4283,7 @@
     {
       "word": "晩",
       "reading": "ばん",
-      "meaning": "",
+      "meaning": "evening",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4251,7 +4291,7 @@
     {
       "word": "晩御飯",
       "reading": "ばんごはん",
-      "meaning": "",
+      "meaning": "dinner",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4259,7 +4299,7 @@
     {
       "word": "晴れ",
       "reading": "はれ",
-      "meaning": "",
+      "meaning": "clear weather",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4267,7 +4307,7 @@
     {
       "word": "晴れる",
       "reading": "はれる",
-      "meaning": "",
+      "meaning": "to clear up (weather)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4275,7 +4315,7 @@
     {
       "word": "暇",
       "reading": "ひま",
-      "meaning": "",
+      "meaning": "free time; not busy",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4283,7 +4323,7 @@
     {
       "word": "曇り",
       "reading": "くもり",
-      "meaning": "",
+      "meaning": "cloudy weather",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4291,15 +4331,15 @@
     {
       "word": "曇る",
       "reading": "くもる",
-      "meaning": "",
+      "meaning": "to get cloudy; to cloud over",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
     },
     {
       "word": "曲る",
-      "reading": "まげる",
-      "meaning": "",
+      "reading": "まがる",
+      "meaning": "to turn; to bend (by itself)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4307,7 +4347,7 @@
     {
       "word": "服",
       "reading": "ふく",
-      "meaning": "",
+      "meaning": "clothes",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4315,7 +4355,7 @@
     {
       "word": "朝御飯",
       "reading": "あさごはん",
-      "meaning": "",
+      "meaning": "breakfast",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4323,7 +4363,7 @@
     {
       "word": "本棚",
       "reading": "ほんだな",
-      "meaning": "",
+      "meaning": "bookshelf",
       "kanji_character": "本",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4331,7 +4371,7 @@
     {
       "word": "机",
       "reading": "つくえ",
-      "meaning": "",
+      "meaning": "desk",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4339,7 +4379,7 @@
     {
       "word": "村",
       "reading": "むら",
-      "meaning": "",
+      "meaning": "village",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4347,7 +4387,7 @@
     {
       "word": "横",
       "reading": "よこ",
-      "meaning": "",
+      "meaning": "side",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4355,7 +4395,7 @@
     {
       "word": "橋",
       "reading": "はし",
-      "meaning": "",
+      "meaning": "bridge",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4363,7 +4403,7 @@
     {
       "word": "次",
       "reading": "つぎ",
-      "meaning": "",
+      "meaning": "next; the next one",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4371,7 +4411,7 @@
     {
       "word": "欲しい",
       "reading": "ほしい",
-      "meaning": "",
+      "meaning": "to want (something)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4379,7 +4419,7 @@
     {
       "word": "歌",
       "reading": "うた",
-      "meaning": "",
+      "meaning": "song",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4387,7 +4427,7 @@
     {
       "word": "歌う",
       "reading": "うたう",
-      "meaning": "",
+      "meaning": "to sing",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4395,7 +4435,7 @@
     {
       "word": "止まる",
       "reading": "とまる",
-      "meaning": "",
+      "meaning": "to stop (by itself)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4403,7 +4443,7 @@
     {
       "word": "歯",
       "reading": "は",
-      "meaning": "",
+      "meaning": "tooth",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4411,7 +4451,7 @@
     {
       "word": "死ぬ",
       "reading": "しぬ",
-      "meaning": "",
+      "meaning": "to die",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4419,7 +4459,7 @@
     {
       "word": "毎晩",
       "reading": "まいばん",
-      "meaning": "",
+      "meaning": "every evening",
       "kanji_character": "毎",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4427,7 +4467,7 @@
     {
       "word": "汚い",
       "reading": "きたない",
-      "meaning": "",
+      "meaning": "dirty; messy",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4435,7 +4475,7 @@
     {
       "word": "池",
       "reading": "いけ",
-      "meaning": "",
+      "meaning": "pond",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4443,7 +4483,7 @@
     {
       "word": "洋服",
       "reading": "ようふく",
-      "meaning": "",
+      "meaning": "clothes (Western-style)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4451,7 +4491,7 @@
     {
       "word": "洗う",
       "reading": "あらう",
-      "meaning": "",
+      "meaning": "to wash",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4459,7 +4499,7 @@
     {
       "word": "洗濯",
       "reading": "せんたく",
-      "meaning": "",
+      "meaning": "laundry; washing",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4467,7 +4507,7 @@
     {
       "word": "海",
       "reading": "うみ",
-      "meaning": "",
+      "meaning": "sea; ocean",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4475,7 +4515,7 @@
     {
       "word": "消える",
       "reading": "きえる",
-      "meaning": "",
+      "meaning": "to go out (by itself); to disappear",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4483,7 +4523,7 @@
     {
       "word": "消す",
       "reading": "けす",
-      "meaning": "",
+      "meaning": "to turn off (something); to erase",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4491,7 +4531,7 @@
     {
       "word": "渡す",
       "reading": "わたす",
-      "meaning": "",
+      "meaning": "to hand over; to pass (something)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4499,7 +4539,7 @@
     {
       "word": "渡る",
       "reading": "わたる",
-      "meaning": "",
+      "meaning": "to cross (over)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4507,7 +4547,7 @@
     {
       "word": "温い",
       "reading": "ぬるい",
-      "meaning": "",
+      "meaning": "lukewarm; tepid",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4515,7 +4555,7 @@
     {
       "word": "漢字",
       "reading": "かんじ",
-      "meaning": "",
+      "meaning": "kanji; Chinese character",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4523,7 +4563,7 @@
     {
       "word": "灰皿",
       "reading": "はいざら",
-      "meaning": "",
+      "meaning": "ashtray",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4531,7 +4571,7 @@
     {
       "word": "無くす",
       "reading": "なくす",
-      "meaning": "",
+      "meaning": "to lose (something)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4539,7 +4579,7 @@
     {
       "word": "煩い",
       "reading": "うるさい",
-      "meaning": "",
+      "meaning": "noisy; annoying",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4547,7 +4587,7 @@
     {
       "word": "熱い",
       "reading": "あつい",
-      "meaning": "",
+      "meaning": "hot (to the touch)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4555,7 +4595,7 @@
     {
       "word": "牛乳",
       "reading": "ぎゅうにゅう",
-      "meaning": "",
+      "meaning": "milk (cow's)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4563,7 +4603,7 @@
     {
       "word": "牛肉",
       "reading": "ぎゅうにく",
-      "meaning": "",
+      "meaning": "beef",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4571,7 +4611,7 @@
     {
       "word": "物",
       "reading": "もの",
-      "meaning": "",
+      "meaning": "thing; object",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4579,7 +4619,7 @@
     {
       "word": "犬",
       "reading": "いぬ",
-      "meaning": "",
+      "meaning": "dog",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4587,7 +4627,7 @@
     {
       "word": "猫",
       "reading": "ねこ",
-      "meaning": "",
+      "meaning": "cat",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4595,7 +4635,7 @@
     {
       "word": "玄関",
       "reading": "げんかん",
-      "meaning": "",
+      "meaning": "entryway (of a house)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4603,7 +4643,7 @@
     {
       "word": "甘い",
       "reading": "あまい",
-      "meaning": "",
+      "meaning": "sweet",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4611,7 +4651,7 @@
     {
       "word": "生まれる",
       "reading": "うまれる",
-      "meaning": "",
+      "meaning": "to be born",
       "kanji_character": "生",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4619,7 +4659,7 @@
     {
       "word": "生徒",
       "reading": "せいと",
-      "meaning": "",
+      "meaning": "pupil; student (school)",
       "kanji_character": "生",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4627,7 +4667,7 @@
     {
       "word": "男",
       "reading": "おとこ",
-      "meaning": "",
+      "meaning": "man; male",
       "kanji_character": "男",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4635,7 +4675,7 @@
     {
       "word": "町",
       "reading": "まち",
-      "meaning": "",
+      "meaning": "town; neighborhood",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4643,7 +4683,7 @@
     {
       "word": "留学生",
       "reading": "りゅうがくせい",
-      "meaning": "",
+      "meaning": "international student",
       "kanji_character": "学",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4651,7 +4691,7 @@
     {
       "word": "番号",
       "reading": "ばんごう",
-      "meaning": "",
+      "meaning": "number (e.g. phone number)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4659,7 +4699,7 @@
     {
       "word": "疲れる",
       "reading": "つかれる",
-      "meaning": "",
+      "meaning": "to get tired",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4667,7 +4707,7 @@
     {
       "word": "病気",
       "reading": "びょうき",
-      "meaning": "",
+      "meaning": "illness; sickness",
       "kanji_character": "気",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4675,7 +4715,7 @@
     {
       "word": "痛い",
       "reading": "いたい",
-      "meaning": "",
+      "meaning": "painful; sore",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4683,7 +4723,7 @@
     {
       "word": "登る",
       "reading": "のぼる",
-      "meaning": "",
+      "meaning": "to climb; to go up",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4691,7 +4731,7 @@
     {
       "word": "白",
       "reading": "しろ",
-      "meaning": "",
+      "meaning": "white (the color)",
       "kanji_character": "白",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4699,7 +4739,7 @@
     {
       "word": "皆さん",
       "reading": "みなさん",
-      "meaning": "",
+      "meaning": "everyone (polite)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4707,7 +4747,7 @@
     {
       "word": "目",
       "reading": "め",
-      "meaning": "",
+      "meaning": "eye",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4715,7 +4755,7 @@
     {
       "word": "眼鏡",
       "reading": "めがね",
-      "meaning": "",
+      "meaning": "glasses; eyeglasses",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4723,7 +4763,7 @@
     {
       "word": "着く",
       "reading": "つく",
-      "meaning": "",
+      "meaning": "to arrive",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4731,7 +4771,7 @@
     {
       "word": "着る",
       "reading": "きる",
-      "meaning": "",
+      "meaning": "to wear (on the body)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4739,7 +4779,7 @@
     {
       "word": "短い",
       "reading": "みじかい",
-      "meaning": "",
+      "meaning": "short",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4747,7 +4787,7 @@
     {
       "word": "砂糖",
       "reading": "さとう",
-      "meaning": "",
+      "meaning": "sugar",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4755,7 +4795,7 @@
     {
       "word": "磨く",
       "reading": "みがく",
-      "meaning": "",
+      "meaning": "to brush (teeth); to polish",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4763,7 +4803,7 @@
     {
       "word": "私",
       "reading": "わたし",
-      "meaning": "",
+      "meaning": "I; me",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4771,7 +4811,7 @@
     {
       "word": "秋",
       "reading": "あき",
-      "meaning": "",
+      "meaning": "autumn; fall",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4779,7 +4819,7 @@
     {
       "word": "窓",
       "reading": "まど",
-      "meaning": "",
+      "meaning": "window",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4787,7 +4827,7 @@
     {
       "word": "答える",
       "reading": "こたえる",
-      "meaning": "",
+      "meaning": "to answer; to reply",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4795,7 +4835,7 @@
     {
       "word": "箱",
       "reading": "はこ",
-      "meaning": "",
+      "meaning": "box",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4803,7 +4843,7 @@
     {
       "word": "紅茶",
       "reading": "こうちゃ",
-      "meaning": "",
+      "meaning": "black tea",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4811,7 +4851,7 @@
     {
       "word": "紙",
       "reading": "かみ",
-      "meaning": "",
+      "meaning": "paper",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4819,7 +4859,7 @@
     {
       "word": "細い",
       "reading": "ほそい",
-      "meaning": "",
+      "meaning": "thin (narrow); slender",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4827,7 +4867,7 @@
     {
       "word": "終る",
       "reading": "おわる",
-      "meaning": "",
+      "meaning": "to end (by itself); to be over",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4835,7 +4875,7 @@
     {
       "word": "結婚",
       "reading": "けっこん",
-      "meaning": "",
+      "meaning": "marriage",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4843,7 +4883,7 @@
     {
       "word": "結構",
       "reading": "けっこう",
-      "meaning": "",
+      "meaning": "fine; no thank you",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4851,7 +4891,7 @@
     {
       "word": "絵",
       "reading": "え",
-      "meaning": "",
+      "meaning": "picture; drawing",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4859,7 +4899,7 @@
     {
       "word": "緑",
       "reading": "みどり",
-      "meaning": "",
+      "meaning": "green",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4867,7 +4907,7 @@
     {
       "word": "締める",
       "reading": "しめる",
-      "meaning": "",
+      "meaning": "to tie; to fasten (a belt, a tie)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4875,7 +4915,7 @@
     {
       "word": "練習",
       "reading": "れんしゅう",
-      "meaning": "",
+      "meaning": "practice",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4883,7 +4923,7 @@
     {
       "word": "置く",
       "reading": "おく",
-      "meaning": "",
+      "meaning": "to put; to place",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4891,7 +4931,7 @@
     {
       "word": "習う",
       "reading": "ならう",
-      "meaning": "",
+      "meaning": "to learn (from a teacher)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4899,7 +4939,7 @@
     {
       "word": "耳",
       "reading": "みみ",
-      "meaning": "",
+      "meaning": "ear",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4907,7 +4947,7 @@
     {
       "word": "背",
       "reading": "せ",
-      "meaning": "",
+      "meaning": "back (of the body); height (of a person)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4915,7 +4955,7 @@
     {
       "word": "背広",
       "reading": "せびろ",
-      "meaning": "",
+      "meaning": "business suit",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4923,7 +4963,7 @@
     {
       "word": "脱ぐ",
       "reading": "ぬぐ",
-      "meaning": "",
+      "meaning": "to take off (clothes, shoes)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4931,7 +4971,7 @@
     {
       "word": "自分",
       "reading": "じぶん",
-      "meaning": "",
+      "meaning": "oneself",
       "kanji_character": "分",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4939,7 +4979,7 @@
     {
       "word": "自動車",
       "reading": "じどうしゃ",
-      "meaning": "",
+      "meaning": "car; automobile",
       "kanji_character": "車",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4947,7 +4987,7 @@
     {
       "word": "色",
       "reading": "いろ",
-      "meaning": "",
+      "meaning": "color",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4955,7 +4995,7 @@
     {
       "word": "花瓶",
       "reading": "かびん",
-      "meaning": "",
+      "meaning": "vase",
       "kanji_character": "花",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4963,7 +5003,7 @@
     {
       "word": "若い",
       "reading": "わかい",
-      "meaning": "",
+      "meaning": "young",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4971,7 +5011,7 @@
     {
       "word": "茶色",
       "reading": "ちゃいろ",
-      "meaning": "",
+      "meaning": "brown",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4979,7 +5019,7 @@
     {
       "word": "荷物",
       "reading": "にもつ",
-      "meaning": "",
+      "meaning": "luggage; parcel",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4987,7 +5027,7 @@
     {
       "word": "葉書",
       "reading": "はがき",
-      "meaning": "",
+      "meaning": "postcard",
       "kanji_character": "書",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -4995,7 +5035,7 @@
     {
       "word": "薄い",
       "reading": "うすい",
-      "meaning": "",
+      "meaning": "thin (not thick); weak (in taste or color)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -5003,7 +5043,7 @@
     {
       "word": "薬",
       "reading": "くすり",
-      "meaning": "",
+      "meaning": "medicine",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -5011,7 +5051,7 @@
     {
       "word": "要る",
       "reading": "いる",
-      "meaning": "",
+      "meaning": "to need; to be necessary",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -5019,7 +5059,7 @@
     {
       "word": "見せる",
       "reading": "みせる",
-      "meaning": "",
+      "meaning": "to show",
       "kanji_character": "見",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -5027,7 +5067,7 @@
     {
       "word": "見る  観る",
       "reading": "みる",
-      "meaning": "",
+      "meaning": "to see; to watch",
       "kanji_character": "見",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -5035,7 +5075,7 @@
     {
       "word": "覚える",
       "reading": "おぼえる",
-      "meaning": "",
+      "meaning": "to memorize; to remember",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -5043,7 +5083,7 @@
     {
       "word": "角",
       "reading": "かど",
-      "meaning": "",
+      "meaning": "corner (of a street)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -5051,7 +5091,7 @@
     {
       "word": "言葉",
       "reading": "ことば",
-      "meaning": "",
+      "meaning": "word; language",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -5059,7 +5099,7 @@
     {
       "word": "話",
       "reading": "はなし",
-      "meaning": "",
+      "meaning": "talk; story",
       "kanji_character": "話",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -5067,7 +5107,7 @@
     {
       "word": "誕生日",
       "reading": "たんじょうび",
-      "meaning": "",
+      "meaning": "birthday",
       "kanji_character": "生",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -5075,7 +5115,7 @@
     {
       "word": "誰",
       "reading": "だれ",
-      "meaning": "",
+      "meaning": "who",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -5083,7 +5123,7 @@
     {
       "word": "警官",
       "reading": "けいかん",
-      "meaning": "",
+      "meaning": "police officer",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -5091,7 +5131,7 @@
     {
       "word": "豚肉",
       "reading": "ぶたにく",
-      "meaning": "",
+      "meaning": "pork",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -5099,7 +5139,7 @@
     {
       "word": "財布",
       "reading": "さいふ",
-      "meaning": "",
+      "meaning": "wallet; purse",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -5107,7 +5147,7 @@
     {
       "word": "買い物",
       "reading": "かいもの",
-      "meaning": "",
+      "meaning": "shopping",
       "kanji_character": "買",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -5115,7 +5155,7 @@
     {
       "word": "貸す",
       "reading": "かす",
-      "meaning": "",
+      "meaning": "to lend",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -5123,7 +5163,7 @@
     {
       "word": "貼る",
       "reading": "はる",
-      "meaning": "",
+      "meaning": "to stick; to paste",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -5131,7 +5171,7 @@
     {
       "word": "賑やか",
       "reading": "にぎやか",
-      "meaning": "",
+      "meaning": "lively; bustling",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -5139,7 +5179,7 @@
     {
       "word": "質問",
       "reading": "しつもん",
-      "meaning": "",
+      "meaning": "question",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -5147,7 +5187,7 @@
     {
       "word": "赤",
       "reading": "あか",
-      "meaning": "",
+      "meaning": "red (color)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -5155,7 +5195,7 @@
     {
       "word": "赤い",
       "reading": "あかい",
-      "meaning": "",
+      "meaning": "red",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -5163,7 +5203,7 @@
     {
       "word": "起きる",
       "reading": "おきる",
-      "meaning": "",
+      "meaning": "to get up; to wake up",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -5171,7 +5211,7 @@
     {
       "word": "足",
       "reading": "あし",
-      "meaning": "",
+      "meaning": "foot; leg",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -5179,7 +5219,7 @@
     {
       "word": "辛い",
       "reading": "からい",
-      "meaning": "",
+      "meaning": "spicy; hot (taste)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -5187,7 +5227,7 @@
     {
       "word": "辞書",
       "reading": "じしょ",
-      "meaning": "",
+      "meaning": "dictionary",
       "kanji_character": "書",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -5195,7 +5235,7 @@
     {
       "word": "辺",
       "reading": "へん",
-      "meaning": "",
+      "meaning": "area; vicinity",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -5203,7 +5243,7 @@
     {
       "word": "近く",
       "reading": "ちかく",
-      "meaning": "",
+      "meaning": "nearby; vicinity",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -5211,7 +5251,7 @@
     {
       "word": "返す",
       "reading": "かえす",
-      "meaning": "",
+      "meaning": "to return (something); to give back",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -5219,7 +5259,7 @@
     {
       "word": "速い",
       "reading": "はやい",
-      "meaning": "",
+      "meaning": "fast (speed)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -5227,7 +5267,7 @@
     {
       "word": "遊ぶ",
       "reading": "あそぶ",
-      "meaning": "",
+      "meaning": "to play; to have fun",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -5235,7 +5275,7 @@
     {
       "word": "道",
       "reading": "みち",
-      "meaning": "",
+      "meaning": "road; street",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -5243,7 +5283,7 @@
     {
       "word": "違う",
       "reading": "ちがう",
-      "meaning": "",
+      "meaning": "to be different; to be wrong",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -5251,7 +5291,7 @@
     {
       "word": "郵便局",
       "reading": "ゆうびんきょく",
-      "meaning": "",
+      "meaning": "post office",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -5259,7 +5299,7 @@
     {
       "word": "鉛筆",
       "reading": "えんぴつ",
-      "meaning": "",
+      "meaning": "pencil",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -5267,7 +5307,7 @@
     {
       "word": "門",
       "reading": "もん",
-      "meaning": "",
+      "meaning": "gate",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -5275,7 +5315,7 @@
     {
       "word": "閉まる",
       "reading": "しまる",
-      "meaning": "",
+      "meaning": "to close (by itself); to be shut",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -5283,7 +5323,7 @@
     {
       "word": "開く",
       "reading": "あく",
-      "meaning": "",
+      "meaning": "to open (by itself)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -5291,7 +5331,7 @@
     {
       "word": "降りる",
       "reading": "おりる",
-      "meaning": "",
+      "meaning": "to get off (a vehicle); to go down",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -5299,7 +5339,7 @@
     {
       "word": "降る",
       "reading": "ふる",
-      "meaning": "",
+      "meaning": "to fall (rain, snow)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -5307,7 +5347,7 @@
     {
       "word": "階段",
       "reading": "かいだん",
-      "meaning": "",
+      "meaning": "stairs",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -5315,7 +5355,7 @@
     {
       "word": "隣",
       "reading": "となり",
-      "meaning": "",
+      "meaning": "next door; next to",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -5323,7 +5363,7 @@
     {
       "word": "雑誌",
       "reading": "ざっし",
-      "meaning": "",
+      "meaning": "magazine",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -5331,7 +5371,7 @@
     {
       "word": "雪",
       "reading": "ゆき",
-      "meaning": "",
+      "meaning": "snow",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -5339,7 +5379,7 @@
     {
       "word": "零",
       "reading": "れい",
-      "meaning": "",
+      "meaning": "zero",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -5347,7 +5387,7 @@
     {
       "word": "電気",
       "reading": "でんき",
-      "meaning": "",
+      "meaning": "electricity; light (lamp)",
       "kanji_character": "電",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -5355,7 +5395,7 @@
     {
       "word": "青",
       "reading": "あお",
-      "meaning": "",
+      "meaning": "blue (color)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -5363,7 +5403,7 @@
     {
       "word": "青い",
       "reading": "あおい",
-      "meaning": "",
+      "meaning": "blue",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -5371,7 +5411,7 @@
     {
       "word": "靴",
       "reading": "くつ",
-      "meaning": "",
+      "meaning": "shoes",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -5379,7 +5419,7 @@
     {
       "word": "靴下",
       "reading": "くつした",
-      "meaning": "",
+      "meaning": "socks",
       "kanji_character": "下",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -5387,7 +5427,7 @@
     {
       "word": "頭",
       "reading": "あたま",
-      "meaning": "",
+      "meaning": "head",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -5395,7 +5435,7 @@
     {
       "word": "頼む",
       "reading": "たのむ",
-      "meaning": "",
+      "meaning": "to ask (a favor); to order",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -5403,7 +5443,7 @@
     {
       "word": "風",
       "reading": "かぜ",
-      "meaning": "",
+      "meaning": "wind",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -5411,7 +5451,7 @@
     {
       "word": "風邪",
       "reading": "かぜ",
-      "meaning": "",
+      "meaning": "cold (illness)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -5419,7 +5459,7 @@
     {
       "word": "飛ぶ",
       "reading": "とぶ",
-      "meaning": "",
+      "meaning": "to fly",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -5427,7 +5467,7 @@
     {
       "word": "飛行機",
       "reading": "ひこうき",
-      "meaning": "",
+      "meaning": "airplane",
       "kanji_character": "行",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -5435,7 +5475,7 @@
     {
       "word": "食堂",
       "reading": "しょくどう",
-      "meaning": "",
+      "meaning": "cafeteria; dining hall",
       "kanji_character": "食",
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -5443,7 +5483,7 @@
     {
       "word": "飴",
       "reading": "あめ",
-      "meaning": "",
+      "meaning": "candy",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -5451,7 +5491,7 @@
     {
       "word": "鳥",
       "reading": "とり",
-      "meaning": "",
+      "meaning": "bird",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -5459,7 +5499,7 @@
     {
       "word": "鳴く",
       "reading": "なく",
-      "meaning": "",
+      "meaning": "to sing (of a bird); to cry (of an animal)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -5467,7 +5507,7 @@
     {
       "word": "黄色",
       "reading": "きいろ",
-      "meaning": "",
+      "meaning": "yellow (color)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -5475,7 +5515,7 @@
     {
       "word": "黄色い",
       "reading": "きいろい",
-      "meaning": "",
+      "meaning": "yellow",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -5483,7 +5523,7 @@
     {
       "word": "黒",
       "reading": "くろ",
-      "meaning": "",
+      "meaning": "black (color)",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -5491,7 +5531,7 @@
     {
       "word": "黒い",
       "reading": "くろい",
-      "meaning": "",
+      "meaning": "black",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
@@ -5499,7 +5539,7 @@
     {
       "word": "鼻",
       "reading": "はな",
-      "meaning": "",
+      "meaning": "nose",
       "kanji_character": null,
       "jlpt_level": "n5",
       "list_source": "tanos"
