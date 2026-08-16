@@ -464,22 +464,28 @@ public final class SessionViewModel {
     ///
     /// `async` (GAP-10, 2026-08-16): the Live-Activity-end and
     /// newly-unlocked bookkeeping below used to run as two untracked,
-    /// un-awaited `Task { }` blocks. Harmless in production — the app opens
-    /// exactly one `ModelContainer` for its whole lifetime, so a detached
-    /// task touching it a few milliseconds after this function returns is
-    /// indistinguishable from touching it synchronously. But the app test
-    /// target crashed the whole `xcodebuild test` runner: each test builds
-    /// and discards its OWN in-memory `ModelContainer`, and these detached
-    /// tasks routinely outlived the test that spawned them — still running
-    /// (and fetching/saving `RPGState` through `SessionRPGPersistence`)
-    /// once a LATER, unrelated test's container was current. SwiftData's
-    /// process-global backing-data bookkeeping isn't safe against that:
-    /// confirmed via `xcrun xcresulttool export diagnostics` crash reports
-    /// and the simulator's unified log, all showing the identical fatal
-    /// error `SwiftData/BackingData.swift:940: Never access a full future
-    /// backing data`, with the accessed `PersistentIdentifier`'s Core Data
-    /// store UUID never matching the store the crashing access expected —
-    /// i.e. a stale reference from a different (already-gone) container.
+    /// un-awaited `Task { }` blocks that could outlive the caller and keep
+    /// fetching/saving `RPGState` through `SessionRPGPersistence` after it
+    /// returned. Harmless in production — the app opens exactly one
+    /// `ModelContainer` for its whole lifetime — but a test that builds and
+    /// discards its own in-memory container has no such guarantee, and work
+    /// racing a container teardown is not something to leave lying around.
+    ///
+    /// CORRECTION (2026-08-16, same day): an earlier version of this comment
+    /// claimed these detached tasks were the cause of the app test target's
+    /// `SwiftData/BackingData.swift:940: Never access a full future backing
+    /// data` crash, and read the two UUIDs in that fatal error as belonging
+    /// to two different containers. Both claims were wrong. Bisected inside
+    /// a single `-only-testing:` run, the crash fires in a test's *seed
+    /// helper*, before any `SessionViewModel` exists, and the fatal's
+    /// `PersistentIdentifier` shares its store UUID with the profile that
+    /// was just saved — one store, not two. The real cause was a seed helper
+    /// displacing a saved `RPGState` through the owning side of the
+    /// relationship; see the GAP-10 regression test in
+    /// `IkeruTests/HomeViewModelTests.swift`. This change is kept purely as
+    /// the structured-concurrency fix it should have been billed as: it does
+    /// not fix, and never fixed, that crash.
+    ///
     /// Making this `async` and awaiting both calls directly keeps them
     /// off the critical synchronous path that mutates `@Observable` state
     /// just below (SwiftUI still sees that state change immediately — the

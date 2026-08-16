@@ -4,8 +4,7 @@ import SwiftData
 @testable import Ikeru
 @testable import IkeruCore
 
-// GAP-10: cross-suite SwiftData isolation — see SwiftDataTestIsolation.swift.
-@Suite("SessionViewModel — Adaptive Sessions", .swiftDataIsolated)
+@Suite("SessionViewModel — Adaptive Sessions")
 @MainActor
 struct AdaptiveSessionViewModelTests {
 
