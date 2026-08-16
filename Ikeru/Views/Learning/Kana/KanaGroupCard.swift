@@ -33,6 +33,13 @@ struct KanaGroupCard: View {
         // relying on localized label text — see `EtudeView.kanaRow`'s
         // identifier, added by the same effort.
         .accessibilityIdentifier("kanaPool.group.\(group.rawValue)")
+        // `KanaPoolViewModel.init` defaults `selectedGroups` to `[.hVowels]`
+        // (persisted thereafter, per-device) — a test can't assume this
+        // card starts UNselected, so it needs to read the current state
+        // before deciding whether to tap it. Mirrors `TatamiToggle`'s
+        // "On"/"Off" `accessibilityValue` pattern (see `SettingsPage`'s
+        // doc comment on `isCloudBackupOn`).
+        .accessibilityValue(isSelected ? "Selected" : "Not selected")
     }
 
     // MARK: Header

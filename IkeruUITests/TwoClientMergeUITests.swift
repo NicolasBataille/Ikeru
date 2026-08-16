@@ -304,6 +304,7 @@ final class TwoClientMergeUITests: IkeruUITestCase {
         XCTAssertTrue(pool.waitForVowelsGroup(), "hVowels group card never appeared")
         pool.selectVowelsGroup()
         pool.tapFreePractice(testCase: self)
+        pool.tapQuizMode(testCase: self) // "Mode" screen — see KanaPoolSelectorPage.tapQuizMode's doc comment
 
         let quiz = KanaQuizPage(app: app)
         XCTAssertTrue(quiz.waitForOptions(), "Free-practice session never reached a quiz option")

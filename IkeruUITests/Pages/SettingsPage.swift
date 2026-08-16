@@ -31,8 +31,13 @@ struct SettingsPage {
         app.staticTexts["settings.cloudBackupStatus"]
     }
 
+    /// 25s default (not 10s): GAP-01's multi-phase merge test relaunches
+    /// the app on a profile that already carries a pulled-down second
+    /// profile plus review history — measured slower to reach Settings on
+    /// a freshly-erased simulator than the single-profile, no-sync-history
+    /// case the original 10s default was tuned for.
     @discardableResult
-    func waitForCloudBackupToggle(timeout: TimeInterval = 10) -> Bool {
+    func waitForCloudBackupToggle(timeout: TimeInterval = 25) -> Bool {
         cloudBackupToggle.waitForExistence(timeout: timeout)
     }
 

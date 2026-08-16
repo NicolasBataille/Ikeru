@@ -71,6 +71,7 @@ struct KanaDrillModeSelector: View {
                     subtitle: "Classic SRS review",
                     description: "Tap to reveal the answer, then grade your recall. Ideal for long-term retention.",
                     icon: "rectangle.on.rectangle.angled",
+                    accessibilityID: "kanaDrillMode.flashcard",
                     action: {
                         runId = UUID()
                         goFlashcard = true
@@ -81,6 +82,7 @@ struct KanaDrillModeSelector: View {
                     subtitle: "4 quick choices",
                     description: "Recognise the romaji among 4 options. Bonus for quick correct answers.",
                     icon: "checkmark.circle.badge.questionmark",
+                    accessibilityID: "kanaDrillMode.quiz",
                     action: {
                         runId = UUID()
                         goQuiz = true
@@ -160,6 +162,7 @@ struct KanaDrillModeSelector: View {
         subtitle: LocalizedStringKey,
         description: LocalizedStringKey,
         icon: String,
+        accessibilityID: String,
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
@@ -189,5 +192,10 @@ struct KanaDrillModeSelector: View {
         .tatamiRoom(.standard)
         .disabled(cards.isEmpty)
         .opacity(cards.isEmpty ? 0.5 : 1.0)
+        // GAP-01 two-client merge test: this "Mode" screen sits between
+        // `KanaPoolSelectorView`'s drill buttons and the actual
+        // `KanaQuizView`/`KanaFlashcardView` — measured, not assumed to be
+        // a direct navigation.
+        .accessibilityIdentifier(accessibilityID)
     }
 }

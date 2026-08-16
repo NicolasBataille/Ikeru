@@ -36,7 +36,15 @@ struct KanaPoolSelectorPage {
         vowelsGroupCard.waitForExistence(timeout: timeout)
     }
 
+    /// `KanaPoolViewModel.init` defaults `selectedGroups` to `[.hVowels]`
+    /// on a device's FIRST-ever visit to this screen — already selected —
+    /// so this only taps the card when it is NOT already selected
+    /// (`accessibilityValue`, set by `KanaGroupCard`). Tapping
+    /// unconditionally would TOGGLE an already-selected group OFF, leaving
+    /// an empty selection that permanently disables every drill button —
+    /// measured: this is exactly what the first version of this method did.
     func selectVowelsGroup() {
+        guard vowelsGroupCard.value as? String != "Selected" else { return }
         vowelsGroupCard.tap()
     }
 
@@ -53,5 +61,26 @@ struct KanaPoolSelectorPage {
         )
         testCase.wait(for: [becomesEnabled], timeout: 10)
         freePracticeButton.tap()
+    }
+
+    // MARK: - KanaDrillModeSelector (the "Mode" screen between the pool and the quiz)
+
+    /// Measured, not assumed: `KanaPoolSelectorView.drillButton` does NOT
+    /// navigate straight into `KanaQuizView` — it lands on
+    /// `KanaDrillModeSelector` ("Mode" screen) first, which needs its own
+    /// "Quiz" card tapped. `.disabled(cards.isEmpty)` there is populated by
+    /// an async `refreshCards()` on `.onAppear`, hence the same
+    /// wait-for-enabled pattern as `tapFreePractice`.
+    private var quizModeCard: XCUIElement {
+        app.buttons["kanaDrillMode.quiz"]
+    }
+
+    func tapQuizMode(testCase: XCTestCase) {
+        let becomesEnabled = testCase.expectation(
+            for: NSPredicate(format: "isEnabled == true"),
+            evaluatedWith: quizModeCard
+        )
+        testCase.wait(for: [becomesEnabled], timeout: 10)
+        quizModeCard.tap()
     }
 }
