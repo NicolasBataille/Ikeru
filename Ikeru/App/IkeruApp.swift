@@ -358,6 +358,25 @@ struct IkeruApp: App {
             FeatureTourController.markSeen(profileID: profileID)
         }
 
+        #if IKERU_DEV_TOOLS
+        // GAP-01 two-client merge test only: launch with -switchToOldestProfile
+        // to make the OTHER client's pulled-down profile (always the older
+        // one by `createdAt` in this test's phase ordering — see
+        // `LaunchArguments.switchToOldestProfile` in IkeruUITests) the
+        // active one on THIS device. `viewModel.allProfiles` is already
+        // sorted by `createdAt` ascending (`ProfileViewModel.loadProfile()`),
+        // so `.first` is exactly that profile. Without this, every card/
+        // review-log query stays scoped to this device's OWN throwaway
+        // profile forever — a pull never changes which profile is active.
+        // No-op when only one profile exists locally (nothing to switch to).
+        if CommandLine.arguments.contains("-switchToOldestProfile"),
+           let oldest = viewModel.allProfiles.first,
+           oldest.id != viewModel.currentProfile?.id {
+            Logger.ui.info("switchToOldestProfile flag set — switching active profile to \(oldest.id)")
+            viewModel.switchProfile(to: oldest)
+        }
+        #endif
+
         if viewModel.hasProfile {
             Logger.ui.info("Existing profile found — skipping onboarding")
             showOnboarding = false

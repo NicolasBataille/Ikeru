@@ -772,6 +772,11 @@ struct SettingsView: View {
         }
         .buttonStyle(.plain)
         .disabled(isDeletingCloudData)
+        // GAP-01 two-client merge test: production cleanup (delete the
+        // live anonymous account this test created) drives this row from
+        // `IkeruUITests`, same reasoning as every other identifier GAP-09
+        // added.
+        .accessibilityIdentifier("settings.deleteCloudDataRow")
     }
 
     /// Returns the SAME `CloudSyncCoordinator` instance every other trigger

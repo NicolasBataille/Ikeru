@@ -51,4 +51,40 @@ struct SettingsPage {
     func waitForCloudBackupStatus(timeout: TimeInterval = 10) -> Bool {
         cloudBackupStatus.waitForExistence(timeout: timeout)
     }
+
+    // MARK: - GAP-01 two-client merge test only
+
+    /// Forces a fresh, deterministic `syncNow(ignoringThrottle: true)` cycle
+    /// without waiting on `CloudSyncTriggers`' foreground/network-regain
+    /// triggers or the 60s `minSyncInterval` — see
+    /// `CloudSyncCoordinator.setConsent`'s doc comment: turning the toggle
+    /// OFF resets every pull cursor, and turning it back ON always fires an
+    /// `ignoringThrottle: true` sync (`SettingsView.handleCloudSyncToggleChange`).
+    /// Requires the toggle to already be ON — callers that need the FIRST
+    /// sync (identity not minted yet) should call `tapCloudBackupToggle()`
+    /// once instead.
+    func forceResync() {
+        tapCloudBackupToggle() // OFF — resets cursors
+        tapCloudBackupToggle() // ON — syncNow(ignoringThrottle: true)
+    }
+
+    private var deleteCloudDataRow: XCUIElement {
+        app.buttons["settings.deleteCloudDataRow"]
+    }
+
+    @discardableResult
+    func waitForDeleteCloudDataRow(timeout: TimeInterval = 10) -> Bool {
+        deleteCloudDataRow.waitForExistence(timeout: timeout)
+    }
+
+    /// Drives the full "Delete my data from the server" flow — the row,
+    /// the confirmation alert, and its destructive "Delete" button.
+    /// `CloudDataDeletionService.deleteAllCloudData()` (wired from
+    /// `SettingsView.deleteCloudDataFromServer()`) is what actually calls
+    /// the production `delete-account` Edge Function — see
+    /// `LiveSyncVolumeTests` for the same call made directly, without a UI.
+    func confirmDeleteCloudData() {
+        deleteCloudDataRow.tap()
+        app.alerts.firstMatch.buttons["Delete"].tap()
+    }
 }

@@ -97,6 +97,12 @@ struct ExploreView: View {
                        stat: kanaProgress.map { "\($0.total)/\(KanaProgress.grandTotal)" })
         }
         .buttonStyle(.plain)
+        // GAP-01 two-client merge test: the only reachable path from Explore
+        // into `KanaPoolSelectorView`, where a specific kana group can be
+        // selected and drilled deterministically (see `KanaGroupCard`'s and
+        // `KanaPoolSelectorView.drillButton`'s identifiers, added for the
+        // same effort).
+        .accessibilityIdentifier("explore.kanaRow")
     }
 
     private var vocabularyRow: some View {

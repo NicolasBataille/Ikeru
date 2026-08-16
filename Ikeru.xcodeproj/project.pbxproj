@@ -250,6 +250,9 @@
 		477536274341CBF0327E7DB3 /* HomePage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CC05412F9822B4E6D174DB4 /* HomePage.swift */; };
 		F823ED39AB7889497F5BE229 /* KanaQuizPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA69C5A644C64AAF416D4803 /* KanaQuizPage.swift */; };
 		6B13D7790EFDA7C6E4B470B4 /* CloudBackupToggleUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72F259260D9B15F440C7B50E /* CloudBackupToggleUITests.swift */; };
+		0B24848A71F0B8F8612AA423 /* TwoClientMergeUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDD0E946E7F0F99FC93B40DF /* TwoClientMergeUITests.swift */; };
+		243431D0B39FF36A054FE572 /* ExplorePage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46726316E052377D10627D55 /* ExplorePage.swift */; };
+		8E4800033C64BFE1B1650294 /* KanaPoolSelectorPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = B16B56EABFE27AC7DCFCEAF5 /* KanaPoolSelectorPage.swift */; };
 		E60F6F77330CEE535D85DA46 /* DashboardLaunchUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 040591AD75D40A6C60A65226 /* DashboardLaunchUITests.swift */; };
 		7A7CFB6F30BE72C371E63721 /* SessionAnswerFlowUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F061122EE640C6A0C07BAC0A /* SessionAnswerFlowUITests.swift */; };
 		ACD0BCA3A7C1EE79813BD02A /* ProfileResetUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43C2F8072E54B6E9C89A7A82 /* ProfileResetUITests.swift */; };
@@ -553,6 +556,9 @@
 		5CC05412F9822B4E6D174DB4 /* HomePage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomePage.swift; sourceTree = "<group>"; };
 		DA69C5A644C64AAF416D4803 /* KanaQuizPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KanaQuizPage.swift; sourceTree = "<group>"; };
 		72F259260D9B15F440C7B50E /* CloudBackupToggleUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudBackupToggleUITests.swift; sourceTree = "<group>"; };
+		BDD0E946E7F0F99FC93B40DF /* TwoClientMergeUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TwoClientMergeUITests.swift; sourceTree = "<group>"; };
+		46726316E052377D10627D55 /* ExplorePage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExplorePage.swift; sourceTree = "<group>"; };
+		B16B56EABFE27AC7DCFCEAF5 /* KanaPoolSelectorPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KanaPoolSelectorPage.swift; sourceTree = "<group>"; };
 		040591AD75D40A6C60A65226 /* DashboardLaunchUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardLaunchUITests.swift; sourceTree = "<group>"; };
 		F061122EE640C6A0C07BAC0A /* SessionAnswerFlowUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionAnswerFlowUITests.swift; sourceTree = "<group>"; };
 		43C2F8072E54B6E9C89A7A82 /* ProfileResetUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileResetUITests.swift; sourceTree = "<group>"; };
@@ -881,6 +887,7 @@
 				040591AD75D40A6C60A65226 /* DashboardLaunchUITests.swift */,
 				F061122EE640C6A0C07BAC0A /* SessionAnswerFlowUITests.swift */,
 				43C2F8072E54B6E9C89A7A82 /* ProfileResetUITests.swift */,
+				BDD0E946E7F0F99FC93B40DF /* TwoClientMergeUITests.swift */,
 			);
 			path = IkeruUITests;
 			sourceTree = "<group>";
@@ -900,6 +907,8 @@
 				04EF0757E43F2C18E1E202ED /* SettingsPage.swift */,
 				5CC05412F9822B4E6D174DB4 /* HomePage.swift */,
 				DA69C5A644C64AAF416D4803 /* KanaQuizPage.swift */,
+				46726316E052377D10627D55 /* ExplorePage.swift */,
+				B16B56EABFE27AC7DCFCEAF5 /* KanaPoolSelectorPage.swift */,
 			);
 			path = Pages;
 			sourceTree = "<group>";
@@ -1673,6 +1682,9 @@
 				477536274341CBF0327E7DB3 /* HomePage.swift in Sources */,
 				F823ED39AB7889497F5BE229 /* KanaQuizPage.swift in Sources */,
 				6B13D7790EFDA7C6E4B470B4 /* CloudBackupToggleUITests.swift in Sources */,
+				0B24848A71F0B8F8612AA423 /* TwoClientMergeUITests.swift in Sources */,
+				243431D0B39FF36A054FE572 /* ExplorePage.swift in Sources */,
+				8E4800033C64BFE1B1650294 /* KanaPoolSelectorPage.swift in Sources */,
 				E60F6F77330CEE535D85DA46 /* DashboardLaunchUITests.swift in Sources */,
 				7A7CFB6F30BE72C371E63721 /* SessionAnswerFlowUITests.swift in Sources */,
 				ACD0BCA3A7C1EE79813BD02A /* ProfileResetUITests.swift in Sources */,

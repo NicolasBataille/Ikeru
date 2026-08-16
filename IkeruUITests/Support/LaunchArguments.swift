@@ -50,4 +50,16 @@ enum LaunchArguments {
     /// only present when `HomeViewModel` has composed a non-empty session
     /// (timing-sensitive to wait on from a UI test).
     static let autoStartSession = "-autoStartSession"
+
+    /// GAP-01 two-client merge test only. After a cold-start pull has
+    /// applied a REMOTE `profiles` row alongside this device's own local
+    /// one (see `CardRepository.activeProfileCards()` — every card/review
+    /// query is scoped to `ActiveProfileResolver`'s active profile, which a
+    /// pull never changes on its own), switches the active profile to the
+    /// OLDEST local one (by `createdAt`) — i.e. the one the OTHER client
+    /// created first, in this test's phase ordering. Handled in
+    /// `IkeruApp.initializeProfileViewModel()`, gated `#if IKERU_DEV_TOOLS`
+    /// like every other flag here. A no-op if only one profile exists
+    /// locally (nothing to switch to).
+    static let switchToOldestProfile = "-switchToOldestProfile"
 }

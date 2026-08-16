@@ -28,6 +28,11 @@ struct KanaGroupCard: View {
             .animation(.spring(response: 0.3, dampingFraction: 0.85), value: isSelected)
         }
         .buttonStyle(.plain)
+        // GAP-01 two-client merge test needs to select ONE deterministic,
+        // small group (`hVowels` — 5 characters) from `IkeruUITests` without
+        // relying on localized label text — see `EtudeView.kanaRow`'s
+        // identifier, added by the same effort.
+        .accessibilityIdentifier("kanaPool.group.\(group.rawValue)")
     }
 
     // MARK: Header
