@@ -160,6 +160,12 @@ struct SRSCardView: View {
                     .highPriorityGesture(dragGesture, including: isRevealed ? .all : .subviews)
                     .sensoryFeedback(.impact(weight: .medium), trigger: thresholdCrossed)
                     .zIndex(1000)
+                    // The one stable handle a UI test has on a live session.
+                    // Only the interactive front carries it — the peek layers
+                    // above are `.allowsHitTesting(false)` decoration, and the
+                    // flying-card overlay below is ephemeral, so neither is
+                    // something a test should ever be able to address.
+                    .accessibilityIdentifier("session.card")
             }
 
             // Flying card overlay (ephemeral) ----------------------------------

@@ -98,6 +98,49 @@ extension SessionViewModel {
         return true
     }
 
+    /// Starts the session a learner chose when nothing was due — the
+    /// "approfondir" or "découvrir" offer from the Home proposal.
+    ///
+    /// Identical wiring to `startSession()` on purpose: once composed, a
+    /// caught-up session IS an ordinary session, and giving it a parallel
+    /// lifecycle would be two code paths to keep in step for no behavioural
+    /// difference. Returns false when the chosen pool emptied between the
+    /// proposal being shown and the tap — the caller must keep the proposal
+    /// up rather than pretend something happened.
+    @discardableResult
+    public func startCaughtUpSession(
+        offer: SessionPlannerInputs.CaughtUpOffer
+    ) async -> Bool {
+        guard let composed = await sessionComposer.composeCaughtUp(
+            offer: offer,
+            durationMinutes: defaultDurationMinutes
+        ) else {
+            Logger.ui.info(
+                "startCaughtUpSession(\(offer.rawValue, privacy: .public)): nothing to compose — not starting"
+            )
+            return false
+        }
+
+        sessionQueue = composed.sessionQueue
+        resetSessionState()
+        estimatedCardCount = composed.sessionExercises.count
+        sessionExercises = composed.sessionExercises
+        endPolicy = composed.endPolicy
+        sessionJLPTLevel = composed.jlptLevel
+        vocabularyPool = composed.vocabularyPool
+        cardsNeedingPresentation = composed.cardsNeedingPresentation
+        planEstimatedDurationMinutes = composed.estimatedDurationMinutes
+
+        startTimer()
+        await loadRPGState()
+        liveActivity.start(totalExercises: composed.sessionExercises.count)
+
+        Logger.ui.info(
+            "Caught-up session started (\(offer.rawValue, privacy: .public)): \(composed.sessionExercises.count) exercises"
+        )
+        return true
+    }
+
     /// Composes a custom session from the Étude → Compose sheet. Same
     /// pipeline as `startSession()` but with `.studyCustom` as the planner
     /// source (see `SessionComposer.composeStudyCustom`) so the planner
@@ -164,51 +207,6 @@ extension SessionViewModel {
 
         Logger.ui.info(
             "Review-mistakes session started: \(composed.sessionExercises.count) cards"
-        )
-    }
-
-    /// Computes a session preview without starting the session.
-    /// Uses adaptive composition to provide detailed exercise breakdown.
-    /// - Parameter config: Session configuration (time, mode, balances).
-    public func loadSessionPreview(config: SessionConfig = SessionConfig()) async {
-        let result = await sessionComposer.composePreview(config: config)
-        sessionPreview = result.preview
-        estimatedCardCount = result.totalExercises
-
-        Logger.ui.info(
-            "Session preview loaded: \(result.totalExercises) exercises, ~\(result.totalSeconds / 60) min"
-        )
-    }
-
-    /// Starts an adaptive session using the provided config.
-    /// Falls back to basic composition if adaptive session produces no exercises.
-    /// - Parameter config: Session configuration for adaptive composition.
-    public func startAdaptiveSession(config: SessionConfig) async {
-        guard let composed = await sessionComposer.composeAdaptive(config: config) else {
-            // Fallback to basic composition
-            await startSession()
-            return
-        }
-
-        sessionQueue = composed.sessionQueue
-        resetSessionState()
-        estimatedCardCount = composed.sessionExercises.count
-
-        // Store full exercise list for immersive mode
-        sessionExercises = composed.sessionExercises
-        cardsNeedingPresentation = composed.cardsNeedingPresentation
-        planEstimatedDurationMinutes = composed.estimatedDurationMinutes
-
-        // Start timer
-        startTimer()
-
-        await loadRPGState()
-
-        // Start Live Activity for Dynamic Island
-        liveActivity.start(totalExercises: composed.sessionExercises.count)
-
-        Logger.ui.info(
-            "Adaptive session started: \(composed.srsCardCount) SRS cards, \(composed.supplementaryExerciseCount) supplementary"
         )
     }
 }

@@ -1,6 +1,6 @@
 # Tatoeba sentence corpus
 
-The 239 imported example sentences in `Ikeru/Resources/ContentBundles/n5-content.sqlite`
+The 536 imported example sentences in `Ikeru/Resources/ContentBundles/n5-content.sqlite`
 come from here. The 96 that were already in the bundle are Ikeru's own and are
 untouched.
 
@@ -61,13 +61,13 @@ Run `build-corpus.py --verbose` to reproduce these counts.
 | topic | 1 423 | 0 | already emptied by the kanji floor (死, 殺, 戦争, 酒 are not taught kanji) |
 | register | 1 380 | 43 | plain imperatives (`見ろ。`, `〜てくれ。`), `〜な` prohibitive, `〜ぞ / 〜ぜ` |
 | french quality | 1 374 | 6 | digits, quotes, parentheses, no final punctuation, crude vocabulary |
-| **lexical i+1** | **945** | 429 | see below |
-| vocabulary anchor | 592 | 353 | no bundle word ⇒ the sentence can't be filed under anything |
-| one French per Japanese | 497 | 95 | Tatoeba offers several; the oldest `fra` id wins |
-| not already bundled | 491 | 6 | the same Japanese already exists among the 96 |
-| near-duplicate collapse | 460 | 31 | `あの本は小さい。` and `その本は小さい。` drill the same item |
-| **cap: 5 per word** | **249** | 211 | see below |
-| french dedup per word | 239 | 10 | same word, same French gloss twice — see below |
+| **lexical i+1** | **992** | 382 | see below |
+| vocabulary anchor | 914 | 78 | no bundle word ⇒ the sentence can't be filed under anything |
+| one French per Japanese | 756 | 158 | Tatoeba offers several; the oldest `fra` id wins |
+| not already bundled | 750 | 6 | the same Japanese already exists among the 96 |
+| near-duplicate collapse | 696 | 54 | `あの本は小さい。` and `その本は小さい。` drill the same item |
+| **cap: 5 per word** | **548** | 148 | see below |
+| french dedup per word | 536 | 12 | same word, same French gloss twice — see below |
 
 ### Why these thresholds
 
@@ -100,12 +100,39 @@ appearing in ≥ 0.2 % of the 248 866-sentence Japanese corpus (≥ 498 sentence
 is a particle, a copula form or an inflection fragment — that is what the head
 of a frequency table over a closed class looks like. 164 types.
 
-Two unknowns rather than one, because the bundle holds 206 words where a real
-N5 lexicon is roughly four times that; against so small a reference, "one
-unknown" would mean "already in the bundle", not "i+1". Each unknown must
-itself appear in ≥ 150 corpus sentences, which is what separates a common word
-a beginner will meet again (テーブル, よろしく, どうぞ) from an idiom fragment
-(`きり` 57, `いたずら` 58, `ぐあい` 2).
+Two unknowns rather than one. The original argument was that the bundle held
+206 words where a real N5 lexicon is roughly four times that, so against so
+small a reference "one unknown" would have meant "already in the bundle", not
+"i+1". **That argument expired** when the bundle reached 693 words — and the
+threshold was re-measured on 2026-08-16 rather than inherited.
+
+Sweep with `--max-unknown N --dry-run`:
+
+| cut | retained | words anchored | grammar |
+|---:|---:|---:|---:|
+| 0 | 316 | 154/693 | 29/31 |
+| 1 | 506 | 187/693 | 30/31 |
+| **2** | **536** | **188/693** | **30/31** |
+
+Tightening to 1 reads as almost free — 30 sentences and one word. It is not:
+the 37 sentences that actually differ are `日本語を話します。`,
+`わたしはテレビを見ています。`, `この本は読みやすい。`,
+`いくらお金をもっていますか。` and their like. Dropping "I speak Japanese" out
+of a Japanese-learning app to satisfy a threshold is the wrong trade.
+
+What keeps the 2-unknown band honest is the filter below it: each unknown must
+itself appear in ≥ 150 corpus sentences, which separates a common word a
+beginner will meet again (テーブル, よろしく, どうぞ) from an idiom fragment
+(`きり` 57, `いたずら` 58, `ぐあい` 2). "Two unknowns" therefore means two
+*common* words, never two fragments.
+
+It is also a tail, not the bulk: of 1 374 candidates, 512 carry no unknown and
+588 carry one, so only ~7 % of the retained corpus sits at the loose end. Cut
+at 0 is not a stricter i+1 — it is i+0, where no sentence teaches anything new,
+and it costs a grammar point.
+
+Every run now prints this distribution. Re-run the sweep rather than trusting
+this paragraph.
 
 **Katakana allowlist, not a name blocklist.** Blocklisting Tatoeba's cast is an
 endless game. The funnel instead allowlists 65 everyday loanwords, hand-picked
@@ -156,25 +183,25 @@ distinct-per-card corpus rather than a same-size one.
 own internal candidate-scoring counters, which count differently: a sentence
 can *contain* several bundle words while being *filed under* only one.)*
 
-- **Vocabulary**: **122 of the 206 bundled words have at least one example**,
-  combining the 96 original sentences with the 239 imported ones — up from 96
-  (Ikeru's own sentences alone). `build-corpus.py --verbose` additionally
-  reports 75/206 words filed under from the Tatoeba side alone; the gap
-  between 75 and the 26 words the combined total gained over 96 is words
-  Tatoeba re-covers that Ikeru's own sentences already covered.
-- 83 words have no example (206 vocabulary rows minus 122 covered minus one
-  word, `今年`, that occupies two rows — a pre-existing duplicate, unrelated
-  to this corpus). Most of the 83 are largely absent from short,
-  kanji-restricted Tatoeba sentences: counters (`四つ`…`九つ`, whose 五つ/四つ
-  examples were exactly the wrong-word matches the stem fix removed — see
-  above), weekdays other than 月曜日/金曜日, family terms (`兄`, `姉`, `弟`,
-  `妹`), food (`卵`, `野菜`, `果物`, `魚`), and verbs like `泳ぐ`, `走る`, `言う`.
-  No filter can conjure them; they would need hand-written sentences.
-- **Grammar**: 27 of the 31 taught points are exercised by at least one
-  imported sentence. Missing: 21 (`なければならない`), 24 (`つもり`), 26 (`方
-  (かた)`), 31 (`けど / が`). These are *surface-regex* counts, not a parse —
-  see `GRAMMAR_MARKERS`.
-- **Register**: 158 of 239 imported sentences use です/ます. The rest are
+- **Vocabulary**: **236 of the 693 bundled words have at least one example**,
+  combining the 96 original sentences with the 536 imported ones — measured on
+  the bundle with `SELECT COUNT(DISTINCT vocabulary_word) FROM sentences`.
+  `build-corpus.py --verbose` additionally reports 188/693 filed under from the
+  Tatoeba side alone, and 193/693 appearing anywhere; the gap between those and
+  236 is coverage Ikeru's own 96 sentences contribute.
+- The remaining ~457 words have no example. The share grew, not shrank, because
+  the vocabulary table tripled (205 → 693) while the corpus roughly doubled —
+  covering a bigger lexicon from the same kanji-restricted Tatoeba pool is
+  strictly harder. The classes that stay uncovered are the same ones as before:
+  counters (`四つ`…`九つ`), weekdays other than 月曜日/金曜日, family terms
+  (`兄`, `姉`, `弟`, `妹`), food (`卵`, `野菜`, `果物`, `魚`), and verbs like
+  `泳ぐ`, `走る`, `言う`. No filter can conjure them; they would need
+  hand-written sentences.
+- **Grammar**: 30 of the 31 taught points are exercised by at least one
+  imported sentence — up from 27. Only 26 (`方 (かた)`) is still missing; 21
+  (`なければならない`), 24 (`つもり`) and 31 (`けど / が`) are now covered.
+  These are *surface-regex* counts, not a parse — see `GRAMMAR_MARKERS`.
+- **Register**: 276 of 536 imported sentences use です/ます. The rest are
   plain form, which the bundle also teaches.
 
 ## What the selection cannot do

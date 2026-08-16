@@ -40,14 +40,13 @@ struct MainTabView: View {
 
     @Environment(\.modelContext) private var modelContext
     @State private var selectedTab: AppTab = {
-        if let arg = CommandLine.arguments.first(where: { $0.hasPrefix("-startTab=") }),
-           let raw = Int(arg.dropFirst("-startTab=".count)),
+        if let raw = AppEnvironment.intArg("startTab"),
            let tab = AppTab(rawValue: raw) {
             return tab
         }
         return .practice
     }()
-    @State private var presentAISettings = CommandLine.arguments.contains("-presentAISettings")
+    @State private var presentAISettings = AppEnvironment.hasFlag("presentAISettings")
     @State private var appLocale = AppLocale()
     @State private var displayMode: DisplayMode = .beginner
     @State private var displayModeRepo: (any DisplayModePreferenceRepository)?

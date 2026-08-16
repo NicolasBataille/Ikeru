@@ -1,7 +1,7 @@
 {
   "source": "Tatoeba (https://tatoeba.org) — sentence text under CC BY 2.0 FR",
   "generated_by": "scripts/tatoeba/build-corpus.py",
-  "count": 239,
+  "count": 536,
   "sentences": [
     {
       "japanese": "何かしてみましょう。",
@@ -25,6 +25,20 @@
       "tatoeba_fr_id": 3164
     },
     {
+      "japanese": "日本へ行けたらいいのに。",
+      "french": "J'aimerais bien pouvoir aller au Japon.",
+      "vocabulary_word": "日本",
+      "tatoeba_ja_id": 4812,
+      "tatoeba_fr_id": 3209
+    },
+    {
+      "japanese": "そんなつもりではなかったんだ。",
+      "french": "Ce n'était pas mon intention.",
+      "vocabulary_word": "では",
+      "tatoeba_ja_id": 4821,
+      "tatoeba_fr_id": 3218
+    },
+    {
       "japanese": "ありがとうございます！",
       "french": "Merci beaucoup !",
       "vocabulary_word": "ありがとう",
@@ -32,11 +46,88 @@
       "tatoeba_fr_id": 3381
     },
     {
+      "japanese": "どれくらいかかるのかしら。",
+      "french": "Je me demande combien de temps ça va prendre.",
+      "vocabulary_word": "かかる",
+      "tatoeba_ja_id": 5010,
+      "tatoeba_fr_id": 3421
+    },
+    {
+      "japanese": "何時ですか。",
+      "french": "Quelle heure est-il ?",
+      "vocabulary_word": "何",
+      "tatoeba_ja_id": 5059,
+      "tatoeba_fr_id": 3474
+    },
+    {
       "japanese": "あなたの名前は？",
       "french": "Comment est-ce que tu t'appelles ?",
       "vocabulary_word": "名前",
       "tatoeba_ja_id": 5061,
       "tatoeba_fr_id": 3476
+    },
+    {
+      "japanese": "シャワーはどこですか。",
+      "french": "Où sont les douches ?",
+      "vocabulary_word": "シャワー",
+      "tatoeba_ja_id": 5066,
+      "tatoeba_fr_id": 3482
+    },
+    {
+      "japanese": "もっとゆっくり話してください！",
+      "french": "Parlez plus lentement s'il vous plaît !",
+      "vocabulary_word": "もっと",
+      "tatoeba_ja_id": 5109,
+      "tatoeba_fr_id": 3527
+    },
+    {
+      "japanese": "電話はどこでできる？",
+      "french": "Où peut-on téléphoner ?",
+      "vocabulary_word": "できる",
+      "tatoeba_ja_id": 5115,
+      "tatoeba_fr_id": 3533
+    },
+    {
+      "japanese": "おなか空いた！",
+      "french": "Je meurs de faim !",
+      "vocabulary_word": "おなか",
+      "tatoeba_ja_id": 5152,
+      "tatoeba_fr_id": 3574
+    },
+    {
+      "japanese": "あまり見えない。",
+      "french": "Je le vois rarement.",
+      "vocabulary_word": "あまり",
+      "tatoeba_ja_id": 5157,
+      "tatoeba_fr_id": 3580
+    },
+    {
+      "japanese": "どこにいますか？",
+      "french": "Où es-tu ?",
+      "vocabulary_word": "どこ",
+      "tatoeba_ja_id": 5319,
+      "tatoeba_fr_id": 3989
+    },
+    {
+      "japanese": "どこに行きますか？",
+      "french": "Où vas-tu ?",
+      "vocabulary_word": "どこ",
+      "tatoeba_ja_id": 5320,
+      "tatoeba_fr_id": 3991
+    },
+    {
+      "japanese": "どこから来ましたか？",
+      "french": "Tu viens d'où ?",
+      "vocabulary_word": "どこ",
+      "tatoeba_ja_id": 5323,
+      "tatoeba_fr_id": 3475
+    },
+    {
+      "japanese": "いくらですか？",
+      "french": "Ça coûte combien ?",
+      "vocabulary_word": "いくら",
+      "tatoeba_ja_id": 5332,
+      "tatoeba_fr_id": 4295
     },
     {
       "japanese": "毎年行きます。",
@@ -67,16 +158,23 @@
       "tatoeba_fr_id": 135055
     },
     {
+      "japanese": "父は中国へ行ってしまった。",
+      "french": "Mon père est allé en Chine.",
+      "vocabulary_word": "父",
+      "tatoeba_ja_id": 84418,
+      "tatoeba_fr_id": 134914
+    },
+    {
       "japanese": "父は新しい車を買いました。",
       "french": "Mon père a acheté une voiture neuve.",
-      "vocabulary_word": "父",
+      "vocabulary_word": "新しい",
       "tatoeba_ja_id": 84431,
       "tatoeba_fr_id": 134910
     },
     {
       "japanese": "父は見かけほど年をとっていません。",
       "french": "Mon père n'est pas aussi vieux qu'il en a l'air.",
-      "vocabulary_word": "父",
+      "vocabulary_word": "年",
       "tatoeba_ja_id": 84595,
       "tatoeba_fr_id": 134869
     },
@@ -97,9 +195,16 @@
     {
       "japanese": "父はまだ休んでいる。",
       "french": "Père est encore au lit.",
-      "vocabulary_word": "父",
+      "vocabulary_word": "まだ",
       "tatoeba_ja_id": 84662,
       "tatoeba_fr_id": 134859
+    },
+    {
+      "japanese": "父さんはどこへ行ったんだろう。",
+      "french": "Où est allé papa ?",
+      "vocabulary_word": "父",
+      "tatoeba_ja_id": 84837,
+      "tatoeba_fr_id": 13241137
     },
     {
       "japanese": "白いですか。",
@@ -118,7 +223,7 @@
     {
       "japanese": "白いシャツはありますか。",
       "french": "As-tu une chemise en blanc ?",
-      "vocabulary_word": "白い",
+      "vocabulary_word": "シャツ",
       "tatoeba_ja_id": 121441,
       "tatoeba_fr_id": 120118
     },
@@ -132,14 +237,14 @@
     {
       "japanese": "日本語を話せる人はいますか。",
       "french": "Est-ce que quelqu'un ici parle japonais ?",
-      "vocabulary_word": "人",
+      "vocabulary_word": "はい",
       "tatoeba_ja_id": 122324,
       "tatoeba_fr_id": 15231
     },
     {
       "japanese": "日本語は話せますか。",
       "french": "Parles-tu japonais ?",
-      "vocabulary_word": "日本語",
+      "vocabulary_word": "日本",
       "tatoeba_ja_id": 122333,
       "tatoeba_fr_id": 10423
     },
@@ -153,14 +258,21 @@
     {
       "japanese": "日本語で話してはいけません。",
       "french": "Ne parle pas japonais.",
-      "vocabulary_word": "日本",
+      "vocabulary_word": "日本語",
       "tatoeba_ja_id": 122357,
       "tatoeba_fr_id": 129762
     },
     {
+      "japanese": "日本へようこそ。",
+      "french": "Bienvenue au Japon.",
+      "vocabulary_word": "日本",
+      "tatoeba_ja_id": 122387,
+      "tatoeba_fr_id": 6465652
+    },
+    {
       "japanese": "日本はいかがですか。",
       "french": "Aimez-vous le Japon ?",
-      "vocabulary_word": "日本",
+      "vocabulary_word": "いかが",
       "tatoeba_ja_id": 122522,
       "tatoeba_fr_id": 331056
     },
@@ -181,7 +293,7 @@
     {
       "japanese": "日本に来てどれくらいになりますか？",
       "french": "Cela fait combien de temps que vous êtes arrivé au Japon ?",
-      "vocabulary_word": "日本",
+      "vocabulary_word": "どれ",
       "tatoeba_ja_id": 122696,
       "tatoeba_fr_id": 3577586
     },
@@ -200,6 +312,20 @@
       "tatoeba_fr_id": 4320561
     },
     {
+      "japanese": "電話をかけたい。",
+      "french": "Je veux donner un coup de téléphone.",
+      "vocabulary_word": "電話",
+      "tatoeba_ja_id": 124675,
+      "tatoeba_fr_id": 11596173
+    },
+    {
+      "japanese": "電話にでなさい。",
+      "french": "Répondez au téléphone !",
+      "vocabulary_word": "電話",
+      "tatoeba_ja_id": 124710,
+      "tatoeba_fr_id": 129525
+    },
+    {
       "japanese": "電話しよう。",
       "french": "Je lui téléphone.",
       "vocabulary_word": "電話",
@@ -214,6 +340,13 @@
       "tatoeba_fr_id": 139511
     },
     {
+      "japanese": "電気をつけていただけませんか。",
+      "french": "Est-ce que tu peux allumer la lumière, s'il te plaît ?",
+      "vocabulary_word": "電気",
+      "tatoeba_ja_id": 124844,
+      "tatoeba_fr_id": 13282265
+    },
+    {
       "japanese": "天気はどうですか。",
       "french": "Quel temps fait-il ?",
       "vocabulary_word": "天気",
@@ -221,9 +354,23 @@
       "tatoeba_fr_id": 5952
     },
     {
+      "japanese": "天気のよい日です。",
+      "french": "C'est une belle journée.",
+      "vocabulary_word": "よい",
+      "tatoeba_ja_id": 125126,
+      "tatoeba_fr_id": 10654
+    },
+    {
+      "japanese": "天気がよくなった。",
+      "french": "Le temps s'est éclairci.",
+      "vocabulary_word": "よく",
+      "tatoeba_ja_id": 125187,
+      "tatoeba_fr_id": 14619
+    },
+    {
       "japanese": "中に入れて。",
       "french": "Laissez-moi rentrer.",
-      "vocabulary_word": "中",
+      "vocabulary_word": "入れる",
       "tatoeba_ja_id": 126559,
       "tatoeba_fr_id": 129344
     },
@@ -256,6 +403,13 @@
       "tatoeba_fr_id": 129149
     },
     {
+      "japanese": "何とか入れた。",
+      "french": "J'ai réussi à entrer.",
+      "vocabulary_word": "入れる",
+      "tatoeba_ja_id": 139686,
+      "tatoeba_fr_id": 4294
+    },
+    {
       "japanese": "千人くらいの人がいた。",
       "french": "Il pouvait y avoir un millier de personnes.",
       "vocabulary_word": "千",
@@ -265,7 +419,7 @@
     {
       "japanese": "先生は新しい車が気に入っている。",
       "french": "Notre professeur aime sa nouvelle voiture.",
-      "vocabulary_word": "新しい",
+      "vocabulary_word": "車",
       "tatoeba_ja_id": 141560,
       "tatoeba_fr_id": 128940
     },
@@ -279,7 +433,7 @@
     {
       "japanese": "先生、どうもありがとうございました。",
       "french": "Merci beaucoup, Docteur.",
-      "vocabulary_word": "ありがとう",
+      "vocabulary_word": "どうも",
       "tatoeba_ja_id": 141797,
       "tatoeba_fr_id": 354383
     },
@@ -293,7 +447,7 @@
     {
       "japanese": "水を少しください。",
       "french": "Un peu d'eau, s'il vous plaît.",
-      "vocabulary_word": "水",
+      "vocabulary_word": "少し",
       "tatoeba_ja_id": 143706,
       "tatoeba_fr_id": 609944
     },
@@ -305,6 +459,13 @@
       "tatoeba_fr_id": 1922561
     },
     {
+      "japanese": "水をいっぱいほしいんだけど。",
+      "french": "Je prendrais bien un verre d'eau.",
+      "vocabulary_word": "水",
+      "tatoeba_ja_id": 143720,
+      "tatoeba_fr_id": 128756
+    },
+    {
       "japanese": "水は十分ある。",
       "french": "Nous avons assez d'eau.",
       "vocabulary_word": "水",
@@ -312,9 +473,23 @@
       "tatoeba_fr_id": 120006
     },
     {
+      "japanese": "水がなければ、人間は生きられない。",
+      "french": "S'il n'y avait pas d'eau, l'homme ne pourrait pas vivre.",
+      "vocabulary_word": "水",
+      "tatoeba_ja_id": 143831,
+      "tatoeba_fr_id": 181911
+    },
+    {
+      "japanese": "人生いいことばかりではない。",
+      "french": "La vie n'est pas toujours agréable.",
+      "vocabulary_word": "では",
+      "tatoeba_ja_id": 144050,
+      "tatoeba_fr_id": 14662
+    },
+    {
       "japanese": "人と話ができません。",
       "french": "Je ne peux pas parler avec des gens.",
-      "vocabulary_word": "人",
+      "vocabulary_word": "話",
       "tatoeba_ja_id": 144672,
       "tatoeba_fr_id": 429032
     },
@@ -326,9 +501,37 @@
       "tatoeba_fr_id": 3139167
     },
     {
+      "japanese": "食べながら読んではいけません。",
+      "french": "On ne lit pas en mangeant.",
+      "vocabulary_word": "では",
+      "tatoeba_ja_id": 145934,
+      "tatoeba_fr_id": 7767
+    },
+    {
+      "japanese": "少し時間をいただけないでしょうか。",
+      "french": "Peux-tu m'accorder quelques minutes ?",
+      "vocabulary_word": "時間",
+      "tatoeba_ja_id": 146807,
+      "tatoeba_fr_id": 181420
+    },
+    {
+      "japanese": "少しお話ししてもよろしいですか。",
+      "french": "Puis-je te parler une minute ?",
+      "vocabulary_word": "少し",
+      "tatoeba_ja_id": 146869,
+      "tatoeba_fr_id": 14678
+    },
+    {
+      "japanese": "書いてくださいますか。",
+      "french": "Peux-tu l'écrire s'il te plait ?",
+      "vocabulary_word": "ください",
+      "tatoeba_ja_id": 147431,
+      "tatoeba_fr_id": 128425
+    },
+    {
       "japanese": "出るか入るかどちらかにしてください。",
       "french": "Soit tu sors soit tu entres.",
-      "vocabulary_word": "入る",
+      "vocabulary_word": "どちら",
       "tatoeba_ja_id": 147768,
       "tatoeba_fr_id": 128394
     },
@@ -347,23 +550,58 @@
       "tatoeba_fr_id": 128385
     },
     {
+      "japanese": "手を出してはいけません。",
+      "french": "Ne sortez pas vos mains.",
+      "vocabulary_word": "手",
+      "tatoeba_ja_id": 148626,
+      "tatoeba_fr_id": 128312
+    },
+    {
+      "japanese": "手に入れたものは何だ？",
+      "french": "Qu'as-tu eu ?",
+      "vocabulary_word": "手",
+      "tatoeba_ja_id": 148650,
+      "tatoeba_fr_id": 941175
+    },
+    {
+      "japanese": "車で行こう。",
+      "french": "Allons-y en voiture.",
+      "vocabulary_word": "車",
+      "tatoeba_ja_id": 149096,
+      "tatoeba_fr_id": 1313943
+    },
+    {
       "japanese": "車でどれくらいかかりますか。",
       "french": "Combien ça prend de temps en voiture ?",
-      "vocabulary_word": "車",
+      "vocabulary_word": "どれ",
       "tatoeba_ja_id": 149104,
       "tatoeba_fr_id": 1344997
     },
     {
       "japanese": "車があればどんなによいだろう。",
       "french": "Comme j'aurais espéré avoir une voiture.",
-      "vocabulary_word": "車",
+      "vocabulary_word": "あれ",
       "tatoeba_ja_id": 149148,
       "tatoeba_fr_id": 128258
     },
     {
+      "japanese": "車があったらなぁ。",
+      "french": "J'aimerais avoir une voiture.",
+      "vocabulary_word": "車",
+      "tatoeba_ja_id": 149152,
+      "tatoeba_fr_id": 128257
+    },
+    {
+      "japanese": "時々ゴルフをします。",
+      "french": "Je joue au golf de temps en temps.",
+      "vocabulary_word": "時々",
+      "tatoeba_ja_id": 150453,
+      "tatoeba_fr_id": 128137
+    },
+    {
       "japanese": "時間はどのくらいかかりますか。",
       "french": "Combien de temps ça prend ?",
-      "vocabulary_word": "時間",
+      "vocabulary_word": "どの",
       "tatoeba_ja_id": 150582,
       "tatoeba_fr_id": 576481
     },
@@ -389,6 +627,20 @@
       "tatoeba_fr_id": 6548
     },
     {
+      "japanese": "もうしてしまいました。",
+      "french": "Je l'ai déjà fait.",
+      "vocabulary_word": "もう",
+      "tatoeba_ja_id": 158775,
+      "tatoeba_fr_id": 6887
+    },
+    {
+      "japanese": "ここに、もっと長くいたい。",
+      "french": "Je veux rester ici plus longtemps.",
+      "vocabulary_word": "もっと",
+      "tatoeba_ja_id": 161056,
+      "tatoeba_fr_id": 7309
+    },
+    {
       "japanese": "お金ではなくて、時間がほしい。",
       "french": "Je veux du temps à la place de l'argent.",
       "vocabulary_word": "お金",
@@ -396,11 +648,53 @@
       "tatoeba_fr_id": 7349
     },
     {
+      "japanese": "あなたにはついていけません。",
+      "french": "Je ne peux pas te suivre.",
+      "vocabulary_word": "あなた",
+      "tatoeba_ja_id": 161772,
+      "tatoeba_fr_id": 7453
+    },
+    {
+      "japanese": "カメラをなくしてしまった。",
+      "french": "J'ai perdu mon appareil photo.",
+      "vocabulary_word": "カメラ",
+      "tatoeba_ja_id": 162370,
+      "tatoeba_fr_id": 7335
+    },
+    {
+      "japanese": "四月一日です。",
+      "french": "C'est le premier avril.",
+      "vocabulary_word": "四",
+      "tatoeba_ja_id": 168964,
+      "tatoeba_fr_id": 6207192
+    },
+    {
+      "japanese": "三時でどうでしょうか。",
+      "french": "Qu'en dites-vous de trois heures ?",
+      "vocabulary_word": "三",
+      "tatoeba_ja_id": 169504,
+      "tatoeba_fr_id": 12419750
+    },
+    {
       "japanese": "今年もよい年でありますように。",
       "french": "Puisse la nouvelle année t'apporter la joie.",
       "vocabulary_word": "今年",
       "tatoeba_ja_id": 171289,
       "tatoeba_fr_id": 8403
+    },
+    {
+      "japanese": "今日の気分はいかがですか？",
+      "french": "Comment vas-tu aujourd'hui ?",
+      "vocabulary_word": "いかが",
+      "tatoeba_ja_id": 171651,
+      "tatoeba_fr_id": 8433
+    },
+    {
+      "japanese": "今日は気分がいいですね。",
+      "french": "Quelle belle journée, n'est-ce pas ?",
+      "vocabulary_word": "いい",
+      "tatoeba_ja_id": 171657,
+      "tatoeba_fr_id": 8437
     },
     {
       "japanese": "今日は何日ですか。",
@@ -414,6 +708,34 @@
       "french": "Comment est le temps aujourd'hui ?",
       "vocabulary_word": "今日",
       "tatoeba_ja_id": 171732,
+      "tatoeba_fr_id": 8447
+    },
+    {
+      "japanese": "今日はたいへん天気がよい。",
+      "french": "Il fait extrêmement beau aujourd'hui.",
+      "vocabulary_word": "たいへん",
+      "tatoeba_ja_id": 171763,
+      "tatoeba_fr_id": 14946
+    },
+    {
+      "japanese": "今日はすることが何もない。",
+      "french": "Je n'ai rien à faire aujourd'hui.",
+      "vocabulary_word": "する",
+      "tatoeba_ja_id": 171770,
+      "tatoeba_fr_id": 8453
+    },
+    {
+      "japanese": "今日はいい天気だ。",
+      "french": "Il fait beau aujourd'hui.",
+      "vocabulary_word": "天気",
+      "tatoeba_ja_id": 171815,
+      "tatoeba_fr_id": 333133
+    },
+    {
+      "japanese": "今日の天気はどうかね？",
+      "french": "Comment est le temps aujourd'hui ?",
+      "vocabulary_word": "天気",
+      "tatoeba_ja_id": 171858,
       "tatoeba_fr_id": 8447
     },
     {
@@ -431,6 +753,13 @@
       "tatoeba_fr_id": 8465
     },
     {
+      "japanese": "今日の気分はどうですか。",
+      "french": "Comment te sens-tu aujourd'hui ?",
+      "vocabulary_word": "どう",
+      "tatoeba_ja_id": 171965,
+      "tatoeba_fr_id": 8475
+    },
+    {
       "japanese": "今月いっぱいここにいます。",
       "french": "Je serai là tout le mois.",
       "vocabulary_word": "今月",
@@ -440,7 +769,7 @@
     {
       "japanese": "今はあまり時間がないのです。",
       "french": "Je n'ai pas trop le temps maintenant.",
-      "vocabulary_word": "今",
+      "vocabulary_word": "あまり",
       "tatoeba_ja_id": 172682,
       "tatoeba_fr_id": 14954
     },
@@ -452,6 +781,27 @@
       "tatoeba_fr_id": 180604
     },
     {
+      "japanese": "今テレビを見てもいいですか。",
+      "french": "Pourrais-je regarder la télévision maintenant ?",
+      "vocabulary_word": "テレビ",
+      "tatoeba_ja_id": 172777,
+      "tatoeba_fr_id": 8541
+    },
+    {
+      "japanese": "今しかない。",
+      "french": "C'est maintenant ou jamais.",
+      "vocabulary_word": "今",
+      "tatoeba_ja_id": 172845,
+      "tatoeba_fr_id": 237234
+    },
+    {
+      "japanese": "今この本を読んでしまったところだ。",
+      "french": "Je viens juste de lire ce livre.",
+      "vocabulary_word": "本",
+      "tatoeba_ja_id": 172853,
+      "tatoeba_fr_id": 8551
+    },
+    {
       "japanese": "今、行くわ。",
       "french": "J'y vais de ce pas.",
       "vocabulary_word": "行く",
@@ -459,18 +809,39 @@
       "tatoeba_fr_id": 3524623
     },
     {
+      "japanese": "行くのか行かないのか。",
+      "french": "Tu y vas ou tu restes ?",
+      "vocabulary_word": "行く",
+      "tatoeba_ja_id": 173384,
+      "tatoeba_fr_id": 8587
+    },
+    {
       "japanese": "後で電話します。",
       "french": "Je te rappellerai plus tard.",
-      "vocabulary_word": "電話",
+      "vocabulary_word": "後",
       "tatoeba_ja_id": 174334,
       "tatoeba_fr_id": 8689
     },
     {
+      "japanese": "後でまた電話するよ。",
+      "french": "Je vous rappellerai plus tard.",
+      "vocabulary_word": "する",
+      "tatoeba_ja_id": 174350,
+      "tatoeba_fr_id": 8695
+    },
+    {
       "japanese": "後でこちらからお電話します。",
       "french": "Je vous rappelle plus tard.",
-      "vocabulary_word": "電話",
+      "vocabulary_word": "こちら",
       "tatoeba_ja_id": 174354,
       "tatoeba_fr_id": 181397
+    },
+    {
+      "japanese": "後から一人きます。",
+      "french": "Une personne de plus se joindra à nous plus tard.",
+      "vocabulary_word": "一人",
+      "tatoeba_ja_id": 174359,
+      "tatoeba_fr_id": 8694
     },
     {
       "japanese": "古いピアノだよ。",
@@ -482,9 +853,16 @@
     {
       "japanese": "この本はもう読みましたか。",
       "french": "As-tu déjà lu ce livre ?",
-      "vocabulary_word": "本",
+      "vocabulary_word": "この",
       "tatoeba_ja_id": 177824,
       "tatoeba_fr_id": 8985
+    },
+    {
+      "japanese": "金はたくさんある。",
+      "french": "Il y a beaucoup d'argent.",
+      "vocabulary_word": "たくさん",
+      "tatoeba_ja_id": 179738,
+      "tatoeba_fr_id": 180647
     },
     {
       "japanese": "お金はいくらかあります。",
@@ -501,6 +879,41 @@
       "tatoeba_fr_id": 9151
     },
     {
+      "japanese": "気分はどうですか。",
+      "french": "Comment vous sentez-vous ?",
+      "vocabulary_word": "どう",
+      "tatoeba_ja_id": 183161,
+      "tatoeba_fr_id": 9324
+    },
+    {
+      "japanese": "気分がよい。",
+      "french": "Je vais bien maintenant.",
+      "vocabulary_word": "よい",
+      "tatoeba_ja_id": 183179,
+      "tatoeba_fr_id": 9328
+    },
+    {
+      "japanese": "気にするなよ。",
+      "french": "Ce n'est pas grave.",
+      "vocabulary_word": "する",
+      "tatoeba_ja_id": 183269,
+      "tatoeba_fr_id": 333722
+    },
+    {
+      "japanese": "気にしなくていいんですよ。",
+      "french": "Tout va bien.",
+      "vocabulary_word": "いい",
+      "tatoeba_ja_id": 183273,
+      "tatoeba_fr_id": 9336
+    },
+    {
+      "japanese": "学校に行く時間よ。",
+      "french": "Il est l'heure d'aller à l'école.",
+      "vocabulary_word": "時間",
+      "tatoeba_ja_id": 184467,
+      "tatoeba_fr_id": 9432
+    },
+    {
       "japanese": "外国へ行ったことがありますか。",
       "french": "Avez-vous déjà été à l'étranger ?",
       "vocabulary_word": "外国",
@@ -515,9 +928,16 @@
       "tatoeba_fr_id": 181493
     },
     {
+      "japanese": "外へ出たい。",
+      "french": "J'ai envie de sortir.",
+      "vocabulary_word": "外",
+      "tatoeba_ja_id": 184860,
+      "tatoeba_fr_id": 2805981
+    },
+    {
       "japanese": "外のテーブルがいいのですが。",
       "french": "Pourrait-on avoir une table à l'extérieur ?",
-      "vocabulary_word": "外",
+      "vocabulary_word": "テーブル",
       "tatoeba_ja_id": 184884,
       "tatoeba_fr_id": 9481
     },
@@ -550,9 +970,30 @@
       "tatoeba_fr_id": 467887
     },
     {
+      "japanese": "何のためにここに来たのですか。",
+      "french": "Pourquoi es-tu venu ici ?",
+      "vocabulary_word": "ここ",
+      "tatoeba_ja_id": 187723,
+      "tatoeba_fr_id": 427691
+    },
+    {
+      "japanese": "何でも聞いて！",
+      "french": "Demande-moi n'importe quoi !",
+      "vocabulary_word": "でも",
+      "tatoeba_ja_id": 187822,
+      "tatoeba_fr_id": 15026
+    },
+    {
+      "japanese": "何でもない。",
+      "french": "Ce n'est rien.",
+      "vocabulary_word": "でも",
+      "tatoeba_ja_id": 187835,
+      "tatoeba_fr_id": 825119
+    },
+    {
       "japanese": "何か食べるものをください。",
       "french": "S'il vous plaît, donnez-moi à manger.",
-      "vocabulary_word": "何",
+      "vocabulary_word": "ください",
       "tatoeba_ja_id": 187936,
       "tatoeba_fr_id": 14910
     },
@@ -571,6 +1012,13 @@
       "tatoeba_fr_id": 9698
     },
     {
+      "japanese": "何かすることはないの？",
+      "french": "N'as-tu rien à faire ?",
+      "vocabulary_word": "する",
+      "tatoeba_ja_id": 188096,
+      "tatoeba_fr_id": 9701
+    },
+    {
       "japanese": "雨の日にはバスで学校へいきますか。",
       "french": "Allez-vous à l'école en bus quand il pleut ?",
       "vocabulary_word": "雨",
@@ -578,16 +1026,30 @@
       "tatoeba_fr_id": 9889
     },
     {
+      "japanese": "雨になっちゃうんじゃないかなあ。",
+      "french": "J'ai peur qu'il pleuve.",
+      "vocabulary_word": "雨",
+      "tatoeba_ja_id": 189637,
+      "tatoeba_fr_id": 12842
+    },
+    {
       "japanese": "一日いい天気になりそうですよ。",
       "french": "Je pense qu'on va passer une bonne journée.",
-      "vocabulary_word": "天気",
+      "vocabulary_word": "一日",
       "tatoeba_ja_id": 190284,
       "tatoeba_fr_id": 13996
     },
     {
+      "japanese": "一人にしておいて下さい。",
+      "french": "Laissez-moi tranquille.",
+      "vocabulary_word": "一人",
+      "tatoeba_ja_id": 190481,
+      "tatoeba_fr_id": 13976
+    },
+    {
       "japanese": "一人で行くのはいやです。",
       "french": "Je ne veux pas y aller seul.",
-      "vocabulary_word": "行く",
+      "vocabulary_word": "一人",
       "tatoeba_ja_id": 190490,
       "tatoeba_fr_id": 13975
     },
@@ -599,11 +1061,39 @@
       "tatoeba_fr_id": 13951
     },
     {
+      "japanese": "よく聞こえないのです。",
+      "french": "J'ai du mal à entendre.",
+      "vocabulary_word": "よく",
+      "tatoeba_ja_id": 192755,
+      "tatoeba_fr_id": 13740
+    },
+    {
+      "japanese": "よい一日をね。",
+      "french": "Bonne journée !",
+      "vocabulary_word": "一日",
+      "tatoeba_ja_id": 192919,
+      "tatoeba_fr_id": 13716
+    },
+    {
+      "japanese": "よいお年を。",
+      "french": "Bonne année !",
+      "vocabulary_word": "年",
+      "tatoeba_ja_id": 192926,
+      "tatoeba_fr_id": 14185
+    },
+    {
       "japanese": "もっと安いものはありますか。",
       "french": "En avez-vous de moins chers ?",
-      "vocabulary_word": "安い",
+      "vocabulary_word": "もっと",
       "tatoeba_ja_id": 193312,
       "tatoeba_fr_id": 13677
+    },
+    {
+      "japanese": "もう少し大きくして。",
+      "french": "Un peu plus fort.",
+      "vocabulary_word": "大きい",
+      "tatoeba_ja_id": 194079,
+      "tatoeba_fr_id": 13629
     },
     {
       "japanese": "もう少し安いのはありますか。",
@@ -611,6 +1101,13 @@
       "vocabulary_word": "安い",
       "tatoeba_ja_id": 194118,
       "tatoeba_fr_id": 11056205
+    },
+    {
+      "japanese": "もう行かなければなりません。",
+      "french": "Je dois partir maintenant.",
+      "vocabulary_word": "もう",
+      "tatoeba_ja_id": 194208,
+      "tatoeba_fr_id": 181693
     },
     {
       "japanese": "もう学校に行く時間です。",
@@ -629,23 +1126,100 @@
     {
       "japanese": "まもなく雨になるだろう。",
       "french": "Il va pleuvoir bientôt.",
-      "vocabulary_word": "雨",
+      "vocabulary_word": "なる",
       "tatoeba_ja_id": 195294,
       "tatoeba_fr_id": 181061
     },
     {
+      "japanese": "まっすぐ前を見てください。",
+      "french": "Regardez devant vous, je vous prie.",
+      "vocabulary_word": "まっすぐ",
+      "tatoeba_ja_id": 195363,
+      "tatoeba_fr_id": 13456
+    },
+    {
+      "japanese": "まっすぐ行け。",
+      "french": "Va tout droit.",
+      "vocabulary_word": "まっすぐ",
+      "tatoeba_ja_id": 195365,
+      "tatoeba_fr_id": 13455
+    },
+    {
+      "japanese": "また後でかけます。",
+      "french": "Je le rappellerai plus tard.",
+      "vocabulary_word": "また",
+      "tatoeba_ja_id": 195442,
+      "tatoeba_fr_id": 14964
+    },
+    {
       "japanese": "またいつか電話します。",
       "french": "Je t'appellerai une autre fois.",
-      "vocabulary_word": "電話",
+      "vocabulary_word": "いつ",
       "tatoeba_ja_id": 195523,
       "tatoeba_fr_id": 13431
     },
     {
+      "japanese": "ほんの少しください。",
+      "french": "Donnez-m'en juste un peu.",
+      "vocabulary_word": "少し",
+      "tatoeba_ja_id": 195867,
+      "tatoeba_fr_id": 15088
+    },
+    {
+      "japanese": "ほかのを見せてください。",
+      "french": "S'il te plaît, montre-m'en un autre.",
+      "vocabulary_word": "ほか",
+      "tatoeba_ja_id": 196433,
+      "tatoeba_fr_id": 13314
+    },
+    {
+      "japanese": "ボールペンで書いてください。",
+      "french": "Écrivez avec un stylo à bille s'il vous plait.",
+      "vocabulary_word": "ボールペン",
+      "tatoeba_ja_id": 196459,
+      "tatoeba_fr_id": 181551
+    },
+    {
+      "japanese": "ペンで書いて下さい。",
+      "french": "Veuillez écrire avec un stylo.",
+      "vocabulary_word": "ペン",
+      "tatoeba_ja_id": 196626,
+      "tatoeba_fr_id": 180511
+    },
+    {
+      "japanese": "ペンで名前を書いて下さい。",
+      "french": "Veuillez écrire votre nom au stylo.",
+      "vocabulary_word": "ペン",
+      "tatoeba_ja_id": 196627,
+      "tatoeba_fr_id": 1970014
+    },
+    {
+      "japanese": "ベッドから出なさい。",
+      "french": "Sortez du lit !",
+      "vocabulary_word": "ベッド",
+      "tatoeba_ja_id": 196806,
+      "tatoeba_fr_id": 1985931
+    },
+    {
       "japanese": "ページの下を読んでごらん。",
       "french": "Lis le bas de la page !",
-      "vocabulary_word": "下",
+      "vocabulary_word": "ページ",
       "tatoeba_ja_id": 196852,
       "tatoeba_fr_id": 13273
+    },
+    {
+      "japanese": "プレゼントをありがとう。",
+      "french": "Merci pour votre cadeau.",
+      "vocabulary_word": "ありがとう",
+      "tatoeba_ja_id": 196918,
+      "tatoeba_fr_id": 13260
+    },
+    {
+      "japanese": "フォークをいただけますか。",
+      "french": "Pouvons-nous avoir une fourchette ?",
+      "vocabulary_word": "フォーク",
+      "tatoeba_ja_id": 197199,
+      "tatoeba_fr_id": 13223
     },
     {
       "japanese": "ピアノは高いです。",
@@ -655,11 +1229,81 @@
       "tatoeba_fr_id": 13141
     },
     {
+      "japanese": "パスポートを見せていただけますか。",
+      "french": "Puis-je voir votre passeport ?",
+      "vocabulary_word": "見せる",
+      "tatoeba_ja_id": 198086,
+      "tatoeba_fr_id": 13096
+    },
+    {
       "japanese": "バスはどのくらい前に出ましたか。",
       "french": "Depuis combien de temps le bus est-il parti ?",
       "vocabulary_word": "前",
       "tatoeba_ja_id": 198125,
       "tatoeba_fr_id": 13093
+    },
+    {
+      "japanese": "バスで行こう。",
+      "french": "Prenons un bus.",
+      "vocabulary_word": "バス",
+      "tatoeba_ja_id": 198193,
+      "tatoeba_fr_id": 13087
+    },
+    {
+      "japanese": "バスが来ましたよ。",
+      "french": "Le bus arrive.",
+      "vocabulary_word": "バス",
+      "tatoeba_ja_id": 198223,
+      "tatoeba_fr_id": 13083
+    },
+    {
+      "japanese": "はい、行きましょう。",
+      "french": "Oui, allons-y.",
+      "vocabulary_word": "はい",
+      "tatoeba_ja_id": 198378,
+      "tatoeba_fr_id": 338192
+    },
+    {
+      "japanese": "はい、すぐ行きます。",
+      "french": "Oui, j'arrive immédiatement.",
+      "vocabulary_word": "はい",
+      "tatoeba_ja_id": 198392,
+      "tatoeba_fr_id": 338199
+    },
+    {
+      "japanese": "パーティーに来ますか。",
+      "french": "Est-ce que vous viendrez à la fête ?",
+      "vocabulary_word": "パーティー",
+      "tatoeba_ja_id": 198474,
+      "tatoeba_fr_id": 13058
+    },
+    {
+      "japanese": "パーティーに来なさいね。",
+      "french": "Tu viendras à la fête, n'est-ce pas ?",
+      "vocabulary_word": "パーティー",
+      "tatoeba_ja_id": 198475,
+      "tatoeba_fr_id": 13057
+    },
+    {
+      "japanese": "ノートとペンを出しなさい。",
+      "french": "Sortez vos cahiers et vos stylos.",
+      "vocabulary_word": "ノート",
+      "tatoeba_ja_id": 198585,
+      "tatoeba_fr_id": 13039
+    },
+    {
+      "japanese": "ネクタイを見せて下さい。",
+      "french": "Pourriez-vous me montrer cette cravate ?",
+      "vocabulary_word": "ネクタイ",
+      "tatoeba_ja_id": 198632,
+      "tatoeba_fr_id": 119997
+    },
+    {
+      "japanese": "なぜそんなことをしたの？",
+      "french": "Pourquoi as-tu fait cela ?",
+      "vocabulary_word": "なぜ",
+      "tatoeba_ja_id": 199246,
+      "tatoeba_fr_id": 181128
     },
     {
       "japanese": "どのくらい高い？",
@@ -669,11 +1313,46 @@
       "tatoeba_fr_id": 237244
     },
     {
+      "japanese": "とても天気のよい日だった。",
+      "french": "C'était un si beau jour.",
+      "vocabulary_word": "よい",
+      "tatoeba_ja_id": 200572,
+      "tatoeba_fr_id": 12897
+    },
+    {
       "japanese": "とても大きいね。",
       "french": "C'est très grand.",
       "vocabulary_word": "大きい",
       "tatoeba_ja_id": 200577,
       "tatoeba_fr_id": 5372463
+    },
+    {
+      "japanese": "とても気に入ってます。",
+      "french": "Ça me plaît beaucoup.",
+      "vocabulary_word": "とても",
+      "tatoeba_ja_id": 200605,
+      "tatoeba_fr_id": 3465
+    },
+    {
+      "japanese": "とてもおいしいよ。",
+      "french": "C'est très bon.",
+      "vocabulary_word": "おいしい",
+      "tatoeba_ja_id": 200661,
+      "tatoeba_fr_id": 549563
+    },
+    {
+      "japanese": "とてもいいよ。",
+      "french": "C'est très bon.",
+      "vocabulary_word": "とても",
+      "tatoeba_ja_id": 200671,
+      "tatoeba_fr_id": 12884
+    },
+    {
+      "japanese": "どこかは今五時だろう。",
+      "french": "Il est actuellement cinq heures quelque part.",
+      "vocabulary_word": "五",
+      "tatoeba_ja_id": 201024,
+      "tatoeba_fr_id": 15122
     },
     {
       "japanese": "どこかに出かけるの？",
@@ -683,9 +1362,16 @@
       "tatoeba_fr_id": 136483
     },
     {
+      "japanese": "どうやって手に入れたの？",
+      "french": "Comment te les es-tu procurés ?",
+      "vocabulary_word": "手",
+      "tatoeba_ja_id": 201144,
+      "tatoeba_fr_id": 15123
+    },
+    {
       "japanese": "どうも雨になりそうです。",
       "french": "J'ai peur qu'il pleuve.",
-      "vocabulary_word": "雨",
+      "vocabulary_word": "どうも",
       "tatoeba_ja_id": 201190,
       "tatoeba_fr_id": 12842
     },
@@ -697,6 +1383,41 @@
       "tatoeba_fr_id": 12830
     },
     {
+      "japanese": "どうぞそれをつけてください。",
+      "french": "Allume-le, s'il te plait.",
+      "vocabulary_word": "どうぞ",
+      "tatoeba_ja_id": 201319,
+      "tatoeba_fr_id": 12819
+    },
+    {
+      "japanese": "どうぞごゆっくり。",
+      "french": "Je vous en prie, prenez votre temps.",
+      "vocabulary_word": "どうぞ",
+      "tatoeba_ja_id": 201334,
+      "tatoeba_fr_id": 12816
+    },
+    {
+      "japanese": "どうぞお話し下さい。",
+      "french": "Vas-y.",
+      "vocabulary_word": "どうぞ",
+      "tatoeba_ja_id": 201339,
+      "tatoeba_fr_id": 12815
+    },
+    {
+      "japanese": "どうしてここへ来たのですか。",
+      "french": "Pourquoi es-tu venu ici ?",
+      "vocabulary_word": "どうして",
+      "tatoeba_ja_id": 201561,
+      "tatoeba_fr_id": 427691
+    },
+    {
+      "japanese": "どうかよく聞いてください。",
+      "french": "Je te prie d'écouter attentivement.",
+      "vocabulary_word": "よく",
+      "tatoeba_ja_id": 201652,
+      "tatoeba_fr_id": 12780
+    },
+    {
       "japanese": "テレビを見ながら新聞を読む人もいる。",
       "french": "Il y a des gens qui lisent le journal en regardant la télévision.",
       "vocabulary_word": "読む",
@@ -704,16 +1425,44 @@
       "tatoeba_fr_id": 12741
     },
     {
+      "japanese": "テレビをつけてくれますか。",
+      "french": "Peux-tu allumer la télévision ?",
+      "vocabulary_word": "テレビ",
+      "tatoeba_ja_id": 201967,
+      "tatoeba_fr_id": 236751
+    },
+    {
+      "japanese": "テニスをするのはおもしろい。",
+      "french": "C'est amusant de jouer au tennis.",
+      "vocabulary_word": "おもしろい",
+      "tatoeba_ja_id": 202176,
+      "tatoeba_fr_id": 12707
+    },
+    {
+      "japanese": "できるだけ多くの本を読みなさい。",
+      "french": "Lis autant de livres que tu peux.",
+      "vocabulary_word": "できる",
+      "tatoeba_ja_id": 202294,
+      "tatoeba_fr_id": 1573078
+    },
+    {
+      "japanese": "できるだけたくさんの本を読みなさい。",
+      "french": "Lis le plus de livres possible.",
+      "vocabulary_word": "できる",
+      "tatoeba_ja_id": 202343,
+      "tatoeba_fr_id": 12684
+    },
+    {
       "japanese": "テーブルの上に花が一本あります。",
       "french": "Il y a une fleur sur la table.",
-      "vocabulary_word": "上",
+      "vocabulary_word": "一",
       "tatoeba_ja_id": 202395,
       "tatoeba_fr_id": 367932
     },
     {
       "japanese": "ちょっと新聞を見せてもらえませんか。",
       "french": "Me permettez-vous de jeter un coup d'œil à votre journal ?",
-      "vocabulary_word": "新聞",
+      "vocabulary_word": "ちょっと",
       "tatoeba_ja_id": 202747,
       "tatoeba_fr_id": 180433
     },
@@ -723,6 +1472,34 @@
       "vocabulary_word": "出かける",
       "tatoeba_ja_id": 202751,
       "tatoeba_fr_id": 15138
+    },
+    {
+      "japanese": "ちょっとここへきてくれませんか。",
+      "french": "Pourriez-vous venir ici un instant ?",
+      "vocabulary_word": "ちょっと",
+      "tatoeba_ja_id": 202839,
+      "tatoeba_fr_id": 181249
+    },
+    {
+      "japanese": "ちょうど出かけるところだ。",
+      "french": "Je suis sur le départ.",
+      "vocabulary_word": "ちょうど",
+      "tatoeba_ja_id": 202898,
+      "tatoeba_fr_id": 1679109
+    },
+    {
+      "japanese": "ちょうど五時です。",
+      "french": "Il est pile cinq heures.",
+      "vocabulary_word": "ちょうど",
+      "tatoeba_ja_id": 202921,
+      "tatoeba_fr_id": 1610731
+    },
+    {
+      "japanese": "たぶん雨になるだろう。",
+      "french": "Il va pleuvoir.",
+      "vocabulary_word": "たぶん",
+      "tatoeba_ja_id": 203351,
+      "tatoeba_fr_id": 761482
     },
     {
       "japanese": "ただ見ているだけです。",
@@ -746,6 +1523,34 @@
       "tatoeba_fr_id": 2142221
     },
     {
+      "japanese": "それを少し食べてもいいかい。",
+      "french": "Est-ce que je peux en manger un peu ?",
+      "vocabulary_word": "少し",
+      "tatoeba_ja_id": 204562,
+      "tatoeba_fr_id": 12430
+    },
+    {
+      "japanese": "それを見せてよ。",
+      "french": "Laissez-moi regarder !",
+      "vocabulary_word": "それ",
+      "tatoeba_ja_id": 204605,
+      "tatoeba_fr_id": 12425
+    },
+    {
+      "japanese": "それを見たいものです。",
+      "french": "Je voudrais le voir.",
+      "vocabulary_word": "それ",
+      "tatoeba_ja_id": 204606,
+      "tatoeba_fr_id": 15152
+    },
+    {
+      "japanese": "すぐにしなさい。",
+      "french": "Faites-le immédiatement.",
+      "vocabulary_word": "すぐに",
+      "tatoeba_ja_id": 204667,
+      "tatoeba_fr_id": 1964350
+    },
+    {
       "japanese": "それは新しくない。",
       "french": "Ce n'est pas nouveau.",
       "vocabulary_word": "新しい",
@@ -760,6 +1565,20 @@
       "tatoeba_fr_id": 822111
     },
     {
+      "japanese": "それは高すぎます。",
+      "french": "C'est trop cher.",
+      "vocabulary_word": "それ",
+      "tatoeba_ja_id": 205206,
+      "tatoeba_fr_id": 12361
+    },
+    {
+      "japanese": "それは何かボールみたいなものです。",
+      "french": "C'est quelque chose qui ressemble à une balle.",
+      "vocabulary_word": "それ",
+      "tatoeba_ja_id": 205320,
+      "tatoeba_fr_id": 390634
+    },
+    {
       "japanese": "それは安いですね。",
       "french": "C'est bon marché, n'est-ce pas ?",
       "vocabulary_word": "安い",
@@ -769,23 +1588,107 @@
     {
       "japanese": "それはどのくらい前のことでしたか。",
       "french": "C'était il y a combien de temps ?",
-      "vocabulary_word": "前",
+      "vocabulary_word": "どの",
       "tatoeba_ja_id": 205427,
       "tatoeba_fr_id": 12340
     },
     {
+      "japanese": "それはおもしろいニュースだ。",
+      "french": "C'est une information intéressante.",
+      "vocabulary_word": "ニュース",
+      "tatoeba_ja_id": 205530,
+      "tatoeba_fr_id": 135956
+    },
+    {
+      "japanese": "それはあなたのナイフではない。",
+      "french": "Ce n'est pas ton couteau.",
+      "vocabulary_word": "ナイフ",
+      "tatoeba_ja_id": 205569,
+      "tatoeba_fr_id": 460672
+    },
+    {
       "japanese": "それは何ですか。",
       "french": "Qu'est-ce que c'est ?",
-      "vocabulary_word": "何",
+      "vocabulary_word": "それ",
       "tatoeba_ja_id": 205604,
       "tatoeba_fr_id": 3094
     },
     {
+      "japanese": "その話を聞かせなさい。",
+      "french": "Raconte-moi l'histoire.",
+      "vocabulary_word": "その",
+      "tatoeba_ja_id": 206009,
+      "tatoeba_fr_id": 12274
+    },
+    {
+      "japanese": "その話はもうたくさんだ。",
+      "french": "J'en ai assez entendu.",
+      "vocabulary_word": "たくさん",
+      "tatoeba_ja_id": 206045,
+      "tatoeba_fr_id": 1538075
+    },
+    {
       "japanese": "その時あなたは学校にいましたか。",
       "french": "Étais-tu à l'école à ce moment-là ?",
-      "vocabulary_word": "学校",
+      "vocabulary_word": "その",
       "tatoeba_ja_id": 209760,
       "tatoeba_fr_id": 136160
+    },
+    {
+      "japanese": "そのバスは一日に何本ありますか。",
+      "french": "Combien de fois par jour passe ce bus ?",
+      "vocabulary_word": "一日",
+      "tatoeba_ja_id": 212736,
+      "tatoeba_fr_id": 12056
+    },
+    {
+      "japanese": "そのことを話して下さい。",
+      "french": "Parlez-moi de cela.",
+      "vocabulary_word": "その",
+      "tatoeba_ja_id": 213109,
+      "tatoeba_fr_id": 12043
+    },
+    {
+      "japanese": "そのいすは木でできている。",
+      "french": "Ces chaises sont faites de bois.",
+      "vocabulary_word": "いす",
+      "tatoeba_ja_id": 213398,
+      "tatoeba_fr_id": 685058
+    },
+    {
+      "japanese": "そっちの天気は？",
+      "french": "Quel temps fait-il là-bas ?",
+      "vocabulary_word": "そっち",
+      "tatoeba_ja_id": 213467,
+      "tatoeba_fr_id": 12018
+    },
+    {
+      "japanese": "そちらの天気はいかがですか。",
+      "french": "Comment est le temps là-bas ?",
+      "vocabulary_word": "そちら",
+      "tatoeba_ja_id": 213476,
+      "tatoeba_fr_id": 180672
+    },
+    {
+      "japanese": "そして十分な水さえない。",
+      "french": "Et il n'y a même pas assez d'eau.",
+      "vocabulary_word": "そして",
+      "tatoeba_ja_id": 213496,
+      "tatoeba_fr_id": 12016
+    },
+    {
+      "japanese": "そこへ行くつもりだ。",
+      "french": "Je compte aller là-bas.",
+      "vocabulary_word": "そこ",
+      "tatoeba_ja_id": 213591,
+      "tatoeba_fr_id": 12002
+    },
+    {
+      "japanese": "そこへは行かないほうがよい。",
+      "french": "Je te déconseille d'y aller.",
+      "vocabulary_word": "よい",
+      "tatoeba_ja_id": 213596,
+      "tatoeba_fr_id": 139593
     },
     {
       "japanese": "そこへはバスと電車で行った。",
@@ -802,6 +1705,20 @@
       "tatoeba_fr_id": 1843064
     },
     {
+      "japanese": "そこで何をしたの？",
+      "french": "Qu'est-ce que tu as fait là ?",
+      "vocabulary_word": "そこ",
+      "tatoeba_ja_id": 213722,
+      "tatoeba_fr_id": 13239650
+    },
+    {
+      "japanese": "そうしないではいられないんだよ。",
+      "french": "Je ne peux m'empêcher de faire cela.",
+      "vocabulary_word": "では",
+      "tatoeba_ja_id": 213857,
+      "tatoeba_fr_id": 11979
+    },
+    {
       "japanese": "すばらしい天気ですね。",
       "french": "Il fait un temps magnifique, n'est-ce pas ?",
       "vocabulary_word": "天気",
@@ -809,9 +1726,93 @@
       "tatoeba_fr_id": 181357
     },
     {
+      "japanese": "すぐに来て下さい。",
+      "french": "Viens ici immédiatement.",
+      "vocabulary_word": "すぐに",
+      "tatoeba_ja_id": 214819,
+      "tatoeba_fr_id": 450449
+    },
+    {
+      "japanese": "すぐに出来ます。",
+      "french": "Bientôt prêt.",
+      "vocabulary_word": "すぐに",
+      "tatoeba_ja_id": 214858,
+      "tatoeba_fr_id": 15188
+    },
+    {
+      "japanese": "すぐに行きます。",
+      "french": "J'arrive tout de suite.",
+      "vocabulary_word": "すぐに",
+      "tatoeba_ja_id": 214893,
+      "tatoeba_fr_id": 8545
+    },
+    {
+      "japanese": "すぐにここへ来なさい。",
+      "french": "Viens ici tout de suite.",
+      "vocabulary_word": "すぐに",
+      "tatoeba_ja_id": 214956,
+      "tatoeba_fr_id": 11852
+    },
+    {
+      "japanese": "すぐそちらに行きますよ。",
+      "french": "J'arrive immédiatement.",
+      "vocabulary_word": "そちら",
+      "tatoeba_ja_id": 214979,
+      "tatoeba_fr_id": 329744
+    },
+    {
+      "japanese": "すぐそこに行かなければなりませんか。",
+      "french": "Dois-je y aller tout de suite ?",
+      "vocabulary_word": "そこ",
+      "tatoeba_ja_id": 214980,
+      "tatoeba_fr_id": 135881
+    },
+    {
+      "japanese": "ジュースをください。",
+      "french": "Un jus de fruit s'il vous plaît.",
+      "vocabulary_word": "ください",
+      "tatoeba_ja_id": 215728,
+      "tatoeba_fr_id": 11759
+    },
+    {
+      "japanese": "しかし、なぜ？",
+      "french": "Mais pourquoi ?",
+      "vocabulary_word": "しかし",
+      "tatoeba_ja_id": 216249,
+      "tatoeba_fr_id": 237235
+    },
+    {
+      "japanese": "しかしながら、高すぎる。",
+      "french": "Cependant c'est trop cher.",
+      "vocabulary_word": "しかし",
+      "tatoeba_ja_id": 216263,
+      "tatoeba_fr_id": 237241
+    },
+    {
+      "japanese": "さあどうぞお入りください。",
+      "french": "Je vous en prie, entrez !",
+      "vocabulary_word": "さあ",
+      "tatoeba_ja_id": 216899,
+      "tatoeba_fr_id": 14138
+    },
+    {
+      "japanese": "さあ、入って入って。",
+      "french": "Entre donc !",
+      "vocabulary_word": "さあ",
+      "tatoeba_ja_id": 216921,
+      "tatoeba_fr_id": 11610
+    },
+    {
+      "japanese": "これを買います。",
+      "french": "Je le prends.",
+      "vocabulary_word": "これ",
+      "tatoeba_ja_id": 217615,
+      "tatoeba_fr_id": 3383
+    },
+    {
       "japanese": "これを食べていいですか。",
       "french": "Puis-je manger ceci ?",
-      "vocabulary_word": "いい",
+      "vocabulary_word": "これ",
       "tatoeba_ja_id": 217628,
       "tatoeba_fr_id": 11534
     },
@@ -823,6 +1824,13 @@
       "tatoeba_fr_id": 12419731
     },
     {
+      "japanese": "これをコピーしてくれますか。",
+      "french": "Peux-tu copier ça pour moi ?",
+      "vocabulary_word": "これ",
+      "tatoeba_ja_id": 217685,
+      "tatoeba_fr_id": 11529
+    },
+    {
       "japanese": "これよりも小さいのはないですか。",
       "french": "N'avez-vous pas quelque chose de plus petit que ça ?",
       "vocabulary_word": "小さい",
@@ -832,7 +1840,7 @@
     {
       "japanese": "これはとても小さい本です。",
       "french": "C'est un très petit livre.",
-      "vocabulary_word": "小さい",
+      "vocabulary_word": "とても",
       "tatoeba_ja_id": 218561,
       "tatoeba_fr_id": 127426
     },
@@ -842,6 +1850,41 @@
       "vocabulary_word": "本",
       "tatoeba_ja_id": 218661,
       "tatoeba_fr_id": 3662054
+    },
+    {
+      "japanese": "ゴルフをしたことはあるかい？",
+      "french": "Avez-vous déjà joué au golf ?",
+      "vocabulary_word": "ある",
+      "tatoeba_ja_id": 219037,
+      "tatoeba_fr_id": 11490
+    },
+    {
+      "japanese": "この話はあれよりずっとおもしろい。",
+      "french": "Cette histoire est de loin plus intéressante que celle-là.",
+      "vocabulary_word": "おもしろい",
+      "tatoeba_ja_id": 219137,
+      "tatoeba_fr_id": 119805
+    },
+    {
+      "japanese": "この本読んでもいいよ。",
+      "french": "Tu peux lire ce livre.",
+      "vocabulary_word": "でも",
+      "tatoeba_ja_id": 219488,
+      "tatoeba_fr_id": 748308
+    },
+    {
+      "japanese": "この本は日本では手に入らない。",
+      "french": "Ce livre n'est pas disponible au Japon.",
+      "vocabulary_word": "手",
+      "tatoeba_ja_id": 219549,
+      "tatoeba_fr_id": 395078
+    },
+    {
+      "japanese": "この本は読みやすい。",
+      "french": "Ce livre est facile à lire.",
+      "vocabulary_word": "この",
+      "tatoeba_ja_id": 219569,
+      "tatoeba_fr_id": 336890
     },
     {
       "japanese": "この本は新しい。",
@@ -865,6 +1908,13 @@
       "tatoeba_fr_id": 11457
     },
     {
+      "japanese": "この本は何と小さいのだろう。",
+      "french": "Que ce livre est petit !",
+      "vocabulary_word": "本",
+      "tatoeba_ja_id": 219669,
+      "tatoeba_fr_id": 11458
+    },
+    {
       "japanese": "この本がいただきたいのですが。",
       "french": "Je voudrais ce livre.",
       "vocabulary_word": "本",
@@ -874,16 +1924,100 @@
     {
       "japanese": "この車はあの車より大きい。",
       "french": "Cette voiture-ci est plus grande que celle-là.",
-      "vocabulary_word": "車",
+      "vocabulary_word": "あの",
       "tatoeba_ja_id": 221417,
       "tatoeba_fr_id": 1702138
     },
     {
+      "japanese": "この花はなんてきれいなんだろう。",
+      "french": "Comme cette fleur est belle !",
+      "vocabulary_word": "花",
+      "tatoeba_ja_id": 222739,
+      "tatoeba_fr_id": 11308
+    },
+    {
+      "japanese": "このようにして、それをやって下さい。",
+      "french": "Faites comme cela, s'il vous plait.",
+      "vocabulary_word": "この",
+      "tatoeba_ja_id": 223072,
+      "tatoeba_fr_id": 11286
+    },
+    {
+      "japanese": "このペンをください。",
+      "french": "S'il vous plaît, donnez-moi ce stylo.",
+      "vocabulary_word": "ペン",
+      "tatoeba_ja_id": 223199,
+      "tatoeba_fr_id": 7771384
+    },
+    {
+      "japanese": "このペンはいくらですか。",
+      "french": "Combien coûte ce stylo ?",
+      "vocabulary_word": "この",
+      "tatoeba_ja_id": 223205,
+      "tatoeba_fr_id": 11281
+    },
+    {
+      "japanese": "このページをコピーして下さい。",
+      "french": "Recopie cette page s'il te plait.",
+      "vocabulary_word": "ページ",
+      "tatoeba_ja_id": 223219,
+      "tatoeba_fr_id": 11280
+    },
+    {
+      "japanese": "このバッグを見せてください。",
+      "french": "Pouvez-vous me montrer ce sac ?",
+      "vocabulary_word": "見せる",
+      "tatoeba_ja_id": 223320,
+      "tatoeba_fr_id": 11275
+    },
+    {
+      "japanese": "このネクタイはいくらですか。",
+      "french": "Combien coûte cette cravate ?",
+      "vocabulary_word": "ネクタイ",
+      "tatoeba_ja_id": 223401,
+      "tatoeba_fr_id": 11270
+    },
+    {
+      "japanese": "このところあまり外出する気がしない。",
+      "french": "Je n'ai pas envie de sortir en ce moment.",
+      "vocabulary_word": "あまり",
+      "tatoeba_ja_id": 223465,
+      "tatoeba_fr_id": 11268
+    },
+    {
+      "japanese": "このコップには水が入っている。",
+      "french": "Il y a de l'eau dans ce verre.",
+      "vocabulary_word": "コップ",
+      "tatoeba_ja_id": 223795,
+      "tatoeba_fr_id": 12419954
+    },
+    {
+      "japanese": "このいすは木で出来ている。",
+      "french": "Cette chaise est en bois.",
+      "vocabulary_word": "いす",
+      "tatoeba_ja_id": 223991,
+      "tatoeba_fr_id": 482331
+    },
+    {
       "japanese": "コップは水でいっぱいだ。",
       "french": "Le verre est plein d'eau.",
-      "vocabulary_word": "水",
+      "vocabulary_word": "コップ",
       "tatoeba_ja_id": 224105,
       "tatoeba_fr_id": 1158728
+    },
+    {
+      "japanese": "コップに水をいっぱい入れなさい。",
+      "french": "Remplis un verre d'eau.",
+      "vocabulary_word": "コップ",
+      "tatoeba_ja_id": 224111,
+      "tatoeba_fr_id": 180256
+    },
+    {
+      "japanese": "こちらに来なさい。",
+      "french": "Viens ici.",
+      "vocabulary_word": "こちら",
+      "tatoeba_ja_id": 224174,
+      "tatoeba_fr_id": 11240
     },
     {
       "japanese": "ここに本がある。",
@@ -893,11 +2027,39 @@
       "tatoeba_fr_id": 11215
     },
     {
+      "japanese": "ここには長くいないでおきましょう。",
+      "french": "Ne restons pas ici trop longtemps.",
+      "vocabulary_word": "ここ",
+      "tatoeba_ja_id": 224395,
+      "tatoeba_fr_id": 11214
+    },
+    {
       "japanese": "ここで食べます。",
       "french": "Nous mangeons ici.",
-      "vocabulary_word": "食べる",
+      "vocabulary_word": "ここ",
       "tatoeba_ja_id": 224546,
       "tatoeba_fr_id": 11195
+    },
+    {
+      "japanese": "ここで休みましょう。",
+      "french": "Reposons-nous ici.",
+      "vocabulary_word": "休み",
+      "tatoeba_ja_id": 224571,
+      "tatoeba_fr_id": 11194
+    },
+    {
+      "japanese": "ここでテレビを見ましょう。",
+      "french": "Regardons la télévision ici.",
+      "vocabulary_word": "テレビ",
+      "tatoeba_ja_id": 224651,
+      "tatoeba_fr_id": 11179
+    },
+    {
+      "japanese": "ここだけの話なんだけど。",
+      "french": "C'est juste entre toi et moi.",
+      "vocabulary_word": "話",
+      "tatoeba_ja_id": 224677,
+      "tatoeba_fr_id": 341285
     },
     {
       "japanese": "ここが父の生まれたところです。",
@@ -907,11 +2069,46 @@
       "tatoeba_fr_id": 1558436
     },
     {
+      "japanese": "コーヒーを入れましょう。",
+      "french": "Je vais préparer du café.",
+      "vocabulary_word": "入れる",
+      "tatoeba_ja_id": 224851,
+      "tatoeba_fr_id": 11148
+    },
+    {
+      "japanese": "コーヒーを飲みながら話しましょう。",
+      "french": "Parlons autour d'une tasse de café.",
+      "vocabulary_word": "コーヒー",
+      "tatoeba_ja_id": 224862,
+      "tatoeba_fr_id": 11145
+    },
+    {
+      "japanese": "コーヒーをください。",
+      "french": "Donnez-moi un café, s'il vous plaît.",
+      "vocabulary_word": "コーヒー",
+      "tatoeba_ja_id": 224884,
+      "tatoeba_fr_id": 11143
+    },
+    {
+      "japanese": "コーヒーにミルクを入れた。",
+      "french": "Il a mis du lait dans son café.",
+      "vocabulary_word": "コーヒー",
+      "tatoeba_ja_id": 224929,
+      "tatoeba_fr_id": 1578072
+    },
+    {
       "japanese": "きれいな花をありがとう。",
       "french": "Merci pour les belles fleurs.",
-      "vocabulary_word": "花",
+      "vocabulary_word": "きれい",
       "tatoeba_ja_id": 225744,
       "tatoeba_fr_id": 236248
+    },
+    {
+      "japanese": "きっと今日テストがあるでしょう。",
+      "french": "Je parie que nous aurons un contrôle aujourd'hui.",
+      "vocabulary_word": "テスト",
+      "tatoeba_ja_id": 226018,
+      "tatoeba_fr_id": 11016
     },
     {
       "japanese": "きっと雨になりますよ。",
@@ -923,7 +2120,7 @@
     {
       "japanese": "お話中です。",
       "french": "Ça sonne occupé.",
-      "vocabulary_word": "中",
+      "vocabulary_word": "話",
       "tatoeba_ja_id": 226502,
       "tatoeba_fr_id": 396313
     },
@@ -933,6 +2130,20 @@
       "vocabulary_word": "すみません",
       "tatoeba_ja_id": 226503,
       "tatoeba_fr_id": 128286
+    },
+    {
+      "japanese": "話し中です。",
+      "french": "Ça sonne occupé.",
+      "vocabulary_word": "中",
+      "tatoeba_ja_id": 226509,
+      "tatoeba_fr_id": 396313
+    },
+    {
+      "japanese": "お話ししてもよいですか。",
+      "french": "Est-ce que je peux te parler ?",
+      "vocabulary_word": "よい",
+      "tatoeba_ja_id": 226511,
+      "tatoeba_fr_id": 396316
     },
     {
       "japanese": "お名前をお聞きしたいのですが。",
@@ -956,6 +2167,20 @@
       "tatoeba_fr_id": 136231
     },
     {
+      "japanese": "お入りください。",
+      "french": "Entrez, je vous prie.",
+      "vocabulary_word": "ください",
+      "tatoeba_ja_id": 226784,
+      "tatoeba_fr_id": 10928
+    },
+    {
+      "japanese": "お年をお聞きしてよろしいでしょうか。",
+      "french": "Puis-je vous demander votre âge ?",
+      "vocabulary_word": "年",
+      "tatoeba_ja_id": 226785,
+      "tatoeba_fr_id": 2125671
+    },
+    {
       "japanese": "お時間わかりますか。",
       "french": "Auriez-vous l'heure ?",
       "vocabulary_word": "時間",
@@ -970,11 +2195,32 @@
       "tatoeba_fr_id": 10888
     },
     {
+      "japanese": "お金を先に入れるのですか。",
+      "french": "Dois-je d'abord mettre les pièces ?",
+      "vocabulary_word": "先",
+      "tatoeba_ja_id": 227214,
+      "tatoeba_fr_id": 180257
+    },
+    {
       "japanese": "お金を少しください。",
       "french": "Donnez-moi un peu d'argent.",
       "vocabulary_word": "お金",
       "tatoeba_ja_id": 227219,
       "tatoeba_fr_id": 10868
+    },
+    {
+      "japanese": "おもしろいならどんな本でもよい。",
+      "french": "N'importe quel livre peut aller tant qu'il est intéressant.",
+      "vocabulary_word": "おもしろい",
+      "tatoeba_ja_id": 227500,
+      "tatoeba_fr_id": 10836
+    },
+    {
+      "japanese": "いつテニスをしますか。",
+      "french": "Quand jouez-vous au tennis ?",
+      "vocabulary_word": "いつ",
+      "tatoeba_ja_id": 228861,
+      "tatoeba_fr_id": 1677659
     },
     {
       "japanese": "いつかあなたの国へ行きます。",
@@ -1005,11 +2251,53 @@
       "tatoeba_fr_id": 4244
     },
     {
+      "japanese": "いいカメラを買った。",
+      "french": "J'ai acheté un bon appareil photo.",
+      "vocabulary_word": "カメラ",
+      "tatoeba_ja_id": 229410,
+      "tatoeba_fr_id": 136040
+    },
+    {
+      "japanese": "いいえ、少しも。",
+      "french": "Je vous en prie.",
+      "vocabulary_word": "いいえ",
+      "tatoeba_ja_id": 229428,
+      "tatoeba_fr_id": 477559
+    },
+    {
+      "japanese": "いいえ、でもテニスはやりますよ。",
+      "french": "Non, mais je joue au tennis.",
+      "vocabulary_word": "いいえ",
+      "tatoeba_ja_id": 229451,
+      "tatoeba_fr_id": 1649808
+    },
+    {
+      "japanese": "いいえ、ちょっと見ているだけです。",
+      "french": "Non merci. Je ne fais que regarder.",
+      "vocabulary_word": "いいえ",
+      "tatoeba_ja_id": 229454,
+      "tatoeba_fr_id": 10644
+    },
+    {
+      "japanese": "あれを見せてください。",
+      "french": "Puis-je voir celui-ci ?",
+      "vocabulary_word": "見せる",
+      "tatoeba_ja_id": 229635,
+      "tatoeba_fr_id": 555789
+    },
+    {
       "japanese": "あれは古いカメラだ。",
       "french": "C'est un vieil appareil photo.",
-      "vocabulary_word": "古い",
+      "vocabulary_word": "カメラ",
       "tatoeba_ja_id": 229711,
       "tatoeba_fr_id": 10614
+    },
+    {
+      "japanese": "あれはテーブルです。",
+      "french": "C'est une table.",
+      "vocabulary_word": "テーブル",
+      "tatoeba_ja_id": 229736,
+      "tatoeba_fr_id": 181306
     },
     {
       "japanese": "ある女の子から電話がかかってきた。",
@@ -1017,6 +2305,13 @@
       "vocabulary_word": "女の子",
       "tatoeba_ja_id": 229860,
       "tatoeba_fr_id": 10597
+    },
+    {
+      "japanese": "あのケーキ食べてもいい？",
+      "french": "Puis-je manger ce gâteau ?",
+      "vocabulary_word": "あの",
+      "tatoeba_ja_id": 231333,
+      "tatoeba_fr_id": 10462
     },
     {
       "japanese": "あなたは先月から日本にいますか。",
@@ -1033,9 +2328,16 @@
       "tatoeba_fr_id": 430354
     },
     {
+      "japanese": "あなたは今まで何をしていたの？",
+      "french": "Que faisais-tu ?",
+      "vocabulary_word": "あなた",
+      "tatoeba_ja_id": 232054,
+      "tatoeba_fr_id": 452150
+    },
+    {
       "japanese": "あなたは学生ですか。",
       "french": "Es-tu étudiant ?",
-      "vocabulary_word": "学生",
+      "vocabulary_word": "あなた",
       "tatoeba_ja_id": 232152,
       "tatoeba_fr_id": 10391
     },
@@ -1054,18 +2356,67 @@
       "tatoeba_fr_id": 10357
     },
     {
+      "japanese": "あなたはテレビを見ますか。",
+      "french": "Regardez-vous la télévision ?",
+      "vocabulary_word": "テレビ",
+      "tatoeba_ja_id": 232511,
+      "tatoeba_fr_id": 15294
+    },
+    {
+      "japanese": "あなたはテニスが上手ですか。",
+      "french": "Est-ce que vous jouez bien au tennis ?",
+      "vocabulary_word": "上手",
+      "tatoeba_ja_id": 232515,
+      "tatoeba_fr_id": 1536800
+    },
+    {
       "japanese": "あなたはたくさん時間がありますか。",
       "french": "Avez-vous beaucoup de temps ?",
-      "vocabulary_word": "時間",
+      "vocabulary_word": "たくさん",
       "tatoeba_ja_id": 232532,
       "tatoeba_fr_id": 10353
     },
     {
+      "japanese": "あなたはそのニュースを聞きましたか。",
+      "french": "As-tu entendu les nouvelles ?",
+      "vocabulary_word": "ニュース",
+      "tatoeba_ja_id": 232622,
+      "tatoeba_fr_id": 10346
+    },
+    {
+      "japanese": "あなたはサッカーをしますか。",
+      "french": "Joues-tu au foot ?",
+      "vocabulary_word": "あなた",
+      "tatoeba_ja_id": 232681,
+      "tatoeba_fr_id": 1570983
+    },
+    {
+      "japanese": "あなたはカメラをどうしましたか。",
+      "french": "Qu'avez-vous fait de l'appareil photo ?",
+      "vocabulary_word": "カメラ",
+      "tatoeba_ja_id": 232768,
+      "tatoeba_fr_id": 354771
+    },
+    {
       "japanese": "いくらお金をもっていますか。",
       "french": "Combien d'argent avez-vous sur vous ?",
-      "vocabulary_word": "お金",
+      "vocabulary_word": "いくら",
       "tatoeba_ja_id": 232845,
       "tatoeba_fr_id": 10863
+    },
+    {
+      "japanese": "あなたのノートを見せてください。",
+      "french": "S'il te plaît, montre-moi ton cahier.",
+      "vocabulary_word": "ノート",
+      "tatoeba_ja_id": 233500,
+      "tatoeba_fr_id": 3441493
+    },
+    {
+      "japanese": "あなたのしたいことは何でもしなさい。",
+      "french": "Fais ce que tu veux.",
+      "vocabulary_word": "でも",
+      "tatoeba_ja_id": 233524,
+      "tatoeba_fr_id": 10274
     },
     {
       "japanese": "あなたのお母さんはいかがですか。",
@@ -1089,6 +2440,13 @@
       "tatoeba_fr_id": 10245
     },
     {
+      "japanese": "あなたが話していた人はどなたですか。",
+      "french": "Qui est l'homme à qui tu parlais ?",
+      "vocabulary_word": "どなた",
+      "tatoeba_ja_id": 233903,
+      "tatoeba_fr_id": 430384
+    },
+    {
       "japanese": "あとで電話します。",
       "french": "Je t'appellerai plus tard.",
       "vocabulary_word": "電話",
@@ -1096,11 +2454,39 @@
       "tatoeba_fr_id": 10198
     },
     {
+      "japanese": "あとでホテルに電話を下さい。",
+      "french": "S'il vous plaît, appelez-moi plus tard à mon hôtel.",
+      "vocabulary_word": "ホテル",
+      "tatoeba_ja_id": 234313,
+      "tatoeba_fr_id": 10196
+    },
+    {
+      "japanese": "あさって、時間がありませんか。",
+      "french": "As-tu du temps libre après-demain ?",
+      "vocabulary_word": "あさって",
+      "tatoeba_ja_id": 234494,
+      "tatoeba_fr_id": 10179
+    },
+    {
       "japanese": "読む本がありますか。",
       "french": "Avez-vous un livre à lire ?",
       "vocabulary_word": "読む",
       "tatoeba_ja_id": 236725,
       "tatoeba_fr_id": 14606
+    },
+    {
+      "japanese": "どうぞおかけ下さい。",
+      "french": "S'il vous plaît, asseyez-vous !",
+      "vocabulary_word": "どうぞ",
+      "tatoeba_ja_id": 236991,
+      "tatoeba_fr_id": 12809
+    },
+    {
+      "japanese": "そこに行ったことがありますか。",
+      "french": "Es-tu jamais allé là-bas ?",
+      "vocabulary_word": "そこ",
+      "tatoeba_ja_id": 342142,
+      "tatoeba_fr_id": 395581
     },
     {
       "japanese": "何をしていますか。",
@@ -1124,11 +2510,25 @@
       "tatoeba_fr_id": 4323067
     },
     {
+      "japanese": "何を買いましたか。",
+      "french": "Qu'avez-vous acheté ?",
+      "vocabulary_word": "何",
+      "tatoeba_ja_id": 401777,
+      "tatoeba_fr_id": 480409
+    },
+    {
       "japanese": "すみません。",
       "french": "Excusez-moi.",
       "vocabulary_word": "すみません",
       "tatoeba_ja_id": 408301,
       "tatoeba_fr_id": 499087
+    },
+    {
+      "japanese": "これはいくらですか。",
+      "french": "Combien ça coûte ?",
+      "vocabulary_word": "これ",
+      "tatoeba_ja_id": 432825,
+      "tatoeba_fr_id": 439117
     },
     {
       "japanese": "分かってる。",
@@ -1145,11 +2545,25 @@
       "tatoeba_fr_id": 538591
     },
     {
+      "japanese": "あなたはどこで生まれましたか？",
+      "french": "Où êtes-vous née ?",
+      "vocabulary_word": "生まれる",
+      "tatoeba_ja_id": 545831,
+      "tatoeba_fr_id": 1619330
+    },
+    {
       "japanese": "中国は日本より大きいです。",
       "french": "La Chine est plus grande que le Japon.",
       "vocabulary_word": "大きい",
       "tatoeba_ja_id": 625254,
       "tatoeba_fr_id": 627628
+    },
+    {
+      "japanese": "その本は小さい。",
+      "french": "Ce livre est petit.",
+      "vocabulary_word": "その",
+      "tatoeba_ja_id": 633064,
+      "tatoeba_fr_id": 1447130
     },
     {
       "japanese": "食べてはいけません。",
@@ -1161,7 +2575,7 @@
     {
       "japanese": "男の人はパンを食べました。",
       "french": "L'homme mangea du pain.",
-      "vocabulary_word": "男の人",
+      "vocabulary_word": "男",
       "tatoeba_ja_id": 767955,
       "tatoeba_fr_id": 1132182
     },
@@ -1173,11 +2587,39 @@
       "tatoeba_fr_id": 11029
     },
     {
+      "japanese": "どうでしたか。",
+      "french": "C'était comment ?",
+      "vocabulary_word": "どう",
+      "tatoeba_ja_id": 792528,
+      "tatoeba_fr_id": 1132789
+    },
+    {
       "japanese": "あなたは今日、何をしましたか？",
       "french": "Qu'avez-vous fait aujourd'hui ?",
       "vocabulary_word": "今日",
       "tatoeba_ja_id": 865768,
       "tatoeba_fr_id": 464805
+    },
+    {
+      "japanese": "こっちへ来なさい！",
+      "french": "Venez ici !",
+      "vocabulary_word": "こっち",
+      "tatoeba_ja_id": 874002,
+      "tatoeba_fr_id": 1275473
+    },
+    {
+      "japanese": "レストランはどこにありますか？",
+      "french": "Où y a-t-il un restaurant ?",
+      "vocabulary_word": "レストラン",
+      "tatoeba_ja_id": 878467,
+      "tatoeba_fr_id": 878469
+    },
+    {
+      "japanese": "このズボンいくら？",
+      "french": "Combien coûte ce pantalon ?",
+      "vocabulary_word": "ズボン",
+      "tatoeba_ja_id": 879005,
+      "tatoeba_fr_id": 469698
     },
     {
       "japanese": "少年がパンを食べています。",
@@ -1187,6 +2629,13 @@
       "tatoeba_fr_id": 767919
     },
     {
+      "japanese": "今日のテストどうだった？",
+      "french": "Comment s'est passé l'examen aujourd'hui ?",
+      "vocabulary_word": "テスト",
+      "tatoeba_ja_id": 886078,
+      "tatoeba_fr_id": 888685
+    },
+    {
       "japanese": "先は長いなあ。",
       "french": "La route est encore longue !",
       "vocabulary_word": "長い",
@@ -1194,9 +2643,16 @@
       "tatoeba_fr_id": 1189236
     },
     {
+      "japanese": "じゃあ、今日はここまで。",
+      "french": "C'est tout pour aujourd'hui.",
+      "vocabulary_word": "じゃあ",
+      "tatoeba_ja_id": 889766,
+      "tatoeba_fr_id": 8458
+    },
+    {
       "japanese": "どうして花を買ったんだ？",
       "french": "Pourquoi as-tu acheté les fleurs ?",
-      "vocabulary_word": "花",
+      "vocabulary_word": "どうして",
       "tatoeba_ja_id": 980709,
       "tatoeba_fr_id": 992844
     },
@@ -1215,11 +2671,81 @@
       "tatoeba_fr_id": 8509
     },
     {
+      "japanese": "とても天気がいい。",
+      "french": "Le temps est si beau.",
+      "vocabulary_word": "とても",
+      "tatoeba_ja_id": 1031839,
+      "tatoeba_fr_id": 536987
+    },
+    {
+      "japanese": "することがたくさんある。",
+      "french": "J'ai beaucoup à faire.",
+      "vocabulary_word": "たくさん",
+      "tatoeba_ja_id": 1039968,
+      "tatoeba_fr_id": 590439
+    },
+    {
+      "japanese": "でもなんで？",
+      "french": "Mais pourquoi ?",
+      "vocabulary_word": "でも",
+      "tatoeba_ja_id": 1057336,
+      "tatoeba_fr_id": 237235
+    },
+    {
       "japanese": "もし雨なら電話して。",
       "french": "Appelle-moi si jamais il pleut.",
       "vocabulary_word": "雨",
       "tatoeba_ja_id": 1061603,
       "tatoeba_fr_id": 1538087
+    },
+    {
+      "japanese": "あなたはどう？",
+      "french": "Et vous ?",
+      "vocabulary_word": "あなた",
+      "tatoeba_ja_id": 1110588,
+      "tatoeba_fr_id": 8973
+    },
+    {
+      "japanese": "あなたは何年生まれですか？",
+      "french": "En quelle année êtes-vous née ?",
+      "vocabulary_word": "生まれる",
+      "tatoeba_ja_id": 1147746,
+      "tatoeba_fr_id": 1147743
+    },
+    {
+      "japanese": "あなたたちは何月生まれですか？",
+      "french": "Quel mois êtes-vous nées ?",
+      "vocabulary_word": "生まれる",
+      "tatoeba_ja_id": 1147784,
+      "tatoeba_fr_id": 1147778
+    },
+    {
+      "japanese": "あまり出かける気分じゃなかった。",
+      "french": "Je n'avais pas vraiment envie de sortir.",
+      "vocabulary_word": "あまり",
+      "tatoeba_ja_id": 1152481,
+      "tatoeba_fr_id": 545725
+    },
+    {
+      "japanese": "もう少しお時間をいただけますか。",
+      "french": "Pouvez-vous me donner un peu plus de temps ?",
+      "vocabulary_word": "少し",
+      "tatoeba_ja_id": 1160399,
+      "tatoeba_fr_id": 1160798
+    },
+    {
+      "japanese": "話したいことがたくさんあるんだよ。",
+      "french": "J'ai plein de choses à te dire.",
+      "vocabulary_word": "たくさん",
+      "tatoeba_ja_id": 1167022,
+      "tatoeba_fr_id": 396317
+    },
+    {
+      "japanese": "どこに行きたいですか。",
+      "french": "Où veux-tu aller ?",
+      "vocabulary_word": "どこ",
+      "tatoeba_ja_id": 1168273,
+      "tatoeba_fr_id": 936516
     },
     {
       "japanese": "これは花ですか。",
@@ -1231,7 +2757,7 @@
     {
       "japanese": "男の子と男の人は水を飲んでいます。",
       "french": "Le garçon et l'homme boivent de l'eau.",
-      "vocabulary_word": "男の子",
+      "vocabulary_word": "男",
       "tatoeba_ja_id": 1187515,
       "tatoeba_fr_id": 1187521
     },
@@ -1243,6 +2769,13 @@
       "tatoeba_fr_id": 1188725
     },
     {
+      "japanese": "あなたは何年生ですか。",
+      "french": "En quelle année êtes-vous à l'école ?",
+      "vocabulary_word": "年",
+      "tatoeba_ja_id": 1191255,
+      "tatoeba_fr_id": 1191285
+    },
+    {
       "japanese": "男の人は何をしていますか。",
       "french": "Qu'est-ce que l'homme fait ?",
       "vocabulary_word": "男の人",
@@ -1250,9 +2783,16 @@
       "tatoeba_fr_id": 1193958
     },
     {
+      "japanese": "もう見ないでください！",
+      "french": "Ne regardez plus !",
+      "vocabulary_word": "もう",
+      "tatoeba_ja_id": 1200727,
+      "tatoeba_fr_id": 1158477
+    },
+    {
       "japanese": "その本をどこで買いましたか。",
       "french": "Où as-tu acheté ce livre ?",
-      "vocabulary_word": "本",
+      "vocabulary_word": "その",
       "tatoeba_ja_id": 1221498,
       "tatoeba_fr_id": 1080619
     },
@@ -1299,6 +2839,13 @@
       "tatoeba_fr_id": 1339246
     },
     {
+      "japanese": "よく聞いて。",
+      "french": "Écoute bien.",
+      "vocabulary_word": "よく",
+      "tatoeba_ja_id": 1512404,
+      "tatoeba_fr_id": 13739
+    },
+    {
       "japanese": "ありがとう！",
       "french": "Merci !",
       "vocabulary_word": "ありがとう",
@@ -1313,6 +2860,13 @@
       "tatoeba_fr_id": 2302907
     },
     {
+      "japanese": "もう少し食べてください。",
+      "french": "S'il vous plaît, mangez un peu plus.",
+      "vocabulary_word": "もう",
+      "tatoeba_ja_id": 1564950,
+      "tatoeba_fr_id": 1564953
+    },
+    {
       "japanese": "なぜ聞くの？",
       "french": "Pourquoi demandes-tu ?",
       "vocabulary_word": "聞く",
@@ -1320,11 +2874,25 @@
       "tatoeba_fr_id": 3184
     },
     {
+      "japanese": "一年にどのくらいスキーに行きますか？",
+      "french": "Combien de fois par an allez-vous skier ?",
+      "vocabulary_word": "一",
+      "tatoeba_ja_id": 1658475,
+      "tatoeba_fr_id": 1462255
+    },
+    {
       "japanese": "何を食べたいですか？",
       "french": "Que voulez-vous manger ?",
       "vocabulary_word": "何",
       "tatoeba_ja_id": 1667724,
       "tatoeba_fr_id": 439274
+    },
+    {
+      "japanese": "もうおなかいっぱいです。",
+      "french": "Je n'ai plus faim.",
+      "vocabulary_word": "おなか",
+      "tatoeba_ja_id": 1721259,
+      "tatoeba_fr_id": 2928114
     },
     {
       "japanese": "このパンは小さい。",
@@ -1336,9 +2904,16 @@
     {
       "japanese": "このパンは大きい。",
       "french": "Ce pain est gros.",
-      "vocabulary_word": "パン",
+      "vocabulary_word": "この",
       "tatoeba_ja_id": 1771792,
       "tatoeba_fr_id": 1771788
+    },
+    {
+      "japanese": "少し後にまた来てくれないかな？",
+      "french": "Pourrais-tu revenir un peu plus tard ?",
+      "vocabulary_word": "後",
+      "tatoeba_ja_id": 1773368,
+      "tatoeba_fr_id": 1673028
     },
     {
       "japanese": "あなたは毎日ここへ来ますか。",
@@ -1350,7 +2925,7 @@
     {
       "japanese": "日本語ができる人います？",
       "french": "Il y a-t-il des gens qui connaissent le japonais ?",
-      "vocabulary_word": "日本語",
+      "vocabulary_word": "できる",
       "tatoeba_ja_id": 1925965,
       "tatoeba_fr_id": 11911780
     },
@@ -1369,11 +2944,46 @@
       "tatoeba_fr_id": 13360003
     },
     {
+      "japanese": "女と子どもが先だ。",
+      "french": "Les femmes et les enfants d'abord !",
+      "vocabulary_word": "女",
+      "tatoeba_ja_id": 2197715,
+      "tatoeba_fr_id": 1958241
+    },
+    {
       "japanese": "食べてもいいですか？",
       "french": "Puis-je manger ?",
       "vocabulary_word": "いい",
       "tatoeba_ja_id": 2242416,
       "tatoeba_fr_id": 1564849
+    },
+    {
+      "japanese": "ちょっと休みませんか？",
+      "french": "Et si on se reposait un peu ?",
+      "vocabulary_word": "ちょっと",
+      "tatoeba_ja_id": 2265696,
+      "tatoeba_fr_id": 7809855
+    },
+    {
+      "japanese": "ミルクはいかがですか？",
+      "french": "Veux-tu du lait ?",
+      "vocabulary_word": "いかが",
+      "tatoeba_ja_id": 2270816,
+      "tatoeba_fr_id": 15078
+    },
+    {
+      "japanese": "どうしてここにいるって分かったの？",
+      "french": "Comment saviez-vous que nous étions là ?",
+      "vocabulary_word": "どうして",
+      "tatoeba_ja_id": 2278915,
+      "tatoeba_fr_id": 1803599
+    },
+    {
+      "japanese": "何の話をしてるのか分からないよ。",
+      "french": "Je ne sais pas de quoi vous parlez.",
+      "vocabulary_word": "話",
+      "tatoeba_ja_id": 2298443,
+      "tatoeba_fr_id": 1078266
     },
     {
       "japanese": "本はテーブルの上にあります。",
@@ -1385,7 +2995,7 @@
     {
       "japanese": "今日はとてもいいことがありました。",
       "french": "Il m'est arrivé une chose formidable, aujourd'hui.",
-      "vocabulary_word": "いい",
+      "vocabulary_word": "とても",
       "tatoeba_ja_id": 2481152,
       "tatoeba_fr_id": 4724202
     },
@@ -1418,11 +3028,179 @@
       "tatoeba_fr_id": 10410
     },
     {
+      "japanese": "何人に話した？",
+      "french": "À combien de personnes tu l'as dit ?",
+      "vocabulary_word": "人",
+      "tatoeba_ja_id": 2912714,
+      "tatoeba_fr_id": 4260121
+    },
+    {
+      "japanese": "もうちょっとだけいてくれない？",
+      "french": "Tu veux pas rester encore un peu ?",
+      "vocabulary_word": "ちょっと",
+      "tatoeba_ja_id": 2976032,
+      "tatoeba_fr_id": 4260176
+    },
+    {
+      "japanese": "ポケットに何か入れてるでしょ。",
+      "french": "Vous avez quelque chose dans les poches, non ?",
+      "vocabulary_word": "ポケット",
+      "tatoeba_ja_id": 2982983,
+      "tatoeba_fr_id": 4737365
+    },
+    {
+      "japanese": "一日中ベッドの中にいるつもり？",
+      "french": "As-tu l'intention de rester au lit toute la journée ?",
+      "vocabulary_word": "ベッド",
+      "tatoeba_ja_id": 2985789,
+      "tatoeba_fr_id": 2991920
+    },
+    {
+      "japanese": "オフィスへどうぞお入りください。",
+      "french": "Entrez dans mon bureau s'il vous plait.",
+      "vocabulary_word": "どうぞ",
+      "tatoeba_ja_id": 2988564,
+      "tatoeba_fr_id": 2991780
+    },
+    {
+      "japanese": "ここから出てもよろしいですか？",
+      "french": "Peut-on s'en aller ?",
+      "vocabulary_word": "ここ",
+      "tatoeba_ja_id": 2988584,
+      "tatoeba_fr_id": 2991770
+    },
+    {
+      "japanese": "二人ともありがとう。",
+      "french": "Merci à vous deux.",
+      "vocabulary_word": "二人",
+      "tatoeba_ja_id": 2991029,
+      "tatoeba_fr_id": 2991730
+    },
+    {
+      "japanese": "また後で電話するね。",
+      "french": "Je te rappelle tout à l'heure.",
+      "vocabulary_word": "後",
+      "tatoeba_ja_id": 3024537,
+      "tatoeba_fr_id": 3847200
+    },
+    {
+      "japanese": "お金ないのにまた本買っちゃった。",
+      "french": "Même si je suis fauché, j'ai encore acheté un livre.",
+      "vocabulary_word": "また",
+      "tatoeba_ja_id": 3169741,
+      "tatoeba_fr_id": 3211161
+    },
+    {
+      "japanese": "今日はいい一日になりそう。",
+      "french": "La journée d'aujourd'hui s'annonce bien.",
+      "vocabulary_word": "一日",
+      "tatoeba_ja_id": 3199709,
+      "tatoeba_fr_id": 3207884
+    },
+    {
+      "japanese": "電話ありがとう。",
+      "french": "Je suis sensible à ton appel.",
+      "vocabulary_word": "ありがとう",
+      "tatoeba_ja_id": 3401026,
+      "tatoeba_fr_id": 2159407
+    },
+    {
+      "japanese": "またやったのかよ。",
+      "french": "Tu l'as encore fait ?",
+      "vocabulary_word": "また",
+      "tatoeba_ja_id": 3406078,
+      "tatoeba_fr_id": 3407700
+    },
+    {
+      "japanese": "テストとかなければいいのに。",
+      "french": "Ce serait bien si on n'avait pas d'examens.",
+      "vocabulary_word": "テスト",
+      "tatoeba_ja_id": 3451871,
+      "tatoeba_fr_id": 3473677
+    },
+    {
+      "japanese": "二かける七は十四です。",
+      "french": "Deux fois sept égale quatorze.",
+      "vocabulary_word": "かける",
+      "tatoeba_ja_id": 3454067,
+      "tatoeba_fr_id": 1567564
+    },
+    {
+      "japanese": "こんな時間まで何してたの？",
+      "french": "Qu'est-ce que tu faisais, jusqu'à une heure pareille ?",
+      "vocabulary_word": "こんな",
+      "tatoeba_ja_id": 3484283,
+      "tatoeba_fr_id": 3526303
+    },
+    {
+      "japanese": "そこにいて。",
+      "french": "Reste là.",
+      "vocabulary_word": "そこ",
+      "tatoeba_ja_id": 3488748,
+      "tatoeba_fr_id": 2784386
+    },
+    {
+      "japanese": "ここはどこ？",
+      "french": "Où suis-je ?",
+      "vocabulary_word": "どこ",
+      "tatoeba_ja_id": 3491573,
+      "tatoeba_fr_id": 1098750
+    },
+    {
+      "japanese": "今日はちょっと食べすぎちゃったな。",
+      "french": "J'ai un peu trop mangé aujourd'hui.",
+      "vocabulary_word": "ちょっと",
+      "tatoeba_ja_id": 3515316,
+      "tatoeba_fr_id": 3516259
+    },
+    {
+      "japanese": "生まれてきてごめんなさい。",
+      "french": "Je suis désolé d'être venu au monde.",
+      "vocabulary_word": "生まれる",
+      "tatoeba_ja_id": 3516750,
+      "tatoeba_fr_id": 4575240
+    },
+    {
+      "japanese": "どういうこと？",
+      "french": "Que veux-tu dire ?",
+      "vocabulary_word": "どう",
+      "tatoeba_ja_id": 3553284,
+      "tatoeba_fr_id": 499166
+    },
+    {
       "japanese": "すみません、ここ空いてますか？",
       "french": "Excusez-moi, cette place est libre ?",
       "vocabulary_word": "すみません",
       "tatoeba_ja_id": 3554844,
       "tatoeba_fr_id": 3555980
+    },
+    {
+      "japanese": "また来てもいい？",
+      "french": "Je pourrai revenir ?",
+      "vocabulary_word": "また",
+      "tatoeba_ja_id": 3559172,
+      "tatoeba_fr_id": 3560365
+    },
+    {
+      "japanese": "それ見せて。",
+      "french": "Fais-moi voir ça.",
+      "vocabulary_word": "見せる",
+      "tatoeba_ja_id": 3560587,
+      "tatoeba_fr_id": 429017
+    },
+    {
+      "japanese": "今日のパーティー行く？",
+      "french": "Tu vas à la fête, aujourd'hui ?",
+      "vocabulary_word": "パーティー",
+      "tatoeba_ja_id": 3568650,
+      "tatoeba_fr_id": 3571971
+    },
+    {
+      "japanese": "みんな何の話してるの？",
+      "french": "De quoi vous parlez, là ?",
+      "vocabulary_word": "みんな",
+      "tatoeba_ja_id": 3592386,
+      "tatoeba_fr_id": 3593770
     },
     {
       "japanese": "どこ行くの？",
@@ -1432,11 +3210,39 @@
       "tatoeba_fr_id": 4869487
     },
     {
+      "japanese": "何か食べたいものある？",
+      "french": "Tu veux manger quelque chose en particulier ?",
+      "vocabulary_word": "ある",
+      "tatoeba_ja_id": 3631723,
+      "tatoeba_fr_id": 3866893
+    },
+    {
+      "japanese": "おいしいもの食べたい。",
+      "french": "Je veux manger un truc bon.",
+      "vocabulary_word": "おいしい",
+      "tatoeba_ja_id": 3635215,
+      "tatoeba_fr_id": 3866921
+    },
+    {
+      "japanese": "きれいな手してるね。",
+      "french": "Tu as de belles mains.",
+      "vocabulary_word": "きれい",
+      "tatoeba_ja_id": 3652943,
+      "tatoeba_fr_id": 3657359
+    },
+    {
       "japanese": "ここよく来るの？",
       "french": "Tu viens souvent ici ?",
       "vocabulary_word": "来る",
       "tatoeba_ja_id": 3677754,
       "tatoeba_fr_id": 1317553
+    },
+    {
+      "japanese": "テストどうだった？",
+      "french": "Comment s'est passé ton examen ?",
+      "vocabulary_word": "テスト",
+      "tatoeba_ja_id": 3699097,
+      "tatoeba_fr_id": 4418301
     },
     {
       "japanese": "今日は長い一日になりそうです。",
@@ -1446,6 +3252,13 @@
       "tatoeba_fr_id": 3741401
     },
     {
+      "japanese": "やっと二人になれたね。",
+      "french": "On est enfin tous les deux.",
+      "vocabulary_word": "二人",
+      "tatoeba_ja_id": 3782777,
+      "tatoeba_fr_id": 3784522
+    },
+    {
       "japanese": "すみません、これいくらですか？",
       "french": "Excusez-moi, combien cela coûte ?",
       "vocabulary_word": "すみません",
@@ -1453,11 +3266,60 @@
       "tatoeba_fr_id": 3216093
     },
     {
+      "japanese": "何でまだここにいるの？",
+      "french": "Pourquoi sommes-nous encore ici ?",
+      "vocabulary_word": "まだ",
+      "tatoeba_ja_id": 4120279,
+      "tatoeba_fr_id": 4182511
+    },
+    {
       "japanese": "ちょっと水買ってくる。",
       "french": "Je vais acheter de l'eau.",
       "vocabulary_word": "水",
       "tatoeba_ja_id": 4263315,
       "tatoeba_fr_id": 4269337
+    },
+    {
+      "japanese": "わたしはテレビを見ています。",
+      "french": "Je regarde la télévision.",
+      "vocabulary_word": "テレビ",
+      "tatoeba_ja_id": 4272241,
+      "tatoeba_fr_id": 4274115
+    },
+    {
+      "japanese": "コーヒーはいかがですか。",
+      "french": "Veux-tu du café ?",
+      "vocabulary_word": "コーヒー",
+      "tatoeba_ja_id": 4561796,
+      "tatoeba_fr_id": 2586526
+    },
+    {
+      "japanese": "もっとゆっくり食べなさい。",
+      "french": "Mange plus lentement !",
+      "vocabulary_word": "もっと",
+      "tatoeba_ja_id": 4629043,
+      "tatoeba_fr_id": 4631960
+    },
+    {
+      "japanese": "その話聞いたことある気がする。",
+      "french": "Cette histoire me dit quelque chose.",
+      "vocabulary_word": "話",
+      "tatoeba_ja_id": 4704249,
+      "tatoeba_fr_id": 4707923
+    },
+    {
+      "japanese": "こんな時間に何してるの？",
+      "french": "Qu'est-ce que tu fais à une heure pareille ?",
+      "vocabulary_word": "こんな",
+      "tatoeba_ja_id": 4717909,
+      "tatoeba_fr_id": 4720460
+    },
+    {
+      "japanese": "どうだった、テスト？",
+      "french": "Ça a été, ton examen ?",
+      "vocabulary_word": "テスト",
+      "tatoeba_ja_id": 4751174,
+      "tatoeba_fr_id": 4418304
     },
     {
       "japanese": "学校はどうですか？",
@@ -1481,11 +3343,32 @@
       "tatoeba_fr_id": 3501619
     },
     {
+      "japanese": "これどうやって食べるんですか？",
+      "french": "Comment mange-t-on cela ?",
+      "vocabulary_word": "どう",
+      "tatoeba_ja_id": 4909232,
+      "tatoeba_fr_id": 2117140
+    },
+    {
+      "japanese": "電話しないといけないよ。",
+      "french": "Tu dois donner un coup de fil, tu sais ?",
+      "vocabulary_word": "電話",
+      "tatoeba_ja_id": 4934639,
+      "tatoeba_fr_id": 4939577
+    },
+    {
       "japanese": "大きくなる。",
       "french": "Il grandit.",
-      "vocabulary_word": "大きい",
+      "vocabulary_word": "なる",
       "tatoeba_ja_id": 4944207,
       "tatoeba_fr_id": 4946500
+    },
+    {
+      "japanese": "それは十分ではありません。",
+      "french": "Ça ne suffit pas.",
+      "vocabulary_word": "では",
+      "tatoeba_ja_id": 4975848,
+      "tatoeba_fr_id": 1341567
     },
     {
       "japanese": "そのレストランの名前はなんですか？",
@@ -1495,11 +3378,60 @@
       "tatoeba_fr_id": 5007729
     },
     {
+      "japanese": "ホテルはどこですか。",
+      "french": "Où est l'hôtel ?",
+      "vocabulary_word": "ホテル",
+      "tatoeba_ja_id": 5348327,
+      "tatoeba_fr_id": 2508115
+    },
+    {
+      "japanese": "いつになくよく食べるね。",
+      "french": "Pour une fois, tu manges bien.",
+      "vocabulary_word": "いつ",
+      "tatoeba_ja_id": 5690322,
+      "tatoeba_fr_id": 5691395
+    },
+    {
+      "japanese": "あそこを見て。",
+      "french": "Regarde par-là.",
+      "vocabulary_word": "あそこ",
+      "tatoeba_ja_id": 5933519,
+      "tatoeba_fr_id": 5933523
+    },
+    {
       "japanese": "学校へ行かせないでください。",
       "french": "S'il te plaît, ne m'oblige pas à aller à l'école.",
       "vocabulary_word": "学校",
       "tatoeba_ja_id": 6704212,
       "tatoeba_fr_id": 6778750
+    },
+    {
+      "japanese": "月には人がいない。",
+      "french": "Il n'y a pas d'hommes sur la lune.",
+      "vocabulary_word": "人",
+      "tatoeba_ja_id": 6828194,
+      "tatoeba_fr_id": 8571251
+    },
+    {
+      "japanese": "電話を一本かけなくてはいけない。",
+      "french": "Je dois passer un coup de téléphone.",
+      "vocabulary_word": "一",
+      "tatoeba_ja_id": 7560861,
+      "tatoeba_fr_id": 3835986
+    },
+    {
+      "japanese": "何か食べたい気がする。",
+      "french": "J'ai envie de manger quelque chose.",
+      "vocabulary_word": "する",
+      "tatoeba_ja_id": 8505146,
+      "tatoeba_fr_id": 2113493
+    },
+    {
+      "japanese": "エレベーターはどこですか？",
+      "french": "Où se trouve l'ascenseur ?",
+      "vocabulary_word": "エレベーター",
+      "tatoeba_ja_id": 8533515,
+      "tatoeba_fr_id": 492339
     },
     {
       "japanese": "日本語を話します。",
@@ -1516,6 +3448,13 @@
       "tatoeba_fr_id": 1672961
     },
     {
+      "japanese": "月がきれいよ。",
+      "french": "La lune est belle.",
+      "vocabulary_word": "きれい",
+      "tatoeba_ja_id": 8634780,
+      "tatoeba_fr_id": 5774856
+    },
+    {
       "japanese": "ほとんどの学生がマスクをしていた。",
       "french": "La plupart des élèves portaient le masque.",
       "vocabulary_word": "学生",
@@ -1530,6 +3469,20 @@
       "tatoeba_fr_id": 10894750
     },
     {
+      "japanese": "ここで生まれたの？",
+      "french": "Es-tu né ici ?",
+      "vocabulary_word": "生まれる",
+      "tatoeba_ja_id": 8717708,
+      "tatoeba_fr_id": 4579626
+    },
+    {
+      "japanese": "いつもこうなの？",
+      "french": "Est-ce toujours ainsi ?",
+      "vocabulary_word": "いつも",
+      "tatoeba_ja_id": 8730580,
+      "tatoeba_fr_id": 3639963
+    },
+    {
       "japanese": "パン買ったよ。",
       "french": "J'ai acheté du pain.",
       "vocabulary_word": "パン",
@@ -1539,7 +3492,7 @@
     {
       "japanese": "いつなら時間ある？",
       "french": "Quand seras-tu libre ?",
-      "vocabulary_word": "ある",
+      "vocabulary_word": "いつ",
       "tatoeba_ja_id": 9029531,
       "tatoeba_fr_id": 474139
     },
@@ -1567,23 +3520,51 @@
     {
       "japanese": "あの女の子、男の子みたい。",
       "french": "Cette fille ressemble à un garçon.",
-      "vocabulary_word": "女の子",
+      "vocabulary_word": "男の子",
       "tatoeba_ja_id": 9808984,
       "tatoeba_fr_id": 428280
     },
     {
       "japanese": "タクシーがもうすぐ来るよ。",
       "french": "Le taxi sera bientôt là.",
-      "vocabulary_word": "来る",
+      "vocabulary_word": "タクシー",
       "tatoeba_ja_id": 9926818,
       "tatoeba_fr_id": 10755108
     },
     {
       "japanese": "あれはお花です。",
       "french": "C'est une fleur.",
-      "vocabulary_word": "花",
+      "vocabulary_word": "あれ",
       "tatoeba_ja_id": 10077666,
       "tatoeba_fr_id": 8362684
+    },
+    {
+      "japanese": "ここにいてもいい？",
+      "french": "Je peux rester ici ?",
+      "vocabulary_word": "ここ",
+      "tatoeba_ja_id": 10079741,
+      "tatoeba_fr_id": 10471552
+    },
+    {
+      "japanese": "一人で行きな。",
+      "french": "Vas-y seul.",
+      "vocabulary_word": "一人",
+      "tatoeba_ja_id": 10157822,
+      "tatoeba_fr_id": 10006014
+    },
+    {
+      "japanese": "あなたのパソコンを見せてください。",
+      "french": "Je peux voir ton ordinateur s'il te plaît ?",
+      "vocabulary_word": "見せる",
+      "tatoeba_ja_id": 10171287,
+      "tatoeba_fr_id": 13243863
+    },
+    {
+      "japanese": "コーヒー飲みながら話さない？",
+      "french": "Si on discutait en prenant un café ?",
+      "vocabulary_word": "コーヒー",
+      "tatoeba_ja_id": 10187595,
+      "tatoeba_fr_id": 11595318
     },
     {
       "japanese": "新聞で読みましたよ。",
@@ -1607,9 +3588,37 @@
       "tatoeba_fr_id": 5386866
     },
     {
+      "japanese": "そこにホテルがあるよ。",
+      "french": "Il y a un hôtel là-bas.",
+      "vocabulary_word": "ホテル",
+      "tatoeba_ja_id": 10793155,
+      "tatoeba_fr_id": 10699708
+    },
+    {
+      "japanese": "あそこにエレベーターがあります。",
+      "french": "Il y a un ascenseur là-bas.",
+      "vocabulary_word": "あそこ",
+      "tatoeba_ja_id": 10899486,
+      "tatoeba_fr_id": 12420030
+    },
+    {
+      "japanese": "三年前この国へ来ました。",
+      "french": "Je suis venu dans ce pays il y a trois ans.",
+      "vocabulary_word": "国",
+      "tatoeba_ja_id": 10899809,
+      "tatoeba_fr_id": 12419772
+    },
+    {
+      "japanese": "この国には、三年前に来たんだ。",
+      "french": "Je suis venu dans ce pays il y a trois ans.",
+      "vocabulary_word": "三",
+      "tatoeba_ja_id": 10899900,
+      "tatoeba_fr_id": 12419772
+    },
+    {
       "japanese": "よくあることだ。",
       "french": "C'est quelque chose de fréquent.",
-      "vocabulary_word": "ある",
+      "vocabulary_word": "よく",
       "tatoeba_ja_id": 10907951,
       "tatoeba_fr_id": 13939313
     },
@@ -1621,11 +3630,25 @@
       "tatoeba_fr_id": 12419905
     },
     {
+      "japanese": "もうすぐバスが来ます。",
+      "french": "Le bus va bientôt arriver.",
+      "vocabulary_word": "バス",
+      "tatoeba_ja_id": 10982406,
+      "tatoeba_fr_id": 5741713
+    },
+    {
       "japanese": "いろいろありがとうございました。",
       "french": "Merci pour tout ce que tu as fait.",
-      "vocabulary_word": "ありがとう",
+      "vocabulary_word": "いろいろ",
       "tatoeba_ja_id": 10982436,
       "tatoeba_fr_id": 416379
+    },
+    {
+      "japanese": "はいはい、分かったから。",
+      "french": "Oui-oui, j'ai bien compris.",
+      "vocabulary_word": "はい",
+      "tatoeba_ja_id": 11045084,
+      "tatoeba_fr_id": 13422640
     },
     {
       "japanese": "その名前いいね。",
@@ -1642,11 +3665,46 @@
       "tatoeba_fr_id": 11224213
     },
     {
+      "japanese": "キッチンがきれいでない。",
+      "french": "La cuisine n'est pas propre.",
+      "vocabulary_word": "きれい",
+      "tatoeba_ja_id": 11553989,
+      "tatoeba_fr_id": 11553981
+    },
+    {
+      "japanese": "もうやってるよ。",
+      "french": "Je suis déjà en train de le faire.",
+      "vocabulary_word": "もう",
+      "tatoeba_ja_id": 11558968,
+      "tatoeba_fr_id": 11595380
+    },
+    {
+      "japanese": "もっとよく見てみましょう。",
+      "french": "Voyons en détail.",
+      "vocabulary_word": "もっと",
+      "tatoeba_ja_id": 11594088,
+      "tatoeba_fr_id": 11594120
+    },
+    {
       "japanese": "毎日パンを食べます。",
       "french": "Je mange du pain tous les jours.",
       "vocabulary_word": "毎日",
       "tatoeba_ja_id": 11594632,
       "tatoeba_fr_id": 11598784
+    },
+    {
+      "japanese": "チョコレートを食べました。",
+      "french": "J'ai mangé du chocolat.",
+      "vocabulary_word": "食べる",
+      "tatoeba_ja_id": 11708363,
+      "tatoeba_fr_id": 11705673
+    },
+    {
+      "japanese": "これ食べる？",
+      "french": "Tu veux en manger ?",
+      "vocabulary_word": "これ",
+      "tatoeba_ja_id": 12206268,
+      "tatoeba_fr_id": 13546509
     },
     {
       "japanese": "あの山は高いね。",
@@ -1663,11 +3721,32 @@
       "tatoeba_fr_id": 12296810
     },
     {
+      "japanese": "まだ読んでいるよ。",
+      "french": "Je lis encore.",
+      "vocabulary_word": "まだ",
+      "tatoeba_ja_id": 12356381,
+      "tatoeba_fr_id": 6888423
+    },
+    {
+      "japanese": "メニューをください。",
+      "french": "Le menu, s'il vous plaît !",
+      "vocabulary_word": "ください",
+      "tatoeba_ja_id": 12890046,
+      "tatoeba_fr_id": 10008478
+    },
+    {
       "japanese": "よくあることさ。",
       "french": "C'est fréquent...",
       "vocabulary_word": "ある",
       "tatoeba_ja_id": 12957374,
       "tatoeba_fr_id": 13939312
+    },
+    {
+      "japanese": "一人で行く。",
+      "french": "J'y vais tout seul.",
+      "vocabulary_word": "一人",
+      "tatoeba_ja_id": 13223996,
+      "tatoeba_fr_id": 13238560
     },
     {
       "japanese": "人は人です。",
