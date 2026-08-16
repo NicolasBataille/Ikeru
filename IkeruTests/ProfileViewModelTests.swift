@@ -11,69 +11,47 @@ struct ProfileViewModelTests {
 
     // MARK: - Helpers
 
-    private func makeModelContext() throws -> ModelContext {
-        // Full V3 schema so ExerciseOutcomeLog (scalar-scoped, no cascade) is
-        // present for the deletion-cleanup test. Must track the app's current
-        // schema version (see IkeruApp) — declaring a stale version opens the
-        // container without error but traps on the first insert.
-        //
-        // NOTE (pre-existing, not fixed here — out of this repair's scope):
-        // every `@Test` in this file SIGTRAPs inside SwiftData (EXC_BREAKPOINT,
-        // stripped frames, no diagnostic message) on the first
-        // `modelContext.fetch` when actually *run* in the app-hosted test host
-        // (`xcodebuild test`), even though `build-for-testing` compiles clean.
-        // Swapping this to a plain, non-versioned `Schema([UserProfile.self,
-        // Card.self, ReviewLog.self, RPGState.self, ...])` (matching
-        // `KanaDrillViewModelTests`'s pattern) was tried and did NOT fix it —
-        // same SIGTRAP, same `ProfileViewModel.loadProfile()` call site, on
-        // every test; reverted back to this versioned form since the swap
-        // didn't help. Observed matrix across the app-hosted test host
-        // (same simulator/session): ProfileViewModelTests 18/18 crash
-        // (both schema forms); HomeViewModelTests 4/5 crash (plain schema);
-        // SessionDecouplingTests 9/9 pass (this *same* versioned-schema +
-        // direct-`mainContext`-fetch pattern, via
-        // `ActiveProfileResolver.fetchActiveProfile`); KanaDrillViewModelTests
-        // 13/13 pass (actor-routed via `CardRepository`). No consistent
-        // discriminator (schema form, actor- vs. context-routing) was found
-        // that explains the full matrix — flagging for a dedicated follow-up
-        // rather than guessing further.
-        //
-        // GAP-10 (2026-08-16), symbolicated proof this suite's crash is a
-        // DIFFERENT bug from HomeViewModelTests's, not the same one wearing
-        // two faces: `xcrun xcresulttool export diagnostics` +
-        // `~/Library/Logs/DiagnosticReports/Ikeru-*.ips` on a crash from
-        // `updatesDisplayName()` shows `EXC_BREAKPOINT`/`SIGTRAP`, faulting
-        // thread stack (innermost first) `SwiftData + 645672` →
-        // `SwiftData + 594444` → `SwiftData + 643760` →
-        // `ProfileViewModel.loadProfile()` → `ProfileViewModel.init
-        // (modelContext:)` — i.e. a trap inside SwiftData's own internals on
-        // this class's very FIRST `modelContext.fetch` call, synchronously
-        // inside `init`, no relationship faulting, no background actor
-        // involved, and (unlike HomeViewModelTests) NO
-        // "Fatal error: ..." text printed anywhere — a silent trap, not an
-        // assertion with a message. HomeViewModelTests's crash is instead an
-        // explicit `SwiftData/BackingData.swift:940: Fatal error: Never
-        // access a full future backing data` with two mismatched Core Data
-        // store UUIDs in the message, hit via `ActiveProfileResolver
-        // .fetchActiveRPGState` → `profile.rpgState` relationship fault,
-        // well after other SwiftData work has already happened successfully.
-        // Different signal, different call shape, different SwiftData
-        // subsystem — treat these as two separate open bugs, not one.
-        //
-        // V4, not V3 (2026-08-13, cloud-sync lot 0): `IkeruSchemaV3` is now
-        // frozen (nested snapshot types) — a container opened at V3 would
-        // bind this file's live-type fetches to the wrong entity identity.
+    /// Returns the CONTAINER, never just its `mainContext`.
+    ///
+    /// This is the whole fix for the crash that took every test in this file
+    /// down (GAP-10, 2026-08-16). The old helper returned
+    /// `container.mainContext` and let the local `ModelContainer` go out of
+    /// scope. `ModelContext` does not keep its container alive, so the
+    /// container — and the in-memory store under it — was deallocated before
+    /// the caller's first fetch. `ProfileViewModel.init` fetches
+    /// synchronously, so all 18 tests trapped inside SwiftData on that first
+    /// fetch: `EXC_BREAKPOINT`/`SIGTRAP`, stripped frames, and — unlike the
+    /// other GAP-10 crash — no `Fatal error:` text anywhere, because a dead
+    /// store has no assertion to report.
+    ///
+    /// That also explains the matrix an earlier note here called
+    /// undiscriminating. It listed schema form (versioned vs. plain) and
+    /// actor- vs. context-routing as candidate discriminators and found that
+    /// neither predicted the outcome. Neither does. The discriminator is
+    /// **who retains the container**: every suite that passes
+    /// (`SessionDecouplingTests`, `KanaSessionEndToEndTests`,
+    /// `HomeViewModelTests`, …) returns the `ModelContainer` and holds it in
+    /// the test body for the test's whole lifetime. This file was the only
+    /// one that dropped it. Swapping the schema form, as that note records,
+    /// changed nothing — correctly, since the schema was never the variable.
+    ///
+    /// V4, not V3 (2026-08-13, cloud-sync lot 0): `IkeruSchemaV3` is now
+    /// frozen (nested snapshot types) — a container opened at V3 would
+    /// bind this file's live-type fetches to the wrong entity identity.
+    /// The full V4 schema also keeps `ExerciseOutcomeLog` (scalar-scoped, no
+    /// cascade) present for the deletion-cleanup test.
+    private func makeContainer() throws -> ModelContainer {
         let schema = Schema(versionedSchema: IkeruSchemaV4.self)
         let config = ModelConfiguration(UUID().uuidString, isStoredInMemoryOnly: true)
-        let container = try ModelContainer(for: schema, configurations: [config])
-        return container.mainContext
+        return try ModelContainer(for: schema, configurations: [config])
     }
 
     // MARK: - Tests
 
     @Test("No profile on fresh launch")
     func noProfileOnFreshLaunch() throws {
-        let context = try makeModelContext()
+        let container = try makeContainer()
+        let context = container.mainContext
         let viewModel = ProfileViewModel(modelContext: context)
 
         #expect(viewModel.hasProfile == false)
@@ -82,7 +60,8 @@ struct ProfileViewModelTests {
 
     @Test("Creates profile with valid name")
     func createsProfileWithValidName() throws {
-        let context = try makeModelContext()
+        let container = try makeContainer()
+        let context = container.mainContext
         let viewModel = ProfileViewModel(modelContext: context)
 
         viewModel.createProfile(name: "Nico")
@@ -93,7 +72,8 @@ struct ProfileViewModelTests {
 
     @Test("Trims whitespace from name on creation")
     func trimsWhitespaceOnCreation() throws {
-        let context = try makeModelContext()
+        let container = try makeContainer()
+        let context = container.mainContext
         let viewModel = ProfileViewModel(modelContext: context)
 
         viewModel.createProfile(name: "  Nico  ")
@@ -103,7 +83,8 @@ struct ProfileViewModelTests {
 
     @Test("Does not create profile with empty name")
     func doesNotCreateWithEmptyName() throws {
-        let context = try makeModelContext()
+        let container = try makeContainer()
+        let context = container.mainContext
         let viewModel = ProfileViewModel(modelContext: context)
 
         viewModel.createProfile(name: "")
@@ -113,7 +94,8 @@ struct ProfileViewModelTests {
 
     @Test("Does not create profile with whitespace-only name")
     func doesNotCreateWithWhitespaceOnlyName() throws {
-        let context = try makeModelContext()
+        let container = try makeContainer()
+        let context = container.mainContext
         let viewModel = ProfileViewModel(modelContext: context)
 
         viewModel.createProfile(name: "   ")
@@ -123,7 +105,8 @@ struct ProfileViewModelTests {
 
     @Test("Loads existing profile on init")
     func loadsExistingProfileOnInit() throws {
-        let context = try makeModelContext()
+        let container = try makeContainer()
+        let context = container.mainContext
 
         // Pre-seed a profile
         let profile = UserProfile(displayName: "Existing")
@@ -138,7 +121,8 @@ struct ProfileViewModelTests {
 
     @Test("Updates display name")
     func updatesDisplayName() throws {
-        let context = try makeModelContext()
+        let container = try makeContainer()
+        let context = container.mainContext
         let viewModel = ProfileViewModel(modelContext: context)
 
         viewModel.createProfile(name: "OldName")
@@ -150,7 +134,8 @@ struct ProfileViewModelTests {
 
     @Test("Trims whitespace on name update")
     func trimsWhitespaceOnUpdate() throws {
-        let context = try makeModelContext()
+        let container = try makeContainer()
+        let context = container.mainContext
         let viewModel = ProfileViewModel(modelContext: context)
 
         viewModel.createProfile(name: "Nico")
@@ -161,7 +146,8 @@ struct ProfileViewModelTests {
 
     @Test("Does not update to empty name")
     func doesNotUpdateToEmptyName() throws {
-        let context = try makeModelContext()
+        let container = try makeContainer()
+        let context = container.mainContext
         let viewModel = ProfileViewModel(modelContext: context)
 
         viewModel.createProfile(name: "Nico")
@@ -172,7 +158,8 @@ struct ProfileViewModelTests {
 
     @Test("Does not update to whitespace-only name")
     func doesNotUpdateToWhitespaceOnlyName() throws {
-        let context = try makeModelContext()
+        let container = try makeContainer()
+        let context = container.mainContext
         let viewModel = ProfileViewModel(modelContext: context)
 
         viewModel.createProfile(name: "Nico")
@@ -183,7 +170,8 @@ struct ProfileViewModelTests {
 
     @Test("Update without profile does nothing")
     func updateWithoutProfileDoesNothing() throws {
-        let context = try makeModelContext()
+        let container = try makeContainer()
+        let context = container.mainContext
         let viewModel = ProfileViewModel(modelContext: context)
 
         viewModel.updateDisplayName("SomeName")
@@ -194,7 +182,8 @@ struct ProfileViewModelTests {
 
     @Test("Name change propagates via observable")
     func nameChangePropagatesViaObservable() throws {
-        let context = try makeModelContext()
+        let container = try makeContainer()
+        let context = container.mainContext
         let viewModel = ProfileViewModel(modelContext: context)
 
         viewModel.createProfile(name: "Before")
@@ -209,7 +198,8 @@ struct ProfileViewModelTests {
 
     @Test("Deleting a non-active profile leaves the other profile's cards and RPG state untouched")
     func deleteProfileLeavesOtherProfileDataIntact() throws {
-        let context = try makeModelContext()
+        let container = try makeContainer()
+        let context = container.mainContext
         let viewModel = ProfileViewModel(modelContext: context)
         viewModel.createProfile(name: "A")
         viewModel.createProfile(name: "B")
@@ -285,7 +275,8 @@ struct ProfileViewModelTests {
 
     @Test("Deleting the active profile switches to a remaining profile")
     func deleteActiveProfileSwitchesToRemaining() throws {
-        let context = try makeModelContext()
+        let container = try makeContainer()
+        let context = container.mainContext
         let viewModel = ProfileViewModel(modelContext: context)
         viewModel.createProfile(name: "A")
         viewModel.createProfile(name: "B")
@@ -303,7 +294,8 @@ struct ProfileViewModelTests {
 
     @Test("Refuses to delete the last remaining profile")
     func refusesToDeleteLastRemainingProfile() throws {
-        let context = try makeModelContext()
+        let container = try makeContainer()
+        let context = container.mainContext
         let viewModel = ProfileViewModel(modelContext: context)
         viewModel.createProfile(name: "Solo")
         let solo = try #require(viewModel.currentProfile)
@@ -326,7 +318,8 @@ struct ProfileViewModelTests {
 
     @Test("switchProfile posts .displayModeDidChange so the cached display mode is re-read")
     func switchProfilePostsDisplayModeDidChange() throws {
-        let context = try makeModelContext()
+        let container = try makeContainer()
+        let context = container.mainContext
         let viewModel = ProfileViewModel(modelContext: context)
         viewModel.createProfile(name: "A")
         viewModel.createProfile(name: "B")
@@ -350,7 +343,8 @@ struct ProfileViewModelTests {
 
     @Test("createProfile posts .displayModeDidChange so a new profile doesn't inherit the prior mode")
     func createProfilePostsDisplayModeDidChange() throws {
-        let context = try makeModelContext()
+        let container = try makeContainer()
+        let context = container.mainContext
         let viewModel = ProfileViewModel(modelContext: context)
         viewModel.createProfile(name: "A")
 
@@ -368,7 +362,8 @@ struct ProfileViewModelTests {
 
     @Test("Deleting a profile tombstones its ExerciseOutcomeLog rows (no orphans, no resurrection)")
     func deleteProfileRemovesOutcomes() throws {
-        let context = try makeModelContext()
+        let container = try makeContainer()
+        let context = container.mainContext
         let viewModel = ProfileViewModel(modelContext: context)
         viewModel.createProfile(name: "A")
         viewModel.createProfile(name: "B")
@@ -405,7 +400,8 @@ struct ProfileViewModelTests {
 
     @Test("Deleting a profile removes its MasteryBookSnapshotStore baseline (chantier #45h)")
     func deleteProfileRemovesMasteryBookSnapshot() throws {
-        let context = try makeModelContext()
+        let container = try makeContainer()
+        let context = container.mainContext
         let viewModel = ProfileViewModel(modelContext: context)
         viewModel.createProfile(name: "A")
         viewModel.createProfile(name: "B")
