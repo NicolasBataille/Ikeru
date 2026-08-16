@@ -468,10 +468,13 @@ struct HomeView: View {
                 }
                 .ikeruButtonStyle(.primary)
                 .tourAnchor(.sessionCTA)
+                .accessibilityIdentifier("home.beginPracticeButton")
             }
 
             // Beginner's compass — kana mastery, always visible (the honest
-            // progress number that replaces XP/streak chrome).
+            // progress number that replaces XP/streak chrome). Identifier is
+            // on the count `Text` leaf inside, not this call site — see
+            // `kanaProgressLine`'s body.
             kanaProgressLine(vm)
         }
         .tatamiRoom(.glass, padding: 20)
@@ -504,6 +507,12 @@ struct HomeView: View {
                 .ikeruScaledFont(12, design: .serif, relativeTo: .caption)
                 .monospacedDigit()
                 .foregroundStyle(Color.ikeruTextSecondary)
+                // Applied to this leaf `Text`, not the parent `HStack`: a
+                // SwiftUI container isn't itself an accessibility element
+                // unless explicitly combined (`.accessibilityElement(children:
+                // .combine)`), so an identifier on the HStack would not be
+                // queryable from XCUITest — see `IkeruUITests/Pages/HomePage.swift`.
+                .accessibilityIdentifier("home.kanaProgressCount")
             Text("Home.KanaLearned")
                 .ikeruScaledFont(10, relativeTo: .caption2)
                 .textCase(.uppercase)

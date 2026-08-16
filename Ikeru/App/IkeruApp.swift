@@ -307,6 +307,22 @@ struct IkeruApp: App {
         let viewModel = ProfileViewModel(modelContext: modelContainer.mainContext)
         profileViewModel = viewModel
 
+        #if IKERU_DEV_TOOLS
+        // Dev helper: launch with -wipeData to reset to a clean slate BEFORE
+        // -skipOnboarding / -mockProfile run below. Without this, a second UI
+        // test launch on the same simulator sees `hasProfile == true` from the
+        // previous run and both of those flags silently no-op (`seedIfRequested`
+        // and this file's own `-skipOnboarding` guard both check `hasProfile`
+        // first) — the exact "seed doesn't re-run on the 2nd launch" trap named
+        // in the GAP-09 UI-test-harness brief. Runs in its own IKERU_DEV_TOOLS
+        // block (stripped before App Store submit, see CLAUDE.md) since
+        // `TestFixtures.wipeAll` lives behind the same flag.
+        if CommandLine.arguments.contains("-wipeData") {
+            Logger.ui.info("wipeData flag set — clearing all persisted state before seeding")
+            TestFixtures.wipeAll(context: modelContainer.mainContext, profileVM: viewModel)
+        }
+        #endif
+
         // Dev helper: launch with -skipOnboarding to auto-create a default profile
         if !viewModel.hasProfile && CommandLine.arguments.contains("-skipOnboarding") {
             Logger.ui.info("Skip onboarding flag set — creating default profile")

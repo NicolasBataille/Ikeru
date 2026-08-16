@@ -244,6 +244,15 @@
 		FDA86090738921E4E18E79CE /* SessionSummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8BD1F07D5A033139C8C8A83 /* SessionSummaryView.swift */; };
 		FDC87A32E50CF633C3BDC97D /* HoldToConfirmButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2CBFF6AF9FE7C9F48E34A51 /* HoldToConfirmButton.swift */; };
 		FF89BFE59885EB3742A25989 /* HandwritingExerciseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6662134E08023C0DBD738ED /* HandwritingExerciseView.swift */; };
+		E7F304F8F102F1676196A4EE /* LaunchArguments.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C5322CE8E72D9C6242E5F7A /* LaunchArguments.swift */; };
+		FAAD7FE5CBF2C0A6366F8813 /* IkeruUITestCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7C2C3D83BD7C65E1D5EA78F /* IkeruUITestCase.swift */; };
+		5548CB18C0A47A9190B2BDBB /* SettingsPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04EF0757E43F2C18E1E202ED /* SettingsPage.swift */; };
+		477536274341CBF0327E7DB3 /* HomePage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CC05412F9822B4E6D174DB4 /* HomePage.swift */; };
+		F823ED39AB7889497F5BE229 /* KanaQuizPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA69C5A644C64AAF416D4803 /* KanaQuizPage.swift */; };
+		6B13D7790EFDA7C6E4B470B4 /* CloudBackupToggleUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72F259260D9B15F440C7B50E /* CloudBackupToggleUITests.swift */; };
+		E60F6F77330CEE535D85DA46 /* DashboardLaunchUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 040591AD75D40A6C60A65226 /* DashboardLaunchUITests.swift */; };
+		7A7CFB6F30BE72C371E63721 /* SessionAnswerFlowUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F061122EE640C6A0C07BAC0A /* SessionAnswerFlowUITests.swift */; };
+		ACD0BCA3A7C1EE79813BD02A /* ProfileResetUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43C2F8072E54B6E9C89A7A82 /* ProfileResetUITests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -267,6 +276,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = AB63406F8CCDE07382570F0B;
 			remoteInfo = IkeruWatch;
+		};
+		878D6DEF846110F4DA6FC1FD /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 44FF3435A5B11DC2E0D31918 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = EDDB8F3812DC1BC18F32017C;
+			remoteInfo = Ikeru;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -530,6 +546,16 @@
 		FD7E0BEDFFAF72A3409B8B08 /* ProgressComplication.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressComplication.swift; sourceTree = "<group>"; };
 		FDB2946DC6619B99A4BBD591 /* DrillUtilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DrillUtilities.swift; sourceTree = "<group>"; };
 		FEE55E655DAC68F122F04B9D /* KanaDrillModeSelector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KanaDrillModeSelector.swift; sourceTree = "<group>"; };
+		9E2346F3FADE504EFFA9CBF7 /* IkeruUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = IkeruUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		5C5322CE8E72D9C6242E5F7A /* LaunchArguments.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchArguments.swift; sourceTree = "<group>"; };
+		E7C2C3D83BD7C65E1D5EA78F /* IkeruUITestCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IkeruUITestCase.swift; sourceTree = "<group>"; };
+		04EF0757E43F2C18E1E202ED /* SettingsPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsPage.swift; sourceTree = "<group>"; };
+		5CC05412F9822B4E6D174DB4 /* HomePage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomePage.swift; sourceTree = "<group>"; };
+		DA69C5A644C64AAF416D4803 /* KanaQuizPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KanaQuizPage.swift; sourceTree = "<group>"; };
+		72F259260D9B15F440C7B50E /* CloudBackupToggleUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudBackupToggleUITests.swift; sourceTree = "<group>"; };
+		040591AD75D40A6C60A65226 /* DashboardLaunchUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardLaunchUITests.swift; sourceTree = "<group>"; };
+		F061122EE640C6A0C07BAC0A /* SessionAnswerFlowUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionAnswerFlowUITests.swift; sourceTree = "<group>"; };
+		43C2F8072E54B6E9C89A7A82 /* ProfileResetUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileResetUITests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -794,6 +820,7 @@
 			children = (
 				8225047CD3C41A1364CD67FA /* Ikeru.app */,
 				71F17C0E3B326F9F0C5D3E94 /* IkeruTests.xctest */,
+				9E2346F3FADE504EFFA9CBF7 /* IkeruUITests.xctest */,
 				41DE2FB348D4D1AFBF4143ED /* IkeruWatch.app */,
 				FAB097C7086A8C5F1549D53D /* IkeruWidget.appex */,
 			);
@@ -843,6 +870,38 @@
 				3175FF0712D942078BC1664C /* MasteryBookSnapshotStoreTests.swift */,
 			);
 			path = IkeruTests;
+			sourceTree = "<group>";
+		};
+		C866ECFDA9FD425ADC45AF9D /* IkeruUITests */ = {
+			isa = PBXGroup;
+			children = (
+				0E5659B039C080407686F6E3 /* Support */,
+				E90CE4FB4F89A69883403DA9 /* Pages */,
+				72F259260D9B15F440C7B50E /* CloudBackupToggleUITests.swift */,
+				040591AD75D40A6C60A65226 /* DashboardLaunchUITests.swift */,
+				F061122EE640C6A0C07BAC0A /* SessionAnswerFlowUITests.swift */,
+				43C2F8072E54B6E9C89A7A82 /* ProfileResetUITests.swift */,
+			);
+			path = IkeruUITests;
+			sourceTree = "<group>";
+		};
+		0E5659B039C080407686F6E3 /* Support */ = {
+			isa = PBXGroup;
+			children = (
+				5C5322CE8E72D9C6242E5F7A /* LaunchArguments.swift */,
+				E7C2C3D83BD7C65E1D5EA78F /* IkeruUITestCase.swift */,
+			);
+			path = Support;
+			sourceTree = "<group>";
+		};
+		E90CE4FB4F89A69883403DA9 /* Pages */ = {
+			isa = PBXGroup;
+			children = (
+				04EF0757E43F2C18E1E202ED /* SettingsPage.swift */,
+				5CC05412F9822B4E6D174DB4 /* HomePage.swift */,
+				DA69C5A644C64AAF416D4803 /* KanaQuizPage.swift */,
+			);
+			path = Pages;
 			sourceTree = "<group>";
 		};
 		78AAAC6074F5CA46557FF5DA /* Etude */ = {
@@ -1112,6 +1171,7 @@
 			children = (
 				F07F60B10BED6A68A1D6B10F /* Ikeru */,
 				7344ECA701F647E161A3F97A /* IkeruTests */,
+				C866ECFDA9FD425ADC45AF9D /* IkeruUITests */,
 				89E961573BC43074012E9FBE /* IkeruWatch */,
 				2C4C5EDAADACC15D5976A581 /* IkeruWidget */,
 				EFEE841E8CCC68D101865FB8 /* Shared */,
@@ -1220,6 +1280,22 @@
 			productReference = 71F17C0E3B326F9F0C5D3E94 /* IkeruTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
+		6BFC3C86F3AD7CE33BD80F20 /* IkeruUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 35E00156CEA0DE421B858F6B /* Build configuration list for PBXNativeTarget "IkeruUITests" */;
+			buildPhases = (
+				B828EC9881E57D1E1EE17EE1 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				512D9C4F946341C1BD0C139F /* PBXTargetDependency */,
+			);
+			name = IkeruUITests;
+			productName = IkeruUITests;
+			productReference = 9E2346F3FADE504EFFA9CBF7 /* IkeruUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 		EDDB8F3812DC1BC18F32017C /* Ikeru */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 3CA19E1D53CD0152AB4B9BA3 /* Build configuration list for PBXNativeTarget "Ikeru" */;
@@ -1265,6 +1341,11 @@
 						DevelopmentTeam = N84YXYF2NZ;
 						ProvisioningStyle = Automatic;
 					};
+					6BFC3C86F3AD7CE33BD80F20 = {
+						DevelopmentTeam = N84YXYF2NZ;
+						ProvisioningStyle = Automatic;
+						TestTargetID = EDDB8F3812DC1BC18F32017C;
+					};
 					EDDB8F3812DC1BC18F32017C = {
 						ProvisioningStyle = Automatic;
 					};
@@ -1290,6 +1371,7 @@
 			targets = (
 				EDDB8F3812DC1BC18F32017C /* Ikeru */,
 				C7A466B4903F67E7A7B2D0E2 /* IkeruTests */,
+				6BFC3C86F3AD7CE33BD80F20 /* IkeruUITests */,
 				AB63406F8CCDE07382570F0B /* IkeruWatch */,
 				5E31F15C6A31BAD7198508F4 /* IkeruWidget */,
 			);
@@ -1581,6 +1663,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		B828EC9881E57D1E1EE17EE1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E7F304F8F102F1676196A4EE /* LaunchArguments.swift in Sources */,
+				FAAD7FE5CBF2C0A6366F8813 /* IkeruUITestCase.swift in Sources */,
+				5548CB18C0A47A9190B2BDBB /* SettingsPage.swift in Sources */,
+				477536274341CBF0327E7DB3 /* HomePage.swift in Sources */,
+				F823ED39AB7889497F5BE229 /* KanaQuizPage.swift in Sources */,
+				6B13D7790EFDA7C6E4B470B4 /* CloudBackupToggleUITests.swift in Sources */,
+				E60F6F77330CEE535D85DA46 /* DashboardLaunchUITests.swift in Sources */,
+				7A7CFB6F30BE72C371E63721 /* SessionAnswerFlowUITests.swift in Sources */,
+				ACD0BCA3A7C1EE79813BD02A /* ProfileResetUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -1598,6 +1696,11 @@
 			isa = PBXTargetDependency;
 			target = AB63406F8CCDE07382570F0B /* IkeruWatch */;
 			targetProxy = A0D20F1CE0000000000B0002 /* PBXContainerItemProxy */;
+		};
+		512D9C4F946341C1BD0C139F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = EDDB8F3812DC1BC18F32017C /* Ikeru */;
+			targetProxy = 878D6DEF846110F4DA6FC1FD /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -1881,6 +1984,38 @@
 			};
 			name = Debug;
 		};
+		4514837964E48BB1A4E4CF96 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.ikeru.app.uitests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_TARGET_NAME = Ikeru;
+			};
+			name = Debug;
+		};
+		8D71FC1765058E90649B3EF2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.ikeru.app.uitests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_TARGET_NAME = Ikeru;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -1925,6 +2060,15 @@
 			buildConfigurations = (
 				0AC7F214D33BD7F4D7729F3F /* Debug */,
 				59CEEF26E2A5EB7AA0D56731 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		35E00156CEA0DE421B858F6B /* Build configuration list for PBXNativeTarget "IkeruUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4514837964E48BB1A4E4CF96 /* Debug */,
+				8D71FC1765058E90649B3EF2 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
