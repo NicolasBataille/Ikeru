@@ -41,7 +41,7 @@ struct ProfileViewModelTests {
     /// cascade) present for the deletion-cleanup test.
     private func makeContainer() throws -> ModelContainer {
         let schema = Schema(versionedSchema: IkeruSchemaV4.self)
-        let config = ModelConfiguration(UUID().uuidString, isStoredInMemoryOnly: true)
+        let config = ModelConfiguration(isStoredInMemoryOnly: true)
         return try ModelContainer(for: schema, configurations: [config])
     }
 
