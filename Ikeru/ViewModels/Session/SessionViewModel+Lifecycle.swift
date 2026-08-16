@@ -98,6 +98,49 @@ extension SessionViewModel {
         return true
     }
 
+    /// Starts the session a learner chose when nothing was due — the
+    /// "approfondir" or "découvrir" offer from the Home proposal.
+    ///
+    /// Identical wiring to `startSession()` on purpose: once composed, a
+    /// caught-up session IS an ordinary session, and giving it a parallel
+    /// lifecycle would be two code paths to keep in step for no behavioural
+    /// difference. Returns false when the chosen pool emptied between the
+    /// proposal being shown and the tap — the caller must keep the proposal
+    /// up rather than pretend something happened.
+    @discardableResult
+    public func startCaughtUpSession(
+        offer: SessionPlannerInputs.CaughtUpOffer
+    ) async -> Bool {
+        guard let composed = await sessionComposer.composeCaughtUp(
+            offer: offer,
+            durationMinutes: defaultDurationMinutes
+        ) else {
+            Logger.ui.info(
+                "startCaughtUpSession(\(offer.rawValue, privacy: .public)): nothing to compose — not starting"
+            )
+            return false
+        }
+
+        sessionQueue = composed.sessionQueue
+        resetSessionState()
+        estimatedCardCount = composed.sessionExercises.count
+        sessionExercises = composed.sessionExercises
+        endPolicy = composed.endPolicy
+        sessionJLPTLevel = composed.jlptLevel
+        vocabularyPool = composed.vocabularyPool
+        cardsNeedingPresentation = composed.cardsNeedingPresentation
+        planEstimatedDurationMinutes = composed.estimatedDurationMinutes
+
+        startTimer()
+        await loadRPGState()
+        liveActivity.start(totalExercises: composed.sessionExercises.count)
+
+        Logger.ui.info(
+            "Caught-up session started (\(offer.rawValue, privacy: .public)): \(composed.sessionExercises.count) exercises"
+        )
+        return true
+    }
+
     /// Composes a custom session from the Étude → Compose sheet. Same
     /// pipeline as `startSession()` but with `.studyCustom` as the planner
     /// source (see `SessionComposer.composeStudyCustom`) so the planner

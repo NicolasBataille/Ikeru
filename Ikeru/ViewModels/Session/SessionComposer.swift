@@ -107,6 +107,62 @@ final class SessionComposer {
         )
     }
 
+    // MARK: - Caught up (startCaughtUpSession)
+
+    /// Composes the session a learner explicitly asked for when nothing was
+    /// due — "approfondir" or "découvrir".
+    ///
+    /// Deliberately reuses `HomeRecommendationPlan` and the same nil-on-empty
+    /// guard: a caught-up session is an ordinary session in every respect the
+    /// rest of `SessionViewModel` cares about. Only its *source* differs, and
+    /// that difference lives in the planner where the pool is chosen.
+    ///
+    /// Returning nil here is not an error path to hide. It means the learner
+    /// tapped an offer whose pool has since emptied, and the caller must keep
+    /// showing the proposal rather than opening a blank session — the whole
+    /// point of this change is that nothing happens silently.
+    func composeCaughtUp(
+        offer: SessionPlannerInputs.CaughtUpOffer,
+        durationMinutes: Int
+    ) async -> HomeRecommendationPlan? {
+        let cards = await cardRepository.allCards()
+        let snapshot = await buildSnapshot(cards: cards)
+        let inputs = SessionPlannerInputs(
+            source: .caughtUp(offer),
+            durationMinutes: durationMinutes,
+            profile: snapshot,
+            unlockedTypes: effectiveUnlockedTypes(profile: snapshot),
+            availableCards: cards
+        )
+        let plan = await sessionPlanner.compose(inputs: inputs)
+        let scheduled = NewCardPresentationScheduler.schedulingPresentations(for: plan.exercises)
+        let exercises = scheduled.exercises
+        let srsCards = Self.srsCards(from: exercises)
+        guard !srsCards.isEmpty else {
+            Logger.ui.info(
+                "session.caughtUp offer=\(offer.rawValue, privacy: .public) produced no cards"
+            )
+            return nil
+        }
+
+        let pool = await vocabularyPool(level: snapshot.jlptLevel)
+
+        return HomeRecommendationPlan(
+            sessionQueue: srsCards,
+            sessionExercises: exercises,
+            endPolicy: SessionEndPolicy(
+                durationBudgetMinutes: durationMinutes,
+                queueLength: exercises.count
+            ),
+            jlptLevel: snapshot.jlptLevel,
+            vocabularyPool: pool,
+            srsCardCount: srsCards.count,
+            estimatedDurationMinutes: plan.estimatedDurationMinutes
+                + Self.minutes(fromSeconds: scheduled.addedDurationSeconds),
+            cardsNeedingPresentation: scheduled.cardsNeedingPresentation
+        )
+    }
+
     // MARK: - Study Custom (startStudyCustomSession)
 
     struct StudyCustomPlan {
