@@ -705,6 +705,7 @@ struct SettingsView: View {
                     .ikeruScaledFont(13, design: .serif, relativeTo: .caption)
                     .foregroundStyle(Color.ikeruPrimaryAccent)
                     .padding(.horizontal, 16)
+                    .accessibilityIdentifier("settings.cloudBackupStatus")
             }
             Text(
                 "Backs up your progress to a server in Europe. No account is needed. Conversations with Sakura are not included. Restoring on a new device is not available yet.",
@@ -729,6 +730,11 @@ struct SettingsView: View {
             jp: "クラウド",
             label: "Cloud backup (beta)",
             isOn: $cloudSyncConsentEnabled,
+            // GAP-09 UI-test harness: this is THE gesture GAP-01's two-client
+            // merge test is blocked on (cloud sync only starts from
+            // `setConsent()`, which this toggle drives) — see
+            // `IkeruUITests/Pages/SettingsPage.swift`.
+            accessibilityID: "settings.cloudBackupToggle",
             onToggleChange: { enabled in handleCloudSyncToggleChange(enabled) }
         ) {
             EmptyView()
@@ -1306,6 +1312,7 @@ extension SettingsView {
         jp: String,
         label: LocalizedStringKey,
         isOn: Binding<Bool>,
+        accessibilityID: String? = nil,
         onToggleChange: @escaping (Bool) -> Void,
         @ViewBuilder trailing: () -> Trailing
     ) -> some View {
@@ -1333,7 +1340,7 @@ extension SettingsView {
                     .lineLimit(1)
                     .padding(.trailing, 4)
             }
-            TatamiToggle(isOn: isOn, onChange: onToggleChange)
+            TatamiToggle(isOn: isOn, onChange: onToggleChange, accessibilityID: accessibilityID)
         }
         .padding(.horizontal, 16).padding(.vertical, 12)
         .overlay(alignment: .bottom) {

@@ -170,6 +170,13 @@ struct KanaQuizView: View {
         .disabled(answered)
         .scaleEffect(isSelected && !answered ? 0.97 : 1.0)
         .animation(.spring(response: 0.25, dampingFraction: 0.85), value: isSelected)
+        // Same identifier on all four options (GAP-09 UI-test harness) — a
+        // flow test only needs to tap *an* option, not the correct one
+        // (correctness is already covered by KanaDrillViewModelTests), so
+        // `buttons.matching(identifier:).firstMatch` is enough and doesn't
+        // require the option text (romaji, not localized, but still content
+        // a test shouldn't depend on).
+        .accessibilityIdentifier("kanaQuiz.optionButton")
     }
 
     // MARK: Feedback
@@ -231,6 +238,7 @@ struct KanaQuizView: View {
         .ikeruButtonStyle(.primary)
         .disabled(viewModel.selectedOption == nil)
         .opacity(viewModel.selectedOption == nil ? 0.5 : 1.0)
+        .accessibilityIdentifier("kanaQuiz.actionButton")
     }
 
     // MARK: Accuracy bar

@@ -296,6 +296,82 @@ jobs:
             -only-testing:IkeruTests/StoreRecoveryNoticeTests \
             CODE_SIGNING_ALLOWED=NO
 
+  ui-test:
+    name: UI Test (IkeruUITests)
+    runs-on: macos-15
+    needs: lint
+    # Non-blocking for now (GAP-09): this is the FIRST UI-test target this
+    # repo has ever had, run on a brand-new runner combination (XCUITest +
+    # GitHub's macos-15 image) that has had zero baking time. The app
+    # target (IkeruTests) separately has a known, unresolved history of
+    # SwiftData crashes specifically under `xcodebuild test` (two distinct
+    # signatures, tracked in PR #103 / fix/app-target-test-coverage) that
+    # this job's app-under-test could hit for the same underlying reason
+    # even though its own test code never touches SwiftData directly. Kept
+    # as its own job (not a step in `test`) so promoting it to blocking
+    # later, or removing it, never touches that job's `-only-testing`
+    # allowlist, which PR #103 owns. `continue-on-error` so a flake here
+    # (CI-runner UI automation is known-flakier than unit tests) never reds
+    # out the required checks — promote once a week or two of green runs
+    # establishes it isn't systematically flaky on this runner image.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s "$(ls -d /Applications/Xcode*.app | sort -V | tail -1)/Contents/Developer"
+
+      - name: Run IkeruUITests
+        # Same dynamic-simulator pick as the `test` job (see its comment) —
+        # never hardcode `name=iPhone 16`, the runner's available devices
+        # bump with the macos-15 image periodically.
+        #
+        # No CODE_SIGNING_ALLOWED=NO here, unlike `device-build-check` and
+        # part of `test`: a UI test drives the real app process, which needs
+        # its sandbox and Keychain to behave like production — see
+        # CLAUDE.md's "N'utilise JAMAIS CODE_SIGNING_ALLOWED=NO pour lancer
+        # des tests" and IkeruTests/KeychainAvailabilityTests.swift, which
+        # measured exactly this failure mode. Simulator destinations don't
+        # need a real Apple Developer certificate either way — Xcode ad-hoc
+        # signs simulator builds automatically ("Sign to Run Locally"),
+        # confirmed locally: `xcodebuild build-for-testing -scheme
+        # IkeruUITests` signs with that identity with no certificate
+        # imported.
+        run: |
+          DEVICE_ID=$(xcrun simctl list devices available -j | python3 -c "
+          import json, sys
+          data = json.load(sys.stdin)
+          best = None
+          for runtime, devices in data['devices'].items():
+              if 'iOS' not in runtime: continue
+              for d in devices:
+                  if d['name'].startswith('iPhone') and d.get('isAvailable', True):
+                      key = (runtime, d['name'])
+                      if best is None or key > best[0]:
+                          best = (key, d['udid'])
+          print(best[1] if best else '', end='')
+          ")
+          if [ -z "$DEVICE_ID" ]; then
+            echo "::error::No iPhone simulator available on runner"
+            xcrun simctl list devices available
+            exit 1
+          fi
+          echo "Using simulator: $DEVICE_ID"
+          xcodebuild test \
+            -project Ikeru.xcodeproj \
+            -scheme IkeruUITests \
+            -destination "platform=iOS Simulator,id=$DEVICE_ID" \
+            -skipPackagePluginValidation \
+            -resultBundlePath TestResults/IkeruUITests.xcresult
+
+      - name: Upload UI test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: IkeruUITests-xcresult
+          path: TestResults/IkeruUITests.xcresult
+          retention-days: 14
+
   device-build-check:
     name: Device Build (no signing)
     runs-on: macos-15

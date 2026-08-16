@@ -307,6 +307,22 @@ struct IkeruApp: App {
         let viewModel = ProfileViewModel(modelContext: modelContainer.mainContext)
         profileViewModel = viewModel
 
+        #if IKERU_DEV_TOOLS
+        // Dev helper: launch with -wipeData to reset to a clean slate BEFORE
+        // -skipOnboarding / -mockProfile run below. Without this, a second UI
+        // test launch on the same simulator sees `hasProfile == true` from the
+        // previous run and both of those flags silently no-op (`seedIfRequested`
+        // and this file's own `-skipOnboarding` guard both check `hasProfile`
+        // first) — the exact "seed doesn't re-run on the 2nd launch" trap named
+        // in the GAP-09 UI-test-harness brief. Runs in its own IKERU_DEV_TOOLS
+        // block (stripped before App Store submit, see CLAUDE.md) since
+        // `TestFixtures.wipeAll` lives behind the same flag.
+        if CommandLine.arguments.contains("-wipeData") {
+            Logger.ui.info("wipeData flag set — clearing all persisted state before seeding")
+            TestFixtures.wipeAll(context: modelContainer.mainContext, profileVM: viewModel)
+        }
+        #endif
+
         // Dev helper: launch with -skipOnboarding to auto-create a default profile
         if !viewModel.hasProfile && CommandLine.arguments.contains("-skipOnboarding") {
             Logger.ui.info("Skip onboarding flag set — creating default profile")
@@ -321,6 +337,26 @@ struct IkeruApp: App {
         // App Store submit — see CLAUDE.md "Removing IKERU_DEV_TOOLS".
         TestFixtures.seedIfRequested(context: modelContainer.mainContext, profileVM: viewModel)
         #endif
+
+        // Dev helper: launch with -skipTour to land on a profile that has already
+        // "seen" the feature tour.
+        //
+        // Without this, `-skipOnboarding` and `-startTab=` do not compose, which
+        // is not obvious and cost a UI test its diagnosis: creating a profile
+        // starts the tour, and the tour drives navigation itself
+        // (`MainTabView.syncTabToTourStep()`), overwriting whatever tab
+        // `-startTab=` selected. The test asked for Settings and was quietly
+        // taken to the tour's own step instead.
+        //
+        // Reuses `markSeen` rather than adding a second notion of "seen": it is
+        // the same static writer the restore path uses, on the same UserDefaults
+        // key `hasSeenTour(profileID:)` reads. A test that suppressed the tour
+        // some other way would be testing a code path no learner ever takes.
+        if let profileID = viewModel.currentProfile?.id,
+           CommandLine.arguments.contains("-skipTour") {
+            Logger.ui.info("Skip tour flag set — marking the feature tour as seen")
+            FeatureTourController.markSeen(profileID: profileID)
+        }
 
         if viewModel.hasProfile {
             Logger.ui.info("Existing profile found — skipping onboarding")
