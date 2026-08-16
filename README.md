@@ -38,7 +38,7 @@ The shipped content bundle is, exactly:
 | vocabulary | 693 |
 | grammar points | 31 |
 | example sentences | 335 |
-| bundled audio clips | 572 |
+| bundled audio clips | 1259 |
 
 Of those sentences, 96 are Ikeru's own and 239 come from Tatoeba. Of the
 vocabulary, 205 words are Ikeru's own list and 488 come from the Tanos JLPT N5
@@ -46,8 +46,10 @@ list — but every English and French meaning is written for Ikeru, including fo
 the imported words. The split is recorded per row (`vocabulary.list_source`), so
 that claim is a query rather than a promise.
 
-The bundled audio covers the original sentence set; the imported sentences fall
-back to on-device speech synthesis until the clips are regenerated.
+The bundled audio now covers everything the app speaks: all 208 drillable kana,
+all 665 distinct vocabulary readings, and all 335 example sentences — imported
+ones included, which was not true before. Measured after regeneration: 1258
+texts, 0 failures, nothing left falling back to on-device synthesis.
 
 That is JLPT N5 and no further. N4 and beyond are not in the app, and the
 onboarding copy says so.
