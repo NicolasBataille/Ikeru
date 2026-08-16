@@ -15,8 +15,50 @@ final class AssetCacheHolder {
     private init() {}
 }
 
-@main
+// GAP-10 (2026-08-16): `@main` moved to `IkeruMain.swift`, which picks
+// between this real app and an empty test-host `App` based on
+// `isRunningUnderXCTest` below — see that file's doc comment for why.
 struct IkeruApp: App {
+
+    // MARK: - Test-host detection
+
+    /// True when this process is the app-hosted test target's TEST HOST
+    /// (`xcodebuild test -scheme Ikeru`) rather than a real launch.
+    /// `XCTestConfigurationFilePath` is the standard, widely-used signal for
+    /// this (set by the XCTest launcher regardless of whether the actual
+    /// tests are written with XCTest or Swift Testing — Swift Testing is
+    /// hosted through the same XCTest bridge under `xcodebuild test`).
+    ///
+    /// Why this exists (GAP-10, 2026-08-16): `IkeruTests` builds and tears
+    /// down its OWN in-memory `ModelContainer` per test, but `xcodebuild
+    /// test` still launches this REAL `App` as the test host, so its full
+    /// SwiftUI scene — including the `.task { }` below — genuinely mounts
+    /// and runs unless gated.
+    ///
+    /// CORRECTION (2026-08-16, same day): an earlier version of this comment
+    /// claimed this gate FIXED the `SwiftData/BackingData.swift:940: Fatal
+    /// error: Never access a full future backing data` crash by removing
+    /// `IkeruApp`'s own second `ModelContainer` from the process. That claim
+    /// was measured and falsified, not just doubted: `@main` was moved to
+    /// `IkeruMain.swift`, which swaps in an empty `TestHostApp` (no
+    /// `ModelContainer`, no `.task`, no `IkeruApp` instance at all) whenever
+    /// `isRunningUnderXCTest` is true. `HomeViewModelTests
+    /// .loadDataLoadsRPGState()`, run alone, still crashed with the
+    /// IDENTICAL fatal error afterwards — proof this app's own container was
+    /// never the (or at least not the only) cause. The real mechanism is
+    /// still not identified; see GAP-10's final report for the measured
+    /// evidence (two distinct crash signatures, `ModelContainer(` reachable
+    /// only from this file per a repo-wide grep, contradicting evidence
+    /// against a background-actor/mainContext race).
+    ///
+    /// This gate is kept anyway as ordinary test hygiene — the app-hosted
+    /// test target should not run this app's real startup side effects
+    /// (background task registration, launch animation, profile
+    /// initialization) as an accidental by-product of hosting tests — not as
+    /// a fix for the SwiftData crash.
+    static var isRunningUnderXCTest: Bool {
+        ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
+    }
 
     // MARK: - Pre-warm constants
 
@@ -164,6 +206,10 @@ struct IkeruApp: App {
             .environment(\.assetCache, assetCache)
             .toastOverlay()
             .task {
+                    // GAP-10: skip the app's own startup machinery when this
+                    // process is IkeruTests' test host, not a real launch —
+                    // see `isRunningUnderXCTest`'s doc comment.
+                    guard !Self.isRunningUnderXCTest else { return }
                     initializeProfileViewModel()
                     NotificationManager.shared.registerAsDelegate()
                     WatchConnectivityManager.shared.activate(modelContainer: modelContainer)

@@ -13,6 +13,9 @@ struct ImmersiveSessionViewTests {
     private func makeContainer() throws -> ModelContainer {
         let schema = Schema([UserProfile.self, Card.self, ReviewLog.self, RPGState.self])
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
+        // Drop any active-profile id left in UserDefaults by an earlier test;
+        // the resolver persists it there, and it crosses test boundaries.
+        ActiveProfileResolver.setActiveProfileID(nil)
         return try ModelContainer(for: schema, configurations: [config])
     }
 
@@ -26,16 +29,49 @@ struct ImmersiveSessionViewTests {
         )
     }
 
+    /// Resolves (creating if needed) the active profile, and marks it active.
+    ///
+    /// Cards MUST be attached to it: `CardRepository` scopes every query to
+    /// `profile.cards` (see `CardModelActor.activeProfileCards`), so a card
+    /// inserted with `profile == nil` is invisible to the planner and the
+    /// session composes to nothing. These suites predate per-profile scoping
+    /// and were never updated, because a crashing runner meant they never ran
+    /// — every "session never starts" failure here traced back to this.
+    @discardableResult
+    private func ensureProfile(container: ModelContainer) throws -> UserProfile {
+        let context = container.mainContext
+        if let existing = ActiveProfileResolver.fetchActiveProfile(in: context) {
+            return existing
+        }
+        let profile = UserProfile(displayName: "Test")
+        context.insert(profile)
+        try context.save()
+        ActiveProfileResolver.setActiveProfileID(profile.id)
+        return profile
+    }
+
     private func seedDueCards(container: ModelContainer, count: Int) throws -> [UUID] {
         let context = container.mainContext
+        let profile = try ensureProfile(container: container)
         var ids: [UUID] = []
         for i in 0..<count {
             let card = Card(
                 front: "Card \(i)",
                 back: "Back \(i)",
                 type: .kanji,
+                // `reps: 1` is what makes these REVIEWS. The planner's
+                // `pickReviews` filters on `dueDate <= now && reps > 0`; a
+                // never-reviewed card is NEW content, which is deliberately
+                // dripped roughly one per session. Seeded with the default
+                // `reps == 0`, this helper produced new cards while its name
+                // and every assertion said "due reviews", so a 3-card seed
+                // composed a 1-item session. The product was right; the
+                // fixture was lying.
+                fsrsState: FSRSState(difficulty: 5.0, stability: 5.0, reps: 1, lapses: 0,
+                                     lastReview: Date().addingTimeInterval(-86_400)),
                 dueDate: Date().addingTimeInterval(-3600)
             )
+            card.profile = profile
             context.insert(card)
             ids.append(card.id)
         }
@@ -91,7 +127,7 @@ struct ImmersiveSessionViewTests {
         let vm = makeViewModel(container: container)
 
         await vm.startSession()
-        vm.endSession()
+        await vm.endSession()
 
         #expect(vm.isTimerRunning == false)
     }
@@ -295,7 +331,7 @@ struct ImmersiveSessionViewTests {
         let xpBeforeAbandon = vm.xpEarned
         let reviewedBeforeAbandon = vm.reviewedCount
 
-        vm.endSession()
+        await vm.endSession()
 
         #expect(vm.xpEarned == xpBeforeAbandon)
         #expect(vm.reviewedCount == reviewedBeforeAbandon)
@@ -313,7 +349,12 @@ struct ImmersiveSessionViewTests {
         await vm.gradeAndAdvance(grade: .good)
         await vm.gradeAndAdvance(grade: .good)
 
-        #expect(vm.abandonProgressDescription == "You've completed 3 of 8 exercises")
+        // Locale-independent: this string is localized, and the test host
+        // runs in whatever language the simulator is set to (French here, so
+        // the hardcoded English sentence failed). Assert the two numbers the
+        // description exists to convey, not the sentence around them.
+        #expect(vm.abandonProgressDescription.contains("3"))
+        #expect(vm.abandonProgressDescription.contains("8"))
     }
 
     // MARK: - Skill Type Icon Tests
@@ -368,7 +409,14 @@ struct ImmersiveSessionViewTests {
         await vm.gradeAndAdvance(grade: .good)
         #expect(vm.currentExerciseIndex == 1)
         #expect(vm.reviewedCount == 1)
-        #expect(vm.xpEarned == 10)
+        // Not a magic 10. XP per grade was deliberately flattened (see
+        // `RPGConstants.xpForGrade`'s doc comment: reward showing up, not
+        // self-rated accuracy), so the old hardcoded 10 predates the current
+        // economy. Assert the property that matters here — grading an
+        // exercise earns XP — and leave the exact per-grade number to
+        // `RPGConstants`' own tests, where changing the economy should
+        // require changing exactly one expectation.
+        #expect(vm.xpEarned > 0)
 
         // Pause mid-session
         vm.pauseSession()
@@ -408,16 +456,19 @@ struct ImmersiveSessionViewTests {
 
         // Abandon after 2 of 5 exercises
         vm.pauseSession()
-        vm.endSession()
+        await vm.endSession()
 
         #expect(vm.reviewedCount == 2)
-        #expect(vm.xpEarned == 20)
+        let xpAfterTwo = vm.xpEarned
+        #expect(xpAfterTwo > 0)
         #expect(vm.isSessionComplete == true)
 
         // Verify RPG state was persisted
         let descriptor = FetchDescriptor<RPGState>()
         let states = try container.mainContext.fetch(descriptor)
-        #expect(states.first?.xp == 20)
+        // The point of this assertion is that the session's XP reached
+        // SwiftData intact — not what the economy pays per grade.
+        #expect(states.first?.xp == xpAfterTwo)
     }
 
     @Test("Exercise transition trigger increments on advance")

@@ -461,7 +461,41 @@ public final class SessionViewModel {
     /// If no cards were reviewed (the user abandoned immediately), the summary
     /// screen has nothing meaningful to display — skip it and return directly
     /// to the home screen via `dismissSession()`.
-    public func endSession() {
+    ///
+    /// `async` (GAP-10, 2026-08-16): the Live-Activity-end and
+    /// newly-unlocked bookkeeping below used to run as two untracked,
+    /// un-awaited `Task { }` blocks that could outlive the caller and keep
+    /// fetching/saving `RPGState` through `SessionRPGPersistence` after it
+    /// returned. Harmless in production — the app opens exactly one
+    /// `ModelContainer` for its whole lifetime — but a test that builds and
+    /// discards its own in-memory container has no such guarantee, and work
+    /// racing a container teardown is not something to leave lying around.
+    ///
+    /// CORRECTION (2026-08-16, same day): an earlier version of this comment
+    /// claimed these detached tasks were the cause of the app test target's
+    /// `SwiftData/BackingData.swift:940: Never access a full future backing
+    /// data` crash, and read the two UUIDs in that fatal error as belonging
+    /// to two different containers. Both claims were wrong. Bisected inside
+    /// a single `-only-testing:` run, the crash fires in a test's *seed
+    /// helper*, before any `SessionViewModel` exists, and the fatal's
+    /// `PersistentIdentifier` shares its store UUID with the profile that
+    /// was just saved — one store, not two. The real cause was a seed helper
+    /// displacing a saved `RPGState` through the owning side of the
+    /// relationship; see the GAP-10 regression test in
+    /// `IkeruTests/HomeViewModelTests.swift`. This change is kept purely as
+    /// the structured-concurrency fix it should have been billed as: it does
+    /// not fix, and never fixed, that crash.
+    ///
+    /// Making this `async` and awaiting both calls directly keeps them
+    /// off the critical synchronous path that mutates `@Observable` state
+    /// just below (SwiftUI still sees that state change immediately — the
+    /// synchronous prefix of an `async` function runs eagerly, before its
+    /// first suspension point) while ensuring the function genuinely
+    /// doesn't return until the SwiftData work is done, so nothing is left
+    /// running against a container the caller may be about to release.
+    /// The one production call site (`ActiveSessionView`'s "End Session"
+    /// button) now wraps this in `Task { await ... }` itself.
+    public func endSession() async {
         Logger.ui.info(
             "Session ended early: \(self.reviewedCount)/\(self.sessionQueue.count) reviewed, \(self.xpEarned) XP"
         )
@@ -479,28 +513,28 @@ public final class SessionViewModel {
             return
         }
 
-        // End Live Activity
-        Task {
-            await liveActivity.end(
-                elapsedSeconds: Int(elapsedTime),
-                completedCount: reviewedCount,
-                // Exercise-list length, matching updateActivity / finishSessionIfNeeded.
-                // On an abandoned mixed SRS + drill session, sessionQueue.count
-                // (SRS-only) would under-report and make completedCount > totalCount.
-                totalCount: sessionExercises.count,
-                xpEarned: xpEarned,
-                streakCount: consecutiveCorrect
-            )
-        }
-
-        // Mark as complete by jumping to end of queue
+        // Mark as complete by jumping to end of queue. Done before the
+        // awaits below so the synchronous state change is observed by
+        // SwiftUI immediately, matching the original fire-and-forget timing.
         currentIndex = sessionQueue.count
         currentExerciseIndex = sessionExercises.count
         isPaused = false
         showAbandonConfirmation = false
         stopTimer()
 
-        Task { await processNewlyUnlocked() }
+        // End Live Activity.
+        await liveActivity.end(
+            elapsedSeconds: Int(elapsedTime),
+            completedCount: reviewedCount,
+            // Exercise-list length, matching updateActivity / finishSessionIfNeeded.
+            // On an abandoned mixed SRS + drill session, sessionQueue.count
+            // (SRS-only) would under-report and make completedCount > totalCount.
+            totalCount: sessionExercises.count,
+            xpEarned: xpEarned,
+            streakCount: consecutiveCorrect
+        )
+
+        await processNewlyUnlocked()
     }
 
     /// After the session ends, compute the new `LearnerSnapshot` and grant
