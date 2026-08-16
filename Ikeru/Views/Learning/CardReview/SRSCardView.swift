@@ -165,6 +165,21 @@ struct SRSCardView: View {
                     // above are `.allowsHitTesting(false)` decoration, and the
                     // flying-card overlay below is ephemeral, so neither is
                     // something a test should ever be able to address.
+                    //
+                    // `.contain` is load-bearing, and its absence is what GAP-18
+                    // actually was. Without it SwiftUI has no element to hang the
+                    // identifier on, so it pushes the identifier DOWN onto every
+                    // leaf `Text` in the card: the tree ended up with two
+                    // `StaticText`s both identified `session.card` (the character
+                    // and the "Kanji" caption) and nothing in `otherElements`.
+                    // The page object queried `otherElements` and found nothing —
+                    // while the card was plainly on screen. Same defect as
+                    // `home.caughtUpProposal` on Home, same one-line shape.
+                    //
+                    // `.contain` rather than `.combine`: combining would flatten
+                    // the card into a single label and lose the reveal/answer
+                    // structure VoiceOver needs.
+                    .accessibilityElement(children: .contain)
                     .accessibilityIdentifier("session.card")
             }
 

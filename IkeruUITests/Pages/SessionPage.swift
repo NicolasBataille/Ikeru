@@ -37,8 +37,17 @@ struct SessionPage {
 
     /// The interactive front of the deck. Peek layers behind it are
     /// non-hit-testable decoration and carry no identifier.
+    ///
+    /// Matched by identifier across **any** element type, not via
+    /// `app.otherElements`. That specificity is what GAP-18 turned out to be:
+    /// before `SRSCardView` published the card as a container, SwiftUI pushed
+    /// `session.card` down onto the leaf `Text`s, so the identifier existed —
+    /// as `StaticText` — while `otherElements["session.card"]` found nothing
+    /// and the failure read as "the session never opened". The view is fixed;
+    /// this query is deliberately type-agnostic so a future change of element
+    /// type cannot resurrect a whole-suite red from a one-word mismatch.
     private var card: XCUIElement {
-        app.otherElements["session.card"]
+        app.descendants(matching: .any).matching(identifier: "session.card").firstMatch
     }
 
     private func gradeButton(_ grade: String) -> XCUIElement {
