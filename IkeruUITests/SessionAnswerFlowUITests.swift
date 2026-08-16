@@ -33,11 +33,31 @@ import XCTest
 /// predicts (the `NewCardPresentationScheduler`/`reps == 0` reasoning is
 /// sound on paper but was never confirmed against a live hierarchy dump
 /// the way the cloud-backup failure was).
+/// ⚠️ STILL RED, deliberately left so, and measured — not assumed.
+///
+/// Adding `skipTour` did NOT fix it, which is itself the useful result: the
+/// feature tour hijacking navigation (the cause of the cloud-toggle failures)
+/// is not what breaks this one. The assertion still reports that the session
+/// never reached a kana quiz option.
+///
+/// Most likely explanation, NOT yet confirmed: this launches with
+/// `mockDue(0)` + `mockMastered(0)`, i.e. a profile with nothing due. A
+/// session composed from no SRS cards falls back to supplementary exercises,
+/// so a kana quiz may simply never appear — in which case the test's
+/// expectation is wrong, not the app. That guess is worth checking against
+/// the related finding on `AdaptiveSessionViewModelTests.loadSessionPreview`
+/// (PR #103), where an empty profile produced 25 composed items instead of 0.
+///
+/// It would have been easy to raise `mockDue` until this went green. That
+/// would have hidden the question of what the app is supposed to do for a
+/// learner with nothing due — which is a real product question, and belongs
+/// to whoever answers it, not to a fixture tweak.
 final class SessionAnswerFlowUITests: IkeruUITestCase {
 
     func testStartSessionAndAnswerOneExercise() {
         let app = launch([
             LaunchArguments.mockProfile,
+            LaunchArguments.skipTour,
             LaunchArguments.mockLevel(30),
             LaunchArguments.mockDue(0),
             LaunchArguments.mockMastered(0),

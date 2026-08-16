@@ -12,27 +12,28 @@ import XCTest
 /// flips, a status line appears) — see `SettingsPage`'s doc comment for why
 /// it does not assert on the network sync outcome.
 ///
-/// KNOWN FAILURE as of this writing (measured, not assumed — full
-/// accessibility-hierarchy dump captured via a temporary `app.debugDescription`
-/// print, then removed): both tests below currently time out.
-/// `-skipOnboarding` creates a brand-new profile, which makes
-/// `MainTabView.onAppear` start `FeatureTourController`'s first-run coach-mark
-/// overlay ("Hi, I'm Sakura!") — that overlay covers the whole screen AND
-/// (via `syncTabToTourStep()`) drives `selectedTab` itself, overriding
-/// `-startTab=2`'s initial value. So the app never actually reaches Settings
-/// under `-skipOnboarding`, regardless of `-startTab`. Not fixed here — this
-/// effort ran out of budget mid-diagnosis (see PR description / GAP-09
-/// report). Two candidate fixes for whoever picks this up: (1) a
-/// `-skipFeatureTour` dev-tools launch flag that calls
-/// `FeatureTourController.markSeen(profileID:)` before `MainTabView`
-/// appears, or (2) have `SettingsPage` dismiss the tour overlay first if
-/// present. `DashboardLaunchUITests`/`ProfileResetUITests` don't hit this
-/// because they only need Home, which is what the tour spotlights anyway.
+/// Both tests below used to time out, and the diagnosis is worth keeping:
+/// `-skipOnboarding` creates a brand-new profile, which starts
+/// `FeatureTourController`'s first-run coach marks ("Hi, I'm Sakura!"). That
+/// overlay covers the screen AND drives `selectedTab` itself via
+/// `MainTabView.syncTabToTourStep()`, overriding `-startTab=2`. The app never
+/// reached Settings, and the symptom — a missing element — looked like a
+/// broken accessibility identifier rather than a hijacked route.
+///
+/// Fixed by `LaunchArguments.skipTour`, which calls the existing
+/// `FeatureTourController.markSeen(profileID:)` — the same static writer the
+/// restore path uses, on the same UserDefaults key `hasSeenTour(profileID:)`
+/// reads. Suppressing the tour any other way would have tested a path no
+/// learner takes.
+///
+/// The general lesson, since it will bite again: **`-skipOnboarding` and
+/// `-startTab` do not compose on their own.** Pair them with `skipTour`.
 final class CloudBackupToggleUITests: IkeruUITestCase {
 
     func testTogglingCloudBackupOnUpdatesLocalState() {
         let app = launch([
             LaunchArguments.skipOnboarding,
+            LaunchArguments.skipTour,
             LaunchArguments.startTab(2), // Settings — see AppTab
         ])
 
@@ -55,6 +56,7 @@ final class CloudBackupToggleUITests: IkeruUITestCase {
     func testTogglingCloudBackupOffReturnsToDefaultState() {
         let app = launch([
             LaunchArguments.skipOnboarding,
+            LaunchArguments.skipTour,
             LaunchArguments.startTab(2),
         ])
 

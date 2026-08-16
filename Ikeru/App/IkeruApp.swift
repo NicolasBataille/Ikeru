@@ -338,6 +338,26 @@ struct IkeruApp: App {
         TestFixtures.seedIfRequested(context: modelContainer.mainContext, profileVM: viewModel)
         #endif
 
+        // Dev helper: launch with -skipTour to land on a profile that has already
+        // "seen" the feature tour.
+        //
+        // Without this, `-skipOnboarding` and `-startTab=` do not compose, which
+        // is not obvious and cost a UI test its diagnosis: creating a profile
+        // starts the tour, and the tour drives navigation itself
+        // (`MainTabView.syncTabToTourStep()`), overwriting whatever tab
+        // `-startTab=` selected. The test asked for Settings and was quietly
+        // taken to the tour's own step instead.
+        //
+        // Reuses `markSeen` rather than adding a second notion of "seen": it is
+        // the same static writer the restore path uses, on the same UserDefaults
+        // key `hasSeenTour(profileID:)` reads. A test that suppressed the tour
+        // some other way would be testing a code path no learner ever takes.
+        if let profileID = viewModel.currentProfile?.id,
+           CommandLine.arguments.contains("-skipTour") {
+            Logger.ui.info("Skip tour flag set — marking the feature tour as seen")
+            FeatureTourController.markSeen(profileID: profileID)
+        }
+
         if viewModel.hasProfile {
             Logger.ui.info("Existing profile found — skipping onboarding")
             showOnboarding = false

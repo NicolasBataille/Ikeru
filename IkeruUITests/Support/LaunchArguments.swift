@@ -23,6 +23,17 @@ enum LaunchArguments {
     /// Auto-creates a plain "Nico" profile with no fixture content.
     static let skipOnboarding = "-skipOnboarding"
 
+    /// Marks the feature tour as already seen for the profile that was just
+    /// created, so it never starts.
+    ///
+    /// Pair this with `startTab(_:)` — without it the two do not compose, and
+    /// the failure is silent. Creating a profile starts the tour, and the tour
+    /// drives navigation itself (`MainTabView.syncTabToTourStep()`), so it
+    /// overwrites the tab `startTab(_:)` asked for. The test lands somewhere
+    /// it never requested and reports a missing element, which reads like a
+    /// broken accessibility identifier rather than a hijacked route.
+    static let skipTour = "-skipTour"
+
     /// Seeds a rich fixture profile (kana + kanji/vocab review history).
     /// No-ops if a profile already exists — always pair with `wipeData`.
     static let mockProfile = "-mockProfile"
