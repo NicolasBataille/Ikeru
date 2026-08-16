@@ -90,7 +90,11 @@ struct ContentBundleVocabularyTests {
 
         #expect(
             duplicates.isEmpty,
-            "Duplicated in the shipped bundle: \(duplicates.joined(separator: ", ")). A duplicate word means one is unreachable through `word`-keyed lookups, and the learner can be shown the same card twice."
+            """
+            Duplicated in the shipped bundle: \(duplicates.joined(separator: ", ")). \
+            A duplicate word means one is unreachable through `word`-keyed lookups, \
+            and the learner can be shown the same card twice.
+            """
         )
     }
 
@@ -126,7 +130,10 @@ struct ContentBundleVocabularyTests {
         #expect(counts["tanos"] == 488, "The imported N5 list changed size: \(counts)")
         #expect(
             Set(counts.keys) == ["ikeru", "tanos"],
-            "Unexpected list_source values: \(Set(counts.keys)). Every value needs a matching credit in AttributionView."
+            """
+            Unexpected list_source values: \(Set(counts.keys)). \
+            Every value needs a matching credit in AttributionView.
+            """
         )
         #expect(rows.count == 693)
     }

@@ -40,7 +40,7 @@ struct AttributionView: View {
             // `Attribution.all`). This is the line a learner actually READS;
             // fixing only the source comment would have left the claim on
             // screen and the correction where nobody looks.
-            Text("Vocabulary meanings and grammar notes are written for Ikeru. Kanji readings come from KANJIDIC, the N5 word list from Tanos, and most example sentences from the Tatoeba corpus — all credited below.")
+            Text("Meanings and grammar notes are written for Ikeru. Kanji readings come from KANJIDIC, the N5 word list from Tanos, most example sentences from Tatoeba — all credited below.")
                 .font(.ikeruCaption)
                 .foregroundStyle(.ikeruTextSecondary)
         }
@@ -195,7 +195,7 @@ struct Attribution: Identifiable {
             author: "Jonathan Waller — tanos.co.uk",
             license: "CC BY",
             licenceURL: URL(string: "http://www.tanos.co.uk/jlpt/sharing/"),
-            description: "Which words are on the JLPT N5 list, and how they are read, come from Jonathan Waller's JLPT resources. The English and French meanings shown in Ikeru are written for Ikeru, not taken from there."
+            description: "The JLPT N5 word list and its readings come from Jonathan Waller's JLPT resources. The meanings shown in Ikeru are written for Ikeru, not taken from there."
         ),
         Attribution(
             id: "voicevox",
