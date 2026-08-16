@@ -732,11 +732,7 @@ struct HomeView: View {
     /// returns nil so the session still starts; the audio drills just get an
     /// empty vocabulary pool rather than crashing.
     private static func makeContentRepository() -> ContentRepository? {
-        guard let url = Bundle.main.url(forResource: "n5-content", withExtension: "sqlite") else {
-            Logger.ui.error("n5-content.sqlite not found in bundle — audio drills will have no content")
-            return nil
-        }
-        return ContentRepository(bundleURL: url)
+        BundledContent.makeRepository()
     }
 
     private func startSession() {

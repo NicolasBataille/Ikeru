@@ -9757,6 +9757,24 @@
         }
       }
     },
+    "Vocabulary.Examples.Title" : {
+      "comment" : "Section header above a word's bundled example sentences",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Examples"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exemples"
+          }
+        }
+      }
+    },
     "Vocabulary.Empty.Body" : {
       "extractionState" : "manual",
       "localizations" : {

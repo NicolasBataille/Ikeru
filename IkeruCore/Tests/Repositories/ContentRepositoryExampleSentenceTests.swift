@@ -93,6 +93,42 @@ struct ContentRepositoryExampleSentenceTests {
         #expect(await repo.exampleSentences(for: "日本", limit: 5).isEmpty)
     }
 
+    /// Against the **shipped** bundle, not a fixture.
+    ///
+    /// Every other test here builds its own SQLite, which proves the query is
+    /// correct but not that the real data is shaped the way the query assumes.
+    /// This one opens `Ikeru/Resources/ContentBundles/n5-content.sqlite` and
+    /// asserts a French translation actually comes back — the closest a
+    /// package test can get to "a learner would see this".
+    ///
+    /// Resolved from `#filePath` because the bundle lives in the app target,
+    /// outside this package's resources. Skipped rather than failed if the
+    /// layout ever moves: a path assumption breaking should not read as the
+    /// feature breaking.
+    @Test("the shipped bundle really does serve French example sentences")
+    func shippedBundleServesFrench() async throws {
+        let repositoryRoot = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()   // Repositories
+            .deletingLastPathComponent()   // Tests
+            .deletingLastPathComponent()   // IkeruCore
+            .deletingLastPathComponent()   // repo root
+        let bundleURL = repositoryRoot
+            .appendingPathComponent("Ikeru/Resources/ContentBundles/n5-content.sqlite")
+
+        try #require(
+            FileManager.default.fileExists(atPath: bundleURL.path),
+            "shipped bundle not found at \(bundleURL.path) — path assumption moved, not a feature failure"
+        )
+
+        let repo = ContentRepository(bundleURL: bundleURL, language: .french)
+        let examples = await repo.exampleSentences(for: "日本", limit: 2)
+
+        #expect(!examples.isEmpty, "the shipped bundle served no French example for 日本")
+        #expect(examples.allSatisfy { !$0.japanese.isEmpty && !$0.translation.isEmpty })
+        // A French translation, not the Japanese echoed back or an English one.
+        #expect(examples.allSatisfy { $0.translation != $0.japanese })
+    }
+
     @Test("ordering is stable across calls")
     func orderingIsStable() async throws {
         let repo = ContentRepository(bundleURL: try makeSentenceDatabase(), language: .english)

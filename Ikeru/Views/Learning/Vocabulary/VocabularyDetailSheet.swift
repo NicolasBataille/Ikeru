@@ -32,6 +32,7 @@ struct VocabularyDetailSheet: View {
                         wordHeader
                         meaningSection
                         contextSection
+                        ExampleSentencesSection(word: hint.word)
                         if let entry = existingEntry, entry.isInDictionary {
                             masterySection(entry)
                         }

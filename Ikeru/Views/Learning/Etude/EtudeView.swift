@@ -195,10 +195,6 @@ struct ExploreView: View {
     /// against curated readings (remediation 6.7). Fail-safe: a missing
     /// resource logs and returns nil, and reading-validation simply no-ops.
     private static func makeContentRepository() -> ContentRepository? {
-        guard let url = Bundle.main.url(forResource: "n5-content", withExtension: "sqlite") else {
-            Logger.ui.error("n5-content.sqlite not found in bundle — Sakura reading validation disabled")
-            return nil
-        }
-        return ContentRepository(bundleURL: url)
+        BundledContent.makeRepository()
     }
 }

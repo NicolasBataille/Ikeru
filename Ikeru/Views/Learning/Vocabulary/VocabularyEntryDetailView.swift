@@ -38,6 +38,7 @@ struct VocabularyEntryDetailView: View {
                         VStack(spacing: IkeruTheme.Spacing.xl) {
                             wordHeader(entry)
                             masteryCard(entry)
+                            ExampleSentencesSection(word: entry.word)
                             encounterTimeline
                             deleteSection
                             Spacer(minLength: 40)
