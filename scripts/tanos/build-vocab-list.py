@@ -36,10 +36,17 @@ three fields (0 = Front / written form, 1 = Back / English, 2 = Hiragana).
 
 ## Known defects in the source, corrected here
 
-- ``左`` is given the reading ``はだり``; the word reads ``ひだり``. Typo in the
-  source, fixed by ``_READING_CORRECTIONS``. Found by diffing the 179 words
-  that overlap Ikeru's existing hand-written entries — which is the only
-  reason it was caught, so do not assume the other 483 are clean.
+- **Four wrong readings**, fixed by ``_READING_CORRECTIONS``:
+  ``左`` as ``はだり`` (reads ``ひだり``), ``半分`` as ``はんぷん`` (rendaku:
+  ``はんぶん``), ``夕飯`` as ``ゆうしょく`` (that is ``夕食``), and ``曲る`` as
+  ``まげる`` (that is ``曲げる``, the transitive pair).
+
+  The first was caught by diffing the 179 words that overlap Ikeru's existing
+  hand-written entries. The other three were caught only because every gloss
+  goes through an independent verification pass that re-reads the reading
+  against the word. **Do not skip that pass on a future import** — without it
+  three wrong readings would have shipped, and a learner has no way to know a
+  reading is wrong.
 - 163 entries have an **empty** hiragana field. All are kana-only words, where
   the reading is derivable: hiragana words read as themselves, katakana words
   transliterate. No kanji-bearing word lacks a reading (asserted below).
@@ -74,7 +81,12 @@ _WRITTEN, _READING = _FIELD_ORDINALS["Front"], _FIELD_ORDINALS["Hiragana"]
 # Corrections applied to the source. Keep every entry justified in the
 # docstring above — a silent correction table is how a "fix" becomes a second
 # undocumented source of truth.
-_READING_CORRECTIONS = {"左": "ひだり"}
+_READING_CORRECTIONS = {
+    "左": "ひだり",       # source: はだり
+    "半分": "はんぶん",   # source: はんぷん — rendaku on 分
+    "夕飯": "ゆうはん",   # source: ゆうしょく — that is the reading of 夕食
+    "曲る": "まがる",     # source: まげる — that is 曲げる, the transitive pair
+}
 
 _KATAKANA_START, _KATAKANA_END = "ァ", "ヶ"
 _KANJI_START, _KANJI_END = "一", "鿿"

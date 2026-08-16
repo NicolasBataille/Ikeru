@@ -50,6 +50,31 @@ SELECT list_source, COUNT(*) FROM vocabulary GROUP BY 1;
 CC BY demande le crédit, et le site demande un lien. Les deux sont dans
 `AttributionView` (carte « Tanos JLPT lists », lien vers la page de partage).
 
+## `n5-word-list.json` n'est PAS la source de vérité du bundle
+
+Ce fichier est le **relevé fidèle** de ce que dit Tanos, corrections de lecture
+comprises. Le vocabulaire réellement expédié vit dans
+`scripts/content/vocabulary.json`, qui est *curé* : c'est là que les décisions
+d'Ikeru sont prises, et elles ne remontent pas ici.
+
+La plus visible : **11 lignes de la source joignent deux formes écrites par une
+barre oblique** (`丸い/円い`, `伯母さん/叔母さん`, `キロ/キログラム`, `いい/よい`…).
+Comme recto de carte, `いい/よい` n'est pas un mot. Elles sont devenues 16
+entrées dans le fichier curé, une décision par ligne :
+
+- `川/河` et `いい/よい` → seule la variante entre (`河`, `よい`) : `川` et `いい`
+  étaient déjà dans la liste d'Ikeru.
+- `じゃ/じゃあ`, `そうして/そして`, `ラジカセ / ラジオカセット` → une seule forme,
+  celle qu'un apprenant rencontre ; la contraction et la variante rare sautent.
+- `キロ` apparaît dans **deux** lignes source (kg et km) : une seule entrée, dont
+  la glose dit l'ambiguïté au lieu de trancher au hasard, plus `キログラム` et
+  `キロメートル` séparément.
+- `伯母さん/叔母さん`, `伯父/叔父`, `初め/始め`, `丸い/円い` → deux entrées, parce
+  que le choix du kanji porte une vraie distinction.
+
+Refaire tourner `build-vocab-list.py` **ne rejoue pas** ces décisions : il
+réécrit le relevé, pas le fichier curé.
+
 ## Défauts de la source, corrigés ici
 
 - **`左` est donné pour `はだり`** — le mot se lit `ひだり`. Corrigé par

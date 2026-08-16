@@ -47,7 +47,13 @@ BLOCKLIST_PATH = Path(__file__).resolve().parent / "blocklist.json"
 
 MIN_CHARS = 6              # below this, Tatoeba yields interjections ("はい。")
 MAX_CHARS = 18             # above this, sentences pile up clauses and proper nouns
-MAX_UNKNOWN_TOKENS = 2     # i+1 tolerance, measured against a 206-word bundle
+MAX_UNKNOWN_TOKENS = 2     # i+1 tolerance, measured against a 206-word bundle.
+                           # ⚠️ The bundle is 688 words since 2026-08-16, and this
+                           # threshold has NOT been re-measured against it. More known
+                           # words means fewer unknown tokens per sentence, so the same
+                           # value is now *more* permissive than it was when chosen —
+                           # re-measure before the next sentence import rather than
+                           # assuming the number still means what it meant.
 MIN_UNKNOWN_DOC_FREQ = 150 # an unknown word must still be common corpus-wide
 GLUE_DOC_FREQ_RATIO = 0.002  # hiragana token seen in ≥0.2% of jpn → grammatical glue
 MAX_PER_VOCAB_WORD = 5     # VocabularyExamplesView shows Self.examplesPerWord (2) of these
