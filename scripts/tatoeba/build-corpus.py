@@ -44,16 +44,47 @@ TOKENIZER_SOURCE = Path(__file__).resolve().parent / "tokenize-japanese.swift"
 BLOCKLIST_PATH = Path(__file__).resolve().parent / "blocklist.json"
 
 # MARK: - Thresholds (every one of these is justified in README.md)
+#
+# ## Why MAX_UNKNOWN_TOKENS stayed at 2 when the bundle tripled
+#
+# The warning that used to sit on that constant was right about the mechanism
+# and wrong about what to do. More known words DOES mean fewer unknown tokens
+# per sentence, so at 693 words the same cut admits sentences it would once
+# have rejected. Measured with `--max-unknown N --dry-run`:
+#
+#     cut at 0 →  316 sentences,  154/693 words anchored,  29/31 grammar
+#     cut at 1 →  506 sentences,  187/693 words anchored,  30/31 grammar
+#     cut at 2 →  536 sentences,  188/693 words anchored,  30/31 grammar
+#
+# Tightening to 1 looked almost free — 30 sentences, one vocabulary word. Then
+# the 37 sentences that actually differ were read, and they are not the tail
+# anyone would want cut:
+#
+#     日本語を話します。          Je parle le japonais.
+#     わたしはテレビを見ています。  Je regarde la télévision.
+#     この本は読みやすい。         Ce livre est facile à lire.
+#     いくらお金をもっていますか。  Combien d'argent avez-vous sur vous ?
+#
+# Dropping « I speak Japanese » out of a Japanese-learning app to satisfy a
+# threshold is the wrong trade. What protects the 2-unknown band is a filter
+# that was already there: MIN_UNKNOWN_DOC_FREQ makes every unknown a word
+# appearing in ≥150 corpus sentences, so "two unknowns" means two common words,
+# never two idiom fragments. And the band is a tail, not the bulk — of 1374
+# candidates only 230 carry two unknowns (512 carry none, 588 carry one), so
+# roughly 7 % of the retained corpus sits at the loose end.
+#
+# Cut at 0 is not a stricter i+1, it is i+0: no sentence teaches anything new,
+# and it costs a grammar point.
+#
+# The lesson for the next person: `--max-unknown N --dry-run` prints the whole
+# distribution. Re-run it rather than inheriting this paragraph.
 
 MIN_CHARS = 6              # below this, Tatoeba yields interjections ("はい。")
 MAX_CHARS = 18             # above this, sentences pile up clauses and proper nouns
-MAX_UNKNOWN_TOKENS = 2     # i+1 tolerance, measured against a 206-word bundle.
-                           # ⚠️ The bundle is 688 words since 2026-08-16, and this
-                           # threshold has NOT been re-measured against it. More known
-                           # words means fewer unknown tokens per sentence, so the same
-                           # value is now *more* permissive than it was when chosen —
-                           # re-measure before the next sentence import rather than
-                           # assuming the number still means what it meant.
+MAX_UNKNOWN_TOKENS = 2     # i+1 tolerance. RE-MEASURED 2026-08-16 against the
+                           # 693-word bundle (the note here said 688; it was
+                           # wrong, and the whole point of that note was that
+                           # stale numbers mislead). Kept at 2 — see below.
 MIN_UNKNOWN_DOC_FREQ = 150 # an unknown word must still be common corpus-wide
 GLUE_DOC_FREQ_RATIO = 0.002  # hiragana token seen in ≥0.2% of jpn → grammatical glue
 MAX_PER_VOCAB_WORD = 5     # VocabularyExamplesView shows Self.examplesPerWord (2) of these
@@ -512,7 +543,8 @@ POLITE_RE = re.compile(
 # MARK: - Funnel
 
 
-def run(exports: Path, db_path: Path, verbose: bool) -> dict:
+def run(exports: Path, db_path: Path, verbose: bool,
+        max_unknown: int = MAX_UNKNOWN_TOKENS) -> dict:
     jpn = load_sentences(exports / "jpn_sentences.tsv")
     fra = load_sentences(exports / "fra_sentences.tsv")
     links = load_links(exports / "jpn-fra_links.tsv", jpn, fra)
@@ -576,11 +608,18 @@ def run(exports: Path, db_path: Path, verbose: bool) -> dict:
         print(f"  glue types: {len(glue)}   exact forms: {len(exact)}   stems: {len(stems)}",
               file=sys.stderr)
 
+    # How many unknowns each candidate carries, BEFORE the cut. Reported so the
+    # threshold can be re-justified against the bundle of the day instead of
+    # inherited — the 206-word rationale below `MAX_UNKNOWN_TOKENS` outlived the
+    # bundle it was measured on by 487 words.
+    unknown_histogram: collections.Counter = collections.Counter()
+
     lexical: list[dict] = []
     dropped = 0
     for ja_id, fr_id, french in with_french:
         unknown = unknown_tokens(reference_tokens[ja_id], exact, stems, glue)
-        if len(unknown) > MAX_UNKNOWN_TOKENS:
+        unknown_histogram[len(unknown)] += 1
+        if len(unknown) > max_unknown:
             dropped += 1
             continue
         if any(doc_freq[token] < MIN_UNKNOWN_DOC_FREQ for token in unknown):
@@ -734,6 +773,9 @@ def run(exports: Path, db_path: Path, verbose: bool) -> dict:
         "vocab_missing": sorted({w for _, w, _ in vocab} - contained_words),
         "grammar_hits": grammar_hits,
         "polite_share": sum(1 for row in selected if POLITE_RE.search(row["japanese"])),
+        "unknown_histogram": unknown_histogram,
+        "max_unknown": max_unknown,
+        "known_words": len(vocab),
     }
 
 
@@ -749,10 +791,16 @@ def main(argv: list[str]) -> int:
     parser.add_argument("--db", type=Path, default=DEFAULT_DB, help="content bundle to read")
     parser.add_argument("--out", type=Path, default=DEFAULT_OUT, help="JSON artefact to write")
     parser.add_argument("--verbose", action="store_true", help="print the funnel to stderr")
+    parser.add_argument("--max-unknown", type=int, default=MAX_UNKNOWN_TOKENS,
+                        help="lexical i+1 tolerance; see MAX_UNKNOWN_TOKENS. Exposed so the "
+                             "threshold can be re-measured against the bundle of the day "
+                             "rather than inherited from the one it was chosen on")
+    parser.add_argument("--dry-run", action="store_true",
+                        help="report the funnel without writing --out (for threshold sweeps)")
     args = parser.parse_args(argv)
 
     try:
-        result = run(args.exports, args.db, args.verbose)
+        result = run(args.exports, args.db, args.verbose, args.max_unknown)
     except BuildError as error:
         print(f"error: {error}", file=sys.stderr)
         return 1
@@ -778,9 +826,10 @@ def main(argv: list[str]) -> int:
             for row in selected
         ],
     }
-    args.out.write_text(
-        json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
-    )
+    if not args.dry_run:
+        args.out.write_text(
+            json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+        )
 
     print(f"{'stage':<32}{'kept':>8}{'dropped':>10}")
     for stage, kept, dropped in result["funnel"]:
@@ -793,7 +842,24 @@ def main(argv: list[str]) -> int:
     missing_grammar = [point for point, hits in result["grammar_hits"].items() if hits == 0]
     print(f"grammar: {31 - len(missing_grammar)}/31 points exercised "
           f"(missing: {missing_grammar or 'none'})")
-    print(f"wrote {args.out}")
+
+    # The distribution the cut hides. Printed every run so the next person to
+    # touch `MAX_UNKNOWN_TOKENS` sees what each value costs instead of guessing.
+    histogram = result["unknown_histogram"]
+    total = sum(histogram.values())
+    print(f"\nunknown tokens per candidate (bundle: {result['known_words']} words, "
+          f"cut at {result['max_unknown']}):")
+    running = 0
+    for count in sorted(histogram):
+        running += histogram[count]
+        marker = "  <- cut here" if count == result["max_unknown"] else ""
+        print(f"  {count:>2} unknown  {histogram[count]:>6}  "
+              f"(cumulative {running:>6} / {total}){marker}")
+
+    if args.dry_run:
+        print("\n(dry run — nothing written)")
+    else:
+        print(f"wrote {args.out}")
     return 0
 
 
