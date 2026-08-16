@@ -44,7 +44,14 @@ struct IkeruMain {
 private struct TestHostApp: App {
     var body: some Scene {
         WindowGroup {
-            Text("IkeruTests host")
+            // `verbatim:` on purpose. A `Text` string literal is a
+            // `LocalizedStringKey`, so this placeholder was being looked up in
+            // `Localizable.xcstrings` and reported as a missing key by
+            // `scripts/i18n-lint.py`. No learner ever sees this view — it is
+            // the `xcodebuild test` host's scene — so the string must not be
+            // localized, rather than being localized or waved through in the
+            // linter's baseline.
+            Text(verbatim: "IkeruTests host")
         }
     }
 }
