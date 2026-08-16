@@ -293,6 +293,14 @@ struct HomeView: View {
                 }
             }
         }
+        // `.contain`, and load-bearing: an identifier on a bare VStack is not
+        // exposed as an element at all, so `otherElements["home.caughtUpProposal"]`
+        // never resolved and the UI test died on its first assertion while the
+        // proposal was plainly on screen (measured 2026-08-16, screenshot in
+        // the PR). `.contain` publishes the container while leaving the two
+        // offer buttons individually addressable — `.combine` would have
+        // merged them into one element and broken the taps.
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("home.caughtUpProposal")
     }
 
