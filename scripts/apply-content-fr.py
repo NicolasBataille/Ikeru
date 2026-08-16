@@ -183,9 +183,17 @@ def main(argv: list[str]) -> int:
     plans = [
         {
             "table": "vocabulary",
-            "key_column": "id",
+            # Keyed on `word`, not `id`. The ids are assigned by enumeration in
+            # `generate_content_bundles.py`, so any insertion or removal in the
+            # word list silently reassigns every id after it — and this file
+            # would then attach the wrong French to the wrong word without a
+            # single error. That is not hypothetical: the 2026-08-16 expansion
+            # dropped a duplicate row (今年) and added 488 words, shifting
+            # nearly every id in the table. `word` is the natural key and the
+            # generator already rejects duplicates of it.
+            "key_column": "word",
             "file": "vocabulary.json",
-            "key_field": "id",
+            "key_field": "word",
             "columns": {"meaning_fr": "meaning_fr"},
             "json_columns": frozenset(),
         },

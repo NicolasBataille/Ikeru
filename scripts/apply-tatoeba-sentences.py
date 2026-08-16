@@ -50,8 +50,18 @@ transaction rather than leaving the bundle half-written.
 Run order when regenerating the bundle from scratch:
 
     python3 scripts/generate_content_bundles.py     # 96 original sentences
+    python3 scripts/fetch-kanjivg.py --no-network   # ⚠️ NOT OPTIONAL — see below
     python3 scripts/apply-content-fr.py             # French for those 96
     python3 scripts/apply-tatoeba-sentences.py      # this script
+
+⚠️ **The KanjiVG step used to be missing from this list**, and following the
+list as written shipped a bundle with `kana` **empty** (142 rows gone) and
+`kanji.stroke_order_svg` **all NULL** — no stroke-order animation, no tracing
+exercise, on any character. `generate_content_bundles.py` drops and recreates
+the file, and it does not produce stroke data; only `fetch-kanjivg.py` does.
+Measured the hard way on 2026-08-16 during the vocabulary expansion. The
+`--no-network` flag reads `scripts/kanjivg-cache/` (232 files, committed), so
+this works offline and needs no fetch.
 
 Usage:
     python3 scripts/apply-tatoeba-sentences.py [--db PATH] [--source FILE] [--dry-run]

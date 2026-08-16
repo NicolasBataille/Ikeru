@@ -228,6 +228,24 @@
         }
       }
     },
+    "The JLPT N5 word list and its readings come from Jonathan Waller's JLPT resources. The meanings shown in Ikeru are written for Ikeru, not taken from there." : {
+      "comment" : "AttributionView — Tanos JLPT lists credit",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The JLPT N5 word list and its readings come from Jonathan Waller's JLPT resources. The meanings shown in Ikeru are written for Ikeru, not taken from there."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La liste de mots JLPT N5 et ses lectures viennent des ressources JLPT de Jonathan Waller. Les définitions affichées dans Ikeru sont écrites pour Ikeru, elles n'en sont pas tirées."
+          }
+        }
+      }
+    },
     "Your Apple sign-in couldn't be verified. Please try again." : {
       "localizations" : {
         "en" : {
@@ -12873,20 +12891,20 @@
         }
       }
     },
-    "Vocabulary and grammar notes are original content written for Ikeru. Kanji readings come from KANJIDIC, and most example sentences from the Tatoeba corpus — both credited below." : {
+    "Meanings and grammar notes are written for Ikeru. Kanji readings come from KANJIDIC, the N5 word list from Tanos, most example sentences from Tatoeba — all credited below." : {
       "comment" : "AttributionView — header, provenance summary",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Vocabulary and grammar notes are original content written for Ikeru. Kanji readings come from KANJIDIC, and most example sentences from the Tatoeba corpus — both credited below."
+            "value" : "Meanings and grammar notes are written for Ikeru. Kanji readings come from KANJIDIC, the N5 word list from Tanos, most example sentences from Tatoeba — all credited below."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Le vocabulaire et les notes de grammaire sont écrits pour Ikeru. Les lectures des kanji viennent de KANJIDIC, et la plupart des phrases d'exemple du corpus Tatoeba — les deux sont crédités ci-dessous."
+            "value" : "Les définitions et les notes de grammaire sont écrites pour Ikeru. Les lectures des kanji viennent de KANJIDIC, la liste de mots N5 de Tanos, la plupart des phrases d'exemple de Tatoeba — tous sont crédités ci-dessous."
           }
         }
       }

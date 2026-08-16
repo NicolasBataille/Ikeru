@@ -5,7 +5,7 @@ embarqué dans `Ikeru/Resources/ContentBundles/n5-content.sqlite`.
 
 | Fichier            | Entrées | Colonnes SQLite écrites                          |
 | ------------------ | ------: | ------------------------------------------------ |
-| `vocabulary.json`  |     206 | `vocabulary.meaning_fr`                           |
+| `vocabulary.json`  |     693 | `vocabulary.meaning_fr`                           |
 | `sentences.json`   |      96 | `sentences.french`                                |
 | `grammar.json`     |      31 | `grammar_points.title_fr`, `explanation_fr`, `examples_fr` |
 | `kanji.json`       |      90 | `kanji.meanings_fr`                               |
@@ -28,6 +28,21 @@ d'aucune base de vocabulaire japonais-français, n'y a été copiée ni consult�
 **Conséquence pratique : ne jamais remplacer ce travail par un import
 automatique de gloses françaises tierces.** Ça réintroduirait exactement le
 problème de licence que ces fichiers existent pour éviter.
+
+Le même raisonnement a été appliqué à l'anglais le 2026-08-16, quand le
+vocabulaire est passé de 205 à 693 mots. La **liste** vient de Tanos (CC BY),
+mais son paquet contenait aussi une colonne de gloses anglaises, et on ne l'a
+pas importée : le site ne dit nulle part d'où elles viennent. Voir
+`scripts/tanos/README.md`. Donc les 488 gloses anglaises ajoutées sont, comme
+les françaises, écrites pour Ikeru.
+
+## Clé : `word`, pas `id`
+
+`vocabulary.json` est indexé sur le **mot**. Il l'était sur l'`id` jusqu'au
+2026-08-16, et c'était un piège : les id sont attribués par énumération dans
+`generate_content_bundles.py`, donc insérer 488 mots les décalait tous — le
+français serait parti sur les mauvais mots **sans une seule erreur**. Les
+autres fichiers restent sur `id`, leurs tables ne bougeant pas.
 
 ## Appliquer au bundle
 
