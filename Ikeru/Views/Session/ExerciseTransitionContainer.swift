@@ -79,13 +79,7 @@ struct ExerciseTransitionContainer: View {
     /// this pass's scope. Mirrors the existing per-screen pattern already
     /// used by `HomeView.makeContentRepository()` / `EtudeView.makeContentRepository()`
     /// — read-only bundle, so a second connection is redundant but not unsafe.
-    private static let kanaContentRepository: ContentRepository? = {
-        guard let url = Bundle.main.url(forResource: "n5-content", withExtension: "sqlite") else {
-            Logger.ui.error("n5-content.sqlite not found in bundle — new-card stroke trace disabled")
-            return nil
-        }
-        return ContentRepository(bundleURL: url)
-    }()
+    private static let kanaContentRepository: ContentRepository? = BundledContent.makeRepository()
 
     var body: some View {
         ZStack {
