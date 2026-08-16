@@ -69,8 +69,14 @@ final class SessionAnswerFlowUITests: IkeruUITestCase {
         ])
 
         let proposal = app.otherElements["home.caughtUpProposal"]
+        // 30s, not the usual 15–20: `-mockNothingDue` is the heaviest fixture
+        // in the suite — all 92 kana replayed through FSRS with a full review
+        // history each — and this test runs first, so it eats the cold
+        // first-launch cost of a freshly installed binary. Observed timing out
+        // at 20s on exactly that combination while passing twice in isolation.
+        // The assertion is unchanged; only the patience is.
         XCTAssertTrue(
-            proposal.waitForExistence(timeout: 20),
+            proposal.waitForExistence(timeout: 30),
             "Nothing was due and the app showed no caught-up proposal — the "
                 + "learner is back in front of a dead end"
         )
