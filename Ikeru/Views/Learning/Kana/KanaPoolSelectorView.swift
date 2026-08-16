@@ -165,6 +165,11 @@ struct KanaPoolSelectorView: View {
                         .frame(maxWidth: .infinity)
                 }
                 .ikeruButtonStyle(.primary)
+                // GAP-01 two-client merge test: this one-time explainer
+                // otherwise covers `KanaGroupCard`/the drill buttons on the
+                // FIRST visit for a brand-new profile, exactly the case
+                // every phase of that test hits.
+                .accessibilityIdentifier("kanaPool.explainerDismiss")
             }
             .padding(20)
             .background(
@@ -455,6 +460,11 @@ struct KanaPoolSelectorView: View {
         .ikeruButtonStyle(primary ? .primary : .secondary)
         .disabled(vm.selectedGroups.isEmpty)
         .opacity(vm.selectedGroups.isEmpty ? 0.5 : 1.0)
+        // GAP-01 two-client merge test: `.freePractice` is the mode that
+        // does not depend on `dueDate`, which is exactly what makes it
+        // reachable deterministically right after a fresh group selection
+        // (`KanaGroupCard`'s identifier, same effort).
+        .accessibilityIdentifier("kanaPool.drill.\(mode.rawValue)")
     }
 
     private func launchDrill(_ vm: KanaPoolViewModel, mode: KanaDrillMode) {

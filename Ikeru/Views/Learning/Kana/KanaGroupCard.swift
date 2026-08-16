@@ -28,6 +28,18 @@ struct KanaGroupCard: View {
             .animation(.spring(response: 0.3, dampingFraction: 0.85), value: isSelected)
         }
         .buttonStyle(.plain)
+        // GAP-01 two-client merge test needs to select ONE deterministic,
+        // small group (`hVowels` — 5 characters) from `IkeruUITests` without
+        // relying on localized label text — see `EtudeView.kanaRow`'s
+        // identifier, added by the same effort.
+        .accessibilityIdentifier("kanaPool.group.\(group.rawValue)")
+        // `KanaPoolViewModel.init` defaults `selectedGroups` to `[.hVowels]`
+        // (persisted thereafter, per-device) — a test can't assume this
+        // card starts UNselected, so it needs to read the current state
+        // before deciding whether to tap it. Mirrors `TatamiToggle`'s
+        // "On"/"Off" `accessibilityValue` pattern (see `SettingsPage`'s
+        // doc comment on `isCloudBackupOn`).
+        .accessibilityValue(isSelected ? "Selected" : "Not selected")
     }
 
     // MARK: Header

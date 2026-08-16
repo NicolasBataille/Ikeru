@@ -39,6 +39,9 @@ struct BeginnerTabCell: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        // GAP-01 two-client merge test — see `TatamiTabCell`'s matching
+        // identifier, same effort.
+        .accessibilityIdentifier("tabBar.\(String(describing: tab))")
     }
 
     private var symbolName: String {

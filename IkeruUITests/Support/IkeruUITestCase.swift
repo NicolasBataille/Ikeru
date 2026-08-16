@@ -37,4 +37,21 @@ class IkeruUITestCase: XCTestCase {
         app.launch()
         return app
     }
+
+    /// GAP-01 two-client merge test only. Launches WITHOUT `wipeData` — the
+    /// opposite of `launch(_:)`'s deliberate always-wipe default, needed
+    /// here because that test's later phases (answering cards, re-toggling
+    /// cloud sync, switching the active profile) must build on state a
+    /// PREVIOUS phase's launch of the SAME app already left behind on this
+    /// simulator. Every other suite keeps using `launch(_:)` — do not widen
+    /// this method's use beyond the multi-phase merge test without
+    /// re-reading `launch(_:)`'s own doc comment for why wiping is the
+    /// correct default everywhere else.
+    @discardableResult
+    func launchKeepingData(_ extraArguments: [String] = []) -> XCUIApplication {
+        let app = XCUIApplication()
+        app.launchArguments = extraArguments + ["-AppleLanguages", "(en)"]
+        app.launch()
+        return app
+    }
 }

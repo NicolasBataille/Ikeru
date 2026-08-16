@@ -119,6 +119,10 @@ private struct TatamiTabCell: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel(accessibilityLabel)
+        // GAP-01 two-client merge test: tapping between tabs mid-scenario
+        // (Explore → Settings) needs a stable, non-localized target — see
+        // `EtudeView.kanaRow`'s identifier, added by the same effort.
+        .accessibilityIdentifier("tabBar.\(String(describing: tab))")
     }
 
     private var japaneseLabel: String {

@@ -60,23 +60,42 @@ final class CloudBackupToggleUITests: IkeruUITestCase {
         )
     }
 
-    // MARK: - Cleanup — intentionally absent on this branch
-    //
-    // The upstream commit this gate was cherry-picked from
-    // (`test/gap-01-two-client-merge`, 7a2e6be) also carries a teardown that
-    // removes the account through the app's own Settings row. It is NOT
-    // reproduced here: it drives page-object helpers that arrive with GAP-01's
-    // own commit (1625238). Dragging that commit into an unrelated
-    // test-infrastructure PR to get two helpers would be worse than going
-    // without the teardown.
-    //
-    // Nothing is lost. That commit's own message is explicit that the teardown
-    // "is deliberately not what makes this safe, because it did not work" — it
-    // left consent ON for the next test and dropped the runner connection
-    // mid-deletion. What makes this safe is the `XCTSkipUnless` gate above,
-    // reproduced verbatim: these tests no longer run unless opted into, so
-    // there is no account left behind to tear down. The teardown returns for
-    // free when GAP-01 lands and this branch rebases.
+    // MARK: - Cleanup
+
+    /// Deletes the anonymous account this test created on the live backend.
+    ///
+    /// These tests toggle real cloud backup, and the app mints a real anonymous
+    /// identity on the real Supabase project when it does. Nothing was removing
+    /// it: four orphaned accounts accumulated on the production project in a
+    /// single morning — one carrying 92 fixture cards — including one minted by
+    /// a CI run, because the `ui-test` job runs on every PR. The suite was
+    /// judged on "does the test pass" and not on what it left behind.
+    ///
+    /// Cleanup goes through the app's OWN Settings row rather than calling the
+    /// `delete-account` Edge Function directly. The access token lives in the
+    /// app's Keychain, which the test process cannot read — and tapping the
+    /// real control exercises the deletion path a learner actually uses, so
+    /// this doubles as coverage of it.
+    ///
+    /// Failures here are reported, never swallowed: a silent cleanup failure
+    /// would put us straight back to accumulating accounts unnoticed.
+    private func deleteCloudAccount(_ app: XCUIApplication) {
+        let settings = SettingsPage(app: app)
+        guard settings.waitForCloudBackupToggle(), settings.isCloudBackupOn else { return }
+
+        XCTAssertTrue(
+            settings.waitForDeleteCloudDataRow(),
+            "Cloud data was created but the delete row never appeared — this run may have "
+                + "leaked an anonymous account on the live project. Check by SQL."
+        )
+        settings.confirmDeleteCloudData()
+
+        let becomesOff = expectation(
+            for: NSPredicate(format: "value == %@", "Off"),
+            evaluatedWith: app.buttons["settings.cloudBackupToggle"]
+        )
+        wait(for: [becomesOff], timeout: 20)
+    }
 
     func testTogglingCloudBackupOnUpdatesLocalState() {
         let app = launch([
@@ -99,6 +118,8 @@ final class CloudBackupToggleUITests: IkeruUITestCase {
             settings.waitForCloudBackupStatus(),
             "No status line appeared under the toggle after enabling backup"
         )
+
+        deleteCloudAccount(app)
     }
 
     func testTogglingCloudBackupOffReturnsToDefaultState() {
@@ -116,5 +137,13 @@ final class CloudBackupToggleUITests: IkeruUITestCase {
 
         settings.tapCloudBackupToggle() // OFF
         XCTAssertFalse(settings.isCloudBackupOn, "Toggle did not flip back to OFF")
+
+        // Turning backup OFF does NOT delete what is already on the server —
+        // that is the whole point of GAP-15, and it means this test leaks an
+        // anonymous account exactly like the one above. Re-enable so the delete
+        // row is reachable, then remove the account. The assertion that matters
+        // has already been made, above; this is cleanup, not more test.
+        settings.tapCloudBackupToggle() // back ON, so the delete row appears
+        deleteCloudAccount(app)
     }
 }
