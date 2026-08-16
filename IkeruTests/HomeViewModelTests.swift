@@ -35,10 +35,17 @@ struct HomeViewModelTests {
         return profile
     }
 
-    /// Seeds an RPGState attached to the active profile (creating one if
-    /// the test forgot to seed a profile first). The resolver's
-    /// `fetchActiveRPGState` requires a profile→state attachment, so a
-    /// standalone insert is invisible to the view model.
+    /// Seeds the active profile's RPG state (creating the profile if the test
+    /// forgot to). The resolver's `fetchActiveRPGState` requires a
+    /// profile→state attachment, so a standalone insert is invisible to the
+    /// view model.
+    ///
+    /// Mutates the state the profile ALREADY owns rather than minting a rival
+    /// one. `UserProfile.init` always creates its own `RPGState` (see that
+    /// initializer), so "seed an RPG state" never means "attach a new one" —
+    /// it means "set the values on the one that is already there". Doing it
+    /// the other way round is what crashed the whole test runner for months;
+    /// `swiftDataOwningSideDisplacementTraps()` below holds the measurement.
     private func seedRPGState(container: ModelContainer, xp: Int, level: Int) throws {
         let context = container.mainContext
         let profile: UserProfile = try {
@@ -47,10 +54,20 @@ struct HomeViewModelTests {
             }
             return try seedProfile(container: container, name: "Test")
         }()
-        let state = RPGState(xp: xp, level: level, totalReviewsCompleted: 10)
-        state.profile = profile
-        profile.rpgState = state
-        context.insert(state)
+        let state: RPGState = try {
+            if let existing = profile.rpgState { return existing }
+            // Only reachable for a profile built without `UserProfile.init`
+            // (none today). Assigning the INVERSE side is safe here precisely
+            // because there is nothing to displace.
+            let fresh = RPGState()
+            profile.rpgState = fresh
+            context.insert(fresh)
+            try context.save()
+            return fresh
+        }()
+        state.xp = xp
+        state.level = level
+        state.totalReviewsCompleted = 10
         try context.save()
     }
 
@@ -313,5 +330,58 @@ struct HomeViewModelTests {
         // Reload
         await vm.loadData()
         #expect(vm.dueCardCount == 2)
+    }
+
+    // MARK: - GAP-10 regression
+
+    /// Pins the rule that cost this repo its whole app-target test suite.
+    ///
+    /// **Measured, 2026-08-16** (bisected statement by statement inside a
+    /// single `-only-testing:` run, so nothing else was in the process):
+    /// assigning the **owning side** of a to-one SwiftData relationship —
+    /// `newState.profile = profile` — when `profile` already owns a *saved*
+    /// `RPGState` traps the process:
+    ///
+    ///   SwiftData/BackingData.swift:940: Fatal error: Never access a full
+    ///   future backing data - PersistentIdentifier(... /RPGState/p1 ...)
+    ///
+    /// Assigning the **inverse side** on the same data — `profile.rpgState =
+    /// newState` — does not trap. Neither `context.insert(newState)` before
+    /// the assignment nor reading `profile.rpgState` first (to materialize
+    /// the object being displaced) avoids it; both were tried and both still
+    /// crashed. The trigger is the displacement itself, through the owning
+    /// side, of a child that has already been saved. When the profile was
+    /// never saved, the displaced child holds a temporary identifier and
+    /// nothing traps — which is the only reason `DataExportManagerTests`
+    /// stayed green in CI while carrying the same shape.
+    ///
+    /// Two consequences the codebase depends on:
+    /// 1. `UserProfile.init` mints its own `RPGState`, so a profile ALWAYS
+    ///    owns one. "Seeding" an RPG state therefore means mutating that
+    ///    one, never attaching a second.
+    /// 2. Production is safe by construction, not by luck:
+    ///    `ActiveProfileResolver.fetchActiveRPGState` returns early when
+    ///    `profile.rpgState` is non-nil, and `SyncPullActor`'s RPG upsert
+    ///    routes the "profile already has a state" case through its
+    ///    orphan-adoption branch. Both reach `state.profile = …` only when
+    ///    there is nothing to displace. Keep it that way.
+    ///
+    /// This test asserts the SAFE path stays safe. It deliberately does not
+    /// assert the crash — that would take the runner down with it.
+    @Test("GAP-10: seeding RPG state mutates the profile's own, never a rival")
+    func swiftDataOwningSideDisplacementTraps() async throws {
+        let container = try makeContainer()
+        let profile = try seedProfile(container: container, name: "Test")
+        let originalStateID = profile.rpgState?.persistentModelID
+        #expect(originalStateID != nil, "UserProfile.init must still mint an RPGState")
+
+        try seedRPGState(container: container, xp: 250, level: 3)
+
+        // Same object, new values — no second RPGState was ever created.
+        #expect(profile.rpgState?.persistentModelID == originalStateID)
+        #expect(profile.rpgState?.xp == 250)
+
+        let all = try container.mainContext.fetch(FetchDescriptor<RPGState>())
+        #expect(all.count == 1, "a rival RPGState would orphan the profile's own")
     }
 }

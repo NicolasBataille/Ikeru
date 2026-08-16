@@ -186,15 +186,23 @@ struct DataExportManagerTests {
         context.insert(profileA)
         context.insert(profileB)
 
-        let rpgA = RPGState(xp: 500, level: 5, totalReviewsCompleted: 42)
-        rpgA.profile = profileA
-        profileA.rpgState = rpgA
-        context.insert(rpgA)
+        // Mutate the state each profile ALREADY owns (`UserProfile.init`
+        // mints one) rather than attaching a rival. Attaching a rival via the
+        // owning side (`rpgA.profile = profileA`) traps the whole test runner
+        // once the profile has been saved — see the GAP-10 regression test in
+        // `HomeViewModelTests` for the measurement. This suite only stayed
+        // green because it never saved between the insert and the assignment;
+        // that is ordering luck, not safety, and it also left an orphaned
+        // RPGState per profile in the store the export then had to ignore.
+        let rpgA = try #require(profileA.rpgState)
+        rpgA.xp = 500
+        rpgA.level = 5
+        rpgA.totalReviewsCompleted = 42
 
-        let rpgB = RPGState(xp: 9_000, level: 42, totalReviewsCompleted: 999)
-        rpgB.profile = profileB
-        profileB.rpgState = rpgB
-        context.insert(rpgB)
+        let rpgB = try #require(profileB.rpgState)
+        rpgB.xp = 9_000
+        rpgB.level = 42
+        rpgB.totalReviewsCompleted = 999
 
         // `totalReviewsCompleted` in the export is GAP-13's ReviewLog-derived
         // count (`CardRepository.activeProfileReviewCount()`), not a mirror of
