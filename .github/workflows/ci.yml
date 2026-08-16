@@ -245,7 +245,7 @@ jobs:
           cd IkeruCore
           swift test --no-parallel --filter "StoreMigrationV3V4"
 
-      - name: Run App Tests (green subset)
+      - name: Run App Tests (full IkeruTests target)
         # Same — scoped to suites known to pass. KanaDrillViewModel covers
         # the recent shuffle-fix regression tests.
         #
