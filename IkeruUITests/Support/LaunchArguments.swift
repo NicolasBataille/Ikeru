@@ -34,6 +34,18 @@ enum LaunchArguments {
     /// broken accessibility identifier rather than a hijacked route.
     static let skipTour = "-skipTour"
 
+    /// Marks every in-context coach-mark as already dismissed for the profile
+    /// that was just created.
+    ///
+    /// Pair this with anything that reaches a session or a caught-up Home —
+    /// and note it is NOT what `skipTour` does. Measured 2026-08-16: with only
+    /// `skipTour`, a session opens and `SwipeTutorialView` immediately covers
+    /// the card and its grade buttons behind a "Got it" scrim
+    /// (`ActiveSessionView.maybeShowSwipeTutorial`). The test then reports a
+    /// missing element while a screenshot shows the app working perfectly —
+    /// one of the two reasons `SessionAnswerFlowUITests` could never pass.
+    static let skipHints = "-skipHints"
+
     /// Seeds a rich fixture profile (kana + kanji/vocab review history).
     /// No-ops if a profile already exists — always pair with `wipeData`.
     static let mockProfile = "-mockProfile"
@@ -41,6 +53,23 @@ enum LaunchArguments {
     static func mockLevel(_ level: Int) -> String { "-mockLevel=\(level)" }
     static func mockDue(_ due: Int) -> String { "-mockDue=\(due)" }
     static func mockMastered(_ mastered: Int) -> String { "-mockMastered=\(mastered)" }
+
+    /// Seeds a profile with **nothing due right now** — every kana and every
+    /// content card begun and scheduled comfortably ahead.
+    ///
+    /// `mockDue(0)` does NOT do this, which is the trap this flag was added
+    /// for. Measured 2026-08-16: `mockDue` governs only the kanji/vocabulary
+    /// pool (`TestFixtures.seedContentCards`), while `seedKana` seeds its own
+    /// 92 characters from `mockLevel` — a fixed 10-card overdue band at every
+    /// level, plus never-reviewed cards (due today) for the rest. So a
+    /// `-mockDue=0` profile always had something due, and the two caught-up
+    /// tests that assumed otherwise could not pass at any slider setting.
+    ///
+    /// Overrides `mockDue`; `mockMastered` still applies (as mastered content).
+    /// One consequence to design around: with no never-reviewed card left, the
+    /// caught-up proposal offers **deepen** and not **discover** — a card
+    /// nobody has reviewed is itself due, so the two cannot coexist.
+    static let mockNothingDue = "-mockNothingDue"
 
     /// 0 = explore, 1 = practice (default), 2 = settings — see `AppTab`.
     static func startTab(_ tab: Int) -> String { "-startTab=\(tab)" }

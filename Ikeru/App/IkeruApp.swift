@@ -363,14 +363,14 @@ struct IkeruApp: App {
         // in the GAP-09 UI-test-harness brief. Runs in its own IKERU_DEV_TOOLS
         // block (stripped before App Store submit, see CLAUDE.md) since
         // `TestFixtures.wipeAll` lives behind the same flag.
-        if CommandLine.arguments.contains("-wipeData") {
+        if AppEnvironment.hasFlag("wipeData") {
             Logger.ui.info("wipeData flag set — clearing all persisted state before seeding")
             TestFixtures.wipeAll(context: modelContainer.mainContext, profileVM: viewModel)
         }
         #endif
 
         // Dev helper: launch with -skipOnboarding to auto-create a default profile
-        if !viewModel.hasProfile && CommandLine.arguments.contains("-skipOnboarding") {
+        if !viewModel.hasProfile && AppEnvironment.hasFlag("skipOnboarding") {
             Logger.ui.info("Skip onboarding flag set — creating default profile")
             viewModel.createProfile(name: "Nico")
             viewModel.loadProfile()
@@ -399,9 +399,25 @@ struct IkeruApp: App {
         // key `hasSeenTour(profileID:)` reads. A test that suppressed the tour
         // some other way would be testing a code path no learner ever takes.
         if let profileID = viewModel.currentProfile?.id,
-           CommandLine.arguments.contains("-skipTour") {
+           AppEnvironment.hasFlag("skipTour") {
             Logger.ui.info("Skip tour flag set — marking the feature tour as seen")
             FeatureTourController.markSeen(profileID: profileID)
+        }
+
+        // Dev helper: launch with -skipHints to land on a profile that has
+        // already dismissed every in-context coach-mark (swipe tutorial,
+        // caught-up explainer, kana drill modes, first-session daily term).
+        //
+        // Distinct from `-skipTour` above, which owns the *tab tour* and its
+        // own controller. These are the lighter overlays that fire the first
+        // time a learner reaches a surface — and they are opaque scrims: the
+        // swipe tutorial covers the session card and its grade buttons
+        // entirely (measured 2026-08-16, see `OnboardingFlags.markAllSeen`).
+        // Any UI test that isn't about the coach-mark itself needs both flags.
+        if let profileID = viewModel.currentProfile?.id,
+           AppEnvironment.hasFlag("skipHints") {
+            Logger.ui.info("Skip hints flag set — marking every coach-mark as seen")
+            OnboardingFlags.markAllSeen(profileID: profileID)
         }
 
         #if IKERU_DEV_TOOLS
@@ -415,7 +431,7 @@ struct IkeruApp: App {
         // review-log query stays scoped to this device's OWN throwaway
         // profile forever — a pull never changes which profile is active.
         // No-op when only one profile exists locally (nothing to switch to).
-        if CommandLine.arguments.contains("-switchToOldestProfile"),
+        if AppEnvironment.hasFlag("switchToOldestProfile"),
            let oldest = viewModel.allProfiles.first,
            oldest.id != viewModel.currentProfile?.id {
             Logger.ui.info("switchToOldestProfile flag set — switching active profile to \(oldest.id)")

@@ -43,6 +43,13 @@ struct GradeButtonsView: View {
         let kanji: String
         let label: LocalizedStringKey
         let color: Color
+        /// Untranslated slug for this button's accessibility identifier.
+        /// Spelled out rather than derived from `Grade.rawValue` (an `Int`,
+        /// so it would read `session.gradeButton.3`) or from `label` (a
+        /// `LocalizedStringKey`, so it would change with the simulator's
+        /// language — the exact trap `IkeruUITestCase` forces `-AppleLanguages
+        /// (en)` to avoid).
+        let identifierSlug: String
     }
 
     /// Color-coded specs for the four FSRS grades. Colors come from the
@@ -51,14 +58,18 @@ struct GradeButtonsView: View {
     /// easy review.
     private var specs: [GradeSpec] {
         [
-            .init(grade: .again, kanji: "\u{518D}", label: "Again",   // 再
-                  color: TatamiTokens.vermilion),
-            .init(grade: .hard,  kanji: "\u{96E3}", label: "Hard",    // 難
-                  color: Color(red: 0.627, green: 0.451, blue: 0.302)),
-            .init(grade: .good,  kanji: "\u{826F}", label: "Good",    // 良
-                  color: Color.ikeruPrimaryAccent),
-            .init(grade: .easy,  kanji: "\u{6613}", label: "Easy",    // 易
-                  color: Color(red: 0.616, green: 0.729, blue: 0.486))
+            // 再
+            .init(grade: .again, kanji: "\u{518D}", label: "Again",
+                  color: TatamiTokens.vermilion, identifierSlug: "again"),
+            // 難
+            .init(grade: .hard, kanji: "\u{96E3}", label: "Hard",
+                  color: Color(red: 0.627, green: 0.451, blue: 0.302), identifierSlug: "hard"),
+            // 良
+            .init(grade: .good, kanji: "\u{826F}", label: "Good",
+                  color: Color.ikeruPrimaryAccent, identifierSlug: "good"),
+            // 易
+            .init(grade: .easy, kanji: "\u{6613}", label: "Easy",
+                  color: Color(red: 0.616, green: 0.729, blue: 0.486), identifierSlug: "easy")
         ]
     }
 
@@ -96,6 +107,11 @@ struct GradeButtonsView: View {
                     .sumiCorners(color: spec.color, size: 8, weight: 1.2, inset: -1)
                 }
                 .buttonStyle(.plain)
+                // Per-grade, not one shared identifier: unlike the kana
+                // quiz's four interchangeable options, which grade a test
+                // taps changes what FSRS schedules next. A test that means
+                // "answer Good" must be able to say so.
+                .accessibilityIdentifier("session.gradeButton.\(spec.identifierSlug)")
             }
         }
     }

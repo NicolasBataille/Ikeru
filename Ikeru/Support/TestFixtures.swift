@@ -68,7 +68,12 @@ import os
 /// ```bash
 /// xcrun simctl launch booted com.ikeru.app \
 ///   -mockProfile -mockLevel=15 -mockDue=25 -mockMastered=120
+///
+/// # ...or the one shape the sliders cannot express — nothing due at all:
+/// xcrun simctl launch booted com.ikeru.app -mockProfile -mockNothingDue
 /// ```
+///
+/// `-mockNothingDue` overrides the due bands entirely; see `populate`.
 ///
 /// In-app usage (Debug + TestFlight): the `Outils développeur` section in
 /// Réglages exposes the same controls (`wipeAndSeed`, `wipeAll`,
@@ -118,8 +123,11 @@ public enum TestFixtures {
         let level = AppEnvironment.intArg("mockLevel") ?? 5
         let dueCount = AppEnvironment.intArg("mockDue") ?? 12
         let masteredCount = AppEnvironment.intArg("mockMastered") ?? 40
+        let nothingDue = AppEnvironment.hasFlag("mockNothingDue")
 
-        logger.info("Seeding fixture profile: level=\(level) due=\(dueCount) mastered=\(masteredCount)")
+        logger.info(
+            "Seeding fixture profile: level=\(level) due=\(dueCount) mastered=\(masteredCount) nothingDue=\(nothingDue)"
+        )
 
         let profile = UserProfile(displayName: placeholderDisplayName)
         context.insert(profile)
@@ -130,6 +138,7 @@ public enum TestFixtures {
             level: level,
             dueCount: dueCount,
             masteredCount: masteredCount,
+            nothingDue: nothingDue,
             now: Date()
         )
 
@@ -147,13 +156,19 @@ public enum TestFixtures {
     /// Regenerates the fixture content for the *current* profile (or
     /// creates one if none exists), preserving its identity — see the
     /// type-level "Reseeding preserves identity" doc above.
+    ///
+    /// `nothingDue` is the same switch `-mockNothingDue` flips on the launch
+    /// path — see `populate`. Exposed as a parameter (rather than read from
+    /// `CommandLine` inside) so a unit test can assert on the resulting card
+    /// pool without launching the app; see `TestFixturesNothingDueTests`.
     @MainActor
     public static func wipeAndSeed(
         context: ModelContext,
         profileVM: ProfileViewModel,
         level: Int,
         dueCount: Int,
-        masteredCount: Int
+        masteredCount: Int,
+        nothingDue: Bool = false
     ) {
         let now = Date()
 
@@ -172,6 +187,7 @@ public enum TestFixtures {
             level: level,
             dueCount: dueCount,
             masteredCount: masteredCount,
+            nothingDue: nothingDue,
             now: now
         )
 
@@ -183,7 +199,9 @@ public enum TestFixtures {
         }
 
         profileVM.loadProfile()
-        logger.info("wipeAndSeed: level=\(level) due=\(dueCount) mastered=\(masteredCount)")
+        logger.info(
+            "wipeAndSeed: level=\(level) due=\(dueCount) mastered=\(masteredCount) nothingDue=\(nothingDue)"
+        )
     }
 
     /// Deletes every UserProfile + RPGState + Card so the next launch returns
@@ -255,6 +273,33 @@ public enum TestFixtures {
     /// (how many kana/content cards land in the mastered vs. learning vs.
     /// fresh bands) — it just no longer double as the RPG state's `level`
     /// directly.
+    ///
+    /// ## `nothingDue`
+    ///
+    /// Seeds the one profile shape no other combination of sliders can
+    /// express: a learner who has **nothing left to review right now**.
+    ///
+    /// It needs its own switch because `dueCount` does not reach far enough.
+    /// Measured 2026-08-16: `-mockDue=0` governs only `seedContentCards`,
+    /// while `seedKana` seeds its own 92 characters on trajectories derived
+    /// from `level` — a fixed 10-card overdue "learning" band at every level,
+    /// plus never-reviewed cards (`dueDate == now`, i.e. due) for whatever the
+    /// mastered band doesn't cover. Either band alone makes something due, so
+    /// no `(level, due, mastered)` triple produces a quiet queue.
+    ///
+    /// Rather than post-processing `dueDate` — which would break this file's
+    /// central invariant that every card's state is what a real replay
+    /// produced — `nothingDue` routes *every* card through the existing
+    /// `.upcoming` anchor: all 92 kana get the mastered trajectory (no
+    /// learning band, no fresh cards) and the content pool contributes only
+    /// its comfortably-ahead half (`due` forced to 0). "Everything begun,
+    /// everything scheduled ahead" is a state the production scheduler
+    /// genuinely produces, so `dueDate` still agrees with `fsrsState`.
+    ///
+    /// Consequence worth knowing before writing a test against it: with no
+    /// `reps == 0` card left, `DefaultSessionPlanner.caughtUpAvailability`
+    /// offers **deepen** and not **discover** — the two are mutually
+    /// exclusive here, because a never-reviewed card is itself due.
     @MainActor
     private static func populate(
         context: ModelContext,
@@ -262,16 +307,25 @@ public enum TestFixtures {
         level: Int,
         dueCount: Int,
         masteredCount: Int,
+        nothingDue: Bool,
         now: Date
     ) {
         var rng = SeededGenerator(seed: fixtureSeed(level: level, due: dueCount, mastered: masteredCount))
 
-        let kanaTally = seedKana(context: context, profile: profile, level: level, now: now, rng: &rng)
+        let kanaTally = seedKana(
+            context: context,
+            profile: profile,
+            level: level,
+            nothingDue: nothingDue,
+            now: now,
+            rng: &rng
+        )
         let contentTally = seedContentCards(
             context: context,
             profile: profile,
-            due: dueCount,
+            due: nothingDue ? 0 : dueCount,
             mastered: masteredCount,
+            nothingDue: nothingDue,
             now: now,
             rng: &rng
         )
@@ -412,22 +466,29 @@ public enum TestFixtures {
     /// so the かな counter never saturates to 92/92 before the top of the
     /// level range, and a level-1 profile never reads as having already
     /// anchored kana.
+    ///
+    /// `nothingDue` collapses the three bands into the first one: all 92 kana
+    /// take the mastered trajectory, so neither the overdue learning band nor
+    /// the never-reviewed remainder can put a card in today's queue. See
+    /// `populate`'s doc for why that switch exists at all — `level` alone
+    /// cannot express it, because the learning band is fixed at 10 across the
+    /// whole range on purpose.
     @MainActor
     private static func seedKana(
         context: ModelContext,
         profile: UserProfile,
         level: Int,
+        nothingDue: Bool,
         now: Date,
         rng: inout SeededGenerator
     ) -> (reviewCount: Int, xp: Int) {
         let allKana = KanaGroup.allBaseCharacters
-        let learningBandSize = min(10, allKana.count)
+        let learningBandSize = nothingDue ? 0 : min(10, allKana.count)
         let maxMastered = allKana.count - learningBandSize
         let levelFraction = Double(max(1, min(level, 30)) - 1) / 29.0
-        let masteredCount = min(
-            maxMastered,
-            max(0, Int((Double(maxMastered) * levelFraction).rounded()))
-        )
+        let masteredCount = nothingDue
+            ? allKana.count
+            : min(maxMastered, max(0, Int((Double(maxMastered) * levelFraction).rounded())))
         let learningCount = min(allKana.count - masteredCount, learningBandSize)
 
         var totalReviews = 0
@@ -442,7 +503,15 @@ public enum TestFixtures {
                     profile: profile,
                     context: context,
                     reviewCount: Int.random(in: 5...9, using: &rng),
-                    failureRate: Double.random(in: 0.02...0.12, using: &rng),
+                    // A lapse on the FINAL review collapses stability, and
+                    // `.upcoming` can only pull the last review back to its
+                    // `max(1, interval/2)` floor — so a short enough interval
+                    // lands the card back inside today despite the "comfortably
+                    // ahead" intent. Harmless noise in an ordinary fixture; fatal
+                    // to `nothingDue`, whose entire contract is an empty queue.
+                    // A spotless history is what a caught-up learner's anchored
+                    // kana look like anyway.
+                    failureRate: nothingDue ? 0 : Double.random(in: 0.02...0.12, using: &rng),
                     desiredRetention: 0.9,
                     anchor: .upcoming(reviewedDaysAgo: 1.0...30.0),
                     now: now,
@@ -499,12 +568,19 @@ public enum TestFixtures {
     /// would — which in turn lets `LeechDetectionService.analyzeConfusion`
     /// surface real confusion pairs (e.g. 日/目) since the fronts are
     /// genuine kanji.
+    ///
+    /// `nothingDue` never reaches the due bucket — `populate` already forces
+    /// `due` to 0 for that mode. It is threaded in only to zero the mastered
+    /// bucket's failure rate, for the reason spelled out on `seedKana`'s
+    /// mastered branch: a lapse on the last review can schedule a
+    /// "comfortably ahead" card back inside today.
     @MainActor
     private static func seedContentCards(
         context: ModelContext,
         profile: UserProfile,
         due: Int,
         mastered: Int,
+        nothingDue: Bool,
         now: Date,
         rng: inout SeededGenerator
     ) -> (reviewCount: Int, xp: Int) {
@@ -553,7 +629,10 @@ public enum TestFixtures {
                 profile: profile,
                 context: context,
                 reviewCount: Int.random(in: 5...9, using: &rng),
-                failureRate: Double.random(in: 0.02...0.1, using: &rng),
+                // Zeroed under `nothingDue` — same reason as `seedKana`'s
+                // mastered branch: a final-review lapse can pull a
+                // "comfortably ahead" card back into today's queue.
+                failureRate: nothingDue ? 0 : Double.random(in: 0.02...0.1, using: &rng),
                 desiredRetention: 0.9,
                 anchor: .upcoming(reviewedDaysAgo: 1.0...45.0),
                 now: now,

@@ -135,7 +135,7 @@ struct HomeView: View {
             // Also covers opening the app already caught-up (the state can be
             // reached without a session ending this launch).
             evaluateCaughtUpExplainer()
-            if CommandLine.arguments.contains("-autoStartSession") {
+            if AppEnvironment.hasFlag("autoStartSession") {
                 startSession()
             }
         }
