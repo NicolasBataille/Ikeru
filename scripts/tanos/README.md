@@ -33,7 +33,7 @@ affiché le contraire à l'écran (cf. `AttributionView.swift`). Importer une
 colonne de gloses à la provenance invérifiable dans un dépôt **public**
 referait la même erreur, avec une chaîne de licence pire.
 
-Donc Ikeru écrit ses propres gloses anglaises pour ces 483 mots, exactement
+Donc Ikeru écrit ses propres gloses anglaises pour ces 488 mots, exactement
 comme `scripts/content-fr/` le fait déjà pour le français. Le résultat vit dans
 `scripts/content/vocabulary.json`.
 
@@ -42,7 +42,7 @@ bundle porte `tanos` ou `ikeru` **par ligne**.
 
 ```sql
 SELECT list_source, COUNT(*) FROM vocabulary GROUP BY 1;
--- ikeru|205   tanos|483
+-- ikeru|205   tanos|488
 ```
 
 ## Attribution
@@ -64,6 +64,15 @@ entrées dans le fichier curé, une décision par ligne :
 
 - `川/河` et `いい/よい` → seule la variante entre (`河`, `よい`) : `川` et `いい`
   étaient déjà dans la liste d'Ikeru.
+
+  ⚠️ **Ce raisonnement ne tient que parce que l'import se superpose à la liste
+  existante.** `川` et `いい` n'apparaissent nulle part ailleurs dans
+  `n5-word-list.json` — leur seule occurrence est à l'intérieur des lignes
+  jointes. Un deck reconstruit **depuis la seule liste Tanos** expédierait donc
+  `河` et `よい` en perdant `川` et `いい`, c'est-à-dire les deux formes dont un
+  débutant a réellement besoin. La source de vérité est
+  `scripts/content/vocabulary.json`, qui les porte en `list_source = "ikeru"` ;
+  ne jamais repartir de zéro depuis ce dossier-ci.
 - `じゃ/じゃあ`, `そうして/そして`, `ラジカセ / ラジオカセット` → une seule forme,
   celle qu'un apprenant rencontre ; la contraction et la variante rare sautent.
 - `キロ` apparaît dans **deux** lignes source (kg et km) : une seule entrée, dont
@@ -80,7 +89,7 @@ réécrit le relevé, pas le fichier curé.
 - **`左` est donné pour `はだり`** — le mot se lit `ひだり`. Corrigé par
   `_READING_CORRECTIONS`. Trouvé en diffant les 179 mots qui recoupent les
   entrées écrites à la main d'Ikeru : c'est la **seule** raison pour laquelle il
-  a été vu. Ne pas en déduire que les 483 autres sont propres — la passe de
+  a été vu. Ne pas en déduire que les 488 autres sont propres — la passe de
   vérification des gloses relit chaque lecture pour cette raison.
 - **163 entrées sans lecture**, toutes en kana seul (101 hiragana, 62 katakana).
   La lecture est dérivée : un mot en hiragana se lit lui-même, un mot en

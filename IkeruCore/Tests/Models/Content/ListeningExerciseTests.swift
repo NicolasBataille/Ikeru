@@ -196,4 +196,62 @@ struct ListeningExerciseTests {
         let uniqueDistractors = Set(exercise.distractors)
         #expect(uniqueDistractors.count == 3)
     }
+
+    // MARK: - Homophone Distractors
+
+    /// The failure scenario, named: the learner hears あつい and is offered
+    /// "hot (weather)", "hot (to the touch)" and "thick" — three correct
+    /// answers to what was actually played, one of them arbitrarily marked
+    /// right. Both generators use `target.reading` as the audio, so any word
+    /// sharing that reading is a valid answer and cannot be a distractor.
+    ///
+    /// This was not a hypothetical. The 205-word bundle had **zero** shared
+    /// readings, so filtering distractors on meaning alone was safe by
+    /// accident; the 2026-08-16 expansion to 693 words brought 26 shared
+    /// readings across 54 words and turned it into a live defect.
+    @Test("Distractors never share the target's reading")
+    func distractorsExcludeHomophones() {
+        let target = VocabularyItem(japanese: "暑い", reading: "あつい", meaning: "hot (weather)", jlptLevel: .n5)
+        let pool = [
+            target,
+            VocabularyItem(japanese: "熱い", reading: "あつい", meaning: "hot (to the touch)", jlptLevel: .n5),
+            VocabularyItem(japanese: "厚い", reading: "あつい", meaning: "thick", jlptLevel: .n5),
+            VocabularyItem(japanese: "寒い", reading: "さむい", meaning: "cold (weather)", jlptLevel: .n5),
+            VocabularyItem(japanese: "涼しい", reading: "すずしい", meaning: "cool", jlptLevel: .n5),
+            VocabularyItem(japanese: "暖かい", reading: "あたたかい", meaning: "warm", jlptLevel: .n5)
+        ]
+
+        for exercise in [
+            ListeningExerciseGenerator.generateWordRecognition(target: target, pool: pool),
+            ListeningExerciseGenerator.generateMeaningSelection(target: target, pool: pool)
+        ] {
+            #expect(!exercise.distractors.contains("hot (to the touch)"))
+            #expect(!exercise.distractors.contains("thick"))
+            #expect(exercise.distractors.count == 3)
+        }
+    }
+
+    /// 朝ご飯 and 朝御飯 are different words with the identical gloss
+    /// "breakfast". Two identical options in a four-choice question is its own
+    /// kind of unanswerable, so the selection deduplicates on meaning.
+    @Test("Distractors are never repeated, even across different words")
+    func distractorsAreDistinct() {
+        let target = VocabularyItem(japanese: "猫", reading: "ねこ", meaning: "cat", jlptLevel: .n5)
+        let pool = [
+            target,
+            VocabularyItem(japanese: "朝ご飯", reading: "あさごはん", meaning: "breakfast", jlptLevel: .n5),
+            VocabularyItem(japanese: "朝御飯", reading: "あさごはん", meaning: "breakfast", jlptLevel: .n5),
+            VocabularyItem(japanese: "犬", reading: "いぬ", meaning: "dog", jlptLevel: .n5),
+            VocabularyItem(japanese: "鳥", reading: "とり", meaning: "bird", jlptLevel: .n5)
+        ]
+
+        // Repeated because the selection shuffles: with 4 candidates for 3
+        // slots, the old prefix-based code produced the duplicate only most of
+        // the time, and a single run passed by luck.
+        for _ in 0..<50 {
+            let exercise = ListeningExerciseGenerator.generateWordRecognition(target: target, pool: pool)
+            #expect(Set(exercise.distractors).count == exercise.distractors.count)
+            #expect(exercise.distractors.count == 3)
+        }
+    }
 }

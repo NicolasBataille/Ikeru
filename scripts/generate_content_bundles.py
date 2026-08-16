@@ -15,8 +15,8 @@ Data Sources:
   of 90 match RADKFILE, with systematic divergence (八/九 here vs RADKFILE's
   ハ-shaped radicals). Do not credit RADKFILE without re-running that diff.
 - JLPT N5 kanji list (factual list, not copyrightable)
-- Vocabulary: the English glosses are Ikeru's own, all 688 of them. The WORDS
-  come from two lists — Ikeru's original hand-picked 205, and 483 more selected
+- Vocabulary: the English glosses are Ikeru's own, all 693 of them. The WORDS
+  come from two lists — Ikeru's original hand-picked 205, and 488 more selected
   from the Tanos JLPT N5 list (Jonathan Waller, CC BY, credited in
   AttributionView). Only the word and its reading were taken from Tanos; its
   English gloss column was deliberately not imported, because the site states
@@ -356,7 +356,7 @@ def n5_vocabulary() -> list[VocabEntry]:
     """Load the N5 vocabulary from ``scripts/content/vocabulary.json``.
 
     The entries used to be ~200 literals in this file. They moved out when the
-    list grew to 688 words: a data set that large is data, not code, and it is
+    list grew to 693 words: a data set that large is data, not code, and it is
     edited by people (and reviewed in diffs) far more often than this
     generator is.
 

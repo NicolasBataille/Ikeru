@@ -167,10 +167,7 @@ public enum ListeningExerciseGenerator {
         target: VocabularyItem,
         pool: [VocabularyItem]
     ) -> ListeningExercise {
-        let distractors = selectDistractors(
-            correctMeaning: target.meaning,
-            pool: pool.map(\.meaning)
-        )
+        let distractors = selectDistractors(target: target, pool: pool)
 
         return ListeningExercise(
             audioText: target.reading,
@@ -191,10 +188,7 @@ public enum ListeningExerciseGenerator {
         target: VocabularyItem,
         pool: [VocabularyItem]
     ) -> ListeningExercise {
-        let distractors = selectDistractors(
-            correctMeaning: target.meaning,
-            pool: pool.map(\.meaning)
-        )
+        let distractors = selectDistractors(target: target, pool: pool)
 
         return ListeningExercise(
             audioText: target.reading,
@@ -225,13 +219,36 @@ public enum ListeningExerciseGenerator {
 
     // MARK: - Private Helpers
 
-    /// Selects unique distractor meanings from the pool, excluding the correct answer.
+    /// Selects distractor meanings from the pool.
+    ///
+    /// Excludes not only the correct answer but **every word that shares the
+    /// target's reading**, because both exercises play `target.reading` as the
+    /// audio: a homophone's meaning is a correct answer to what the learner
+    /// actually heard, so offering it makes the question unanswerable and
+    /// marks a right answer wrong.
+    ///
+    /// This filter used to be `meaning != correctMeaning` alone, and that was
+    /// safe only by accident — the 205-word bundle happened to contain **zero**
+    /// shared readings. The 2026-08-16 expansion to 693 words brought 26
+    /// readings shared by 54 words (あつい → 暑い / 熱い / 厚い, おじ → 伯父 /
+    /// 叔父, かわ → 川 / 河), which turned the accident into a live defect.
+    /// Measured, not assumed: see `JOURNAL.md` and the guard test in
+    /// `ListeningExerciseTests`.
+    ///
+    /// Deduplicates on meaning too: 朝ご飯 and 朝御飯 are different words with
+    /// the identical gloss "breakfast", and two identical options in a
+    /// four-choice question is its own kind of broken.
     private static func selectDistractors(
-        correctMeaning: String,
-        pool: [String]
+        target: VocabularyItem,
+        pool: [VocabularyItem]
     ) -> [String] {
-        let candidates = pool.filter { $0 != correctMeaning }
-        let shuffled = candidates.shuffled()
-        return Array(shuffled.prefix(distractorCount))
+        var seen: Set<String> = [target.meaning]
+        var candidates: [String] = []
+        for item in pool.shuffled() where item.reading != target.reading {
+            guard seen.insert(item.meaning).inserted else { continue }
+            candidates.append(item.meaning)
+            if candidates.count == distractorCount { break }
+        }
+        return candidates
     }
 }

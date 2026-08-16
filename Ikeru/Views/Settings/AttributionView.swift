@@ -136,9 +136,9 @@ struct Attribution: Identifiable {
     /// Radicals are NOT credited to RADKFILE, on the same evidence: only 36 of
     /// 90 decompositions match it, and the misses are systematic (the bundle
     /// writes 八 and 九 where RADKFILE writes its own ハ-shaped radicals).
-    /// Vocabulary *glosses* remain hand-authored — all 688 of them, English and
-    /// French. What is no longer Ikeru's own is the **selection**: 483 of the
-    /// 688 words were picked from the Tanos JLPT N5 list (CC BY, credited
+    /// Vocabulary *glosses* remain hand-authored — all 693 of them, English and
+    /// French. What is no longer Ikeru's own is the **selection**: 488 of the
+    /// 693 words were picked from the Tanos JLPT N5 list (CC BY, credited
     /// below), whose site asks for a link. Only the word and its reading came
     /// from there; the deck's own English gloss column was deliberately not
     /// imported, because tanos.co.uk states no provenance for it and it is
