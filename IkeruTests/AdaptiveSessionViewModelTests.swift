@@ -4,7 +4,7 @@ import SwiftData
 @testable import Ikeru
 @testable import IkeruCore
 
-@Suite("SessionViewModel — Adaptive Sessions")
+@Suite("SessionViewModel — Caught-up sessions")
 @MainActor
 struct AdaptiveSessionViewModelTests {
 
@@ -97,92 +97,172 @@ struct AdaptiveSessionViewModelTests {
         try context.save()
     }
 
-    // MARK: - Session Preview Tests
+    // MARK: - Caught-up sessions (nothing due)
 
-    @Test("loadSessionPreview populates session preview")
-    func loadSessionPreviewPopulates() async throws {
-        let container = try makeContainer()
-        _ = try seedDueCards(container: container, count: 5)
-        let vm = makeViewModel(container: container)
-
-        await vm.loadSessionPreview()
-
-        #expect(vm.sessionPreview.cardCount > 0)
-        #expect(vm.sessionPreview.estimatedMinutes >= 0)
-        #expect(vm.estimatedCardCount > 0)
-    }
-
-    @Test("loadSessionPreview with no cards produces empty preview")
-    func loadSessionPreviewEmpty() async throws {
-        let container = try makeContainer()
-        let vm = makeViewModel(container: container)
-
-        await vm.loadSessionPreview()
-
-        // KNOWN PRODUCT ISSUE (GAP-10, surfaced 2026-08-16): an EMPTY store
-        // previews a 25-item session — 22 of them reading — instead of an
-        // empty one. Nothing is due, nothing has been studied, and the app
-        // still proposes twenty minutes of work.
-        //
-        // The question this raises is a product decision, not a test bug:
-        // what do we show a learner with nothing to review? The same
-        // question is open on the UI side (`SessionAnswerFlowUITests`, left
-        // red on purpose in PR #106). Both are recorded rather than papered
-        // over: the assertion below states what the app SHOULD do, and this
-        // will start failing as "known issue not recorded" the moment the
-        // planner learns to return an empty plan for an empty store.
-        withKnownIssue("planner composes a 25-item session from an empty store") {
-            #expect(vm.sessionPreview.cardCount == 0)
-            #expect(vm.sessionPreview == SessionPreview.empty)
+    /// Seeds cards that are STARTED but not yet due — the "approfondir" pool.
+    /// `daysUntilDue` varies so the retrievability ordering has something to
+    /// sort on.
+    @discardableResult
+    private func seedNotYetDueCards(container: ModelContainer, count: Int) throws -> [UUID] {
+        let context = container.mainContext
+        let profile = try ensureProfile(container: container)
+        var ids: [UUID] = []
+        for i in 0..<count {
+            let card = Card(
+                front: "Known \(i)",
+                back: "Back \(i)",
+                type: .kanji,
+                fsrsState: FSRSState(
+                    difficulty: 5.0,
+                    stability: Double(i + 2),
+                    reps: 3,
+                    lapses: 0,
+                    lastReview: Date().addingTimeInterval(-86_400)
+                ),
+                dueDate: Date().addingTimeInterval(Double(i + 1) * 86_400)
+            )
+            card.profile = profile
+            context.insert(card)
+            ids.append(card.id)
         }
+        try context.save()
+        return ids
     }
 
-    @Test("loadSessionPreview with custom config")
-    func loadSessionPreviewCustomConfig() async throws {
-        let container = try makeContainer()
-        _ = try seedDueCards(container: container, count: 15)
-        let vm = makeViewModel(container: container)
-
-        let config = SessionConfig(availableTimeMinutes: 3) // Micro
-        await vm.loadSessionPreview(config: config)
-
-        // Micro session should cap at 10 cards
-        #expect(vm.sessionPreview.cardCount <= 10)
-    }
-
-    // MARK: - Adaptive Session Start Tests
-
-    @Test("startAdaptiveSession sets active with SRS cards")
-    func startAdaptiveSessionSetsActive() async throws {
-        let container = try makeContainer()
-        _ = try seedDueCards(container: container, count: 5)
-        let vm = makeViewModel(container: container)
-
-        let config = SessionConfig(availableTimeMinutes: 20)
-        await vm.startAdaptiveSession(config: config)
-
-        #expect(vm.isActive == true)
-        #expect(!vm.sessionQueue.isEmpty)
-        #expect(vm.currentIndex == 0)
-        #expect(vm.reviewedCount == 0)
-    }
-
-    @Test("startAdaptiveSession falls back to basic when no content")
-    func startAdaptiveSessionFallback() async throws {
-        let container = try makeContainer()
-        let vm = makeViewModel(container: container)
-
-        let config = SessionConfig(availableTimeMinutes: 20)
-        await vm.startAdaptiveSession(config: config)
-
-        // Should still be active (falls back to basic)
-        #expect(vm.isActive == true)
-        // Same known product issue as `loadSessionPreviewEmpty` above, seen
-        // from the session side: with no cards at all the planner still fills
-        // a session, so it does not start out complete.
-        withKnownIssue("planner composes a non-empty session from an empty store") {
-            #expect(vm.isSessionComplete == true) // No cards
+    /// Seeds never-reviewed cards — the "découvrir" pool.
+    ///
+    /// Kana fronts by default: `NewCardPresentationScheduler` only inserts its
+    /// ungraded presentation phase for `card.isKana` (pre-existing scope, task
+    /// #21) — and `isKana` is decided by the FRONT being in the kana catalog,
+    /// not by `CardType`, which has no `.kana` case at all. A first version of
+    /// this helper seeded "New 0"-style fronts and the presentation assertion
+    /// failed. Correctly: the test was wrong, not the code. See
+    /// `discoverAnnouncesNewKanaButNotOtherTypes`, which records the
+    /// limitation instead of hiding it behind a kana-only fixture.
+    private func seedUnseenCards(
+        container: ModelContainer,
+        count: Int,
+        kanaFronts: Bool = true
+    ) throws {
+        let context = container.mainContext
+        let profile = try ensureProfile(container: container)
+        let kana = Array("あいうえおかきくけこ")
+        for i in 0..<count {
+            let card = Card(
+                front: kanaFronts ? String(kana[i % kana.count]) : "New word \(i)",
+                back: "Back \(i)",
+                type: .vocabulary,
+                fsrsState: FSRSState(),
+                dueDate: Date()
+            )
+            card.profile = profile
+            context.insert(card)
         }
+        try context.save()
+    }
+
+    /// The behaviour this whole feature exists for: nothing due must not mean
+    /// nothing offered. Replaces `loadSessionPreviewEmpty` and
+    /// `startAdaptiveSessionFallback`, whose `withKnownIssue` wrappers pinned
+    /// the 25-item filler of a pipeline no user could reach (deleted
+    /// 2026-08-16 — see `PlannerService`'s header for what it did).
+    @Test("Deepen composes from started-but-not-yet-due cards")
+    func deepenComposesFromKnownCards() async throws {
+        let container = try makeContainer()
+        try seedNotYetDueCards(container: container, count: 5)
+        let vm = makeViewModel(container: container)
+
+        let started = await vm.startCaughtUpSession(offer: .deepen)
+
+        #expect(started == true)
+        #expect(vm.isActive == true)
+        #expect(vm.sessionQueue.isEmpty == false)
+        #expect(
+            vm.sessionQueue.allSatisfy { $0.fsrsState.reps > 0 },
+            "deepen must never introduce new content — that is what discover is for"
+        )
+    }
+
+    @Test("Discover composes from never-seen cards")
+    func discoverComposesFromUnseenCards() async throws {
+        let container = try makeContainer()
+        try seedUnseenCards(container: container, count: 4)
+        let vm = makeViewModel(container: container)
+
+        let started = await vm.startCaughtUpSession(offer: .discover)
+
+        #expect(started == true)
+        #expect(vm.sessionQueue.allSatisfy { $0.fsrsState.reps == 0 })
+        #expect(
+            vm.cardsNeedingPresentation.isEmpty == false,
+            "new content must be ANNOUNCED as new — that is the presentation phase"
+        )
+    }
+
+    /// The honest limit of "announced as new", recorded rather than papered
+    /// over.
+    ///
+    /// The owner's decision was that discovery must present new content AS
+    /// new. `NewCardPresentationScheduler` does exactly that — but only for
+    /// kana (`card.isKana`), a scope that predates this feature. So a
+    /// discovery session that surfaces a vocabulary or kanji card introduces
+    /// it with no presentation phase, exactly as the normal new-content drip
+    /// already does.
+    ///
+    /// This is asserted, not fixed here: widening the presentation phase to
+    /// every card type would change the ORDINARY session too, which is a
+    /// separate decision with its own pacing consequences. This test is what
+    /// makes the gap visible instead of letting it hide behind a kana-only
+    /// fixture.
+    @Test("Discovery of non-kana content gets no presentation phase — known limit")
+    func discoverAnnouncesNewKanaButNotOtherTypes() async throws {
+        let container = try makeContainer()
+        try seedUnseenCards(container: container, count: 4, kanaFronts: false)
+        let vm = makeViewModel(container: container)
+
+        let started = await vm.startCaughtUpSession(offer: .discover)
+
+        #expect(started == true)
+        #expect(
+            vm.cardsNeedingPresentation.isEmpty,
+            """
+            if this starts failing, the presentation phase was widened beyond \
+            kana — good news, but update this test and the doc above
+            """
+        )
+    }
+
+    /// The offer must fail honestly rather than open a hollow session. This is
+    /// the same guard `startSession()` has, and the reason the UI refreshes
+    /// instead of presenting when it returns false.
+    @Test("An offer with an empty pool does not start a session")
+    func emptyPoolDoesNotStart() async throws {
+        let container = try makeContainer()
+        try ensureProfile(container: container)
+        let vm = makeViewModel(container: container)
+
+        let deepen = await vm.startCaughtUpSession(offer: .deepen)
+        let discover = await vm.startCaughtUpSession(offer: .discover)
+
+        #expect(deepen == false)
+        #expect(discover == false)
+        #expect(vm.isActive == false)
+    }
+
+    /// Availability drives which buttons Home renders, so it must agree with
+    /// what the planner can actually compose — otherwise the proposal shows a
+    /// control that does nothing, which is the defect being removed.
+    @Test("Availability matches what the planner can compose")
+    func availabilityMatchesComposition() async throws {
+        let container = try makeContainer()
+        try seedNotYetDueCards(container: container, count: 2)
+        let repo = CardRepository(modelContainer: container)
+        let cards = await repo.allCards()
+
+        let offers = DefaultSessionPlanner.caughtUpAvailability(cards: cards)
+
+        #expect(offers.contains(.deepen))
+        #expect(offers.contains(.discover) == false, "no unseen card was seeded")
     }
 
     @Test("startSession backward compatibility preserved")

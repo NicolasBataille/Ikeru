@@ -97,6 +97,18 @@ public final class HomeViewModel {
     /// Estimated time in minutes for the next session.
     public private(set) var sessionPreviewMinutes: Int = 0
 
+    /// Which caught-up offers can actually produce a session right now.
+    ///
+    /// Drives the proposal shown when `todayKind == .empty`. Empty set means
+    /// there is genuinely nothing left — every card mastered and no new
+    /// content — which is the only case where "all caught up" should stay a
+    /// full stop rather than an invitation.
+    ///
+    /// This is computed rather than assumed so the UI never renders a button
+    /// that does nothing on tap. A silently inert control is the exact defect
+    /// this proposal exists to remove.
+    public private(set) var caughtUpOffers: Set<SessionPlannerInputs.CaughtUpOffer> = []
+
     /// Recent achievement text (e.g., "Unlocked Listening!").
     public private(set) var recentAchievement: String?
 
@@ -621,6 +633,11 @@ public final class HomeViewModel {
         }
         sessionPreviewNewCount = newCount
         sessionPreviewReviewCount = reviewCount
+
+        // What can still be offered once there is nothing due. Computed from
+        // the same `cards` snapshot the preview used, so the proposal and the
+        // count it replaces can never disagree.
+        caughtUpOffers = DefaultSessionPlanner.caughtUpAvailability(cards: cards)
         Logger.ui.debug(
             "Session preview (planner): \(srsItems.count) SRS (\(newCount) new / \(reviewCount) review), ~\(self.sessionPreviewMinutes) min"
         )

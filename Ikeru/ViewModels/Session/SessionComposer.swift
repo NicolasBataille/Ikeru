@@ -107,6 +107,62 @@ final class SessionComposer {
         )
     }
 
+    // MARK: - Caught up (startCaughtUpSession)
+
+    /// Composes the session a learner explicitly asked for when nothing was
+    /// due — "approfondir" or "découvrir".
+    ///
+    /// Deliberately reuses `HomeRecommendationPlan` and the same nil-on-empty
+    /// guard: a caught-up session is an ordinary session in every respect the
+    /// rest of `SessionViewModel` cares about. Only its *source* differs, and
+    /// that difference lives in the planner where the pool is chosen.
+    ///
+    /// Returning nil here is not an error path to hide. It means the learner
+    /// tapped an offer whose pool has since emptied, and the caller must keep
+    /// showing the proposal rather than opening a blank session — the whole
+    /// point of this change is that nothing happens silently.
+    func composeCaughtUp(
+        offer: SessionPlannerInputs.CaughtUpOffer,
+        durationMinutes: Int
+    ) async -> HomeRecommendationPlan? {
+        let cards = await cardRepository.allCards()
+        let snapshot = await buildSnapshot(cards: cards)
+        let inputs = SessionPlannerInputs(
+            source: .caughtUp(offer),
+            durationMinutes: durationMinutes,
+            profile: snapshot,
+            unlockedTypes: effectiveUnlockedTypes(profile: snapshot),
+            availableCards: cards
+        )
+        let plan = await sessionPlanner.compose(inputs: inputs)
+        let scheduled = NewCardPresentationScheduler.schedulingPresentations(for: plan.exercises)
+        let exercises = scheduled.exercises
+        let srsCards = Self.srsCards(from: exercises)
+        guard !srsCards.isEmpty else {
+            Logger.ui.info(
+                "session.caughtUp offer=\(offer.rawValue, privacy: .public) produced no cards"
+            )
+            return nil
+        }
+
+        let pool = await vocabularyPool(level: snapshot.jlptLevel)
+
+        return HomeRecommendationPlan(
+            sessionQueue: srsCards,
+            sessionExercises: exercises,
+            endPolicy: SessionEndPolicy(
+                durationBudgetMinutes: durationMinutes,
+                queueLength: exercises.count
+            ),
+            jlptLevel: snapshot.jlptLevel,
+            vocabularyPool: pool,
+            srsCardCount: srsCards.count,
+            estimatedDurationMinutes: plan.estimatedDurationMinutes
+                + Self.minutes(fromSeconds: scheduled.addedDurationSeconds),
+            cardsNeedingPresentation: scheduled.cardsNeedingPresentation
+        )
+    }
+
     // MARK: - Study Custom (startStudyCustomSession)
 
     struct StudyCustomPlan {
@@ -199,79 +255,6 @@ final class SessionComposer {
             sessionQueue: mistakes,
             sessionExercises: exercises,
             estimatedDurationMinutes: Self.minutes(fromSeconds: totalSeconds)
-        )
-    }
-
-    // MARK: - Adaptive Preview (loadSessionPreview)
-
-    struct AdaptivePreview {
-        let preview: SessionPreview
-        let totalExercises: Int
-        let totalSeconds: Int
-    }
-
-    /// Computes a session preview without starting the session, using
-    /// adaptive composition (`PlannerService`) to provide a detailed
-    /// exercise breakdown.
-    func composePreview(config: SessionConfig) async -> AdaptivePreview {
-        let plan = await plannerService.composeAdaptiveSession(config: config)
-        let scheduled = NewCardPresentationScheduler.schedulingPresentations(for: plan.exercises)
-        let totalExercises = scheduled.exercises.count
-        // Read the planner's own maturity-modulated estimate rather than
-        // re-summing `estimatedDurationSeconds` flat across every exercise —
-        // a flat re-sum ignores `DefaultSessionPlanner`'s per-review
-        // maturity discount (`effectiveDurationSeconds`) and silently drifts
-        // from the honest total (SUIVI note, 2026-08 pedagogy P2 review).
-        // The new-card presentation pass adds real time on top of what the
-        // planner priced in, so its seconds are added back explicitly.
-        let totalSeconds = plan.estimatedDurationMinutes * 60 + scheduled.addedDurationSeconds
-
-        var skillSplit: [SkillType: Double] = [:]
-        if totalExercises > 0 {
-            for (skill, count) in plan.exerciseBreakdown {
-                skillSplit[skill] = Double(count) / Double(totalExercises)
-            }
-        }
-
-        let preview = SessionPreview(
-            estimatedMinutes: Self.minutes(fromSeconds: totalSeconds),
-            cardCount: totalExercises,
-            exerciseBreakdown: plan.exerciseBreakdown,
-            skillSplit: skillSplit
-        )
-
-        return AdaptivePreview(preview: preview, totalExercises: totalExercises, totalSeconds: totalSeconds)
-    }
-
-    // MARK: - Adaptive Session (startAdaptiveSession)
-
-    struct AdaptiveSessionPlan {
-        let sessionQueue: [CardDTO]
-        let sessionExercises: [ExerciseItem]
-        let srsCardCount: Int
-        let supplementaryExerciseCount: Int
-        let estimatedDurationMinutes: Int
-        /// See `HomeRecommendationPlan.cardsNeedingPresentation`.
-        let cardsNeedingPresentation: Set<UUID>
-    }
-
-    /// Composes an adaptive session using the provided config. Returns nil
-    /// when the adaptive plan produced no exercises — the caller falls back
-    /// to `startSession()`, matching the original's guard.
-    func composeAdaptive(config: SessionConfig) async -> AdaptiveSessionPlan? {
-        let plan = await plannerService.composeAdaptiveSession(config: config)
-        guard !plan.exercises.isEmpty else { return nil }
-        let scheduled = NewCardPresentationScheduler.schedulingPresentations(for: plan.exercises)
-        let exercises = scheduled.exercises
-        let srsCards = Self.srsCards(from: exercises)
-        return AdaptiveSessionPlan(
-            sessionQueue: srsCards,
-            sessionExercises: exercises,
-            srsCardCount: srsCards.count,
-            supplementaryExerciseCount: plan.supplementaryExerciseCount,
-            estimatedDurationMinutes: plan.estimatedDurationMinutes
-                + Self.minutes(fromSeconds: scheduled.addedDurationSeconds),
-            cardsNeedingPresentation: scheduled.cardsNeedingPresentation
         )
     }
 

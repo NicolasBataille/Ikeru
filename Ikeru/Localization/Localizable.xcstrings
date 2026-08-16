@@ -50,6 +50,42 @@
         }
       }
     },
+    "Discover something new" : {
+      "comment" : "HomeView — caught-up offer, title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Discover something new"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Découvrir du nouveau"
+          }
+        }
+      }
+    },
+    "Go deeper" : {
+      "comment" : "HomeView — caught-up offer, title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Go deeper"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Approfondir"
+          }
+        }
+      }
+    },
     "I already have an account" : {
       "extractionState" : "manual",
       "comment" : "Accessibility label for the Sign in with Apple button at the foot of onboarding's name-entry screen",
@@ -84,6 +120,24 @@
         }
       }
     },
+    "Meet content you haven't seen yet" : {
+      "comment" : "HomeView — caught-up offer 'discover', subtitle",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meet content you haven't seen yet"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rencontrer du contenu que tu n'as pas encore vu"
+          }
+        }
+      }
+    },
     "No backup was found for that Apple account — let's set up your profile." : {
       "localizations" : {
         "en" : {
@@ -96,6 +150,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aucune sauvegarde trouvée pour ce compte Apple — configurons ton profil."
+          }
+        }
+      }
+    },
+    "Practise what you already know, weakest first" : {
+      "comment" : "HomeView — caught-up offer 'deepen', subtitle",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Practise what you already know, weakest first"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Travailler ce que tu connais déjà, du plus fragile au plus solide"
           }
         }
       }
@@ -192,6 +264,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cela ne prend qu'un instant."
+          }
+        }
+      }
+    },
+    "Want to keep going? Nothing is due, so this is extra." : {
+      "comment" : "HomeView — caught-up proposal, intro line",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Want to keep going? Nothing is due, so this is extra."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Envie de continuer ? Rien n'est dû, donc c'est du bonus."
           }
         }
       }
