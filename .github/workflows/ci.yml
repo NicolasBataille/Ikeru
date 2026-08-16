@@ -272,29 +272,35 @@ jobs:
             exit 1
           fi
           echo "Using simulator: $DEVICE_ID"
+          # The WHOLE app test target, not an allowlist (GAP-10, 2026-08-16).
+          #
+          # This used to name 17 suites explicitly, because the target's other
+          # suites crashed the test runner. Both crashes are now fixed at the
+          # cause (a seed helper displacing a saved RPGState through the
+          # relationship's owning side; a ModelContainer dropped while its
+          # ModelContext was still in use), so the filter has nothing left to
+          # protect. Measured locally on iPhone 17 after the fixes:
+          # 372 tests, 41 suites, 0 runner restarts, ~54s.
+          #
+          # An allowlist fails OPEN, which is why this is not simply a longer
+          # list: a suite added tomorrow is silently not run, exactly as the
+          # 228 tests this list excluded were silently not run. Core made the
+          # same move to a denylist for the same reason (see CLAUDE.md). If a
+          # suite ever has to be excluded, exclude it with `-skip-testing:`
+          # and say why right here — so the exclusion is visible and every
+          # NEW suite runs by default.
+          #
+          # No `CODE_SIGNING_ALLOWED=NO`: an unsigned simulator build has no
+          # sandbox and no Keychain (`-34018`), which `KeychainAvailabilityTests`
+          # proves — and that suite is now in scope. Ad-hoc "Sign to Run
+          # Locally" signing needs no credentials, so dropping the flag costs
+          # nothing.
           xcodebuild test \
             -project Ikeru.xcodeproj \
             -scheme Ikeru \
             -destination "platform=iOS Simulator,id=$DEVICE_ID" \
             -skipPackagePluginValidation \
-            -only-testing:IkeruTests/KanaDrillViewModelTests \
-            -only-testing:IkeruTests/SessionDecouplingTests \
-            -only-testing:IkeruTests/WatchQuizEligibilityTests \
-            -only-testing:IkeruTests/WatchQuizBridgeTests \
-            -only-testing:IkeruTests/NewCardPresentationTests \
-            -only-testing:IkeruTests/KanaSessionEndToEndTests \
-            -only-testing:IkeruTests/MasteryBookSnapshotStoreTests \
-            -only-testing:IkeruTests/Tier1KanjiStudyBookkeepingTests \
-            -only-testing:IkeruTests/Tier2AudioDrillCompletionTests \
-            -only-testing:IkeruTests/Tier2VocabRecallTests \
-            -only-testing:IkeruTests/DrillGradeMappingTests \
-            -only-testing:IkeruTests/DataExportManagerTests \
-            -only-testing:IkeruTests/SessionViewModelTests \
-            -only-testing:IkeruTests/SessionIntegrationTests \
-            -only-testing:IkeruTests/WidgetSnapshotStoreTests \
-            -only-testing:IkeruTests/StoreRecoveryTests \
-            -only-testing:IkeruTests/StoreRecoveryNoticeTests \
-            CODE_SIGNING_ALLOWED=NO
+            -only-testing:IkeruTests
 
   ui-test:
     name: UI Test (IkeruUITests)
@@ -303,14 +309,11 @@ jobs:
     # Non-blocking for now (GAP-09): this is the FIRST UI-test target this
     # repo has ever had, run on a brand-new runner combination (XCUITest +
     # GitHub's macos-15 image) that has had zero baking time. The app
-    # target (IkeruTests) separately has a known, unresolved history of
-    # SwiftData crashes specifically under `xcodebuild test` (two distinct
-    # signatures, tracked in PR #103 / fix/app-target-test-coverage) that
-    # this job's app-under-test could hit for the same underlying reason
-    # even though its own test code never touches SwiftData directly. Kept
-    # as its own job (not a step in `test`) so promoting it to blocking
-    # later, or removing it, never touches that job's `-only-testing`
-    # allowlist, which PR #103 owns. `continue-on-error` so a flake here
+    # target's two SwiftData crashes, which this comment used to list as an
+    # additional risk to this job, are fixed at the cause (GAP-10,
+    # 2026-08-16) and no longer apply. Kept as its own job (not a step in
+    # `test`) so promoting it to blocking later, or removing it, is a
+    # self-contained change. `continue-on-error` so a flake here
     # (CI-runner UI automation is known-flakier than unit tests) never reds
     # out the required checks — promote once a week or two of green runs
     # establishes it isn't systematically flaky on this runner image.
