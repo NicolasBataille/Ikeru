@@ -40,7 +40,7 @@ struct AttributionView: View {
             // `Attribution.all`). This is the line a learner actually READS;
             // fixing only the source comment would have left the claim on
             // screen and the correction where nobody looks.
-            Text("Vocabulary and grammar notes are original content written for Ikeru. Kanji readings come from KANJIDIC, and most example sentences from the Tatoeba corpus — both credited below.")
+            Text("Vocabulary meanings and grammar notes are written for Ikeru. Kanji readings come from KANJIDIC, the N5 word list from Tanos, and most example sentences from the Tatoeba corpus — all credited below.")
                 .font(.ikeruCaption)
                 .foregroundStyle(.ikeruTextSecondary)
         }
@@ -136,9 +136,18 @@ struct Attribution: Identifiable {
     /// Radicals are NOT credited to RADKFILE, on the same evidence: only 36 of
     /// 90 decompositions match it, and the misses are systematic (the bundle
     /// writes 八 and 九 where RADKFILE writes its own ハ-shaped radicals).
-    /// Vocabulary remains hand-authored. Do not add a RADKFILE entry without
-    /// re-running that diff — crediting a source you did not use is its own
-    /// kind of false claim.
+    /// Vocabulary *glosses* remain hand-authored — all 688 of them, English and
+    /// French. What is no longer Ikeru's own is the **selection**: 483 of the
+    /// 688 words were picked from the Tanos JLPT N5 list (CC BY, credited
+    /// below), whose site asks for a link. Only the word and its reading came
+    /// from there; the deck's own English gloss column was deliberately not
+    /// imported, because tanos.co.uk states no provenance for it and it is
+    /// plausibly EDICT-derived — see `scripts/tanos/build-vocab-list.py`. The
+    /// split is recorded per row in `vocabulary.list_source`, so "we wrote the
+    /// meanings, they had the list" is a query, not a promise.
+    ///
+    /// Do not add a RADKFILE entry without re-running that diff — crediting a
+    /// source you did not use is its own kind of false claim.
     ///
     /// Example sentences are no longer all Ikeru's: 239 of the 335 come from
     /// Tatoeba under CC BY 2.0 FR (`scripts/tatoeba/`), which requires
@@ -179,6 +188,14 @@ struct Attribution: Identifiable {
             license: "CC BY 2.0 FR",
             licenceURL: URL(string: "https://creativecommons.org/licenses/by/2.0/fr/"),
             description: "Japanese example sentences reproduced unchanged from Tatoeba; French lightly normalized (spacing, apostrophes). Its audio is licensed separately, per contributor, unused."
+        ),
+        Attribution(
+            id: "tanos",
+            name: "Tanos JLPT lists",
+            author: "Jonathan Waller — tanos.co.uk",
+            license: "CC BY",
+            licenceURL: URL(string: "http://www.tanos.co.uk/jlpt/sharing/"),
+            description: "Which words are on the JLPT N5 list, and how they are read, come from Jonathan Waller's JLPT resources. The English and French meanings shown in Ikeru are written for Ikeru, not taken from there."
         ),
         Attribution(
             id: "voicevox",

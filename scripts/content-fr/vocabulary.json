@@ -1,826 +1,822 @@
 [
   {
-    "id": 1,
+    "word": "一つ",
     "meaning_fr": "un (objet)"
   },
   {
-    "id": 2,
+    "word": "二つ",
     "meaning_fr": "deux (objets)"
   },
   {
-    "id": 3,
+    "word": "三つ",
     "meaning_fr": "trois (objets)"
   },
   {
-    "id": 4,
+    "word": "四つ",
     "meaning_fr": "quatre (objets)"
   },
   {
-    "id": 5,
+    "word": "五つ",
     "meaning_fr": "cinq (objets)"
   },
   {
-    "id": 6,
+    "word": "六つ",
     "meaning_fr": "six (objets)"
   },
   {
-    "id": 7,
+    "word": "七つ",
     "meaning_fr": "sept (objets)"
   },
   {
-    "id": 8,
+    "word": "八つ",
     "meaning_fr": "huit (objets)"
   },
   {
-    "id": 9,
+    "word": "九つ",
     "meaning_fr": "neuf (objets)"
   },
   {
-    "id": 10,
+    "word": "十",
     "meaning_fr": "dix"
   },
   {
-    "id": 11,
+    "word": "百",
     "meaning_fr": "cent"
   },
   {
-    "id": 12,
+    "word": "千",
     "meaning_fr": "mille"
   },
   {
-    "id": 13,
+    "word": "万",
     "meaning_fr": "dix mille"
   },
   {
-    "id": 14,
+    "word": "円",
     "meaning_fr": "le yen ; le cercle"
   },
   {
-    "id": 15,
+    "word": "月曜日",
     "meaning_fr": "lundi"
   },
   {
-    "id": 16,
+    "word": "火曜日",
     "meaning_fr": "mardi"
   },
   {
-    "id": 17,
+    "word": "水曜日",
     "meaning_fr": "mercredi"
   },
   {
-    "id": 18,
+    "word": "木曜日",
     "meaning_fr": "jeudi"
   },
   {
-    "id": 19,
+    "word": "金曜日",
     "meaning_fr": "vendredi"
   },
   {
-    "id": 20,
+    "word": "土曜日",
     "meaning_fr": "samedi"
   },
   {
-    "id": 21,
+    "word": "日曜日",
     "meaning_fr": "dimanche"
   },
   {
-    "id": 22,
+    "word": "今日",
     "meaning_fr": "aujourd'hui"
   },
   {
-    "id": 23,
+    "word": "明日",
     "meaning_fr": "demain"
   },
   {
-    "id": 24,
+    "word": "昨日",
     "meaning_fr": "hier"
   },
   {
-    "id": 25,
+    "word": "今",
     "meaning_fr": "maintenant"
   },
   {
-    "id": 26,
+    "word": "朝",
     "meaning_fr": "le matin"
   },
   {
-    "id": 27,
+    "word": "昼",
     "meaning_fr": "midi ; la journée"
   },
   {
-    "id": 28,
+    "word": "夜",
     "meaning_fr": "la nuit ; le soir"
   },
   {
-    "id": 29,
+    "word": "毎日",
     "meaning_fr": "tous les jours"
   },
   {
-    "id": 30,
+    "word": "毎朝",
     "meaning_fr": "tous les matins"
   },
   {
-    "id": 31,
+    "word": "毎週",
     "meaning_fr": "toutes les semaines"
   },
   {
-    "id": 32,
+    "word": "毎月",
     "meaning_fr": "tous les mois"
   },
   {
-    "id": 33,
+    "word": "毎年",
     "meaning_fr": "tous les ans"
   },
   {
-    "id": 34,
+    "word": "今年",
     "meaning_fr": "cette année"
   },
   {
-    "id": 35,
+    "word": "去年",
     "meaning_fr": "l'année dernière"
   },
   {
-    "id": 36,
+    "word": "来年",
     "meaning_fr": "l'année prochaine"
   },
   {
-    "id": 37,
+    "word": "今月",
     "meaning_fr": "ce mois-ci"
   },
   {
-    "id": 38,
+    "word": "先月",
     "meaning_fr": "le mois dernier"
   },
   {
-    "id": 39,
+    "word": "来月",
     "meaning_fr": "le mois prochain"
   },
   {
-    "id": 40,
+    "word": "今週",
     "meaning_fr": "cette semaine"
   },
   {
-    "id": 41,
+    "word": "先週",
     "meaning_fr": "la semaine dernière"
   },
   {
-    "id": 42,
+    "word": "来週",
     "meaning_fr": "la semaine prochaine"
   },
   {
-    "id": 43,
+    "word": "時間",
     "meaning_fr": "le temps ; l'heure"
   },
   {
-    "id": 44,
+    "word": "半",
     "meaning_fr": "demi"
   },
   {
-    "id": 45,
+    "word": "分",
     "meaning_fr": "la minute"
   },
   {
-    "id": 46,
+    "word": "午前",
     "meaning_fr": "du matin ; le matin"
   },
   {
-    "id": 47,
+    "word": "午後",
     "meaning_fr": "de l'après-midi ; l'après-midi"
   },
   {
-    "id": 48,
+    "word": "山",
     "meaning_fr": "la montagne"
   },
   {
-    "id": 49,
+    "word": "川",
     "meaning_fr": "la rivière"
   },
   {
-    "id": 50,
+    "word": "天気",
     "meaning_fr": "le temps (qu'il fait)"
   },
   {
-    "id": 51,
+    "word": "雨",
     "meaning_fr": "la pluie"
   },
   {
-    "id": 52,
+    "word": "花",
     "meaning_fr": "la fleur"
   },
   {
-    "id": 53,
+    "word": "空",
     "meaning_fr": "le ciel"
   },
   {
-    "id": 54,
+    "word": "水",
     "meaning_fr": "l'eau"
   },
   {
-    "id": 55,
+    "word": "木",
     "meaning_fr": "l'arbre"
   },
   {
-    "id": 56,
+    "word": "花見",
     "meaning_fr": "la contemplation des fleurs de cerisier"
   },
   {
-    "id": 57,
+    "word": "人",
     "meaning_fr": "la personne"
   },
   {
-    "id": 58,
+    "word": "日本人",
     "meaning_fr": "le/la Japonais(e)"
   },
   {
-    "id": 59,
+    "word": "男の子",
     "meaning_fr": "le garçon"
   },
   {
-    "id": 60,
+    "word": "女の子",
     "meaning_fr": "la fille"
   },
   {
-    "id": 61,
+    "word": "男の人",
     "meaning_fr": "l'homme"
   },
   {
-    "id": 62,
+    "word": "女の人",
     "meaning_fr": "la femme"
   },
   {
-    "id": 63,
+    "word": "子供",
     "meaning_fr": "l'enfant ; les enfants"
   },
   {
-    "id": 64,
+    "word": "友達",
     "meaning_fr": "l'ami(e)"
   },
   {
-    "id": 65,
+    "word": "お父さん",
     "meaning_fr": "le père (forme polie)"
   },
   {
-    "id": 66,
+    "word": "お母さん",
     "meaning_fr": "la mère (forme polie)"
   },
   {
-    "id": 67,
+    "word": "父",
     "meaning_fr": "le père (forme neutre)"
   },
   {
-    "id": 68,
+    "word": "母",
     "meaning_fr": "la mère (forme neutre)"
   },
   {
-    "id": 69,
+    "word": "兄",
     "meaning_fr": "le grand frère (forme neutre)"
   },
   {
-    "id": 70,
+    "word": "姉",
     "meaning_fr": "la grande sœur (forme neutre)"
   },
   {
-    "id": 71,
+    "word": "弟",
     "meaning_fr": "le petit frère"
   },
   {
-    "id": 72,
+    "word": "妹",
     "meaning_fr": "la petite sœur"
   },
   {
-    "id": 73,
+    "word": "家族",
     "meaning_fr": "la famille"
   },
   {
-    "id": 74,
+    "word": "学生",
     "meaning_fr": "l'étudiant(e)"
   },
   {
-    "id": 75,
+    "word": "大学",
     "meaning_fr": "l'université"
   },
   {
-    "id": 76,
+    "word": "大学生",
     "meaning_fr": "l'étudiant(e) universitaire"
   },
   {
-    "id": 77,
+    "word": "学校",
     "meaning_fr": "l'école"
   },
   {
-    "id": 78,
+    "word": "先生",
     "meaning_fr": "le professeur"
   },
   {
-    "id": 79,
+    "word": "本",
     "meaning_fr": "le livre"
   },
   {
-    "id": 80,
+    "word": "日本語",
     "meaning_fr": "le japonais"
   },
   {
-    "id": 81,
+    "word": "英語",
     "meaning_fr": "l'anglais"
   },
   {
-    "id": 82,
+    "word": "勉強",
     "meaning_fr": "l'étude"
   },
   {
-    "id": 83,
+    "word": "食べる",
     "meaning_fr": "manger"
   },
   {
-    "id": 84,
+    "word": "飲む",
     "meaning_fr": "boire"
   },
   {
-    "id": 85,
+    "word": "食べ物",
     "meaning_fr": "la nourriture"
   },
   {
-    "id": 86,
+    "word": "飲み物",
     "meaning_fr": "la boisson"
   },
   {
-    "id": 87,
+    "word": "お茶",
     "meaning_fr": "le thé"
   },
   {
-    "id": 88,
+    "word": "ご飯",
     "meaning_fr": "le riz ; le repas"
   },
   {
-    "id": 89,
+    "word": "パン",
     "meaning_fr": "le pain"
   },
   {
-    "id": 90,
+    "word": "肉",
     "meaning_fr": "la viande"
   },
   {
-    "id": 91,
+    "word": "魚",
     "meaning_fr": "le poisson"
   },
   {
-    "id": 92,
+    "word": "野菜",
     "meaning_fr": "les légumes"
   },
   {
-    "id": 93,
+    "word": "果物",
     "meaning_fr": "les fruits"
   },
   {
-    "id": 94,
+    "word": "卵",
     "meaning_fr": "l'œuf"
   },
   {
-    "id": 95,
+    "word": "朝ご飯",
     "meaning_fr": "le petit-déjeuner"
   },
   {
-    "id": 96,
+    "word": "昼ご飯",
     "meaning_fr": "le déjeuner"
   },
   {
-    "id": 97,
+    "word": "晩ご飯",
     "meaning_fr": "le dîner"
   },
   {
-    "id": 98,
+    "word": "見る",
     "meaning_fr": "voir ; regarder"
   },
   {
-    "id": 99,
+    "word": "聞く",
     "meaning_fr": "entendre ; demander ; écouter"
   },
   {
-    "id": 100,
+    "word": "読む",
     "meaning_fr": "lire"
   },
   {
-    "id": 101,
+    "word": "書く",
     "meaning_fr": "écrire"
   },
   {
-    "id": 102,
+    "word": "話す",
     "meaning_fr": "parler"
   },
   {
-    "id": 103,
+    "word": "行く",
     "meaning_fr": "aller"
   },
   {
-    "id": 104,
+    "word": "来る",
     "meaning_fr": "venir"
   },
   {
-    "id": 105,
+    "word": "出る",
     "meaning_fr": "sortir"
   },
   {
-    "id": 106,
+    "word": "入る",
     "meaning_fr": "entrer"
   },
   {
-    "id": 107,
+    "word": "買う",
     "meaning_fr": "acheter"
   },
   {
-    "id": 108,
+    "word": "休む",
     "meaning_fr": "se reposer ; prendre un jour de congé"
   },
   {
-    "id": 109,
+    "word": "立つ",
     "meaning_fr": "se tenir debout"
   },
   {
-    "id": 110,
+    "word": "分かる",
     "meaning_fr": "comprendre"
   },
   {
-    "id": 111,
+    "word": "出かける",
     "meaning_fr": "sortir (faire une sortie)"
   },
   {
-    "id": 112,
+    "word": "歩く",
     "meaning_fr": "marcher"
   },
   {
-    "id": 113,
+    "word": "走る",
     "meaning_fr": "courir"
   },
   {
-    "id": 114,
+    "word": "泳ぐ",
     "meaning_fr": "nager"
   },
   {
-    "id": 115,
+    "word": "作る",
     "meaning_fr": "faire ; créer"
   },
   {
-    "id": 116,
+    "word": "使う",
     "meaning_fr": "utiliser"
   },
   {
-    "id": 117,
+    "word": "待つ",
     "meaning_fr": "attendre"
   },
   {
-    "id": 118,
+    "word": "持つ",
     "meaning_fr": "tenir ; avoir"
   },
   {
-    "id": 119,
+    "word": "住む",
     "meaning_fr": "habiter ; résider"
   },
   {
-    "id": 120,
+    "word": "知る",
     "meaning_fr": "connaître"
   },
   {
-    "id": 121,
+    "word": "思う",
     "meaning_fr": "penser"
   },
   {
-    "id": 122,
+    "word": "言う",
     "meaning_fr": "dire"
   },
   {
-    "id": 123,
+    "word": "会う",
     "meaning_fr": "rencontrer"
   },
   {
-    "id": 124,
+    "word": "帰る",
     "meaning_fr": "rentrer"
   },
   {
-    "id": 125,
+    "word": "教える",
     "meaning_fr": "enseigner ; indiquer"
   },
   {
-    "id": 126,
+    "word": "開ける",
     "meaning_fr": "ouvrir"
   },
   {
-    "id": 127,
+    "word": "閉める",
     "meaning_fr": "fermer"
   },
   {
-    "id": 128,
+    "word": "始まる",
     "meaning_fr": "commencer (intransitif)"
   },
   {
-    "id": 129,
+    "word": "終わる",
     "meaning_fr": "finir ; se terminer"
   },
   {
-    "id": 130,
+    "word": "大きい",
     "meaning_fr": "grand"
   },
   {
-    "id": 131,
+    "word": "小さい",
     "meaning_fr": "petit"
   },
   {
-    "id": 132,
+    "word": "高い",
     "meaning_fr": "haut ; grand ; cher"
   },
   {
-    "id": 133,
+    "word": "安い",
     "meaning_fr": "bon marché ; pas cher"
   },
   {
-    "id": 134,
+    "word": "新しい",
     "meaning_fr": "nouveau"
   },
   {
-    "id": 135,
+    "word": "古い",
     "meaning_fr": "vieux (pour les objets)"
   },
   {
-    "id": 136,
+    "word": "長い",
     "meaning_fr": "long"
   },
   {
-    "id": 137,
+    "word": "白い",
     "meaning_fr": "blanc"
   },
   {
-    "id": 138,
+    "word": "多い",
     "meaning_fr": "nombreux ; abondant"
   },
   {
-    "id": 139,
+    "word": "少ない",
     "meaning_fr": "peu nombreux ; peu abondant"
   },
   {
-    "id": 140,
+    "word": "いい",
     "meaning_fr": "bon"
   },
   {
-    "id": 141,
+    "word": "悪い",
     "meaning_fr": "mauvais"
   },
   {
-    "id": 142,
+    "word": "暑い",
     "meaning_fr": "chaud (climat)"
   },
   {
-    "id": 143,
+    "word": "寒い",
     "meaning_fr": "froid (climat)"
   },
   {
-    "id": 144,
+    "word": "暖かい",
     "meaning_fr": "doux (climat)"
   },
   {
-    "id": 145,
+    "word": "涼しい",
     "meaning_fr": "frais ; rafraîchissant"
   },
   {
-    "id": 146,
+    "word": "早い",
     "meaning_fr": "tôt ; rapide"
   },
   {
-    "id": 147,
+    "word": "遅い",
     "meaning_fr": "lent ; en retard"
   },
   {
-    "id": 148,
+    "word": "近い",
     "meaning_fr": "proche ; près"
   },
   {
-    "id": 149,
+    "word": "遠い",
     "meaning_fr": "loin ; lointain"
   },
   {
-    "id": 150,
+    "word": "広い",
     "meaning_fr": "large ; spacieux"
   },
   {
-    "id": 151,
+    "word": "狭い",
     "meaning_fr": "étroit ; exigu"
   },
   {
-    "id": 152,
+    "word": "重い",
     "meaning_fr": "lourd"
   },
   {
-    "id": 153,
+    "word": "軽い",
     "meaning_fr": "léger (poids)"
   },
   {
-    "id": 154,
+    "word": "明るい",
     "meaning_fr": "lumineux"
   },
   {
-    "id": 155,
+    "word": "暗い",
     "meaning_fr": "sombre"
   },
   {
-    "id": 156,
+    "word": "難しい",
     "meaning_fr": "difficile"
   },
   {
-    "id": 157,
+    "word": "易しい",
     "meaning_fr": "facile"
   },
   {
-    "id": 158,
+    "word": "面白い",
     "meaning_fr": "intéressant ; drôle"
   },
   {
-    "id": 159,
+    "word": "楽しい",
     "meaning_fr": "amusant ; agréable"
   },
   {
-    "id": 160,
+    "word": "忙しい",
     "meaning_fr": "occupé"
   },
   {
-    "id": 161,
+    "word": "元気",
     "meaning_fr": "en forme ; énergique"
   },
   {
-    "id": 162,
+    "word": "静か",
     "meaning_fr": "calme"
   },
   {
-    "id": 163,
+    "word": "有名",
     "meaning_fr": "célèbre"
   },
   {
-    "id": 164,
+    "word": "大切",
     "meaning_fr": "important ; précieux"
   },
   {
-    "id": 165,
+    "word": "便利",
     "meaning_fr": "pratique"
   },
   {
-    "id": 166,
+    "word": "国",
     "meaning_fr": "le pays"
   },
   {
-    "id": 167,
+    "word": "日本",
     "meaning_fr": "le Japon"
   },
   {
-    "id": 168,
+    "word": "外国",
     "meaning_fr": "le pays étranger"
   },
   {
-    "id": 169,
+    "word": "家",
     "meaning_fr": "la maison ; le foyer"
   },
   {
-    "id": 170,
+    "word": "部屋",
     "meaning_fr": "la pièce"
   },
   {
-    "id": 171,
+    "word": "会社",
     "meaning_fr": "l'entreprise"
   },
   {
-    "id": 172,
+    "word": "病院",
     "meaning_fr": "l'hôpital"
   },
   {
-    "id": 173,
+    "word": "駅",
     "meaning_fr": "la gare"
   },
   {
-    "id": 174,
+    "word": "店",
     "meaning_fr": "le magasin"
   },
   {
-    "id": 175,
+    "word": "銀行",
     "meaning_fr": "la banque"
   },
   {
-    "id": 176,
+    "word": "上",
     "meaning_fr": "au-dessus ; le dessus"
   },
   {
-    "id": 177,
+    "word": "下",
     "meaning_fr": "en dessous ; le dessous"
   },
   {
-    "id": 178,
+    "word": "中",
     "meaning_fr": "l'intérieur ; le milieu"
   },
   {
-    "id": 179,
+    "word": "右",
     "meaning_fr": "la droite"
   },
   {
-    "id": 180,
+    "word": "左",
     "meaning_fr": "la gauche"
   },
   {
-    "id": 181,
+    "word": "前",
     "meaning_fr": "devant ; avant"
   },
   {
-    "id": 182,
+    "word": "後ろ",
     "meaning_fr": "derrière ; l'arrière"
   },
   {
-    "id": 183,
+    "word": "北",
     "meaning_fr": "le nord"
   },
   {
-    "id": 184,
+    "word": "南",
     "meaning_fr": "le sud"
   },
   {
-    "id": 185,
+    "word": "東",
     "meaning_fr": "l'est"
   },
   {
-    "id": 186,
+    "word": "西",
     "meaning_fr": "l'ouest"
   },
   {
-    "id": 187,
+    "word": "外",
     "meaning_fr": "dehors"
   },
   {
-    "id": 188,
+    "word": "電車",
     "meaning_fr": "le train"
   },
   {
-    "id": 189,
+    "word": "車",
     "meaning_fr": "la voiture"
   },
   {
-    "id": 190,
+    "word": "自転車",
     "meaning_fr": "le vélo"
   },
   {
-    "id": 191,
+    "word": "名前",
     "meaning_fr": "le nom"
   },
   {
-    "id": 192,
+    "word": "お金",
     "meaning_fr": "l'argent"
   },
   {
-    "id": 193,
+    "word": "電話",
     "meaning_fr": "le téléphone"
   },
   {
-    "id": 194,
+    "word": "写真",
     "meaning_fr": "la photo"
   },
   {
-    "id": 195,
+    "word": "映画",
     "meaning_fr": "le film"
   },
   {
-    "id": 196,
+    "word": "音楽",
     "meaning_fr": "la musique"
   },
   {
-    "id": 197,
+    "word": "手紙",
     "meaning_fr": "la lettre"
   },
   {
-    "id": 198,
+    "word": "新聞",
     "meaning_fr": "le journal"
   },
   {
-    "id": 199,
+    "word": "何",
     "meaning_fr": "quoi"
   },
   {
-    "id": 200,
-    "meaning_fr": "cette année"
-  },
-  {
-    "id": 201,
+    "word": "ある",
     "meaning_fr": "exister (inanimé)"
   },
   {
-    "id": 202,
+    "word": "いる",
     "meaning_fr": "exister (animé)"
   },
   {
-    "id": 203,
+    "word": "お願いします",
     "meaning_fr": "s'il vous plaît (demande polie)"
   },
   {
-    "id": 204,
+    "word": "すみません",
     "meaning_fr": "excusez-moi ; pardon"
   },
   {
-    "id": 205,
+    "word": "ありがとう",
     "meaning_fr": "merci"
   },
   {
-    "id": 206,
+    "word": "大丈夫",
     "meaning_fr": "ça va ; d'accord"
   }
 ]

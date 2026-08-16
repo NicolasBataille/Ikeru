@@ -1,0 +1,3342 @@
+{
+  "source": {
+    "name": "Tanos JLPT resources (Jonathan Waller)",
+    "url": "http://www.tanos.co.uk/jlpt/jlpt5/vocab/n5-vocab-kanji-eng-hiragana.anki",
+    "site": "http://www.tanos.co.uk/jlpt/",
+    "licence": "CC BY",
+    "retrieved": "2026-08-16",
+    "taken": "word list and hiragana readings only — English glosses deliberately not imported"
+  },
+  "words": [
+    {
+      "word": "あさって",
+      "reading": "あさって",
+      "alternate_readings": []
+    },
+    {
+      "word": "あそこ",
+      "reading": "あそこ",
+      "alternate_readings": []
+    },
+    {
+      "word": "あちら",
+      "reading": "あちら",
+      "alternate_readings": []
+    },
+    {
+      "word": "あっち",
+      "reading": "あっち",
+      "alternate_readings": []
+    },
+    {
+      "word": "あなた",
+      "reading": "あなた",
+      "alternate_readings": []
+    },
+    {
+      "word": "あの",
+      "reading": "あの",
+      "alternate_readings": []
+    },
+    {
+      "word": "あびる",
+      "reading": "あびる",
+      "alternate_readings": []
+    },
+    {
+      "word": "あまり",
+      "reading": "あまり",
+      "alternate_readings": []
+    },
+    {
+      "word": "ある",
+      "reading": "ある",
+      "alternate_readings": []
+    },
+    {
+      "word": "あれ",
+      "reading": "あれ",
+      "alternate_readings": []
+    },
+    {
+      "word": "いい/よい",
+      "reading": "いい/よい",
+      "alternate_readings": []
+    },
+    {
+      "word": "いいえ",
+      "reading": "いいえ",
+      "alternate_readings": []
+    },
+    {
+      "word": "いかが",
+      "reading": "いかが",
+      "alternate_readings": []
+    },
+    {
+      "word": "いくつ",
+      "reading": "いくつ",
+      "alternate_readings": []
+    },
+    {
+      "word": "いくら",
+      "reading": "いくら",
+      "alternate_readings": []
+    },
+    {
+      "word": "いす",
+      "reading": "いす",
+      "alternate_readings": []
+    },
+    {
+      "word": "いちばん",
+      "reading": "いちばん",
+      "alternate_readings": []
+    },
+    {
+      "word": "いつ",
+      "reading": "いつ",
+      "alternate_readings": []
+    },
+    {
+      "word": "いつも",
+      "reading": "いつも",
+      "alternate_readings": []
+    },
+    {
+      "word": "いろいろ",
+      "reading": "いろいろ",
+      "alternate_readings": []
+    },
+    {
+      "word": "ええ",
+      "reading": "ええ",
+      "alternate_readings": []
+    },
+    {
+      "word": "おいしい",
+      "reading": "おいしい",
+      "alternate_readings": []
+    },
+    {
+      "word": "おなか",
+      "reading": "おなか",
+      "alternate_readings": []
+    },
+    {
+      "word": "おばあさん",
+      "reading": "おばあさん",
+      "alternate_readings": []
+    },
+    {
+      "word": "おまわりさん",
+      "reading": "おまわりさん",
+      "alternate_readings": []
+    },
+    {
+      "word": "おもしろい",
+      "reading": "おもしろい",
+      "alternate_readings": []
+    },
+    {
+      "word": "お兄さん",
+      "reading": "おにいさん",
+      "alternate_readings": []
+    },
+    {
+      "word": "お姉さん",
+      "reading": "おねえさん",
+      "alternate_readings": []
+    },
+    {
+      "word": "お弁当",
+      "reading": "おべんとう",
+      "alternate_readings": []
+    },
+    {
+      "word": "お手洗い",
+      "reading": "おてあらい",
+      "alternate_readings": []
+    },
+    {
+      "word": "お母さん",
+      "reading": "おかあさん",
+      "alternate_readings": []
+    },
+    {
+      "word": "お父さん",
+      "reading": "おとうさん",
+      "alternate_readings": []
+    },
+    {
+      "word": "お皿",
+      "reading": "おさら",
+      "alternate_readings": []
+    },
+    {
+      "word": "お茶",
+      "reading": "おちゃ",
+      "alternate_readings": []
+    },
+    {
+      "word": "お菓子",
+      "reading": "おかし",
+      "alternate_readings": []
+    },
+    {
+      "word": "お酒",
+      "reading": "おさけ",
+      "alternate_readings": []
+    },
+    {
+      "word": "お金",
+      "reading": "おかね",
+      "alternate_readings": []
+    },
+    {
+      "word": "お風呂",
+      "reading": "おふろ",
+      "alternate_readings": []
+    },
+    {
+      "word": "かかる",
+      "reading": "かかる",
+      "alternate_readings": []
+    },
+    {
+      "word": "かぎ",
+      "reading": "かぎ",
+      "alternate_readings": []
+    },
+    {
+      "word": "かける",
+      "reading": "かける",
+      "alternate_readings": []
+    },
+    {
+      "word": "かばん",
+      "reading": "かばん",
+      "alternate_readings": []
+    },
+    {
+      "word": "かわいい",
+      "reading": "かわいい",
+      "alternate_readings": []
+    },
+    {
+      "word": "きれい",
+      "reading": "きれい",
+      "alternate_readings": []
+    },
+    {
+      "word": "ください",
+      "reading": "ください",
+      "alternate_readings": []
+    },
+    {
+      "word": "ここ",
+      "reading": "ここ",
+      "alternate_readings": []
+    },
+    {
+      "word": "こちら",
+      "reading": "こちら",
+      "alternate_readings": []
+    },
+    {
+      "word": "こっち",
+      "reading": "こっち",
+      "alternate_readings": []
+    },
+    {
+      "word": "この",
+      "reading": "この",
+      "alternate_readings": []
+    },
+    {
+      "word": "これ",
+      "reading": "これ",
+      "alternate_readings": []
+    },
+    {
+      "word": "こんな",
+      "reading": "こんな",
+      "alternate_readings": []
+    },
+    {
+      "word": "さあ",
+      "reading": "さあ",
+      "alternate_readings": []
+    },
+    {
+      "word": "さ来年",
+      "reading": "さらいねん",
+      "alternate_readings": []
+    },
+    {
+      "word": "しかし",
+      "reading": "しかし",
+      "alternate_readings": []
+    },
+    {
+      "word": "しょうゆ",
+      "reading": "しょうゆ",
+      "alternate_readings": []
+    },
+    {
+      "word": "じゃ/じゃあ",
+      "reading": "じゃ/じゃあ",
+      "alternate_readings": []
+    },
+    {
+      "word": "すぐに",
+      "reading": "すぐに",
+      "alternate_readings": []
+    },
+    {
+      "word": "する",
+      "reading": "する",
+      "alternate_readings": []
+    },
+    {
+      "word": "せっけん",
+      "reading": "せっけん",
+      "alternate_readings": []
+    },
+    {
+      "word": "そうして/そして",
+      "reading": "そうして/そして",
+      "alternate_readings": []
+    },
+    {
+      "word": "そこ",
+      "reading": "そこ",
+      "alternate_readings": []
+    },
+    {
+      "word": "そちら",
+      "reading": "そちら",
+      "alternate_readings": []
+    },
+    {
+      "word": "そっち",
+      "reading": "そっち",
+      "alternate_readings": []
+    },
+    {
+      "word": "その",
+      "reading": "その",
+      "alternate_readings": []
+    },
+    {
+      "word": "そば",
+      "reading": "そば",
+      "alternate_readings": []
+    },
+    {
+      "word": "それ",
+      "reading": "それ",
+      "alternate_readings": []
+    },
+    {
+      "word": "それから",
+      "reading": "それから",
+      "alternate_readings": []
+    },
+    {
+      "word": "それでは",
+      "reading": "それでは",
+      "alternate_readings": []
+    },
+    {
+      "word": "たいへん",
+      "reading": "たいへん",
+      "alternate_readings": []
+    },
+    {
+      "word": "たくさん",
+      "reading": "たくさん",
+      "alternate_readings": []
+    },
+    {
+      "word": "たて",
+      "reading": "たて",
+      "alternate_readings": []
+    },
+    {
+      "word": "たばこ",
+      "reading": "たばこ",
+      "alternate_readings": []
+    },
+    {
+      "word": "たぶん",
+      "reading": "たぶん",
+      "alternate_readings": []
+    },
+    {
+      "word": "だんだん",
+      "reading": "だんだん",
+      "alternate_readings": []
+    },
+    {
+      "word": "ちゃわん",
+      "reading": "ちゃわん",
+      "alternate_readings": []
+    },
+    {
+      "word": "ちょうど",
+      "reading": "ちょうど",
+      "alternate_readings": []
+    },
+    {
+      "word": "ちょっと",
+      "reading": "ちょっと",
+      "alternate_readings": []
+    },
+    {
+      "word": "つける",
+      "reading": "つける",
+      "alternate_readings": []
+    },
+    {
+      "word": "つまらない",
+      "reading": "つまらない",
+      "alternate_readings": []
+    },
+    {
+      "word": "できる",
+      "reading": "できる",
+      "alternate_readings": []
+    },
+    {
+      "word": "では",
+      "reading": "では",
+      "alternate_readings": []
+    },
+    {
+      "word": "でも",
+      "reading": "でも",
+      "alternate_readings": []
+    },
+    {
+      "word": "とても",
+      "reading": "とても",
+      "alternate_readings": []
+    },
+    {
+      "word": "とり肉",
+      "reading": "とりにく",
+      "alternate_readings": []
+    },
+    {
+      "word": "どう",
+      "reading": "どう",
+      "alternate_readings": []
+    },
+    {
+      "word": "どうして",
+      "reading": "どうして",
+      "alternate_readings": []
+    },
+    {
+      "word": "どうぞ",
+      "reading": "どうぞ",
+      "alternate_readings": []
+    },
+    {
+      "word": "どうも",
+      "reading": "どうも",
+      "alternate_readings": []
+    },
+    {
+      "word": "どこ",
+      "reading": "どこ",
+      "alternate_readings": []
+    },
+    {
+      "word": "どちら",
+      "reading": "どちら",
+      "alternate_readings": []
+    },
+    {
+      "word": "どっち",
+      "reading": "どっち",
+      "alternate_readings": []
+    },
+    {
+      "word": "どなた",
+      "reading": "どなた",
+      "alternate_readings": []
+    },
+    {
+      "word": "どの",
+      "reading": "どの",
+      "alternate_readings": []
+    },
+    {
+      "word": "どれ",
+      "reading": "どれ",
+      "alternate_readings": []
+    },
+    {
+      "word": "なぜ",
+      "reading": "なぜ",
+      "alternate_readings": []
+    },
+    {
+      "word": "など",
+      "reading": "など",
+      "alternate_readings": []
+    },
+    {
+      "word": "なる",
+      "reading": "なる",
+      "alternate_readings": []
+    },
+    {
+      "word": "はい",
+      "reading": "はい",
+      "alternate_readings": []
+    },
+    {
+      "word": "はく",
+      "reading": "はく",
+      "alternate_readings": []
+    },
+    {
+      "word": "はし",
+      "reading": "はし",
+      "alternate_readings": []
+    },
+    {
+      "word": "ふろ",
+      "reading": "ふろ",
+      "alternate_readings": []
+    },
+    {
+      "word": "ほか",
+      "reading": "ほか",
+      "alternate_readings": []
+    },
+    {
+      "word": "ほんとう",
+      "reading": "ほんとう",
+      "alternate_readings": []
+    },
+    {
+      "word": "まずい",
+      "reading": "まずい",
+      "alternate_readings": []
+    },
+    {
+      "word": "また",
+      "reading": "また",
+      "alternate_readings": []
+    },
+    {
+      "word": "まだ",
+      "reading": "まだ",
+      "alternate_readings": []
+    },
+    {
+      "word": "まっすぐ",
+      "reading": "まっすぐ",
+      "alternate_readings": []
+    },
+    {
+      "word": "みんな",
+      "reading": "みんな",
+      "alternate_readings": []
+    },
+    {
+      "word": "もう",
+      "reading": "もう",
+      "alternate_readings": []
+    },
+    {
+      "word": "もう一度",
+      "reading": "もういちど",
+      "alternate_readings": []
+    },
+    {
+      "word": "もっと",
+      "reading": "もっと",
+      "alternate_readings": []
+    },
+    {
+      "word": "やる",
+      "reading": "やる",
+      "alternate_readings": []
+    },
+    {
+      "word": "ゆっくりと",
+      "reading": "ゆっくりと",
+      "alternate_readings": []
+    },
+    {
+      "word": "よく",
+      "reading": "よく",
+      "alternate_readings": []
+    },
+    {
+      "word": "より、ほう",
+      "reading": "より、ほう",
+      "alternate_readings": []
+    },
+    {
+      "word": "りっぱ",
+      "reading": "りっぱ",
+      "alternate_readings": []
+    },
+    {
+      "word": "アパート",
+      "reading": "あぱーと",
+      "alternate_readings": []
+    },
+    {
+      "word": "エレベーター",
+      "reading": "えれべーたー",
+      "alternate_readings": []
+    },
+    {
+      "word": "カップ",
+      "reading": "かっぷ",
+      "alternate_readings": []
+    },
+    {
+      "word": "カメラ",
+      "reading": "かめら",
+      "alternate_readings": []
+    },
+    {
+      "word": "カレンダー",
+      "reading": "かれんだー",
+      "alternate_readings": []
+    },
+    {
+      "word": "カレー",
+      "reading": "かれー",
+      "alternate_readings": []
+    },
+    {
+      "word": "キロ/キログラム",
+      "reading": "きろ/きろぐらむ",
+      "alternate_readings": []
+    },
+    {
+      "word": "キロ/キロメートル",
+      "reading": "きろ/きろめーとる",
+      "alternate_readings": []
+    },
+    {
+      "word": "ギター",
+      "reading": "ぎたー",
+      "alternate_readings": []
+    },
+    {
+      "word": "クラス",
+      "reading": "くらす",
+      "alternate_readings": []
+    },
+    {
+      "word": "グラム",
+      "reading": "ぐらむ",
+      "alternate_readings": []
+    },
+    {
+      "word": "コップ",
+      "reading": "こっぷ",
+      "alternate_readings": []
+    },
+    {
+      "word": "コピーする",
+      "reading": "こぴーする",
+      "alternate_readings": []
+    },
+    {
+      "word": "コート",
+      "reading": "こーと",
+      "alternate_readings": []
+    },
+    {
+      "word": "コーヒー",
+      "reading": "こーひー",
+      "alternate_readings": []
+    },
+    {
+      "word": "シャツ",
+      "reading": "しゃつ",
+      "alternate_readings": []
+    },
+    {
+      "word": "シャワー",
+      "reading": "しゃわー",
+      "alternate_readings": []
+    },
+    {
+      "word": "スカート",
+      "reading": "すかーと",
+      "alternate_readings": []
+    },
+    {
+      "word": "ストーブ",
+      "reading": "すとーぶ",
+      "alternate_readings": []
+    },
+    {
+      "word": "スプーン",
+      "reading": "すぷーん",
+      "alternate_readings": []
+    },
+    {
+      "word": "スポーツ",
+      "reading": "すぽーつ",
+      "alternate_readings": []
+    },
+    {
+      "word": "スリッパ",
+      "reading": "すりっぱ",
+      "alternate_readings": []
+    },
+    {
+      "word": "ズボン",
+      "reading": "ずぼん",
+      "alternate_readings": []
+    },
+    {
+      "word": "セーター",
+      "reading": "せーたー",
+      "alternate_readings": []
+    },
+    {
+      "word": "ゼロ",
+      "reading": "ぜろ",
+      "alternate_readings": []
+    },
+    {
+      "word": "タクシー",
+      "reading": "たくしー",
+      "alternate_readings": []
+    },
+    {
+      "word": "テスト",
+      "reading": "てすと",
+      "alternate_readings": []
+    },
+    {
+      "word": "テレビ",
+      "reading": "てれび",
+      "alternate_readings": []
+    },
+    {
+      "word": "テーブル",
+      "reading": "てーぶる",
+      "alternate_readings": []
+    },
+    {
+      "word": "テープ",
+      "reading": "てーぷ",
+      "alternate_readings": []
+    },
+    {
+      "word": "テープレコーダー",
+      "reading": "てーぷれこーだー",
+      "alternate_readings": []
+    },
+    {
+      "word": "デパート",
+      "reading": "でぱーと",
+      "alternate_readings": []
+    },
+    {
+      "word": "トイレ",
+      "reading": "といれ",
+      "alternate_readings": []
+    },
+    {
+      "word": "ドア",
+      "reading": "どあ",
+      "alternate_readings": []
+    },
+    {
+      "word": "ナイフ",
+      "reading": "ないふ",
+      "alternate_readings": []
+    },
+    {
+      "word": "ニュース",
+      "reading": "にゅーす",
+      "alternate_readings": []
+    },
+    {
+      "word": "ネクタイ",
+      "reading": "ねくたい",
+      "alternate_readings": []
+    },
+    {
+      "word": "ノート",
+      "reading": "のーと",
+      "alternate_readings": []
+    },
+    {
+      "word": "ハンカチ",
+      "reading": "はんかち",
+      "alternate_readings": []
+    },
+    {
+      "word": "バス",
+      "reading": "ばす",
+      "alternate_readings": []
+    },
+    {
+      "word": "バター",
+      "reading": "ばたー",
+      "alternate_readings": []
+    },
+    {
+      "word": "パン",
+      "reading": "ぱん",
+      "alternate_readings": []
+    },
+    {
+      "word": "パーティー",
+      "reading": "ぱーてぃー",
+      "alternate_readings": []
+    },
+    {
+      "word": "フィルム",
+      "reading": "ふぃるむ",
+      "alternate_readings": []
+    },
+    {
+      "word": "フォーク",
+      "reading": "ふぉーく",
+      "alternate_readings": []
+    },
+    {
+      "word": "プール",
+      "reading": "ぷーる",
+      "alternate_readings": []
+    },
+    {
+      "word": "ベッド",
+      "reading": "べっど",
+      "alternate_readings": []
+    },
+    {
+      "word": "ペット",
+      "reading": "ぺっと",
+      "alternate_readings": []
+    },
+    {
+      "word": "ペン",
+      "reading": "ぺん",
+      "alternate_readings": []
+    },
+    {
+      "word": "ページ",
+      "reading": "ぺーじ",
+      "alternate_readings": []
+    },
+    {
+      "word": "ホテル",
+      "reading": "ほてる",
+      "alternate_readings": []
+    },
+    {
+      "word": "ボタン",
+      "reading": "ぼたん",
+      "alternate_readings": []
+    },
+    {
+      "word": "ボールペン",
+      "reading": "ぼーるぺん",
+      "alternate_readings": []
+    },
+    {
+      "word": "ポケット",
+      "reading": "ぽけっと",
+      "alternate_readings": []
+    },
+    {
+      "word": "ポスト",
+      "reading": "ぽすと",
+      "alternate_readings": []
+    },
+    {
+      "word": "マッチ",
+      "reading": "まっち",
+      "alternate_readings": []
+    },
+    {
+      "word": "メートル",
+      "reading": "めーとる",
+      "alternate_readings": []
+    },
+    {
+      "word": "ラジオ",
+      "reading": "らじお",
+      "alternate_readings": []
+    },
+    {
+      "word": "ラジカセ / ラジオカセット",
+      "reading": "らじかせ / らじおかせっと",
+      "alternate_readings": []
+    },
+    {
+      "word": "レコード",
+      "reading": "れこーど",
+      "alternate_readings": []
+    },
+    {
+      "word": "レストラン",
+      "reading": "れすとらん",
+      "alternate_readings": []
+    },
+    {
+      "word": "ワイシャツ",
+      "reading": "わいしゃつ",
+      "alternate_readings": []
+    },
+    {
+      "word": "一",
+      "reading": "いち",
+      "alternate_readings": []
+    },
+    {
+      "word": "一つ",
+      "reading": "ひとつ",
+      "alternate_readings": []
+    },
+    {
+      "word": "一人",
+      "reading": "ひとり",
+      "alternate_readings": []
+    },
+    {
+      "word": "一日",
+      "reading": "いちにち",
+      "alternate_readings": [
+        "ついたち"
+      ]
+    },
+    {
+      "word": "一昨年",
+      "reading": "おととし",
+      "alternate_readings": [
+        "いっさくねん"
+      ]
+    },
+    {
+      "word": "一昨日",
+      "reading": "おととい",
+      "alternate_readings": []
+    },
+    {
+      "word": "一月",
+      "reading": "いちげつ",
+      "alternate_readings": []
+    },
+    {
+      "word": "一緒",
+      "reading": "いっしょ",
+      "alternate_readings": []
+    },
+    {
+      "word": "七",
+      "reading": "しち",
+      "alternate_readings": [
+        "なな"
+      ]
+    },
+    {
+      "word": "七つ",
+      "reading": "ななつ",
+      "alternate_readings": []
+    },
+    {
+      "word": "七日",
+      "reading": "なのか",
+      "alternate_readings": []
+    },
+    {
+      "word": "万",
+      "reading": "まん",
+      "alternate_readings": []
+    },
+    {
+      "word": "万年筆",
+      "reading": "まんねんひつ",
+      "alternate_readings": []
+    },
+    {
+      "word": "丈夫",
+      "reading": "じょうぶ",
+      "alternate_readings": []
+    },
+    {
+      "word": "三",
+      "reading": "さん",
+      "alternate_readings": []
+    },
+    {
+      "word": "三つ",
+      "reading": "みっつ",
+      "alternate_readings": []
+    },
+    {
+      "word": "三日",
+      "reading": "みっか",
+      "alternate_readings": []
+    },
+    {
+      "word": "上",
+      "reading": "うえ",
+      "alternate_readings": []
+    },
+    {
+      "word": "上げる",
+      "reading": "あげる",
+      "alternate_readings": []
+    },
+    {
+      "word": "上手",
+      "reading": "じょうず",
+      "alternate_readings": []
+    },
+    {
+      "word": "上着",
+      "reading": "うわぎ",
+      "alternate_readings": []
+    },
+    {
+      "word": "下",
+      "reading": "した",
+      "alternate_readings": []
+    },
+    {
+      "word": "下手",
+      "reading": "へた",
+      "alternate_readings": []
+    },
+    {
+      "word": "両親",
+      "reading": "りょうしん",
+      "alternate_readings": []
+    },
+    {
+      "word": "並ぶ",
+      "reading": "ならぶ",
+      "alternate_readings": []
+    },
+    {
+      "word": "並べる",
+      "reading": "ならべる",
+      "alternate_readings": []
+    },
+    {
+      "word": "中",
+      "reading": "なか",
+      "alternate_readings": []
+    },
+    {
+      "word": "丸い/円い",
+      "reading": "まるい",
+      "alternate_readings": []
+    },
+    {
+      "word": "乗る",
+      "reading": "のる",
+      "alternate_readings": []
+    },
+    {
+      "word": "九",
+      "reading": "きゅう",
+      "alternate_readings": [
+        "く",
+        "ここの"
+      ]
+    },
+    {
+      "word": "九つ",
+      "reading": "ここのつ",
+      "alternate_readings": []
+    },
+    {
+      "word": "九日",
+      "reading": "ここのか",
+      "alternate_readings": []
+    },
+    {
+      "word": "二",
+      "reading": "に",
+      "alternate_readings": []
+    },
+    {
+      "word": "二つ",
+      "reading": "ふたつ",
+      "alternate_readings": []
+    },
+    {
+      "word": "二人",
+      "reading": "ふたり",
+      "alternate_readings": []
+    },
+    {
+      "word": "二十日",
+      "reading": "はつか",
+      "alternate_readings": []
+    },
+    {
+      "word": "二十歳",
+      "reading": "はたち",
+      "alternate_readings": []
+    },
+    {
+      "word": "二日",
+      "reading": "ふつか",
+      "alternate_readings": []
+    },
+    {
+      "word": "五",
+      "reading": "ご",
+      "alternate_readings": []
+    },
+    {
+      "word": "五つ",
+      "reading": "いつつ",
+      "alternate_readings": []
+    },
+    {
+      "word": "五日",
+      "reading": "いつか",
+      "alternate_readings": []
+    },
+    {
+      "word": "交差点",
+      "reading": "こうさてん",
+      "alternate_readings": []
+    },
+    {
+      "word": "交番",
+      "reading": "こうばん",
+      "alternate_readings": []
+    },
+    {
+      "word": "人",
+      "reading": "ひと",
+      "alternate_readings": []
+    },
+    {
+      "word": "今",
+      "reading": "いま",
+      "alternate_readings": []
+    },
+    {
+      "word": "今年",
+      "reading": "ことし",
+      "alternate_readings": []
+    },
+    {
+      "word": "今日",
+      "reading": "きょう",
+      "alternate_readings": []
+    },
+    {
+      "word": "今晩",
+      "reading": "こんばん",
+      "alternate_readings": []
+    },
+    {
+      "word": "今月",
+      "reading": "こんげつ",
+      "alternate_readings": []
+    },
+    {
+      "word": "今朝",
+      "reading": "けさ",
+      "alternate_readings": []
+    },
+    {
+      "word": "今週",
+      "reading": "こんしゅう",
+      "alternate_readings": []
+    },
+    {
+      "word": "仕事",
+      "reading": "しごと",
+      "alternate_readings": []
+    },
+    {
+      "word": "休み",
+      "reading": "やすみ",
+      "alternate_readings": []
+    },
+    {
+      "word": "休む",
+      "reading": "やすむ",
+      "alternate_readings": []
+    },
+    {
+      "word": "会う",
+      "reading": "あう",
+      "alternate_readings": []
+    },
+    {
+      "word": "会社",
+      "reading": "かいしゃ",
+      "alternate_readings": []
+    },
+    {
+      "word": "伯母さん/叔母さん",
+      "reading": "おばさん",
+      "alternate_readings": []
+    },
+    {
+      "word": "伯父/叔父",
+      "reading": "おじ",
+      "alternate_readings": []
+    },
+    {
+      "word": "低い",
+      "reading": "ひくい",
+      "alternate_readings": []
+    },
+    {
+      "word": "住む",
+      "reading": "すむ",
+      "alternate_readings": []
+    },
+    {
+      "word": "体",
+      "reading": "からだ",
+      "alternate_readings": []
+    },
+    {
+      "word": "何",
+      "reading": "なに",
+      "alternate_readings": []
+    },
+    {
+      "word": "作る",
+      "reading": "つくる",
+      "alternate_readings": []
+    },
+    {
+      "word": "作文",
+      "reading": "さくぶん",
+      "alternate_readings": []
+    },
+    {
+      "word": "使う",
+      "reading": "つかう",
+      "alternate_readings": []
+    },
+    {
+      "word": "便利",
+      "reading": "べんり",
+      "alternate_readings": []
+    },
+    {
+      "word": "借りる",
+      "reading": "かりる",
+      "alternate_readings": []
+    },
+    {
+      "word": "傘",
+      "reading": "かさ",
+      "alternate_readings": []
+    },
+    {
+      "word": "働く",
+      "reading": "はたらく",
+      "alternate_readings": []
+    },
+    {
+      "word": "元気",
+      "reading": "げんき",
+      "alternate_readings": []
+    },
+    {
+      "word": "兄",
+      "reading": "あに",
+      "alternate_readings": []
+    },
+    {
+      "word": "兄弟",
+      "reading": "きょうだい",
+      "alternate_readings": []
+    },
+    {
+      "word": "先",
+      "reading": "さき",
+      "alternate_readings": []
+    },
+    {
+      "word": "先月",
+      "reading": "せんげつ",
+      "alternate_readings": []
+    },
+    {
+      "word": "先生",
+      "reading": "せんせい",
+      "alternate_readings": []
+    },
+    {
+      "word": "先週",
+      "reading": "せんしゅう",
+      "alternate_readings": []
+    },
+    {
+      "word": "入る",
+      "reading": "はいる",
+      "alternate_readings": []
+    },
+    {
+      "word": "入れる",
+      "reading": "いれる",
+      "alternate_readings": []
+    },
+    {
+      "word": "入口",
+      "reading": "いりぐち",
+      "alternate_readings": []
+    },
+    {
+      "word": "全部",
+      "reading": "ぜんぶ",
+      "alternate_readings": []
+    },
+    {
+      "word": "八",
+      "reading": "はち",
+      "alternate_readings": []
+    },
+    {
+      "word": "八つ",
+      "reading": "やっつ",
+      "alternate_readings": []
+    },
+    {
+      "word": "八日",
+      "reading": "ようか",
+      "alternate_readings": []
+    },
+    {
+      "word": "八百屋",
+      "reading": "やおや",
+      "alternate_readings": []
+    },
+    {
+      "word": "公園",
+      "reading": "こうえん",
+      "alternate_readings": []
+    },
+    {
+      "word": "六",
+      "reading": "ろく",
+      "alternate_readings": []
+    },
+    {
+      "word": "六つ",
+      "reading": "むっつ",
+      "alternate_readings": []
+    },
+    {
+      "word": "六日",
+      "reading": "むいか",
+      "alternate_readings": []
+    },
+    {
+      "word": "写真",
+      "reading": "しゃしん",
+      "alternate_readings": []
+    },
+    {
+      "word": "冬",
+      "reading": "ふゆ",
+      "alternate_readings": []
+    },
+    {
+      "word": "冷たい",
+      "reading": "つめたい",
+      "alternate_readings": []
+    },
+    {
+      "word": "冷蔵庫",
+      "reading": "れいぞうこ",
+      "alternate_readings": []
+    },
+    {
+      "word": "出かける",
+      "reading": "でかける",
+      "alternate_readings": []
+    },
+    {
+      "word": "出す",
+      "reading": "だす",
+      "alternate_readings": []
+    },
+    {
+      "word": "出る",
+      "reading": "でる",
+      "alternate_readings": []
+    },
+    {
+      "word": "出口",
+      "reading": "でぐち",
+      "alternate_readings": []
+    },
+    {
+      "word": "分かる",
+      "reading": "わかる",
+      "alternate_readings": []
+    },
+    {
+      "word": "切る",
+      "reading": "きる",
+      "alternate_readings": []
+    },
+    {
+      "word": "切手",
+      "reading": "きって",
+      "alternate_readings": []
+    },
+    {
+      "word": "切符",
+      "reading": "きっぷ",
+      "alternate_readings": []
+    },
+    {
+      "word": "初め/始め",
+      "reading": "はじめ",
+      "alternate_readings": []
+    },
+    {
+      "word": "初めて",
+      "reading": "はじめて",
+      "alternate_readings": []
+    },
+    {
+      "word": "前",
+      "reading": "まえ",
+      "alternate_readings": []
+    },
+    {
+      "word": "勉強",
+      "reading": "べんきょう",
+      "alternate_readings": []
+    },
+    {
+      "word": "動物",
+      "reading": "どうぶつ",
+      "alternate_readings": []
+    },
+    {
+      "word": "勤める",
+      "reading": "つとめる",
+      "alternate_readings": []
+    },
+    {
+      "word": "北",
+      "reading": "きた",
+      "alternate_readings": []
+    },
+    {
+      "word": "医者",
+      "reading": "いしゃ",
+      "alternate_readings": []
+    },
+    {
+      "word": "十",
+      "reading": "じゅう",
+      "alternate_readings": []
+    },
+    {
+      "word": "十日",
+      "reading": "とおか",
+      "alternate_readings": []
+    },
+    {
+      "word": "千",
+      "reading": "せん",
+      "alternate_readings": []
+    },
+    {
+      "word": "午前",
+      "reading": "ごぜん",
+      "alternate_readings": []
+    },
+    {
+      "word": "午後",
+      "reading": "ごご",
+      "alternate_readings": []
+    },
+    {
+      "word": "半",
+      "reading": "はん",
+      "alternate_readings": []
+    },
+    {
+      "word": "半分",
+      "reading": "はんぷん",
+      "alternate_readings": []
+    },
+    {
+      "word": "南",
+      "reading": "みなみ",
+      "alternate_readings": []
+    },
+    {
+      "word": "危ない",
+      "reading": "あぶない",
+      "alternate_readings": []
+    },
+    {
+      "word": "卵",
+      "reading": "たまご",
+      "alternate_readings": []
+    },
+    {
+      "word": "厚い",
+      "reading": "あつい",
+      "alternate_readings": []
+    },
+    {
+      "word": "去年",
+      "reading": "きょねん",
+      "alternate_readings": []
+    },
+    {
+      "word": "友達",
+      "reading": "ともだち",
+      "alternate_readings": []
+    },
+    {
+      "word": "取る",
+      "reading": "とる",
+      "alternate_readings": []
+    },
+    {
+      "word": "口",
+      "reading": "くち",
+      "alternate_readings": []
+    },
+    {
+      "word": "古い",
+      "reading": "ふるい",
+      "alternate_readings": []
+    },
+    {
+      "word": "台所",
+      "reading": "だいどころ",
+      "alternate_readings": []
+    },
+    {
+      "word": "右",
+      "reading": "みぎ",
+      "alternate_readings": []
+    },
+    {
+      "word": "同じ",
+      "reading": "おなじ",
+      "alternate_readings": []
+    },
+    {
+      "word": "名前",
+      "reading": "なまえ",
+      "alternate_readings": []
+    },
+    {
+      "word": "向こう",
+      "reading": "むこう",
+      "alternate_readings": []
+    },
+    {
+      "word": "吸う",
+      "reading": "すう",
+      "alternate_readings": []
+    },
+    {
+      "word": "吹く",
+      "reading": "ふく",
+      "alternate_readings": []
+    },
+    {
+      "word": "呼ぶ",
+      "reading": "よぶ",
+      "alternate_readings": []
+    },
+    {
+      "word": "咲く",
+      "reading": "さく",
+      "alternate_readings": []
+    },
+    {
+      "word": "問題",
+      "reading": "もんだい",
+      "alternate_readings": []
+    },
+    {
+      "word": "喫茶店",
+      "reading": "きっさてん",
+      "alternate_readings": []
+    },
+    {
+      "word": "四",
+      "reading": "よん",
+      "alternate_readings": []
+    },
+    {
+      "word": "四つ",
+      "reading": "よっつ",
+      "alternate_readings": []
+    },
+    {
+      "word": "四日",
+      "reading": "よっか",
+      "alternate_readings": []
+    },
+    {
+      "word": "困る",
+      "reading": "こまる",
+      "alternate_readings": []
+    },
+    {
+      "word": "図書館",
+      "reading": "としょかん",
+      "alternate_readings": []
+    },
+    {
+      "word": "国",
+      "reading": "くに",
+      "alternate_readings": []
+    },
+    {
+      "word": "土曜日",
+      "reading": "どようび",
+      "alternate_readings": []
+    },
+    {
+      "word": "地下鉄",
+      "reading": "ちかてつ",
+      "alternate_readings": []
+    },
+    {
+      "word": "地図",
+      "reading": "ちず",
+      "alternate_readings": []
+    },
+    {
+      "word": "塩",
+      "reading": "しお",
+      "alternate_readings": []
+    },
+    {
+      "word": "声",
+      "reading": "こえ",
+      "alternate_readings": []
+    },
+    {
+      "word": "売る",
+      "reading": "うる",
+      "alternate_readings": []
+    },
+    {
+      "word": "夏",
+      "reading": "なつ",
+      "alternate_readings": []
+    },
+    {
+      "word": "夏休み",
+      "reading": "なつやすみ",
+      "alternate_readings": []
+    },
+    {
+      "word": "夕方",
+      "reading": "ゆうがた",
+      "alternate_readings": []
+    },
+    {
+      "word": "夕飯",
+      "reading": "ゆうしょく",
+      "alternate_readings": []
+    },
+    {
+      "word": "外",
+      "reading": "そと",
+      "alternate_readings": []
+    },
+    {
+      "word": "外国",
+      "reading": "がいこく",
+      "alternate_readings": []
+    },
+    {
+      "word": "外国人",
+      "reading": "がいこくじん",
+      "alternate_readings": []
+    },
+    {
+      "word": "多い",
+      "reading": "おおい",
+      "alternate_readings": []
+    },
+    {
+      "word": "夜",
+      "reading": "よる",
+      "alternate_readings": []
+    },
+    {
+      "word": "大きい",
+      "reading": "おおきい",
+      "alternate_readings": []
+    },
+    {
+      "word": "大きな",
+      "reading": "おおきな",
+      "alternate_readings": []
+    },
+    {
+      "word": "大丈夫",
+      "reading": "だいじょうぶ",
+      "alternate_readings": []
+    },
+    {
+      "word": "大人",
+      "reading": "おとな",
+      "alternate_readings": []
+    },
+    {
+      "word": "大使館",
+      "reading": "たいしかん",
+      "alternate_readings": []
+    },
+    {
+      "word": "大切",
+      "reading": "たいせつ",
+      "alternate_readings": []
+    },
+    {
+      "word": "大勢",
+      "reading": "おおぜい",
+      "alternate_readings": []
+    },
+    {
+      "word": "大好き",
+      "reading": "だいすき",
+      "alternate_readings": []
+    },
+    {
+      "word": "大学",
+      "reading": "だいがく",
+      "alternate_readings": []
+    },
+    {
+      "word": "天気",
+      "reading": "てんき",
+      "alternate_readings": []
+    },
+    {
+      "word": "太い",
+      "reading": "ふとい",
+      "alternate_readings": []
+    },
+    {
+      "word": "奥さん",
+      "reading": "おくさん",
+      "alternate_readings": []
+    },
+    {
+      "word": "女",
+      "reading": "おんな",
+      "alternate_readings": []
+    },
+    {
+      "word": "女の子",
+      "reading": "おんなのこ",
+      "alternate_readings": []
+    },
+    {
+      "word": "好き",
+      "reading": "すき",
+      "alternate_readings": []
+    },
+    {
+      "word": "妹",
+      "reading": "いもうと",
+      "alternate_readings": []
+    },
+    {
+      "word": "姉",
+      "reading": "あね",
+      "alternate_readings": []
+    },
+    {
+      "word": "始まる",
+      "reading": "はじまる",
+      "alternate_readings": []
+    },
+    {
+      "word": "嫌",
+      "reading": "いや",
+      "alternate_readings": []
+    },
+    {
+      "word": "嫌い",
+      "reading": "きらい",
+      "alternate_readings": []
+    },
+    {
+      "word": "子供",
+      "reading": "こども",
+      "alternate_readings": []
+    },
+    {
+      "word": "字引",
+      "reading": "じびき",
+      "alternate_readings": []
+    },
+    {
+      "word": "学校",
+      "reading": "がっこう",
+      "alternate_readings": []
+    },
+    {
+      "word": "学生",
+      "reading": "がくせい",
+      "alternate_readings": []
+    },
+    {
+      "word": "安い",
+      "reading": "やすい",
+      "alternate_readings": []
+    },
+    {
+      "word": "家",
+      "reading": "いえ",
+      "alternate_readings": []
+    },
+    {
+      "word": "家庭",
+      "reading": "かてい",
+      "alternate_readings": []
+    },
+    {
+      "word": "家族",
+      "reading": "かぞく",
+      "alternate_readings": []
+    },
+    {
+      "word": "宿題",
+      "reading": "しゅくだい",
+      "alternate_readings": []
+    },
+    {
+      "word": "寒い",
+      "reading": "さむい",
+      "alternate_readings": []
+    },
+    {
+      "word": "寝る",
+      "reading": "ねる",
+      "alternate_readings": []
+    },
+    {
+      "word": "封筒",
+      "reading": "ふうとう",
+      "alternate_readings": []
+    },
+    {
+      "word": "小さい",
+      "reading": "ちいさい",
+      "alternate_readings": []
+    },
+    {
+      "word": "小さな",
+      "reading": "ちいさな",
+      "alternate_readings": []
+    },
+    {
+      "word": "少し",
+      "reading": "すこし",
+      "alternate_readings": []
+    },
+    {
+      "word": "少ない",
+      "reading": "すくない",
+      "alternate_readings": []
+    },
+    {
+      "word": "居る",
+      "reading": "いる",
+      "alternate_readings": []
+    },
+    {
+      "word": "山",
+      "reading": "やま",
+      "alternate_readings": []
+    },
+    {
+      "word": "川/河",
+      "reading": "かわ",
+      "alternate_readings": []
+    },
+    {
+      "word": "左",
+      "reading": "ひだり",
+      "alternate_readings": []
+    },
+    {
+      "word": "差す",
+      "reading": "さす",
+      "alternate_readings": []
+    },
+    {
+      "word": "帰る",
+      "reading": "かえる",
+      "alternate_readings": []
+    },
+    {
+      "word": "帽子",
+      "reading": "ぼうし",
+      "alternate_readings": []
+    },
+    {
+      "word": "年",
+      "reading": "ねん",
+      "alternate_readings": []
+    },
+    {
+      "word": "広い",
+      "reading": "ひろい",
+      "alternate_readings": []
+    },
+    {
+      "word": "店",
+      "reading": "みせ",
+      "alternate_readings": []
+    },
+    {
+      "word": "座る",
+      "reading": "すわる",
+      "alternate_readings": []
+    },
+    {
+      "word": "庭",
+      "reading": "にわ",
+      "alternate_readings": []
+    },
+    {
+      "word": "廊下",
+      "reading": "ろうか",
+      "alternate_readings": []
+    },
+    {
+      "word": "建物",
+      "reading": "たてもの",
+      "alternate_readings": []
+    },
+    {
+      "word": "引く",
+      "reading": "ひく",
+      "alternate_readings": []
+    },
+    {
+      "word": "弟",
+      "reading": "おとうと",
+      "alternate_readings": []
+    },
+    {
+      "word": "弱い",
+      "reading": "よわい",
+      "alternate_readings": []
+    },
+    {
+      "word": "強い",
+      "reading": "つよい",
+      "alternate_readings": []
+    },
+    {
+      "word": "弾く",
+      "reading": "ひく",
+      "alternate_readings": []
+    },
+    {
+      "word": "待つ",
+      "reading": "まつ",
+      "alternate_readings": []
+    },
+    {
+      "word": "後",
+      "reading": "あと",
+      "alternate_readings": []
+    },
+    {
+      "word": "後ろ",
+      "reading": "うしろ",
+      "alternate_readings": []
+    },
+    {
+      "word": "御飯",
+      "reading": "ごはん",
+      "alternate_readings": []
+    },
+    {
+      "word": "忘れる",
+      "reading": "わすれる",
+      "alternate_readings": []
+    },
+    {
+      "word": "忙しい",
+      "reading": "いそがしい",
+      "alternate_readings": []
+    },
+    {
+      "word": "悪い",
+      "reading": "わるい",
+      "alternate_readings": []
+    },
+    {
+      "word": "意味",
+      "reading": "いみ",
+      "alternate_readings": []
+    },
+    {
+      "word": "戸",
+      "reading": "と",
+      "alternate_readings": []
+    },
+    {
+      "word": "所",
+      "reading": "ところ",
+      "alternate_readings": []
+    },
+    {
+      "word": "手",
+      "reading": "て",
+      "alternate_readings": []
+    },
+    {
+      "word": "手紙",
+      "reading": "てがみ",
+      "alternate_readings": []
+    },
+    {
+      "word": "押す",
+      "reading": "おす",
+      "alternate_readings": []
+    },
+    {
+      "word": "持つ",
+      "reading": "もつ",
+      "alternate_readings": []
+    },
+    {
+      "word": "掃除",
+      "reading": "そうじ",
+      "alternate_readings": []
+    },
+    {
+      "word": "授業",
+      "reading": "じゅぎょう",
+      "alternate_readings": []
+    },
+    {
+      "word": "撮る",
+      "reading": "とる",
+      "alternate_readings": []
+    },
+    {
+      "word": "教える",
+      "reading": "おしえる",
+      "alternate_readings": []
+    },
+    {
+      "word": "教室",
+      "reading": "きょうしつ",
+      "alternate_readings": []
+    },
+    {
+      "word": "散歩",
+      "reading": "さんぽ",
+      "alternate_readings": []
+    },
+    {
+      "word": "文章",
+      "reading": "ぶんしょう",
+      "alternate_readings": []
+    },
+    {
+      "word": "料理",
+      "reading": "りょうり",
+      "alternate_readings": []
+    },
+    {
+      "word": "新しい",
+      "reading": "あたらしい",
+      "alternate_readings": []
+    },
+    {
+      "word": "新聞",
+      "reading": "しんぶん",
+      "alternate_readings": []
+    },
+    {
+      "word": "方",
+      "reading": "かた",
+      "alternate_readings": []
+    },
+    {
+      "word": "旅行",
+      "reading": "りょこう",
+      "alternate_readings": []
+    },
+    {
+      "word": "日曜日",
+      "reading": "にちようび",
+      "alternate_readings": []
+    },
+    {
+      "word": "早い",
+      "reading": "はやい",
+      "alternate_readings": []
+    },
+    {
+      "word": "明い",
+      "reading": "あかるい",
+      "alternate_readings": []
+    },
+    {
+      "word": "明日",
+      "reading": "あした",
+      "alternate_readings": []
+    },
+    {
+      "word": "易しい",
+      "reading": "やさしい",
+      "alternate_readings": []
+    },
+    {
+      "word": "映画",
+      "reading": "えいが",
+      "alternate_readings": []
+    },
+    {
+      "word": "映画館",
+      "reading": "えいがかん",
+      "alternate_readings": []
+    },
+    {
+      "word": "春",
+      "reading": "はる",
+      "alternate_readings": []
+    },
+    {
+      "word": "昨夜",
+      "reading": "さくや",
+      "alternate_readings": []
+    },
+    {
+      "word": "昨日",
+      "reading": "きのう",
+      "alternate_readings": []
+    },
+    {
+      "word": "昼",
+      "reading": "ひる",
+      "alternate_readings": []
+    },
+    {
+      "word": "昼御飯",
+      "reading": "ひるごはん",
+      "alternate_readings": []
+    },
+    {
+      "word": "時々",
+      "reading": "ときどき",
+      "alternate_readings": []
+    },
+    {
+      "word": "時計",
+      "reading": "とけい",
+      "alternate_readings": []
+    },
+    {
+      "word": "時間",
+      "reading": "じかん",
+      "alternate_readings": []
+    },
+    {
+      "word": "晩",
+      "reading": "ばん",
+      "alternate_readings": []
+    },
+    {
+      "word": "晩御飯",
+      "reading": "ばんごはん",
+      "alternate_readings": []
+    },
+    {
+      "word": "晴れ",
+      "reading": "はれ",
+      "alternate_readings": []
+    },
+    {
+      "word": "晴れる",
+      "reading": "はれる",
+      "alternate_readings": []
+    },
+    {
+      "word": "暇",
+      "reading": "ひま",
+      "alternate_readings": []
+    },
+    {
+      "word": "暑い",
+      "reading": "あつい",
+      "alternate_readings": []
+    },
+    {
+      "word": "暖かい",
+      "reading": "あたたかい",
+      "alternate_readings": []
+    },
+    {
+      "word": "暗い",
+      "reading": "くらい",
+      "alternate_readings": []
+    },
+    {
+      "word": "曇り",
+      "reading": "くもり",
+      "alternate_readings": []
+    },
+    {
+      "word": "曇る",
+      "reading": "くもる",
+      "alternate_readings": []
+    },
+    {
+      "word": "曲る",
+      "reading": "まげる",
+      "alternate_readings": []
+    },
+    {
+      "word": "書く",
+      "reading": "かく",
+      "alternate_readings": []
+    },
+    {
+      "word": "月曜日",
+      "reading": "げつようび",
+      "alternate_readings": []
+    },
+    {
+      "word": "有名",
+      "reading": "ゆうめい",
+      "alternate_readings": []
+    },
+    {
+      "word": "服",
+      "reading": "ふく",
+      "alternate_readings": []
+    },
+    {
+      "word": "朝",
+      "reading": "あさ",
+      "alternate_readings": []
+    },
+    {
+      "word": "朝御飯",
+      "reading": "あさごはん",
+      "alternate_readings": []
+    },
+    {
+      "word": "木",
+      "reading": "き",
+      "alternate_readings": [
+        "もく"
+      ]
+    },
+    {
+      "word": "木曜日",
+      "reading": "もくようび",
+      "alternate_readings": []
+    },
+    {
+      "word": "本",
+      "reading": "ほん",
+      "alternate_readings": []
+    },
+    {
+      "word": "本棚",
+      "reading": "ほんだな",
+      "alternate_readings": []
+    },
+    {
+      "word": "机",
+      "reading": "つくえ",
+      "alternate_readings": []
+    },
+    {
+      "word": "村",
+      "reading": "むら",
+      "alternate_readings": []
+    },
+    {
+      "word": "来る",
+      "reading": "くる",
+      "alternate_readings": []
+    },
+    {
+      "word": "来年",
+      "reading": "らいねん",
+      "alternate_readings": []
+    },
+    {
+      "word": "来月",
+      "reading": "らいげつ",
+      "alternate_readings": []
+    },
+    {
+      "word": "来週",
+      "reading": "らいしゅう",
+      "alternate_readings": []
+    },
+    {
+      "word": "東",
+      "reading": "ひがし",
+      "alternate_readings": [
+        "とう"
+      ]
+    },
+    {
+      "word": "果物",
+      "reading": "くだもの",
+      "alternate_readings": []
+    },
+    {
+      "word": "楽しい",
+      "reading": "たのしい",
+      "alternate_readings": []
+    },
+    {
+      "word": "横",
+      "reading": "よこ",
+      "alternate_readings": []
+    },
+    {
+      "word": "橋",
+      "reading": "はし",
+      "alternate_readings": []
+    },
+    {
+      "word": "次",
+      "reading": "つぎ",
+      "alternate_readings": []
+    },
+    {
+      "word": "欲しい",
+      "reading": "ほしい",
+      "alternate_readings": []
+    },
+    {
+      "word": "歌",
+      "reading": "うた",
+      "alternate_readings": []
+    },
+    {
+      "word": "歌う",
+      "reading": "うたう",
+      "alternate_readings": []
+    },
+    {
+      "word": "止まる",
+      "reading": "とまる",
+      "alternate_readings": []
+    },
+    {
+      "word": "歩く",
+      "reading": "あるく",
+      "alternate_readings": []
+    },
+    {
+      "word": "歯",
+      "reading": "は",
+      "alternate_readings": []
+    },
+    {
+      "word": "死ぬ",
+      "reading": "しぬ",
+      "alternate_readings": []
+    },
+    {
+      "word": "毎年",
+      "reading": "まいとし",
+      "alternate_readings": [
+        "まいねん"
+      ]
+    },
+    {
+      "word": "毎日",
+      "reading": "まいにち",
+      "alternate_readings": []
+    },
+    {
+      "word": "毎晩",
+      "reading": "まいばん",
+      "alternate_readings": []
+    },
+    {
+      "word": "毎月",
+      "reading": "まいげつ",
+      "alternate_readings": []
+    },
+    {
+      "word": "毎朝",
+      "reading": "まいあさ",
+      "alternate_readings": []
+    },
+    {
+      "word": "毎週",
+      "reading": "まいしゅう",
+      "alternate_readings": []
+    },
+    {
+      "word": "水",
+      "reading": "みず",
+      "alternate_readings": []
+    },
+    {
+      "word": "水曜日",
+      "reading": "すいようび",
+      "alternate_readings": []
+    },
+    {
+      "word": "汚い",
+      "reading": "きたない",
+      "alternate_readings": []
+    },
+    {
+      "word": "池",
+      "reading": "いけ",
+      "alternate_readings": []
+    },
+    {
+      "word": "泳ぐ",
+      "reading": "およぐ",
+      "alternate_readings": []
+    },
+    {
+      "word": "洋服",
+      "reading": "ようふく",
+      "alternate_readings": []
+    },
+    {
+      "word": "洗う",
+      "reading": "あらう",
+      "alternate_readings": []
+    },
+    {
+      "word": "洗濯",
+      "reading": "せんたく",
+      "alternate_readings": []
+    },
+    {
+      "word": "海",
+      "reading": "うみ",
+      "alternate_readings": []
+    },
+    {
+      "word": "消える",
+      "reading": "きえる",
+      "alternate_readings": []
+    },
+    {
+      "word": "消す",
+      "reading": "けす",
+      "alternate_readings": []
+    },
+    {
+      "word": "涼しい",
+      "reading": "すずしい",
+      "alternate_readings": []
+    },
+    {
+      "word": "渡す",
+      "reading": "わたす",
+      "alternate_readings": []
+    },
+    {
+      "word": "渡る",
+      "reading": "わたる",
+      "alternate_readings": []
+    },
+    {
+      "word": "温い",
+      "reading": "ぬるい",
+      "alternate_readings": []
+    },
+    {
+      "word": "漢字",
+      "reading": "かんじ",
+      "alternate_readings": []
+    },
+    {
+      "word": "火曜日",
+      "reading": "かようび",
+      "alternate_readings": []
+    },
+    {
+      "word": "灰皿",
+      "reading": "はいざら",
+      "alternate_readings": []
+    },
+    {
+      "word": "無くす",
+      "reading": "なくす",
+      "alternate_readings": []
+    },
+    {
+      "word": "煩い",
+      "reading": "うるさい",
+      "alternate_readings": []
+    },
+    {
+      "word": "熱い",
+      "reading": "あつい",
+      "alternate_readings": []
+    },
+    {
+      "word": "牛乳",
+      "reading": "ぎゅうにゅう",
+      "alternate_readings": []
+    },
+    {
+      "word": "牛肉",
+      "reading": "ぎゅうにく",
+      "alternate_readings": []
+    },
+    {
+      "word": "物",
+      "reading": "もの",
+      "alternate_readings": []
+    },
+    {
+      "word": "犬",
+      "reading": "いぬ",
+      "alternate_readings": []
+    },
+    {
+      "word": "狭い",
+      "reading": "せまい",
+      "alternate_readings": []
+    },
+    {
+      "word": "猫",
+      "reading": "ねこ",
+      "alternate_readings": []
+    },
+    {
+      "word": "玄関",
+      "reading": "げんかん",
+      "alternate_readings": []
+    },
+    {
+      "word": "甘い",
+      "reading": "あまい",
+      "alternate_readings": []
+    },
+    {
+      "word": "生まれる",
+      "reading": "うまれる",
+      "alternate_readings": []
+    },
+    {
+      "word": "生徒",
+      "reading": "せいと",
+      "alternate_readings": []
+    },
+    {
+      "word": "男",
+      "reading": "おとこ",
+      "alternate_readings": []
+    },
+    {
+      "word": "男の子",
+      "reading": "おとこのこ",
+      "alternate_readings": []
+    },
+    {
+      "word": "町",
+      "reading": "まち",
+      "alternate_readings": []
+    },
+    {
+      "word": "留学生",
+      "reading": "りゅうがくせい",
+      "alternate_readings": []
+    },
+    {
+      "word": "番号",
+      "reading": "ばんごう",
+      "alternate_readings": []
+    },
+    {
+      "word": "疲れる",
+      "reading": "つかれる",
+      "alternate_readings": []
+    },
+    {
+      "word": "病気",
+      "reading": "びょうき",
+      "alternate_readings": []
+    },
+    {
+      "word": "病院",
+      "reading": "びょういん",
+      "alternate_readings": []
+    },
+    {
+      "word": "痛い",
+      "reading": "いたい",
+      "alternate_readings": []
+    },
+    {
+      "word": "登る",
+      "reading": "のぼる",
+      "alternate_readings": []
+    },
+    {
+      "word": "白",
+      "reading": "しろ",
+      "alternate_readings": []
+    },
+    {
+      "word": "白い",
+      "reading": "しろい",
+      "alternate_readings": []
+    },
+    {
+      "word": "百",
+      "reading": "ひゃく",
+      "alternate_readings": []
+    },
+    {
+      "word": "皆さん",
+      "reading": "みなさん",
+      "alternate_readings": []
+    },
+    {
+      "word": "目",
+      "reading": "め",
+      "alternate_readings": []
+    },
+    {
+      "word": "眼鏡",
+      "reading": "めがね",
+      "alternate_readings": []
+    },
+    {
+      "word": "着く",
+      "reading": "つく",
+      "alternate_readings": []
+    },
+    {
+      "word": "着る",
+      "reading": "きる",
+      "alternate_readings": []
+    },
+    {
+      "word": "知る",
+      "reading": "しる",
+      "alternate_readings": []
+    },
+    {
+      "word": "短い",
+      "reading": "みじかい",
+      "alternate_readings": []
+    },
+    {
+      "word": "砂糖",
+      "reading": "さとう",
+      "alternate_readings": []
+    },
+    {
+      "word": "磨く",
+      "reading": "みがく",
+      "alternate_readings": []
+    },
+    {
+      "word": "私",
+      "reading": "わたし",
+      "alternate_readings": []
+    },
+    {
+      "word": "秋",
+      "reading": "あき",
+      "alternate_readings": []
+    },
+    {
+      "word": "空",
+      "reading": "そら",
+      "alternate_readings": []
+    },
+    {
+      "word": "窓",
+      "reading": "まど",
+      "alternate_readings": []
+    },
+    {
+      "word": "立つ",
+      "reading": "たつ",
+      "alternate_readings": []
+    },
+    {
+      "word": "答える",
+      "reading": "こたえる",
+      "alternate_readings": []
+    },
+    {
+      "word": "箱",
+      "reading": "はこ",
+      "alternate_readings": []
+    },
+    {
+      "word": "紅茶",
+      "reading": "こうちゃ",
+      "alternate_readings": []
+    },
+    {
+      "word": "紙",
+      "reading": "かみ",
+      "alternate_readings": []
+    },
+    {
+      "word": "細い",
+      "reading": "ほそい",
+      "alternate_readings": []
+    },
+    {
+      "word": "終る",
+      "reading": "おわる",
+      "alternate_readings": []
+    },
+    {
+      "word": "結婚",
+      "reading": "けっこん",
+      "alternate_readings": []
+    },
+    {
+      "word": "結構",
+      "reading": "けっこう",
+      "alternate_readings": []
+    },
+    {
+      "word": "絵",
+      "reading": "え",
+      "alternate_readings": []
+    },
+    {
+      "word": "緑",
+      "reading": "みどり",
+      "alternate_readings": []
+    },
+    {
+      "word": "締める",
+      "reading": "しめる",
+      "alternate_readings": []
+    },
+    {
+      "word": "練習",
+      "reading": "れんしゅう",
+      "alternate_readings": []
+    },
+    {
+      "word": "置く",
+      "reading": "おく",
+      "alternate_readings": []
+    },
+    {
+      "word": "習う",
+      "reading": "ならう",
+      "alternate_readings": []
+    },
+    {
+      "word": "耳",
+      "reading": "みみ",
+      "alternate_readings": []
+    },
+    {
+      "word": "聞く",
+      "reading": "きく",
+      "alternate_readings": []
+    },
+    {
+      "word": "肉",
+      "reading": "にく",
+      "alternate_readings": []
+    },
+    {
+      "word": "背",
+      "reading": "せ",
+      "alternate_readings": [
+        "せい"
+      ]
+    },
+    {
+      "word": "背広",
+      "reading": "せびろ",
+      "alternate_readings": []
+    },
+    {
+      "word": "脱ぐ",
+      "reading": "ぬぐ",
+      "alternate_readings": []
+    },
+    {
+      "word": "自分",
+      "reading": "じぶん",
+      "alternate_readings": []
+    },
+    {
+      "word": "自動車",
+      "reading": "じどうしゃ",
+      "alternate_readings": []
+    },
+    {
+      "word": "自転車",
+      "reading": "じてんしゃ",
+      "alternate_readings": []
+    },
+    {
+      "word": "色",
+      "reading": "いろ",
+      "alternate_readings": []
+    },
+    {
+      "word": "花",
+      "reading": "はな",
+      "alternate_readings": []
+    },
+    {
+      "word": "花瓶",
+      "reading": "かびん",
+      "alternate_readings": []
+    },
+    {
+      "word": "若い",
+      "reading": "わかい",
+      "alternate_readings": []
+    },
+    {
+      "word": "英語",
+      "reading": "えいご",
+      "alternate_readings": []
+    },
+    {
+      "word": "茶色",
+      "reading": "ちゃいろ",
+      "alternate_readings": []
+    },
+    {
+      "word": "荷物",
+      "reading": "にもつ",
+      "alternate_readings": []
+    },
+    {
+      "word": "葉書",
+      "reading": "はがき",
+      "alternate_readings": []
+    },
+    {
+      "word": "薄い",
+      "reading": "うすい",
+      "alternate_readings": []
+    },
+    {
+      "word": "薬",
+      "reading": "くすり",
+      "alternate_readings": []
+    },
+    {
+      "word": "行く",
+      "reading": "いく",
+      "alternate_readings": []
+    },
+    {
+      "word": "西",
+      "reading": "にし",
+      "alternate_readings": []
+    },
+    {
+      "word": "要る",
+      "reading": "いる",
+      "alternate_readings": []
+    },
+    {
+      "word": "見せる",
+      "reading": "みせる",
+      "alternate_readings": []
+    },
+    {
+      "word": "見る  観る",
+      "reading": "みる",
+      "alternate_readings": []
+    },
+    {
+      "word": "覚える",
+      "reading": "おぼえる",
+      "alternate_readings": []
+    },
+    {
+      "word": "角",
+      "reading": "かど",
+      "alternate_readings": []
+    },
+    {
+      "word": "言う",
+      "reading": "いう",
+      "alternate_readings": []
+    },
+    {
+      "word": "言葉",
+      "reading": "ことば",
+      "alternate_readings": []
+    },
+    {
+      "word": "話",
+      "reading": "はなし",
+      "alternate_readings": []
+    },
+    {
+      "word": "話す",
+      "reading": "はなす",
+      "alternate_readings": []
+    },
+    {
+      "word": "誕生日",
+      "reading": "たんじょうび",
+      "alternate_readings": []
+    },
+    {
+      "word": "読む",
+      "reading": "よむ",
+      "alternate_readings": []
+    },
+    {
+      "word": "誰",
+      "reading": "だれ",
+      "alternate_readings": []
+    },
+    {
+      "word": "警官",
+      "reading": "けいかん",
+      "alternate_readings": []
+    },
+    {
+      "word": "豚肉",
+      "reading": "ぶたにく",
+      "alternate_readings": []
+    },
+    {
+      "word": "財布",
+      "reading": "さいふ",
+      "alternate_readings": []
+    },
+    {
+      "word": "買い物",
+      "reading": "かいもの",
+      "alternate_readings": []
+    },
+    {
+      "word": "買う",
+      "reading": "かう",
+      "alternate_readings": []
+    },
+    {
+      "word": "貸す",
+      "reading": "かす",
+      "alternate_readings": []
+    },
+    {
+      "word": "貼る",
+      "reading": "はる",
+      "alternate_readings": []
+    },
+    {
+      "word": "賑やか",
+      "reading": "にぎやか",
+      "alternate_readings": []
+    },
+    {
+      "word": "質問",
+      "reading": "しつもん",
+      "alternate_readings": []
+    },
+    {
+      "word": "赤",
+      "reading": "あか",
+      "alternate_readings": []
+    },
+    {
+      "word": "赤い",
+      "reading": "あかい",
+      "alternate_readings": []
+    },
+    {
+      "word": "走る",
+      "reading": "はしる",
+      "alternate_readings": []
+    },
+    {
+      "word": "起きる",
+      "reading": "おきる",
+      "alternate_readings": []
+    },
+    {
+      "word": "足",
+      "reading": "あし",
+      "alternate_readings": []
+    },
+    {
+      "word": "車",
+      "reading": "くるま",
+      "alternate_readings": []
+    },
+    {
+      "word": "軽い",
+      "reading": "かるい",
+      "alternate_readings": []
+    },
+    {
+      "word": "辛い",
+      "reading": "からい",
+      "alternate_readings": []
+    },
+    {
+      "word": "辞書",
+      "reading": "じしょ",
+      "alternate_readings": []
+    },
+    {
+      "word": "辺",
+      "reading": "へん",
+      "alternate_readings": []
+    },
+    {
+      "word": "近い",
+      "reading": "ちかい",
+      "alternate_readings": []
+    },
+    {
+      "word": "近く",
+      "reading": "ちかく",
+      "alternate_readings": []
+    },
+    {
+      "word": "返す",
+      "reading": "かえす",
+      "alternate_readings": []
+    },
+    {
+      "word": "速い",
+      "reading": "はやい",
+      "alternate_readings": []
+    },
+    {
+      "word": "遅い",
+      "reading": "おそい",
+      "alternate_readings": []
+    },
+    {
+      "word": "遊ぶ",
+      "reading": "あそぶ",
+      "alternate_readings": []
+    },
+    {
+      "word": "道",
+      "reading": "みち",
+      "alternate_readings": []
+    },
+    {
+      "word": "違う",
+      "reading": "ちがう",
+      "alternate_readings": []
+    },
+    {
+      "word": "遠い",
+      "reading": "とおい",
+      "alternate_readings": []
+    },
+    {
+      "word": "部屋",
+      "reading": "へや",
+      "alternate_readings": []
+    },
+    {
+      "word": "郵便局",
+      "reading": "ゆうびんきょく",
+      "alternate_readings": []
+    },
+    {
+      "word": "重い",
+      "reading": "おもい",
+      "alternate_readings": []
+    },
+    {
+      "word": "野菜",
+      "reading": "やさい",
+      "alternate_readings": []
+    },
+    {
+      "word": "金曜日",
+      "reading": "きんようび",
+      "alternate_readings": []
+    },
+    {
+      "word": "鉛筆",
+      "reading": "えんぴつ",
+      "alternate_readings": []
+    },
+    {
+      "word": "銀行",
+      "reading": "ぎんこう",
+      "alternate_readings": []
+    },
+    {
+      "word": "長い",
+      "reading": "ながい",
+      "alternate_readings": []
+    },
+    {
+      "word": "門",
+      "reading": "もん",
+      "alternate_readings": []
+    },
+    {
+      "word": "閉まる",
+      "reading": "しまる",
+      "alternate_readings": []
+    },
+    {
+      "word": "閉める",
+      "reading": "しめる",
+      "alternate_readings": []
+    },
+    {
+      "word": "開く",
+      "reading": "あく",
+      "alternate_readings": []
+    },
+    {
+      "word": "開ける",
+      "reading": "あける",
+      "alternate_readings": []
+    },
+    {
+      "word": "降りる",
+      "reading": "おりる",
+      "alternate_readings": []
+    },
+    {
+      "word": "降る",
+      "reading": "ふる",
+      "alternate_readings": []
+    },
+    {
+      "word": "階段",
+      "reading": "かいだん",
+      "alternate_readings": []
+    },
+    {
+      "word": "隣",
+      "reading": "となり",
+      "alternate_readings": []
+    },
+    {
+      "word": "雑誌",
+      "reading": "ざっし",
+      "alternate_readings": []
+    },
+    {
+      "word": "難しい",
+      "reading": "むずかしい",
+      "alternate_readings": []
+    },
+    {
+      "word": "雨",
+      "reading": "あめ",
+      "alternate_readings": []
+    },
+    {
+      "word": "雪",
+      "reading": "ゆき",
+      "alternate_readings": []
+    },
+    {
+      "word": "零",
+      "reading": "れい",
+      "alternate_readings": [
+        "ぜろ",
+        "ゼロ"
+      ]
+    },
+    {
+      "word": "電気",
+      "reading": "でんき",
+      "alternate_readings": []
+    },
+    {
+      "word": "電話",
+      "reading": "でんわ",
+      "alternate_readings": []
+    },
+    {
+      "word": "電車",
+      "reading": "でんしゃ",
+      "alternate_readings": []
+    },
+    {
+      "word": "青",
+      "reading": "あお",
+      "alternate_readings": []
+    },
+    {
+      "word": "青い",
+      "reading": "あおい",
+      "alternate_readings": []
+    },
+    {
+      "word": "静か",
+      "reading": "しずか",
+      "alternate_readings": []
+    },
+    {
+      "word": "靴",
+      "reading": "くつ",
+      "alternate_readings": []
+    },
+    {
+      "word": "靴下",
+      "reading": "くつした",
+      "alternate_readings": []
+    },
+    {
+      "word": "音楽",
+      "reading": "おんがく",
+      "alternate_readings": []
+    },
+    {
+      "word": "頭",
+      "reading": "あたま",
+      "alternate_readings": []
+    },
+    {
+      "word": "頼む",
+      "reading": "たのむ",
+      "alternate_readings": []
+    },
+    {
+      "word": "風",
+      "reading": "かぜ",
+      "alternate_readings": []
+    },
+    {
+      "word": "風邪",
+      "reading": "かぜ",
+      "alternate_readings": []
+    },
+    {
+      "word": "飛ぶ",
+      "reading": "とぶ",
+      "alternate_readings": []
+    },
+    {
+      "word": "飛行機",
+      "reading": "ひこうき",
+      "alternate_readings": []
+    },
+    {
+      "word": "食べる",
+      "reading": "たべる",
+      "alternate_readings": []
+    },
+    {
+      "word": "食べ物",
+      "reading": "たべもの",
+      "alternate_readings": []
+    },
+    {
+      "word": "食堂",
+      "reading": "しょくどう",
+      "alternate_readings": []
+    },
+    {
+      "word": "飲み物",
+      "reading": "のみもの",
+      "alternate_readings": []
+    },
+    {
+      "word": "飲む",
+      "reading": "のむ",
+      "alternate_readings": []
+    },
+    {
+      "word": "飴",
+      "reading": "あめ",
+      "alternate_readings": []
+    },
+    {
+      "word": "駅",
+      "reading": "えき",
+      "alternate_readings": []
+    },
+    {
+      "word": "高い",
+      "reading": "たかい",
+      "alternate_readings": []
+    },
+    {
+      "word": "魚",
+      "reading": "さかな",
+      "alternate_readings": []
+    },
+    {
+      "word": "鳥",
+      "reading": "とり",
+      "alternate_readings": []
+    },
+    {
+      "word": "鳴く",
+      "reading": "なく",
+      "alternate_readings": []
+    },
+    {
+      "word": "黄色",
+      "reading": "きいろ",
+      "alternate_readings": []
+    },
+    {
+      "word": "黄色い",
+      "reading": "きいろい",
+      "alternate_readings": []
+    },
+    {
+      "word": "黒",
+      "reading": "くろ",
+      "alternate_readings": []
+    },
+    {
+      "word": "黒い",
+      "reading": "くろい",
+      "alternate_readings": []
+    },
+    {
+      "word": "鼻",
+      "reading": "はな",
+      "alternate_readings": []
+    }
+  ]
+}
