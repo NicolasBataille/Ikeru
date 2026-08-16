@@ -150,8 +150,31 @@ public final class ContentRepository: Sendable {
     /// Fetch example sentences for a vocabulary word.
     /// - Parameter word: The vocabulary word to look up.
     /// - Returns: Array of Japanese sentence strings.
+    ///
+    /// Japanese only, and unread by any caller as of 2026-08-16. Prefer
+    /// `exampleSentences(for:limit:)`, which pairs each sentence with its
+    /// translation — a bare Japanese sentence is not an example a beginner
+    /// can use.
     public func sentencesForVocabulary(_ word: String) async -> [String] {
         await actor.sentencesForVocabulary(word)
+    }
+
+    /// Example sentences for `word`, each with a translation in the learner's
+    /// language, capped at `limit`.
+    ///
+    /// Returns an empty array when the word has no bundled examples — which is
+    /// the common case for a dictionary entry the learner met in conversation
+    /// rather than in the bundle, since the lookup is keyed on
+    /// `sentences.vocabulary_word`. Callers should render nothing, not an
+    /// empty section.
+    ///
+    /// - Parameters:
+    ///   - word: The bundle's canonical form. Verified 2026-08-16: every
+    ///     `sentences.vocabulary_word` matches a `vocabulary.word` exactly
+    ///     (zero orphans), so no stemming is needed on this join.
+    ///   - limit: Maximum examples to return.
+    public func exampleSentences(for word: String, limit: Int) async -> [SentenceExample] {
+        await actor.exampleSentences(for: word, limit: limit)
     }
 
     /// Fetch vocabulary items for a given JLPT level.
@@ -661,6 +684,56 @@ actor ContentDatabaseActor {
             radicals.append(columnText(stmt, 0))
         }
         return radicals
+    }
+
+    /// Example sentences for `word`, each paired with a translation in the
+    /// learner's language, capped at `limit`.
+    ///
+    /// Rows whose translation is missing are filtered **in SQL**, so `limit`
+    /// counts usable examples rather than candidate rows — a word with six
+    /// rows of which two are translated still yields two, not zero.
+    ///
+    /// No cross-language fallback, unlike `localizedColumn`. See
+    /// `SentenceExample`'s doc for the measurement: the Tatoeba half of the
+    /// corpus carries French and no English, so "French missing → serve
+    /// English" would be backwards here and would render French text under an
+    /// English UI.
+    ///
+    /// Ordered by `id` so a word's examples are stable across launches — the
+    /// view shows only the first few, and a set that reshuffled every time
+    /// would read as a bug.
+    func exampleSentences(for word: String, limit: Int) -> [SentenceExample] {
+        guard openIfNeeded() else { return [] }
+        guard limit > 0 else { return [] }
+
+        let translationColumn = language == .french ? "french" : "english"
+        guard columnNames(of: "sentences").contains(translationColumn) else { return [] }
+
+        let sql = """
+            SELECT japanese, \(translationColumn) FROM sentences
+            WHERE vocabulary_word = ?
+              AND TRIM(COALESCE(\(translationColumn), '')) NOT IN ('', '[]')
+            ORDER BY id
+            LIMIT ?
+            """
+        var stmt: OpaquePointer?
+        guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else {
+            Logger.content.error("Failed to prepare exampleSentences query")
+            return []
+        }
+        defer { sqlite3_finalize(stmt) }
+
+        sqlite3_bind_text(stmt, 1, word, -1, SQLITE_TRANSIENT)
+        sqlite3_bind_int(stmt, 2, Int32(limit))
+
+        var examples: [SentenceExample] = []
+        while sqlite3_step(stmt) == SQLITE_ROW {
+            let japanese = columnText(stmt, 0)
+            let translation = columnText(stmt, 1)
+            guard !japanese.isEmpty, !translation.isEmpty else { continue }
+            examples.append(SentenceExample(japanese: japanese, translation: translation))
+        }
+        return examples
     }
 
     private func fetchSentences(for word: String) -> [String] {
