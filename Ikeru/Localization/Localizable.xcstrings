@@ -9830,6 +9830,132 @@
         }
       }
     },
+    "Anchored" : {
+      "comment" : "Vocabulary mastery filter chip",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anchored"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ancré"
+          }
+        }
+      }
+    },
+    "Encounters" : {
+      "comment" : "Vocabulary sort order",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Encounters"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rencontres"
+          }
+        }
+      }
+    },
+    "Familiar" : {
+      "comment" : "Vocabulary mastery filter chip",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Familiar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Familier"
+          }
+        }
+      }
+    },
+    "Learning" : {
+      "comment" : "Vocabulary mastery filter chip",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Learning"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En apprentissage"
+          }
+        }
+      }
+    },
+    "Mastered" : {
+      "comment" : "Vocabulary mastery filter chip",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mastered"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maîtrisé"
+          }
+        }
+      }
+    },
+    "Recent" : {
+      "comment" : "Vocabulary sort order",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recent"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Récents"
+          }
+        }
+      }
+    },
+    "Search words..." : {
+      "comment" : "Dictionary search field placeholder",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Search words..."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rechercher un mot…"
+          }
+        }
+      }
+    },
     "Vocabulary.Add" : {
       "extractionState" : "manual",
       "localizations" : {

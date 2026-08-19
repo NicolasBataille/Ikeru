@@ -71,10 +71,18 @@ struct ExampleSentencesSection: View {
 
     private func exampleRow(_ example: SentenceExample) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(example.japanese)
-                .ikeruScaledFont(16, weight: .regular, relativeTo: .body)
-                .foregroundStyle(Color.ikeruTextPrimary)
-                .fixedSize(horizontal: false, vertical: true)
+            HStack(alignment: .top, spacing: IkeruTheme.Spacing.sm) {
+                Text(example.japanese)
+                    .ikeruScaledFont(16, weight: .regular, relativeTo: .body)
+                    .foregroundStyle(Color.ikeruTextPrimary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                // Chaque phrase du bundle a son clip (vérifié 2026-08-19 :
+                // 0 manquant sur les 632). Entendre l'exemple vaut autant que
+                // le lire — c'est une app d'écoute autant que de lecture.
+                ListenButton(text: example.japanese, diameter: 32, glyphSize: 12)
+            }
 
             // Dimmed, and directly under its own sentence — the same
             // relationship the chat uses between a line and its translation,

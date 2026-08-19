@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 import SwiftData
 import IkeruCore
 import os
@@ -13,7 +14,13 @@ enum VocabSortOrder: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
-    var label: String {
+    /// `LocalizedStringKey`, pas `String` — et c'est le piège que `CLAUDE.md`
+    /// documente. Avec `String`, `Text(order.label)` prend l'init `verbatim:`
+    /// et ne fait AUCUN lookup : les chips s'affichaient en anglais alors que
+    /// le catalogue contenait déjà `Mastery → Maîtrise`. Constaté sur device
+    /// 2026-08-19. Les littéraux ci-dessous restent valides grâce à
+    /// `ExpressibleByStringLiteral`.
+    var label: LocalizedStringKey {
         switch self {
         case .mastery: "Mastery"
         case .recent: "Recent"
@@ -33,7 +40,8 @@ enum VocabMasteryFilter: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
-    var label: String {
+    /// `LocalizedStringKey` — voir `VocabSortOrder.label`.
+    var label: LocalizedStringKey {
         switch self {
         case .all: "All"
         case .new: "New"

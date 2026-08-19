@@ -94,11 +94,16 @@ struct VocabularyEntryDetailView: View {
                 .font(.system(size: 64, weight: .regular, design: .serif))
                 .foregroundStyle(Color.ikeruTextPrimary)
 
-            Text(entry.reading)
-                .ikeruScaledFont(24, weight: .medium, design: .rounded, relativeTo: .title2)
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
-                .foregroundStyle(Color.ikeruPrimaryAccent)
+            HStack(spacing: IkeruTheme.Spacing.sm) {
+                Text(entry.reading)
+                    .ikeruScaledFont(24, weight: .medium, design: .rounded, relativeTo: .title2)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                    .foregroundStyle(Color.ikeruPrimaryAccent)
+
+                // La LECTURE, pas le mot — voir `ListenButton`.
+                ListenButton(text: entry.reading.isEmpty ? entry.word : entry.reading)
+            }
 
             Text(entry.meaning)
                 .font(.ikeruBody)

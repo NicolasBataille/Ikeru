@@ -88,9 +88,14 @@ struct VocabularyDetailSheet: View {
                 .font(.system(size: 64, weight: .regular, design: .serif))
                 .foregroundStyle(Color.ikeruTextPrimary)
 
-            Text(hint.reading)
-                .ikeruScaledFont(24, weight: .medium, design: .rounded, relativeTo: .title2)
-                .foregroundStyle(Color.ikeruPrimaryAccent)
+            HStack(spacing: IkeruTheme.Spacing.sm) {
+                Text(hint.reading)
+                    .ikeruScaledFont(24, weight: .medium, design: .rounded, relativeTo: .title2)
+                    .foregroundStyle(Color.ikeruPrimaryAccent)
+
+                // La LECTURE, pas le mot — voir `ListenButton`.
+                ListenButton(text: hint.reading.isEmpty ? hint.word : hint.reading)
+            }
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, IkeruTheme.Spacing.lg)
