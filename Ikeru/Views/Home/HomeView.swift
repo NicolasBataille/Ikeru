@@ -603,7 +603,7 @@ struct HomeView: View {
         if vm.sessionPreviewCardCount > 0 {
             HStack(spacing: 8) {
                 if vm.sessionPreviewNewCount > 0 {
-                    Text("\(vm.sessionPreviewNewCount)")
+                    Text(verbatim: "\(vm.sessionPreviewNewCount)")
                         .ikeruScaledFont(12, design: .serif, relativeTo: .caption)
                         .monospacedDigit()
                         .foregroundStyle(Color.ikeruTextSecondary)
@@ -618,7 +618,7 @@ struct HomeView: View {
                         .foregroundStyle(Color.ikeruTextTertiary)
                 }
                 if vm.sessionPreviewReviewCount > 0 {
-                    Text("\(vm.sessionPreviewReviewCount)")
+                    Text(verbatim: "\(vm.sessionPreviewReviewCount)")
                         .ikeruScaledFont(12, design: .serif, relativeTo: .caption)
                         .monospacedDigit()
                         .foregroundStyle(Color.ikeruTextSecondary)
