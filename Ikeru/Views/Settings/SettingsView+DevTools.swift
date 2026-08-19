@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import IkeruCore
 
 // Split out of `SettingsView.swift` for the same reason as
 // `SettingsView+DataStorage.swift`: the file had crossed SwiftLint's
@@ -24,6 +25,12 @@ struct DevToolsSettingsView: View {
     @State private var devShowResetConfirm = false
     @State private var devShowSeedConfirm = false
     @State private var devLastAction: String = ""
+
+    /// Question de grammaire tiree a la demande, pour pouvoir REGARDER
+    /// l'exercice sans jouer des seances jusqu'a ce qu'il tombe. Le pool de
+    /// variete d'une seance en contient quatre au N5 ; attendre le bon relevait
+    /// du hasard.
+    @State private var devGrammarQuestion: DevGrammarQuestion?
 
     var body: some View {
         ZStack {
@@ -59,6 +66,16 @@ struct DevToolsSettingsView: View {
         } message: {
             Text("Deletes every profile, RPG state, card, vocab encounter. Onboarding triggers on next cold launch.")
         }
+        .sheet(item: $devGrammarQuestion) { question in
+            // La vraie vue d'exercice, pas une maquette : ce que la seance
+            // presente. La note est absorbee ici, le but etant de REGARDER.
+            GrammarClozeView(
+                cloze: question.cloze,
+                options: question.options,
+                onComplete: { _ in devGrammarQuestion = nil }
+            )
+            .background(IkeruScreenBackground().ignoresSafeArea())
+        }
     }
 
     private var devSection: some View {
@@ -82,6 +99,9 @@ struct DevToolsSettingsView: View {
                 devActionRow(jp: "資産", label: "Clear asset cache", value: "purge") {
                     assetCache?.clearAll()
                     devLastAction = "✓ Asset cache cleared"
+                }
+                devActionRow(jp: "文法", label: "Grammar exercise", value: "preview") {
+                    Task { await presentGrammarExercise() }
                 }
                 devActionRow(jp: "情報", label: "Build info",       value: devBuildInfo, action: nil)
                 // swiftlint:enable comma
@@ -203,6 +223,32 @@ struct DevToolsSettingsView: View {
                 .foregroundStyle(Color.ikeruTextPrimary)
                 .frame(width: 30, alignment: .trailing)
         }
+    }
+
+    /// Une question tiree du bundle, avec ses options construites comme en
+    /// seance — donc ce que l'apprenant verrait, pas une maquette.
+    private struct DevGrammarQuestion: Identifiable {
+        let id = UUID()
+        let cloze: GrammarCloze
+        let options: GrammarClozeOptions
+    }
+
+    private func presentGrammarExercise() async {
+        guard let repository = BundledContent.makeRepository() else {
+            devLastAction = "✗ bundle introuvable"
+            return
+        }
+        let clozes = await repository.grammarClozes(for: .n5)
+        guard let target = clozes.randomElement() else {
+            devLastAction = "✗ aucun exercice dans le bundle"
+            return
+        }
+        let pool = clozes.map(\.answer).filter { $0 != target.answer }
+        devGrammarQuestion = DevGrammarQuestion(
+            cloze: target,
+            options: GrammarClozeOptionsBuilder.build(answer: target.answer, pool: pool)
+        )
+        devLastAction = "✓ \(clozes.count) exercices disponibles"
     }
 
     private var devBuildInfo: String {
