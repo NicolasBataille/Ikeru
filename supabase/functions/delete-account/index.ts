@@ -25,17 +25,17 @@
 // needed here).
 //
 // DELETION ORDER: verified live against project `aiayzlarixlogcoyswna` via
-// `pg_constraint` (2026-08-14) that every one of these 8 tables' `user_id`
+// `pg_constraint` (2026-08-14) that every one of these tables' `user_id`
 // column is `REFERENCES auth.users(id) ON DELETE CASCADE`. That means
-// deleting the `auth.users` row alone would already cascade-wipe all 8
-// tables — the explicit per-table deletes below are NOT load-bearing for
+// deleting the `auth.users` row alone would already cascade-wipe all of
+// them — the explicit per-table deletes below are NOT load-bearing for
 // correctness. They exist so this function can (a) report an honest
 // per-table row count in its response instead of a black-box "trust the
 // cascade", and (b) keep working exactly the same way if that CASCADE rule
 // is ever changed by a future migration. `profile_id` / `card_id` /
 // `entry_id` are plain UUID columns with NO enforced foreign-key constraint
 // in the live schema (also verified via `pg_constraint`) — so there is no
-// database-level ordering requirement between the 8 tables themselves.
+// database-level ordering requirement between the tables themselves.
 // Deletion below still runs child-shaped tables (the ones that reference a
 // card/entry/profile conceptually) before `profiles`, purely as defensive
 // practice against a future migration that DOES add those FKs.
@@ -44,6 +44,15 @@ const DELETE_ORDER = [
   "vocabulary_encounters",
   "exercise_outcome_logs",
   "companion_chat_messages",
+  // `text_imports` (2026-08-19): the learner's own imported texts. Added to
+  // this list for the honest per-table count, NOT for correctness — its
+  // `user_id` carries the same `REFERENCES auth.users(id) ON DELETE CASCADE`
+  // as the other 8 (see `supabase/migrations/20260819120000_text_imports.sql`),
+  // so deleting the auth user already wipes it, exactly as the baseline
+  // migration promises for "a table added later". Placed with the
+  // child-shaped tables because it references vocabulary entries
+  // conceptually (`entry_ids`), even though no FK enforces it.
+  "text_imports",
   "cards",
   "rpg_states",
   "vocabulary_entries",

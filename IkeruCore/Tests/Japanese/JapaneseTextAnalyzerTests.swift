@@ -70,6 +70,38 @@ struct JapaneseTextAnalyzerTests {
         #expect(analyzed.coverage(known: []) == nil)
     }
 
+    /// Un vrai texte collé n'est pas du japonais pur. Un tweet porte des emoji,
+    /// des URL, des mentions, de l'anglais et des sauts de ligne — et la
+    /// promesse « le texte de l'utilisateur ressort intact » doit tenir là
+    /// aussi, pas seulement sur des phrases de manuel.
+    @Test("Emoji, URL, anglais et sauts de ligne traversent sans dommage")
+    func messyRealWorldTextSurvives() async throws {
+        let analyzer = try makeAnalyzer()
+        let messy = """
+            今日のライブ最高だった🎉🎉
+            @friend_jp とりあえず写真あげとくね
+            https://example.com/photos?id=42
+            See you next time!! またね〜
+            """
+        let analyzed = await analyzer.analyze(messy)
+        #expect(analyzed.tokens.map(\.surface).joined() == messy,
+                "le texte collé doit ressortir au caractère près")
+        // Et l'analyse trouve quand même le japonais qui s'y cache.
+        let forms = analyzed.tokens.compactMap(\.dictionaryForm)
+        #expect(forms.contains("今日"))
+        #expect(forms.contains("写真"))
+    }
+
+    @Test("Un texte sans un seul mot japonais ne prétend rien mesurer")
+    func nonJapaneseTextMeasuresNothing() async throws {
+        let analyzer = try makeAnalyzer()
+        let analyzed = await analyzer.analyze("Hello world, nothing to see here.")
+        #expect(analyzed.tokens.map(\.surface).joined() == "Hello world, nothing to see here.")
+        #expect(analyzed.learnableWords.isEmpty)
+        #expect(analyzed.coverage(known: []) == nil,
+                "aucun mot de contenu : la couverture n'est pas 0 %, elle n'existe pas")
+    }
+
     // MARK: Recomposition et déflexion
 
     @Test("Les mots sur-découpés par le tokeniseur sont recollés")

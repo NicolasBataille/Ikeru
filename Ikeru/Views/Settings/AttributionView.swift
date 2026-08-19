@@ -40,7 +40,24 @@ struct AttributionView: View {
             // `Attribution.all`). This is the line a learner actually READS;
             // fixing only the source comment would have left the claim on
             // screen and the correction where nobody looks.
-            Text("Meanings and grammar notes are written for Ikeru. Kanji readings come from KANJIDIC, the N5 word list from Tanos, most example sentences from Tatoeba — all credited below.")
+            // Same trap sprung again on 2026-08-19: "Meanings … are written
+            // for Ikeru" was true until `jmdict.sqlite` shipped. Every
+            // definition a learner reads while importing their own text is
+            // JMdict's, so the claim is scoped to the lessons instead of
+            // being left standing one release too long. Split in two rather
+            // than stretched: one sentence longer and the line breaks the
+            // strict lint on changed lines, and shortening it meant dropping
+            // the "most" in front of "example sentences" — which would trade
+            // one overclaim for another.
+            // "Vocabulary", not just "meanings": the 693 vocabulary glosses
+            // are hand-authored, but the kanji meanings in the lessons are
+            // KANJIDIC-derived — the card below says so. Unqualified, this
+            // sentence contradicted a credit printed on the same screen.
+            Text("The vocabulary meanings and grammar notes in Ikeru's lessons are written for Ikeru. The definitions shown for the texts you import come from JMdict.")
+                .font(.ikeruCaption)
+                .foregroundStyle(.ikeruTextSecondary)
+
+            Text("Kanji readings come from KANJIDIC, the N5 word list from Tanos, most example sentences from Tatoeba — all credited below.")
                 .font(.ikeruCaption)
                 .foregroundStyle(.ikeruTextSecondary)
         }
@@ -155,6 +172,27 @@ struct Attribution: Identifiable {
     /// the content bundle (`sentences.source`), so the two sets stay
     /// distinguishable. Tatoeba *audio* is licensed separately, per
     /// contributor, and none of it is bundled.
+    ///
+    /// The imported-text feature reads none of that bundle. It reads
+    /// `Ikeru/Resources/ContentBundles/jmdict.sqlite`, built by
+    /// `scripts/jmdict/build-dictionary.py` from JMdict (EDRDG, Monash
+    /// University — https://www.edrdg.org/jmdict/j_jmdict.html). What a
+    /// learner sees when tapping a word of their own text is derived from it,
+    /// end to end: the 218 498 entries themselves, their readings, their
+    /// parts of speech, and both the French and the English glosses. What is
+    /// Ikeru's is the shaping, not the lexicography — which columns are kept,
+    /// the cap at 3 senses of 3 glosses each (`MAX_SENSES`), the decision to
+    /// index the rare and search-only spellings (`rK`/`sK`/`rk`/`sk`) without
+    /// ever displaying them, the `curated` flag that marks a form as already
+    /// on the app's N5 syllabus, and the rule that a French gloss is shown
+    /// when JMdict has one — 7 % of entries, but 43 % of the priority-marked
+    /// ones — and an English gloss otherwise, always labelled as English.
+    ///
+    /// CC BY-SA 4.0 is share-alike, so the derived `jmdict.sqlite` stays under
+    /// that licence. That is the same situation as KANJIDIC above, with the
+    /// same open question about how far share-alike reaches into the app
+    /// binary, filed against the App Store task — and crediting the source is
+    /// right either way.
     @MainActor
     static let all: [Attribution] = [
         Attribution(
@@ -164,6 +202,14 @@ struct Attribution: Identifiable {
             license: "CC BY-SA 4.0",
             licenceURL: URL(string: "https://www.edrdg.org/edrdg/licence.html"),
             description: "Kanji readings and meanings in the content bundle are derived from the KANJIDIC database, maintained by the EDRDG at Monash University."
+        ),
+        Attribution(
+            id: "jmdict",
+            name: "JMdict",
+            author: "Electronic Dictionary Research and Development Group",
+            license: "CC BY-SA 4.0",
+            licenceURL: URL(string: "https://www.edrdg.org/edrdg/licence.html"),
+            description: "Entries, readings, parts of speech and definitions for the texts you import are derived from the JMdict dictionary, maintained by the EDRDG at Monash University."
         ),
         Attribution(
             id: "kanjivg",

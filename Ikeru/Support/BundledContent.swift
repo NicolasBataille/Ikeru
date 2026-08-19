@@ -43,6 +43,27 @@ enum BundledContent {
         ContentLanguage(locale: AppLocale().currentLocale)
     }
 
+    /// Opens the shipped JMdict dictionary — the one « apporte ton propre
+    /// texte » reads.
+    ///
+    /// Separate from the curated bundle above, and deliberately **not
+    /// localised at open time**: JMdict carries both glosses on the same row,
+    /// and `DictionaryEntry` exposes `glossFR` as an optional so the view layer
+    /// can label an English gloss as English. Only 7 % of entries carry French
+    /// (43 % among the common ones), so hiding the distinction here would mean
+    /// lying quietly about a quarter of the words in a real text.
+    ///
+    /// Same fail-safe contract as `makeRepository()`: a missing resource logs
+    /// and returns `nil`, and the feature says out loud that it cannot look
+    /// anything up rather than failing word by word.
+    static func makeDictionary() -> DictionaryRepository? {
+        guard let url = Bundle.main.url(forResource: "jmdict", withExtension: "sqlite") else {
+            logger.error("jmdict.sqlite not found in bundle — text import unavailable")
+            return nil
+        }
+        return DictionaryRepository(bundleURL: url)
+    }
+
     /// Opens the bundled content database in the learner's language.
     ///
     /// Fail-safe by design, matching what the three call sites did before:

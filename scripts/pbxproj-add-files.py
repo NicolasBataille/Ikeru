@@ -28,19 +28,50 @@ def identifier(seed: str) -> str:
     return hashlib.sha1(seed.encode("utf-8")).hexdigest()[:24].upper()
 
 
+def groups(text: str) -> dict[str, tuple[str, list[str]]]:
+    """Every PBXGroup: id → (its `path` or name, its children ids)."""
+    found: dict[str, tuple[str, list[str]]] = {}
+    for match in re.finditer(
+            r"\t\t([0-9A-F]{24}) (?:/\* (.+?) \*/ )?= \{\n\t\t\tisa = PBXGroup;", text):
+        gid = match.group(1)
+        block = text[match.end():text.index("\n\t\t};", match.end())]
+        path_match = re.search(r'\n\t\t\tpath = "?([^";]+)"?;', block)
+        children = re.findall(r"\t\t\t\t([0-9A-F]{24}) /\*", block)
+        found[gid] = (path_match.group(1) if path_match else (match.group(2) or ""), children)
+    return found
+
+
+def main_group(text: str) -> str:
+    match = re.search(r"isa = PBXProject;(?:.*?\n)*?\t\t\tmainGroup = ([0-9A-F]{24})", text)
+    if not match:
+        raise SystemExit("mainGroup introuvable")
+    return match.group(1)
+
+
 def group_id(text: str, path: str) -> str | None:
-    """The PBXGroup whose `path` is the last component of `path`, if present."""
-    name = Path(path).name
-    for match in re.finditer(r"\t\t([0-9A-F]{24}) /\* (.+?) \*/ = \{\n\t\t\tisa = PBXGroup;", text):
-        block_start = match.end()
-        block = text[block_start:text.index("};", block_start)]
-        if re.search(rf'\n\t\t\tpath = "?{re.escape(name)}"?;', block):
-            return match.group(1)
-    return None
+    """Resolve a group by its FULL path, descending from the project root.
+
+    ⚠️ Matching on the last component alone is not enough, and the failure is
+    silent-then-loud: `Ikeru/ViewModels/TextImport` and
+    `Ikeru/Views/Learning/TextImport` both end in `TextImport`, so a name-only
+    lookup registered six view files under the view-model group and the build
+    failed with « Build input files cannot be found » pointing at paths nobody
+    had typed.
+    """
+    table = groups(text)
+    current = main_group(text)
+    for component in Path(path).parts:
+        match = next((child for child in table[current][1]
+                      if child in table and table[child][0] == component), None)
+        if match is None:
+            return None
+        current = match
+    return current
 
 
 def parent_group_id(text: str, path: str) -> str | None:
-    return group_id(text, str(Path(path).parent))
+    parent = Path(path).parent
+    return main_group(text) if str(parent) == "." else group_id(text, str(parent))
 
 
 def add_group(text: str, path: str) -> tuple[str, str]:
@@ -64,7 +95,8 @@ def add_group(text: str, path: str) -> tuple[str, str]:
     marker = "/* End PBXGroup section */"
     text = text.replace(marker, block + marker, 1)
 
-    anchor = re.search(rf"\t\t{parent} /\* .+? \*/ = \{{\n\t\t\tisa = PBXGroup;\n\t\t\tchildren = \(\n", text)
+    anchor = re.search(
+        rf"\t\t{parent} (?:/\* .+? \*/ )?= \{{\n\t\t\tisa = PBXGroup;\n\t\t\tchildren = \(\n", text)
     if not anchor:
         raise SystemExit(f"impossible d'insérer {name} dans son parent")
     text = text[:anchor.end()] + f"\t\t\t\t{gid} /* {name} */,\n" + text[anchor.end():]
@@ -87,7 +119,8 @@ def add_file(text: str, relative: str, gid: str, sources_phase: str) -> str:
         f"\t\t{build_file} /* {name} in Sources */ = {{isa = PBXBuildFile; "
         f"fileRef = {file_ref} /* {name} */; }};\n/* End PBXBuildFile section */", 1)
 
-    anchor = re.search(rf"\t\t{gid} /\* .+? \*/ = \{{\n\t\t\tisa = PBXGroup;\n\t\t\tchildren = \(\n", text)
+    anchor = re.search(
+        rf"\t\t{gid} (?:/\* .+? \*/ )?= \{{\n\t\t\tisa = PBXGroup;\n\t\t\tchildren = \(\n", text)
     if not anchor:
         raise SystemExit(f"groupe {gid} introuvable pour {name}")
     text = text[:anchor.end()] + f"\t\t\t\t{file_ref} /* {name} */,\n" + text[anchor.end():]

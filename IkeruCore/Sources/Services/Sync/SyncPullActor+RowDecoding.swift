@@ -30,6 +30,7 @@ extension ReviewLog: SyncIdentifiable {}
 extension VocabularyEntry: SyncIdentifiable {}
 extension VocabularyEncounter: SyncIdentifiable {}
 extension ExerciseOutcomeLog: SyncIdentifiable {}
+extension TextImport: SyncIdentifiable {}
 
 // MARK: - RowApplyOutcome
 
@@ -132,6 +133,26 @@ enum SyncRowDecoding {
 
     static func date(_ row: SyncRow, _ key: String) -> Date? {
         string(row, key).flatMap(SyncPullDateParsing.parse)
+    }
+
+    /// Reads a `jsonb` array-of-uuid-strings column (`text_imports.entry_ids`)
+    /// back into an ordered `[UUID]`.
+    ///
+    /// Returns `nil` only when the cell is absent or is not an array at all —
+    /// a genuine shape error worth skipping the row for. An EMPTY array is a
+    /// legitimate value (an import from which the learner kept no word) and
+    /// comes back as `[]`, which is why the two cases must not collapse into
+    /// one.
+    ///
+    /// Elements that are not parseable uuid strings are dropped rather than
+    /// failing the whole row: losing the link to one vocabulary entry is a
+    /// smaller loss than losing the learner's text.
+    static func uuidArray(_ row: SyncRow, _ key: String) -> [UUID]? {
+        guard case .array(let elements)? = row[key] else { return nil }
+        return elements.compactMap { element in
+            guard case .string(let raw) = element else { return nil }
+            return UUID(uuidString: raw)
+        }
     }
 
     /// Decodes a nested `payload` `JSONValue` object into a typed DTO,

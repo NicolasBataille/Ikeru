@@ -35,15 +35,28 @@ struct IkeruSchemaTests {
         #expect(IkeruSchemaV4.versionIdentifier == Schema.Version(4, 0, 0))
     }
 
+    @Test("V5 adds exactly one entity to V4 (TextImport), and touches nothing else")
+    func v5ModelCount() {
+        #expect(IkeruSchemaV5.models.count == IkeruSchemaV4.models.count + 1)
+        #expect(IkeruSchemaV5.versionIdentifier == Schema.Version(5, 0, 0))
+        // Le point qui compte : V5 est purement ADDITIVE. Toute entité de V4
+        // doit se retrouver telle quelle dans V5 — c'est ce qui autorise une
+        // étape `.lightweight` et ce qui garde intact le sens de V4.
+        let v4Names = Set(IkeruSchemaV4.models.map { String(describing: $0) })
+        let v5Names = Set(IkeruSchemaV5.models.map { String(describing: $0) })
+        #expect(v4Names.isSubset(of: v5Names))
+        #expect(v5Names.subtracting(v4Names) == ["TextImport"])
+    }
+
     @Test("Migration plan is well-formed: stages == schemas - 1")
     func planWellFormed() {
-        #expect(IkeruMigrationPlan.schemas.count == 4)
+        #expect(IkeruMigrationPlan.schemas.count == 5)
         #expect(IkeruMigrationPlan.stages.count == IkeruMigrationPlan.schemas.count - 1)
     }
 
-    @Test("A container opens with the current (V4) versioned schema + migration plan")
+    @Test("A container opens with the current (V5) versioned schema + migration plan")
     func containerOpensWithPlan() throws {
-        let schema = Schema(versionedSchema: IkeruSchemaV4.self)
+        let schema = Schema(versionedSchema: IkeruSchemaV5.self)
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         let container = try ModelContainer(
             for: schema,
@@ -51,8 +64,8 @@ struct IkeruSchemaTests {
             configurations: [config]
         )
         // Every declared model resolves to exactly one schema entity — a guard
-        // against a model being dropped from (or duplicated in) V4.
-        #expect(container.schema.entities.count == IkeruSchemaV4.models.count)
+        // against a model being dropped from (or duplicated in) V5.
+        #expect(container.schema.entities.count == IkeruSchemaV5.models.count)
     }
 
     // Deliberately NOT adding a "container opens with frozen V2 (or V3)

@@ -21,7 +21,7 @@ import SwiftData
 /// is scoped to recording calls for a single role).
 ///
 /// `syncDevice` below deliberately mirrors `CloudSyncCoordinator.syncNow()`'s
-/// own ordering — pull, then push, using the exact same 7-call push
+/// own ordering — pull, then push, using the exact same 8-call push
 /// sequence — because the concurrent-deletion test specifically exercises
 /// why that ordering matters (see that test's doc comment): pulling before
 /// pushing is what lets a device that's about to push a stale value
@@ -51,13 +51,17 @@ struct SyncPullDivergenceTests {
             VocabularyEncounter.self,
             ExerciseOutcomeLog.self,
             CompanionChatMessage.self,
+            // `TextImport` is not optional in these containers: `SyncPullActor`
+            // pulls `text_imports` and counts it in `localRowCount()`, so a
+            // container without it makes every `pullAll` throw.
+            TextImport.self,
         ])
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         return try ModelContainer(for: schema, configurations: [config])
     }
 
     /// One full sync cycle for one simulated device: pull, then push —
-    /// same order, same 7 push calls, as `CloudSyncCoordinator.syncNow()`.
+    /// same order, same 8 push calls, as `CloudSyncCoordinator.syncNow()`.
     @discardableResult
     private func syncDevice(
         container: ModelContainer,
@@ -82,6 +86,7 @@ struct SyncPullDivergenceTests {
         _ = try await pushActor.pushDirtyVocabularyEntries(using: server, accessToken: accessToken)
         _ = try await pushActor.pushDirtyVocabularyEncounters(using: server, accessToken: accessToken)
         _ = try await pushActor.pushDirtyExerciseOutcomeLogs(using: server, accessToken: accessToken)
+        _ = try await pushActor.pushDirtyTextImports(using: server, accessToken: accessToken)
 
         return summary
     }

@@ -269,6 +269,12 @@
 		ACD0BCA3A7C1EE79813BD02A /* ProfileResetUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43C2F8072E54B6E9C89A7A82 /* ProfileResetUITests.swift */; };
 		CC17122F2879765AC620D7CB /* TextImportViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA548C5C6D596E96C8A31665 /* TextImportViewModel.swift */; };
 		3D661293E556B31D48A06AB3 /* TextImportViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15E0DF1B80E3633514950924 /* TextImportViewModelTests.swift */; };
+		24A425F1027A409C74C03324 /* AssistedReadingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F66793267450AA0034059A49 /* AssistedReadingView.swift */; };
+		CDA9DD41283E7183E8B2BDC9 /* TextImportCaptureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2640B2A4B4862A5418EC0A6F /* TextImportCaptureView.swift */; };
+		3AF4A81E4426B680B7DF9AF1 /* TextImportFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED45ED9FF97CF51814597DA1 /* TextImportFlowView.swift */; };
+		FFB0893C1D4BB73CA6C876FE /* TextImportJournalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6FBD3CF9F3A42BE51A6B342 /* TextImportJournalView.swift */; };
+		6BC21380CE15327F732E1E29 /* WordDetailSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E9BED7F876245601DB262D /* WordDetailSheet.swift */; };
+		BA32C427487EB8396C52B1A5 /* WordSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E94D0F1228B77B04E4D09E51 /* WordSelectionView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -588,6 +594,12 @@
 		43C2F8072E54B6E9C89A7A82 /* ProfileResetUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileResetUITests.swift; sourceTree = "<group>"; };
 		FA548C5C6D596E96C8A31665 /* TextImportViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextImportViewModel.swift; sourceTree = "<group>"; };
 		15E0DF1B80E3633514950924 /* TextImportViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextImportViewModelTests.swift; sourceTree = "<group>"; };
+		F66793267450AA0034059A49 /* AssistedReadingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistedReadingView.swift; sourceTree = "<group>"; };
+		2640B2A4B4862A5418EC0A6F /* TextImportCaptureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextImportCaptureView.swift; sourceTree = "<group>"; };
+		ED45ED9FF97CF51814597DA1 /* TextImportFlowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextImportFlowView.swift; sourceTree = "<group>"; };
+		D6FBD3CF9F3A42BE51A6B342 /* TextImportJournalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextImportJournalView.swift; sourceTree = "<group>"; };
+		A6E9BED7F876245601DB262D /* WordDetailSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordDetailSheet.swift; sourceTree = "<group>"; };
+		E94D0F1228B77B04E4D09E51 /* WordSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordSelectionView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -781,6 +793,7 @@
 		58EFC03C1940A4C5948A11CA /* Learning */ = {
 			isa = PBXGroup;
 			children = (
+				75ADD0EF97D0271040A894B5 /* TextImport */,
 				15CB0667583EC6D52A9954F3 /* CardReview */,
 				6BD85ED735A9A13C87CB65D6 /* Conversation */,
 				D3A529783E53CBA85AA1B31C /* Kana */,
@@ -1277,6 +1290,19 @@
 			path = TextImport;
 			sourceTree = "<group>";
 		};
+		75ADD0EF97D0271040A894B5 /* TextImport */ = {
+			isa = PBXGroup;
+			children = (
+				E94D0F1228B77B04E4D09E51 /* WordSelectionView.swift */,
+				A6E9BED7F876245601DB262D /* WordDetailSheet.swift */,
+				D6FBD3CF9F3A42BE51A6B342 /* TextImportJournalView.swift */,
+				ED45ED9FF97CF51814597DA1 /* TextImportFlowView.swift */,
+				2640B2A4B4862A5418EC0A6F /* TextImportCaptureView.swift */,
+				F66793267450AA0034059A49 /* AssistedReadingView.swift */,
+			);
+			path = TextImport;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -1554,6 +1580,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BA32C427487EB8396C52B1A5 /* WordSelectionView.swift in Sources */,
+				6BC21380CE15327F732E1E29 /* WordDetailSheet.swift in Sources */,
+				FFB0893C1D4BB73CA6C876FE /* TextImportJournalView.swift in Sources */,
+				3AF4A81E4426B680B7DF9AF1 /* TextImportFlowView.swift in Sources */,
+				CDA9DD41283E7183E8B2BDC9 /* TextImportCaptureView.swift in Sources */,
+				24A425F1027A409C74C03324 /* AssistedReadingView.swift in Sources */,
 				CC17122F2879765AC620D7CB /* TextImportViewModel.swift in Sources */,
 				78EBAB8487F09970D54B4F08 /* AISettingsView.swift in Sources */,
 				09A567494E1C0017CD0F2625 /* ActiveProfileResolver.swift in Sources */,

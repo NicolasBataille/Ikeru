@@ -66,6 +66,28 @@ struct DictionaryCoverageTests {
                 "trop peu de mots de contenu : \(learnable)/\(tokens)")
     }
 
+    /// Le critère de réussite de la feature est un chronomètre : « moins d'une
+    /// minute » entre la phrase croisée et la mini-séance proposée. L'analyse
+    /// est le seul maillon qui puisse le manger, et c'est pour ça que les
+    /// candidats sont résolus en UNE requête par texte et pas une par jeton.
+    /// Ce test épingle la décision : un paragraphe doit s'analyser en bien
+    /// moins d'une seconde.
+    @Test("Un paragraphe s'analyse instantanément")
+    func aParagraphAnalysesInstantly() async throws {
+        let analyzer = try makeAnalyzer()
+        let paragraph = JapaneseTextAnalyzerTests.sample.joined(separator: "\n")
+        // Un texte cinq fois plus long qu'un tweet, soit le haut de la
+        // fourchette que la vision vise (« des textes courts à moyens »).
+        let long = Array(repeating: paragraph, count: 5).joined(separator: "\n")
+
+        let started = Date()
+        let analyzed = await analyzer.analyze(long)
+        let elapsed = Date().timeIntervalSince(started)
+
+        #expect(!analyzed.tokens.isEmpty)
+        #expect(elapsed < 2.0, "analyse en \(Int(elapsed * 1000)) ms — le lot de requêtes a-t-il sauté ?")
+    }
+
     /// Chaque cas ci-dessous est une mauvaise réponse RÉELLEMENT observée sur
     /// l'échantillon, pas un cas de laboratoire. Ils épinglent le classement
     /// des candidats, qui est la partie la plus facile à casser en croyant

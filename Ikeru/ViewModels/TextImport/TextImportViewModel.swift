@@ -60,6 +60,11 @@ public final class TextImportViewModel {
     /// Selected dictionary forms, the geste central of the whole feature.
     public private(set) var selected: Set<String> = []
 
+    /// Entries created by the last `save()`, in selection order — what the
+    /// « pratique ce que tu viens de lire » mini-session drills. Proposed,
+    /// never imposed.
+    public private(set) var savedEntryIDs: [UUID] = []
+
     /// True while the dictionary is unavailable — the feature says so rather
     /// than failing word by word.
     public private(set) var dictionaryAvailable = true
@@ -169,6 +174,7 @@ public final class TextImportViewModel {
 
         _ = await imports.create(content: analysis.source, source: source,
                                  coverage: coverage, entryIDs: createdIDs)
+        savedEntryIDs = createdIDs
         stage = .saved(wordsKept: createdIDs.count)
     }
 
@@ -177,6 +183,7 @@ public final class TextImportViewModel {
         analysis = nil
         selected = []
         knownForms = []
+        savedEntryIDs = []
         stage = .capture
     }
 

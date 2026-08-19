@@ -22,6 +22,10 @@ struct CloudDataDeletionServiceTests {
             VocabularyEncounter.self,
             ExerciseOutcomeLog.self,
             CompanionChatMessage.self,
+            // `TextImport` is not optional in these containers: `SyncPullActor`
+            // pulls `text_imports` and counts it in `localRowCount()`, so a
+            // container without it makes every `pullAll` throw.
+            TextImport.self,
         ])
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         return try ModelContainer(for: schema, configurations: [config])

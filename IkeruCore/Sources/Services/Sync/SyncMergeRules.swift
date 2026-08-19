@@ -44,7 +44,8 @@ public enum SyncMergeRules {
     ///   - remoteRowCount: Total row count across **all** synced tables for
     ///     this account (`profiles` + `rpg_states` + `cards` + `review_logs`
     ///     + `vocabulary_entries` + `vocabulary_encounters` +
-    ///     `exercise_outcome_logs` + `companion_chat_messages`), summed by
+    ///     `exercise_outcome_logs` + `text_imports` +
+    ///     `companion_chat_messages`), summed by
     ///     the caller before invoking this function — this function does no
     ///     counting of its own, by design (that's a network/DB concern).
     ///   - localRowCount: Same sum, computed locally.
