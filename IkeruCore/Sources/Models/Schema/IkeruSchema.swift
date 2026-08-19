@@ -1373,6 +1373,46 @@ public enum IkeruSchemaV4: VersionedSchema {
     }
 }
 
+// MARK: - Versioned Schema V5
+
+/// **V5** — adds `TextImport`, the « apporte ton propre texte » entity.
+///
+/// Purely additive: one new entity, and **not a single existing model was
+/// touched**. That was a design constraint, not luck. The natural modelling
+/// hangs a relationship off `VocabularyEncounter` back to its import — and
+/// `VocabularyEncounter` is referenced *live* by `IkeruSchemaV4`, so growing it
+/// would have silently redefined what V4 means and reproduced the `aa03566`
+/// failure this file opens with: every real store stops hash-matching and the
+/// container refuses to open. `TextImport` carries the entry identifiers on its
+/// own side instead (see its doc comment), so V4 keeps meaning exactly what it
+/// meant and this stage stays `.lightweight`.
+///
+/// - Important: V4 is now frozen in the same sense as V1–V3 — its `models` list
+///   names live types, so **any** future change to `VocabularyEncounter`,
+///   `VocabularyEntry`, `Card`, `UserProfile` or `RPGState` must first pin a
+///   nested snapshot into V4, exactly as V1 did.
+public enum IkeruSchemaV5: VersionedSchema {
+
+    public static var versionIdentifier: Schema.Version { Schema.Version(5, 0, 0) }
+
+    public static var models: [any PersistentModel.Type] {
+        [
+            UserProfile.self,
+            Card.self,
+            ReviewLog.self,
+            RPGState.self,
+            MnemonicCache.self,
+            CompanionChatMessage.self,
+            AssetManifest.self,
+            VocabularyEntry.self,
+            VocabularyEncounter.self,
+            DailyTerm.self,
+            ExerciseOutcomeLog.self,
+            TextImport.self,
+        ]
+    }
+}
+
 // MARK: - Migration Plan
 
 /// The app's schema migration plan.
@@ -1393,7 +1433,8 @@ public enum IkeruSchemaV4: VersionedSchema {
 public enum IkeruMigrationPlan: SchemaMigrationPlan {
 
     public static var schemas: [any VersionedSchema.Type] {
-        [IkeruSchemaV1.self, IkeruSchemaV2.self, IkeruSchemaV3.self, IkeruSchemaV4.self]
+        [IkeruSchemaV1.self, IkeruSchemaV2.self, IkeruSchemaV3.self,
+         IkeruSchemaV4.self, IkeruSchemaV5.self]
     }
 
     public static var stages: [MigrationStage] {
@@ -1401,6 +1442,8 @@ public enum IkeruMigrationPlan: SchemaMigrationPlan {
             .lightweight(fromVersion: IkeruSchemaV1.self, toVersion: IkeruSchemaV2.self),
             .lightweight(fromVersion: IkeruSchemaV2.self, toVersion: IkeruSchemaV3.self),
             .lightweight(fromVersion: IkeruSchemaV3.self, toVersion: IkeruSchemaV4.self),
+            // V4 → V5 : une entité de plus (`TextImport`), rien de modifié.
+            .lightweight(fromVersion: IkeruSchemaV4.self, toVersion: IkeruSchemaV5.self),
         ]
     }
 }

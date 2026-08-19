@@ -98,7 +98,7 @@ struct IkeruApp: App {
     let modelContainer: ModelContainer
 
     init() {
-        // Current versioned schema (IkeruSchemaV4) + migration plan so
+        // Current versioned schema (IkeruSchemaV5) + migration plan so
         // @Model changes migrate explicitly instead of relying on implicit
         // lightweight migration. The plan carries the V1→V2 stage that adds
         // ExerciseOutcomeLog, V2→V3 which adds the answer provenance fields
@@ -111,7 +111,7 @@ struct IkeruApp: App {
         // container without error and then traps on the first insert
         // ("Failed to cast model IkeruCore.UserProfile"), which the store
         // recovery below cannot catch — it only wraps makeModelContainer.
-        let schema = Schema(versionedSchema: IkeruSchemaV4.self)
+        let schema = Schema(versionedSchema: IkeruSchemaV5.self)
 
         do {
             modelContainer = try Self.makeModelContainer(schema: schema)
