@@ -96,10 +96,40 @@ struct GrammarClozeTests {
             #expect(cloze.sentence.contains(GrammarCloze.blank),
                     "pas de trou dans « \(cloze.sentence) »")
             #expect(!cloze.answer.isEmpty)
-            let japanese = cloze.sentence.components(separatedBy: " — ").first ?? cloze.sentence
-            #expect(!japanese.contains(cloze.answer),
-                    "la reponse « \(cloze.answer) » est encore visible dans « \(japanese) »")
+            #expect(!cloze.sentence.contains(cloze.answer),
+                    "la reponse « \(cloze.answer) » est encore visible dans « \(cloze.sentence) »")
+            // Le japonais SEUL : plus de traduction collee dedans.
+            #expect(!cloze.sentence.contains(" — "),
+                    "la phrase porte encore une traduction figee : « \(cloze.sentence) »")
         }
+    }
+
+    /// Le defaut constate sur device : la traduction etait figee en anglais a la
+    /// generation, donc un apprenant en francais lisait « Please do not come in
+    /// here. ». Elle vient desormais de la colonne localisee.
+    @Test("La traduction suit la langue de l'apprenant")
+    func translationFollowsLanguage() async throws {
+        let root = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent().deletingLastPathComponent()
+            .deletingLastPathComponent().deletingLastPathComponent()
+        let bundleURL = root
+            .appendingPathComponent("Ikeru/Resources/ContentBundles/n5-content.sqlite")
+        try #require(FileManager.default.fileExists(atPath: bundleURL.path))
+
+        let french = await ContentRepository(bundleURL: bundleURL, language: .french)
+            .grammarClozes(for: .n5)
+        let english = await ContentRepository(bundleURL: bundleURL, language: .english)
+            .grammarClozes(for: .n5)
+
+        #expect(french.count == english.count)
+        #expect(french.allSatisfy { !$0.translation.isEmpty })
+
+        // Le japonais est le meme des deux cotes ; les traductions different.
+        let sameJapanese = zip(french, english).allSatisfy { $0.sentence == $1.sentence }
+        #expect(sameJapanese, "le japonais ne doit pas dependre de la langue")
+        let differing = zip(french, english).filter { $0.translation != $1.translation }
+        #expect(differing.count >= 40,
+                "seulement \(differing.count) traductions different — la localisation ne prend pas")
     }
 
     @Test("Les reponses du bundle forment un pool de distracteurs utilisable")

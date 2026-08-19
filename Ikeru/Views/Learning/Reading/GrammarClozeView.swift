@@ -81,16 +81,17 @@ struct GrammarClozeView: View {
         .accessibilityElement(children: .combine)
     }
 
-    /// La phrase est stockée « japonais — traduction ». On sépare à
-    /// l'affichage plutôt qu'en base : la colonne reste lisible telle quelle,
-    /// et l'audio comme les tests s'appuient dessus.
-    private var japanese: String {
-        cloze.sentence.components(separatedBy: " — ").first ?? cloze.sentence
-    }
+    private var japanese: String { cloze.sentence }
 
-    private var translation: String {
-        let parts = cloze.sentence.components(separatedBy: " — ")
-        return parts.count > 1 ? parts.dropFirst().joined(separator: " — ") : ""
+    /// Dans la langue de l'apprenant : elle vient de la colonne localisée, pas
+    /// d'une copie figée à la génération. La version figée affichait une glose
+    /// anglaise sous une UI française (constaté sur device le 2026-08-19).
+    private var translation: String { cloze.translation }
+
+    /// La phrase complète, le trou rempli par la bonne réponse. Montrée
+    /// seulement APRÈS coup — c'est elle qu'on fait entendre.
+    private var completedSentence: String {
+        japanese.replacingOccurrences(of: GrammarCloze.blank, with: options.correctAnswer)
     }
 
     // MARK: - Options
@@ -141,6 +142,23 @@ struct GrammarClozeView: View {
 
     private var revealFooter: some View {
         VStack(spacing: IkeruTheme.Spacing.md) {
+            // La phrase complète, à entendre — et JAMAIS avant d'avoir répondu :
+            // l'audio prononce l'élément manquant, donc le proposer plus tôt
+            // donnerait la réponse. Après coup c'est l'inverse : entendre le
+            // motif entier, au bon rythme, est ce qui l'installe.
+            HStack(spacing: IkeruTheme.Spacing.sm) {
+                Text(completedSentence)
+                    .ikeruScaledFont(17, weight: .regular, relativeTo: .body)
+                    .foregroundStyle(Color.ikeruTextPrimary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                ListenButton(text: completedSentence, diameter: 36, glyphSize: 13)
+            }
+            .padding(IkeruTheme.Spacing.sm)
+            .background(Color.white.opacity(0.03))
+            .clipShape(RoundedRectangle(cornerRadius: IkeruTheme.Radius.sm))
+
             Text(cloze.title)
                 .ikeruScaledFont(13, weight: .semibold, relativeTo: .footnote)
                 .foregroundStyle(Color.ikeruPrimaryAccent)

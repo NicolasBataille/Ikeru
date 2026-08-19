@@ -5,10 +5,10 @@ import Foundation
 /// One fill-in-the-blank grammar question: a sentence with the grammar element
 /// removed, the element itself, and the point it teaches.
 ///
-/// The sentence keeps its translation after an em dash — the learner needs the
-/// meaning to aim at, otherwise several answers fit the hole equally well.
-/// `写真を撮っ____ですか。 — May I take a photo?` has one defensible answer;
-/// `写真を撮っ____ですか。` alone has three.
+/// The translation is carried beside the sentence, not inside it — the learner
+/// needs the meaning to aim at, otherwise several answers fit the hole equally
+/// well. `写真を撮っ____ですか。` alone admits three defensible answers; with
+/// « Puis-je prendre une photo ? » it admits one.
 ///
 /// Built offline by `scripts/grammar-cloze/generate-cloze.py`, which **refuses
 /// to guess**: a point whose element cannot be located verbatim in its example
@@ -22,19 +22,28 @@ public struct GrammarCloze: Sendable, Equatable, Identifiable {
     /// The point's title, e.g. `てもいい (Permission)` — shown after answering.
     public let title: String
 
-    /// The sentence with the element replaced by `____`, translation kept.
+    /// The JAPANESE sentence with the element replaced by `____`.
     public let sentence: String
+
+    /// The translation in the learner's language, read from the localised
+    /// `examples` column at query time — never frozen alongside the sentence.
+    /// Freezing it shipped an English gloss under a French UI (device,
+    /// 2026-08-19). Empty when the bundle has no translation for that example;
+    /// the view then omits the line.
+    public let translation: String
 
     /// The removed element, e.g. `てもいい`. This is the correct answer.
     public let answer: String
 
     public var id: Int { pointID }
 
-    public init(pointID: Int, title: String, sentence: String, answer: String) {
+    public init(pointID: Int, title: String, sentence: String,
+                answer: String, translation: String = "") {
         self.pointID = pointID
         self.title = title
         self.sentence = sentence
         self.answer = answer
+        self.translation = translation
     }
 
     /// The blank marker the generator writes. Views split on it to lay the

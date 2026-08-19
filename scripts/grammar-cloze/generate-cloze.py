@@ -3,9 +3,11 @@
 
 Writes two columns on ``grammar_points``:
 
-- ``cloze_sentence`` — the first example with the grammar element replaced by
-  ``____`` (four underscores), plus its translation kept after the em dash so
-  the learner has the meaning to aim at.
+- ``cloze_sentence`` — the first example's JAPANESE with the grammar element
+  replaced by ``____`` (four underscores). The translation is deliberately NOT
+  stored here: it is derived at read time from the already-localised
+  ``examples`` column, so a French learner sees a French gloss. Freezing it
+  here shipped an English translation under a French UI (device, 2026-08-19).
 - ``cloze_answer`` — the exact substring that was removed.
 
 The answer is derived from the point's title where that works (37 of 51), and
@@ -80,9 +82,15 @@ def main(argv: list[str]) -> int:
                 f"{point_id} {title}: réponse « {answer} » absente de « {japanese} »")
             continue
 
+        # Japonais SEUL. La traduction n'est PAS figée ici : elle est dérivée à
+        # la lecture depuis la colonne `examples` déjà localisée, sinon un
+        # apprenant en français lisait la traduction anglaise — constaté sur
+        # device le 2026-08-19. Le japonais de `examples[0]` est identique dans
+        # les deux langues pour les 51 points (vérifié), donc le trou posé ici
+        # vaut pour les deux.
+        _ = translation
         blanked = japanese.replace(answer, BLANK, 1)
-        sentence = f"{blanked} — {translation}".strip() if translation else blanked
-        updates.append((sentence, answer, point_id))
+        updates.append((blanked, answer, point_id))
 
     print(f"points                 : {len(rows)}")
     print(f"exercices construits   : {len(updates)}")

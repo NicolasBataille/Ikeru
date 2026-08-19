@@ -509,6 +509,18 @@ actor ContentDatabaseActor {
     /// La phrase reste dans la langue de l'apprenant pour la traduction, mais
     /// le japonais et la reponse ne sont pas localises — ce sont les memes dans
     /// les deux langues.
+    /// La traduction du premier exemple d'un tableau JSON « japonais — traduction ».
+    /// Vide si le tableau est illisible ou si l'entree n'a pas de tiret cadratin :
+    /// la vue omet alors la ligne plutot que d'afficher du japonais en double.
+    static func firstExampleTranslation(from json: String) -> String {
+        guard let data = json.data(using: .utf8),
+              let entries = try? JSONDecoder().decode([String].self, from: data),
+              let first = entries.first else { return "" }
+        let parts = first.components(separatedBy: " — ")
+        guard parts.count > 1 else { return "" }
+        return parts.dropFirst().joined(separator: " — ")
+    }
+
     func grammarClozes(for level: JLPTLevel) -> [GrammarCloze] {
         guard openIfNeeded() else { return [] }
         let columns = columnNames(of: "grammar_points")
@@ -517,8 +529,14 @@ actor ContentDatabaseActor {
         }
 
         let title = localizedColumn(english: "title", french: "title_fr", table: "grammar_points")
+        // La traduction vient de la colonne LOCALISEE, pas d'une copie figee :
+        // `cloze_sentence` ne porte que le japonais. Geler la traduction a la
+        // generation avait mis une glose anglaise sous une UI francaise.
+        let examples = localizedColumn(
+            english: "examples", french: "examples_fr", table: "grammar_points"
+        )
         let sql = """
-            SELECT id, \(title), cloze_sentence, cloze_answer
+            SELECT id, \(title), cloze_sentence, cloze_answer, \(examples)
             FROM grammar_points
             WHERE jlpt_level = ?
               AND TRIM(COALESCE(cloze_sentence, '')) != ''
@@ -536,11 +554,15 @@ actor ContentDatabaseActor {
 
         var results: [GrammarCloze] = []
         while sqlite3_step(stmt) == SQLITE_ROW {
+            // `examples` est un tableau JSON « japonais — traduction » ; on ne
+            // garde que la traduction du PREMIER, celui dont vient le trou.
+            let translation = Self.firstExampleTranslation(from: columnText(stmt, 4))
             let cloze = GrammarCloze(
                 pointID: Int(sqlite3_column_int(stmt, 0)),
                 title: columnText(stmt, 1),
                 sentence: columnText(stmt, 2),
-                answer: columnText(stmt, 3)
+                answer: columnText(stmt, 3),
+                translation: translation
             )
             guard !cloze.sentence.isEmpty, !cloze.answer.isEmpty else { continue }
             results.append(cloze)
