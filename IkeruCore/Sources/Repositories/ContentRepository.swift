@@ -58,7 +58,8 @@ import SQLite3
 ///     id INTEGER PRIMARY KEY,
 ///     japanese TEXT,
 ///     english TEXT,
-///     french TEXT,            -- French translation (no reader yet, see below)
+///     french TEXT,            -- French translation
+///     furigana TEXT,          -- 水(みず)を… — written by scripts/furigana/
 ///     vocabulary_word TEXT    -- FK for lookup
 /// );
 ///
@@ -90,9 +91,12 @@ import SQLite3
 ///   `PRAGMA table_info` and queried in English, rather than failing to
 ///   prepare and returning nothing.
 ///
-/// `sentences.french` is populated but has no reader: `fetchSentences` only
-/// serves the Japanese, and nothing in the app reads `sentences.english`
-/// today either. The data is in place for a future consumer.
+/// `sentences.french` and `sentences.furigana` are served by
+/// `exampleSentences(for:limit:)`. `sentences.english` still has no reader —
+/// and note the corpus is lopsided: the Tatoeba half (536 of 632 rows) carries
+/// French and NO English, because it was selected from Tatoeba's jpn↔fra links.
+/// That is why `exampleSentences` drops untranslated rows instead of falling
+/// back across languages the way the vocabulary glosses do.
 public final class ContentRepository: Sendable {
 
     /// The background actor performing thread-safe SQLite operations.
@@ -709,8 +713,13 @@ actor ContentDatabaseActor {
         let translationColumn = language == .french ? "french" : "english"
         guard columnNames(of: "sentences").contains(translationColumn) else { return [] }
 
+        // `furigana` sondee, pas supposee : un bundle anterieur a la colonne
+        // doit servir les phrases sans annotation plutot que d'echouer a
+        // preparer la requete et de ne rien rendre du tout.
+        let hasFurigana = columnNames(of: "sentences").contains("furigana")
+        let furiganaColumn = hasFurigana ? "COALESCE(furigana, '')" : "''"
         let sql = """
-            SELECT japanese, \(translationColumn) FROM sentences
+            SELECT japanese, \(translationColumn), \(furiganaColumn) FROM sentences
             WHERE vocabulary_word = ?
               AND TRIM(COALESCE(\(translationColumn), '')) NOT IN ('', '[]')
             ORDER BY id
@@ -730,8 +739,11 @@ actor ContentDatabaseActor {
         while sqlite3_step(stmt) == SQLITE_ROW {
             let japanese = columnText(stmt, 0)
             let translation = columnText(stmt, 1)
+            let furigana = columnText(stmt, 2)
             guard !japanese.isEmpty, !translation.isEmpty else { continue }
-            examples.append(SentenceExample(japanese: japanese, translation: translation))
+            examples.append(SentenceExample(japanese: japanese,
+                                            translation: translation,
+                                            furigana: furigana))
         }
         return examples
     }

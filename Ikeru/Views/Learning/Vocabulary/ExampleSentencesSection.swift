@@ -72,11 +72,17 @@ struct ExampleSentencesSection: View {
     private func exampleRow(_ example: SentenceExample) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(alignment: .top, spacing: IkeruTheme.Spacing.sm) {
-                Text(example.japanese)
-                    .ikeruScaledFont(16, weight: .regular, relativeTo: .body)
-                    .foregroundStyle(Color.ikeruTextPrimary)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                // `KanaRubyText`, pas `Text` : il pose les hiragana AU-DESSUS
+                // des kanji seulement — jamais de romaji, jamais de ruby sur
+                // du kana deja lisible. `displayText` retombe sur la phrase
+                // nue si le bundle ne porte pas encore la colonne.
+                KanaRubyText(
+                    example.displayText,
+                    textColor: Color.ikeruTextPrimary,
+                    showFurigana: true,
+                    baseFont: .system(size: 16, weight: .regular)
+                )
+                .frame(maxWidth: .infinity, alignment: .leading)
 
                 // Chaque phrase du bundle a son clip (vérifié 2026-08-19 :
                 // 0 manquant sur les 632). Entendre l'exemple vaut autant que
