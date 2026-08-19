@@ -12,9 +12,23 @@ public enum VarietyPoolResolver {
 
     /// Raw pool by JLPT level (before unlocking constraints).
     public static func pool(for level: JLPTLevel) -> Set<ExerciseType> {
-        var result: Set<ExerciseType> = [.listeningSubtitled, .fillInBlank]
+        // `.grammarExercise` est au N5, pas au N4 — corrige le 2026-08-19.
+        //
+        // Il etait derriere `level >= .n4`, ce qui le rendait INATTEIGNABLE :
+        // l'app est N5 et rien d'autre (« That is JLPT N5 and no further »,
+        // README), donc aucune seance ne pouvait le programmer. Le seuil datait
+        // d'une epoque ou l'exercice de grammaire n'avait ni contenu ni ecran :
+        // il rendait un placeholder, et le planificateur lui passait un `UUID()`
+        // fabrique. Le laisser en N4 aurait fait un exercice complet que
+        // personne n'aurait jamais vu.
+        //
+        // Le contenu, lui, est bien du N5 : les 51 points couvrent la liste
+        // officielle N5 (40/40, mesure le 2026-08-19). La porte reste tenue par
+        // `ExerciseUnlockService`, qui exige les hiragana maitrises — un
+        // debutant ne recoit donc pas de texte a trou avant de savoir lire.
+        var result: Set<ExerciseType> = [.listeningSubtitled, .fillInBlank, .grammarExercise]
         if level >= .n4 {
-            result.formUnion([.grammarExercise, .sentenceConstruction])
+            result.insert(.sentenceConstruction)
         }
         if level >= .n3 {
             result.formUnion([.readingPassage, .writingPractice, .listeningUnsubtitled])

@@ -40,6 +40,10 @@ struct ExerciseTransitionContainer: View {
     /// no content bundle was available; the hosts then show a skip affordance.
     let vocabularyPool: [VocabularyItem]
 
+    /// Les exercices de grammaire a trou du bundle. Vide sur un bundle
+    /// anterieur au generateur — l'hote affiche alors l'echappatoire.
+    var grammarClozes: [GrammarCloze] = []
+
     /// Profile retention snapshotted by the session — powers the per-card
     /// predicted intervals under the grade buttons.
     var desiredRetention: Double = 0.9
@@ -134,12 +138,7 @@ struct ExerciseTransitionContainer: View {
             HandwritingDrillHost(character: card.front, onComplete: onExerciseComplete)
 
         case .grammarExercise:
-            placeholderExerciseView(
-                icon: sfSymbol(for: .reading),
-                title: "Grammar Exercise",
-                detail: "Grammar point",
-                skill: .reading
-            )
+            GrammarClozeDrillHost(clozes: grammarClozes, onComplete: onExerciseComplete)
 
         case .writingPractice(let card):
             // Writing practice reuses the same handwriting drill and, like
@@ -719,6 +718,48 @@ private struct ListeningDrillHost: View {
 /// Falls back to `DrillUnavailableView` when the pool can't yield a full
 /// question (needs ≥ N+1 distinct meanings, e.g. an empty content bundle) so
 /// the session never dead-ends on a degenerate one-option question.
+/// Tire une question a trou parmi celles du bundle et construit ses options.
+///
+/// Comme les autres hotes, il ne pose une question que s'il peut en poser une
+/// honnete : deux propositions au minimum. Sous ce seuil il montre
+/// `DrillUnavailableView` plutot qu'un QCM a un seul choix.
+private struct GrammarClozeDrillHost: View {
+    let clozes: [GrammarCloze]
+    let onComplete: (Grade) -> Void
+    @State private var question: Question?
+
+    private struct Question: Equatable {
+        let cloze: GrammarCloze
+        let options: GrammarClozeOptions
+    }
+
+    init(clozes: [GrammarCloze], onComplete: @escaping (Grade) -> Void) {
+        self.clozes = clozes
+        self.onComplete = onComplete
+        _question = State(initialValue: Self.buildQuestion(from: clozes))
+    }
+
+    var body: some View {
+        if let question {
+            GrammarClozeView(
+                cloze: question.cloze,
+                options: question.options,
+                onComplete: onComplete
+            )
+        } else {
+            DrillUnavailableView { onComplete(.again) }
+        }
+    }
+
+    private static func buildQuestion(from clozes: [GrammarCloze]) -> Question? {
+        guard let target = clozes.randomElement() else { return nil }
+        let pool = clozes.map(\.answer).filter { $0 != target.answer }
+        let options = GrammarClozeOptionsBuilder.build(answer: target.answer, pool: pool)
+        guard options.options.count >= 2 else { return nil }
+        return Question(cloze: target, options: options)
+    }
+}
+
 private struct VocabularyRecallDrillHost: View {
     let vocabulary: [VocabularyItem]
     let onComplete: (Grade) -> Void

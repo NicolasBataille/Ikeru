@@ -224,6 +224,12 @@ public final class ContentRepository: Sendable {
         await actor.grammarPointsByLevel(level)
     }
 
+    /// Les exercices a trou pour ce niveau, un par point qui en porte un.
+    /// Vide sur un bundle anterieur au generateur — l'exercice se saute alors.
+    public func grammarClozes(for level: JLPTLevel) async -> [GrammarCloze] {
+        await actor.grammarClozes(for: level)
+    }
+
     // MARK: - Edge Queries
 
     /// Fetch all kanji-radical edges for a given JLPT level.
@@ -493,6 +499,88 @@ actor ContentDatabaseActor {
     }
 
     // MARK: - Grammar Queries
+
+    /// Les exercices a trou, un par point de grammaire qui en porte un.
+    ///
+    /// La colonne est **sondee**, pas supposee : un bundle anterieur au
+    /// generateur rend une liste vide et l'exercice se saute, plutot que
+    /// d'echouer a preparer la requete.
+    ///
+    /// La phrase reste dans la langue de l'apprenant pour la traduction, mais
+    /// le japonais et la reponse ne sont pas localises — ce sont les memes dans
+    /// les deux langues.
+    /// La traduction du premier exemple d'un tableau JSON « japonais — traduction ».
+    /// Vide si le tableau est illisible ou si l'entree n'a pas de tiret cadratin :
+    /// la vue omet alors la ligne plutot que d'afficher du japonais en double.
+    /// Un tableau JSON de chaines, ou vide s'il est illisible — l'exercice
+    /// tombe alors sur zero distracteur et la vue se degrade, plutot que de
+    /// planter sur du contenu inattendu.
+    static func decodeStrings(_ json: String) -> [String] {
+        guard let data = json.data(using: .utf8),
+              let values = try? JSONDecoder().decode([String].self, from: data)
+        else { return [] }
+        return values
+    }
+
+    static func firstExampleTranslation(from json: String) -> String {
+        guard let data = json.data(using: .utf8),
+              let entries = try? JSONDecoder().decode([String].self, from: data),
+              let first = entries.first else { return "" }
+        let parts = first.components(separatedBy: " — ")
+        guard parts.count > 1 else { return "" }
+        return parts.dropFirst().joined(separator: " — ")
+    }
+
+    func grammarClozes(for level: JLPTLevel) -> [GrammarCloze] {
+        guard openIfNeeded() else { return [] }
+        let columns = columnNames(of: "grammar_points")
+        guard columns.contains("cloze_sentence"), columns.contains("cloze_answer") else {
+            return []
+        }
+
+        let title = localizedColumn(english: "title", french: "title_fr", table: "grammar_points")
+        // La traduction vient de la colonne LOCALISEE, pas d'une copie figee :
+        // `cloze_sentence` ne porte que le japonais. Geler la traduction a la
+        // generation avait mis une glose anglaise sous une UI francaise.
+        let examples = localizedColumn(
+            english: "examples", french: "examples_fr", table: "grammar_points"
+        )
+        let sql = """
+            SELECT id, \(title), cloze_sentence, cloze_answer, \(examples),
+                   COALESCE(cloze_distractors, '[]')
+            FROM grammar_points
+            WHERE jlpt_level = ?
+              AND TRIM(COALESCE(cloze_sentence, '')) != ''
+              AND TRIM(COALESCE(cloze_answer, '')) != ''
+            ORDER BY id
+            """
+
+        var stmt: OpaquePointer?
+        guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else {
+            Logger.content.error("Failed to prepare grammarClozes query")
+            return []
+        }
+        defer { sqlite3_finalize(stmt) }
+        sqlite3_bind_text(stmt, 1, level.rawValue, -1, SQLITE_TRANSIENT)
+
+        var results: [GrammarCloze] = []
+        while sqlite3_step(stmt) == SQLITE_ROW {
+            // `examples` est un tableau JSON « japonais — traduction » ; on ne
+            // garde que la traduction du PREMIER, celui dont vient le trou.
+            let translation = Self.firstExampleTranslation(from: columnText(stmt, 4))
+            let cloze = GrammarCloze(
+                pointID: Int(sqlite3_column_int(stmt, 0)),
+                title: columnText(stmt, 1),
+                sentence: columnText(stmt, 2),
+                answer: columnText(stmt, 3),
+                translation: translation,
+                distractors: Self.decodeStrings(columnText(stmt, 5))
+            )
+            guard !cloze.sentence.isEmpty, !cloze.answer.isEmpty else { continue }
+            results.append(cloze)
+        }
+        return results
+    }
 
     func grammarPointsByLevel(_ level: JLPTLevel) -> [GrammarPoint] {
         guard openIfNeeded() else { return [] }

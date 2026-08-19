@@ -60,6 +60,7 @@ final class SessionComposer {
         let endPolicy: SessionEndPolicy
         let jlptLevel: JLPTLevel
         let vocabularyPool: [VocabularyItem]
+        let grammarClozes: [GrammarCloze]
         let srsCardCount: Int
         let estimatedDurationMinutes: Int
         /// Card ids awaiting their ungraded new-card presentation pass — see
@@ -90,6 +91,7 @@ final class SessionComposer {
         guard !srsCards.isEmpty else { return nil }
 
         let pool = await vocabularyPool(level: snapshot.jlptLevel)
+        let clozes = await grammarClozePool(level: snapshot.jlptLevel)
 
         return HomeRecommendationPlan(
             sessionQueue: srsCards,
@@ -100,6 +102,7 @@ final class SessionComposer {
             ),
             jlptLevel: snapshot.jlptLevel,
             vocabularyPool: pool,
+            grammarClozes: clozes,
             srsCardCount: srsCards.count,
             estimatedDurationMinutes: plan.estimatedDurationMinutes
                 + Self.minutes(fromSeconds: scheduled.addedDurationSeconds),
@@ -146,6 +149,7 @@ final class SessionComposer {
         }
 
         let pool = await vocabularyPool(level: snapshot.jlptLevel)
+        let clozes = await grammarClozePool(level: snapshot.jlptLevel)
 
         return HomeRecommendationPlan(
             sessionQueue: srsCards,
@@ -156,6 +160,7 @@ final class SessionComposer {
             ),
             jlptLevel: snapshot.jlptLevel,
             vocabularyPool: pool,
+            grammarClozes: clozes,
             srsCardCount: srsCards.count,
             estimatedDurationMinutes: plan.estimatedDurationMinutes
                 + Self.minutes(fromSeconds: scheduled.addedDurationSeconds),
@@ -171,6 +176,7 @@ final class SessionComposer {
         let endPolicy: SessionEndPolicy
         let jlptLevel: JLPTLevel
         let vocabularyPool: [VocabularyItem]
+        let grammarClozes: [GrammarCloze]
         let srsCardCount: Int
         let estimatedDurationMinutes: Int
         /// See `HomeRecommendationPlan.cardsNeedingPresentation`.
@@ -208,6 +214,7 @@ final class SessionComposer {
         // selected (defensive — UI requires a selection).
         let jlptLevel = levels.max() ?? snapshot.jlptLevel
         let pool = await vocabularyPool(level: jlptLevel)
+        let clozes = await grammarClozePool(level: jlptLevel)
 
         return StudyCustomPlan(
             sessionQueue: srsCards,
@@ -218,6 +225,7 @@ final class SessionComposer {
             ),
             jlptLevel: jlptLevel,
             vocabularyPool: pool,
+            grammarClozes: clozes,
             srsCardCount: srsCards.count,
             estimatedDurationMinutes: plan.estimatedDurationMinutes
                 + Self.minutes(fromSeconds: scheduled.addedDurationSeconds),
@@ -264,6 +272,17 @@ final class SessionComposer {
     /// (Shadowing / Listening). Returns an empty pool when no
     /// `ContentRepository` was injected (previews / tests) — never throws,
     /// never blocks the session start on a failed content read.
+    /// Les exercices de grammaire a trou du niveau. Meme forme que
+    /// `vocabularyPool` : charge une fois a la composition, lu au rendu.
+    func grammarClozePool(level: JLPTLevel) async -> [GrammarCloze] {
+        guard let contentRepository else { return [] }
+        let clozes = await contentRepository.grammarClozes(for: level)
+        Logger.ui.info(
+            "session.grammarClozes level=\(level.rawValue, privacy: .public) count=\(clozes.count, privacy: .public)"
+        )
+        return clozes
+    }
+
     func vocabularyPool(level: JLPTLevel) async -> [VocabularyItem] {
         guard let contentRepository else { return [] }
         let rows = await contentRepository.vocabularyByLevel(level)

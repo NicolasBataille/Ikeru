@@ -223,7 +223,6 @@ struct HomeView: View {
                 topBar(vm)
                 proverbHero(vm)
                 dailyTermSection
-                sessionBreakdown(vm)
                 competencyBookSection(vm)
                 nextStepSection(vm)
             }
@@ -564,6 +563,7 @@ struct HomeView: View {
             // progress number that replaces XP/streak chrome). Identifier is
             // on the count `Text` leaf inside, not this call site — see
             // `kanaProgressLine`'s body.
+            sessionShapeLine(vm)
             kanaProgressLine(vm)
         }
         .tatamiRoom(.glass, padding: 20)
@@ -587,6 +587,55 @@ struct HomeView: View {
     /// `reps >= 2`, see `MasteryLevel`) but silent, exactly the "anti-burnout
     /// without a mirror" gap the 2026-08-10 review names. The in-progress
     /// count is the trace that makes session one visible.
+    /// La forme de la prochaine seance, en une ligne discrete sous le CTA.
+    ///
+    /// Remplace la bande « NOUVEAUX / RÉVISION / APPROX. » qui occupait une
+    /// carte entiere entre l'accueil et le terme du jour. Signale sur device le
+    /// 2026-08-19 : trois chiffres, trois icones et un cadre pour dire ce que
+    /// le gros chiffre juste au-dessus dit deja en partie — l'ecran se lisait
+    /// charge. Ici l'information reste, dans le meme registre typographique que
+    /// la ligne kana, et sans son propre cadre.
+    ///
+    /// La duree n'est PAS reprise : « ~1 min » sur une seance d'une carte
+    /// n'apprend rien, et c'est la valeur la moins actionnable des trois.
+    @ViewBuilder
+    private func sessionShapeLine(_ vm: HomeViewModel) -> some View {
+        if vm.sessionPreviewCardCount > 0 {
+            HStack(spacing: 8) {
+                if vm.sessionPreviewNewCount > 0 {
+                    Text(verbatim: "\(vm.sessionPreviewNewCount)")
+                        .ikeruScaledFont(12, design: .serif, relativeTo: .caption)
+                        .monospacedDigit()
+                        .foregroundStyle(Color.ikeruTextSecondary)
+                    Text("New")
+                        .ikeruScaledFont(10, relativeTo: .caption2)
+                        .textCase(.uppercase)
+                        .tracking(1.0)
+                        .foregroundStyle(Color.ikeruTextTertiary)
+                }
+                if vm.sessionPreviewNewCount > 0 && vm.sessionPreviewReviewCount > 0 {
+                    Text("\u{00B7}")
+                        .foregroundStyle(Color.ikeruTextTertiary)
+                }
+                if vm.sessionPreviewReviewCount > 0 {
+                    Text(verbatim: "\(vm.sessionPreviewReviewCount)")
+                        .ikeruScaledFont(12, design: .serif, relativeTo: .caption)
+                        .monospacedDigit()
+                        .foregroundStyle(Color.ikeruTextSecondary)
+                    Text("Review")
+                        .ikeruScaledFont(10, relativeTo: .caption2)
+                        .textCase(.uppercase)
+                        .tracking(1.0)
+                        .foregroundStyle(Color.ikeruTextTertiary)
+                }
+                Spacer()
+            }
+            .padding(.top, 2)
+            .accessibilityElement(children: .combine)
+            .accessibilityIdentifier("home.sessionShape")
+        }
+    }
+
     private func kanaProgressLine(_ vm: HomeViewModel) -> some View {
         HStack(spacing: 8) {
             Text("\u{304B}\u{306A}") // かな

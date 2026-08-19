@@ -10028,6 +10028,24 @@
         }
       }
     },
+    "Grammar.Validate" : {
+      "comment" : "Button that submits the selected cloze answer",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Validate"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valider"
+          }
+        }
+      }
+    },
     "Vocabulary.Add" : {
       "extractionState" : "manual",
       "localizations" : {

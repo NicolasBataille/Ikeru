@@ -105,6 +105,7 @@
 		5A1C0D3E7B9F42A18C6D0E52 /* ListenButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A1C0D3E7B9F42A18C6D0E51 /* ListenButton.swift */; };
 		61B02BAEB2D22074A962FBBE /* DeleteProfileSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E10FA2BDC5455704DB5EDE7 /* DeleteProfileSheet.swift */; };
 		62289A66A5C3A6A9D6CD9364 /* ListeningIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46F48E350D03281741ABCA19 /* ListeningIntegrationTests.swift */; };
+		TMPAUDIO0000000000000002 /* AudioServiceLifecycleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TMPAUDIO0000000000000001 /* AudioServiceLifecycleTests.swift */; };
 		6264BDA72959D5123E44F75D /* PreWarmFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C0690DD9A67CB231FB3B2BE /* PreWarmFactory.swift */; };
 		65CFDAA2B97AA214A4AEEFA8 /* SessionViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B43EF20C3659B03FE6702B5 /* SessionViewModel.swift */; };
 		C7EE3A721EAE46B793D58906 /* SessionComposer.swift in Sources */ = {isa = PBXBuildFile; fileRef = E418B4ABDFF04297AF386A8A /* SessionComposer.swift */; };
@@ -206,6 +207,7 @@
 		C8F7ED3F00387307F04FD73E /* InlineQuizView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5A9840F6C7DB7B734D9FC80 /* InlineQuizView.swift */; };
 		C91AAFCB6B347DD7E48BEC5F /* GrammarPointView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BFAD9F3F0796D53A41F3F2A /* GrammarPointView.swift */; };
 		8C1C0D3E7B9F42A18C6D0E72 /* GrammarListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C1C0D3E7B9F42A18C6D0E71 /* GrammarListView.swift */; };
+		AB1C0D3E7B9F42A18C6D0E92 /* GrammarClozeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB1C0D3E7B9F42A18C6D0E91 /* GrammarClozeView.swift */; };
 		C98990815A7397FAEECC5E9F /* MasteryBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 432F33D5FCBBD072BE009810 /* MasteryBadge.swift */; };
 		C9C552606F14AE938AB0A1C3 /* StrokeTracingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69FD1BC54CDC2C981E6F4402 /* StrokeTracingView.swift */; };
 		CA1E4BC77111ADC4E439BCB7 /* KanaDrillSessionSummary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6999560B934B111F55D2F3E5 /* KanaDrillSessionSummary.swift */; };
@@ -334,6 +336,7 @@
 		15C00EAAA3BA98179DFE119D /* KanjiStudyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KanjiStudyView.swift; sourceTree = "<group>"; };
 		1BFAD9F3F0796D53A41F3F2A /* GrammarPointView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GrammarPointView.swift; sourceTree = "<group>"; };
 		8C1C0D3E7B9F42A18C6D0E71 /* GrammarListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GrammarListView.swift; sourceTree = "<group>"; };
+		AB1C0D3E7B9F42A18C6D0E91 /* GrammarClozeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GrammarClozeView.swift; sourceTree = "<group>"; };
 		AAKC0000000000000000001 /* KeychainAvailabilityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainAvailabilityTests.swift; sourceTree = "<group>"; };
 		AACB0000000000000000001 /* ContentBundleVocabularyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentBundleVocabularyTests.swift; sourceTree = "<group>"; };
 		1D97512A99D55C0A04CB5169 /* KanaDrillViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KanaDrillViewModelTests.swift; sourceTree = "<group>"; };
@@ -365,6 +368,7 @@
 		457B840A63725833DFB68E38 /* NameEntryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NameEntryView.swift; sourceTree = "<group>"; };
 		45CECCE4FCC052EECE84795A /* DisplayModeEnvironmentTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DisplayModeEnvironmentTests.swift; sourceTree = "<group>"; };
 		46F48E350D03281741ABCA19 /* ListeningIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListeningIntegrationTests.swift; sourceTree = "<group>"; };
+		TMPAUDIO0000000000000001 /* AudioServiceLifecycleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioServiceLifecycleTests.swift; sourceTree = "<group>"; };
 		4C436FC5E8920ED935DA2049 /* PlaybackRateSelector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackRateSelector.swift; sourceTree = "<group>"; };
 		4EBABD6C9A0B5F802FBA5DB2 /* RigJobsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RigJobsViewModel.swift; sourceTree = "<group>"; };
 		4FCAA1C6D8004A72C4233DEE /* FusumaRail.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FusumaRail.swift; sourceTree = "<group>"; };
@@ -656,6 +660,7 @@
 				E199ACCB659AD0493D556C8C /* FillInBlankExerciseView.swift */,
 				1BFAD9F3F0796D53A41F3F2A /* GrammarPointView.swift */,
 				8C1C0D3E7B9F42A18C6D0E71 /* GrammarListView.swift */,
+				AB1C0D3E7B9F42A18C6D0E91 /* GrammarClozeView.swift */,
 				E028A7B4AD2AB9F9E1802817 /* ReadingPassageView.swift */,
 				BCB50A9A0ED295F6A7C82144 /* VocabularyStudyView.swift */,
 				70EEF639F3CAC30DE1A9B25F /* VocabularyRecallView.swift */,
@@ -871,6 +876,7 @@
 				A6C995B4118F51F9AD485135 /* KanjiStudyViewModelTests.swift */,
 				566DAE0C74757C138694AE80 /* KanjiStudyViewStateTests.swift */,
 				46F48E350D03281741ABCA19 /* ListeningIntegrationTests.swift */,
+				TMPAUDIO0000000000000001 /* AudioServiceLifecycleTests.swift */,
 				B5EC7CD071A02DEB1F3611E0 /* ListeningViewModelTests.swift */,
 				AF20C958BD43ABB601BE2B23 /* ProfileViewModelTests.swift */,
 				095E73A3C30741AA92AE2679 /* OnboardingRestoreDecisionTests.swift */,
@@ -1481,6 +1487,7 @@
 				B4D53BD2C72F596C888D6FAB /* KanjiStudyViewModelTests.swift in Sources */,
 				3F46A142E358DF4FAF74F67B /* KanjiStudyViewStateTests.swift in Sources */,
 				62289A66A5C3A6A9D6CD9364 /* ListeningIntegrationTests.swift in Sources */,
+				TMPAUDIO0000000000000002 /* AudioServiceLifecycleTests.swift in Sources */,
 				784365F25937638D410F69D3 /* ListeningViewModelTests.swift in Sources */,
 				1F267C7F06B849E143C9F872 /* ProfileViewModelTests.swift in Sources */,
 				66025CCA5210488E965338E1 /* OnboardingRestoreDecisionTests.swift in Sources */,
@@ -1561,6 +1568,7 @@
 				BBE2383F1411582FB9D27014 /* GradeButtonsView.swift in Sources */,
 				C91AAFCB6B347DD7E48BEC5F /* GrammarPointView.swift in Sources */,
 				8C1C0D3E7B9F42A18C6D0E72 /* GrammarListView.swift in Sources */,
+				AB1C0D3E7B9F42A18C6D0E92 /* GrammarClozeView.swift in Sources */,
 				9BC4183DC3C8A7EC9B37686D /* HandwritingCanvasView.swift in Sources */,
 				FF89BFE59885EB3742A25989 /* HandwritingExerciseView.swift in Sources */,
 				2F6B8C98160163965120553D /* HandwritingViewModel.swift in Sources */,

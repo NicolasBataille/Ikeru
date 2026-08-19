@@ -29,7 +29,7 @@ n5-content.sqlite, PLUS every "term of the day" reading parsed straight from
 IkeruCore's DailyTermCatalog.swift (so the set stays in lock-step with the
 catalog) (~560 clips, ~10 MB).
 """
-import hashlib, os, re, sqlite3, subprocess, tempfile, urllib.parse, urllib.request
+import hashlib, json, os, re, sqlite3, subprocess, tempfile, urllib.parse, urllib.request
 
 IP = open("/tmp/voicevox_ip.txt").read().strip()
 BASE = f"http://{IP}:50021"
@@ -132,6 +132,38 @@ def collect_texts():
         texts.append(r.strip())
     for (s,) in con.execute("SELECT DISTINCT japanese FROM sentences WHERE japanese IS NOT NULL AND TRIM(japanese)!=''"):
         texts.append(s.strip())
+    # Phrases d'exemple de grammaire : le PREMIER exemple de chaque point, qui
+    # est celui dont l'exercice a trou est tire. Ajoute le 2026-08-19 — 44 des
+    # 51 n'avaient aucun clip et retombaient sur la synthese on-device, laquelle
+    # peut choisir la mauvaise lecture d'un kanji en contexte (mesure : 日本 ->
+    # にっぽん, 何を -> なん). Sur un MOTIF grammatical, une lecture fausse
+    # s'imprime plus durablement que sur un mot isole.
+    for (ex,) in con.execute(
+        "SELECT examples FROM grammar_points WHERE examples IS NOT NULL AND TRIM(examples)!=''"
+    ):
+        try:
+            first = json.loads(ex)[0]
+        except (ValueError, IndexError):
+            continue
+        japanese = first.split(" \u2014 ")[0].strip()
+        if japanese:
+            texts.append(japanese)
+    # Exercice a trou : la phrase completee par CHAQUE option, pas seulement par
+    # la bonne. Sans ca l'exercice serait truque — mesure le 2026-08-19, la
+    # completion correcte avait un clip 12 fois sur 12 et une completion fausse
+    # 1 fois sur 12, donc la bonne reponse s'entendait a la VOIX (clip bundle
+    # contre synthese on-device) sans rien connaitre a la grammaire.
+    #
+    # C'est fini parce que les distracteurs sont figes par point : 51 x 4.
+    for cid, ans, dis in con.execute(
+        "SELECT cloze_sentence, cloze_answer, cloze_distractors FROM grammar_points "
+        "WHERE TRIM(COALESCE(cloze_sentence,'')) != ''"
+    ):
+        options = [ans] + (json.loads(dis) if dis else [])
+        for option in options:
+            completed = cid.replace("____", option)
+            if completed:
+                texts.append(completed)
     con.close()
     texts.extend(collect_daily_term_readings())
     # de-dup, preserve order

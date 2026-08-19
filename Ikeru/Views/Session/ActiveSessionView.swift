@@ -266,6 +266,7 @@ struct ActiveSessionView: View {
                 upcomingCards: viewModel.upcomingCards,
                 feedbackState: viewModel.feedbackState,
                 vocabularyPool: viewModel.vocabularyPool,
+                grammarClozes: viewModel.grammarClozes,
                 desiredRetention: viewModel.desiredRetention,
                 isPresentingNewCard: viewModel.isPresentingNewCard,
                 isPaused: viewModel.isPaused,
