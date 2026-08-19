@@ -85,6 +85,7 @@ extension SessionViewModel {
         endPolicy = composed.endPolicy
         sessionJLPTLevel = composed.jlptLevel
         vocabularyPool = composed.vocabularyPool
+        grammarClozes = composed.grammarClozes
         cardsNeedingPresentation = composed.cardsNeedingPresentation
         planEstimatedDurationMinutes = composed.estimatedDurationMinutes
 
@@ -128,6 +129,7 @@ extension SessionViewModel {
         endPolicy = composed.endPolicy
         sessionJLPTLevel = composed.jlptLevel
         vocabularyPool = composed.vocabularyPool
+        grammarClozes = composed.grammarClozes
         cardsNeedingPresentation = composed.cardsNeedingPresentation
         planEstimatedDurationMinutes = composed.estimatedDurationMinutes
 
@@ -165,6 +167,7 @@ extension SessionViewModel {
         endPolicy = composed.endPolicy
         sessionJLPTLevel = composed.jlptLevel
         vocabularyPool = composed.vocabularyPool
+        grammarClozes = composed.grammarClozes
         cardsNeedingPresentation = composed.cardsNeedingPresentation
         planEstimatedDurationMinutes = composed.estimatedDurationMinutes
 

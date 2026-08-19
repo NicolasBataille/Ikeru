@@ -224,6 +224,12 @@ public final class ContentRepository: Sendable {
         await actor.grammarPointsByLevel(level)
     }
 
+    /// Les exercices a trou pour ce niveau, un par point qui en porte un.
+    /// Vide sur un bundle anterieur au generateur — l'exercice se saute alors.
+    public func grammarClozes(for level: JLPTLevel) async -> [GrammarCloze] {
+        await actor.grammarClozes(for: level)
+    }
+
     // MARK: - Edge Queries
 
     /// Fetch all kanji-radical edges for a given JLPT level.
@@ -493,6 +499,54 @@ actor ContentDatabaseActor {
     }
 
     // MARK: - Grammar Queries
+
+    /// Les exercices a trou, un par point de grammaire qui en porte un.
+    ///
+    /// La colonne est **sondee**, pas supposee : un bundle anterieur au
+    /// generateur rend une liste vide et l'exercice se saute, plutot que
+    /// d'echouer a preparer la requete.
+    ///
+    /// La phrase reste dans la langue de l'apprenant pour la traduction, mais
+    /// le japonais et la reponse ne sont pas localises — ce sont les memes dans
+    /// les deux langues.
+    func grammarClozes(for level: JLPTLevel) -> [GrammarCloze] {
+        guard openIfNeeded() else { return [] }
+        let columns = columnNames(of: "grammar_points")
+        guard columns.contains("cloze_sentence"), columns.contains("cloze_answer") else {
+            return []
+        }
+
+        let title = localizedColumn(english: "title", french: "title_fr", table: "grammar_points")
+        let sql = """
+            SELECT id, \(title), cloze_sentence, cloze_answer
+            FROM grammar_points
+            WHERE jlpt_level = ?
+              AND TRIM(COALESCE(cloze_sentence, '')) != ''
+              AND TRIM(COALESCE(cloze_answer, '')) != ''
+            ORDER BY id
+            """
+
+        var stmt: OpaquePointer?
+        guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else {
+            Logger.content.error("Failed to prepare grammarClozes query")
+            return []
+        }
+        defer { sqlite3_finalize(stmt) }
+        sqlite3_bind_text(stmt, 1, level.rawValue, -1, SQLITE_TRANSIENT)
+
+        var results: [GrammarCloze] = []
+        while sqlite3_step(stmt) == SQLITE_ROW {
+            let cloze = GrammarCloze(
+                pointID: Int(sqlite3_column_int(stmt, 0)),
+                title: columnText(stmt, 1),
+                sentence: columnText(stmt, 2),
+                answer: columnText(stmt, 3)
+            )
+            guard !cloze.sentence.isEmpty, !cloze.answer.isEmpty else { continue }
+            results.append(cloze)
+        }
+        return results
+    }
 
     func grammarPointsByLevel(_ level: JLPTLevel) -> [GrammarPoint] {
         guard openIfNeeded() else { return [] }

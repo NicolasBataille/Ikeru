@@ -420,6 +420,26 @@ struct IkeruApp: App {
             OnboardingFlags.markAllSeen(profileID: profileID)
         }
 
+        // La grammaire entre dans le SRS : une carte `.grammar` par point du
+        // bundle, semee une fois et idempotente sur le recto (le titre du
+        // point). Sans ca, `CardType.grammar` restait un cas d'enum qu'aucune
+        // carte n'habitait — mesure le 2026-08-19 — et la formule de
+        // preparation JLPT recevait `grammarPointsFamiliarPlus: 0` en dur.
+        //
+        // Apres le profil, pas avant : les cartes appartiennent a un profil.
+        Task { @MainActor in
+            guard let repository = BundledContent.makeRepository() else { return }
+            let points = await repository.grammarPointsByLevel(.n5)
+            guard !points.isEmpty else { return }
+            let seeded = await GrammarCardSeeder.seedIfNeeded(
+                points: points,
+                repository: CardRepository(modelContainer: modelContainer)
+            )
+            if !seeded.isEmpty {
+                Logger.ui.info("Seeded \(seeded.count, privacy: .public) grammar cards")
+            }
+        }
+
         #if IKERU_DEV_TOOLS
         // GAP-01 two-client merge test only: launch with -switchToOldestProfile
         // to make the OTHER client's pulled-down profile (always the older

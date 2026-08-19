@@ -266,6 +266,12 @@ public final class SessionViewModel {
     /// vocabulary; the container degrades gracefully in that case.
     public internal(set) var vocabularyPool: [VocabularyItem] = []
 
+    /// Les exercices de grammaire a trou du bundle, meme patron que
+    /// `vocabularyPool` : le conteneur les lit et construit la question au
+    /// rendu. Vide quand aucun depot n'est injecte ou que le bundle precede le
+    /// generateur — le conteneur degrade alors vers l'echappatoire.
+    public internal(set) var grammarClozes: [GrammarCloze] = []
+
     /// The profile's desired retention, snapshotted at session start — feeds
     /// the per-card predicted intervals under the grade buttons so they match
     /// what `gradeCard` will actually schedule.

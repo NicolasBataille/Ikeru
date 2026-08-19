@@ -4,13 +4,16 @@ import Testing
 @Suite("VarietyPoolResolver")
 struct VarietyPoolResolverTests {
 
-    @Test("N5 pool: subtitled listening + fill-in-blank + Sakura (unlock gate is N5, the floor)")
+    /// `.grammarExercise` est au N5 depuis le 2026-08-19. Il etait au N4, ce qui
+    /// le rendait inatteignable dans une app qui ne va pas au-dela du N5 — un
+    /// exercice complet que personne n'aurait jamais vu.
+    @Test("N5 pool: listening + fill-in-blank + grammaire + Sakura")
     func n5() {
         let pool = VarietyPoolResolver.pool(for: .n5)
-        #expect(pool == [.listeningSubtitled, .fillInBlank, .sakuraConversation])
+        #expect(pool == [.listeningSubtitled, .fillInBlank, .grammarExercise, .sakuraConversation])
     }
 
-    @Test("N4 adds grammar + sentence construction")
+    @Test("N4 ajoute la construction de phrase, la grammaire etant deja la")
     func n4() {
         let pool = VarietyPoolResolver.pool(for: .n4)
         #expect(pool.contains(.grammarExercise))
