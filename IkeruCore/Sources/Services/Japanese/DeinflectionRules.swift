@@ -308,16 +308,36 @@ public enum DeinflectionRules {
     ///
     /// A rule can only fire when the candidate ends with its `suffixIn`, so a
     /// candidate ending in `た` can never match a rule ending in `る`. Bucketing
-    /// on that character turns « test all 124 rules » into « test the 3 to 12
-    /// that could possibly apply », without changing a single outcome.
+    /// on that character turns « test all 220 rules » into « test the 9 that
+    /// could possibly apply », without changing a single outcome.
     ///
-    /// This is not premature optimisation, it closed a measured cliff. The
-    /// table grew from 106 to 124 rules when the familiar contractions,
-    /// honorifics and aspect chains were added — all legitimate — and a
-    /// paragraph went from 53 ms to 737 ms, because the cost is
-    /// `depth × frontier × RULES` and every one of those factors had grown.
-    /// The choice looked like « correct Japanese or a responsive app ». It was
-    /// neither: it was a linear scan in the innermost loop.
+    /// ⚠️ **220, pas 124.** 124 est le nombre de `DeinflectionRule(` écrits
+    /// dans ce fichier ; douze d'entre eux vivent dans la boucle godan et sont
+    /// donc instanciés neuf fois. `DeinflectionRules.all.count` vaut **220**
+    /// (194 avant l'enrichissement), répartis en 25 seaux de 2 à 59 règles,
+    /// 9 en moyenne.
+    ///
+    /// ⚠️ **Et le coût de l'enrichissement était ×1,4, pas ×14.** Cette note
+    /// annonçait « un paragraphe passé de 53 ms à 737 ms » et présentait donc
+    /// un arbitrage « japonais correct contre application réactive ». Remesuré
+    /// en release, même machine, même paragraphe de 354 caractères, 624
+    /// joints, balayage linéaire dans les deux cas :
+    ///
+    /// ```
+    /// table de bb5a939 (194 règles) : 1 816 déflexions produites,  53,0 ms
+    /// table actuelle   (220 règles) : 2 161 déflexions produites,  74,7 ms
+    /// table actuelle, indexée       : 2 161 déflexions produites,  13,2 ms
+    /// ```
+    ///
+    /// Le 53 ms se reproduit au dixième près ; le 737 ms est faux d'un facteur
+    /// dix — il a dû être pris sur une table intermédiaire contenant des
+    /// règles retirées depuis (la règle « い → る » nue, dont le commentaire
+    /// plus haut dit qu'elle faisait à elle seule passer un paragraphe de
+    /// 0,9 s à 2,8 s). L'arbitrage n'a donc jamais existé à cette échelle :
+    /// +13 % de règles et +19 % de frontière coûtent +41 %, pas ×14. Ce qui
+    /// reste vrai, et qui justifie l'index, c'est que le coût est
+    /// `depth × frontier × RULES` et qu'un balayage linéaire de la table dans
+    /// la boucle la plus interne est le facteur le plus bête des trois.
     ///
     /// ⚠️ **Chaque seau porte AUSSI les règles sans suffixe**, à leur place
     /// dans `all`. Deux raisons, et la seconde vaut plus que la première.

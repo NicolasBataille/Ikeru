@@ -1430,11 +1430,21 @@ public enum IkeruSchemaV5: VersionedSchema {
 /// versioned schemas existed (see its doc comment for the full story);
 /// `IkeruSchemaV2` is frozen at the shape that shipped before the
 /// learner-telemetry `ReviewLog` fields; `IkeruSchemaV3` is frozen at the
-/// shape that shipped before the cloud-sync columns; `IkeruSchemaV4` is the
-/// live current shape. All three stages are purely additive — new
-/// defaulted/optional columns and (for V1→V2) a wholly new entity — so
-/// `.lightweight` is sufficient for each: SwiftData adds the new
-/// columns/table and leaves prior data untouched.
+/// shape that shipped before the cloud-sync columns; `IkeruSchemaV4` is frozen
+/// at the shape that shipped before `TextImport`; `IkeruSchemaV5` is the live
+/// current shape. All FOUR stages are purely additive — new defaulted/optional
+/// columns, and (for V1→V2 and V4→V5) a wholly new entity — so `.lightweight`
+/// is sufficient for each: SwiftData adds the new columns/table and leaves
+/// prior data untouched.
+///
+/// ⚠️ « Frozen » means something different for V4 than for V1–V3: V4's `models`
+/// still names LIVE classes, so it is frozen by *discipline and by the golden
+/// digest*, not by nested snapshots. Freezing it properly — the way V1 did —
+/// would break `KanaSessionEndToEndTests` and `SessionDecouplingTests`, which
+/// open a container on `IkeruSchemaV4` inside the shared `IkeruTests` process:
+/// nested frozen classes there would poison CoreData's entity↔class cache, the
+/// exact failure CLAUDE.md quarantines the migration suites for. Move those two
+/// suites to V5 first, or out of the shared process.
 ///
 /// When a future `@Model` change needs data transformation (renames with
 /// data preservation, split/merge fields, etc.), use `.custom(...)` instead

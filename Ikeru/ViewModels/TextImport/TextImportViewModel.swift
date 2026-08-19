@@ -60,6 +60,9 @@ public final class TextImportViewModel {
     /// Selected dictionary forms, the geste central of the whole feature.
     public private(set) var selected: Set<String> = []
 
+    /// Whether the suggestion cap has already been applied for this text.
+    private var hasPreselected = false
+
     /// Entries **created** by the last `save()`, in selection order — what the
     /// « pratique ce que tu viens de lire » mini-session drills. Proposed,
     /// never imposed. A word the learner already had is deliberately absent:
@@ -72,6 +75,15 @@ public final class TextImportViewModel {
 
     /// How many unknown words are pre-ticked.
     public static let suggestionCap = 8
+
+    /// Marks a stored meaning as being in English rather than French.
+    ///
+    /// Deliberately a visible prefix in the text and not a hidden flag: the
+    /// meaning travels through the dictionary list, the flashcard, the quiz and
+    /// the cloud backup, and every one of those would need to learn about a
+    /// flag. « EN — » is understood everywhere, including in an export the
+    /// learner opens in a text editor.
+    public static let englishLabelPrefix = "EN — "
 
     // MARK: Derived
 
@@ -127,14 +139,42 @@ public final class TextImportViewModel {
 
         knownForms = Set(await vocabulary.allEntries().map(\.word))
         analysis = await analyzer.analyze(text)
+        // Nouveau texte, nouvelle proposition : le plafond doit repartir, et
+        // les choix faits sur le texte précédent n'ont plus de sens.
+        selected = []
+        hasPreselected = false
         stage = .reading
     }
 
     public func moveToSelection() {
-        // Le plafond pré-coche, il n'interdit rien : le reste de la liste est
-        // là, décoché, à un tap.
-        selected = Set(unknownWords.prefix(Self.suggestionCap).compactMap(\.dictionaryForm))
+        // Le plafond pré-coche la PREMIÈRE fois, et seulement elle.
+        //
+        // C'était une affectation, donc un écrasement : inoffensif tant que
+        // rien ne pouvait cocher avant, mais un piège armé sous les deux
+        // chemins qui arrivent — « + apprendre » depuis la lecture, et le
+        // retour depuis la sélection. Un mot retenu à la fiche, ou huit
+        // décochages patients, disparaissaient sans un mot.
+        //
+        // ⚠️ La garde est un DRAPEAU, pas `selected.isEmpty`. Une sélection
+        // vide a deux sens opposés — « je n'ai pas encore choisi » et « j'ai
+        // tout décoché exprès » — et les confondre remet les huit premiers au
+        // premier retour, en défaisant précisément le geste le plus délibéré
+        // que l'apprenant puisse poser. Attrapé par
+        // `returningToSelectionKeepsChoices`.
+        if !hasPreselected {
+            selected = Set(unknownWords.prefix(Self.suggestionCap).compactMap(\.dictionaryForm))
+            hasPreselected = true
+        }
         stage = .selection
+    }
+
+    /// Retient un mot depuis la lecture, sans quitter le texte.
+    ///
+    /// La vision demande « lecture, sens, + apprendre » sur chaque mot tappé ;
+    /// les deux premiers étaient là, le troisième n'était branché nulle part.
+    public func learn(_ token: AnalyzedToken) {
+        guard let form = token.dictionaryForm, token.isLearnable else { return }
+        selected.insert(form)
     }
 
     public func backToReading() { stage = .reading }
@@ -186,7 +226,14 @@ public final class TextImportViewModel {
             if alreadyOwned, let existing {
                 entryID = existing.id
             } else {
-                let gloss = entry.glossFR ?? entry.glossEN
+                // L'app ÉTIQUETTE l'anglais dans la lecture et la sélection, puis
+            // l'oubliait ici : la carte partait avec « to be crowded… » nu, au
+            // milieu d'un dictionnaire français. Mesuré le 2026-08-20 : une
+            // carte minée sur trois. L'étiquette entre donc dans le texte
+            // stocké — c'est la seule façon de la faire suivre partout
+            // (dictionnaire, recto-verso, quiz, sauvegarde) sans un champ de
+            // schéma, une colonne de synchro et quatre vues.
+            let gloss = entry.glossFR ?? Self.englishLabelPrefix + entry.glossEN
                 let created = await vocabulary.addEntry(word: form, reading: entry.reading,
                                                         meaning: gloss)
                 entryID = created.id

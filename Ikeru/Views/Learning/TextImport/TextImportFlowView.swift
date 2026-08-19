@@ -79,7 +79,7 @@ struct TextImportFlowView: View {
         case .reading:
             TextImportReadingStage(viewModel: viewModel)
         case .selection:
-            WordSelectionView(viewModel: viewModel)
+            WordSelectionView(viewModel: viewModel, onBack: { viewModel.backToReading() })
         case .saved(let kept):
             savedStage(viewModel, wordsKept: kept)
         }
@@ -242,7 +242,15 @@ private struct TextImportReadingStage: View {
         VStack(spacing: 0) {
             ScrollView {
                 if let analysis = viewModel.analysis {
-                    AssistedReadingView(analysis: analysis, knownForms: viewModel.knownForms)
+                    // Les trois affordances que la vision demande sur un mot
+                    // tappé : lecture, sens, et « + apprendre ». Les deux
+                    // premières étaient là ; la troisième n'était branchée
+                    // nulle part, et `WordDetailSheet` masque son bouton quand
+                    // `onLearn` est nil — donc elle n'existait pas.
+                    AssistedReadingView(analysis: analysis,
+                                        knownForms: viewModel.knownForms,
+                                        isSelected: { viewModel.isSelected($0) },
+                                        onLearn: { viewModel.learn($0) })
                         .padding(.horizontal, IkeruTheme.Spacing.md)
                         .padding(.top, IkeruTheme.Spacing.md)
                         .padding(.bottom, IkeruTheme.Spacing.lg)

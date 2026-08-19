@@ -23,6 +23,15 @@ struct WordSelectionView: View {
 
     @Bindable var viewModel: TextImportViewModel
 
+    /// Revenir au texte sans rien perdre.
+    ///
+    /// Le chevron de la barre de navigation, lui, DÉPILE l'écran entier et
+    /// détruit le brouillon et son analyse — deux minutes de correction d'OCR
+    /// parties sans confirmation. Et l'état « rien reconnu » invite justement
+    /// à « revenir en arrière pour corriger le texte ». Il fallait donc un
+    /// retour qui fasse ce que la copie promet.
+    var onBack: (() -> Void)?
+
     /// Garde-fou de réentrance : `save()` crée une entrée de vocabulaire par
     /// mot coché et n'a pas de verrou interne, donc un double tap créerait des
     /// doublons.
@@ -72,6 +81,18 @@ struct WordSelectionView: View {
         }
         .navigationTitle("TextImport.Selection.Title")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if let onBack {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        onBack()
+                    } label: {
+                        Label("Back to the text", systemImage: "chevron.left")
+                    }
+                    .accessibilityIdentifier("textImport.backToReading")
+                }
+            }
+        }
     }
 
     // MARK: - Coverage

@@ -65,6 +65,22 @@
         }
       }
     },
+    "Back to the text" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Back to the text"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Revenir au texte"
+          }
+        }
+      }
+    },
     "Choose words to learn" : {
       "localizations" : {
         "en" : {

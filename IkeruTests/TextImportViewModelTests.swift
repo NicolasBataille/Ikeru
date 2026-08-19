@@ -501,3 +501,162 @@ struct TextImportEmptyStatesTests {
         #expect(viewModel.coverage == 1)
     }
 }
+
+// MARK: - Ce que les sceptiques ont trouvé
+
+/// Chaque test ici rejoue une panne trouvée par la relecture adversariale du
+/// 2026-08-20 — pas un cas de laboratoire.
+@Suite("Texte perso — pannes trouvées en relecture")
+@MainActor
+struct TextImportReviewFindingsTests {
+
+    /// Le plafond ÉCRASAIT la sélection au lieu de la compléter.
+    ///
+    /// Inoffensif tant que rien ne pouvait cocher avant. Devenu une perte
+    /// réelle dès que « + apprendre » existe en lecture et qu'on peut revenir
+    /// de la sélection : un mot retenu à la fiche, ou huit décochages patients,
+    /// disparaissaient sans un mot.
+    @Test("Revenir à la sélection ne réécrit pas les choix de l'apprenant")
+    func returningToSelectionKeepsChoices() async throws {
+        let viewModel = try makeViewModel(try makeContainer())
+        viewModel.begin(with: """
+            今日は朝から雨が降っていて、電車がめちゃくちゃ混んでた。
+            新しいカフェが駅前にオープンしたらしいので、週末に行ってみようと思います。
+            """, source: .paste)
+        await viewModel.analyzeDraft()
+        viewModel.moveToSelection()
+
+        // L'apprenant décoche tout, puis retourne lire.
+        for word in viewModel.unknownWords where viewModel.isSelected(word) {
+            viewModel.toggle(word)
+        }
+        #expect(viewModel.selectedCount == 0)
+        viewModel.backToReading()
+        #expect(viewModel.stage == .reading)
+
+        // Et revient : ses décochages tiennent, le plafond ne repasse pas.
+        viewModel.moveToSelection()
+        #expect(viewModel.selectedCount == 0,
+                "le plafond a réécrit la sélection de l'apprenant")
+    }
+
+    /// « + apprendre » depuis la lecture : la troisième affordance que la
+    /// vision demande sur un mot tappé, et qui n'était branchée nulle part.
+    @Test("Retenir un mot depuis la lecture le pré-coche, et le plafond le respecte")
+    func learningFromReadingSurvivesTheCap() async throws {
+        let viewModel = try makeViewModel(try makeContainer())
+        viewModel.begin(with: "季節の野菜天ぷらと鶏の唐揚げ定食。", source: .paste)
+        await viewModel.analyzeDraft()
+
+        let chosen = try #require(viewModel.unknownWords.last)
+        viewModel.learn(chosen)
+        #expect(viewModel.isSelected(chosen))
+
+        viewModel.moveToSelection()
+        #expect(viewModel.isSelected(chosen),
+                "le mot retenu en lecture a été effacé par le pré-cochage")
+    }
+
+    @Test("Un mot non apprenable ne se retient pas")
+    func unlearnableTokensAreRefused() async throws {
+        let viewModel = try makeViewModel(try makeContainer())
+        viewModel.begin(with: "犬がいる。", source: .paste)
+        await viewModel.analyzeDraft()
+        let analysis = try #require(viewModel.analysis)
+        // La particule が : reconnue, mais pas un mot à apprendre.
+        if let particle = analysis.tokens.first(where: { $0.surface == "が" }) {
+            viewModel.learn(particle)
+            #expect(viewModel.selectedCount == 0)
+        }
+    }
+
+    /// L'app étiquetait « EN » dans la lecture et la sélection, puis l'oubliait
+    /// en créant la carte : « to be crowded… » partait nu au milieu d'un
+    /// dictionnaire français. Environ une carte minée sur trois.
+    @Test("Une gloss anglaise reste étiquetée jusque dans la carte SRS")
+    func englishGlossesStayLabelledInTheCard() async throws {
+        let container = try makeContainer()
+        let viewModel = try makeViewModel(container)
+        viewModel.begin(with: "電車がめちゃくちゃ混んでた。", source: .paste)
+        await viewModel.analyzeDraft()
+        viewModel.moveToSelection()
+        await viewModel.save()
+
+        let entries = await VocabularyRepository(modelContainer: container).allEntries()
+        #expect(!entries.isEmpty)
+        // 混む n'a pas de gloss française dans JMdict : sa carte doit le dire.
+        let crowded = entries.first { $0.word == "混む" }
+        let meaning = try #require(crowded?.meaning)
+        #expect(meaning.hasPrefix(TextImportViewModel.englishLabelPrefix),
+                "gloss anglaise non étiquetée dans la carte : « \(meaning) »")
+
+        // Et une gloss française ne porte JAMAIS l'étiquette.
+        for entry in entries where !entry.meaning.hasPrefix(TextImportViewModel.englishLabelPrefix) {
+            #expect(!entry.meaning.contains("EN —"))
+        }
+    }
+}
+
+// MARK: - Le QCM ne doit pas se gagner à la langue
+
+/// La mini-séance tirait ses leurres dans tout le dictionnaire. Sur un
+/// dictionnaire à 97 % français, une bonne réponse anglaise était la seule
+/// option anglaise ~9 fois sur 10 : l'exercice se résolvait sans lire un kanji.
+/// C'est la leçon des homophones du drill d'écoute et des suffixes du texte à
+/// trou, une troisième fois.
+@Suite("Quiz de vocabulaire — les leurres parlent la même langue")
+@MainActor
+struct VocabularyQuizLanguageTests {
+
+    private func entry(_ word: String, _ meaning: String) -> VocabularyEntryDTO {
+        VocabularyEntryDTO(id: UUID(), word: word, reading: word, meaning: meaning,
+                           jlptLevel: .n5, fsrsState: FSRSState(), easeFactor: 2.5,
+                           interval: 1, dueDate: Date(), lapseCount: 0,
+                           isInDictionary: true, createdAt: Date(), encounterCount: 0)
+    }
+
+    @Test("Reconnaître le français et l'anglais")
+    func languageHeuristic() {
+        #expect(VocabularyDrillViewModel.looksEnglish("to be crowded; to be packed"))
+        #expect(VocabularyDrillViewModel.looksEnglish("spoiler; revealing the plot of a story"))
+        #expect(!VocabularyDrillViewModel.looksEnglish("pluie"))
+        #expect(!VocabularyDrillViewModel.looksEnglish("fin de semaine; week-end"))
+        #expect(!VocabularyDrillViewModel.looksEnglish("être; se trouver"))
+        // Sans indice, on ne devine pas : on suppose la langue de l'app.
+        #expect(!VocabularyDrillViewModel.looksEnglish("train"))
+    }
+
+    @Test("Une réponse anglaise n'est pas la seule option anglaise")
+    func anEnglishAnswerIsNotTheOnlyEnglishOption() throws {
+        let repository = VocabularyRepository(modelContainer: try makeContainer())
+        let answer = entry("混む", "EN — to be crowded; to be packed")
+        let dictionary = [answer]
+            + (0..<12).map { entry("mot\($0)", ["pluie", "matin", "ami", "film"][$0 % 4]) }
+            + (0..<4).map { entry("en\($0)", "EN — to do something with a thing") }
+
+        // Répété : le tirage est aléatoire, une seule passe ne prouverait rien.
+        for _ in 0..<30 {
+            let viewModel = VocabularyDrillViewModel(
+                queue: [answer], allEntries: dictionary,
+                vocabularyRepository: repository)
+            let english = viewModel.quizOptions.filter {
+                VocabularyDrillViewModel.looksEnglish($0)
+            }
+            #expect(english.count > 1,
+                    "la réponse anglaise est seule de sa langue : \(viewModel.quizOptions)")
+        }
+    }
+
+    /// Le repli reste possible : mieux vaut une question aux langues mêlées
+    /// qu'une question à deux options.
+    @Test("Sans assez de leurres de la même langue, on complète plutôt que de tronquer")
+    func mixedLanguagesBeatTwoOptions() throws {
+        let answer = entry("混む", "EN — to be crowded")
+        let dictionary = [answer] + (0..<6).map { entry("mot\($0)", ["pluie", "matin", "ami"][$0 % 3]) }
+        let viewModel = VocabularyDrillViewModel(
+            queue: [answer], allEntries: dictionary,
+            vocabularyRepository: VocabularyRepository(modelContainer: try makeContainer()))
+        #expect(viewModel.quizOptions.count == 4)
+        #expect(viewModel.quizOptions.contains("EN — to be crowded"))
+    }
+}
