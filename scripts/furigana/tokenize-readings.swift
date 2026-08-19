@@ -9,15 +9,22 @@
 import Foundation
 
 let RS = "\u{1E}", GS = "\u{1D}", US = "\u{1F}"
+guard CommandLine.arguments.count > 1 else {
+    FileHandle.standardError.write(Data("usage: tokenize-readings <fichier>\n".utf8))
+    exit(2)
+}
 let path = CommandLine.arguments[1]
-let raw = try! String(contentsOfFile: path, encoding: .utf8)
+guard let raw = try? String(contentsOfFile: path, encoding: .utf8) else {
+    FileHandle.standardError.write(Data("lecture impossible : \(path)\n".utf8))
+    exit(2)
+}
 
 for line in raw.components(separatedBy: "\u{1E}\n") {
-    let s = line.trimmingCharacters(in: .whitespacesAndNewlines)
-    if s.isEmpty { continue }
-    let ns = s as NSString
+    let sentence = line.trimmingCharacters(in: .whitespacesAndNewlines)
+    if sentence.isEmpty { continue }
+    let ns = sentence as NSString
     let tokenizer = CFStringTokenizerCreate(
-        nil, s as CFString, CFRangeMake(0, ns.length),
+        nil, sentence as CFString, CFRangeMake(0, ns.length),
         kCFStringTokenizerUnitWordBoundary, Locale(identifier: "ja") as CFLocale)
     var parts: [String] = []
     while CFStringTokenizerAdvanceToNextToken(tokenizer) != [] {
@@ -26,11 +33,11 @@ for line in raw.components(separatedBy: "\u{1E}\n") {
         var reading = (CFStringTokenizerCopyCurrentTokenAttribute(
             tokenizer, kCFStringTokenizerAttributeLatinTranscription) as? String) ?? ""
         if !reading.isEmpty {
-            let m = NSMutableString(string: reading) as CFMutableString
-            CFStringTransform(m, nil, kCFStringTransformLatinHiragana, false)
-            reading = m as String
+            let mutable = NSMutableString(string: reading) as CFMutableString
+            CFStringTransform(mutable, nil, kCFStringTransformLatinHiragana, false)
+            reading = mutable as String
         }
         parts.append(word + US + reading)
     }
-    print(s + RS + parts.joined(separator: GS))
+    print(sentence + RS + parts.joined(separator: GS))
 }

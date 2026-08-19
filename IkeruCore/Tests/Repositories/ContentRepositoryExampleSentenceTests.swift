@@ -129,7 +129,6 @@ struct ContentRepositoryExampleSentenceTests {
         #expect(examples.allSatisfy { $0.translation != $0.japanese })
     }
 
-
     // MARK: - Furigana
 
     @Test("A sentence carries its furigana form, and displayText prefers it")
