@@ -724,6 +724,133 @@ def n5_grammar() -> list[GrammarEntry]:
                      ["日本語は難しいですが、楽しいです。 — Japanese is difficult, but fun.",
                       "高いけど、買います。 — It's expensive, but I'll buy it.",
                       "行きたいですが、時間がありません。 — I want to go, but I don't have time."]),
+
+        # --- Ajoutes le 2026-08-19 : les 20 schemas de phrase qui manquaient.
+        # Mesure contre GrammarList.N5.doc (Tanos, CC BY) : la liste officielle
+        # compte 40 points, l'app en avait 31 — mais presque tous des
+        # PARTICULES. Ce qui manquait etait l'autre moitie du N5 : les schemas
+        # avec lesquels on PARLE (てください, たり…たり, ほうがいい, まえに…).
+        # Le chiffre « ~80 » qui circulait dans TODO.md etait faux du double.
+        GrammarEntry("n5", "へ (Direction)",
+                     "Marks the direction of movement. Interchangeable with に for destinations — へ stresses the heading, に the arrival point. Written へ but pronounced 'e'.",
+                     ["学校へ行きます。 — I go to school.",
+                      "日本へ来ました。 — I came to Japan.",
+                      "どこへ行きますか。 — Where are you going?"]),
+
+        GrammarEntry("n5", "や (Non-exhaustive list)",
+                     "Lists a few examples and implies there are more — 'things like A and B'. と lists everything; や leaves the list open.",
+                     ["本やノートを買いました。 — I bought books, notebooks and so on.",
+                      "犬や魚が好きです。 — I like dogs, fish and the like.",
+                      "パンや水があります。 — There is bread, water and so on."]),
+
+        GrammarEntry("n5", "あります / います (Existence)",
+                     "States that something exists or is somewhere. あります for inanimate things, います for people and animals.",
+                     ["上に本があります。 — There is a book on top.",
+                      "部屋に人がいます。 — There is someone in the room.",
+                      "お金がありません。 — I have no money."]),
+
+        GrammarEntry("n5", "ませんか (Invitation)",
+                     "A polite invitation — 'won't you ~?'. Softer than ましょう because it leaves the other person room to decline.",
+                     ["一緒に行きませんか。 — Won't you come with me?",
+                      "お茶を飲みませんか。 — Would you like some tea?",
+                      "映画を見ませんか。 — Shall we see a film?"]),
+
+        GrammarEntry("n5", "ましょうか (Shall I? / Shall we?)",
+                     "Offers to do something for someone, or proposes a joint action as a question. ましょう decides; ましょうか asks.",
+                     ["持ちましょうか。 — Shall I carry it?",
+                      "窓を開けましょうか。 — Shall I open the window?",
+                      "何を食べましょうか。 — What shall we eat?"]),
+
+        GrammarEntry("n5", "てください (Request)",
+                     "Asks someone to do something politely. Attach ください to the て-form.",
+                     ["待ってください。 — Please wait.",
+                      "名前を書いてください。 — Please write your name.",
+                      "もう一度言ってください。 — Please say it once more."]),
+
+        GrammarEntry("n5", "ないでください (Negative request)",
+                     "Asks someone NOT to do something. Attach でください to the ない-form.",
+                     ["ここに入らないでください。 — Please do not come in here.",
+                      "写真を撮らないでください。 — Please do not take photographs.",
+                      "忘れないでください。 — Please do not forget."]),
+
+        GrammarEntry("n5", "に行く (Going to do something)",
+                     "Verb stem + に + a motion verb states the PURPOSE of going — 'go in order to ~'.",
+                     ["映画を見に行きます。 — I'm going to see a film.",
+                      "友達に会いに行きました。 — I went to meet a friend.",
+                      "パンを買いに行きます。 — I'm going out to buy bread."]),
+
+        GrammarEntry("n5", "のが好き / 上手 / 下手 (Liking and skill)",
+                     "の turns a verb into a noun, so it can be liked or done well. Dictionary form + のが + 好き / 上手 / 下手.",
+                     ["本を読むのが好きです。 — I like reading.",
+                      "歌を歌うのが上手です。 — She is good at singing.",
+                      "話すのが下手です。 — I am bad at speaking."]),
+
+        GrammarEntry("n5", "まだ〜ていません (Not yet)",
+                     "Says an action has not happened YET, and is still expected. Contrast with ませんでした, which simply did not happen.",
+                     ["まだ食べていません。 — I haven't eaten yet.",
+                      "手紙をまだ書いていません。 — I haven't written the letter yet.",
+                      "まだ来ていません。 — He hasn't come yet."]),
+
+        GrammarEntry("n5", "〜のほうが〜より (Comparison)",
+                     "Compares two things — 'A is more ~ than B'. The thing that wins takes のほうが, the other より.",
+                     ["電車のほうがバスより速いです。 — The train is faster than the bus.",
+                      "犬のほうが猫より好きです。 — I like dogs more than cats.",
+                      "今日のほうが昨日より暑いです。 — Today is hotter than yesterday."]),
+
+        GrammarEntry("n5", "〜の中で〜がいちばん (Superlative)",
+                     "Picks out the most ~ within a group — 'of all A, B is the most ~'.",
+                     ["日本の中で東京がいちばん大きいです。 — Of all Japan, Tokyo is the biggest.",
+                      "果物の中でりんごがいちばん好きです。 — Of all fruit I like apples best.",
+                      "一年の中で八月がいちばん暑いです。 — August is the hottest month of the year."]),
+
+        GrammarEntry("n5", "くなる / になる (Becoming)",
+                     "States a change of state. い-adjectives drop い and take く; な-adjectives and nouns take に.",
+                     ["寒くなりました。 — It has turned cold.",
+                      "元気になりました。 — I got better.",
+                      "先生になりたいです。 — I want to become a teacher."]),
+
+        GrammarEntry("n5", "〜たり〜たりする (Representative actions)",
+                     "Lists a few representative actions out of several, without claiming to be exhaustive. Past plain form + り, ending in する.",
+                     ["本を読んだり音楽を聞いたりします。 — I read, listen to music and so on.",
+                      "食べたり飲んだりしました。 — We ate and drank and so on.",
+                      "泳いだり走ったりします。 — I swim, run and the like."]),
+
+        GrammarEntry("n5", "んです (Explanatory)",
+                     "Gives or asks for an explanation, or softens a statement. Plain form + んです.",
+                     ["日本語を勉強しているんです。 — The thing is, I'm studying Japanese.",
+                      "どうして休んだんですか。 — Why was it that you took the day off?",
+                      "少し高いんです。 — It's a bit expensive, you see."]),
+
+        GrammarEntry("n5", "ほうがいい (Advice)",
+                     "Recommends a course of action — 'you had better ~'. Past plain form + ほうがいい.",
+                     ["早く寝たほうがいいですよ。 — You had better go to bed early.",
+                      "休んだほうがいいです。 — You should rest.",
+                      "先生に聞いたほうがいいです。 — You had better ask the teacher."]),
+
+        GrammarEntry("n5", "ので (Reason, soft)",
+                     "Gives a reason. Softer and more objective than から, which is why it suits polite requests and excuses.",
+                     ["雨が降っているので、行きません。 — Since it is raining, I won't go.",
+                      "寒いので、窓を閉めてください。 — As it's cold, please close the window.",
+                      "時間がないので、また今度。 — I'm out of time, so another time."]),
+
+        GrammarEntry("n5", "でしょう (Probably / right?)",
+                     "Expresses probability. Said with rising intonation it seeks the listener's agreement instead.",
+                     ["明日は雨でしょう。 — It will probably rain tomorrow.",
+                      "彼は来ないでしょう。 — He probably won't come.",
+                      "きれいでしょう。 — It's pretty, isn't it?"]),
+
+        GrammarEntry("n5", "まえに (Before doing)",
+                     "States what comes BEFORE something else. Dictionary form + 前に for verbs, noun + の前に for nouns.",
+                     ["寝る前に本を読みます。 — I read before going to bed.",
+                      "ご飯の前に手を洗います。 — I wash my hands before the meal.",
+                      "出かける前に電話します。 — I'll call before going out."]),
+
+        GrammarEntry("n5", "てから (After doing)",
+                     "States a sequence — 'after doing A, then B'. て-form + から. Unlike あとで, it stresses that A must come first.",
+                     ["ご飯を食べてから出かけます。 — I'll go out after eating.",
+                      "手を洗ってから食べてください。 — Please eat after washing your hands.",
+                      "学校が終わってから遊びます。 — I'll play after school finishes."]),
+
     ]
 
 
