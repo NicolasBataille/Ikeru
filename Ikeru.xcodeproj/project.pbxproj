@@ -205,6 +205,7 @@
 		C5AFFF3C83FD80FF4E57B0EB /* ConversationViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D08B33E031522EEA0E701C84 /* ConversationViewModel.swift */; };
 		C8F7ED3F00387307F04FD73E /* InlineQuizView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5A9840F6C7DB7B734D9FC80 /* InlineQuizView.swift */; };
 		C91AAFCB6B347DD7E48BEC5F /* GrammarPointView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BFAD9F3F0796D53A41F3F2A /* GrammarPointView.swift */; };
+		8C1C0D3E7B9F42A18C6D0E72 /* GrammarListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C1C0D3E7B9F42A18C6D0E71 /* GrammarListView.swift */; };
 		C98990815A7397FAEECC5E9F /* MasteryBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 432F33D5FCBBD072BE009810 /* MasteryBadge.swift */; };
 		C9C552606F14AE938AB0A1C3 /* StrokeTracingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69FD1BC54CDC2C981E6F4402 /* StrokeTracingView.swift */; };
 		CA1E4BC77111ADC4E439BCB7 /* KanaDrillSessionSummary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6999560B934B111F55D2F3E5 /* KanaDrillSessionSummary.swift */; };
@@ -332,6 +333,7 @@
 		156EFFF0B204464405BC709E /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		15C00EAAA3BA98179DFE119D /* KanjiStudyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KanjiStudyView.swift; sourceTree = "<group>"; };
 		1BFAD9F3F0796D53A41F3F2A /* GrammarPointView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GrammarPointView.swift; sourceTree = "<group>"; };
+		8C1C0D3E7B9F42A18C6D0E71 /* GrammarListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GrammarListView.swift; sourceTree = "<group>"; };
 		AAKC0000000000000000001 /* KeychainAvailabilityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainAvailabilityTests.swift; sourceTree = "<group>"; };
 		AACB0000000000000000001 /* ContentBundleVocabularyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentBundleVocabularyTests.swift; sourceTree = "<group>"; };
 		1D97512A99D55C0A04CB5169 /* KanaDrillViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KanaDrillViewModelTests.swift; sourceTree = "<group>"; };
@@ -653,6 +655,7 @@
 			children = (
 				E199ACCB659AD0493D556C8C /* FillInBlankExerciseView.swift */,
 				1BFAD9F3F0796D53A41F3F2A /* GrammarPointView.swift */,
+				8C1C0D3E7B9F42A18C6D0E71 /* GrammarListView.swift */,
 				E028A7B4AD2AB9F9E1802817 /* ReadingPassageView.swift */,
 				BCB50A9A0ED295F6A7C82144 /* VocabularyStudyView.swift */,
 				70EEF639F3CAC30DE1A9B25F /* VocabularyRecallView.swift */,
@@ -1557,6 +1560,7 @@
 				89472D6F07C417CF74A6F34D /* FontExtensions.swift in Sources */,
 				BBE2383F1411582FB9D27014 /* GradeButtonsView.swift in Sources */,
 				C91AAFCB6B347DD7E48BEC5F /* GrammarPointView.swift in Sources */,
+				8C1C0D3E7B9F42A18C6D0E72 /* GrammarListView.swift in Sources */,
 				9BC4183DC3C8A7EC9B37686D /* HandwritingCanvasView.swift in Sources */,
 				FF89BFE59885EB3742A25989 /* HandwritingExerciseView.swift in Sources */,
 				2F6B8C98160163965120553D /* HandwritingViewModel.swift in Sources */,
