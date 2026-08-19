@@ -19,8 +19,25 @@ import os
 /// - `HomeViewModel` passed `grammarPointsFamiliarPlus: 0` hardcoded, so the
 ///   JLPT-readiness formula ignored grammar entirely.
 ///
-/// Seeding real cards is what turns all three from dead branches into live
-/// ones.
+/// ⚠️ **Rien n'appelle ce semeur aujourd'hui, et c'est delibere.** Il a d'abord
+/// ete branche au lancement de l'app, apres l'initialisation du profil. Mesure
+/// le 2026-08-19, ca cassait deux choses d'un coup :
+///
+/// - les 51 cartes naissaient **dues immediatement**, donc un profil « rien
+///   n'est du » ne l'etait plus jamais et la proposition « tout est a jour »
+///   disparaissait. C'est aussi exactement ce que la decision produit 1 refuse :
+///   remplir la file sans que personne l'ait demande ;
+/// - le `Task` de semis **coursait** l'initialisation du profil : sur un
+///   profil de fixture, les 92 kana disparaissaient et il ne restait que les
+///   51 cartes de grammaire (capture a l'appui).
+///
+/// La suite UI l'a attrape (`testTappingAnOfferStartsASession` : « No caught-up
+/// offer was available to tap »).
+///
+/// Le bon declencheur reste a concevoir : une carte creee **quand l'apprenant
+/// repond a l'exercice de ce point**, incrementale, jamais en bloc. L'exercice
+/// lui-meme n'en depend pas — il lit `grammarClozes` depuis le bundle — donc il
+/// fonctionne sans, ce qui manque est la planification.
 ///
 /// ## Idempotent on `front`
 ///
