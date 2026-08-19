@@ -109,19 +109,18 @@ struct VocabularyEntryDetailView: View {
                 .font(.ikeruBody)
                 .foregroundStyle(Color.ikeruTextSecondary)
 
-            if let level = entry.jlptLevel {
-                Text(level.displayLabel)
-                    .font(.ikeruCaption)
-                    .foregroundStyle(Color.ikeruPrimaryAccent)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 4)
-                    .background {
-                        Rectangle()
-                            .fill(Color.ikeruPrimaryAccent.opacity(0.12))
-                            .overlay { Rectangle().strokeBorder(TatamiTokens.goldDim.opacity(0.4), lineWidth: 0.5) }
-                    }
-                    .sumiCorners(color: TatamiTokens.goldDim, size: 5, weight: 1.0)
-            }
+            // PAS de badge JLPT ici, et c'est mesure : les 693 mots du bundle
+            // sont N5, sans exception — comme les 90 kanji. Le badge etait donc
+            // constant sur tout le contenu embarque et ne distinguait aucun
+            // niveau. Ce qu'il separait en pratique, c'est « ce mot vient du
+            // programme » de « tu l'as attrape en conversation » (une entree
+            // Sakura a `jlptLevel == nil`), ce qui n'est pas ce qu'un badge de
+            // niveau annonce.
+            //
+            // A REMETTRE le jour d'un bundle N4+, ou il redeviendra informatif.
+            // Il reste en place sur `DailyTermRevealView`, ou il l'est deja :
+            // les termes du jour couvrent N5 a N1 (mesure : 17 N5, 10 N3, 6 N1,
+            // 5 N4, 3 N2).
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, IkeruTheme.Spacing.lg)
