@@ -154,6 +154,35 @@ struct MatchScore: Comparable {
 /// spellings. They are collected first and resolved in a single batched query;
 /// one at a time is the difference between instant and visibly slow, and the
 /// feature promises « moins d'une minute » end to end.
+///
+/// ## Un joint n'est déflexionné qu'une fois
+///
+/// La requête groupée n'était PAS le coût dominant, contrairement à ce que
+/// suggérait le paragraphe ci-dessus. Décomposition mesurée le 2026-08-19
+/// (build release, texte de 6 079 caractères) : segmentation 8 ms, requête
+/// dictionnaire **5 ms**, déflexion **1 485 ms**. Autrement dit 99 % du temps
+/// part dans `JapaneseDeinflector.deinflect`, appelé une fois par (position,
+/// longueur de joint) — 10 620 fois sur ce texte.
+///
+/// Or ces joints se répètent massivement : 10 620 appels pour **479 chaînes
+/// distinctes** sur ce texte, 19 850 pour 1 410 distinctes sur un texte
+/// délibérément varié. La déflexion étant une fonction pure de sa chaîne, un
+/// mémo local à l'analyse suffit, et le coût passe du nombre de joints au
+/// nombre de joints *distincts* — qui croît beaucoup plus lentement que le
+/// texte.
+///
+/// Mesuré avant / après, même build, même machine :
+///
+/// ```
+///  1 519 car. (paroles)     253 ms →  71 ms
+///  3 039 car. (article)     511 ms →  76 ms
+/// 12 159 car. (texte long) 2 227 ms → 115 ms   (×19)
+///  8 890 car. (varié)      2 833 ms → 250 ms   (×11)
+/// ```
+///
+/// Le mémo vit dans `analyze`, pas dans le déflecteur : un cache global serait
+/// un état partagé non borné, et deux analyses concurrentes n'ont rien à se
+/// dire.
 public struct JapaneseTextAnalyzer: Sendable {
 
     /// How many adjacent word pieces may be joined. 食べ / させ / られ / たく /
@@ -174,6 +203,9 @@ public struct JapaneseTextAnalyzer: Sendable {
         // joins that produced it.
         var options: [Int: [(length: Int, deinflections: [Deinflection])]] = [:]
         var candidates: Set<String> = []
+        // Un joint qui revient ne se re-déflexionne pas : voir « Un joint n'est
+        // déflexionné qu'une fois » en tête de type. Local à l'analyse.
+        var deinflected: [String: [Deinflection]] = [:]
         for (position, start) in wordIndices.enumerated() {
             // Contiguity: extend only while the next word piece is literally
             // the next piece, so a join never swallows punctuation.
@@ -186,7 +218,13 @@ public struct JapaneseTextAnalyzer: Sendable {
             var list: [(Int, [Deinflection])] = []
             for length in stride(from: reach, through: 1, by: -1) {
                 let joined = pieces[start..<(start + length)].map(\.surface).joined()
-                let deinflections = JapaneseDeinflector.deinflect(joined)
+                let deinflections: [Deinflection]
+                if let cached = deinflected[joined] {
+                    deinflections = cached
+                } else {
+                    deinflections = JapaneseDeinflector.deinflect(joined)
+                    deinflected[joined] = deinflections
+                }
                 candidates.formUnion(deinflections.map(\.term))
                 list.append((length, deinflections))
             }
@@ -282,7 +320,32 @@ public struct JapaneseTextAnalyzer: Sendable {
                 }
             }
             if !allowExpressions {
-                eligible = eligible.filter(\.canAbsorbNeighbours)
+                eligible = eligible.filter { entry in
+                    // Un joint de PLUSIEURS jetons qui n'a demandé AUCUNE règle
+                    // n'a pour lui que d'être écrit comme ça. Exiger en plus
+                    // que la graphie soit la principale de son entrée, sinon la
+                    // lecture en kana d'un composé rare avale des particules :
+                    // mesuré, そう + だ donnait 操舵 (« gouverne d'un bateau »),
+                    // が + そう 画僧 (« moine-peintre »), に + お 鳰 (« grèbe
+                    // castagneux »), そこ + に 底荷 (« lest ») et で + は 出端.
+                    // Cinq noms absurdes proposés à l'apprentissage.
+                    guard deinflection.rules.isEmpty else {
+                        // Passé par la grammaire : la copule et les auxiliaires
+                        // ont le droit de recoller ce que le tokeniseur a coupé
+                        // (でし + た → です). Les EXPRESSIONS, non : c'est ce
+                        // qui garde 見に行く de manger 見, に et 行きました.
+                        guard entry.canAbsorbNeighbours || !entry.isExpression else {
+                            return false
+                        }
+                        // Et il faut que le mot atteint soit un mot que
+                        // quelqu'un emploie : sinon 社長がそう… collait が + そう
+                        // en 賀す (« féliciter », littéraire), la そう du joint
+                        // étant lue comme un volitif. Une graphie secondaire ET
+                        // non courante ne mange pas ses voisins.
+                        return entry.spellingRank == 0 || entry.isCommon
+                    }
+                    return entry.canAbsorbNeighbours && entry.spellingRank == 0
+                }
             }
             for entry in eligible {
                 let base = DictionaryEntry.rank(entry)

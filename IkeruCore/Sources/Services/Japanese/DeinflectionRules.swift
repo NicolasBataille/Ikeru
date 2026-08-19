@@ -87,7 +87,19 @@ public enum DeinflectionRules {
             // doit donc accepter les deux, sinon 行きました, 行かない, 行けば et
             // 行こう ne trouvent rien — mesuré : 映画を見に行きました laissait
             // 行き non résolu, et l'apprenant voyait un nom (« un aller »).
-            let pos: Set<String> = row.pos == "v5k" ? ["v5k", "v5k-s"] : [row.pos]
+            // Même motif pour la rangée en る : ある est `v5r-i` dans JMdict
+            // (irrégulier au négatif), et les quatre honorifiques いらっしゃる,
+            // おっしゃる, くださる, なさる sont `v5aru`. Sans eux, ありません
+            // laissait あり non résolu et l'apprenant lisait « 蟻 » (fourmi).
+            // Les `v5aru` se conjuguent comme un v5r partout SAUF au radical
+            // en い (いらっしゃいます, jamais ×いらっしゃります) — traité juste
+            // après.
+            let pos: Set<String>
+            switch row.pos {
+            case "v5k": pos = ["v5k", "v5k-s"]
+            case "v5r": pos = ["v5r", "v5r-i", "v5aru"]
+            default:    pos = [row.pos]
+            }
             let out = row.dictionary
             rules += [
                 DeinflectionRule(row.i + "ます", out, pos, ["*masu"], "poli"),
@@ -102,6 +114,10 @@ public enum DeinflectionRules {
                 DeinflectionRule(row.e + "る", out, pos, ["v1"], "potentiel"),
                 DeinflectionRule(row.a + "れる", out, pos, ["v1"], "passif"),
                 DeinflectionRule(row.a + "せる", out, pos, ["v1"], "causatif"),
+                // Causatif-passif contracté : 待たされる ← 待たせられる ← 待つ.
+                // Sans lui, 一時間も待たされました rendait 待たす — un vrai mot,
+                // mais pas celui que l'apprenant réutilise.
+                DeinflectionRule(row.a + "される", out, pos, ["v1"], "causatif-passif"),
                 DeinflectionRule(row.o + "う", out, pos, [], "volitif"),
                 DeinflectionRule(row.i, out, pos, [], "radical en i"),
             ]
@@ -112,6 +128,20 @@ public enum DeinflectionRules {
         rules += [
             DeinflectionRule("った", "く", ["v5k-s"], ["*ta"], "passé irrégulier"),
             DeinflectionRule("って", "く", ["v5k-s"], ["*te"], "forme en te irrégulière"),
+            // Les cinq verbes en -aru : radical en い là où un v5r prendrait り.
+            // Mesuré avant : 先生がいらっしゃいました rendait ました → 真下
+            // (« juste en dessous »), un nom parfaitement inutile proposé à
+            // l'apprentissage, parce que le radical honorifique ne se
+            // rattachait à rien.
+            DeinflectionRule("います", "る", ["v5aru"], ["*masu"], "poli honorifique"),
+            // ⚠️ Pas de règle « い → る » nue pour le radical honorifique :
+            // mesuré, elle fait passer l'analyse d'un paragraphe de 0,9 s à
+            // 2,8 s (elle s'applique à TOUT candidat finissant en い, donc à
+            // tout adjectif et tout négatif). いらっしゃい seul reste rendu par
+            // son entrée propre ; c'est ました qui posait problème, et il est
+            // recollé par la règle います ci-dessus.
+            // ござる est `v5r` et non `v5aru`, mais prend le même radical.
+            DeinflectionRule("ございます", "ござる", ["v5r"], ["*masu"], "poli honorifique"),
         ]
         return rules
     }
@@ -194,45 +224,113 @@ public enum DeinflectionRules {
         DeinflectionRule("たくない", "たい", ["*tai"], ["*nai", "adj-i"], "désidératif négatif"),
         DeinflectionRule("たくて", "たい", ["*tai"], ["*te"], "désidératif en te"),
         DeinflectionRule("なかった", "ない", ["*nai", "adj-i"], [], "négatif passé"),
-        DeinflectionRule("なくて", "ない", ["*nai", "adj-i"], [], "négatif en te"),
+        // ないで et なくて SONT des formes en て : sans `posOut`, la chaîne
+        // s'arrêtait net sur 言わないでおこう (おこう ressortait en 御構,
+        // « conduite scandaleuse »).
+        DeinflectionRule("なくて", "ない", ["*nai", "adj-i"], ["*te"], "négatif en te"),
         DeinflectionRule("なければ", "ない", ["*nai", "adj-i"], [], "négatif conditionnel"),
-        DeinflectionRule("ないで", "ない", ["*nai", "adj-i"], [], "négatif suspensif"),
+        DeinflectionRule("ないで", "ない", ["*nai", "adj-i"], ["*te"], "négatif suspensif"),
         DeinflectionRule("なく", "ない", ["*nai", "adj-i"], [], "négatif adverbial"),
         DeinflectionRule("たら", "た", ["*ta"], [], "conditionnel たら"),
         DeinflectionRule("たり", "た", ["*ta"], [], "énumératif たり"),
         DeinflectionRule("だら", "だ", ["*ta"], [], "conditionnel たら"),
         DeinflectionRule("だり", "だ", ["*ta"], [], "énumératif たり"),
         // Aspect : la chaîne ている/でいる et ses contractions.
-        DeinflectionRule("ている", "て", ["*te"], [], "progressif"),
+        DeinflectionRule("ている", "て", ["*te"], ["v1"], "progressif"),
         DeinflectionRule("ています", "て", ["*te"], ["*masu"], "progressif poli"),
         DeinflectionRule("ていた", "て", ["*te"], ["*ta"], "progressif passé"),
-        DeinflectionRule("てる", "て", ["*te"], [], "progressif contracté"),
+        DeinflectionRule("てる", "て", ["*te"], ["v1"], "progressif contracté"),
         DeinflectionRule("てた", "て", ["*te"], ["*ta"], "progressif contracté passé"),
-        DeinflectionRule("てしまう", "て", ["*te"], [], "accompli"),
-        DeinflectionRule("ておく", "て", ["*te"], [], "préparatoire"),
-        DeinflectionRule("てみる", "て", ["*te"], [], "tentative"),
+        DeinflectionRule("てしまう", "て", ["*te"], ["v5u"], "accompli"),
+        DeinflectionRule("ておく", "て", ["*te"], ["v5k", "v5k-s"], "préparatoire"),
+        DeinflectionRule("てみる", "て", ["*te"], ["v1"], "tentative"),
         DeinflectionRule("ていて", "て", ["*te"], [], "progressif en te"),
-        DeinflectionRule("てくる", "て", ["*te"], [], "directionnel"),
-        DeinflectionRule("ていく", "て", ["*te"], [], "directionnel"),
-        DeinflectionRule("てくれる", "て", ["*te"], [], "bénéfactif"),
-        DeinflectionRule("てもらう", "て", ["*te"], [], "bénéfactif"),
-        DeinflectionRule("てあげる", "て", ["*te"], [], "bénéfactif"),
-        DeinflectionRule("でいる", "で", ["*te"], [], "progressif"),
+        DeinflectionRule("てくる", "て", ["*te"], ["vk"], "directionnel"),
+        DeinflectionRule("ていく", "て", ["*te"], ["v5k", "v5k-s"], "directionnel"),
+        DeinflectionRule("てくれる", "て", ["*te"], ["v1"], "bénéfactif"),
+        DeinflectionRule("てもらう", "て", ["*te"], ["v5u"], "bénéfactif"),
+        DeinflectionRule("てあげる", "て", ["*te"], ["v1"], "bénéfactif"),
+        DeinflectionRule("でいる", "で", ["*te"], ["v1"], "progressif"),
         DeinflectionRule("でいます", "で", ["*te"], ["*masu"], "progressif poli"),
         DeinflectionRule("でいた", "で", ["*te"], ["*ta"], "progressif passé"),
-        DeinflectionRule("でる", "で", ["*te"], [], "progressif contracté"),
+        DeinflectionRule("でる", "で", ["*te"], ["v1"], "progressif contracté"),
         DeinflectionRule("でた", "で", ["*te"], ["*ta"], "progressif contracté passé"),
-        DeinflectionRule("でしまう", "で", ["*te"], [], "accompli"),
-        DeinflectionRule("でおく", "で", ["*te"], [], "préparatoire"),
+        DeinflectionRule("でしまう", "で", ["*te"], ["v5u"], "accompli"),
+        DeinflectionRule("でおく", "で", ["*te"], ["v5k", "v5k-s"], "préparatoire"),
+        // ⚠️ でみる manquait : 読んでみた se cassait en 読んで + みた, et みた
+        // ressortait en 見る (« voir ») alors que ce みる est un auxiliaire.
+        DeinflectionRule("でみる", "で", ["*te"], ["v1"], "tentative"),
         DeinflectionRule("でいて", "で", ["*te"], [], "progressif en te"),
-        DeinflectionRule("でくる", "で", ["*te"], [], "directionnel"),
-        DeinflectionRule("でいく", "で", ["*te"], [], "directionnel"),
-        DeinflectionRule("でくれる", "で", ["*te"], [], "bénéfactif"),
-        DeinflectionRule("でもらう", "で", ["*te"], [], "bénéfactif"),
-        DeinflectionRule("であげる", "で", ["*te"], [], "bénéfactif"),
+        DeinflectionRule("でくる", "で", ["*te"], ["vk"], "directionnel"),
+        DeinflectionRule("でいく", "で", ["*te"], ["v5k", "v5k-s"], "directionnel"),
+        DeinflectionRule("でくれる", "で", ["*te"], ["v1"], "bénéfactif"),
+        DeinflectionRule("でもらう", "で", ["*te"], ["v5u"], "bénéfactif"),
+        DeinflectionRule("であげる", "で", ["*te"], ["v1"], "bénéfactif"),
+        // Contractions familières. Elles sont MAJORITAIRES dans le registre que
+        // la feature vise (tweet, bulle de manga, message) et ne menaient nulle
+        // part : 飲んじゃった laissait 飲ん sans entrée, 買っとく laissait 買っ,
+        // 行かなきゃ laissait 行か. ちゃう = てしまう, とく = ておく, なきゃ =
+        // なければ, なくちゃ = なくては.
+        DeinflectionRule("ちゃう", "て", ["*te"], ["v5u"], "accompli contracté"),
+        DeinflectionRule("じゃう", "で", ["*te"], ["v5u"], "accompli contracté"),
+        DeinflectionRule("とく", "て", ["*te"], ["v5k", "v5k-s"], "préparatoire contracté"),
+        DeinflectionRule("どく", "で", ["*te"], ["v5k", "v5k-s"], "préparatoire contracté"),
+        DeinflectionRule("なきゃ", "ない", ["*nai", "adj-i"], [], "négatif contracté"),
+        DeinflectionRule("なくちゃ", "ない", ["*nai", "adj-i"], [], "négatif contracté"),
+        DeinflectionRule("なくては", "ない", ["*nai", "adj-i"], [], "négatif conditionnel"),
+        // Littéraire, mais courant dans les paroles et les titres.
+        DeinflectionRule("ねば", "ない", ["*nai", "adj-i"], [], "négatif conditionnel littéraire"),
+        // Ce qui s'accroche au radical en い se ramène à ます, exactement comme
+        // たい. Sans ça, 聴きながら donnait le NOM 聴き (« l'ouïe »), 降りそう le
+        // nom 降り (« chute de pluie ») et 寝なさい le nom 寝 (« sommeil ») :
+        // trois mots de contenu faux proposés à l'apprentissage.
+        DeinflectionRule("ながら", "ます", ["*masu"], [], "simultané"),
+        DeinflectionRule("なさい", "ます", ["*masu"], [], "impératif poli"),
+        DeinflectionRule("そう", "ます", ["*masu"], [], "apparence"),
+        // すぎる s'accroche au radical en い des verbes et au radical des
+        // adjectifs. 走りすぎる existe dans JMdict, 難しすぎる non — et il
+        // ressortait en 難し, un adjectif CLASSIQUE en -く.
+        DeinflectionRule("すぎる", "ます", ["*masu"], ["v1"], "excès"),
+        DeinflectionRule("すぎる", "い", ["adj-i"], ["v1"], "excès"),
+        // La copule polie au passé. でし n'est pas un mot : laissé seul, il
+        // ressortait en 弟子 (« disciple »), proposé à l'apprentissage dans
+        // toute phrase polie au passé.
+        DeinflectionRule("でした", "です", ["cop", "aux-v"], [], "copule passée"),
     ]
 
     /// The whole table, built once.
     public static let all: [DeinflectionRule] =
         godanRules() + ichidan + irregular + adjectives + auxiliaries
+
+    // MARK: - Index
+
+    /// The table bucketed by the **last character of `suffixIn`**.
+    ///
+    /// A rule can only fire when the candidate ends with its `suffixIn`, so a
+    /// candidate ending in `た` can never match a rule ending in `る`. Bucketing
+    /// on that character turns « test all 124 rules » into « test the 3 to 12
+    /// that could possibly apply », without changing a single outcome.
+    ///
+    /// This is not premature optimisation, it closed a measured cliff. The
+    /// table grew from 106 to 124 rules when the familiar contractions,
+    /// honorifics and aspect chains were added — all legitimate — and a
+    /// paragraph went from 53 ms to 737 ms, because the cost is
+    /// `depth × frontier × RULES` and every one of those factors had grown.
+    /// The choice looked like « correct Japanese or a responsive app ». It was
+    /// neither: it was a linear scan in the innermost loop.
+    static let byLastCharacter: [Character: [DeinflectionRule]] = {
+        var index: [Character: [DeinflectionRule]] = [:]
+        for rule in all {
+            guard let last = rule.suffixIn.last else { continue }
+            index[last, default: []].append(rule)
+        }
+        return index
+    }()
+
+    /// Rules whose `suffixIn` is empty, so they apply to any candidate.
+    ///
+    /// Exactly one today — the ichidan stem (食べ → 食べる) — but derived rather
+    /// than hardcoded, because a second one would otherwise be silently
+    /// dropped by the index above.
+    static let unanchored: [DeinflectionRule] = all.filter { $0.suffixIn.isEmpty }
 }

@@ -115,6 +115,77 @@ struct DeinflectionRulesTests {
         expect("行って", "行く", "v5k-s")
     }
 
+    // MARK: Registre familier, honorifique et littéraire
+
+    /// Les contractions ne sont pas un ornement : dans un tweet ou une bulle de
+    /// manga elles sont la forme NORMALE. Mesuré avant ces règles, 飲んじゃった
+    /// laissait 飲ん sans entrée, 買っとく laissait 買っ et 行かなきゃ laissait
+    /// 行か — c'est-à-dire « définition non disponible » sur le verbe principal
+    /// de la phrase.
+    @Test("Les contractions familières reviennent au verbe")
+    func casualContractions() {
+        expect("忘れちゃった", "忘れる", "v1", "ちゃう = てしまう")
+        expect("飲んじゃった", "飲む", "v5m", "じゃう = でしまう")
+        expect("食べちゃいました", "食べる", "v1")
+        expect("買っとく", "買う", "v5u", "とく = ておく")
+        expect("やっといて", "やる", "v5r", "とく à la forme en te")
+        expect("読んどく", "読む", "v5m", "どく = でおく")
+        expect("行かなきゃ", "行く", "v5k-s", "なきゃ = なければ")
+        expect("食べなくちゃ", "食べる", "v1", "なくちゃ = なくては")
+        expect("行かねば", "行く", "v5k-s", "littéraire, courant dans les titres")
+    }
+
+    /// Les cinq verbes en -aru prennent い là où un v5r prendrait り. Sans eux,
+    /// いらっしゃいました se cassait en いらっしゃい + ました, et ました seul
+    /// ressortait en 真下 (« juste en dessous ») : un nom faux proposé à
+    /// l'apprentissage dans toute phrase polie au passé.
+    @Test("Les honorifiques en -aru et ござる")
+    func honorifics() {
+        expect("いらっしゃいます", "いらっしゃる", "v5aru")
+        expect("いらっしゃいました", "いらっしゃる", "v5aru")
+        expect("おっしゃいました", "おっしゃる", "v5aru")
+        expect("くださいました", "くださる", "v5aru")
+        expect("なさいました", "なさる", "v5aru")
+        expect("ございます", "ござる", "v5r")
+        expect("でした", "です", "cop", "copule polie au passé")
+    }
+
+    /// ある est `v5r-i`, comme 行く est `v5k-s` : un irrégulier que la rangée
+    /// doit accepter explicitement. Mesuré avant : 学生ではありません rendait
+    /// あり → 蟻 (« fourmi »).
+    @Test("ある est un v5r irrégulier, pas un inconnu")
+    func aruIsIrregular() {
+        expect("ありません", "ある", "v5r-i")
+        expect("あります", "ある", "v5r-i")
+        expect("ありました", "ある", "v5r-i")
+    }
+
+    /// Ce qui s'accroche au radical en い se ramène à ます, exactement comme
+    /// たい. Chacun de ces cas rendait auparavant un NOM homographe du radical.
+    @Test("Ce qui s'accroche au radical en い")
+    func stemAuxiliaries() {
+        expect("聴きながら", "聴く", "v5k", "sinon le nom 聴き, « l'ouïe »")
+        expect("寝なさい", "寝る", "v1", "sinon le nom 寝, « le sommeil »")
+        expect("降りそう", "降る", "v5r", "sinon le nom 降り, « la chute de pluie »")
+        expect("飲みすぎた", "飲む", "v5m")
+        expect("難しすぎる", "難しい", "adj-i", "sinon 難し, adjectif classique en -く")
+    }
+
+    /// Les auxiliaires d'aspect doivent pouvoir s'enchaîner : ils se conjuguent
+    /// eux-mêmes. Sans `posOut`, 書いておいて laissait おいて → 追手
+    /// (« poursuivant ») et 行ってきます laissait きます → 着る (« s'habiller »).
+    @Test("Les auxiliaires d'aspect se conjuguent aussi")
+    func chainedAuxiliaries() {
+        expect("書いておいて", "書く", "v5k")
+        expect("休んでおきます", "休む", "v5m")
+        expect("行ってきます", "行く", "v5k-s")
+        expect("食べてみました", "食べる", "v1")
+        expect("読んでみた", "読む", "v5m", "la colonne で avait perdu でみる")
+        expect("言わないでおこう", "言う", "v5u", "ないで est une forme en te")
+        expect("待たされました", "待つ", "v5t", "causatif-passif contracté")
+        expect("飲まされた", "飲む", "v5m")
+    }
+
     // MARK: Adjectifs
 
     @Test("Les adjectifs en -い")

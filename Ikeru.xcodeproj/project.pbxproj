@@ -275,6 +275,10 @@
 		FFB0893C1D4BB73CA6C876FE /* TextImportJournalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6FBD3CF9F3A42BE51A6B342 /* TextImportJournalView.swift */; };
 		6BC21380CE15327F732E1E29 /* WordDetailSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E9BED7F876245601DB262D /* WordDetailSheet.swift */; };
 		BA32C427487EB8396C52B1A5 /* WordSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E94D0F1228B77B04E4D09E51 /* WordSelectionView.swift */; };
+		EC6F1A82ED0CD525B8BF183E /* TextImportUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 674341C4384336F178229332 /* TextImportUITests.swift */; };
+		5A17E000000000000000000B /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A17E000000000000000000A /* ShareViewController.swift */; };
+		5A17E000000000000000000F /* IkeruCore in Frameworks */ = {isa = PBXBuildFile; productRef = 5A17E000000000000000000E /* IkeruCore */; };
+		5A17E0000000000000000010 /* IkeruShare.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 5A17E0000000000000000005 /* IkeruShare.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -306,6 +310,13 @@
 			remoteGlobalIDString = EDDB8F3812DC1BC18F32017C;
 			remoteInfo = Ikeru;
 		};
+		5A17E0000000000000000012 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 44FF3435A5B11DC2E0D31918 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 5A17E0000000000000000001;
+			remoteInfo = IkeruShare;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -315,6 +326,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
+				5A17E0000000000000000010 /* IkeruShare.appex in Embed Foundation Extensions */,
 				CF13EFF3CE9BC5A619F0B16D /* IkeruWidget.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
@@ -600,6 +612,11 @@
 		D6FBD3CF9F3A42BE51A6B342 /* TextImportJournalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextImportJournalView.swift; sourceTree = "<group>"; };
 		A6E9BED7F876245601DB262D /* WordDetailSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordDetailSheet.swift; sourceTree = "<group>"; };
 		E94D0F1228B77B04E4D09E51 /* WordSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordSelectionView.swift; sourceTree = "<group>"; };
+		674341C4384336F178229332 /* TextImportUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextImportUITests.swift; sourceTree = "<group>"; };
+		5A17E0000000000000000005 /* IkeruShare.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = IkeruShare.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		5A17E000000000000000000A /* ShareViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareViewController.swift; sourceTree = "<group>"; };
+		5A17E000000000000000000C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		5A17E000000000000000000D /* IkeruShare.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = IkeruShare.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -624,6 +641,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				53CA5BB295FDB9CBF8535BE8 /* IkeruCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5A17E0000000000000000008 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5A17E000000000000000000F /* IkeruCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -867,6 +892,7 @@
 		70A9DC9F6ECBB150C593E25D /* Products */ = {
 			isa = PBXGroup;
 			children = (
+				5A17E0000000000000000005 /* IkeruShare.appex */,
 				8225047CD3C41A1364CD67FA /* Ikeru.app */,
 				71F17C0E3B326F9F0C5D3E94 /* IkeruTests.xctest */,
 				9E2346F3FADE504EFFA9CBF7 /* IkeruUITests.xctest */,
@@ -928,6 +954,7 @@
 		C866ECFDA9FD425ADC45AF9D /* IkeruUITests */ = {
 			isa = PBXGroup;
 			children = (
+				674341C4384336F178229332 /* TextImportUITests.swift */,
 				0E5659B039C080407686F6E3 /* Support */,
 				E90CE4FB4F89A69883403DA9 /* Pages */,
 				72F259260D9B15F440C7B50E /* CloudBackupToggleUITests.swift */,
@@ -1230,6 +1257,7 @@
 		EF88C2B2433715E2D2E8D0DA = {
 			isa = PBXGroup;
 			children = (
+				5A17E0000000000000000006 /* IkeruShare */,
 				F07F60B10BED6A68A1D6B10F /* Ikeru */,
 				7344ECA701F647E161A3F97A /* IkeruTests */,
 				C866ECFDA9FD425ADC45AF9D /* IkeruUITests */,
@@ -1301,6 +1329,16 @@
 				F66793267450AA0034059A49 /* AssistedReadingView.swift */,
 			);
 			path = TextImport;
+			sourceTree = "<group>";
+		};
+		5A17E0000000000000000006 /* IkeruShare */ = {
+			isa = PBXGroup;
+			children = (
+				5A17E000000000000000000A /* ShareViewController.swift */,
+				5A17E000000000000000000C /* Info.plist */,
+				5A17E000000000000000000D /* IkeruShare.entitlements */,
+			);
+			path = IkeruShare;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -1391,6 +1429,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				5A17E0000000000000000011 /* PBXTargetDependency */,
 				6B5EFA12D68F711EDA158C69 /* PBXTargetDependency */,
 				A0D20F1CE0000000000B0004 /* PBXTargetDependency */,
 			);
@@ -1401,6 +1440,26 @@
 			productName = Ikeru;
 			productReference = 8225047CD3C41A1364CD67FA /* Ikeru.app */;
 			productType = "com.apple.product-type.application";
+		};
+		5A17E0000000000000000001 /* IkeruShare */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5A17E0000000000000000002 /* Build configuration list for PBXNativeTarget "IkeruShare" */;
+			buildPhases = (
+				5A17E0000000000000000007 /* Sources */,
+				5A17E0000000000000000008 /* Frameworks */,
+				5A17E0000000000000000009 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = IkeruShare;
+			packageProductDependencies = (
+				5A17E000000000000000000E /* IkeruCore */,
+			);
+			productName = IkeruShare;
+			productReference = 5A17E0000000000000000005 /* IkeruShare.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -1451,6 +1510,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
+				5A17E0000000000000000001 /* IkeruShare */,
 				EDDB8F3812DC1BC18F32017C /* Ikeru */,
 				C7A466B4903F67E7A7B2D0E2 /* IkeruTests */,
 				6BFC3C86F3AD7CE33BD80F20 /* IkeruUITests */,
@@ -1491,6 +1551,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				F1459C29539AC8013D0E6140 /* Localizable.xcstrings in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5A17E0000000000000000009 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1767,6 +1834,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				EC6F1A82ED0CD525B8BF183E /* TextImportUITests.swift in Sources */,
 				E7F304F8F102F1676196A4EE /* LaunchArguments.swift in Sources */,
 				FAAD7FE5CBF2C0A6366F8813 /* IkeruUITestCase.swift in Sources */,
 				5548CB18C0A47A9190B2BDBB /* SettingsPage.swift in Sources */,
@@ -1780,6 +1848,14 @@
 				E60F6F77330CEE535D85DA46 /* DashboardLaunchUITests.swift in Sources */,
 				7A7CFB6F30BE72C371E63721 /* SessionAnswerFlowUITests.swift in Sources */,
 				ACD0BCA3A7C1EE79813BD02A /* ProfileResetUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5A17E0000000000000000007 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5A17E000000000000000000B /* ShareViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1805,6 +1881,11 @@
 			isa = PBXTargetDependency;
 			target = EDDB8F3812DC1BC18F32017C /* Ikeru */;
 			targetProxy = 878D6DEF846110F4DA6FC1FD /* PBXContainerItemProxy */;
+		};
+		5A17E0000000000000000011 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 5A17E0000000000000000001 /* IkeruShare */;
+			targetProxy = 5A17E0000000000000000012 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -2120,6 +2201,48 @@
 			};
 			name = Release;
 		};
+		5A17E0000000000000000003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = IkeruShare/IkeruShare.entitlements;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = IkeruShare/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ikeru.app.share;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		5A17E0000000000000000004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = IkeruShare/IkeruShare.entitlements;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = IkeruShare/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ikeru.app.share;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -2177,6 +2300,15 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
+		5A17E0000000000000000002 /* Build configuration list for PBXNativeTarget "IkeruShare" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5A17E0000000000000000003 /* Debug */,
+				5A17E0000000000000000004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
@@ -2196,6 +2328,10 @@
 			productName = IkeruCore;
 		};
 		F1FCE9F34C02B01EDB2461B7 /* IkeruCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = IkeruCore;
+		};
+		5A17E000000000000000000E /* IkeruCore */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = IkeruCore;
 		};

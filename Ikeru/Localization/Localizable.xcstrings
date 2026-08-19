@@ -17,6 +17,22 @@
         }
       }
     },
+    "A shared text is waiting" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A shared text is waiting"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un texte partagé t'attend"
+          }
+        }
+      }
+    },
     "Already in your dictionary" : {
       "localizations" : {
         "en" : {
@@ -110,6 +126,170 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Définition en anglais"
+          }
+        }
+      }
+    },
+    "Kept for this import" : {
+      "comment" : "WordDetailSheet — la fiche ouverte au tap d'un mot pendant la lecture assistee. Ces quatre cles etaient utilisees comme LocalizedStringKey sans jamais entrer dans le catalogue, donc la fiche s'affichait a moitie en anglais en francais. i18n-lint ne les voyait pas : il ne regarde ni .navigationTitle(...) ni les helpers maison (sectionLabel) ni LocalizedStringKey(...) explicite.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kept for this import"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gardé pour cet import"
+          }
+        }
+      }
+    },
+    "Learn this word" : {
+      "comment" : "WordDetailSheet — la fiche ouverte au tap d'un mot pendant la lecture assistee. Ces quatre cles etaient utilisees comme LocalizedStringKey sans jamais entrer dans le catalogue, donc la fiche s'affichait a moitie en anglais en francais. i18n-lint ne les voyait pas : il ne regarde ni .navigationTitle(...) ni les helpers maison (sectionLabel) ni LocalizedStringKey(...) explicite.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Learn this word"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apprendre ce mot"
+          }
+        }
+      }
+    },
+    "Meaning" : {
+      "comment" : "WordDetailSheet — la fiche ouverte au tap d'un mot pendant la lecture assistee. Ces quatre cles etaient utilisees comme LocalizedStringKey sans jamais entrer dans le catalogue, donc la fiche s'affichait a moitie en anglais en francais. i18n-lint ne les voyait pas : il ne regarde ni .navigationTitle(...) ni les helpers maison (sectionLabel) ni LocalizedStringKey(...) explicite.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meaning"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sens"
+          }
+        }
+      }
+    },
+    "Nothing to read in what was shared." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nothing to read in what was shared."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rien à lire dans ce qui a été partagé."
+          }
+        }
+      }
+    },
+    "Saved. Open Ikeru and the text will be waiting." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saved. Open Ikeru and the text will be waiting."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enregistré. Ouvre Ikeru et le texte t'y attendra."
+          }
+        }
+      }
+    },
+    "Talk about this text with Sakura" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Talk about this text with Sakura"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parler de ce texte avec Sakura"
+          }
+        }
+      }
+    },
+    "TextImport.Journal.Summary %lld %lld %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld texts read, %2$lld words kept, %3$lld%% average coverage"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld textes lus, %2$lld mots retenus, %3$lld %% de couverture moyenne"
+          }
+        }
+      }
+    },
+    "TextImport.Journal.SummaryNoCoverage %lld %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld texts read, %2$lld words kept"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld textes lus, %2$lld mots retenus"
+          }
+        }
+      }
+    },
+    "TextImport.Journal.ThisMonth" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "THIS MONTH"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CE MOIS-CI"
+          }
+        }
+      }
+    },
+    "Word" : {
+      "comment" : "WordDetailSheet — la fiche ouverte au tap d'un mot pendant la lecture assistee. Ces quatre cles etaient utilisees comme LocalizedStringKey sans jamais entrer dans le catalogue, donc la fiche s'affichait a moitie en anglais en francais. i18n-lint ne les voyait pas : il ne regarde ni .navigationTitle(...) ni les helpers maison (sectionLabel) ni LocalizedStringKey(...) explicite.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Word"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mot"
           }
         }
       }
@@ -572,6 +752,23 @@
         }
       }
     },
+    "TextImport.Capture.CameraDenied" : {
+      "comment" : "Shown under the capture buttons when camera permission is denied (TextImportCaptureView.cameraAccessDenied). The key was referenced by the view without ever being added here, so the learner read the raw identifier « TextImport.Capture.CameraDenied » above an « Ouvrir les réglages » button.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Camera access is off, so the preview stays black. Turn it on in Settings — or paste the text instead."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L'accès à l'appareil photo est refusé, l'aperçu reste noir. Autorise-le dans les réglages — ou colle le texte à la place."
+          }
+        }
+      }
+    },
     "TextImport.Capture.ClipboardEmpty" : {
       "localizations" : {
         "en" : {
@@ -984,6 +1181,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%lld mots retenus"
+          }
+        }
+      }
+    },
+    "TextImport.Selection.NothingRecognized" : {
+      "comment" : "Shown instead of the word list when the analyser recognised no content word at all (coverage == nil) — garbled OCR, slang, proper nouns. Distinct from NothingUnknown, which congratulates: saying « you already know everything here » about a text nothing could read would be an invented compliment. The key was referenced by WordSelectionView without ever being added here, so the learner read the raw identifier instead of the explanation.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No words could be read here. That happens with slang, proper nouns, or a photo the recognition struggled with. Go back and correct the text, then try again."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun mot n'a pu être lu ici. Ça arrive avec de l'argot, des noms propres, ou une photo que la reconnaissance a mal déchiffrée. Reviens en arrière pour corriger le texte, puis relance."
           }
         }
       }
@@ -13540,18 +13754,18 @@
     },
     "Backs up your progress to a server in Europe. No account is needed. Conversations with Sakura are not included. Restoring on a new device is not available yet." : {
       "extractionState" : "manual",
-      "comment" : "Value reworded for lot 3 (Sign in with Apple) — key text kept stable to avoid a re-key; the last sentence now points at the new sign-in row instead of claiming cross-device restore is unavailable, which it no longer is once signed in.",
+      "comment" : "Value reworded for lot 3 (Sign in with Apple), then again on 2026-08-19 for « Apporte ton propre texte » — key text kept stable to avoid a re-key. The imported-texts clause is not decoration: this explainer sits directly under the toggle and is the consent surface the learner actually reads, while text_imports pushes their own pasted or photographed prose. Naming only what is EXCLUDED (Sakura) while the widest new inclusion went unnamed was the gap.",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Backs up your progress to a server in Europe. No account is needed. Conversations with Sakura are not included. Restoring on a new device requires signing in with Apple."
+            "value" : "Backs up your progress to a server in Europe — including the texts you import yourself. No account is needed. Conversations with Sakura are not included. Restoring on a new device requires signing in with Apple."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sauvegarde votre progression sur un serveur situé en Europe. Aucun compte n'est nécessaire. Les conversations avec Sakura ne sont pas incluses. La restauration sur un nouvel appareil nécessite de vous connecter avec Apple."
+            "value" : "Sauvegarde votre progression sur un serveur situé en Europe — y compris les textes que vous importez vous-même. Aucun compte n'est nécessaire. Les conversations avec Sakura ne sont pas incluses. La restauration sur un nouvel appareil nécessite de vous connecter avec Apple."
           }
         }
       }
@@ -14020,18 +14234,18 @@
     },
     "Permanently deletes your backed-up progress — profiles, cards, review history, and vocabulary — from the server. This cannot be undone. Data on this device stays untouched." : {
       "extractionState" : "manual",
-      "comment" : "Value reworded for lot 3 (Sign in with Apple) — key text kept stable to avoid a re-key. Deletion now also erases the account itself; wording covers both anonymous-only and Apple-linked learners since most are the former.",
+      "comment" : "Value reworded for lot 3 (Sign in with Apple), then again on 2026-08-19 for « Apporte ton propre texte » — key text kept stable to avoid a re-key. Deletion now also erases the account itself; wording covers both anonymous-only and Apple-linked learners since most are the former. The imported texts are listed explicitly: this alert is the enumeration a learner reads before an irreversible erasure, and text_imports shipped into the backup without being named in it.",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Permanently deletes your account and everything backed up to it — profiles, cards, review history, and vocabulary. If you're signed in with Apple, that connection is removed too. This cannot be undone. Data on this device stays untouched."
+            "value" : "Permanently deletes your account and everything backed up to it — profiles, cards, review history, vocabulary, and the texts you imported. If you're signed in with Apple, that connection is removed too. This cannot be undone. Data on this device stays untouched."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Supprime définitivement votre compte et tout ce qui y est sauvegardé — profils, cartes, historique de révisions, vocabulaire. Si vous êtes connecté avec Apple, cette connexion est également supprimée. Action irréversible. Les données sur cet appareil ne sont pas concernées."
+            "value" : "Supprime définitivement votre compte et tout ce qui y est sauvegardé — profils, cartes, historique de révisions, vocabulaire, et les textes que vous avez importés. Si vous êtes connecté avec Apple, cette connexion est également supprimée. Action irréversible. Les données sur cet appareil ne sont pas concernées."
           }
         }
       }

@@ -37,10 +37,20 @@ struct WordSelectionView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: IkeruTheme.Spacing.md) {
                     coverageHeader
-                    intro
+                    // « Les premiers sont déjà cochés » n'a de sens que s'il y
+                    // a une liste : au-dessus d'un état vide, la phrase
+                    // annonçait des cases à cocher qui n'existent pas.
+                    if !words.isEmpty { intro }
 
                     if words.isEmpty {
-                        nothingUnknown
+                        // Deux vides très différents, deux messages : « tu
+                        // connais tout » n'est vrai que si l'app a reconnu
+                        // quelque chose.
+                        if viewModel.coverage == nil {
+                            nothingRecognized
+                        } else {
+                            nothingUnknown
+                        }
                     } else {
                         wordList
                     }
@@ -105,6 +115,26 @@ struct WordSelectionView: View {
             .font(.ikeruCaption)
             .foregroundStyle(Color.ikeruTextSecondary)
             .fixedSize(horizontal: false, vertical: true)
+    }
+
+    /// `coverage == nil` veut dire : **aucun mot de contenu reconnu**, pas
+    /// « tout connu ». Afficher « tu connais déjà tous les mots d'ici » sur un
+    /// texte que le dictionnaire n'a pas su lire — argot, noms propres, OCR
+    /// approximatif — serait une félicitation inventée. On dit ce qui s'est
+    /// passé, et ce que l'apprenant peut en faire.
+    private var nothingRecognized: some View {
+        VStack(spacing: IkeruTheme.Spacing.sm) {
+            Image(systemName: "questionmark.text.page")
+                .font(.system(size: 36, weight: .ultraLight))
+                .foregroundStyle(Color.ikeruTextTertiary)
+            Text("TextImport.Selection.NothingRecognized")
+                .font(.ikeruCaption)
+                .foregroundStyle(Color.ikeruTextSecondary)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, IkeruTheme.Spacing.xl)
     }
 
     private var nothingUnknown: some View {
@@ -210,7 +240,14 @@ struct WordSelectionView: View {
     private func glossLine(_ token: AnalyzedToken) -> some View {
         HStack(alignment: .top, spacing: IkeruTheme.Spacing.xs) {
             if let entry = token.entry {
-                if entry.glossFR == nil {
+                // Une chaîne française VIDE compte comme absente, exactement
+                // comme dans `WordDetailSheet.gloss(_:)`. Les deux écrans
+                // montrent la même donnée et divergeaient : ici `== nil`
+                // laissait passer `""`, ce qui affichait une ligne de gloss
+                // vide, sans badge et sans sens. Aucune ligne de la base
+                // livrée n'est dans ce cas (mesuré : 0 sur 218 498) — c'est
+                // une divergence latente qu'on ferme, pas une panne vécue.
+                if entry.glossFR?.isEmpty != false {
                     Text(verbatim: "EN")
                         .ikeruScaledFont(9, weight: .semibold, relativeTo: .caption2)
                         .foregroundStyle(Color.ikeruTextSecondary)
@@ -221,7 +258,7 @@ struct WordSelectionView: View {
                         }
                         .accessibilityLabel("TextImport.Gloss.EnglishBadge")
                 }
-                Text(entry.glossFR ?? entry.glossEN)
+                Text(verbatim: entry.glossFR.flatMap { $0.isEmpty ? nil : $0 } ?? entry.glossEN)
                     .font(.ikeruCaption)
                     .foregroundStyle(Color.ikeruTextSecondary)
                     .fixedSize(horizontal: false, vertical: true)

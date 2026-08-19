@@ -60,9 +60,10 @@ public final class TextImportViewModel {
     /// Selected dictionary forms, the geste central of the whole feature.
     public private(set) var selected: Set<String> = []
 
-    /// Entries created by the last `save()`, in selection order — what the
+    /// Entries **created** by the last `save()`, in selection order — what the
     /// « pratique ce que tu viens de lire » mini-session drills. Proposed,
-    /// never imposed.
+    /// never imposed. A word the learner already had is deliberately absent:
+    /// it is already scheduled, and re-proposing it would drill a card twice.
     public private(set) var savedEntryIDs: [UUID] = []
 
     /// True while the dictionary is unavailable — the feature says so rather
@@ -161,12 +162,41 @@ public final class TextImportViewModel {
         for token in analysis.learnableWords {
             guard let form = token.dictionaryForm, selected.contains(form),
                   let entry = token.entry else { continue }
-            let gloss = entry.glossFR ?? entry.glossEN
-            let created = await vocabulary.addEntry(word: form, reading: entry.reading,
-                                                    meaning: gloss)
-            createdIDs.append(created.id)
+            // `addEntry` rend l'entrée EXISTANTE quand le mot est déjà au
+            // dictionnaire. La revendiquer ferait entrer dans `entryIDs` — « les
+            // entrées créées à partir de cet import » — un mot que l'apprenant
+            // possédait déjà, et supprimer l'import emporterait cette carte avec
+            // tout son historique FSRS, en contredisant ce que la boîte de
+            // confirmation promet. `knownForms` écarte normalement ces mots,
+            // mais c'est un instantané pris à l'analyse : un ajout à la main
+            // dans un autre écran, ou une synchro qui atterrit entre l'analyse
+            // et ici, passe à travers. Étroit et destructeur : on vérifie.
+            let existing = await vocabulary.entry(byWord: form)
+            let alreadyOwned = existing?.isInDictionary == true
+
+            // Deux gestes distincts, et c'est voulu. Une carte que l'apprenant
+            // possède déjà n'est PAS repassée par `addEntry` : celui-ci écrase
+            // `meaning` avec la gloss JMdict, donc un sens écrit à la main
+            // (« aujourd'hui, formel — pour les annonces ») disparaissait sans
+            // un mot, remplacé par la définition du dictionnaire — en anglais
+            // une fois sur deux parmi les mots courants. Recroiser un mot en
+            // lecture n'autorise pas à réécrire ce que l'apprenant en a dit.
+            // Épinglé par `preexistingDictionaryWordsAreNotClaimed`.
+            let entryID: UUID
+            if alreadyOwned, let existing {
+                entryID = existing.id
+            } else {
+                let gloss = entry.glossFR ?? entry.glossEN
+                let created = await vocabulary.addEntry(word: form, reading: entry.reading,
+                                                        meaning: gloss)
+                entryID = created.id
+                createdIDs.append(created.id)
+            }
+            // La rencontre est enregistrée dans les deux cas : le contexte de
+            // lecture appartient à l'apprenant même quand la provenance de la
+            // carte, elle, est plus ancienne que ce texte.
             await vocabulary.logEncounter(
-                entryId: created.id,
+                entryId: entryID,
                 source: .importedText,
                 contextSnippet: Self.sentence(containing: token, in: analysis)
             )
@@ -178,12 +208,22 @@ public final class TextImportViewModel {
         stage = .saved(wordsKept: createdIDs.count)
     }
 
+    /// Repart d'un import vierge — y compris sa **provenance**.
+    ///
+    /// `source` n'est écrit que par `begin(with:source:)`, c'est-à-dire par le
+    /// collage et par l'OCR. Taper au clavier ne le touche pas : sans cette
+    /// remise à zéro, « importer un autre texte » après une photo laissait
+    /// `.photo` en place, et un texte tapé à la main partait au journal — et
+    /// dans la sauvegarde cloud, qui pousse la colonne `source` — étiqueté
+    /// « photographié ». La provenance affichée doit être celle du texte qu'on
+    /// regarde, pas celle du précédent.
     public func reset() {
         draft = ""
         analysis = nil
         selected = []
         knownForms = []
         savedEntryIDs = []
+        source = .paste
         stage = .capture
     }
 

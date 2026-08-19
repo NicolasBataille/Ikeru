@@ -321,14 +321,47 @@ struct IkeruSchemaTests {
         golden.append(contentsOf: Self.v4SyncColumns)
         golden.sort()
         #expect(Self.fingerprint(of: schema) == golden)
-        // NOTE: no typed-digest assertion here (unlike v1/v2/v3 above). That
-        // hash can only be minted by actually running this suite (`swift
-        // test --no-parallel --filter "IkeruSchema"`) and reading the
-        // printed value — this lot was authored without build/test
-        // authorization (see handoff notes), so a fabricated hash would be
-        // worse than no assertion at all. First person to run this suite:
-        // read the digest `typedFingerprint(of: schema)` produces, verify it
-        // by hand against the property list above, and add
-        // `#expect(Self.typedFingerprint(of: schema) == "<value>")` here.
+        // Typed digest — minted 2026-08-19 by running this suite, as the note
+        // that stood here asked. It was missing until V5 shipped, which meant
+        // V4 (whose `models` are LIVE types) had NO guard against a property
+        // being *retyped* or *re-optionalized*: the name list above cannot see
+        // that, and V4 is the version every store on a real device is coming
+        // from. See v1GoldenFingerprint for the failure mode.
+        #expect(Self.typedFingerprint(of: schema) == "6d9ea78fe6560d5f")
+    }
+
+    /// The 10 columns `TextImport` brings — and nothing else. V5 is purely
+    /// additive by construction (see `IkeruSchemaV5`'s doc comment); this list
+    /// is what makes "by construction" mechanically checkable.
+    private static let v5TextImportColumns = [
+        "TextImport.content",
+        "TextImport.coverage",
+        "TextImport.createdAt",
+        "TextImport.deletedAt",
+        "TextImport.entryIDs",
+        "TextImport.id",
+        "TextImport.sourceRawValue",
+        "TextImport.syncedAt",
+        "TextImport.title",
+        "TextImport.updatedAt",
+    ]
+
+    /// The gap this closes: `v5ModelCount` only compares *entity name sets*, so
+    /// it would stay green if a V4 entity silently gained, lost or retyped a
+    /// property — which is exactly the `aa03566` failure, since V4 and V5 both
+    /// name LIVE types. Both fingerprints below are needed: the name list
+    /// catches added/removed/renamed properties, the typed digest catches
+    /// retyping and re-optionalizing.
+    @Test("V5 golden fingerprint — V4 untouched, plus exactly TextImport's 10 columns")
+    func v5GoldenFingerprint() {
+        let v4 = Self.fingerprint(of: Schema(versionedSchema: IkeruSchemaV4.self))
+        let v5 = Self.fingerprint(of: Schema(versionedSchema: IkeruSchemaV5.self))
+        // Not one property of V4 moved: additive means additive.
+        #expect(v5.filter { !$0.hasPrefix("TextImport.") } == v4)
+        #expect(v5.filter { $0.hasPrefix("TextImport.") } == Self.v5TextImportColumns)
+        #expect((v4 + Self.v5TextImportColumns).sorted() == v5)
+        // Typed digest — minted 2026-08-19 by running this suite.
+        #expect(Self.typedFingerprint(of: Schema(versionedSchema: IkeruSchemaV5.self))
+                == "bc676f2ff0a1a6a1")
     }
 }

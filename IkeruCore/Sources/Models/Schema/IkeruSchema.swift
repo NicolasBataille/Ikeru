@@ -1,6 +1,6 @@
 // swiftlint:disable file_length
 // This file is an append-only history of frozen `VersionedSchema` snapshots
-// (V1 through V3) plus the live V4 schema. Splitting it across files would
+// (V1 through V3) plus the live V4 and V5 schemas. Splitting it across files would
 // break the name-shadowing trick each frozen enum relies on (nested @Model
 // types must live inside their own versioned-schema enum body — see V1's doc
 // comment) and would scatter a single coherent story about what shipped
@@ -1349,9 +1349,18 @@ public enum IkeruSchemaV3: VersionedSchema {
 /// for freshly created objects, so only pre-existing (migrated) rows ever
 /// see the epoch sentinel.
 ///
-/// Unlike V3, V4 uses *live* references throughout — it doesn't need to be
-/// frozen because there is currently no V5. The day a V5 is created, V4 must
-/// be frozen the same way V1, V2, and V3 were.
+/// V4 uses *live* references throughout. **That is now a standing hazard, not
+/// a neutral fact**: `IkeruSchemaV5` exists (2026-08-19) and V4 was NOT frozen
+/// when it was cut, so V4 and V5 both describe whatever the live classes say
+/// today. Adding, removing or retyping a stored property on any of these
+/// classes silently rewrites what V4 means — the `aa03566` failure this file
+/// opens with — and every real store stops hash-matching.
+///
+/// What holds the line until someone does the freeze: `IkeruSchemaTests`'
+/// `v4GoldenFingerprint` (name list **and** typed digest) and
+/// `v5GoldenFingerprint`. They fail loudly on any such edit. Do not "fix" them
+/// by updating the golden values: freeze V4's touched entities into nested
+/// snapshots the way V1 did, then cut V6.
 public enum IkeruSchemaV4: VersionedSchema {
 
     public static var versionIdentifier: Schema.Version { Schema.Version(4, 0, 0) }

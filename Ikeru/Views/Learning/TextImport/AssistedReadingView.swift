@@ -286,7 +286,12 @@ struct AssistedReadingView: View {
 
 /// Un morceau de ligne : soit un mot (avec son token), soit un run de
 /// caractères entre les mots.
-private struct ReadingSegment: Identifiable {
+///
+/// Interne, pas `private` : `AssistedReadingTextFidelityTests` rejoue la
+/// reconstruction du texte source sur ces deux types. C'est la seule
+/// vérification possible de la promesse « le texte n'est jamais réécrit » —
+/// le rendu SwiftUI, lui, ne s'inspecte pas.
+struct ReadingSegment: Identifiable {
     let id: Int
     /// Le token quand le morceau est un mot ; `nil` pour ce qui vit entre eux.
     let token: AnalyzedToken?
@@ -294,7 +299,7 @@ private struct ReadingSegment: Identifiable {
 }
 
 /// Une ligne visuelle. `segments` vide = ligne blanche du texte source.
-private struct ReadingLine: Identifiable {
+struct ReadingLine: Identifiable {
     let id: Int
     let segments: [ReadingSegment]
 

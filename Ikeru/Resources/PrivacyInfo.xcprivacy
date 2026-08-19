@@ -18,11 +18,21 @@
     see AIRouterService), the text of the conversation or mnemonic request is
     sent to that provider to generate a response. This is opt-in: with no key
     configured, nothing is sent anywhere. Declared below as
-    NSPrivacyCollectedDataTypeOtherUserContent, NOT linked to identity: the
-    request carries no Supabase user_id or any other stable identifier, and
-    (see cloud-sync bullets below) the sync path deliberately never sends
-    this content to Supabase either — the two data flows never combine it
-    with an identifier.
+    NSPrivacyCollectedDataTypeOtherUserContent. That request itself carries
+    no Supabase user_id or any other stable identifier.
+
+    ⚠️ That entry is nonetheless declared LINKED, and the reason is a second,
+    separate flow — see the imported-texts bullet in the cloud-backup list
+    below. Until 2026-08-19 it was Linked=false, and this paragraph claimed
+    "the sync path deliberately never sends this content to Supabase either
+    — the two data flows never combine it with an identifier." That stopped
+    being true the day `text_imports` shipped: the learner's own pasted or
+    photographed prose is now pushed under the stable anonymous user_id.
+    Apple's rule is per data TYPE, not per flow — if a type is linked in any
+    one use, it is declared linked — so one entry covering both flows, set
+    to linked, is the honest declaration. docs/privacy.html was rewritten in
+    the same commit that created the table; this file was not, and that gap
+    is what this note exists to stop recurring.
 
   Cloud backup (Supabase, opt-in — see CloudSyncCoordinator.syncNow(), which
   only runs after the learner turns sync on): the app signs in anonymously
@@ -84,11 +94,23 @@
     progress in an app" (one of Apple's own examples under Product
     Interaction). Linked: true — every one of these tables is pushed with
     a row tied to the session's user_id.
+  - NSPrivacyCollectedDataTypeOtherUserContent (the entry above, Linked:
+    true): the `text_imports` table — the texts the learner pastes or
+    photographs to turn into cards (2026-08-19, « Apporte ton propre texte »).
+    `content` is that text VERBATIM, free-form prose the learner wrote,
+    copied or photographed, plus `title` (its first line). See
+    SyncPayloadBuilder.row(for: TextImport) for the exact columns and
+    supabase/migrations/20260819120000_text_imports.sql for the table. It is
+    pushed under the same anonymous user_id as every other table, which is
+    what makes this data type Linked. The PHOTO is never uploaded — OCR runs
+    on-device (Vision) and only the recognised text is stored.
   - contextSnippet on VocabularyEncounter (free-form sentence text, often
     Sakura conversation) and the entire companion_chat_messages table are
     deliberately NEVER pushed — see the comments at those call sites in
     SyncPayloadBuilder.swift and CloudSyncCoordinator.swift. Nothing here
-    declares them because nothing sends them.
+    declares them because nothing sends them. Note the asymmetry, which is
+    real and intended: a sentence attached to a dictionary entry does not
+    travel, but the imported text it was cut from does, whole.
 
   NSPrivacyAccessedAPITypes below covers UserDefaults access (reason
   CA92.1: reading/writing app settings). Network requests to AI providers
@@ -108,7 +130,7 @@
 			<key>NSPrivacyCollectedDataType</key>
 			<string>NSPrivacyCollectedDataTypeOtherUserContent</string>
 			<key>NSPrivacyCollectedDataTypeLinked</key>
-			<false/>
+			<true/>
 			<key>NSPrivacyCollectedDataTypeTracking</key>
 			<false/>
 			<key>NSPrivacyCollectedDataTypePurposes</key>

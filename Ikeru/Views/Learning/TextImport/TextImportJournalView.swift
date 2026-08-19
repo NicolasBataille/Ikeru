@@ -72,6 +72,7 @@ struct TextImportJournalView: View {
     /// où le modificateur était silencieusement inerte dans un `VStack`.
     private var importList: some View {
         List {
+            monthSummary
             ForEach(imports) { item in
                 row(item)
                     .listRowBackground(Color.clear)
@@ -149,6 +150,43 @@ struct TextImportJournalView: View {
 
     /// « Aucun élément » n'apprend rien à personne. Un écran vide est le seul
     /// endroit où la feature peut encore s'expliquer.
+    /// Ce que le mois en cours donne, en une ligne.
+    ///
+    /// Rien du tout tant qu'aucun texte n'a été lu ce mois-ci : un journal qui
+    /// affiche « 0 texte, 0 mot » le premier du mois transforme un compteur
+    /// remis à zéro en reproche.
+    @ViewBuilder
+    private var monthSummary: some View {
+        let summary = TextImportSummary.make(
+            from: imports,
+            since: TextImportSummary.startOfMonth(containing: Date()))
+        if !summary.isEmpty {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("TextImport.Journal.ThisMonth")
+                    .font(.ikeruMicro)
+                    .ikeruTracking(.micro)
+                    .foregroundStyle(Color.ikeruTextTertiary)
+                if let coverage = summary.averageCoverage {
+                    Text("TextImport.Journal.Summary \(summary.textCount) \(summary.wordCount) \(Int((coverage * 100).rounded()))")
+                        .font(.ikeruCaption)
+                        .foregroundStyle(Color.ikeruTextSecondary)
+                } else {
+                    // Pas de moyenne à annoncer : on ne la remplace pas par un
+                    // zéro, on n'en parle pas.
+                    Text("TextImport.Journal.SummaryNoCoverage \(summary.textCount) \(summary.wordCount)")
+                        .font(.ikeruCaption)
+                        .foregroundStyle(Color.ikeruTextSecondary)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, IkeruTheme.Spacing.md)
+            .padding(.vertical, IkeruTheme.Spacing.sm)
+            .listRowBackground(Color.clear)
+            .listRowSeparator(.hidden)
+            .listRowInsets(EdgeInsets())
+        }
+    }
+
     private var emptyState: some View {
         VStack(spacing: IkeruTheme.Spacing.lg) {
             Image(systemName: "text.viewfinder")

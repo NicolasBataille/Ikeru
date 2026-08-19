@@ -252,7 +252,7 @@ actor SyncPullActor {
         // MARK: Rule 1 — cold-start empty-cloud guard
         //
         // Only relevant on a device's VERY FIRST pull ever (no cursor for
-        // ANY of the 7 tables) — a device mid-way through its sync history
+        // ANY of the 8 tables) — a device mid-way through its sync history
         // has already proven the server isn't empty by definition of
         // having a cursor. Rather than issuing separate "is it empty?"
         // probe requests (which would race the real pagination for the

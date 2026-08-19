@@ -145,6 +145,101 @@ struct TextImportDeletionTests {
         #expect(await repository.imports(containing: UUID()).isEmpty)
     }
 
+    @Test("Un mot qu'un autre import garde perd quand même la rencontre du texte effacé")
+    func survivorLosesThisTextsEncounter() async throws {
+        // La boîte de confirmation promet « seuls les mots que ce texte a été le
+        // seul à apporter sont retirés » — pas que l'historique continue de
+        // citer un texte qui n'existe plus. Le doc de `delete(_:)` le dit
+        // aussi : « an entry that survives still loses THIS text's encounter ».
+        // La branche « un autre import le revendique » sautait l'entrée entière
+        // et laissait donc une rencontre pointant sur un texte effacé, alors
+        // que la branche « rencontré ailleurs » la retirait : deux issues
+        // différentes pour la même situation, selon la seule raison de survie.
+        let container = try makeTestContainer()
+        let repository = TextImportRepository(modelContainer: container)
+        let entryID = seedEntry(container, word: "野菜", encounters: [
+            (.importedText, "季節の野菜天ぷら"),
+            (.importedText, "野菜を買いに行く"),
+        ])
+        let first = await repository.create(content: "季節の野菜天ぷらが美味しい", source: .paste,
+                                            coverage: nil, entryIDs: [entryID])
+        _ = await repository.create(content: "野菜を買いに行く", source: .paste,
+                                    coverage: nil, entryIDs: [entryID])
+
+        #expect(await repository.delete(id: first.id).isEmpty)
+        #expect(isLive(container, entryID))
+
+        let context = ModelContext(container)
+        let predicate = #Predicate<VocabularyEntry> { $0.id == entryID }
+        let entry = try #require((try? context.fetch(FetchDescriptor(predicate: predicate)))?.first)
+        let live = (entry.encounters ?? []).filter { $0.deletedAt == nil }
+        #expect(live.map(\.contextSnippet) == ["野菜を買いに行く"],
+                "la rencontre du texte effacé s'en va, celle du texte encore là reste")
+    }
+
+    @Test("Une rencontre sans extrait ne se fait pas emporter par un texte au hasard")
+    func emptySnippetIsNotMatchedByEveryText() async throws {
+        // Mesuré, pas supposé : `"…".contains("")` rend `false` en Swift, donc
+        // une rencontre à l'extrait vide — il en arrive par la synchronisation,
+        // écrites par un autre appareil — n'est PAS emportée par n'importe quel
+        // import. Ce test épingle ce comportement, parce qu'il tient à une
+        // subtilité de la bibliothèque standard et non à une intention écrite :
+        // le jour où l'appartenance change de critère, il le dira.
+        let container = try makeTestContainer()
+        let repository = TextImportRepository(modelContainer: container)
+        let entryID = seedEntry(container, word: "空", encounters: [
+            (.importedText, ""),
+            (.sakuraChat, "空が青い"),
+        ])
+        let created = await repository.create(content: "全く関係のない文章です", source: .paste,
+                                              coverage: nil, entryIDs: [entryID])
+        #expect(await repository.delete(id: created.id).isEmpty)
+
+        let context = ModelContext(container)
+        let predicate = #Predicate<VocabularyEntry> { $0.id == entryID }
+        let entry = try #require((try? context.fetch(FetchDescriptor(predicate: predicate)))?.first)
+        let live = (entry.encounters ?? []).filter { $0.deletedAt == nil }
+        #expect(live.count == 2, "aucune des deux rencontres ne vient de ce texte")
+    }
+
+    @Test("Un import ne compte plus comme provenance une fois lui-même supprimé")
+    func tombstonedImportsAreNotProvenance() async throws {
+        // Deux imports revendiquent le mot ; on supprime le second, puis le
+        // premier. Au second passage il ne reste aucune provenance vivante,
+        // donc le mot part — un import effacé ne doit pas garder un mot en vie
+        // pour toujours.
+        let container = try makeTestContainer()
+        let repository = TextImportRepository(modelContainer: container)
+        let entryID = seedEntry(container, word: "天ぷら",
+                                encounters: [(.importedText, "野菜天ぷら")])
+        let first = await repository.create(content: "野菜天ぷら定食", source: .paste,
+                                            coverage: nil, entryIDs: [entryID])
+        let second = await repository.create(content: "天ぷらを揚げる", source: .paste,
+                                             coverage: nil, entryIDs: [entryID])
+
+        #expect(await repository.delete(id: second.id).isEmpty, "le premier import le garde")
+        #expect(isLive(container, entryID))
+        #expect(await repository.delete(id: first.id) == [entryID], "plus aucune provenance vivante")
+        #expect(!isLive(container, entryID))
+    }
+
+    @Test("Un identifiant qui ne pointe plus sur rien ne fait ni planter ni gonfler le compte")
+    func danglingEntryIDsAreSkipped() async throws {
+        // L'apprenant a supprimé le mot depuis son dictionnaire ; l'import le
+        // liste encore. Supprimer l'import ne doit rien casser et ne doit pas
+        // annoncer un mot retiré qui l'était déjà.
+        let container = try makeTestContainer()
+        let repository = TextImportRepository(modelContainer: container)
+        let vocabulary = VocabularyRepository(modelContainer: container)
+        let alive = seedEntry(container, word: "揚げる", encounters: [(.importedText, "天ぷらを揚げる")])
+        let gone = seedEntry(container, word: "鍋", encounters: [(.importedText, "鍋を出す")])
+        await vocabulary.deleteEntry(by: gone)
+
+        let created = await repository.create(content: "天ぷらを揚げる。鍋を出す。", source: .paste,
+                                              coverage: nil, entryIDs: [gone, alive, UUID()])
+        #expect(await repository.delete(id: created.id) == [alive])
+    }
+
     @Test("Supprimer deux fois ne casse rien et ne retire rien de plus")
     func deletingTwiceIsSafe() async throws {
         let container = try makeTestContainer()

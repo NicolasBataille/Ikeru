@@ -55,7 +55,14 @@ public final class TextImport {
     /// Recomputing it would quietly rewrite the learner's own history.
     public var coverage: Double?
 
-    /// Vocabulary entries created from this import, in selection order.
+    /// Vocabulary entries **created** by this import, in selection order.
+    ///
+    /// Created, not merely met: a word the learner already had in their
+    /// dictionary before this text does not belong here, because
+    /// `TextImportRepository.delete(_:)` reads this list as « what this import
+    /// alone brought in » and tombstones what it finds. Putting an older card
+    /// in it destroys that card and its FSRS history. Pinned by
+    /// `preexistingDictionaryWordsAreNotClaimed` in `TextImportViewModelTests`.
     public var entryIDs: [UUID]
 
     public var source: ImportSource {

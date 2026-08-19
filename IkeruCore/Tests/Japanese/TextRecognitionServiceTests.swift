@@ -17,14 +17,41 @@ private struct FakeTextRecognitionProvider: TextRecognitionProvider, Sendable {
         self.error = error
     }
 
+    /// Where the orientation actually handed to the engine is recorded.
+    ///
+    /// A reference box rather than a `var`: the provider is a `Sendable`
+    /// struct, so it cannot mutate itself. Without this the doc comment below
+    /// was a promise nothing kept — the orientation parameter existed, and no
+    /// test ever proved it arrived.
+    let seen = OrientationLog()
+
     /// Records what it was handed, so a test can assert the orientation read
     /// off the file actually reaches the engine — the point of the parameter.
     func recognizeFragments(
         in image: CGImage,
         orientation: CGImagePropertyOrientation
     ) async throws -> [RecognizedTextFragment] {
+        seen.record(orientation)
         if let error { throw error }
         return fragments
+    }
+}
+
+/// Thread-safe one-slot recorder for the orientation the provider received.
+private final class OrientationLog: @unchecked Sendable {
+    private let lock = NSLock()
+    private var value: CGImagePropertyOrientation?
+
+    func record(_ orientation: CGImagePropertyOrientation) {
+        lock.lock()
+        defer { lock.unlock() }
+        value = orientation
+    }
+
+    var last: CGImagePropertyOrientation? {
+        lock.lock()
+        defer { lock.unlock() }
+        return value
     }
 }
 
@@ -61,6 +88,38 @@ private func makeStubImage() -> CGImage? {
         bitmapInfo: CGImageAlphaInfo.none.rawValue
     ) else { return nil }
     return context.makeImage()
+}
+
+/// Encode a real 8×8 JPEG, optionally stamped with an EXIF orientation tag.
+///
+/// The bytes matter: the point of ``TextRecognitionService/recognizeText(in:)``
+/// taking `Data` is that it reads the tag off the file. A fixture built from a
+/// bare `CGImage` could not tell a working implementation from one that
+/// hardcodes `.up`.
+private func makeJPEGData(orientation: UInt32?) -> Data? {
+    guard let context = CGContext(
+        data: nil,
+        width: 8,
+        height: 8,
+        bitsPerComponent: 8,
+        bytesPerRow: 0,
+        space: CGColorSpaceCreateDeviceRGB(),
+        bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue
+    ) else { return nil }
+    context.setFillColor(CGColor(red: 1, green: 1, blue: 1, alpha: 1))
+    context.fill(CGRect(x: 0, y: 0, width: 8, height: 8))
+    guard let image = context.makeImage() else { return nil }
+
+    let data = NSMutableData()
+    guard let destination = CGImageDestinationCreateWithData(
+        data as CFMutableData, "public.jpeg" as CFString, 1, nil
+    ) else { return nil }
+
+    var properties: [CFString: Any] = [:]
+    if let orientation { properties[kCGImagePropertyOrientation] = orientation }
+    CGImageDestinationAddImage(destination, image, properties as CFDictionary)
+    guard CGImageDestinationFinalize(destination) else { return nil }
+    return data as Data
 }
 
 // MARK: - Tests
@@ -249,5 +308,65 @@ struct TextRecognitionServiceTests {
         await #expect(throws: TextRecognitionError.recognitionFailed("engine down")) {
             _ = try await service.recognizeText(in: image)
         }
+    }
+
+    // MARK: Encoded pictures — the orientation must survive the way in
+
+    @Test("The EXIF orientation of the file reaches the engine")
+    func exifOrientationReachesTheEngine() async throws {
+        // Tag 6 is « rotate 90° clockwise » — what a phone writes for a shot
+        // framed in portrait. Handing those pixels over as `.up` makes
+        // horizontal Japanese arrive sideways, Vision read nothing, and the
+        // screen blame « vertical text » for a perfectly horizontal page.
+        let data = try #require(makeJPEGData(orientation: 6))
+        let provider = FakeTextRecognitionProvider(fragments: [
+            fragment("横書き", x: 0.05, y: 0.80)
+        ])
+        let service = TextRecognitionService(provider: provider)
+
+        _ = try await service.recognizeText(in: data)
+
+        #expect(provider.seen.last == .right)
+    }
+
+    @Test("A file with no orientation tag is read upright, not guessed")
+    func missingOrientationDefaultsToUp() async throws {
+        let data = try #require(makeJPEGData(orientation: nil))
+        let provider = FakeTextRecognitionProvider(fragments: [
+            fragment("横書き", x: 0.05, y: 0.80)
+        ])
+        let service = TextRecognitionService(provider: provider)
+
+        _ = try await service.recognizeText(in: data)
+
+        #expect(provider.seen.last == .up)
+    }
+
+    @Test("Bytes that are not a picture say so, instead of blaming vertical text")
+    func undecodableDataIsNamedForWhatItIs() async throws {
+        let provider = FakeTextRecognitionProvider(fragments: [
+            fragment("横書き", x: 0.05, y: 0.80)
+        ])
+        let service = TextRecognitionService(provider: provider)
+
+        await #expect(throws: TextRecognitionError.imageUnreadable) {
+            _ = try await service.recognizeText(in: Data("not a picture".utf8))
+        }
+        // And the engine was never asked: there was nothing to read.
+        #expect(provider.seen.last == nil)
+    }
+
+    @Test("The text of an encoded picture comes back in reading order")
+    func encodedPictureIsReadInOrder() async throws {
+        let data = try #require(makeJPEGData(orientation: 1))
+        let provider = FakeTextRecognitionProvider(fragments: [
+            fragment("二行目", x: 0.05, y: 0.60),
+            fragment("一行目", x: 0.05, y: 0.80)
+        ])
+        let service = TextRecognitionService(provider: provider)
+
+        let recognized = try await service.recognizeText(in: data)
+
+        #expect(recognized.text == "一行目\n二行目")
     }
 }

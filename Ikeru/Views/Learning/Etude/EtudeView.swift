@@ -28,6 +28,8 @@ struct ExploreView: View {
     @State private var vocabSavedCount: Int?
     @State private var grammarCount: Int?
     @State private var importCount: Int?
+    /// Un texte est arrivé par l'extension de partage et attend.
+    @State private var hasSharedText = false
 
     var body: some View {
         ZStack {
@@ -142,8 +144,13 @@ struct ExploreView: View {
         NavigationLink {
             TextImportFlowView()
         } label: {
+            // Le sous-titre change quand un texte partagé attend : c'est la
+            // seule trace visible du partage, puisqu'une extension ne peut pas
+            // ouvrir l'app elle-même (voir `SharedTextInbox`).
             exploreRow(kanji: "\u{8AAD}\u{89E3}", title: "Your own text",
-                       subtitle: "Paste or photograph Japanese",
+                       subtitle: hasSharedText
+                           ? "A shared text is waiting"
+                           : "Paste or photograph Japanese",
                        stat: importCount.flatMap { $0 > 0 ? "\($0)" : nil })
         }
         .buttonStyle(.plain)
@@ -210,6 +217,7 @@ struct ExploreView: View {
         grammarCount = await Self.makeContentRepository()?
             .grammarPointsByLevel(.n5).count
         importCount = await TextImportRepository(modelContainer: container).all().count
+        hasSharedText = SharedTextInbox().hasPending
     }
 
     // MARK: - Conversation

@@ -87,7 +87,15 @@ public enum JapaneseDeinflector {
         for _ in 0..<maxDepth {
             var next: [Deinflection] = []
             for candidate in frontier {
-                for rule in DeinflectionRules.all {
+                // Seules les règles dont le `suffixIn` finit par le dernier
+                // caractère du candidat peuvent s'appliquer — plus celles qui
+                // n'ont pas de suffixe du tout. Voir
+                // `DeinflectionRules.byLastCharacter` : c'est ce qui rend la
+                // table extensible sans payer un balayage complet ici.
+                guard let last = candidate.term.last else { continue }
+                let applicable = (DeinflectionRules.byLastCharacter[last] ?? [])
+                    + DeinflectionRules.unanchored
+                for rule in applicable {
                     guard candidate.term.count > rule.suffixIn.count || !rule.suffixOut.isEmpty,
                           candidate.term.hasSuffix(rule.suffixIn) else { continue }
                     // Unconstrained = the raw surface form, which any rule may

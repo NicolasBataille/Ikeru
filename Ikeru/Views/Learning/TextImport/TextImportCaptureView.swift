@@ -1,6 +1,7 @@
 import SwiftUI
 import UIKit
 import PhotosUI
+import AVFoundation
 import IkeruCore
 
 // MARK: - TextImportCaptureView
@@ -52,6 +53,10 @@ struct TextImportCaptureView: View {
     /// le texte vertical appartient au service qui l'a mesuré, pas à l'écran.
     @State private var recognitionErrorKey: String?
     @State private var pasteboardWasEmpty = false
+    /// Vrai quand l'accès à l'appareil photo a été refusé (ou est restreint).
+    /// `UIImagePickerController` ne prévient de rien dans ce cas : il se
+    /// présente et affiche un aperçu noir. On l'intercepte avant.
+    @State private var cameraAccessDenied = false
     @FocusState private var isEditing: Bool
 
     private var trimmedDraft: String {
@@ -159,10 +164,11 @@ struct TextImportCaptureView: View {
                 showLibrary = true
             }
             // Le simulateur n'a pas d'appareil photo : sans ce garde, le bouton
-            // existerait et ne ferait rien.
+            // existerait et ne ferait rien. Attention, ce test porte sur le
+            // MATÉRIEL, pas sur l'autorisation — d'où le contrôle séparé au tap.
             if UIImagePickerController.isSourceTypeAvailable(.camera) {
                 sourceButton(icon: "camera", label: "TextImport.Capture.Camera") {
-                    showCamera = true
+                    Task { await presentCameraIfAllowed() }
                 }
             }
         }
@@ -214,6 +220,19 @@ struct TextImportCaptureView: View {
             noticeRow(icon: "character.textbox",
                       tint: Color.ikeruWarning,
                       message: LocalizedStringKey(recognitionErrorKey))
+        }
+
+        // Refus d'accès : `UIImagePickerController` présenté sans autorisation
+        // affiche un aperçu noir muet. On dit ce qui manque, et où le réparer.
+        if cameraAccessDenied {
+            VStack(alignment: .leading, spacing: IkeruTheme.Spacing.xs) {
+                noticeRow(icon: "camera",
+                          tint: Color.ikeruWarning,
+                          message: "TextImport.Capture.CameraDenied")
+                Button("Open Settings") { openSettings() }
+                    .font(.ikeruCaption)
+                    .foregroundStyle(Color.ikeruPrimaryAccent)
+            }
         }
 
         if pasteboardWasEmpty {
@@ -286,12 +305,44 @@ struct TextImportCaptureView: View {
 
     // MARK: - Actions
 
+    /// Ouvre l'appareil photo **seulement** si l'accès est accordé.
+    ///
+    /// `UIImagePickerController.isSourceTypeAvailable(.camera)` répond sur le
+    /// matériel, pas sur l'autorisation : sur un téléphone où l'accès a été
+    /// refusé, le bouton existe, la vue plein écran se présente, et
+    /// l'utilisateur regarde un rectangle noir sans savoir pourquoi. Le refus
+    /// est un état à nommer, pas un écran vide.
+    private func presentCameraIfAllowed() async {
+        cameraAccessDenied = false
+        switch AVCaptureDevice.authorizationStatus(for: .video) {
+        case .authorized:
+            showCamera = true
+        case .notDetermined:
+            // Demander nous-mêmes plutôt que de laisser le picker le faire :
+            // sinon un refus au moment du prompt laisse le picker présenté sur
+            // un aperçu noir.
+            if await AVCaptureDevice.requestAccess(for: .video) {
+                showCamera = true
+            } else {
+                cameraAccessDenied = true
+            }
+        default:
+            cameraAccessDenied = true
+        }
+    }
+
+    private func openSettings() {
+        guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+        UIApplication.shared.open(url)
+    }
+
     /// Colle le presse-papiers. Quand le champ contient déjà quelque chose, le
     /// texte s'ajoute : effacer ce que l'utilisateur a tapé serait réécrire son
     /// texte, ce que cette feature ne fait jamais.
     private func pasteFromClipboard() {
         pasteboardWasEmpty = false
         recognitionErrorKey = nil
+        cameraAccessDenied = false
         let clipboard = (UIPasteboard.general.string ?? "")
             .trimmingCharacters(in: .whitespacesAndNewlines)
         guard !clipboard.isEmpty else {
@@ -313,6 +364,7 @@ struct TextImportCaptureView: View {
     private func recognize(_ data: Data) async {
         pasteboardWasEmpty = false
         recognitionErrorKey = nil
+        cameraAccessDenied = false
         isRecognizing = true
         defer { isRecognizing = false }
 
@@ -335,28 +387,20 @@ struct TextImportCaptureView: View {
 
     // MARK: - Reconnaissance par défaut
 
-    /// Adaptateur vers le service embarqué : décoder l'image, la redresser, et
-    /// laisser `TextRecognitionService` faire le travail — y compris décider
-    /// que « rien de lisible » se dit `noHorizontalTextFound`.
+    /// Adaptateur vers le service embarqué : lui passer les octets tels quels
+    /// et le laisser faire le travail — y compris lire l'orientation EXIF du
+    /// fichier et décider que « rien de lisible » se dit
+    /// `noHorizontalTextFound`.
     ///
-    /// Le redressement n'est pas cosmétique : `VNImageRequestHandler` reçoit un
-    /// `CGImage` nu, sans l'orientation EXIF, donc une photo prise en portrait
-    /// arriverait couchée et ne serait pas lue.
+    /// L'orientation n'est pas cosmétique : `VNImageRequestHandler` reçoit un
+    /// `CGImage` nu, sans EXIF, donc une photo prise en portrait arriverait
+    /// couchée et ne serait pas lue — et l'écran accuserait « texte vertical »
+    /// une page parfaitement horizontale. C'est exactement ce que la surcharge
+    /// `recognizeText(in: Data)` prend en charge, en lisant le tag sur la
+    /// source ImageIO. Passer par elle plutôt que de redresser ici évite en
+    /// prime de redessiner une image de 12 Mpx sur le `MainActor`.
     static func recognizeOnDevice(_ data: Data) async throws -> String {
-        guard let image = UIImage(data: data), let cgImage = upright(image).cgImage else {
-            throw TextRecognitionError.imageUnreadable
-        }
-        return try await TextRecognitionService().recognizeText(in: cgImage).text
-    }
-
-    private static func upright(_ image: UIImage) -> UIImage {
-        guard image.imageOrientation != .up else { return image }
-        let format = UIGraphicsImageRendererFormat.default()
-        format.scale = image.scale
-        let renderer = UIGraphicsImageRenderer(size: image.size, format: format)
-        return renderer.image { _ in
-            image.draw(in: CGRect(origin: .zero, size: image.size))
-        }
+        try await TextRecognitionService().recognizeText(in: data).text
     }
 
     /// Passer par `begin(with:source:)` plutôt que d'écrire `draft` directement :

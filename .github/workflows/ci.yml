@@ -213,7 +213,8 @@ jobs:
           swift test --no-parallel \
             --skip "LegacyStoreMigration" \
             --skip "StoreMigrationV2V3" \
-            --skip "StoreMigrationV3V4"
+            --skip "StoreMigrationV3V4" \
+            --skip "StoreMigrationV4V5"
 
       - name: Run Legacy-Store Migration Tests (own process)
         # See the previous step's comment: this suite must never share a
@@ -244,6 +245,18 @@ jobs:
         run: |
           cd IkeruCore
           swift test --no-parallel --filter "StoreMigrationV3V4"
+
+      - name: Run Store Migration V4→V5 Tests (isolated process)
+        # Same isolation reason as the three steps above: every store-opening
+        # migration suite gets its own `swift test` process. This one covers
+        # the « apporte ton propre texte » entity (`TextImport`) landing on a
+        # store that already holds a learner's data — the migration every
+        # TestFlight device that updates will actually run. It also proves the
+        # `[UUID]` column survives a close/reopen, which an in-memory store
+        # cannot show.
+        run: |
+          cd IkeruCore
+          swift test --no-parallel --filter "StoreMigrationV4V5"
 
       - name: Run App Tests (full IkeruTests target)
         # Same — scoped to suites known to pass. KanaDrillViewModel covers

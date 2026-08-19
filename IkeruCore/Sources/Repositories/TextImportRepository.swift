@@ -97,10 +97,18 @@ actor TextImportModelActor {
     ///    — meeting the word in a Sakura conversation or a session makes it the
     ///    learner's, not the text's.
     ///
-    /// An entry that survives still loses **this** text's encounter, so its
-    /// history stops claiming a context that no longer exists. Those encounters
-    /// are the `.importedText` ones whose snippet is part of the deleted
-    /// content — the snippet is a sentence of the text, so containment is exact.
+    /// An entry that survives still loses **this** text's encounter — for
+    /// *either* reason it survived — so its history stops claiming a context
+    /// that no longer exists. Those encounters are the `.importedText` ones
+    /// whose snippet is part of the deleted content — the snippet is a sentence
+    /// of the text, so containment is exact.
+    ///
+    /// The one ambiguity this cannot resolve: two imports carrying the *same*
+    /// sentence are indistinguishable here, because no foreign key ties an
+    /// encounter to an import (adding one would have meant growing
+    /// `VocabularyEncounter`, which V4 references live — see `TextImport`).
+    /// Deleting either then drops that shared encounter. Measured cost: one
+    /// context line on a word the learner keeps.
     ///
     /// Everything is tombstoned (`deletedAt`), never hard-deleted: a hard delete
     /// is undone by the next pull, as `VocabularyRepository.addEntry` documents.
@@ -118,16 +126,29 @@ actor TextImportModelActor {
         let stillReferenced = Set(otherImports.flatMap(\.entryIDs))
 
         var removed: [UUID] = []
-        for entryID in candidates where !stillReferenced.contains(entryID) {
+        for entryID in candidates {
             guard let entry = liveEntry(entryID) else { continue }
             let encounters = (entry.encounters ?? []).filter { $0.deletedAt == nil }
+            // Deux raisons de survivre, un seul traitement. Elles étaient
+            // traitées séparément et divergeaient : « revendiqué par un autre
+            // import » sautait l'entrée entière, donc le mot gardait une
+            // rencontre citant un texte effacé, alors que « rencontré
+            // ailleurs » la retirait. Même situation, deux issues, selon la
+            // seule raison de la survie — voir `survivorLosesThisTextsEncounter`.
+            let claimedByAnotherImport = stillReferenced.contains(entryID)
             let metElsewhere = encounters.contains { $0.source != .importedText }
 
-            if metElsewhere {
+            if claimedByAnotherImport || metElsewhere {
                 // Le mot reste : il n'appartient plus au texte seul. On ne
-                // retire que la rencontre issue de CE texte.
+                // retire que la rencontre issue de CE texte — l'extrait est une
+                // phrase du texte, donc l'inclusion suffit à l'identifier. Un
+                // extrait vide n'appartient à personne : `contains("")` rend
+                // `false` en Swift (vérifié par `emptySnippetIsNotMatched…`),
+                // mais le dire ici évite qu'un refactor le suppose.
                 for encounter in encounters
-                where encounter.source == .importedText && content.contains(encounter.contextSnippet) {
+                where encounter.source == .importedText
+                    && !encounter.contextSnippet.isEmpty
+                    && content.contains(encounter.contextSnippet) {
                     encounter.deletedAt = Date()
                     encounter.updatedAt = Date()
                 }
