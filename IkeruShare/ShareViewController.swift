@@ -128,4 +128,3 @@ private struct ShareConfirmationView: View {
             : "Nothing to read in what was shared."
     }
 }
-

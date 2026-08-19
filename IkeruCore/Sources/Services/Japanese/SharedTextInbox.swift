@@ -37,7 +37,7 @@ public struct SharedTextInbox: Sendable {
     // pratique (documenté thread-safe par Apple). L'annotation est portée ici
     // plutôt que de retirer `Sendable` du type : la boîte doit pouvoir
     // traverser les frontières d'acteur, c'est tout son objet.
-    private nonisolated(unsafe) let defaults: UserDefaults?
+    nonisolated(unsafe) private let defaults: UserDefaults?
 
     /// - Parameter suiteName: overridable so tests never touch the real group.
     public init(suiteName: String = SharedTextInbox.appGroup) {

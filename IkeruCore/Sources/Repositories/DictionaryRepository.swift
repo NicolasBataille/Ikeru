@@ -187,7 +187,7 @@ public final class DictionaryRepository: Sendable {
 actor DictionaryDatabaseActor {
 
     private let bundleURL: URL
-    private nonisolated(unsafe) var db: OpaquePointer?
+    nonisolated(unsafe) private var db: OpaquePointer?
     private var didAttemptOpen = false
 
     init(bundleURL: URL) {

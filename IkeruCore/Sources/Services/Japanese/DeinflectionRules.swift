@@ -58,10 +58,10 @@ public enum DeinflectionRules {
     private struct GodanRow {
         let dictionary: String   // う
         let pos: String          // v5u
-        let a: String            // わ — negative stem (irregular for う: わ, not あ)
-        let i: String            // い — polite stem
-        let e: String            // え — conditional / potential stem
-        let o: String            // お — volitional stem
+        let aStem: String            // わ — negative stem (irregular for う: わ, not あ)
+        let iStem: String            // い — polite stem
+        let eStem: String            // え — conditional / potential stem
+        let oStem: String            // お — volitional stem
         let past: String         // った
         let te: String           // って
     }
@@ -69,15 +69,15 @@ public enum DeinflectionRules {
     private static let godan: [GodanRow] = [
         // ⚠️ Row う takes わ, not あ: 買う → 買わない. This is the single most
         // copied-wrong cell in any hand-written conjugation table.
-        GodanRow(dictionary: "う", pos: "v5u", a: "わ", i: "い", e: "え", o: "お", past: "った", te: "って"),
-        GodanRow(dictionary: "く", pos: "v5k", a: "か", i: "き", e: "け", o: "こ", past: "いた", te: "いて"),
-        GodanRow(dictionary: "ぐ", pos: "v5g", a: "が", i: "ぎ", e: "げ", o: "ご", past: "いだ", te: "いで"),
-        GodanRow(dictionary: "す", pos: "v5s", a: "さ", i: "し", e: "せ", o: "そ", past: "した", te: "して"),
-        GodanRow(dictionary: "つ", pos: "v5t", a: "た", i: "ち", e: "て", o: "と", past: "った", te: "って"),
-        GodanRow(dictionary: "ぬ", pos: "v5n", a: "な", i: "に", e: "ね", o: "の", past: "んだ", te: "んで"),
-        GodanRow(dictionary: "ぶ", pos: "v5b", a: "ば", i: "び", e: "べ", o: "ぼ", past: "んだ", te: "んで"),
-        GodanRow(dictionary: "む", pos: "v5m", a: "ま", i: "み", e: "め", o: "も", past: "んだ", te: "んで"),
-        GodanRow(dictionary: "る", pos: "v5r", a: "ら", i: "り", e: "れ", o: "ろ", past: "った", te: "って"),
+        GodanRow(dictionary: "う", pos: "v5u", aStem: "わ", iStem: "い", eStem: "え", oStem: "お", past: "った", te: "って"),
+        GodanRow(dictionary: "く", pos: "v5k", aStem: "か", iStem: "き", eStem: "け", oStem: "こ", past: "いた", te: "いて"),
+        GodanRow(dictionary: "ぐ", pos: "v5g", aStem: "が", iStem: "ぎ", eStem: "げ", oStem: "ご", past: "いだ", te: "いで"),
+        GodanRow(dictionary: "す", pos: "v5s", aStem: "さ", iStem: "し", eStem: "せ", oStem: "そ", past: "した", te: "して"),
+        GodanRow(dictionary: "つ", pos: "v5t", aStem: "た", iStem: "ち", eStem: "て", oStem: "と", past: "った", te: "って"),
+        GodanRow(dictionary: "ぬ", pos: "v5n", aStem: "な", iStem: "に", eStem: "ね", oStem: "の", past: "んだ", te: "んで"),
+        GodanRow(dictionary: "ぶ", pos: "v5b", aStem: "ば", iStem: "び", eStem: "べ", oStem: "ぼ", past: "んだ", te: "んで"),
+        GodanRow(dictionary: "む", pos: "v5m", aStem: "ま", iStem: "み", eStem: "め", oStem: "も", past: "んだ", te: "んで"),
+        GodanRow(dictionary: "る", pos: "v5r", aStem: "ら", iStem: "り", eStem: "れ", oStem: "ろ", past: "った", te: "って"),
     ]
 
     private static func godanRules() -> [DeinflectionRule] {
@@ -102,24 +102,24 @@ public enum DeinflectionRules {
             }
             let out = row.dictionary
             rules += [
-                DeinflectionRule(row.i + "ます", out, pos, ["*masu"], "poli"),
+                DeinflectionRule(row.iStem + "ます", out, pos, ["*masu"], "poli"),
                 DeinflectionRule(row.past, out, pos, ["*ta"], "passé"),
                 DeinflectionRule(row.te, out, pos, ["*te"], "forme en te"),
-                DeinflectionRule(row.a + "ない", out, pos, ["*nai"], "négatif"),
-                DeinflectionRule(row.a + "ず", out, pos, [], "négatif ず"),
-                DeinflectionRule(row.e + "ば", out, pos, [], "conditionnel ば"),
+                DeinflectionRule(row.aStem + "ない", out, pos, ["*nai"], "négatif"),
+                DeinflectionRule(row.aStem + "ず", out, pos, [], "négatif ず"),
+                DeinflectionRule(row.eStem + "ば", out, pos, [], "conditionnel ば"),
                 // Potentiel, passif et causatif produisent des verbes en -る
                 // qui se conjuguent comme des ichidan : d'où `v1` en `posOut`,
                 // qui autorise 買えます → 買える → 買う.
-                DeinflectionRule(row.e + "る", out, pos, ["v1"], "potentiel"),
-                DeinflectionRule(row.a + "れる", out, pos, ["v1"], "passif"),
-                DeinflectionRule(row.a + "せる", out, pos, ["v1"], "causatif"),
+                DeinflectionRule(row.eStem + "る", out, pos, ["v1"], "potentiel"),
+                DeinflectionRule(row.aStem + "れる", out, pos, ["v1"], "passif"),
+                DeinflectionRule(row.aStem + "せる", out, pos, ["v1"], "causatif"),
                 // Causatif-passif contracté : 待たされる ← 待たせられる ← 待つ.
                 // Sans lui, 一時間も待たされました rendait 待たす — un vrai mot,
                 // mais pas celui que l'apprenant réutilise.
-                DeinflectionRule(row.a + "される", out, pos, ["v1"], "causatif-passif"),
-                DeinflectionRule(row.o + "う", out, pos, [], "volitif"),
-                DeinflectionRule(row.i, out, pos, [], "radical en i"),
+                DeinflectionRule(row.aStem + "される", out, pos, ["v1"], "causatif-passif"),
+                DeinflectionRule(row.oStem + "う", out, pos, [], "volitif"),
+                DeinflectionRule(row.iStem, out, pos, [], "radical en i"),
             ]
         }
         // 行く est le seul verbe dont le passé suit la rangée つ/る tout en
