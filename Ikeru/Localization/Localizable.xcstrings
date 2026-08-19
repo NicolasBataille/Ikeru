@@ -9956,6 +9956,78 @@
         }
       }
     },
+    "Grammar.Count %lld" : {
+      "comment" : "Count of grammar points in the list header",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld points"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld points"
+          }
+        }
+      }
+    },
+    "Grammar.Empty" : {
+      "comment" : "Shown when the bundled grammar content is unavailable",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grammar content could not be loaded."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le contenu de grammaire n'a pas pu être chargé."
+          }
+        }
+      }
+    },
+    "Grammar.Title" : {
+      "comment" : "Header above the grammar list",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sentence patterns"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schémas de phrase"
+          }
+        }
+      }
+    },
+    "Sentence patterns" : {
+      "comment" : "Etude row subtitle for grammar",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sentence patterns"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schémas de phrase"
+          }
+        }
+      }
+    },
     "Vocabulary.Add" : {
       "extractionState" : "manual",
       "localizations" : {

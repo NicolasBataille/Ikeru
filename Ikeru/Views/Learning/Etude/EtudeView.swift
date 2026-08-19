@@ -26,6 +26,7 @@ struct ExploreView: View {
     // kana is learned, and how many words you've collected. Nil until loaded.
     @State private var kanaProgress: KanaProgress?
     @State private var vocabSavedCount: Int?
+    @State private var grammarCount: Int?
 
     var body: some View {
         ZStack {
@@ -35,6 +36,7 @@ struct ExploreView: View {
                     header
                     kanaRow
                     vocabularyRow
+                    grammarRow
                     sakuraRow
                 }
                 .padding(.horizontal, 22)
@@ -116,6 +118,20 @@ struct ExploreView: View {
         .buttonStyle(.plain)
     }
 
+    /// Grammaire — la surface qui manquait. Les 51 points existaient dans le
+    /// bundle sans qu'aucune vue ne les affiche (verifie 2026-08-19).
+    private var grammarRow: some View {
+        NavigationLink {
+            GrammarListView()
+        } label: {
+            exploreRow(kanji: "\u{6587}\u{6CD5}", title: "Grammar",
+                       subtitle: "Sentence patterns",
+                       stat: grammarCount.flatMap { $0 > 0 ? "\($0)" : nil })
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("explore.grammarRow")
+    }
+
     private var sakuraRow: some View {
         Button {
             presentConversation()
@@ -171,6 +187,10 @@ struct ExploreView: View {
         let vocab = await VocabularyRepository(modelContainer: container).allEntries()
         kanaProgress = KanaProgress.from(cards: cards)
         vocabSavedCount = vocab.count
+        // Compte lu depuis le bundle, pas code en dur : si le contenu s'enrichit
+        // la ligne suit, et s'il manque la ligne s'affiche sans chiffre.
+        grammarCount = await Self.makeContentRepository()?
+            .grammarPointsByLevel(.n5).count
     }
 
     // MARK: - Conversation
