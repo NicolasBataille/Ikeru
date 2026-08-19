@@ -318,11 +318,34 @@ public enum DeinflectionRules {
     /// `depth × frontier × RULES` and every one of those factors had grown.
     /// The choice looked like « correct Japanese or a responsive app ». It was
     /// neither: it was a linear scan in the innermost loop.
+    ///
+    /// ⚠️ **Chaque seau porte AUSSI les règles sans suffixe**, à leur place
+    /// dans `all`. Deux raisons, et la seconde vaut plus que la première.
+    ///
+    /// 1. Le coût. Concaténer `unanchored` au seau à chaque candidat de la
+    ///    frontière alloue un tableau dans la boucle la plus interne. Mesuré
+    ///    en release, même machine, même texte : 5 679 caractères passaient de
+    ///    92 ms à **37 ms**, et 100 000 caractères de 916 ms à **404 ms**,
+    ///    rien qu'en pré-fusionnant.
+    /// 2. La preuve. Concaténées, les règles sans suffixe s'appliquaient
+    ///    APRÈS toutes celles du seau, là où le balayage linéaire les
+    ///    appliquait au milieu de la table. L'ENSEMBLE des déflexions restait
+    ///    le même, mais l'ORDRE du tableau changeait — et `bestMatch` garde le
+    ///    PREMIER minimum, donc une égalité de score aurait pu basculer.
+    ///    Mesuré : 226 formes sur 1 564 ressortaient dans un ordre différent,
+    ///    sans qu'aucun verdict ne change — mais c'était vrai par échantillon,
+    ///    pas par construction. Fusionnées à leur place, la sortie est
+    ///    identique **au tableau près** à celle du balayage linéaire, et la
+    ///    question ne se pose plus.
     static let byLastCharacter: [Character: [DeinflectionRule]] = {
-        var index: [Character: [DeinflectionRule]] = [:]
+        var keys: Set<Character> = []
         for rule in all {
             guard let last = rule.suffixIn.last else { continue }
-            index[last, default: []].append(rule)
+            keys.insert(last)
+        }
+        var index: [Character: [DeinflectionRule]] = [:]
+        for key in keys {
+            index[key] = all.filter { $0.suffixIn.isEmpty || $0.suffixIn.last == key }
         }
         return index
     }()
@@ -331,6 +354,8 @@ public enum DeinflectionRules {
     ///
     /// Exactly one today — the ichidan stem (食べ → 食べる) — but derived rather
     /// than hardcoded, because a second one would otherwise be silently
-    /// dropped by the index above.
+    /// dropped by the index above. C'est aussi le repli quand le dernier
+    /// caractère du candidat n'ouvre aucun seau — un chiffre, une lettre
+    /// latine, un emoji : ces règles-là restent applicables.
     static let unanchored: [DeinflectionRule] = all.filter { $0.suffixIn.isEmpty }
 }

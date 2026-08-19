@@ -92,9 +92,14 @@ public enum JapaneseDeinflector {
                 // n'ont pas de suffixe du tout. Voir
                 // `DeinflectionRules.byLastCharacter` : c'est ce qui rend la
                 // table extensible sans payer un balayage complet ici.
+                // Le seau porte DÉJÀ les règles sans suffixe, à leur place dans
+                // la table : surtout ne pas les concaténer ici. La
+                // concaténation alloue un tableau par candidat de la frontière
+                // — ×2,5 sur l'analyse, mesuré — et décale l'ordre des
+                // résultats par rapport au balayage linéaire.
                 guard let last = candidate.term.last else { continue }
-                let applicable = (DeinflectionRules.byLastCharacter[last] ?? [])
-                    + DeinflectionRules.unanchored
+                let applicable = DeinflectionRules.byLastCharacter[last]
+                    ?? DeinflectionRules.unanchored
                 for rule in applicable {
                     guard candidate.term.count > rule.suffixIn.count || !rule.suffixOut.isEmpty,
                           candidate.term.hasSuffix(rule.suffixIn) else { continue }

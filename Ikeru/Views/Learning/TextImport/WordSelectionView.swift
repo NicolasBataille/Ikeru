@@ -55,7 +55,11 @@ struct WordSelectionView: View {
                         wordList
                     }
 
-                    Spacer(minLength: IkeruTheme.Spacing.xxl)
+                    // Le pied flotte AU-DESSUS de la liste : sans cette
+                    // réserve, le dernier mot reste caché dessous et ne peut
+                    // pas être décoché. Mesuré sur simulateur — le compteur et
+                    // le bouton masquaient la quatrième ligne.
+                    Spacer(minLength: 150)
                 }
                 .padding(.horizontal, IkeruTheme.Spacing.md)
                 .padding(.top, IkeruTheme.Spacing.md)
@@ -310,6 +314,7 @@ struct WordSelectionView: View {
             }
             .ikeruButtonStyle(.primary)
             .disabled(isSaving)
+            .accessibilityIdentifier("textImport.save")
             .opacity(isSaving ? 0.6 : 1)
         }
         .padding(IkeruTheme.Spacing.md)
@@ -323,6 +328,7 @@ struct WordSelectionView: View {
                 }
                 .ignoresSafeArea(edges: .bottom)
         }
+        .ikeruTabBarClearance()
     }
 
     private func save() {

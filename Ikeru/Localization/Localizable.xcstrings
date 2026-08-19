@@ -234,13 +234,97 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%1$lld texts read, %2$lld words kept, %3$lld%% average coverage"
+            "value" : "%#@texts@, %#@words@, %3$lld%% average coverage"
+          },
+          "substitutions" : {
+            "texts" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg text read"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg texts read"
+                    }
+                  }
+                }
+              }
+            },
+            "words" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg word kept"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg words kept"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%1$lld textes lus, %2$lld mots retenus, %3$lld %% de couverture moyenne"
+            "value" : "%#@texts@, %#@words@, %3$lld %% de couverture moyenne"
+          },
+          "substitutions" : {
+            "texts" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg texte lu"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg textes lus"
+                    }
+                  }
+                }
+              }
+            },
+            "words" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg mot retenu"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg mots retenus"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -250,13 +334,97 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%1$lld texts read, %2$lld words kept"
+            "value" : "%#@texts@, %#@words@"
+          },
+          "substitutions" : {
+            "texts" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg text read"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg texts read"
+                    }
+                  }
+                }
+              }
+            },
+            "words" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg word kept"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg words kept"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%1$lld textes lus, %2$lld mots retenus"
+            "value" : "%#@texts@, %#@words@"
+          },
+          "substitutions" : {
+            "texts" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg texte lu"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg textes lus"
+                    }
+                  }
+                }
+              }
+            },
+            "words" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg mot retenu"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg mots retenus"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -1062,13 +1230,57 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%lld words"
+            "value" : "%#@words@"
+          },
+          "substitutions" : {
+            "words" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg word"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg words"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%lld mots"
+            "value" : "%#@words@"
+          },
+          "substitutions" : {
+            "words" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg mot"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg mots"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -1094,13 +1306,57 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%lld words kept, each with the sentence you met it in."
+            "value" : "%#@words@, each with the sentence you met it in."
+          },
+          "substitutions" : {
+            "words" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg word kept"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg words kept"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%lld mots retenus, chacun avec la phrase où tu l'as rencontré."
+            "value" : "%#@words@, chacun avec la phrase où tu l'as rencontré."
+          },
+          "substitutions" : {
+            "words" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg mot retenu"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg mots retenus"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -1174,13 +1430,57 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%lld words kept"
+            "value" : "%#@words@"
+          },
+          "substitutions" : {
+            "words" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg word kept"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg words kept"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%lld mots retenus"
+            "value" : "%#@words@"
+          },
+          "substitutions" : {
+            "words" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg mot retenu"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg mots retenus"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }

@@ -301,6 +301,7 @@ struct TextImportCaptureView: View {
         .ikeruButtonStyle(.primary)
         .disabled(!canAnalyze)
         .opacity(canAnalyze ? 1 : 0.45)
+        .accessibilityIdentifier("textImport.analyze")
     }
 
     // MARK: - Actions

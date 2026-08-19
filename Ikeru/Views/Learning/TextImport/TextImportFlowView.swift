@@ -129,6 +129,7 @@ struct TextImportFlowView: View {
             Spacer()
         }
         .padding(.horizontal, 32)
+        .ikeruTabBarClearance()
         .navigationDestination(isPresented: $practising) {
             practiceSession(viewModel)
         }
@@ -265,6 +266,7 @@ private struct TextImportReadingStage: View {
         .padding(.vertical, 14)
         .frame(maxWidth: .infinity)
         .background(.ultraThinMaterial)
+        .ikeruTabBarClearance()
     }
 }
 
