@@ -330,6 +330,12 @@ def n5_kanji() -> list[KanjiEntry]:
         KanjiEntry("間", ["門", "日"], ["カン", "ケン"], ["あいだ", "ま"], ["interval", "between"], 12),
         KanjiEntry("分", ["八", "刀"], ["ブン", "フン"], ["わ.かる", "わ.ける"], ["minute", "part", "understand"], 4),
         KanjiEntry("半", ["丨", "二", "十"], ["ハン"], ["なか.ば"], ["half"], 5),
+        # 午 : le SEUL kanji de la liste Tanos N5 qui manquait, mesure le
+        # 2026-08-19 en diffant les 90 enseignes contre les 79 de
+        # KanjiList.N5.doc. Lectures et sens repris de cette liste, elle-meme
+        # KANJIDIC-derivee comme le reste de ce fichier. Porte 午前 / 午後,
+        # deja tous deux dans le vocabulaire.
+        KanjiEntry("\u5348", ["\u30ce", "\u5341"], ["\u30b4"], ["\u3046\u307e"], ["noon", "sign of the horse"], 4),
         KanjiEntry("毎", ["母", "ノ"], ["マイ"], ["ごと"], ["every"], 6),
         KanjiEntry("今", ["人", "一"], ["コン", "キン"], ["いま"], ["now"], 4),
         KanjiEntry("何", ["人", "口", "一"], ["カ"], ["なに", "なん"], ["what"], 7),
