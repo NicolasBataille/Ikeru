@@ -21,6 +21,7 @@ struct VocabularyEntryDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var entry: VocabularyEntryDTO?
     @State private var encounters: [VocabularyEncounterDTO] = []
+    @State private var examples: [SentenceExample] = []
     @State private var hasLoaded = false
     @State private var showDeleteConfirm = false
 
@@ -38,7 +39,7 @@ struct VocabularyEntryDetailView: View {
                         VStack(spacing: IkeruTheme.Spacing.xl) {
                             wordHeader(entry)
                             masteryCard(entry)
-                            ExampleSentencesSection(word: entry.word)
+                            ExampleSentencesSection(examples: examples)
                             encounterTimeline
                             deleteSection
                             Spacer(minLength: 40)
@@ -297,8 +298,13 @@ struct VocabularyEntryDetailView: View {
     // MARK: - Data Loading
 
     private func loadData() async {
-        entry = await repo.entry(by: entryId)
+        let loaded = await repo.entry(by: entryId)
+        entry = loaded
         encounters = await repo.encounters(for: entryId)
+        // Loaded here, not inside the section: a view that renders nothing
+        // while its list is empty has no lifecycle to load from. See
+        // `ExampleSentencesSection`'s doc for the measured failure.
+        examples = await ExampleSentencesSection.load(word: loaded?.word ?? "")
         hasLoaded = true
     }
 }

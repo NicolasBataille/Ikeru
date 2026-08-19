@@ -14,6 +14,7 @@ struct VocabularyDetailSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var existingEntry: VocabularyEntryDTO?
     @State private var encounters: [VocabularyEncounterDTO] = []
+    @State private var examples: [SentenceExample] = []
     @State private var hasLoaded = false
     @State private var contextExpanded = false
 
@@ -32,7 +33,7 @@ struct VocabularyDetailSheet: View {
                         wordHeader
                         meaningSection
                         contextSection
-                        ExampleSentencesSection(word: hint.word)
+                        ExampleSentencesSection(examples: examples)
                         if let entry = existingEntry, entry.isInDictionary {
                             masterySection(entry)
                         }
@@ -270,6 +271,8 @@ struct VocabularyDetailSheet: View {
             existingEntry = entry
             encounters = await repo.encounters(for: entry.id)
         }
+        // Loaded here, not inside the section — see `ExampleSentencesSection`.
+        examples = await ExampleSentencesSection.load(word: hint.word)
         hasLoaded = true
     }
 

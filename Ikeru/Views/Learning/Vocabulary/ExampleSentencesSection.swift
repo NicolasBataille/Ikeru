@@ -13,53 +13,59 @@ import IkeruCore
 // `KanjiStudyView` is itself built nowhere, because a session's `.kanjiStudy`
 // exercise renders `HandwritingDrillHost` instead.
 //
-// This one is placed on the two surfaces a learner genuinely reaches:
+// Shown on the two surfaces a learner genuinely reaches:
 // `VocabularyEntryDetailView` (Étude → dictionary → a word) and
 // `VocabularyDetailSheet` (tapping a word in a Sakura conversation).
 
 /// Shows a word's bundled example sentences, translation underneath.
 ///
-/// Renders **nothing at all** when the word has no examples — not an empty
-/// section with a header. Most dictionary entries come from conversation with
-/// Sakura rather than from the bundle, so "no examples" is the ordinary case,
-/// not an error worth announcing.
+/// **Purely presentational — it owns no state and fetches nothing.** That is a
+/// correction, not a style preference. The first version held `@State private
+/// var examples` and filled it from `.task(id: word)` attached to a
+/// `Group { if !examples.isEmpty { … } }`. On first render the list is empty,
+/// so the `Group` resolved to an *empty view* — and an empty view has no
+/// lifecycle, so `.task` never ran. The list could therefore never fill, and
+/// the section never appeared for **any** word. Measured on device 2026-08-19
+/// against 水, which has six translated examples in the bundle.
+///
+/// The fetch now lives in the parent, which already loads its entry in a
+/// `.task` on a view that always exists. Keep it that way: a self-loading view
+/// that renders nothing while empty cannot load.
+///
+/// Renders nothing at all when `examples` is empty — not an empty section with
+/// a header. Most dictionary entries come from conversation with Sakura rather
+/// than from the bundle, so "no examples" is the ordinary case.
 struct ExampleSentencesSection: View {
 
-    let word: String
+    let examples: [SentenceExample]
 
     /// Two, matching the judgement already encoded in
     /// `VocabularyExamplesView.examplesPerWord`. The bundle caps at 5 per word
     /// (`MAX_PER_VOCAB_WORD` in `build-corpus.py`); showing all five turns a
     /// reference card into a wall.
-    private static let displayedExamples = 2
+    static let displayedExamples = 2
 
-    @State private var examples: [SentenceExample] = []
-    @State private var hasLoaded = false
+    /// Loads a word's examples in the learner's language. Called by the parent
+    /// view's own loader — see the type doc for why this is not a `.task` here.
+    static func load(word: String) async -> [SentenceExample] {
+        guard !word.isEmpty, let repository = BundledContent.makeRepository() else { return [] }
+        return await repository.exampleSentences(for: word, limit: displayedExamples)
+    }
 
     var body: some View {
-        Group {
-            if !examples.isEmpty {
-                VStack(alignment: .leading, spacing: IkeruTheme.Spacing.md) {
-                    Text("Vocabulary.Examples.Title")
-                        .ikeruScaledFont(11, weight: .semibold, relativeTo: .caption2)
-                        .tracking(2)
-                        .textCase(.uppercase)
-                        .foregroundStyle(Color.ikeruTextTertiary)
+        if !examples.isEmpty {
+            VStack(alignment: .leading, spacing: IkeruTheme.Spacing.md) {
+                Text("Vocabulary.Examples.Title")
+                    .ikeruScaledFont(11, weight: .semibold, relativeTo: .caption2)
+                    .tracking(2)
+                    .textCase(.uppercase)
+                    .foregroundStyle(Color.ikeruTextTertiary)
 
-                    ForEach(examples) { example in
-                        exampleRow(example)
-                    }
+                ForEach(examples) { example in
+                    exampleRow(example)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
             }
-        }
-        .task(id: word) {
-            // `.task(id:)` rather than `.onAppear`: the conversation sheet can
-            // be re-shown for a different word without being torn down, and a
-            // stale example list under a new headword is worse than none.
-            hasLoaded = false
-            examples = await Self.load(word: word)
-            hasLoaded = true
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 
@@ -85,10 +91,5 @@ struct ExampleSentencesSection: View {
         // One element per example, so VoiceOver reads a sentence together with
         // its translation instead of two orphaned strings.
         .accessibilityElement(children: .combine)
-    }
-
-    private static func load(word: String) async -> [SentenceExample] {
-        guard !word.isEmpty, let repository = BundledContent.makeRepository() else { return [] }
-        return await repository.exampleSentences(for: word, limit: displayedExamples)
     }
 }
