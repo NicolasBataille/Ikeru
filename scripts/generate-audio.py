@@ -148,6 +148,22 @@ def collect_texts():
         japanese = first.split(" \u2014 ")[0].strip()
         if japanese:
             texts.append(japanese)
+    # Exercice a trou : la phrase completee par CHAQUE option, pas seulement par
+    # la bonne. Sans ca l'exercice serait truque — mesure le 2026-08-19, la
+    # completion correcte avait un clip 12 fois sur 12 et une completion fausse
+    # 1 fois sur 12, donc la bonne reponse s'entendait a la VOIX (clip bundle
+    # contre synthese on-device) sans rien connaitre a la grammaire.
+    #
+    # C'est fini parce que les distracteurs sont figes par point : 51 x 4.
+    for cid, ans, dis in con.execute(
+        "SELECT cloze_sentence, cloze_answer, cloze_distractors FROM grammar_points "
+        "WHERE TRIM(COALESCE(cloze_sentence,'')) != ''"
+    ):
+        options = [ans] + (json.loads(dis) if dis else [])
+        for option in options:
+            completed = cid.replace("____", option)
+            if completed:
+                texts.append(completed)
     con.close()
     texts.extend(collect_daily_term_readings())
     # de-dup, preserve order

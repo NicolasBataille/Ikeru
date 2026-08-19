@@ -512,6 +512,16 @@ actor ContentDatabaseActor {
     /// La traduction du premier exemple d'un tableau JSON « japonais — traduction ».
     /// Vide si le tableau est illisible ou si l'entree n'a pas de tiret cadratin :
     /// la vue omet alors la ligne plutot que d'afficher du japonais en double.
+    /// Un tableau JSON de chaines, ou vide s'il est illisible — l'exercice
+    /// tombe alors sur zero distracteur et la vue se degrade, plutot que de
+    /// planter sur du contenu inattendu.
+    static func decodeStrings(_ json: String) -> [String] {
+        guard let data = json.data(using: .utf8),
+              let values = try? JSONDecoder().decode([String].self, from: data)
+        else { return [] }
+        return values
+    }
+
     static func firstExampleTranslation(from json: String) -> String {
         guard let data = json.data(using: .utf8),
               let entries = try? JSONDecoder().decode([String].self, from: data),
@@ -536,7 +546,8 @@ actor ContentDatabaseActor {
             english: "examples", french: "examples_fr", table: "grammar_points"
         )
         let sql = """
-            SELECT id, \(title), cloze_sentence, cloze_answer, \(examples)
+            SELECT id, \(title), cloze_sentence, cloze_answer, \(examples),
+                   COALESCE(cloze_distractors, '[]')
             FROM grammar_points
             WHERE jlpt_level = ?
               AND TRIM(COALESCE(cloze_sentence, '')) != ''
@@ -562,7 +573,8 @@ actor ContentDatabaseActor {
                 title: columnText(stmt, 1),
                 sentence: columnText(stmt, 2),
                 answer: columnText(stmt, 3),
-                translation: translation
+                translation: translation,
+                distractors: Self.decodeStrings(columnText(stmt, 5))
             )
             guard !cloze.sentence.isEmpty, !cloze.answer.isEmpty else { continue }
             results.append(cloze)

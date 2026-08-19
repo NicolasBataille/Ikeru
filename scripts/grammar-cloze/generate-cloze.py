@@ -9,6 +9,22 @@ Writes two columns on ``grammar_points``:
   ``examples`` column, so a French learner sees a French gloss. Freezing it
   here shipped an English translation under a French UI (device, 2026-08-19).
 - ``cloze_answer`` — the exact substring that was removed.
+- ``cloze_distractors`` — three FIXED wrong answers, as a JSON array.
+
+The distractors are fixed rather than drawn at random, and that is not a
+performance choice. The exercise plays the sentence completed with whichever
+option the learner selects, so they can judge it by ear. Only bundled clips
+sound like the app's voice; anything else falls back to on-device synthesis.
+Measured 2026-08-19: with random distractors, the correct completion had a clip
+12 times out of 12 and a wrong one 1 time out of 12 — so the learner would have
+picked the right answer by VOICE, knowing no grammar at all. Fixing the
+distractors makes the set of completions finite (51 x 4) and therefore
+generatable.
+
+They are also chosen by SIMILARITY, not at random: same first character, same
+last character, comparable length. That puts particles against particles and
+て-forms against て-forms, which is what makes the question discriminate. A
+superlative offered against an imperative is eliminable on shape alone.
 
 The answer is derived from the point's title where that works (37 of 51), and
 read from ``answers.json`` otherwise. The 14 exceptions are not sloppiness in
@@ -50,6 +66,39 @@ def derived_answer(title: str, sentence: str) -> str | None:
     return None
 
 
+def distractor_score(answer: str, candidate: str) -> int:
+    """Higher = closer. Same head, same tail, comparable length."""
+    score = 0
+    if candidate[0] == answer[0]:
+        score += 3
+    if candidate[-1] == answer[-1]:
+        score += 2
+    score += max(0, 3 - abs(len(candidate) - len(answer)))
+    return score
+
+
+def pick_distractors(answer: str, pool: list[str], count: int = 3) -> list[str]:
+    """The `count` closest answers that cannot themselves fill the blank.
+
+    A candidate is rejected when it equals the answer, contains it, or is
+    contained by it — `もいい` would complete `写真を撮っ____ですか。` just as
+    defensibly as `てもいい`, and the learner would be marked wrong for a right
+    answer. Same rule as `GrammarClozeOptionsBuilder`, applied here so the
+    stored set is already safe.
+    """
+    seen: set[str] = set()
+    unique: list[str] = []
+    for candidate in pool:
+        if candidate in seen:
+            continue
+        seen.add(candidate)
+        if candidate == answer or candidate in answer or answer in candidate:
+            continue
+        unique.append(candidate)
+    unique.sort(key=lambda c: -distractor_score(answer, c))
+    return unique[:count]
+
+
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -61,8 +110,9 @@ def main(argv: list[str]) -> int:
     con = sqlite3.connect(args.db)
     rows = con.execute("SELECT id, title, examples FROM grammar_points ORDER BY id").fetchall()
 
-    updates: list[tuple[str, str, int]] = []
+    updates: list[tuple[str, str, str, int]] = []
     problems: list[str] = []
+    staged: list[tuple[int, str, str]] = []   # (id, blanked, answer)
 
     for point_id, title, examples_json in rows:
         examples = json.loads(examples_json)
@@ -90,7 +140,15 @@ def main(argv: list[str]) -> int:
         # vaut pour les deux.
         _ = translation
         blanked = japanese.replace(answer, BLANK, 1)
-        updates.append((blanked, answer, point_id))
+        staged.append((point_id, blanked, answer))
+
+    # Les distracteurs se choisissent une fois toutes les reponses connues.
+    all_answers = [answer for _, _, answer in staged]
+    for point_id, blanked, answer in staged:
+        distractors = pick_distractors(answer, all_answers)
+        if len(distractors) < 3:
+            problems.append(f"{point_id}: seulement {len(distractors)} distracteurs")
+        updates.append((blanked, answer, json.dumps(distractors, ensure_ascii=False), point_id))
 
     print(f"points                 : {len(rows)}")
     print(f"exercices construits   : {len(updates)}")
@@ -107,8 +165,11 @@ def main(argv: list[str]) -> int:
         con.execute("ALTER TABLE grammar_points ADD COLUMN cloze_sentence TEXT")
     if "cloze_answer" not in columns:
         con.execute("ALTER TABLE grammar_points ADD COLUMN cloze_answer TEXT")
+    if "cloze_distractors" not in columns:
+        con.execute("ALTER TABLE grammar_points ADD COLUMN cloze_distractors TEXT")
     con.executemany(
-        "UPDATE grammar_points SET cloze_sentence=?, cloze_answer=? WHERE id=?", updates)
+        "UPDATE grammar_points SET cloze_sentence=?, cloze_answer=?, cloze_distractors=? "
+        "WHERE id=?", updates)
     con.commit()
     con.execute("VACUUM")
     con.close()

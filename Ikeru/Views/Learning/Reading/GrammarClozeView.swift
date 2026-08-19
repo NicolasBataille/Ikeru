@@ -24,10 +24,19 @@ struct GrammarClozeView: View {
     let options: GrammarClozeOptions
     let onComplete: (Grade) -> Void
 
-    @State private var chosenIndex: Int?
+    /// Choix PROVISOIRE : selectionner ne valide pas. Le tap joue la phrase
+    /// completee par cette option, pour que l'apprenant la juge a l'oreille —
+    /// c'est le reflexe qu'on veut installer — et il peut changer d'avis
+    /// autant qu'il veut avant de valider.
+    @State private var selectedIndex: Int?
 
-    private var hasAnswered: Bool { chosenIndex != nil }
-    private var isCorrect: Bool { chosenIndex == options.correctIndex }
+    /// Choix VALIDE. Tant qu'il est nil, rien n'est corrige ni note.
+    @State private var submittedIndex: Int?
+
+    @State private var audioService = AudioService()
+
+    private var hasAnswered: Bool { submittedIndex != nil }
+    private var isCorrect: Bool { submittedIndex == options.correctIndex }
 
     var body: some View {
         VStack(spacing: IkeruTheme.Spacing.xl) {
@@ -43,6 +52,8 @@ struct GrammarClozeView: View {
 
             if hasAnswered {
                 revealFooter
+            } else if selectedIndex != nil {
+                validateButton
             }
 
             Spacer(minLength: 0)
@@ -91,7 +102,7 @@ struct GrammarClozeView: View {
     /// La phrase complète, le trou rempli par la bonne réponse. Montrée
     /// seulement APRÈS coup — c'est elle qu'on fait entendre.
     private var completedSentence: String {
-        japanese.replacingOccurrences(of: GrammarCloze.blank, with: options.correctAnswer)
+        cloze.completed(with: options.correctAnswer)
     }
 
     // MARK: - Options
@@ -99,7 +110,14 @@ struct GrammarClozeView: View {
     private func optionButton(index: Int, text: String) -> some View {
         Button {
             guard !hasAnswered else { return }
-            chosenIndex = index
+            selectedIndex = index
+            // On entend SA propre proposition, pas la bonne reponse : les
+            // quatre completions ont chacune leur clip (VOICEVOX, 51 x 4), donc
+            // aucune ne se distingue a la voix. Sans ces clips, la bonne aurait
+            // sonne « vraie » et les autres synthetiques — l'exercice se
+            // gagnait a l'oreille sans connaitre la grammaire.
+            let spoken = cloze.completed(with: text)
+            Task { await audioService.playTTS(text: spoken) }
         } label: {
             Text(text)
                 .ikeruScaledFont(17, weight: .regular, relativeTo: .body)
@@ -120,10 +138,12 @@ struct GrammarClozeView: View {
     private func background(for index: Int) -> some View {
         let fill: Color
         if !hasAnswered {
-            fill = Color.white.opacity(0.03)
+            fill = index == selectedIndex
+                ? Color.ikeruPrimaryAccent.opacity(0.14)
+                : Color.white.opacity(0.03)
         } else if index == options.correctIndex {
             fill = Color(red: 0.616, green: 0.729, blue: 0.486).opacity(0.18)
-        } else if index == chosenIndex {
+        } else if index == submittedIndex {
             fill = TatamiTokens.vermilion.opacity(0.18)
         } else {
             fill = Color.white.opacity(0.02)
@@ -132,10 +152,32 @@ struct GrammarClozeView: View {
     }
 
     private func borderColor(for index: Int) -> Color {
-        guard hasAnswered else { return TatamiTokens.goldDim.opacity(0.5) }
+        guard hasAnswered else {
+            return index == selectedIndex
+                ? Color.ikeruPrimaryAccent
+                : TatamiTokens.goldDim.opacity(0.5)
+        }
         if index == options.correctIndex { return Color(red: 0.616, green: 0.729, blue: 0.486) }
-        if index == chosenIndex { return TatamiTokens.vermilion }
+        if index == submittedIndex { return TatamiTokens.vermilion }
         return TatamiTokens.goldDim.opacity(0.25)
+    }
+
+    // MARK: - Validate
+
+    /// Valider est un geste distinct de choisir : on peut ecouter plusieurs
+    /// options, se raviser, puis trancher. Soumettre au premier tap privait
+    /// l'apprenant de l'ecoute comparative, qui est tout l'interet.
+    private var validateButton: some View {
+        Button {
+            submittedIndex = selectedIndex
+        } label: {
+            Text("Grammar.Validate")
+                .ikeruScaledFont(15, weight: .semibold, relativeTo: .body)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+        }
+        .ikeruButtonStyle(.primary)
+        .accessibilityIdentifier("grammar.validate")
     }
 
     // MARK: - Reveal

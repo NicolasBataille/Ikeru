@@ -104,6 +104,47 @@ struct GrammarClozeTests {
         }
     }
 
+    /// L'invariant qui empeche l'exercice d'etre gagnable a l'oreille.
+    ///
+    /// L'exercice joue la phrase completee par l'option SELECTIONNEE. Si une
+    /// completion n'a pas de clip bundle, elle sort en synthese on-device —
+    /// une autre voix — et l'apprenant reconnait la bonne reponse au timbre,
+    /// sans rien connaitre a la grammaire. Mesure le 2026-08-19 avant
+    /// correction : la bonne completion avait un clip 12 fois sur 12, une
+    /// mauvaise 1 fois sur 12.
+    ///
+    /// Ce test ne verifie pas les fichiers (ils vivent dans la cible app) mais
+    /// la condition qui les rend generables : des distracteurs FIXES, donc un
+    /// nombre fini de completions.
+    @Test("Chaque question porte trois distracteurs fixes")
+    func distractorsAreFixedAndSafe() async throws {
+        let root = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent().deletingLastPathComponent()
+            .deletingLastPathComponent().deletingLastPathComponent()
+        let bundleURL = root
+            .appendingPathComponent("Ikeru/Resources/ContentBundles/n5-content.sqlite")
+        try #require(FileManager.default.fileExists(atPath: bundleURL.path))
+
+        let clozes = await ContentRepository(bundleURL: bundleURL, language: .french)
+            .grammarClozes(for: .n5)
+        #expect(!clozes.isEmpty)
+
+        for cloze in clozes {
+            #expect(cloze.distractors.count == 3,
+                    "« \(cloze.answer) » a \(cloze.distractors.count) distracteurs")
+            // Aucun distracteur ne doit remplir le trou aussi bien que la reponse.
+            for distractor in cloze.distractors {
+                #expect(distractor != cloze.answer)
+                #expect(!distractor.contains(cloze.answer))
+                #expect(!cloze.answer.contains(distractor))
+            }
+            #expect(Set(cloze.distractors).count == cloze.distractors.count,
+                    "distracteurs en double pour « \(cloze.answer) »")
+            // La completion doit reellement remplir le trou.
+            #expect(!cloze.completed(with: cloze.answer).contains(GrammarCloze.blank))
+        }
+    }
+
     /// Le defaut constate sur device : la traduction etait figee en anglais a la
     /// generation, donc un apprenant en francais lisait « Please do not come in
     /// here. ». Elle vient desormais de la colonne localisee.

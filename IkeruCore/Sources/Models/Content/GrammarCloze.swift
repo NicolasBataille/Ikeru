@@ -35,15 +35,35 @@ public struct GrammarCloze: Sendable, Equatable, Identifiable {
     /// The removed element, e.g. `てもいい`. This is the correct answer.
     public let answer: String
 
+    /// The three FIXED wrong answers, stored with the question.
+    ///
+    /// Fixed, not drawn at random, and that is a correctness requirement rather
+    /// than an optimisation. The exercise plays the sentence completed with
+    /// whichever option the learner selects, so they can judge it by ear — and
+    /// only bundled clips sound like the app's voice. Measured 2026-08-19: with
+    /// random distractors the correct completion had a clip 12 times out of 12
+    /// and a wrong one 1 time out of 12, so the right answer was audible from
+    /// the VOICE alone. Fixing them makes the completions finite (51 x 4) and
+    /// therefore generatable.
+    public let distractors: [String]
+
     public var id: Int { pointID }
 
     public init(pointID: Int, title: String, sentence: String,
-                answer: String, translation: String = "") {
+                answer: String, translation: String = "",
+                distractors: [String] = []) {
         self.pointID = pointID
         self.title = title
         self.sentence = sentence
         self.answer = answer
         self.translation = translation
+        self.distractors = distractors
+    }
+
+    /// The sentence with `option` in the blank — what the learner hears when
+    /// they select it, and what the correction shows once validated.
+    public func completed(with option: String) -> String {
+        sentence.replacingOccurrences(of: Self.blank, with: option)
     }
 
     /// The blank marker the generator writes. Views split on it to lay the
