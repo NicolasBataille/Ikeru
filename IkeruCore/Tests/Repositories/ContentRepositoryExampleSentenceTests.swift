@@ -129,6 +129,74 @@ struct ContentRepositoryExampleSentenceTests {
         #expect(examples.allSatisfy { $0.translation != $0.japanese })
     }
 
+    // MARK: - Furigana
+
+    @Test("A sentence carries its furigana form, and displayText prefers it")
+    func furiganaIsServed() async throws {
+        let repo = ContentRepository(bundleURL: try makeSentenceDatabase(), language: .french)
+
+        let examples = await repo.exampleSentences(for: "日本", limit: 1)
+
+        let first = try #require(examples.first)
+        #expect(first.furigana == "日本(にほん)は島国(しまぐに)です。")
+        #expect(first.displayText == first.furigana)
+        // Le japonais nu reste disponible : c'est lui qui sert de cle audio.
+        #expect(first.japanese == "日本は島国です。")
+    }
+
+    /// Le repli qui compte : sans annotation, la phrase doit s'afficher NUE et
+    /// lisible, jamais vide. Un ecran vide serait pire que pas de furigana.
+    @Test("A row with no furigana falls back to the plain sentence")
+    func furiganaFallsBackToPlain() async throws {
+        let repo = ContentRepository(bundleURL: try makeSentenceDatabase(), language: .english)
+
+        let examples = await repo.exampleSentences(for: "学生", limit: 1)
+
+        let first = try #require(examples.first)
+        #expect(first.furigana.isEmpty)
+        #expect(first.displayText == first.japanese)
+        #expect(!first.displayText.isEmpty)
+    }
+
+    /// Un bundle anterieur a la colonne ne doit ni echouer a preparer la
+    /// requete ni rendre zero exemple — il sert les phrases sans annotation.
+    @Test("A bundle predating the furigana column still serves examples")
+    func legacyBundleWithoutFuriganaColumn() async throws {
+        let repo = ContentRepository(bundleURL: try makeLegacySentenceDatabase(),
+                                     language: .english)
+
+        let examples = await repo.exampleSentences(for: "日本", limit: 2)
+
+        #expect(!examples.isEmpty, "un bundle sans colonne furigana doit servir les phrases")
+        #expect(examples.allSatisfy { $0.furigana.isEmpty })
+        #expect(examples.allSatisfy { $0.displayText == $0.japanese })
+    }
+
+    /// Contre le bundle EXPEDIE : les 632 phrases doivent toutes porter une
+    /// annotation, et retirer les parentheses doit redonner la phrase exacte.
+    /// C'est la garantie que le generateur n'a rien altere.
+    @Test("The shipped bundle's furigana reconstruct the sentence exactly")
+    func shippedFuriganaAreConsistent() async throws {
+        let repositoryRoot = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent().deletingLastPathComponent()
+            .deletingLastPathComponent().deletingLastPathComponent()
+        let bundleURL = repositoryRoot
+            .appendingPathComponent("Ikeru/Resources/ContentBundles/n5-content.sqlite")
+        try #require(FileManager.default.fileExists(atPath: bundleURL.path))
+
+        let repo = ContentRepository(bundleURL: bundleURL, language: .french)
+        let examples = await repo.exampleSentences(for: "水", limit: 2)
+
+        #expect(!examples.isEmpty)
+        for example in examples {
+            #expect(!example.furigana.isEmpty, "phrase expediee sans furigana : \(example.japanese)")
+            let stripped = example.furigana.replacingOccurrences(
+                of: "\\(([^)]*)\\)", with: "", options: .regularExpression)
+            #expect(stripped == example.japanese,
+                    "les furigana ont altere la phrase : \(stripped) != \(example.japanese)")
+        }
+    }
+
     @Test("ordering is stable across calls")
     func orderingIsStable() async throws {
         let repo = ContentRepository(bundleURL: try makeSentenceDatabase(), language: .english)
@@ -167,6 +235,10 @@ private func makeSentenceDatabase() throws -> URL {
     try makeSentenceFixture(named: "sentences-fr", sql: sentenceSchema + """
 
         ALTER TABLE sentences ADD COLUMN french TEXT;
+        ALTER TABLE sentences ADD COLUMN furigana TEXT;
+
+        UPDATE sentences SET furigana = '日本(にほん)は島国(しまぐに)です。' WHERE id = 1;
+        UPDATE sentences SET furigana = ''                                  WHERE id = 5;
 
         UPDATE sentences SET french = 'Le Japon est un pays insulaire.' WHERE id = 1;
         UPDATE sentences SET french = 'J''habite au Japon.'             WHERE id = 2;

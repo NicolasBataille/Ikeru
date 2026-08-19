@@ -21,6 +21,7 @@ struct VocabularyEntryDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var entry: VocabularyEntryDTO?
     @State private var encounters: [VocabularyEncounterDTO] = []
+    @State private var examples: [SentenceExample] = []
     @State private var hasLoaded = false
     @State private var showDeleteConfirm = false
 
@@ -38,7 +39,7 @@ struct VocabularyEntryDetailView: View {
                         VStack(spacing: IkeruTheme.Spacing.xl) {
                             wordHeader(entry)
                             masteryCard(entry)
-                            ExampleSentencesSection(word: entry.word)
+                            ExampleSentencesSection(examples: examples)
                             encounterTimeline
                             deleteSection
                             Spacer(minLength: 40)
@@ -93,29 +94,33 @@ struct VocabularyEntryDetailView: View {
                 .font(.system(size: 64, weight: .regular, design: .serif))
                 .foregroundStyle(Color.ikeruTextPrimary)
 
-            Text(entry.reading)
-                .ikeruScaledFont(24, weight: .medium, design: .rounded, relativeTo: .title2)
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
-                .foregroundStyle(Color.ikeruPrimaryAccent)
+            HStack(spacing: IkeruTheme.Spacing.sm) {
+                Text(entry.reading)
+                    .ikeruScaledFont(24, weight: .medium, design: .rounded, relativeTo: .title2)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                    .foregroundStyle(Color.ikeruPrimaryAccent)
+
+                // La LECTURE, pas le mot — voir `ListenButton`.
+                ListenButton(text: entry.reading.isEmpty ? entry.word : entry.reading)
+            }
 
             Text(entry.meaning)
                 .font(.ikeruBody)
                 .foregroundStyle(Color.ikeruTextSecondary)
 
-            if let level = entry.jlptLevel {
-                Text(level.displayLabel)
-                    .font(.ikeruCaption)
-                    .foregroundStyle(Color.ikeruPrimaryAccent)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 4)
-                    .background {
-                        Rectangle()
-                            .fill(Color.ikeruPrimaryAccent.opacity(0.12))
-                            .overlay { Rectangle().strokeBorder(TatamiTokens.goldDim.opacity(0.4), lineWidth: 0.5) }
-                    }
-                    .sumiCorners(color: TatamiTokens.goldDim, size: 5, weight: 1.0)
-            }
+            // PAS de badge JLPT ici, et c'est mesure : les 693 mots du bundle
+            // sont N5, sans exception — comme les 90 kanji. Le badge etait donc
+            // constant sur tout le contenu embarque et ne distinguait aucun
+            // niveau. Ce qu'il separait en pratique, c'est « ce mot vient du
+            // programme » de « tu l'as attrape en conversation » (une entree
+            // Sakura a `jlptLevel == nil`), ce qui n'est pas ce qu'un badge de
+            // niveau annonce.
+            //
+            // A REMETTRE le jour d'un bundle N4+, ou il redeviendra informatif.
+            // Il reste en place sur `DailyTermRevealView`, ou il l'est deja :
+            // les termes du jour couvrent N5 a N1 (mesure : 17 N5, 10 N3, 6 N1,
+            // 5 N4, 3 N2).
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, IkeruTheme.Spacing.lg)
@@ -297,8 +302,13 @@ struct VocabularyEntryDetailView: View {
     // MARK: - Data Loading
 
     private func loadData() async {
-        entry = await repo.entry(by: entryId)
+        let loaded = await repo.entry(by: entryId)
+        entry = loaded
         encounters = await repo.encounters(for: entryId)
+        // Loaded here, not inside the section: a view that renders nothing
+        // while its list is empty has no lifecycle to load from. See
+        // `ExampleSentencesSection`'s doc for the measured failure.
+        examples = await ExampleSentencesSection.load(word: loaded?.word ?? "")
         hasLoaded = true
     }
 }

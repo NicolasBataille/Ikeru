@@ -57,7 +57,12 @@ struct KanaPoolSelectorView: View {
                     .transition(.opacity)
             }
         }
-        .toolbar(.hidden, for: .navigationBar)
+        // Masquee UNIQUEMENT pour le selecteur de premier lancement presente
+        // depuis Home, qui est un passage oblige : en sortir sans choisir n'a
+        // pas de sens. Depuis Etude c'est une navigation ordinaire, et la
+        // masquer supprimait le seul moyen de revenir en arriere — signale sur
+        // device le 2026-08-19.
+        .toolbar(onStudySetConfirmed == nil ? .visible : .hidden, for: .navigationBar)
         .task {
             initializeIfNeeded()
             await viewModel?.loadMasteries()
@@ -401,7 +406,16 @@ struct KanaPoolSelectorView: View {
 
     /// Vertical clearance reserved for the floating Liquid Glass tab bar so
     /// the action buttons stay above the tab bar's hit-zone.
-    private static let floatingTabBarClearance: CGFloat = 120
+    /// 88 = les 76,33 pt **mesures** de `IkeruTabBar` (voir le commentaire qui
+    /// porte la mesure, prise au GeometryReader sur iPhone 14 Pro) plus ~12 pt
+    /// de respiration. La valeur precedente, 120, laissait ~44 pt de vide entre
+    /// les boutons et la barre — « un peu trop grand en hauteur », signale sur
+    /// device le 2026-08-19.
+    ///
+    /// Les 140 pt qu'utilisent Home/Etude/Reglages ne sont PAS comparables :
+    /// ils degagent du contenu **defilant** sous une barre flottante, pas une
+    /// barre d'action deja epinglee au-dessus d'elle.
+    private static let floatingTabBarClearance: CGFloat = 88
 
     @ViewBuilder
     private func bottomBar(_ vm: KanaPoolViewModel) -> some View {
@@ -455,6 +469,11 @@ struct KanaPoolSelectorView: View {
         } label: {
             Text(label)
                 .font(.ikeruCaption)
+                // Une seule ligne : « Pratique libre » et « Points faibles »
+                // passaient a deux en francais, ce qui rendait les TROIS
+                // boutons deux fois plus hauts pour un seul libelle long.
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
                 .frame(maxWidth: .infinity)
         }
         .ikeruButtonStyle(primary ? .primary : .secondary)

@@ -1,0 +1,130 @@
+{
+  "_comment": [
+    "Corrections revues a la main le 2026-08-19 sur les 632 phrases du bundle.",
+    "Le tokeniseur d'Apple est context-aware et juste dans la grande majorite des",
+    "cas (il obtient 電話中 -> ちゅう, あの人 -> ひと, 四月一日 -> ついたち).",
+    "Ce fichier ne corrige QUE ce qui a ete verifie faux, cas par cas.",
+    "Methode : 241 tokens kanji uniques, dont 127 confirmes par les lectures du",
+    "bundle et 114 juges a la main, dont 13 a lecture variable relus phrase par",
+    "phrase. Toute entree ci-dessous cite la phrase qui l'a motivee.",
+    "La section 'compounds' traite les mots dont le kana est ENTRE deux kanji (男の子, 食べ物) : le decoupeur automatique refuse ces cas car il faudrait repartir une lecture unique sur deux groupes. La forme annotee est donnee en entier, et la verification globale controle qu'en retirant les parentheses on retombe exactement sur la phrase d'origine.",
+    "Les quatre dernieres entrees contextuelles viennent du controle croise (--check compare la lecture ASSEMBLEE de chaque mot du bundle present dans une phrase avec la lecture que le bundle enseigne). La relecture token par token ne pouvait pas les voir : chaque token pris seul etait correct, c'est leur juxtaposition qui etait fausse."
+  ],
+  "global": {
+    "日本": {
+      "reading": "にほん",
+      "why": "le tokeniseur dit にっぽん ; le bundle enseigne にほん (27 occurrences)"
+    },
+    "明日": {
+      "reading": "あした",
+      "why": "あす est valide mais le bundle enseigne あした"
+    },
+    "私": {
+      "reading": "わたし",
+      "why": "わたくし est soutenu ; le bundle enseigne わたし"
+    },
+    "金": {
+      "reading": "かね",
+      "why": "『金はたくさんある。』 = argent, pas きん (or). Toutes les occurrences du corpus sont お金/金 au sens argent"
+    },
+    "行っ": {
+      "reading": "いっ",
+      "why": "『バスと電車で行った。』 -> いった ; le tokeniseur propose おこなっ (行う) une fois sur sept"
+    }
+  },
+  "contextual": [
+    {
+      "token": "何",
+      "next_in": [
+        "を",
+        "が",
+        "も",
+        "か"
+      ],
+      "reading": "なに",
+      "why": "何を/何が/何も/何か -> なに. Devant です/の/で/compteur -> なん, que le tokeniseur donne deja. 25 occurrences sur 51 corrigees."
+    },
+    {
+      "token": "日",
+      "prev_ends": [
+        "曜"
+      ],
+      "reading": "び",
+      "why": "月曜日/金曜日/日曜日 -> び. Le tokeniseur segmente 月曜 + 日 et lit 日 -> ひ."
+    },
+    {
+      "token": "一",
+      "next_starts": [
+        "本"
+      ],
+      "reading": "いっ",
+      "why": "一本 -> いっぽん. Le tokeniseur lit deja 本 -> ぽん mais garde 一 -> いち."
+    },
+    {
+      "token": "七",
+      "next_starts": [
+        "時"
+      ],
+      "reading": "しち",
+      "why": "七時 -> しちじ. なな est correct en arithmetique (『二かける七は十四です。』), d'ou la regle contextuelle et non globale."
+    },
+    {
+      "token": "一日",
+      "prev_ends": [
+        "月"
+      ],
+      "reading": "ついたち",
+      "why": "『四月一日です。』 -> ついたち (date). Le tokeniseur a raison ici."
+    },
+    {
+      "token": "一日",
+      "reading": "いちにち",
+      "why": "『よい一日をね。』『バスは一日に何本ありますか。』 -> いちにち. Defaut hors contexte de date."
+    },
+    {
+      "token": "人",
+      "prev_ends": [
+        "日本"
+      ],
+      "reading": "じん",
+      "why": "日本人 -> にほんじん. Le tokeniseur segmente 日本 + 人 et lit 人 -> にん, ce qui donnerait にほんにん. Trouve par le controle croise contre les lectures du bundle, pas par la relecture token par token."
+    },
+    {
+      "token": "父",
+      "prev_ends": [
+        "お"
+      ],
+      "next_starts": [
+        "さん"
+      ],
+      "reading": "とう",
+      "why": "お父さん -> おとうさん. Isole, 父 se lit ちち, ce que donne le tokeniseur."
+    },
+    {
+      "token": "母",
+      "prev_ends": [
+        "お"
+      ],
+      "next_starts": [
+        "さん"
+      ],
+      "reading": "かあ",
+      "why": "お母さん -> おかあさん. Isole, 母 se lit はは."
+    },
+    {
+      "token": "四",
+      "next_starts": [
+        "月"
+      ],
+      "reading": "し",
+      "why": "四月 -> しがつ, jamais よんがつ. Le tokeniseur donne よん."
+    }
+  ],
+  "compounds": {
+    "男の子": "男(おとこ)の子(こ)",
+    "女の子": "女(おんな)の子(こ)",
+    "食べ物": "食(た)べ物(もの)",
+    "朝ご飯": "朝(あさ)ご飯(はん)",
+    "昼ご飯": "昼(ひる)ご飯(はん)"
+  }
+}

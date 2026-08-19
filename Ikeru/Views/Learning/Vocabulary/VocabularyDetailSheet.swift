@@ -14,6 +14,7 @@ struct VocabularyDetailSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var existingEntry: VocabularyEntryDTO?
     @State private var encounters: [VocabularyEncounterDTO] = []
+    @State private var examples: [SentenceExample] = []
     @State private var hasLoaded = false
     @State private var contextExpanded = false
 
@@ -32,7 +33,7 @@ struct VocabularyDetailSheet: View {
                         wordHeader
                         meaningSection
                         contextSection
-                        ExampleSentencesSection(word: hint.word)
+                        ExampleSentencesSection(examples: examples)
                         if let entry = existingEntry, entry.isInDictionary {
                             masterySection(entry)
                         }
@@ -87,9 +88,14 @@ struct VocabularyDetailSheet: View {
                 .font(.system(size: 64, weight: .regular, design: .serif))
                 .foregroundStyle(Color.ikeruTextPrimary)
 
-            Text(hint.reading)
-                .ikeruScaledFont(24, weight: .medium, design: .rounded, relativeTo: .title2)
-                .foregroundStyle(Color.ikeruPrimaryAccent)
+            HStack(spacing: IkeruTheme.Spacing.sm) {
+                Text(hint.reading)
+                    .ikeruScaledFont(24, weight: .medium, design: .rounded, relativeTo: .title2)
+                    .foregroundStyle(Color.ikeruPrimaryAccent)
+
+                // La LECTURE, pas le mot — voir `ListenButton`.
+                ListenButton(text: hint.reading.isEmpty ? hint.word : hint.reading)
+            }
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, IkeruTheme.Spacing.lg)
@@ -270,6 +276,8 @@ struct VocabularyDetailSheet: View {
             existingEntry = entry
             encounters = await repo.encounters(for: entry.id)
         }
+        // Loaded here, not inside the section — see `ExampleSentencesSection`.
+        examples = await ExampleSentencesSection.load(word: hint.word)
         hasLoaded = true
     }
 

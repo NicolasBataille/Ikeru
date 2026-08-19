@@ -32,6 +32,15 @@ public struct SentenceExample: Sendable, Equatable, Identifiable, Hashable {
     /// The Japanese sentence, verbatim from the bundle.
     public let japanese: String
 
+    /// The same sentence with furigana, as `水(みず)を飲(の)みたいです。` — the
+    /// shape `KanaRubyText` parses. Empty when the bundle predates the column;
+    /// callers fall back to `japanese`, which reads correctly, just unaided.
+    ///
+    /// Generated and **reviewed** by `scripts/furigana/generate-furigana.py`.
+    /// It refuses to guess: a run it cannot resolve ships unannotated rather
+    /// than annotated wrongly, because a learner copies a wrong reading.
+    public let furigana: String
+
     /// The translation in the learner's language. Guaranteed non-empty.
     public let translation: String
 
@@ -39,8 +48,12 @@ public struct SentenceExample: Sendable, Equatable, Identifiable, Hashable {
     /// row by construction (`build-corpus.py` collapses near-duplicates).
     public var id: String { japanese }
 
-    public init(japanese: String, translation: String) {
+    public init(japanese: String, translation: String, furigana: String = "") {
         self.japanese = japanese
         self.translation = translation
+        self.furigana = furigana
     }
+
+    /// The furigana form when the bundle carries one, else the plain sentence.
+    public var displayText: String { furigana.isEmpty ? japanese : furigana }
 }

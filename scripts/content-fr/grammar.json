@@ -308,5 +308,205 @@
       "高いけど、買います。 — C'est cher, mais je vais l'acheter.",
       "行きたいですが、時間がありません。 — Je veux y aller, mais je n'ai pas le temps."
     ]
+  },
+  {
+    "id": 32,
+    "title_fr": "へ (direction)",
+    "explanation_fr": "Marque la direction du déplacement. Interchangeable avec に pour une destination — へ insiste sur le cap, に sur le point d'arrivée. S'écrit へ mais se prononce « e ».",
+    "examples_fr": [
+      "学校へ行きます。 — Je vais à l'école.",
+      "日本へ来ました。 — Je suis venu au Japon.",
+      "どこへ行きますか。 — Où allez-vous ?"
+    ]
+  },
+  {
+    "id": 33,
+    "title_fr": "や (énumération non exhaustive)",
+    "explanation_fr": "Cite quelques exemples en sous-entendant qu'il y en a d'autres — « des choses comme A et B ». と énumère tout ; や laisse la liste ouverte.",
+    "examples_fr": [
+      "本やノートを買いました。 — J'ai acheté des livres, des cahiers, entre autres.",
+      "犬や魚が好きです。 — J'aime les chiens, les poissons et ce genre d'animaux.",
+      "パンや水があります。 — Il y a du pain, de l'eau, etc."
+    ]
+  },
+  {
+    "id": 34,
+    "title_fr": "あります / います (existence)",
+    "explanation_fr": "Indique que quelque chose existe ou se trouve quelque part. あります pour l'inanimé, います pour les personnes et les animaux.",
+    "examples_fr": [
+      "上に本があります。 — Il y a un livre dessus.",
+      "部屋に人がいます。 — Il y a quelqu'un dans la pièce.",
+      "お金がありません。 — Je n'ai pas d'argent."
+    ]
+  },
+  {
+    "id": 35,
+    "title_fr": "ませんか (invitation)",
+    "explanation_fr": "Invitation polie — « et si vous ~ ? ». Plus douce que ましょう, car elle laisse à l'autre la possibilité de refuser.",
+    "examples_fr": [
+      "一緒に行きませんか。 — Vous ne venez pas avec moi ?",
+      "お茶を飲みませんか。 — Voulez-vous du thé ?",
+      "映画を見ませんか。 — Si on allait voir un film ?"
+    ]
+  },
+  {
+    "id": 36,
+    "title_fr": "ましょうか (dois-je ? / on fait ?)",
+    "explanation_fr": "Propose de rendre un service, ou soumet une action commune sous forme de question. ましょう décide ; ましょうか demande.",
+    "examples_fr": [
+      "持ちましょうか。 — Je le porte ?",
+      "窓を開けましょうか。 — J'ouvre la fenêtre ?",
+      "何を食べましょうか。 — Qu'est-ce qu'on mange ?"
+    ]
+  },
+  {
+    "id": 37,
+    "title_fr": "てください (demande)",
+    "explanation_fr": "Demande poliment à quelqu'un de faire quelque chose. On attache ください à la forme en て.",
+    "examples_fr": [
+      "待ってください。 — Attendez, s'il vous plaît.",
+      "名前を書いてください。 — Écrivez votre nom, s'il vous plaît.",
+      "もう一度言ってください。 — Répétez, s'il vous plaît."
+    ]
+  },
+  {
+    "id": 38,
+    "title_fr": "ないでください (demande négative)",
+    "explanation_fr": "Demande à quelqu'un de NE PAS faire quelque chose. On attache でください à la forme en ない.",
+    "examples_fr": [
+      "ここに入らないでください。 — N'entrez pas ici, s'il vous plaît.",
+      "写真を撮らないでください。 — Ne prenez pas de photos, s'il vous plaît.",
+      "忘れないでください。 — N'oubliez pas, s'il vous plaît."
+    ]
+  },
+  {
+    "id": 39,
+    "title_fr": "に行く (aller faire)",
+    "explanation_fr": "Base verbale + に + verbe de déplacement exprime le BUT du déplacement — « aller pour ~ ».",
+    "examples_fr": [
+      "映画を見に行きます。 — Je vais voir un film.",
+      "友達に会いに行きました。 — Je suis allé voir un ami.",
+      "パンを買いに行きます。 — Je sors acheter du pain."
+    ]
+  },
+  {
+    "id": 40,
+    "title_fr": "のが好き / 上手 / 下手 (goûts et aptitudes)",
+    "explanation_fr": "の transforme un verbe en nom, ce qui permet de l'aimer ou de le faire bien. Forme du dictionnaire + のが + 好き / 上手 / 下手.",
+    "examples_fr": [
+      "本を読むのが好きです。 — J'aime lire.",
+      "歌を歌うのが上手です。 — Elle chante bien.",
+      "話すのが下手です。 — Je parle mal."
+    ]
+  },
+  {
+    "id": 41,
+    "title_fr": "まだ〜ていません (pas encore)",
+    "explanation_fr": "Dit qu'une action n'a PAS ENCORE eu lieu, mais qu'on l'attend toujours. À distinguer de ませんでした, qui dit simplement qu'elle n'a pas eu lieu.",
+    "examples_fr": [
+      "まだ食べていません。 — Je n'ai pas encore mangé.",
+      "手紙をまだ書いていません。 — Je n'ai pas encore écrit la lettre.",
+      "まだ来ていません。 — Il n'est pas encore arrivé."
+    ]
+  },
+  {
+    "id": 42,
+    "title_fr": "〜のほうが〜より (comparatif)",
+    "explanation_fr": "Compare deux choses — « A est plus ~ que B ». Ce qui l'emporte prend のほうが, l'autre より.",
+    "examples_fr": [
+      "電車のほうがバスより速いです。 — Le train est plus rapide que le bus.",
+      "犬のほうが猫より好きです。 — J'aime les chiens plus que les chats.",
+      "今日のほうが昨日より暑いです。 — Il fait plus chaud aujourd'hui qu'hier."
+    ]
+  },
+  {
+    "id": 43,
+    "title_fr": "〜の中で〜がいちばん (superlatif)",
+    "explanation_fr": "Désigne le plus ~ d'un ensemble — « de tous les A, c'est B le plus ~ ».",
+    "examples_fr": [
+      "日本の中で東京がいちばん大きいです。 — De tout le Japon, Tokyo est la plus grande.",
+      "果物の中でりんごがいちばん好きです。 — De tous les fruits, ce sont les pommes que je préfère.",
+      "一年の中で八月がいちばん暑いです。 — Août est le mois le plus chaud de l'année."
+    ]
+  },
+  {
+    "id": 44,
+    "title_fr": "くなる / になる (devenir)",
+    "explanation_fr": "Exprime un changement d'état. Les adjectifs en い perdent le い et prennent く ; les adjectifs en な et les noms prennent に.",
+    "examples_fr": [
+      "寒くなりました。 — Il s'est mis à faire froid.",
+      "元気になりました。 — Je me suis remis.",
+      "先生になりたいです。 — Je veux devenir professeur."
+    ]
+  },
+  {
+    "id": 45,
+    "title_fr": "〜たり〜たりする (actions représentatives)",
+    "explanation_fr": "Cite quelques actions représentatives parmi d'autres, sans prétendre être exhaustif. Forme neutre passée + り, terminée par する.",
+    "examples_fr": [
+      "本を読んだり音楽を聞いたりします。 — Je lis, j'écoute de la musique, entre autres.",
+      "食べたり飲んだりしました。 — On a mangé, bu, et ainsi de suite.",
+      "泳いだり走ったりします。 — Je nage, je cours, ce genre de choses."
+    ]
+  },
+  {
+    "id": 46,
+    "title_fr": "んです (explicatif)",
+    "explanation_fr": "Donne ou demande une explication, ou adoucit un propos. Forme neutre + んです.",
+    "examples_fr": [
+      "日本語を勉強しているんです。 — C'est que j'étudie le japonais.",
+      "どうして休んだんですか。 — Pourquoi donc avez-vous pris congé ?",
+      "少し高いんです。 — C'est un peu cher, voyez-vous."
+    ]
+  },
+  {
+    "id": 47,
+    "title_fr": "ほうがいい (conseil)",
+    "explanation_fr": "Recommande une conduite — « tu ferais mieux de ~ ». Forme neutre passée + ほうがいい.",
+    "examples_fr": [
+      "早く寝たほうがいいですよ。 — Tu ferais mieux de te coucher tôt.",
+      "休んだほうがいいです。 — Vous devriez vous reposer.",
+      "先生に聞いたほうがいいです。 — Tu ferais mieux de demander au professeur."
+    ]
+  },
+  {
+    "id": 48,
+    "title_fr": "ので (cause, atténuée)",
+    "explanation_fr": "Donne une raison. Plus douce et plus objective que から, ce qui la rend adaptée aux demandes polies et aux excuses.",
+    "examples_fr": [
+      "雨が降っているので、行きません。 — Comme il pleut, je n'irai pas.",
+      "寒いので、窓を閉めてください。 — Comme il fait froid, fermez la fenêtre.",
+      "時間がないので、また今度。 — Je n'ai pas le temps, ce sera pour une autre fois."
+    ]
+  },
+  {
+    "id": 49,
+    "title_fr": "でしょう (probablement / n'est-ce pas ?)",
+    "explanation_fr": "Exprime la probabilité. Prononcé avec une intonation montante, il cherche au contraire l'assentiment de l'interlocuteur.",
+    "examples_fr": [
+      "明日は雨でしょう。 — Il pleuvra sans doute demain.",
+      "彼は来ないでしょう。 — Il ne viendra probablement pas.",
+      "きれいでしょう。 — C'est joli, non ?"
+    ]
+  },
+  {
+    "id": 50,
+    "title_fr": "まえに (avant de)",
+    "explanation_fr": "Dit ce qui vient AVANT autre chose. Forme du dictionnaire + 前に pour un verbe, nom + の前に pour un nom.",
+    "examples_fr": [
+      "寝る前に本を読みます。 — Je lis avant de dormir.",
+      "ご飯の前に手を洗います。 — Je me lave les mains avant le repas.",
+      "出かける前に電話します。 — J'appellerai avant de sortir."
+    ]
+  },
+  {
+    "id": 51,
+    "title_fr": "てから (après avoir)",
+    "explanation_fr": "Exprime une succession — « après avoir fait A, alors B ». Forme en て + から. À la différence de あとで, elle insiste sur le fait que A doit précéder.",
+    "examples_fr": [
+      "ご飯を食べてから出かけます。 — Je sortirai après avoir mangé.",
+      "手を洗ってから食べてください。 — Mangez après vous être lavé les mains.",
+      "学校が終わってから遊びます。 — Je jouerai une fois l'école finie."
+    ]
   }
 ]
