@@ -111,9 +111,46 @@ struct IkeruSchemaTests {
     /// fails loudly. On failure: if the change was intentional, cut a new
     /// VersionedSchema + migration stage and update the golden hash here;
     /// never edit a frozen schema in place.
+    /// One property, rendered from its **documented** API surface.
+    ///
+    /// ⚠️ Never `String(describing:)` a `Schema.Property`. That was the first
+    /// version, and it made the digest **machine-dependent**: SwiftData's own
+    /// description format is an implementation detail that differs between OS
+    /// versions, so the same code produced `93c7f1726ba34d2a` on macOS 26 and
+    /// `16a69598f17ed293` on the CI's macOS 15. A golden digest that fails
+    /// depending on where it runs is worse than no digest at all — it teaches
+    /// people to update the constant until the light goes green, which is
+    /// exactly the reflex that lets a real schema drift through.
+    ///
+    /// Everything named here is public, stable API, and covers what the digest
+    /// exists to catch: a property retyped, made optional, made unique, made
+    /// transient, or given a default it did not have.
+    private static func canonical(_ property: any SchemaProperty) -> String {
+        if let attribute = property as? Schema.Attribute {
+            return [
+                "attr", attribute.name,
+                "type=\(attribute.valueType)",
+                "optional=\(attribute.isOptional)",
+                "unique=\(attribute.isUnique)",
+                "transformable=\(attribute.isTransformable)",
+                "transient=\(attribute.isTransient)",
+                "hasDefault=\(attribute.defaultValue != nil)",
+            ].joined(separator: "|")
+        }
+        if let relationship = property as? Schema.Relationship {
+            return [
+                "rel", relationship.name,
+                "optional=\(relationship.isOptional)",
+                "toMany=\(relationship.isToOneRelationship == false)",
+                "delete=\(relationship.deleteRule)",
+            ].joined(separator: "|")
+        }
+        return "other|\(property.name)"
+    }
+
     private static func typedFingerprint(of schema: Schema) -> String {
         let lines = schema.entities
-            .flatMap { entity in entity.properties.map { "\(entity.name)|\(String(describing: $0))" } }
+            .flatMap { entity in entity.properties.map { "\(entity.name)|\(Self.canonical($0))" } }
             .sorted()
             .joined(separator: "\n")
         // Deterministic FNV-1a (Swift's Hasher is seeded per-process).
@@ -237,7 +274,7 @@ struct IkeruSchemaTests {
         #expect(Self.fingerprint(of: schema) == Self.v1GoldenFingerprintList)
         // Typed digest: also catches retyping/re-optionalizing an EXISTING
         // property, which the name list above cannot see.
-        #expect(Self.typedFingerprint(of: schema) == "3d20f3ad6b03e99b")
+        #expect(Self.typedFingerprint(of: schema) == "6b4dbca1984d31df")
     }
 
     @Test("V2 golden fingerprint — V1 plus RPGState.activeDaysCount plus ExerciseOutcomeLog")
@@ -255,7 +292,7 @@ struct IkeruSchemaTests {
         golden.sort()
         #expect(Self.fingerprint(of: schema) == golden)
         // Typed digest — see v1GoldenFingerprint for what this adds.
-        #expect(Self.typedFingerprint(of: schema) == "eb462d92926249b7")
+        #expect(Self.typedFingerprint(of: schema) == "72c5a1eaf04ca95f")
     }
 
     @Test("V3 golden fingerprint — V2 plus ReviewLog.answeredValue/exerciseType/surface")
@@ -280,7 +317,7 @@ struct IkeruSchemaTests {
         // Typed digest — see v1GoldenFingerprint for what this adds. Produced
         // by running this suite (`swift test --no-parallel --filter
         // "IkeruSchema"`) and reading the printed value; not hand-computed.
-        #expect(Self.typedFingerprint(of: schema) == "40044a8a4a774661")
+        #expect(Self.typedFingerprint(of: schema) == "38a4f9aceb34b52c")
     }
 
     /// The 24 `updatedAt`/`deletedAt`/`syncedAt` columns cloud-sync lot 0
@@ -327,7 +364,7 @@ struct IkeruSchemaTests {
         // being *retyped* or *re-optionalized*: the name list above cannot see
         // that, and V4 is the version every store on a real device is coming
         // from. See v1GoldenFingerprint for the failure mode.
-        #expect(Self.typedFingerprint(of: schema) == "6d9ea78fe6560d5f")
+        #expect(Self.typedFingerprint(of: schema) == "e0f4cd9747ec06b4")
     }
 
     /// The 10 columns `TextImport` brings — and nothing else. V5 is purely
@@ -362,6 +399,6 @@ struct IkeruSchemaTests {
         #expect((v4 + Self.v5TextImportColumns).sorted() == v5)
         // Typed digest — minted 2026-08-19 by running this suite.
         #expect(Self.typedFingerprint(of: Schema(versionedSchema: IkeruSchemaV5.self))
-                == "bc676f2ff0a1a6a1")
+                == "93c7f1726ba34d2a")
     }
 }
