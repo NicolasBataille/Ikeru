@@ -9,6 +9,27 @@ displayed 18 % on text a learner half understands, and most of the gap was not
 even vocabulary — it was particles and inflection fragments. The mirror is a
 lie without a real dictionary.
 
+## ⛔ Do not re-run this on a whim
+
+The dictionary is committed whole, 27,75 MiB, into a **public** repository. That
+is a deliberate product decision (Nico, 2026-08-20): pruning to the common
+entries would save 85 % of the weight for three points of resolution, but what
+disappears is ございます, ネタバレ, 申し付け — the commercial keigo and the
+social-media slang, which is precisely the tail this feature exists to read. The
+precedent is the bundled audio, committed on the same reasoning.
+
+The cost is not today's 27 MiB, it is the **~13 MiB of permanent public history
+every regeneration adds**, forever, whether or not the result differs. So:
+
+- **regenerate rarely and on purpose**, never « to be up to date ». JMdict moves
+  by a handful of entries a week; that is far below what justifies a resync.
+- a good reason is a **measured gap** — words a learner actually met that the
+  bundle could not resolve. Not a date.
+- before committing the result, check it actually changed something that
+  matters: `sqlite3 jmdict.sqlite "select count(*) from entries"` and a run of
+  `DictionaryCoverageTests`. An identical-in-practice rebuild is 13 MiB of
+  history for nothing.
+
 ## What the app needs from it, and nothing more
 
 1. **Lookup by surface form.** A form is any string that can literally appear in
