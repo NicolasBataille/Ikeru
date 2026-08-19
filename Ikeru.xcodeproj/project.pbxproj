@@ -119,6 +119,7 @@
 		678EBB6CB1EC67C38071F0BC /* VocabularyDictionaryViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5628B43A53BA4F60FC2FAA4E /* VocabularyDictionaryViewModel.swift */; };
 		67FD08C3F44BED1CBC549314 /* KanaPoolSelectorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50DC3FFD19212D20C2539520 /* KanaPoolSelectorView.swift */; };
 		699CDC8CCD6C70501B8AF94A /* n5-content.sqlite in Resources */ = {isa = PBXBuildFile; fileRef = D5D9BA9F4FDA871221354B88 /* n5-content.sqlite */; };
+		A1B2C3D40000000000000002 /* jmdict.sqlite in Resources */ = {isa = PBXBuildFile; fileRef = A1B2C3D40000000000000001 /* jmdict.sqlite */; };
 		69B4E8F5F4A60063E5212BF0 /* IkeruCore in Frameworks */ = {isa = PBXBuildFile; productRef = D6284BC7E5C7136958E6185E /* IkeruCore */; };
 		6B447B08EC87253CC183BF68 /* WatchQuizViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE61F033B42BC3AD5742F25A /* WatchQuizViewModel.swift */; };
 		6D12C66C7BF2FEF680E3D41E /* IkeruTabBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CA34FB1B1DB4560EB47114B /* IkeruTabBar.swift */; };
@@ -519,6 +520,7 @@
 		D1F62206E7AC1CAC9A3335D5 /* VocabularyStudyViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VocabularyStudyViewModel.swift; sourceTree = "<group>"; };
 		D2CBFF6AF9FE7C9F48E34A51 /* HoldToConfirmButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HoldToConfirmButton.swift; sourceTree = "<group>"; };
 		D5D9BA9F4FDA871221354B88 /* n5-content.sqlite */ = {isa = PBXFileReference; lastKnownFileType = file; path = "n5-content.sqlite"; sourceTree = "<group>"; };
+		A1B2C3D40000000000000001 /* jmdict.sqlite */ = {isa = PBXFileReference; lastKnownFileType = file; path = "jmdict.sqlite"; sourceTree = "<group>"; };
 		D73A69C4AD84199B467D6CC9 /* ConversationViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationViewModelTests.swift; sourceTree = "<group>"; };
 		D96B344D5EAABEB91F4B5EE2 /* MarbleBackground.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MarbleBackground.swift; sourceTree = "<group>"; };
 		DABC761CD00B88F2CB2B98DF /* KanaQuizView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KanaQuizView.swift; sourceTree = "<group>"; };
@@ -685,6 +687,7 @@
 			isa = PBXGroup;
 			children = (
 				D5D9BA9F4FDA871221354B88 /* n5-content.sqlite */,
+				A1B2C3D40000000000000001 /* jmdict.sqlite */,
 			);
 			path = ContentBundles;
 			sourceTree = "<group>";
@@ -1425,6 +1428,7 @@
 				2599E15EC556738138D16158 /* Assets.xcassets in Resources */,
 				EFFC7E378C0AE8C64CD48AEB /* PrivacyInfo.xcprivacy in Resources */,
 				699CDC8CCD6C70501B8AF94A /* n5-content.sqlite in Resources */,
+				A1B2C3D40000000000000002 /* jmdict.sqlite in Resources */,
 				A0D10F1CE0000000000A0002 /* Audio in Resources */,
 				7A80AB8856661612D39AAB05 /* Localizable.xcstrings in Resources */,
 				E62C3024909CC557094DC0F5 /* NotoSerifJP-Bold.ttf in Resources */,
