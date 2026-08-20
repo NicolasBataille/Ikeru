@@ -382,29 +382,36 @@ struct TextRecognitionServiceTests {
 @Suite("OCR — ne garder que le sujet de la photo")
 struct TextRecognitionSubjectTests {
 
-    /// Un fragment à la hauteur choisie, en convention Vision (origine en bas).
-    private func fragment(_ text: String, height: Double, y: Double = 0.5)
+    /// Un fragment placé dans le cadre, en convention Vision (origine en bas).
+    ///
+    /// `x` et `width` comptent autant que la hauteur : ce sont eux qui disent
+    /// si deux morceaux sont dans la même colonne. Une première version les
+    /// figeait, et trois boutons d'une barre d'outils — côte à côte dans la
+    /// réalité — se retrouvaient empilés dans un même bloc.
+    private func fragment(_ text: String, height: Double, y: Double = 0.5,
+                          x: Double = 0.1, width: Double = 0.5)
         -> RecognizedTextFragment {
         RecognizedTextFragment(text: text,
-                               boundingBox: CGRect(x: 0.1, y: y, width: 0.5, height: height),
+                               boundingBox: CGRect(x: x, y: y, width: width, height: height),
                                confidence: 0.9)
     }
 
     /// L'écran réel, reconstitué : le panneau en grand, tout le reste petit.
     private var screenshotFragments: [RecognizedTextFragment] {
         [
-            fragment("Enregistrements", height: 0.02, y: 0.96),
-            fragment("Kanji characters", height: 0.02, y: 0.92),
-            fragment("Traffic signs", height: 0.02, y: 0.92),
-            fragment("JapanesePod101", height: 0.02, y: 0.84),
-            fragment("：", height: 0.015, y: 0.83),
+            fragment("Enregistrements", height: 0.02, y: 0.96, x: 0.70, width: 0.25),
+            fragment("Kanji characters", height: 0.02, y: 0.92, x: 0.15, width: 0.25),
+            fragment("Traffic signs", height: 0.02, y: 0.92, x: 0.55, width: 0.20),
+            fragment("JapanesePod101", height: 0.02, y: 0.84, x: 0.12, width: 0.25),
+            fragment("：", height: 0.015, y: 0.83, x: 0.85, width: 0.02),
             fragment("自転車を除く", height: 0.055, y: 0.66),
             fragment("一方通行", height: 0.055, y: 0.60),
-            fragment("Learn Japanese Kanji — Everyday Kanji", height: 0.018, y: 0.36),
-            fragment("Partager", height: 0.015, y: 0.31),
-            fragment("Enregistrer", height: 0.015, y: 0.31),
-            fragment("止まれ", height: 0.012, y: 0.18),
-            fragment("歩行者", height: 0.012, y: 0.16),
+            fragment("Learn Japanese Kanji — Everyday Kanji", height: 0.018, y: 0.36,
+                     x: 0.08, width: 0.55),
+            fragment("Partager", height: 0.015, y: 0.31, x: 0.15, width: 0.15),
+            fragment("Enregistrer", height: 0.015, y: 0.31, x: 0.60, width: 0.15),
+            fragment("止まれ", height: 0.012, y: 0.18, x: 0.40, width: 0.10),
+            fragment("歩行者", height: 0.012, y: 0.16, x: 0.12, width: 0.12),
         ]
     }
 
@@ -414,13 +421,46 @@ struct TextRecognitionSubjectTests {
         #expect(kept == ["自転車を除く", "一方通行"], "gardé : \(kept)")
     }
 
-    @Test("Un fragment sans japonais ne passe pas, même volumineux")
-    func latinOnlyIsRefusedWhateverItsSize() {
+    /// Un bloc SÉPARÉ, sans un mot de japonais, n'est pas ce qu'un apprenant de
+    /// japonais a visé — même s'il occupe plus de place.
+    @Test("Un bloc sans japonais est écarté, même volumineux")
+    func latinOnlyBlocksAreRefusedWhateverTheirSize() {
         let kept = TextRecognitionService.subject(of: [
-            fragment("BREAKING NEWS", height: 0.30),
-            fragment("お知らせ", height: 0.28),
+            fragment("BREAKING NEWS", height: 0.10, y: 0.85),
+            fragment("Subscribe today", height: 0.10, y: 0.72),
+            fragment("お知らせ", height: 0.08, y: 0.30),
         ]).map(\.text)
-        #expect(kept == ["お知らせ"])
+        #expect(kept == ["お知らせ"], "gardé : \(kept)")
+    }
+
+    /// Le pendant, et c'est le gain du passage aux blocs : un titre bilingue
+    /// est UN texte. L'ancien filtre, qui jugeait fragment par fragment,
+    /// l'aurait coupé en deux.
+    @Test("Un bloc bilingue reste entier")
+    func aBilingualBlockStaysWhole() {
+        let kept = TextRecognitionService.subject(of: [
+            fragment("Bicycle", height: 0.05, y: 0.70),
+            fragment("自転車", height: 0.05, y: 0.64),
+        ]).map(\.text)
+        #expect(kept.count == 2, "gardé : \(kept)")
+    }
+
+    /// Le cas où le filtre par écriture était aveugle, et où la mise en page
+    /// tranche : le décor autour de la photo est LUI AUSSI en japonais.
+    @Test("Une interface en japonais autour du sujet est quand même écartée")
+    func aJapaneseInterfaceAroundTheSubjectIsStillDropped() {
+        let kept = TextRecognitionService.subject(of: [
+            // Barre d'application, en japonais, en haut et en petit.
+            fragment("設定", height: 0.018, y: 0.96, x: 0.05, width: 0.10),
+            fragment("共有", height: 0.018, y: 0.96, x: 0.45, width: 0.10),
+            fragment("保存", height: 0.018, y: 0.96, x: 0.80, width: 0.10),
+            // Le panneau visé.
+            fragment("自転車を除く", height: 0.055, y: 0.66),
+            fragment("一方通行", height: 0.055, y: 0.60),
+            // Légende d'une vignette, en japonais elle aussi.
+            fragment("駐車禁止の標識", height: 0.012, y: 0.16, x: 0.60, width: 0.25),
+        ]).map(\.text)
+        #expect(kept == ["自転車を除く", "一方通行"], "gardé : \(kept)")
     }
 
     /// La règle ne peut pas être « écarter tout ce qui contient du latin » :

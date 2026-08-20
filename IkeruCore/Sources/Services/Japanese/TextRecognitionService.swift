@@ -347,52 +347,112 @@ public struct TextRecognitionService: Sendable {
     ///
     /// Vision reads a picture, not an intention. Photograph a street sign on a
     /// screen and it returns the sign *and* the browser chrome, the article
-    /// title, the share buttons, the thumbnails — measured on a real capture
-    /// (2026-08-20): 12 lines, of which the 2 the learner wanted. Handing that
-    /// over is technically faithful and practically useless; they then have to
-    /// delete eleven lines by hand, on a phone.
+    /// title, the share buttons, the thumbnail captions — measured on a real
+    /// capture (2026-08-20): 12 lines, of which the 2 the learner wanted.
+    /// Faithful, and useless: they then delete eleven lines by hand, on a
+    /// phone.
     ///
-    /// Two rules, in order, each of which alone would be wrong:
+    /// ## Layout, not script
     ///
-    /// 1. **Keep only fragments that carry Japanese script.** Kana or CJK, not
-    ///    punctuation — 「：」 and 「■」 are not text. This alone removes the UI
-    ///    of whatever app the photo was taken through, which is most of the
-    ///    noise. It cannot simply be « drop anything Latin »: real Japanese
-    ///    carries URLs, names and loanwords, and dropping those would corrupt
-    ///    the very text the feature exists to read.
+    /// The first version of this filtered on *character class* — keep what
+    /// carries kana or kanji — and it worked on that capture **by accident**:
+    /// the interface around the sign happened to be in French and English.
+    /// Photograph a Japanese website, or a phone set to Japanese, and it filters
+    /// nothing at all.
     ///
-    /// 2. **Keep only what is prominent.** A sign fills the frame; the chrome
-    ///    and the thumbnails around it are a fraction of its height. Rule 1
-    ///    lets 「止まれ」 through from a thumbnail nobody was aiming at; height
-    ///    settles it.
+    /// So the work is done by **layout analysis** instead. Fragments are
+    /// grouped into blocks by geometry — adjacency, alignment, comparable text
+    /// size — and the dominant block wins. A sign is one block; the chrome is
+    /// another; each thumbnail caption is its own. That reasoning does not care
+    /// what alphabet anything is in, which is exactly why it survives a
+    /// Japanese interface.
     ///
-    /// Rule 2 is deliberately generous, because it is the one that can eat
-    /// something wanted. On a page of running text every line is near the
-    /// tallest, so nothing is dropped — the threshold only bites when one text
-    /// genuinely dominates. On a menu, items sit around half the title's height
-    /// and survive. What it does remove is furigana above a manga line, which
-    /// is noise here anyway.
+    /// The script test survives as a **secondary** guard, applied to blocks
+    /// rather than to fragments: a block with no Japanese in it is not what a
+    /// learner of Japanese pointed a camera at. It can no longer split a
+    /// sentence, because it now judges whole blocks.
     static func subject(of fragments: [RecognizedTextFragment]) -> [RecognizedTextFragment] {
-        let japanese = fragments.filter { Self.carriesJapanese($0.text) }
-        guard let tallest = japanese.map(\.boundingBox.height).max(), tallest > 0 else {
-            return japanese
+        let blocks = textBlocks(of: fragments)
+        let japanese = blocks.filter { block in block.contains { carriesJapanese($0.text) } }
+        let candidates = japanese.isEmpty ? [] : japanese
+        guard let dominant = candidates.max(by: { weight(of: $0) < weight(of: $1) }) else {
+            return []
         }
-        return japanese.filter { $0.boundingBox.height >= tallest * Self.prominenceRatio }
+        // Un bloc voisin de poids comparable fait partie du même sujet : une
+        // affiche a un titre et un corps, un panneau deux lignes séparées par
+        // un trait. On ne garde pas QUE le maximum, on garde ce qui joue dans
+        // la même catégorie.
+        let threshold = weight(of: dominant) * siblingRatio
+        return candidates.filter { weight(of: $0) >= threshold }.flatMap { $0 }
     }
 
-    /// How short a fragment may be, relative to the tallest, and still count as
-    /// part of the subject.
+    /// How much of the frame a block occupies — the sum of its fragments'
+    /// areas, not its bounding box.
     ///
-    /// 0.45 rather than a rounder number: a menu's items measured about half
-    /// its title, and cutting those would break the very use the vision names
-    /// (« un menu photographié à Kyōto »).
-    static let prominenceRatio: Double = 0.45
+    /// The bounding box would reward a block whose pieces are scattered across
+    /// the screen, which is precisely what a row of interface buttons is. Ink
+    /// rewards the one that actually fills the frame.
+    static func weight(of block: [RecognizedTextFragment]) -> Double {
+        block.reduce(0) { $0 + Double($1.boundingBox.width * $1.boundingBox.height) }
+    }
+
+    /// How light a block may be, relative to the heaviest, and still count as
+    /// part of the same subject.
+    static let siblingRatio: Double = 0.35
+
+    /// Groups fragments into visual blocks.
+    ///
+    /// Two fragments belong together when they read as one piece of text: their
+    /// text is of comparable size, they overlap horizontally (so they sit in
+    /// the same column), and the vertical gap between them is no more than a
+    /// couple of lines. Transitive — a block is a chain, so a five-line
+    /// paragraph is one block, not four pairs.
+    static func textBlocks(of fragments: [RecognizedTextFragment]) -> [[RecognizedTextFragment]] {
+        var remaining = fragments
+        var blocks: [[RecognizedTextFragment]] = []
+
+        while let seed = remaining.first {
+            remaining.removeFirst()
+            var block = [seed]
+            var grew = true
+            while grew {
+                grew = false
+                for (index, candidate) in remaining.enumerated().reversed()
+                where block.contains(where: { belongTogether($0, candidate) }) {
+                    block.append(candidate)
+                    remaining.remove(at: index)
+                    grew = true
+                }
+            }
+            blocks.append(block)
+        }
+        return blocks
+    }
+
+    /// Whether two fragments read as part of the same block.
+    static func belongTogether(_ left: RecognizedTextFragment,
+                               _ right: RecognizedTextFragment) -> Bool {
+        let a = left.boundingBox, b = right.boundingBox
+        guard a.height > 0, b.height > 0 else { return false }
+
+        // Taille comparable : un titre et une légende ne sont pas le même bloc.
+        let sizeRatio = max(a.height, b.height) / min(a.height, b.height)
+        guard sizeRatio <= 2.0 else { return false }
+
+        // Même colonne : les boîtes doivent se recouvrir horizontalement.
+        let overlap = min(a.maxX, b.maxX) - max(a.minX, b.minX)
+        guard overlap > 0 else { return false }
+
+        // Et se suivre : au plus deux interlignes d'écart vertical.
+        let gap = max(a.minY, b.minY) - min(a.maxY, b.maxY)
+        return gap <= max(a.height, b.height) * 2.0
+    }
 
     /// Whether a fragment carries actual Japanese — kana or a CJK ideograph.
     ///
     /// Punctuation does not count. Vision happily returns 「：」 or a box glyph
-    /// as its own fragment, and those would otherwise sail through rule 1 and
-    /// drag a line of interface text with them.
+    /// as its own fragment, and those would otherwise vouch for a block that is
+    /// pure interface.
     static func carriesJapanese(_ text: String) -> Bool {
         text.unicodeScalars.contains { scalar in
             (0x3040...0x309F).contains(scalar.value)      // hiragana
