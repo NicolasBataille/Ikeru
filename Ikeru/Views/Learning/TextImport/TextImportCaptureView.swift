@@ -42,7 +42,11 @@ struct TextImportCaptureView: View {
     /// Isolée sur le `MainActor` parce que l'appelant l'est : la fermeture peut
     /// capturer aussi bien un service `MainActor` qu'un acteur de fond, sans
     /// contrainte `Sendable` sur le site d'appel.
-    var onRecognizeImage: @MainActor (Data) async throws -> String = TextImportCaptureView.recognizeOnDevice
+    /// Rend le texte retenu **et** le nombre de fragments écartés, pour que
+    /// l'écran puisse dire qu'il n'a pas tout pris. Un filtre invisible est un
+    /// filtre incorrigible.
+    var onRecognizeImage: @MainActor (Data) async throws -> (text: String, discarded: Int)
+        = TextImportCaptureView.recognizeOnDevice
 
     @State private var photoItem: PhotosPickerItem?
     @State private var showLibrary = false
@@ -52,6 +56,11 @@ struct TextImportCaptureView: View {
     /// C'est `TextRecognitionError.messageKey` qui la fournit : le message sur
     /// le texte vertical appartient au service qui l'a mesuré, pas à l'écran.
     @State private var recognitionErrorKey: String?
+
+    /// Combien de morceaux de texte la reconnaissance a écartés parce qu'ils
+    /// n'étaient pas le sujet de la photo — chrome d'une app, légendes,
+    /// vignettes. Zéro tant qu'aucune photo n'a été lue.
+    @State private var discardedFragmentCount = 0
     @State private var pasteboardWasEmpty = false
     /// Vrai quand l'accès à l'appareil photo a été refusé (ou est restreint).
     /// `UIImagePickerController` ne prévient de rien dans ce cas : il se
@@ -235,6 +244,15 @@ struct TextImportCaptureView: View {
             }
         }
 
+        // On DIT ce qu'on a écarté. L'apprenant peut alors juger : soit c'était
+        // bien l'interface autour de sa photo, soit il manque quelque chose et
+        // il le retape — ce qu'il ne pourrait pas décider sans le savoir.
+        if discardedFragmentCount > 0 {
+            noticeRow(icon: "wand.and.sparkles",
+                      tint: Color.ikeruTextSecondary,
+                      message: "TextImport.Capture.Filtered \(discardedFragmentCount)")
+        }
+
         if pasteboardWasEmpty {
             noticeRow(icon: "doc.on.clipboard",
                       tint: Color.ikeruTextSecondary,
@@ -366,18 +384,20 @@ struct TextImportCaptureView: View {
         pasteboardWasEmpty = false
         recognitionErrorKey = nil
         cameraAccessDenied = false
+        discardedFragmentCount = 0
         isRecognizing = true
         defer { isRecognizing = false }
 
         do {
-            let recognized = try await onRecognizeImage(data)
-                .trimmingCharacters(in: .whitespacesAndNewlines)
+            let outcome = try await onRecognizeImage(data)
+            let recognized = outcome.text.trimmingCharacters(in: .whitespacesAndNewlines)
             // Un résultat vide est la même chose que « rien reconnu » vue de
             // l'écran : on ne montre jamais un « résultat » vide.
             guard !recognized.isEmpty else {
                 recognitionErrorKey = TextRecognitionError.noHorizontalTextFound.messageKey
                 return
             }
+            discardedFragmentCount = outcome.discarded
             viewModel.begin(with: merged(with: recognized), source: .photo)
         } catch let error as TextRecognitionError {
             recognitionErrorKey = error.messageKey
@@ -400,8 +420,9 @@ struct TextImportCaptureView: View {
     /// `recognizeText(in: Data)` prend en charge, en lisant le tag sur la
     /// source ImageIO. Passer par elle plutôt que de redresser ici évite en
     /// prime de redessiner une image de 12 Mpx sur le `MainActor`.
-    static func recognizeOnDevice(_ data: Data) async throws -> String {
-        try await TextRecognitionService().recognizeText(in: data).text
+    static func recognizeOnDevice(_ data: Data) async throws -> (text: String, discarded: Int) {
+        let recognized = try await TextRecognitionService().recognizeText(in: data)
+        return (recognized.text, recognized.discardedFragmentCount)
     }
 
     /// Passer par `begin(with:source:)` plutôt que d'écrire `draft` directement :

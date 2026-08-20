@@ -1001,6 +1001,66 @@
         }
       }
     },
+    "TextImport.Capture.Filtered %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%#@bits@ left out — app interface, captions, thumbnails."
+          },
+          "substitutions" : {
+            "bits" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg piece of text that wasn't the subject of the photo was"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg pieces of text that weren't the subject of the photo were"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%#@bits@ écarté — interface, légendes, vignettes."
+          },
+          "substitutions" : {
+            "bits" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg morceau de texte qui n\u2019était pas le sujet de la photo a été"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg morceaux de texte qui n\u2019étaient pas le sujet de la photo ont été"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "TextImport.Capture.Kicker" : {
       "localizations" : {
         "en" : {

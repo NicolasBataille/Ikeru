@@ -370,3 +370,125 @@ struct TextRecognitionServiceTests {
         #expect(recognized.text == "一行目\n二行目")
     }
 }
+
+// MARK: - Ce que la photo visait
+
+/// Rejoue la capture réelle du 2026-08-20 : un panneau japonais photographié
+/// **sur un écran**, donc entouré du chrome du navigateur, du titre de
+/// l'article en anglais, des boutons de partage et de trois vignettes.
+///
+/// Vision avait tout ramassé — douze lignes, dont les deux voulues. Fidèle, et
+/// inutilisable : il fallait en effacer onze à la main, sur un téléphone.
+@Suite("OCR — ne garder que le sujet de la photo")
+struct TextRecognitionSubjectTests {
+
+    /// Un fragment à la hauteur choisie, en convention Vision (origine en bas).
+    private func fragment(_ text: String, height: Double, y: Double = 0.5)
+        -> RecognizedTextFragment {
+        RecognizedTextFragment(text: text,
+                               boundingBox: CGRect(x: 0.1, y: y, width: 0.5, height: height),
+                               confidence: 0.9)
+    }
+
+    /// L'écran réel, reconstitué : le panneau en grand, tout le reste petit.
+    private var screenshotFragments: [RecognizedTextFragment] {
+        [
+            fragment("Enregistrements", height: 0.02, y: 0.96),
+            fragment("Kanji characters", height: 0.02, y: 0.92),
+            fragment("Traffic signs", height: 0.02, y: 0.92),
+            fragment("JapanesePod101", height: 0.02, y: 0.84),
+            fragment("：", height: 0.015, y: 0.83),
+            fragment("自転車を除く", height: 0.055, y: 0.66),
+            fragment("一方通行", height: 0.055, y: 0.60),
+            fragment("Learn Japanese Kanji — Everyday Kanji", height: 0.018, y: 0.36),
+            fragment("Partager", height: 0.015, y: 0.31),
+            fragment("Enregistrer", height: 0.015, y: 0.31),
+            fragment("止まれ", height: 0.012, y: 0.18),
+            fragment("歩行者", height: 0.012, y: 0.16),
+        ]
+    }
+
+    @Test("Le panneau survit, l'interface autour disparaît")
+    func onlyTheSignSurvives() {
+        let kept = TextRecognitionService.subject(of: screenshotFragments).map(\.text)
+        #expect(kept == ["自転車を除く", "一方通行"], "gardé : \(kept)")
+    }
+
+    @Test("Un fragment sans japonais ne passe pas, même volumineux")
+    func latinOnlyIsRefusedWhateverItsSize() {
+        let kept = TextRecognitionService.subject(of: [
+            fragment("BREAKING NEWS", height: 0.30),
+            fragment("お知らせ", height: 0.28),
+        ]).map(\.text)
+        #expect(kept == ["お知らせ"])
+    }
+
+    /// La règle ne peut pas être « écarter tout ce qui contient du latin » :
+    /// un vrai texte japonais porte des URL, des noms, des mots empruntés.
+    @Test("Un japonais mêlé de latin reste intact")
+    func mixedScriptSurvives() {
+        let kept = TextRecognitionService.subject(of: [
+            fragment("今日のライブ最高だった🎉 https://example.com", height: 0.05),
+            fragment("@friend_jp またね〜", height: 0.05),
+        ]).map(\.text)
+        #expect(kept.count == 2)
+    }
+
+    /// Le seuil de proéminence ne doit mordre QUE quand un texte domine
+    /// vraiment. Sur une page de texte courant, toutes les lignes se valent.
+    @Test("Une page de texte uniforme ne perd aucune ligne")
+    func uniformPagesKeepEveryLine() {
+        let page = (0..<20).map { fragment("行\($0)です。", height: 0.028 + Double($0 % 3) * 0.002) }
+        #expect(TextRecognitionService.subject(of: page).count == 20)
+    }
+
+    /// Le cas que la vision nomme explicitement — « un menu photographié à
+    /// Kyōto ». Les plats font environ la moitié du titre et doivent rester.
+    @Test("Sur un menu, les plats survivent au titre")
+    func menuItemsSurviveTheTitle() {
+        let kept = TextRecognitionService.subject(of: [
+            fragment("本日のおすすめ", height: 0.08, y: 0.80),
+            fragment("鶏の唐揚げ定食", height: 0.042, y: 0.70),
+            fragment("季節の野菜天ぷら", height: 0.040, y: 0.64),
+            fragment("冷やし中華", height: 0.038, y: 0.58),
+        ]).map(\.text)
+        #expect(kept.count == 4, "gardé : \(kept)")
+    }
+
+    @Test("La ponctuation seule ne compte pas comme du japonais")
+    func punctuationIsNotJapanese() {
+        #expect(!TextRecognitionService.carriesJapanese("：〜「」…"))
+        #expect(!TextRecognitionService.carriesJapanese("■ □ ●"))
+        #expect(!TextRecognitionService.carriesJapanese("Traffic signs"))
+        #expect(TextRecognitionService.carriesJapanese("あ"))
+        #expect(TextRecognitionService.carriesJapanese("ア"))
+        #expect(TextRecognitionService.carriesJapanese("山"))
+    }
+
+    /// Un filtre invisible est un filtre incorrigible : l'apprenant
+    /// rephotographierait le même panneau sans jamais comprendre qu'on a
+    /// écarté la légende en dessous.
+    @Test("Ce qui a été mis de côté est compté, pour pouvoir le dire")
+    func discardedFragmentsAreCounted() async throws {
+        let image = try #require(makeStubImage())
+        let service = TextRecognitionService(
+            provider: FakeTextRecognitionProvider(fragments: screenshotFragments))
+        let recognized = try await service.recognizeText(in: image)
+        #expect(recognized.text == "自転車を除く\n一方通行")
+        #expect(recognized.discardedFragmentCount == 10)
+    }
+
+    /// Une photo où rien n'est japonais est la même impasse qu'une photo
+    /// illisible : on le dit, on ne rend pas un résultat vide.
+    @Test("Une image sans un mot de japonais lève l'erreur nommée")
+    func aPhotoWithNoJapaneseIsNamedAsSuch() async throws {
+        let image = try #require(makeStubImage())
+        let service = TextRecognitionService(provider: FakeTextRecognitionProvider(fragments: [
+            fragment("BREAKING NEWS", height: 0.3),
+            fragment("Subscribe now", height: 0.2),
+        ]))
+        await #expect(throws: TextRecognitionError.noHorizontalTextFound) {
+            _ = try await service.recognizeText(in: image)
+        }
+    }
+}

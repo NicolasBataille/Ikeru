@@ -29,6 +29,7 @@ public struct RecognizedTextFragment: Sendable, Equatable {
     /// Engine confidence, 0.0 (no confidence) to 1.0 (certain).
     public let confidence: Double
 
+
     public init(text: String, boundingBox: CGRect, confidence: Double) {
         self.text = text
         self.boundingBox = boundingBox
@@ -49,6 +50,14 @@ public struct RecognizedText: Sendable, Equatable {
 
     /// Mean confidence over the fragments that produced this text.
     public let confidence: Double
+    /// How many fragments the engine read and `subject(of:)` set aside — the
+    /// interface of the app the photo was taken through, thumbnails, captions.
+    ///
+    /// Carried so the capture screen can SAY that something was left out. A
+    /// filter the learner cannot see is a filter they cannot correct: they
+    /// would re-photograph the same sign, get the same two lines, and never
+    /// learn that the caption underneath was dropped on purpose.
+    public var discardedFragmentCount: Int = 0
 
     public init(lines: [String], text: String, confidence: Double) {
         self.lines = lines
@@ -317,14 +326,80 @@ public struct TextRecognitionService: Sendable {
         let usable = fragments.filter {
             !$0.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         }
-        guard !usable.isEmpty else {
+        let kept = Self.subject(of: usable)
+        guard !kept.isEmpty else {
             Logger.content.info("Text recognition returned nothing usable (likely vertical text)")
             throw TextRecognitionError.noHorizontalTextFound
         }
 
-        let recognized = RecognizedText.assemble(from: usable)
-        Logger.content.info("Text recognition read \(recognized.lines.count) line(s)")
+        var recognized = RecognizedText.assemble(from: kept)
+        recognized.discardedFragmentCount = usable.count - kept.count
+        let discarded = recognized.discardedFragmentCount
+        Logger.content.info(
+            "Text recognition read \(recognized.lines.count) line(s), \(discarded) set aside")
         return recognized
+    }
+
+    // MARK: - What the learner actually pointed the camera at
+
+    /// Narrows what the engine read down to the text that is plausibly the
+    /// **subject** of the photo.
+    ///
+    /// Vision reads a picture, not an intention. Photograph a street sign on a
+    /// screen and it returns the sign *and* the browser chrome, the article
+    /// title, the share buttons, the thumbnails — measured on a real capture
+    /// (2026-08-20): 12 lines, of which the 2 the learner wanted. Handing that
+    /// over is technically faithful and practically useless; they then have to
+    /// delete eleven lines by hand, on a phone.
+    ///
+    /// Two rules, in order, each of which alone would be wrong:
+    ///
+    /// 1. **Keep only fragments that carry Japanese script.** Kana or CJK, not
+    ///    punctuation — 「：」 and 「■」 are not text. This alone removes the UI
+    ///    of whatever app the photo was taken through, which is most of the
+    ///    noise. It cannot simply be « drop anything Latin »: real Japanese
+    ///    carries URLs, names and loanwords, and dropping those would corrupt
+    ///    the very text the feature exists to read.
+    ///
+    /// 2. **Keep only what is prominent.** A sign fills the frame; the chrome
+    ///    and the thumbnails around it are a fraction of its height. Rule 1
+    ///    lets 「止まれ」 through from a thumbnail nobody was aiming at; height
+    ///    settles it.
+    ///
+    /// Rule 2 is deliberately generous, because it is the one that can eat
+    /// something wanted. On a page of running text every line is near the
+    /// tallest, so nothing is dropped — the threshold only bites when one text
+    /// genuinely dominates. On a menu, items sit around half the title's height
+    /// and survive. What it does remove is furigana above a manga line, which
+    /// is noise here anyway.
+    static func subject(of fragments: [RecognizedTextFragment]) -> [RecognizedTextFragment] {
+        let japanese = fragments.filter { Self.carriesJapanese($0.text) }
+        guard let tallest = japanese.map(\.boundingBox.height).max(), tallest > 0 else {
+            return japanese
+        }
+        return japanese.filter { $0.boundingBox.height >= tallest * Self.prominenceRatio }
+    }
+
+    /// How short a fragment may be, relative to the tallest, and still count as
+    /// part of the subject.
+    ///
+    /// 0.45 rather than a rounder number: a menu's items measured about half
+    /// its title, and cutting those would break the very use the vision names
+    /// (« un menu photographié à Kyōto »).
+    static let prominenceRatio: Double = 0.45
+
+    /// Whether a fragment carries actual Japanese — kana or a CJK ideograph.
+    ///
+    /// Punctuation does not count. Vision happily returns 「：」 or a box glyph
+    /// as its own fragment, and those would otherwise sail through rule 1 and
+    /// drag a line of interface text with them.
+    static func carriesJapanese(_ text: String) -> Bool {
+        text.unicodeScalars.contains { scalar in
+            (0x3040...0x309F).contains(scalar.value)      // hiragana
+                || (0x30A0...0x30FF).contains(scalar.value)  // katakana
+                || (0x4E00...0x9FFF).contains(scalar.value)  // CJK unifié
+                || (0x3400...0x4DBF).contains(scalar.value)  // extension A
+        }
     }
 
     /// Recognise the text of an encoded picture — what a camera or a photo
