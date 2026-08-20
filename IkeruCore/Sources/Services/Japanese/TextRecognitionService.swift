@@ -373,7 +373,7 @@ public struct TextRecognitionService: Sendable {
     /// sentence, because it now judges whole blocks.
     static func subject(of fragments: [RecognizedTextFragment]) -> [RecognizedTextFragment] {
         let blocks = textBlocks(of: fragments)
-        let japanese = blocks.filter { block in block.contains { carriesJapanese($0.text) } }
+        let japanese = blocks.filter { isJapaneseBlock($0) }
         let candidates = japanese.isEmpty ? [] : japanese
         guard let dominant = candidates.max(by: { weight(of: $0) < weight(of: $1) }) else {
             return []
@@ -448,18 +448,45 @@ public struct TextRecognitionService: Sendable {
         return gap <= max(a.height, b.height) * 2.0
     }
 
+    /// Whether a block is Japanese text, as opposed to a block of interface
+    /// with a stray glyph in it.
+    ///
+    /// ⚠️ This asks for a **proportion**, not a presence, and the difference is
+    /// the whole point. Measured on a real capture (2026-08-20): Vision misread
+    /// a share icon as 「山」, and that single character vouched for an entire
+    /// English block — « Learn Japanese Kanji — Everyday Kanji (Traffic Signs
+    /// pt. 1) - JapanesePod101.com Blog 山 Partager » sailed through a
+    /// presence test at 1 % Japanese.
+    ///
+    /// One fifth is low on purpose. It has to let through the things the
+    /// feature exists to read: a bilingual sign (« Bicycle / 自転車 » is 30 %),
+    /// a tweet carrying a URL and a handle. It only has to catch a block that
+    /// is Japanese by accident.
+    static func isJapaneseBlock(_ block: [RecognizedTextFragment]) -> Bool {
+        let scalars = block.flatMap { $0.text.unicodeScalars }
+            .filter { !CharacterSet.whitespacesAndNewlines.contains($0) }
+        guard !scalars.isEmpty else { return false }
+        let japanese = scalars.filter { isJapaneseScalar($0) }.count
+        return Double(japanese) / Double(scalars.count) >= japaneseShareThreshold
+    }
+
+    /// How much of a block must be Japanese for it to count as Japanese text.
+    static let japaneseShareThreshold: Double = 0.2
+
     /// Whether a fragment carries actual Japanese — kana or a CJK ideograph.
     ///
     /// Punctuation does not count. Vision happily returns 「：」 or a box glyph
     /// as its own fragment, and those would otherwise vouch for a block that is
     /// pure interface.
     static func carriesJapanese(_ text: String) -> Bool {
-        text.unicodeScalars.contains { scalar in
-            (0x3040...0x309F).contains(scalar.value)      // hiragana
-                || (0x30A0...0x30FF).contains(scalar.value)  // katakana
-                || (0x4E00...0x9FFF).contains(scalar.value)  // CJK unifié
-                || (0x3400...0x4DBF).contains(scalar.value)  // extension A
-        }
+        text.unicodeScalars.contains(where: isJapaneseScalar)
+    }
+
+    static func isJapaneseScalar(_ scalar: Unicode.Scalar) -> Bool {
+        (0x3040...0x309F).contains(scalar.value)          // hiragana
+            || (0x30A0...0x30FF).contains(scalar.value)   // katakana
+            || (0x4E00...0x9FFF).contains(scalar.value)   // CJK unifié
+            || (0x3400...0x4DBF).contains(scalar.value)   // extension A
     }
 
     /// Recognise the text of an encoded picture — what a camera or a photo

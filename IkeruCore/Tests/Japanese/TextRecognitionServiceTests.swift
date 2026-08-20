@@ -495,6 +495,49 @@ struct TextRecognitionSubjectTests {
         #expect(kept.count == 4, "gardé : \(kept)")
     }
 
+    /// Le défaut constaté sur device le 2026-08-20, deuxième passe : Vision a
+    /// lu une icône de partage comme 「山」, et ce seul caractère cautionnait
+    /// tout un bloc d'interface anglaise. Tester la PRÉSENCE de japonais ne
+    /// suffit pas ; il faut sa PROPORTION.
+    @Test("Un idéogramme parasite ne cautionne pas un bloc d'interface")
+    func oneStrayGlyphDoesNotVouchForAnEnglishBlock() {
+        let kept = TextRecognitionService.subject(of: [
+            fragment("自転車を除く", height: 0.055, y: 0.66),
+            fragment("一方通行", height: 0.055, y: 0.60),
+            // Le titre de l'article et la barre de partage, fusionnés en un
+            // bloc par leur disposition — et 山 est une icône mal lue.
+            fragment("Learn Japanese Kanji — Everyday Kanji（Traffic", height: 0.018,
+                     y: 0.38, x: 0.08, width: 0.60),
+            fragment("Signs pt. 1) - JapanesePod101.com Blog", height: 0.018,
+                     y: 0.35, x: 0.08, width: 0.60),
+            fragment("山 Partager", height: 0.016, y: 0.32, x: 0.10, width: 0.20),
+        ]).map(\.text)
+        #expect(kept == ["自転車を除く", "一方通行"], "gardé : \(kept)")
+    }
+
+    /// Le seuil doit rester bas : ce sont exactement les textes que la feature
+    /// existe pour lire.
+    @Test("Un japonais minoritaire mais réel passe quand même")
+    func genuineJapaneseSurvivesEvenWhenOutnumbered() {
+        // Un panneau bilingue : trois kanji pour sept lettres.
+        #expect(TextRecognitionService.isJapaneseBlock([
+            fragment("Bicycle", height: 0.05, y: 0.70),
+            fragment("自転車", height: 0.05, y: 0.64),
+        ]))
+        // Un tweet avec une mention et un lien.
+        #expect(TextRecognitionService.isJapaneseBlock([
+            fragment("@friend_jp 今日のライブ最高だった", height: 0.03),
+        ]))
+    }
+
+    @Test("Un bloc purement latin n'est jamais japonais")
+    func latinBlocksAreNeverJapanese() {
+        #expect(!TextRecognitionService.isJapaneseBlock([
+            fragment("Learn Japanese Kanji — Everyday Kanji", height: 0.02),
+        ]))
+        #expect(!TextRecognitionService.isJapaneseBlock([]))
+    }
+
     @Test("La ponctuation seule ne compte pas comme du japonais")
     func punctuationIsNotJapanese() {
         #expect(!TextRecognitionService.carriesJapanese("：〜「」…"))
