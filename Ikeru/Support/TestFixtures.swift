@@ -222,6 +222,11 @@ public enum TestFixtures {
             VocabularyEncounter.self,
             VocabularyEntry.self,
             ExerciseOutcomeLog.self,
+            // Added 2026-08-19 with « Apporte ton propre texte ». Omitting it
+            // made "Wipe profile" a lie in the one place it matters most: the
+            // learner's own pasted/photographed prose survived a total wipe
+            // and reappeared in the reading journal on the next launch.
+            TextImport.self,
         ]
         for entity in entities {
             do {

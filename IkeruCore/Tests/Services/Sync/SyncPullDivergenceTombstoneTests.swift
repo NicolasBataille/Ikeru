@@ -43,6 +43,10 @@ struct SyncPullDivergenceTombstoneTests {
             VocabularyEncounter.self,
             ExerciseOutcomeLog.self,
             CompanionChatMessage.self,
+            // `TextImport` is not optional in these containers: `SyncPullActor`
+            // pulls `text_imports` and counts it in `localRowCount()`, so a
+            // container without it makes every `pullAll` throw.
+            TextImport.self,
         ])
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         return try ModelContainer(for: schema, configurations: [config])
@@ -63,6 +67,7 @@ struct SyncPullDivergenceTombstoneTests {
         _ = try await push.pushDirtyVocabularyEntries(using: server, accessToken: token)
         _ = try await push.pushDirtyVocabularyEncounters(using: server, accessToken: token)
         _ = try await push.pushDirtyExerciseOutcomeLogs(using: server, accessToken: token)
+        _ = try await push.pushDirtyTextImports(using: server, accessToken: token)
     }
 
     /// Every row the fake server holds for a table, read back through its real

@@ -196,18 +196,39 @@ public final class VocabularyDrillViewModel {
     // MARK: - Helpers
 
     /// Build 4 quiz options: correct meaning + 3 distractors from other dictionary entries.
+    ///
+    /// ## Distractors must be in the same language as the answer
+    ///
+    /// This is a correctness requirement, not polish — the same lesson the
+    /// listening drill learned with homophones and the grammar cloze learned
+    /// with suffixes: **a distractor that gives the answer away is a broken
+    /// question.**
+    ///
+    /// Words mined from imported texts carry an English gloss whenever JMdict
+    /// has no French one, which is about one mined card in three (measured
+    /// 2026-08-20 on the reference sample: 14 of 45 non-curated words). Drawn
+    /// from a dictionary that is otherwise 97 % French, the English answer was
+    /// the only English option roughly nine times out of ten — so
+    /// « pluie / ami / to be crowded; to be packed / film » is answerable
+    /// without reading a single kanji.
+    ///
+    /// So distractors are drawn from the same language bucket as the answer,
+    /// and only fall back to the other bucket when that one cannot fill three
+    /// slots. A question with mixed languages is still better than a question
+    /// with two options, but it is a last resort, not the default.
     private func buildQuiz(for entry: VocabularyEntryDTO) {
         let correctMeaning = entry.meaning
         correctOption = correctMeaning
 
-        var pool = allEntries
-            .filter { $0.id != entry.id }
-            .map { $0.meaning }
+        let pool = Array(Set(allEntries.filter { $0.id != entry.id }.map(\.meaning)))
+        let answerLooksEnglish = Self.looksEnglish(correctMeaning)
+        let sameLanguage = pool.filter { Self.looksEnglish($0) == answerLooksEnglish }
+        let otherLanguage = pool.filter { Self.looksEnglish($0) != answerLooksEnglish }
 
-        // Deduplicate
-        pool = Array(Set(pool))
-
-        var distractors = pool.shuffled().prefix(3).map { $0 }
+        var distractors = Array(sameLanguage.shuffled().prefix(3))
+        if distractors.count < 3 {
+            distractors += otherLanguage.shuffled().prefix(3 - distractors.count)
+        }
         while distractors.count < 3 {
             distractors.append("—")
         }
@@ -215,6 +236,36 @@ public final class VocabularyDrillViewModel {
         var options = distractors
         options.append(correctMeaning)
         quizOptions = options.shuffled()
+    }
+
+    /// Whether a gloss reads as English rather than French.
+    ///
+    /// A heuristic, deliberately: the entry carries no language field, and
+    /// adding one means a schema version plus a sync column for something the
+    /// text itself already says. It only has to be right often enough to keep
+    /// the four options looking alike — being wrong makes one question
+    /// slightly easier, never wrong.
+    ///
+    /// French glosses in this app are accented far more often than not, and the
+    /// short function words differ completely. Both signals are checked because
+    /// either alone misfires: « pluie » has no accent, and « information » is
+    /// spelled identically in both languages.
+    nonisolated static func looksEnglish(_ gloss: String) -> Bool {
+        let lowered = gloss.lowercased()
+        if lowered.contains(where: { "àâäéèêëîïôöùûüÿçœæ".contains($0) }) { return false }
+        let words = Set(lowered.split(whereSeparator: { !$0.isLetter }).map(String.init))
+        let french: Set<String> = ["le", "la", "les", "un", "une", "des", "du", "de",
+                                   "qui", "que", "dans", "pour", "avec", "sur", "être",
+                                   "faire", "chose", "personne", "sans"]
+        let english: Set<String> = ["the", "a", "an", "of", "to", "in", "for", "with",
+                                    "on", "be", "is", "that", "which", "something",
+                                    "someone", "one's", "etc", "esp"]
+        let frenchHits = words.intersection(french).count
+        let englishHits = words.intersection(english).count
+        if frenchHits != englishHits { return englishHits > frenchHits }
+        // Aucun indice : on ne devine pas, on suppose la langue de l'app —
+        // c'est le cas majoritaire, et se tromper ne fait qu'élargir le vivier.
+        return false
     }
 
 }

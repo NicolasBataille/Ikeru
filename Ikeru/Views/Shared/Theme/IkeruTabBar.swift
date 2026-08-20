@@ -164,3 +164,26 @@ private struct TatamiTabCell: View {
     }
     return Wrapper().preferredColorScheme(.dark)
 }
+
+// MARK: - Tab-bar clearance
+
+extension View {
+
+    /// Lifts a bottom-pinned control clear of the floating tab bar.
+    ///
+    /// `MainTabView` overlays `IkeruTabBar` on top of every tab's content, so a
+    /// control pinned to the bottom of the screen is **drawn underneath it** and
+    /// becomes untappable. That is not a cosmetic issue: measured on the
+    /// simulator 2026-08-19, the « Choose words to learn » footer of the reading
+    /// stage sat entirely behind the bar, and the import journey had no way
+    /// forward at all.
+    ///
+    /// The number comes from the bar's own measurement — 76.33pt on an iPhone
+    /// 14 Pro (see the comment above) — rounded up to 88 for margin, which is
+    /// the value the kana drill screens already use. It lives here, beside the
+    /// bar it clears, so a future change to the bar's height has one obvious
+    /// place to update instead of eight hardcoded paddings across the app.
+    func ikeruTabBarClearance() -> some View {
+        padding(.bottom, 88)
+    }
+}

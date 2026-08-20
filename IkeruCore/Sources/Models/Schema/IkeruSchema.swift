@@ -1,6 +1,6 @@
 // swiftlint:disable file_length
 // This file is an append-only history of frozen `VersionedSchema` snapshots
-// (V1 through V3) plus the live V4 schema. Splitting it across files would
+// (V1 through V3) plus the live V4 and V5 schemas. Splitting it across files would
 // break the name-shadowing trick each frozen enum relies on (nested @Model
 // types must live inside their own versioned-schema enum body — see V1's doc
 // comment) and would scatter a single coherent story about what shipped
@@ -1349,9 +1349,18 @@ public enum IkeruSchemaV3: VersionedSchema {
 /// for freshly created objects, so only pre-existing (migrated) rows ever
 /// see the epoch sentinel.
 ///
-/// Unlike V3, V4 uses *live* references throughout — it doesn't need to be
-/// frozen because there is currently no V5. The day a V5 is created, V4 must
-/// be frozen the same way V1, V2, and V3 were.
+/// V4 uses *live* references throughout. **That is now a standing hazard, not
+/// a neutral fact**: `IkeruSchemaV5` exists (2026-08-19) and V4 was NOT frozen
+/// when it was cut, so V4 and V5 both describe whatever the live classes say
+/// today. Adding, removing or retyping a stored property on any of these
+/// classes silently rewrites what V4 means — the `aa03566` failure this file
+/// opens with — and every real store stops hash-matching.
+///
+/// What holds the line until someone does the freeze: `IkeruSchemaTests`'
+/// `v4GoldenFingerprint` (name list **and** typed digest) and
+/// `v5GoldenFingerprint`. They fail loudly on any such edit. Do not "fix" them
+/// by updating the golden values: freeze V4's touched entities into nested
+/// snapshots the way V1 did, then cut V6.
 public enum IkeruSchemaV4: VersionedSchema {
 
     public static var versionIdentifier: Schema.Version { Schema.Version(4, 0, 0) }
@@ -1373,6 +1382,46 @@ public enum IkeruSchemaV4: VersionedSchema {
     }
 }
 
+// MARK: - Versioned Schema V5
+
+/// **V5** — adds `TextImport`, the « apporte ton propre texte » entity.
+///
+/// Purely additive: one new entity, and **not a single existing model was
+/// touched**. That was a design constraint, not luck. The natural modelling
+/// hangs a relationship off `VocabularyEncounter` back to its import — and
+/// `VocabularyEncounter` is referenced *live* by `IkeruSchemaV4`, so growing it
+/// would have silently redefined what V4 means and reproduced the `aa03566`
+/// failure this file opens with: every real store stops hash-matching and the
+/// container refuses to open. `TextImport` carries the entry identifiers on its
+/// own side instead (see its doc comment), so V4 keeps meaning exactly what it
+/// meant and this stage stays `.lightweight`.
+///
+/// - Important: V4 is now frozen in the same sense as V1–V3 — its `models` list
+///   names live types, so **any** future change to `VocabularyEncounter`,
+///   `VocabularyEntry`, `Card`, `UserProfile` or `RPGState` must first pin a
+///   nested snapshot into V4, exactly as V1 did.
+public enum IkeruSchemaV5: VersionedSchema {
+
+    public static var versionIdentifier: Schema.Version { Schema.Version(5, 0, 0) }
+
+    public static var models: [any PersistentModel.Type] {
+        [
+            UserProfile.self,
+            Card.self,
+            ReviewLog.self,
+            RPGState.self,
+            MnemonicCache.self,
+            CompanionChatMessage.self,
+            AssetManifest.self,
+            VocabularyEntry.self,
+            VocabularyEncounter.self,
+            DailyTerm.self,
+            ExerciseOutcomeLog.self,
+            TextImport.self,
+        ]
+    }
+}
+
 // MARK: - Migration Plan
 
 /// The app's schema migration plan.
@@ -1381,11 +1430,21 @@ public enum IkeruSchemaV4: VersionedSchema {
 /// versioned schemas existed (see its doc comment for the full story);
 /// `IkeruSchemaV2` is frozen at the shape that shipped before the
 /// learner-telemetry `ReviewLog` fields; `IkeruSchemaV3` is frozen at the
-/// shape that shipped before the cloud-sync columns; `IkeruSchemaV4` is the
-/// live current shape. All three stages are purely additive — new
-/// defaulted/optional columns and (for V1→V2) a wholly new entity — so
-/// `.lightweight` is sufficient for each: SwiftData adds the new
-/// columns/table and leaves prior data untouched.
+/// shape that shipped before the cloud-sync columns; `IkeruSchemaV4` is frozen
+/// at the shape that shipped before `TextImport`; `IkeruSchemaV5` is the live
+/// current shape. All FOUR stages are purely additive — new defaulted/optional
+/// columns, and (for V1→V2 and V4→V5) a wholly new entity — so `.lightweight`
+/// is sufficient for each: SwiftData adds the new columns/table and leaves
+/// prior data untouched.
+///
+/// ⚠️ « Frozen » means something different for V4 than for V1–V3: V4's `models`
+/// still names LIVE classes, so it is frozen by *discipline and by the golden
+/// digest*, not by nested snapshots. Freezing it properly — the way V1 did —
+/// would break `KanaSessionEndToEndTests` and `SessionDecouplingTests`, which
+/// open a container on `IkeruSchemaV4` inside the shared `IkeruTests` process:
+/// nested frozen classes there would poison CoreData's entity↔class cache, the
+/// exact failure CLAUDE.md quarantines the migration suites for. Move those two
+/// suites to V5 first, or out of the shared process.
 ///
 /// When a future `@Model` change needs data transformation (renames with
 /// data preservation, split/merge fields, etc.), use `.custom(...)` instead
@@ -1393,7 +1452,8 @@ public enum IkeruSchemaV4: VersionedSchema {
 public enum IkeruMigrationPlan: SchemaMigrationPlan {
 
     public static var schemas: [any VersionedSchema.Type] {
-        [IkeruSchemaV1.self, IkeruSchemaV2.self, IkeruSchemaV3.self, IkeruSchemaV4.self]
+        [IkeruSchemaV1.self, IkeruSchemaV2.self, IkeruSchemaV3.self,
+         IkeruSchemaV4.self, IkeruSchemaV5.self]
     }
 
     public static var stages: [MigrationStage] {
@@ -1401,6 +1461,8 @@ public enum IkeruMigrationPlan: SchemaMigrationPlan {
             .lightweight(fromVersion: IkeruSchemaV1.self, toVersion: IkeruSchemaV2.self),
             .lightweight(fromVersion: IkeruSchemaV2.self, toVersion: IkeruSchemaV3.self),
             .lightweight(fromVersion: IkeruSchemaV3.self, toVersion: IkeruSchemaV4.self),
+            // V4 → V5 : une entité de plus (`TextImport`), rien de modifié.
+            .lightweight(fromVersion: IkeruSchemaV4.self, toVersion: IkeruSchemaV5.self),
         ]
     }
 }

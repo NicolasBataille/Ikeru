@@ -460,6 +460,7 @@ public actor CloudSyncCoordinator {
             pushedCount += try await actor.pushDirtyVocabularyEntries(using: transport, accessToken: accessToken)
             pushedCount += try await actor.pushDirtyVocabularyEncounters(using: transport, accessToken: accessToken)
             pushedCount += try await actor.pushDirtyExerciseOutcomeLogs(using: transport, accessToken: accessToken)
+            pushedCount += try await actor.pushDirtyTextImports(using: transport, accessToken: accessToken)
             // companion_chat_messages: intentionally never pushed by this
             // lot — see `SyncPayloadBuilder`'s trailing comment.
 

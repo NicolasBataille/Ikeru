@@ -173,13 +173,48 @@ actor SyncModelActor {
         return dirty.count
     }
 
+    // MARK: - text_imports — delta, and the only table carrying the learner's prose
+    //
+    // Nico's ruling (2026-08-19): imported text IS backed up, so a reinstall
+    // restores the cards WITH the sentence they came from. That is a
+    // deliberate widening of what leaves the device, and `docs/privacy.html`
+    // was rewritten in the same change — it used to promise that the sentences
+    // a word was met in never leave.
+    //
+    // The delta rule works properly here, unlike on `cards`/`vocabulary_entries`
+    // above: `TextImportRepository` bumps `updatedAt` on every mutation it
+    // performs (creation stamps it from `createdAt`, `delete(_:)` stamps both
+    // `deletedAt` and `updatedAt`), so `isDirty` sees real edits, and the
+    // `deletedAt > syncedAt` clause carries a tombstone even for a row whose
+    // content never changed.
+    //
+    // Rows here are FAT compared to every other table — `content` is a whole
+    // text, not a word. The shared 500-row batch is left as is rather than
+    // special-cased: a learner accumulates imports at human speed (a handful a
+    // week, per the vision), so a batch that large is a first-push-after-restore
+    // scenario, not a routine one, and splitting it further would trade a rare
+    // large request for a permanently chattier one.
+
+    func pushDirtyTextImports(using transport: any SyncDataTransport, accessToken: String) async throws -> Int {
+        let all = try modelContext.fetch(FetchDescriptor<TextImport>())
+        let dirty = all.filter { isDirty(updatedAt: $0.updatedAt, deletedAt: $0.deletedAt, syncedAt: $0.syncedAt) }
+        guard !dirty.isEmpty else { return 0 }
+        for batch in dirty.chunked(into: Self.batchSize) {
+            let rows = batch.map { SyncPayloadBuilder.row(for: $0) }
+            try await transport.upsert(table: "text_imports", rows: rows, accessToken: accessToken)
+            for record in batch { record.syncedAt = record.updatedAt }
+            try modelContext.save()
+        }
+        return dirty.count
+    }
+
     // companion_chat_messages: no pushDirty* method exists for this entity
     // — see `SyncPayloadBuilder`'s trailing comment. Not an omission to fix
     // later in THIS lot.
 
     // MARK: - markEverythingUnsynced (CRITIQUE B)
 
-    /// Sets `syncedAt = nil` on every row across all 7 synced types and
+    /// Sets `syncedAt = nil` on every row across all 8 synced types and
     /// saves — the fix for the most serious defect this lot's second
     /// adversarial review round found (Critical B): "cloud account wiped,
     /// then re-seeded from local" silently pushed almost nothing.
@@ -236,6 +271,7 @@ actor SyncModelActor {
         for entry in try modelContext.fetch(FetchDescriptor<VocabularyEntry>()) { entry.syncedAt = nil }
         for encounter in try modelContext.fetch(FetchDescriptor<VocabularyEncounter>()) { encounter.syncedAt = nil }
         for log in try modelContext.fetch(FetchDescriptor<ExerciseOutcomeLog>()) { log.syncedAt = nil }
+        for record in try modelContext.fetch(FetchDescriptor<TextImport>()) { record.syncedAt = nil }
         try modelContext.save()
     }
 }

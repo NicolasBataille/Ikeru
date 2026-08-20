@@ -1,9 +1,10 @@
 import Foundation
 import SwiftData
 
-/// The 3 `SyncPullActor` apply functions for tables with no FK dependency
+/// The 4 `SyncPullActor` apply functions for tables with no FK dependency
 /// on `cards`/`review_logs` and no rule-2 replay involvement —
-/// `vocabulary_entries`, `vocabulary_encounters`, `exercise_outcome_logs`.
+/// `vocabulary_entries`, `vocabulary_encounters`, `exercise_outcome_logs`,
+/// `text_imports`.
 /// Split out of `SyncPullActor.swift` itself purely to stay under
 /// SwiftLint's `file_length` (1200 lines) and `type_body_length` (600
 /// lines, actor body) budgets — there is no behavioral reason these three
@@ -235,5 +236,95 @@ extension SyncPullActor {
             outcomes.append(.applied)
         }
         return (applied, outcomes, alreadyPresent)
+    }
+    // MARK: - text_imports
+
+    /// Rule-4 (tombstone-aware LWW) apply, modelled on
+    /// `applyVocabularyEntryRows` rather than on the append-only tables above.
+    ///
+    /// Two things that look like they should be copied from
+    /// `applyVocabularyEncounterRows`, and deliberately are not:
+    ///
+    /// - **No `.skippedTransient` branch.** A `TextImport` carries its
+    ///   vocabulary links as *scalar* `entryIDs`, not as a SwiftData
+    ///   relationship — that was the whole point of putting them on this side
+    ///   (see `TextImport`'s doc comment: growing `VocabularyEncounter` would
+    ///   have silently redefined `IkeruSchemaV4`). There is no foreign key to
+    ///   wait on, so every skip here is PERMANENT. An identifier pointing at
+    ///   an entry this device doesn't have is not a reason to withhold the
+    ///   learner's text.
+    /// - **No `alreadyPresentCount`.** This table is not append-only: an
+    ///   import can gain entries, and `TextImportRepository.delete(_:)`
+    ///   tombstones it. A redelivered row goes through the normal merge, like
+    ///   `vocabulary_entries`.
+    func applyTextImportRows(_ rows: [SyncRow]) throws -> (count: Int, outcomes: [RowApplyOutcome]) {
+        var applied = 0
+        var outcomes: [RowApplyOutcome] = []
+        outcomes.reserveCapacity(rows.count)
+        for row in rows {
+            // `coverage` is READ but not guarded: `nil` is a legal value (the
+            // text held nothing measurable to count), so a missing cell maps
+            // straight through rather than disqualifying the row. Everything
+            // else is required — a text without its content is not worth
+            // restoring.
+            guard let common = try? SyncRowDecoding.common(row),
+                  let title = SyncRowDecoding.string(row, "title"),
+                  let content = SyncRowDecoding.string(row, "content"),
+                  let sourceRawValue = SyncRowDecoding.string(row, "source"),
+                  let createdAt = SyncRowDecoding.date(row, "created_at"),
+                  let entryIDs = SyncRowDecoding.uuidArray(row, "entry_ids") else {
+                outcomes.append(.skippedPermanent)
+                continue
+            }
+            let coverage = SyncRowDecoding.number(row, "coverage")
+
+            if let existing = try fetchOne(TextImport.self, id: common.id) {
+                let winner = SyncMergeRules.resolveWinner(
+                    local: .init(updatedAt: existing.updatedAt, deletedAt: existing.deletedAt),
+                    remote: .init(updatedAt: common.updatedAt, deletedAt: common.deletedAt)
+                )
+                if winner == .remote {
+                    existing.title = title
+                    existing.content = content
+                    // `sourceRawValue`, not `source` — an unrecognised value
+                    // written by a newer app version survives verbatim instead
+                    // of being rewritten to `.paste` by the enum's fallback.
+                    existing.sourceRawValue = sourceRawValue
+                    existing.createdAt = createdAt
+                    existing.coverage = coverage
+                    existing.entryIDs = entryIDs
+                    existing.updatedAt = common.updatedAt
+                    existing.deletedAt = common.deletedAt
+                    existing.syncedAt = common.updatedAt
+                }
+            } else {
+                let record = TextImport(
+                    id: common.id,
+                    title: title,
+                    content: content,
+                    source: ImportSource(rawValue: sourceRawValue) ?? .paste,
+                    createdAt: createdAt,
+                    coverage: coverage,
+                    entryIDs: entryIDs
+                )
+                // Both re-asserted AFTER the initializer, which is not a
+                // pass-through: it re-derives the title from the first line
+                // when the one it is given is empty, and it stores the enum
+                // case rather than the raw string. Neither is wanted on a
+                // restore — the server's values are what the learner's own
+                // device produced, and re-deriving them here would let two
+                // devices disagree about the same import, or quietly rewrite
+                // a `source` a newer app version wrote.
+                record.title = title
+                record.sourceRawValue = sourceRawValue
+                record.updatedAt = common.updatedAt
+                record.deletedAt = common.deletedAt
+                record.syncedAt = common.updatedAt
+                modelContext.insert(record)
+            }
+            applied += 1
+            outcomes.append(.applied)
+        }
+        return (applied, outcomes)
     }
 }

@@ -119,6 +119,7 @@
 		678EBB6CB1EC67C38071F0BC /* VocabularyDictionaryViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5628B43A53BA4F60FC2FAA4E /* VocabularyDictionaryViewModel.swift */; };
 		67FD08C3F44BED1CBC549314 /* KanaPoolSelectorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50DC3FFD19212D20C2539520 /* KanaPoolSelectorView.swift */; };
 		699CDC8CCD6C70501B8AF94A /* n5-content.sqlite in Resources */ = {isa = PBXBuildFile; fileRef = D5D9BA9F4FDA871221354B88 /* n5-content.sqlite */; };
+		A1B2C3D40000000000000002 /* jmdict.sqlite in Resources */ = {isa = PBXBuildFile; fileRef = A1B2C3D40000000000000001 /* jmdict.sqlite */; };
 		69B4E8F5F4A60063E5212BF0 /* IkeruCore in Frameworks */ = {isa = PBXBuildFile; productRef = D6284BC7E5C7136958E6185E /* IkeruCore */; };
 		6B447B08EC87253CC183BF68 /* WatchQuizViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE61F033B42BC3AD5742F25A /* WatchQuizViewModel.swift */; };
 		6D12C66C7BF2FEF680E3D41E /* IkeruTabBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CA34FB1B1DB4560EB47114B /* IkeruTabBar.swift */; };
@@ -266,6 +267,18 @@
 		E60F6F77330CEE535D85DA46 /* DashboardLaunchUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 040591AD75D40A6C60A65226 /* DashboardLaunchUITests.swift */; };
 		7A7CFB6F30BE72C371E63721 /* SessionAnswerFlowUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F061122EE640C6A0C07BAC0A /* SessionAnswerFlowUITests.swift */; };
 		ACD0BCA3A7C1EE79813BD02A /* ProfileResetUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43C2F8072E54B6E9C89A7A82 /* ProfileResetUITests.swift */; };
+		CC17122F2879765AC620D7CB /* TextImportViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA548C5C6D596E96C8A31665 /* TextImportViewModel.swift */; };
+		3D661293E556B31D48A06AB3 /* TextImportViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15E0DF1B80E3633514950924 /* TextImportViewModelTests.swift */; };
+		24A425F1027A409C74C03324 /* AssistedReadingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F66793267450AA0034059A49 /* AssistedReadingView.swift */; };
+		CDA9DD41283E7183E8B2BDC9 /* TextImportCaptureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2640B2A4B4862A5418EC0A6F /* TextImportCaptureView.swift */; };
+		3AF4A81E4426B680B7DF9AF1 /* TextImportFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED45ED9FF97CF51814597DA1 /* TextImportFlowView.swift */; };
+		FFB0893C1D4BB73CA6C876FE /* TextImportJournalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6FBD3CF9F3A42BE51A6B342 /* TextImportJournalView.swift */; };
+		6BC21380CE15327F732E1E29 /* WordDetailSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E9BED7F876245601DB262D /* WordDetailSheet.swift */; };
+		BA32C427487EB8396C52B1A5 /* WordSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E94D0F1228B77B04E4D09E51 /* WordSelectionView.swift */; };
+		EC6F1A82ED0CD525B8BF183E /* TextImportUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 674341C4384336F178229332 /* TextImportUITests.swift */; };
+		5A17E000000000000000000B /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A17E000000000000000000A /* ShareViewController.swift */; };
+		5A17E000000000000000000F /* IkeruCore in Frameworks */ = {isa = PBXBuildFile; productRef = 5A17E000000000000000000E /* IkeruCore */; };
+		5A17E0000000000000000010 /* IkeruShare.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 5A17E0000000000000000005 /* IkeruShare.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -297,6 +310,13 @@
 			remoteGlobalIDString = EDDB8F3812DC1BC18F32017C;
 			remoteInfo = Ikeru;
 		};
+		5A17E0000000000000000012 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 44FF3435A5B11DC2E0D31918 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 5A17E0000000000000000001;
+			remoteInfo = IkeruShare;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -306,6 +326,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
+				5A17E0000000000000000010 /* IkeruShare.appex in Embed Foundation Extensions */,
 				CF13EFF3CE9BC5A619F0B16D /* IkeruWidget.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
@@ -519,6 +540,7 @@
 		D1F62206E7AC1CAC9A3335D5 /* VocabularyStudyViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VocabularyStudyViewModel.swift; sourceTree = "<group>"; };
 		D2CBFF6AF9FE7C9F48E34A51 /* HoldToConfirmButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HoldToConfirmButton.swift; sourceTree = "<group>"; };
 		D5D9BA9F4FDA871221354B88 /* n5-content.sqlite */ = {isa = PBXFileReference; lastKnownFileType = file; path = "n5-content.sqlite"; sourceTree = "<group>"; };
+		A1B2C3D40000000000000001 /* jmdict.sqlite */ = {isa = PBXFileReference; lastKnownFileType = file; path = "jmdict.sqlite"; sourceTree = "<group>"; };
 		D73A69C4AD84199B467D6CC9 /* ConversationViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationViewModelTests.swift; sourceTree = "<group>"; };
 		D96B344D5EAABEB91F4B5EE2 /* MarbleBackground.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MarbleBackground.swift; sourceTree = "<group>"; };
 		DABC761CD00B88F2CB2B98DF /* KanaQuizView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KanaQuizView.swift; sourceTree = "<group>"; };
@@ -582,6 +604,19 @@
 		040591AD75D40A6C60A65226 /* DashboardLaunchUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardLaunchUITests.swift; sourceTree = "<group>"; };
 		F061122EE640C6A0C07BAC0A /* SessionAnswerFlowUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionAnswerFlowUITests.swift; sourceTree = "<group>"; };
 		43C2F8072E54B6E9C89A7A82 /* ProfileResetUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileResetUITests.swift; sourceTree = "<group>"; };
+		FA548C5C6D596E96C8A31665 /* TextImportViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextImportViewModel.swift; sourceTree = "<group>"; };
+		15E0DF1B80E3633514950924 /* TextImportViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextImportViewModelTests.swift; sourceTree = "<group>"; };
+		F66793267450AA0034059A49 /* AssistedReadingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistedReadingView.swift; sourceTree = "<group>"; };
+		2640B2A4B4862A5418EC0A6F /* TextImportCaptureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextImportCaptureView.swift; sourceTree = "<group>"; };
+		ED45ED9FF97CF51814597DA1 /* TextImportFlowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextImportFlowView.swift; sourceTree = "<group>"; };
+		D6FBD3CF9F3A42BE51A6B342 /* TextImportJournalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextImportJournalView.swift; sourceTree = "<group>"; };
+		A6E9BED7F876245601DB262D /* WordDetailSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordDetailSheet.swift; sourceTree = "<group>"; };
+		E94D0F1228B77B04E4D09E51 /* WordSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordSelectionView.swift; sourceTree = "<group>"; };
+		674341C4384336F178229332 /* TextImportUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextImportUITests.swift; sourceTree = "<group>"; };
+		5A17E0000000000000000005 /* IkeruShare.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = IkeruShare.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		5A17E000000000000000000A /* ShareViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareViewController.swift; sourceTree = "<group>"; };
+		5A17E000000000000000000C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		5A17E000000000000000000D /* IkeruShare.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = IkeruShare.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -606,6 +641,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				53CA5BB295FDB9CBF8535BE8 /* IkeruCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5A17E0000000000000000008 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5A17E000000000000000000F /* IkeruCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -685,6 +728,7 @@
 			isa = PBXGroup;
 			children = (
 				D5D9BA9F4FDA871221354B88 /* n5-content.sqlite */,
+				A1B2C3D40000000000000001 /* jmdict.sqlite */,
 			);
 			path = ContentBundles;
 			sourceTree = "<group>";
@@ -774,6 +818,7 @@
 		58EFC03C1940A4C5948A11CA /* Learning */ = {
 			isa = PBXGroup;
 			children = (
+				75ADD0EF97D0271040A894B5 /* TextImport */,
 				15CB0667583EC6D52A9954F3 /* CardReview */,
 				6BD85ED735A9A13C87CB65D6 /* Conversation */,
 				D3A529783E53CBA85AA1B31C /* Kana */,
@@ -847,6 +892,7 @@
 		70A9DC9F6ECBB150C593E25D /* Products */ = {
 			isa = PBXGroup;
 			children = (
+				5A17E0000000000000000005 /* IkeruShare.appex */,
 				8225047CD3C41A1364CD67FA /* Ikeru.app */,
 				71F17C0E3B326F9F0C5D3E94 /* IkeruTests.xctest */,
 				9E2346F3FADE504EFFA9CBF7 /* IkeruUITests.xctest */,
@@ -859,6 +905,7 @@
 		7344ECA701F647E161A3F97A /* IkeruTests */ = {
 			isa = PBXGroup;
 			children = (
+				15E0DF1B80E3633514950924 /* TextImportViewModelTests.swift */,
 				769F5F51519266322B36DD05 /* AdaptiveSessionViewModelTests.swift */,
 				D73A69C4AD84199B467D6CC9 /* ConversationViewModelTests.swift */,
 				D11E7E1000000000A005A001 /* DailyTermViewModelTests.swift */,
@@ -907,6 +954,7 @@
 		C866ECFDA9FD425ADC45AF9D /* IkeruUITests */ = {
 			isa = PBXGroup;
 			children = (
+				674341C4384336F178229332 /* TextImportUITests.swift */,
 				0E5659B039C080407686F6E3 /* Support */,
 				E90CE4FB4F89A69883403DA9 /* Pages */,
 				72F259260D9B15F440C7B50E /* CloudBackupToggleUITests.swift */,
@@ -1001,6 +1049,7 @@
 		9AAEFD1942FF8F04AD564639 /* ViewModels */ = {
 			isa = PBXGroup;
 			children = (
+				FB8957223B0DC6A1BBBDD011 /* TextImport */,
 				867A3CA926C8EDBF228F4F2F /* Learning */,
 				D11E7E1000000000A001A001 /* DailyTermViewModel.swift */,
 				A485AB1DAF8DF6C7F9DDAE61 /* RPG */,
@@ -1208,6 +1257,7 @@
 		EF88C2B2433715E2D2E8D0DA = {
 			isa = PBXGroup;
 			children = (
+				5A17E0000000000000000006 /* IkeruShare */,
 				F07F60B10BED6A68A1D6B10F /* Ikeru */,
 				7344ECA701F647E161A3F97A /* IkeruTests */,
 				C866ECFDA9FD425ADC45AF9D /* IkeruUITests */,
@@ -1258,6 +1308,37 @@
 				77C23A25576DBE04B0A332B8 /* VocabularyExamplesView.swift */,
 			);
 			path = Kanji;
+			sourceTree = "<group>";
+		};
+		FB8957223B0DC6A1BBBDD011 /* TextImport */ = {
+			isa = PBXGroup;
+			children = (
+				FA548C5C6D596E96C8A31665 /* TextImportViewModel.swift */,
+			);
+			path = TextImport;
+			sourceTree = "<group>";
+		};
+		75ADD0EF97D0271040A894B5 /* TextImport */ = {
+			isa = PBXGroup;
+			children = (
+				E94D0F1228B77B04E4D09E51 /* WordSelectionView.swift */,
+				A6E9BED7F876245601DB262D /* WordDetailSheet.swift */,
+				D6FBD3CF9F3A42BE51A6B342 /* TextImportJournalView.swift */,
+				ED45ED9FF97CF51814597DA1 /* TextImportFlowView.swift */,
+				2640B2A4B4862A5418EC0A6F /* TextImportCaptureView.swift */,
+				F66793267450AA0034059A49 /* AssistedReadingView.swift */,
+			);
+			path = TextImport;
+			sourceTree = "<group>";
+		};
+		5A17E0000000000000000006 /* IkeruShare */ = {
+			isa = PBXGroup;
+			children = (
+				5A17E000000000000000000A /* ShareViewController.swift */,
+				5A17E000000000000000000C /* Info.plist */,
+				5A17E000000000000000000D /* IkeruShare.entitlements */,
+			);
+			path = IkeruShare;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -1348,6 +1429,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				5A17E0000000000000000011 /* PBXTargetDependency */,
 				6B5EFA12D68F711EDA158C69 /* PBXTargetDependency */,
 				A0D20F1CE0000000000B0004 /* PBXTargetDependency */,
 			);
@@ -1358,6 +1440,26 @@
 			productName = Ikeru;
 			productReference = 8225047CD3C41A1364CD67FA /* Ikeru.app */;
 			productType = "com.apple.product-type.application";
+		};
+		5A17E0000000000000000001 /* IkeruShare */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5A17E0000000000000000002 /* Build configuration list for PBXNativeTarget "IkeruShare" */;
+			buildPhases = (
+				5A17E0000000000000000007 /* Sources */,
+				5A17E0000000000000000008 /* Frameworks */,
+				5A17E0000000000000000009 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = IkeruShare;
+			packageProductDependencies = (
+				5A17E000000000000000000E /* IkeruCore */,
+			);
+			productName = IkeruShare;
+			productReference = 5A17E0000000000000000005 /* IkeruShare.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -1408,6 +1510,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
+				5A17E0000000000000000001 /* IkeruShare */,
 				EDDB8F3812DC1BC18F32017C /* Ikeru */,
 				C7A466B4903F67E7A7B2D0E2 /* IkeruTests */,
 				6BFC3C86F3AD7CE33BD80F20 /* IkeruUITests */,
@@ -1425,6 +1528,7 @@
 				2599E15EC556738138D16158 /* Assets.xcassets in Resources */,
 				EFFC7E378C0AE8C64CD48AEB /* PrivacyInfo.xcprivacy in Resources */,
 				699CDC8CCD6C70501B8AF94A /* n5-content.sqlite in Resources */,
+				A1B2C3D40000000000000002 /* jmdict.sqlite in Resources */,
 				A0D10F1CE0000000000A0002 /* Audio in Resources */,
 				7A80AB8856661612D39AAB05 /* Localizable.xcstrings in Resources */,
 				E62C3024909CC557094DC0F5 /* NotoSerifJP-Bold.ttf in Resources */,
@@ -1450,6 +1554,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		5A17E0000000000000000009 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -1470,6 +1581,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3D661293E556B31D48A06AB3 /* TextImportViewModelTests.swift in Sources */,
 				B645B881692E0AE7FE378DE4 /* AdaptiveSessionViewModelTests.swift in Sources */,
 				EBB22606F9278C7CBC1604BF /* ConversationViewModelTests.swift in Sources */,
 				D11E7E1000000000C005A001 /* DailyTermViewModelTests.swift in Sources */,
@@ -1535,6 +1647,13 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BA32C427487EB8396C52B1A5 /* WordSelectionView.swift in Sources */,
+				6BC21380CE15327F732E1E29 /* WordDetailSheet.swift in Sources */,
+				FFB0893C1D4BB73CA6C876FE /* TextImportJournalView.swift in Sources */,
+				3AF4A81E4426B680B7DF9AF1 /* TextImportFlowView.swift in Sources */,
+				CDA9DD41283E7183E8B2BDC9 /* TextImportCaptureView.swift in Sources */,
+				24A425F1027A409C74C03324 /* AssistedReadingView.swift in Sources */,
+				CC17122F2879765AC620D7CB /* TextImportViewModel.swift in Sources */,
 				78EBAB8487F09970D54B4F08 /* AISettingsView.swift in Sources */,
 				09A567494E1C0017CD0F2625 /* ActiveProfileResolver.swift in Sources */,
 				ABA74ED79DF7BC71F7543DBF /* ActiveSessionView.swift in Sources */,
@@ -1715,6 +1834,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				EC6F1A82ED0CD525B8BF183E /* TextImportUITests.swift in Sources */,
 				E7F304F8F102F1676196A4EE /* LaunchArguments.swift in Sources */,
 				FAAD7FE5CBF2C0A6366F8813 /* IkeruUITestCase.swift in Sources */,
 				5548CB18C0A47A9190B2BDBB /* SettingsPage.swift in Sources */,
@@ -1728,6 +1848,14 @@
 				E60F6F77330CEE535D85DA46 /* DashboardLaunchUITests.swift in Sources */,
 				7A7CFB6F30BE72C371E63721 /* SessionAnswerFlowUITests.swift in Sources */,
 				ACD0BCA3A7C1EE79813BD02A /* ProfileResetUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5A17E0000000000000000007 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5A17E000000000000000000B /* ShareViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1753,6 +1881,11 @@
 			isa = PBXTargetDependency;
 			target = EDDB8F3812DC1BC18F32017C /* Ikeru */;
 			targetProxy = 878D6DEF846110F4DA6FC1FD /* PBXContainerItemProxy */;
+		};
+		5A17E0000000000000000011 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 5A17E0000000000000000001 /* IkeruShare */;
+			targetProxy = 5A17E0000000000000000012 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -2068,6 +2201,48 @@
 			};
 			name = Release;
 		};
+		5A17E0000000000000000003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = IkeruShare/IkeruShare.entitlements;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = IkeruShare/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ikeru.app.share;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		5A17E0000000000000000004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = IkeruShare/IkeruShare.entitlements;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = IkeruShare/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ikeru.app.share;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -2125,6 +2300,15 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
+		5A17E0000000000000000002 /* Build configuration list for PBXNativeTarget "IkeruShare" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5A17E0000000000000000003 /* Debug */,
+				5A17E0000000000000000004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
@@ -2144,6 +2328,10 @@
 			productName = IkeruCore;
 		};
 		F1FCE9F34C02B01EDB2461B7 /* IkeruCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = IkeruCore;
+		};
+		5A17E000000000000000000E /* IkeruCore */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = IkeruCore;
 		};

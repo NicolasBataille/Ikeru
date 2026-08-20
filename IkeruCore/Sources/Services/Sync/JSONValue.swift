@@ -92,6 +92,26 @@ extension JSONValue {
     public static func dateOrNull(_ value: Date?) -> JSONValue {
         value.map(JSONValue.date) ?? .null
     }
+
+    /// Wraps an optional `Double`, producing `.null` for `nil`. Named on the
+    /// same `…OrNull` pattern as the three above rather than relying on
+    /// overload resolution against `case number(Double)`.
+    ///
+    /// `nil` here is a real value, not a missing one: `TextImport.coverage` is
+    /// `nil` when the text held nothing measurable to count, and pushing `0`
+    /// instead would claim the learner knew none of it.
+    public static func numberOrNull(_ value: Double?) -> JSONValue {
+        value.map(JSONValue.number) ?? .null
+    }
+
+    /// Wraps an ordered list of `UUID`s as a JSON array of strings — the shape
+    /// a `jsonb` column round-trips byte-identically (see the `entry_ids`
+    /// column comment in `supabase/migrations/20260819120000_text_imports.sql`
+    /// for why not `uuid[]`). Order is preserved, and for `entry_ids` it is
+    /// meaningful: the learner's selection order.
+    public static func uuidArray(_ values: [UUID]) -> JSONValue {
+        .array(values.map(JSONValue.uuid))
+    }
 }
 
 /// One PostgREST row: a flat map of column name → JSON value, where a

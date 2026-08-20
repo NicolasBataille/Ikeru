@@ -36,6 +36,10 @@ import os
 /// 8. `exercise_outcome_logs` — standalone (`profileID` is a scalar, not a
 ///    SwiftData relationship — see that model's doc comment — so no FK
 ///    ordering constraint applies).
+/// 9. `text_imports` — standalone for the same reason: a `TextImport`'s
+///    link to the vocabulary it produced is a scalar `entryIDs` array, not a
+///    SwiftData relationship (see that model's doc comment for why the link
+///    lives on this side), so nothing here has to arrive after anything else.
 ///
 /// `companion_chat_messages` is never pulled here, mirroring
 /// `SyncModelActor`'s push side, which never pushes it either — see
@@ -90,7 +94,7 @@ actor SyncPullActor {
     /// cursor cannot stall indefinitely on a truly-never-arriving parent.
     static let transientPoisonDropThreshold = 50
 
-    /// The 7 tables this actor pulls, in the dependency + merge-rule order
+    /// The 8 tables this actor pulls, in the dependency + merge-rule order
     /// documented on the type. `companion_chat_messages` is excluded — see
     /// the type doc comment.
     static let pullOrder = [
@@ -101,6 +105,7 @@ actor SyncPullActor {
         "vocabulary_entries",
         "vocabulary_encounters",
         "exercise_outcome_logs",
+        "text_imports",
     ]
 
     // MARK: - Summary
@@ -215,7 +220,7 @@ actor SyncPullActor {
         /// exactly what happened here (a previous review round's Critical
         /// A finding): this error propagating straight out of `pullAll`
         /// meant a stall on, say, `cards` silently meant `review_logs`
-        /// through `exercise_outcome_logs` were never even queried that
+        /// through `text_imports` were never even queried that
         /// cycle. The `…SoFar` payloads let the catcher salvage what this
         /// table actually accomplished before the stall rather than
         /// reporting `0` for a table that may have applied several pages
@@ -247,7 +252,7 @@ actor SyncPullActor {
         // MARK: Rule 1 — cold-start empty-cloud guard
         //
         // Only relevant on a device's VERY FIRST pull ever (no cursor for
-        // ANY of the 7 tables) — a device mid-way through its sync history
+        // ANY of the 8 tables) — a device mid-way through its sync history
         // has already proven the server isn't empty by definition of
         // having a cursor. Rather than issuing separate "is it empty?"
         // probe requests (which would race the real pagination for the
@@ -527,7 +532,7 @@ actor SyncPullActor {
     /// `pullAndApply` uses this to compute the safe cursor-advance prefix
     /// (`.applied` rows only) AND to route a stuck row to the right
     /// `SyncSkipTracker` counter — every per-table apply function this
-    /// dispatches to — 4 of them below, plus the 3 standalone-table ones in
+    /// dispatches to — 4 of them below, plus the 4 standalone-table ones in
     /// `SyncPullActor+StandaloneTables.swift` — must append exactly one
     /// outcome per row it iterates, in order, or both computations silently
     /// misalign.
@@ -566,8 +571,14 @@ actor SyncPullActor {
         case "exercise_outcome_logs":
             let result = try applyExerciseOutcomeLogRows(rows)
             return (result.count, result.outcomes, result.alreadyPresentCount)
+        case "text_imports":
+            // `0` for `alreadyPresentCount`, like `vocabulary_entries`: this
+            // table is not append-only, so a redelivered row goes through the
+            // normal merge instead of being counted as a no-op redelivery.
+            let result = try applyTextImportRows(rows)
+            return (result.count, result.outcomes, 0)
         default:
-            // Not one of `pullOrder`'s 7 tables — nothing calls `apply`
+            // Not one of `pullOrder`'s 8 tables — nothing calls `apply`
             // with any other value, so this is unreachable in practice;
             // fail loudly rather than silently dropping unknown rows.
             assertionFailure("SyncPullActor.apply called with unrecognized table: \(table)")
@@ -577,7 +588,7 @@ actor SyncPullActor {
 
     // MARK: - Rule 1 support: local row count
 
-    /// Sum of local rows across the same 7 tables this actor pulls — the
+    /// Sum of local rows across the same 8 tables this actor pulls — the
     /// `localRowCount` half of `SyncMergeRules.seedDecision`. Deliberately
     /// NOT counting `CompanionChatMessage`: that table is never pulled or
     /// pushed by this lot (see the type doc comment), so it isn't part of
@@ -590,6 +601,7 @@ actor SyncPullActor {
             + modelContext.fetchCount(FetchDescriptor<VocabularyEntry>())
             + modelContext.fetchCount(FetchDescriptor<VocabularyEncounter>())
             + modelContext.fetchCount(FetchDescriptor<ExerciseOutcomeLog>())
+            + modelContext.fetchCount(FetchDescriptor<TextImport>())
     }
 
     // MARK: - profiles
@@ -1126,9 +1138,9 @@ actor SyncPullActor {
         return min(max(raw, FSRSService.desiredRetentionRange.lowerBound), FSRSService.desiredRetentionRange.upperBound)
     }
 
-    // MARK: - vocabulary_entries, vocabulary_encounters, exercise_outcome_logs
+    // MARK: - vocabulary_entries, vocabulary_encounters, exercise_outcome_logs, text_imports
     //
-    // The 3 standalone (no FK dependency on `cards`/`review_logs`, no rule-2
+    // The 4 standalone (no FK dependency on `cards`/`review_logs`, no rule-2
     // replay involvement) apply functions live in
     // `SyncPullActor+StandaloneTables.swift`, not here — splitting them out
     // is what keeps this file/actor under SwiftLint's `file_length` (1200)

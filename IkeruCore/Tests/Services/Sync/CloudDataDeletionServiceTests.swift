@@ -22,6 +22,10 @@ struct CloudDataDeletionServiceTests {
             VocabularyEncounter.self,
             ExerciseOutcomeLog.self,
             CompanionChatMessage.self,
+            // `TextImport` is not optional in these containers: `SyncPullActor`
+            // pulls `text_imports` and counts it in `localRowCount()`, so a
+            // container without it makes every `pullAll` throw.
+            TextImport.self,
         ])
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         return try ModelContainer(for: schema, configurations: [config])
@@ -273,6 +277,16 @@ struct CloudDataDeletionServiceTests {
         let log = ReviewLog(card: card, grade: .good, responseTimeMs: 500)
         log.syncedAt = log.updatedAt
         context.insert(log)
+        // Same shape for `text_imports` (2026-08-19). This table is the one
+        // that carries the learner's own prose, so a `syncedAt` left pointing
+        // at the erased account is the worst version of CRITIQUE B: after
+        // opting back in, `pushDirtyTextImports` reads every import as
+        // "already synced" and the new account's backup silently contains no
+        // text at all — while the reading journal on the device still shows
+        // them, so nothing looks wrong until a reinstall.
+        let textImport = TextImport(content: "猫が好きです。")
+        textImport.syncedAt = textImport.updatedAt
+        context.insert(textImport)
         try context.save()
 
         let service = CloudDataDeletionService(modelContainer: container, identity: identity, transport: deletionTransport)
@@ -282,9 +296,12 @@ struct CloudDataDeletionServiceTests {
         let cards = try freshContext.fetch(FetchDescriptor<Card>())
         let logs = try freshContext.fetch(FetchDescriptor<ReviewLog>())
         let profiles = try freshContext.fetch(FetchDescriptor<UserProfile>())
+        let imports = try freshContext.fetch(FetchDescriptor<TextImport>())
 
         #expect(cards.first?.syncedAt == nil)
         #expect(logs.first?.syncedAt == nil)
         #expect(profiles.first?.syncedAt == nil)
+        #expect(imports.first?.syncedAt == nil,
+                "an imported text left marked synced would never be pushed to the new account")
     }
 }

@@ -219,6 +219,40 @@ enum SyncPayloadBuilder {
         ]
     }
 
+    // MARK: - text_imports
+
+    /// The one table with **no `payload` blob**: every field of a
+    /// `TextImport` is a promoted column — see the header of
+    /// `supabase/migrations/20260819120000_text_imports.sql` for why, and for
+    /// the trade it accepts (a new field here does need a migration).
+    ///
+    /// Nico's ruling (2026-08-19): imported text IS backed up, so a reinstall
+    /// restores the cards *with* the sentence they came from. That is a
+    /// deliberate widening of what leaves the device, and
+    /// `docs/privacy.html` says so in the same change — the page used to
+    /// promise the opposite.
+    ///
+    /// `content` is pushed **verbatim**: not trimmed, not normalised, not
+    /// truncated. The text the learner left is the text that travels, or the
+    /// restored card quotes a sentence that never existed.
+    static func row(for textImport: TextImport) -> SyncRow {
+        [
+            "id": .uuid(textImport.id),
+            "title": .string(textImport.title),
+            "content": .string(textImport.content),
+            // The raw string, not `source.rawValue` through the enum: a value
+            // written by a newer app version (a third import door) must
+            // survive a round-trip through an older one unchanged, rather than
+            // being silently rewritten to `.paste` by the enum's fallback.
+            "source": .string(textImport.sourceRawValue),
+            "created_at": .date(textImport.createdAt),
+            "coverage": .numberOrNull(textImport.coverage),
+            "entry_ids": .uuidArray(textImport.entryIDs),
+            "updated_at": .date(textImport.updatedAt),
+            "deleted_at": .dateOrNull(textImport.deletedAt),
+        ]
+    }
+
     // MARK: - companion_chat_messages
     //
     // Deliberately NOT built here. `CompanionChatMessage.content` is
