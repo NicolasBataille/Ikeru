@@ -110,3 +110,10 @@ TODO.md
 CREW.md
 CLAUDE.md
 docs/device-pass-*.md
+
+# État local du CLI Supabase (`supabase link`, `supabase db push`).
+#
+# ⛔ Ne JAMAIS committer : `pooler-url` contient une chaîne de connexion à la
+# base avec son mot de passe, et le dépôt est public. Le reste n'est que du
+# cache de versions, propre à la machine.
+supabase/.temp/
