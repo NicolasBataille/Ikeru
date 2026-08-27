@@ -407,4 +407,18 @@ public enum KanaGroup: String, Sendable, CaseIterable, Codable, Identifiable {
             .filter { $0.section == .base }
             .flatMap { $0.characters }
     }
+
+    /// Every kana that is NOT one of the 92 base characters: the voiced and
+    /// semi-voiced rows (`.dakuten`) and the combination kana (`.combined`).
+    ///
+    /// Exists so that callers which must treat "is this card a kana?"
+    /// separately from "does it count toward the 46-character mastery
+    /// threshold?" can ask both questions — see
+    /// `LearnerSnapshotBuilder` (OBS2-034), where matching only the base sets
+    /// let ~116 characters be counted as *vocabulary*.
+    public static var allExtendedCharacters: [KanaCharacter] {
+        KanaGroup.allCases
+            .filter { $0.section != .base }
+            .flatMap { $0.characters }
+    }
 }

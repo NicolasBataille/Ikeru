@@ -27,6 +27,51 @@ struct LearnerSnapshotBuilderTests {
         #expect(s.kanjiMasteredFamiliarPlus == 2)
     }
 
+    @Test("Les dakuten et yōon ne comptent ni comme vocabulaire ni dans les 46 (OBS2-034)")
+    func extendedKanaAreNeitherVocabularyNorBaseMastery() {
+        // Le semeur de production émet TOUTES les cartes kana avec
+        // `CardType.vocabulary` — c'est ce qui rendait le défaut invisible :
+        // seuls les 92 caractères de base étaient reconnus comme des kana, et
+        // les ~116 dakuten / yōon tombaient dans le compteur de vocabulaire.
+        // Un apprenant pouvait ainsi franchir deux portes réservées au
+        // vocabulaire avec zéro mot appris.
+        let extended = ["\u{3070}", "\u{3065}", "\u{304E}\u{3083}", "\u{30D4}\u{30E7}", "\u{3071}"]
+        let cards = extended.map {
+            fixture(type: .vocabulary, front: $0, stability: 30.0, reps: 5)  // mastered
+        }
+        let s = LearnerSnapshotBuilder.build(
+            cards: cards,
+            jlptLevel: .n5,
+            listeningAccuracyLast30: 0,
+            listeningRecallLast30Days: 0,
+            skillBalances: [:],
+            hasNewContentQueued: false,
+            lastSessionAt: nil,
+            now: Date(timeIntervalSince1970: 1_800_000_000)
+        )
+        #expect(s.vocabularyMasteredFamiliarPlus == 0, "des kana ne sont pas du vocabulaire")
+        // Et l'inverse doit rester vrai : ils ne doivent pas non plus servir à
+        // remplir le seuil des 46, qui porte sur le syllabaire de base seul.
+        #expect(s.hiraganaMastered == false)
+        #expect(s.katakanaMastered == false)
+    }
+
+    @Test("Un vrai mot reste compté comme vocabulaire (témoin du test précédent)")
+    func realWordStillCountsAsVocabulary() {
+        let cards = [fixture(type: .vocabulary, front: "\u{732B}", stability: 30.0, reps: 5)]
+        let s = LearnerSnapshotBuilder.build(
+            cards: cards,
+            jlptLevel: .n5,
+            listeningAccuracyLast30: 0,
+            listeningRecallLast30Days: 0,
+            skillBalances: [:],
+            hasNewContentQueued: false,
+            lastSessionAt: nil,
+            now: Date(timeIntervalSince1970: 1_800_000_000)
+        )
+        #expect(s.vocabularyMasteredFamiliarPlus == 1)
+    }
+
     @Test("Builds grammar familiar+ count from .grammar cards (remediation 4.3)")
     func grammarFamiliarPlusCount() {
         let cards = [
