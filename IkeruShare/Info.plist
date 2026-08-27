@@ -37,13 +37,28 @@
 			<!-- Du TEXTE, et rien d'autre. Pas d'images : la reconnaissance a
 			     besoin du dictionnaire et d'un temps que le processus d'une
 			     extension de partage n'a pas — une photo se passe par l'app,
-			     où l'OCR peut échouer proprement et se corriger à la main. -->
+			     où l'OCR peut échouer proprement et se corriger à la main.
+
+			     Pas de pages web non plus (OBS2-060). La clé
+			     NSExtensionActivationSupportsWebURLWithMaxCount a été retirée
+			     ici : elle faisait APPARAÎTRE Ikeru dans la feuille de partage
+			     de Safari pour une page entière, alors que l'extension n'en
+			     retient que `attributedContentText` — c'est-à-dire le TITRE.
+			     L'apprenant croyait importer un article et importait une ligne.
+
+			     Extraire le corps de l'article serait l'autre branche, mais
+			     elle bute sur exactement la contrainte du paragraphe
+			     précédent : ce processus n'a ni le temps ni la mémoire d'un
+			     désencombreur de page. Mieux vaut ne pas proposer ce qu'on ne
+			     sait pas tenir.
+
+			     Le partage d'une SÉLECTION de texte dans Safari continue de
+			     fonctionner : il passe par NSExtensionActivationSupportsText,
+			     déclaré séparément juste en dessous. -->
 			<key>NSExtensionActivationRule</key>
 			<dict>
 				<key>NSExtensionActivationSupportsText</key>
 				<true/>
-				<key>NSExtensionActivationSupportsWebURLWithMaxCount</key>
-				<integer>1</integer>
 			</dict>
 		</dict>
 	</dict>
