@@ -13,7 +13,7 @@ struct LearnerSnapshotBuilderTests {
             fixture(type: .kanji, front: "\u{4E00}", stability: 30.0, reps: 5),       // mastered
             fixture(type: .kanji, front: "\u{4E8C}", stability: 8.0, reps: 4),        // familiar
         ]
-        let s = LearnerSnapshotBuilder.build(
+        let snapshot = LearnerSnapshotBuilder.build(
             cards: cards,
             jlptLevel: .n5,
             listeningAccuracyLast30: 0,
@@ -23,8 +23,8 @@ struct LearnerSnapshotBuilderTests {
             lastSessionAt: nil,
             now: Date(timeIntervalSince1970: 1_800_000_000)
         )
-        #expect(s.vocabularyMasteredFamiliarPlus == 1)
-        #expect(s.kanjiMasteredFamiliarPlus == 2)
+        #expect(snapshot.vocabularyMasteredFamiliarPlus == 1)
+        #expect(snapshot.kanjiMasteredFamiliarPlus == 2)
     }
 
     @Test("Les dakuten et yōon ne comptent ni comme vocabulaire ni dans les 46 (OBS2-034)")
@@ -39,7 +39,7 @@ struct LearnerSnapshotBuilderTests {
         let cards = extended.map {
             fixture(type: .vocabulary, front: $0, stability: 30.0, reps: 5)  // mastered
         }
-        let s = LearnerSnapshotBuilder.build(
+        let snapshot = LearnerSnapshotBuilder.build(
             cards: cards,
             jlptLevel: .n5,
             listeningAccuracyLast30: 0,
@@ -49,17 +49,17 @@ struct LearnerSnapshotBuilderTests {
             lastSessionAt: nil,
             now: Date(timeIntervalSince1970: 1_800_000_000)
         )
-        #expect(s.vocabularyMasteredFamiliarPlus == 0, "des kana ne sont pas du vocabulaire")
+        #expect(snapshot.vocabularyMasteredFamiliarPlus == 0, "des kana ne sont pas du vocabulaire")
         // Et l'inverse doit rester vrai : ils ne doivent pas non plus servir à
         // remplir le seuil des 46, qui porte sur le syllabaire de base seul.
-        #expect(s.hiraganaMastered == false)
-        #expect(s.katakanaMastered == false)
+        #expect(snapshot.hiraganaMastered == false)
+        #expect(snapshot.katakanaMastered == false)
     }
 
     @Test("Un vrai mot reste compté comme vocabulaire (témoin du test précédent)")
     func realWordStillCountsAsVocabulary() {
         let cards = [fixture(type: .vocabulary, front: "\u{732B}", stability: 30.0, reps: 5)]
-        let s = LearnerSnapshotBuilder.build(
+        let snapshot = LearnerSnapshotBuilder.build(
             cards: cards,
             jlptLevel: .n5,
             listeningAccuracyLast30: 0,
@@ -69,7 +69,7 @@ struct LearnerSnapshotBuilderTests {
             lastSessionAt: nil,
             now: Date(timeIntervalSince1970: 1_800_000_000)
         )
-        #expect(s.vocabularyMasteredFamiliarPlus == 1)
+        #expect(snapshot.vocabularyMasteredFamiliarPlus == 1)
     }
 
     @Test("Builds grammar familiar+ count from .grammar cards (remediation 4.3)")
@@ -81,7 +81,7 @@ struct LearnerSnapshotBuilderTests {
             fixture(type: .grammar, front: "grammar4", stability: 0, reps: 0),     // new (excluded)
             fixture(type: .vocabulary, front: "vocab1", stability: 30.0, reps: 5), // not grammar
         ]
-        let s = LearnerSnapshotBuilder.build(
+        let snapshot = LearnerSnapshotBuilder.build(
             cards: cards,
             jlptLevel: .n5,
             listeningAccuracyLast30: 0,
@@ -93,7 +93,7 @@ struct LearnerSnapshotBuilderTests {
         )
         // Only the two familiar+ grammar cards count; learning/new grammar and
         // the vocab card are excluded.
-        #expect(s.grammarPointsFamiliarPlus == 2)
+        #expect(snapshot.grammarPointsFamiliarPlus == 2)
     }
 
     @Test("hiraganaMastered flips only when all 46 base kana are familiar+ (vocab cards)")
@@ -209,7 +209,7 @@ struct LearnerSnapshotBuilderTests {
         }
         #expect(cards.count == 46)
 
-        let s = LearnerSnapshotBuilder.build(
+        let snapshot = LearnerSnapshotBuilder.build(
             cards: cards,
             jlptLevel: .n5,
             listeningAccuracyLast30: 0,
@@ -219,7 +219,7 @@ struct LearnerSnapshotBuilderTests {
             lastSessionAt: nil,
             now: Date()
         )
-        #expect(s.hiraganaMastered == false)
+        #expect(snapshot.hiraganaMastered == false)
     }
 
     @Test("kanjiMasteredFamiliarPlus counts only true kanji (not kana, not vocab)")
@@ -227,7 +227,7 @@ struct LearnerSnapshotBuilderTests {
         let cards = [
             fixture(type: .kanji, front: "\u{4E00}", stability: 8.0, reps: 4), // 一 — true kanji
         ]
-        let s = LearnerSnapshotBuilder.build(
+        let snapshot = LearnerSnapshotBuilder.build(
             cards: cards,
             jlptLevel: .n5,
             listeningAccuracyLast30: 0,
@@ -237,9 +237,9 @@ struct LearnerSnapshotBuilderTests {
             lastSessionAt: nil,
             now: Date()
         )
-        #expect(s.kanjiMasteredFamiliarPlus == 1)
-        #expect(s.hiraganaMastered == false)
-        #expect(s.katakanaMastered == false)
+        #expect(snapshot.kanjiMasteredFamiliarPlus == 1)
+        #expect(snapshot.hiraganaMastered == false)
+        #expect(snapshot.katakanaMastered == false)
     }
 
     @Test("Counts due cards (dueDate <= now)")
@@ -250,7 +250,7 @@ struct LearnerSnapshotBuilderTests {
             fixture(type: .vocabulary, dueDate: now),
             fixture(type: .vocabulary, dueDate: now.addingTimeInterval(3600)),
         ]
-        let s = LearnerSnapshotBuilder.build(
+        let snapshot = LearnerSnapshotBuilder.build(
             cards: cards,
             jlptLevel: .n5,
             listeningAccuracyLast30: 0,
@@ -260,7 +260,7 @@ struct LearnerSnapshotBuilderTests {
             lastSessionAt: nil,
             now: now
         )
-        #expect(s.dueCardCount == 2)
+        #expect(snapshot.dueCardCount == 2)
     }
 
     @Test("Base-kana constant sets contain exactly 46 characters each")
