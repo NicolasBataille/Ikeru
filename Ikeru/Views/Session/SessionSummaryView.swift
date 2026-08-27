@@ -7,7 +7,7 @@ import os
 // Tatami-direction restyle (Plan T6a): a triumph header (kanji kicker +
 // serif "Practice complete" + italic proverb), three large serif numerals
 // for cards / recall % / time, an XP-fusuma rail with the bright "new gain"
-// segment glow, two split cells (NEW LEARNED / RE-LEARN) crested with mon,
+// segment glow, two split cells (NEW LEARNED / REVIEWED) crested with mon,
 // and a sharp gold "続ける · CONTINUE" CTA framed in sumi corners.
 //
 // All numerals render in serif. The summary uses `IkeruScreenBackground`
@@ -122,15 +122,15 @@ struct SessionSummaryView: View {
             .frame(width: 1, height: 56)
     }
 
-    // MARK: - Split Cells (NEW LEARNED / RE-LEARN)
+    // MARK: - Split Cells (NEW LEARNED / REVIEWED)
 
     private var splitCells: some View {
         HStack(spacing: 10) {
             cell(label: "NEW LEARNED", count: newCount,
                  color: Color(red: 0.616, green: 0.729, blue: 0.486),
                  mon: .maru)
-            cell(label: "RE-LEARN", count: relearnCount,
-                 color: TatamiTokens.vermilion,
+            cell(label: "REVIEWED", count: reviewedCount,
+                 color: Color.ikeruPrimaryAccent,
                  mon: .kikkou)
         }
     }
@@ -219,8 +219,8 @@ struct SessionSummaryView: View {
     /// also counts ungraded new-card presentation passes (see
     /// `SessionViewModel.completeNewCardPresentation`), which are encounters
     /// — not reviewed cards. Keeping this in step with `gradedAttemptCount`
-    /// also keeps `newCount + relearnCount == cardsCount` below, so the
-    /// NEW LEARNED / RE-LEARN split cells always sum to the headline number.
+    /// also keeps `newCount + reviewedCount == cardsCount` below, so the
+    /// NEW LEARNED / REVIEWED split cells always sum to the headline number.
     private var cardsCount: Int { viewModel.gradedAttemptCount }
 
     /// Recall percentage = total correct grades over total GRADED attempts
@@ -244,14 +244,27 @@ struct SessionSummaryView: View {
     private var newCount: Int { viewModel.newItemsLearned }
 
     /// Everything ELSE that was actually GRADED (`gradedAttemptCount`) minus
-    /// the newly-learned count — deliberately over `reviewedCount`, which
-    /// also counts ungraded new-card presentation passes (see
+    /// the newly-learned count — deliberately over `viewModel.reviewedCount`,
+    /// which also counts ungraded new-card presentation passes (see
     /// `SessionViewModel.completeNewCardPresentation`). Those presentation
     /// steps are neither "new learned" (that credit lands on the SAME card's
-    /// later, delayed graded test) nor a "re-learn" of anything — dividing
-    /// against `reviewedCount` would have miscounted every intro as a
-    /// re-learned review.
-    private var relearnCount: Int {
+    /// later, delayed graded test) nor a review of anything — dividing
+    /// against it would have miscounted every intro as a review.
+    ///
+    /// ### Pourquoi « REVIEWED » et non « RE-LEARN » (OBS2-027)
+    ///
+    /// Ce nombre n'a jamais compté les échecs : c'est « tout ce qui a été noté
+    /// et qui n'était pas neuf », autrement dit les révisions ordinaires.
+    /// Étiqueté « À REVOIR » et peint en vermillon, il se lisait pourtant
+    /// comme un reproche — le reviewer a mesuré « À REVOIR 25札 » en rouge à
+    /// l'issue d'une séance à **100 % de rappel**. Le calcul était juste, le
+    /// cadrage mentait.
+    ///
+    /// La couleur change aussi, et pour une raison écrite dans le thème :
+    /// `TatamiTokens.vermilion` se documente lui-même comme « the single warm
+    /// red of the entire UI, used only on hanko stamps, at most once per
+    /// screen ». Une statistique neutre n'y avait pas sa place.
+    private var reviewedCount: Int {
         max(0, viewModel.gradedAttemptCount - viewModel.newItemsLearned)
     }
 }
