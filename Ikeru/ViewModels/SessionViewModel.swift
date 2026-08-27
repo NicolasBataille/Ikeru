@@ -509,7 +509,7 @@ public final class SessionViewModel {
         // `gradedAttemptCount`, not `reviewedCount`: an abandoned session
         // that only showed ungraded new-card presentation passes (see
         // `completeNewCardPresentation`) has `reviewedCount > 0` but nothing
-        // for the summary's CARDS/RECALL/NEW LEARNED/RE-LEARN stats to show
+        // for the summary's CARDS/RECALL/NEW LEARNED/REVIEWED stats to show
         // — the summary would render as an empty, failure-reading screen for
         // a session that, from the learner's perspective, did nothing wrong.
         if gradedAttemptCount == 0 {

@@ -72,6 +72,7 @@ public final class ConversationService: @unchecked Sendable {
         history: [ConversationMessage],
         jlptLevel: JLPTLevel,
         knownVocabulary: [String] = [],
+        learnerName: String = "",
         bundleReadings: [String: String] = [:],
         interfaceLocale: Locale = .current
     ) async throws -> ConversationMessage {
@@ -80,6 +81,7 @@ public final class ConversationService: @unchecked Sendable {
             history: history,
             jlptLevel: jlptLevel,
             knownVocabulary: knownVocabulary,
+            learnerName: learnerName,
             interfaceLocale: interfaceLocale
         )
 
@@ -214,12 +216,14 @@ public final class ConversationService: @unchecked Sendable {
     private func buildSystemPrompt(
         for level: JLPTLevel,
         knownVocabulary: [String] = [],
+        learnerName: String = "",
         interfaceLocale: Locale = .current,
         now: Date = Date(),
         isOngoing: Bool = false
     ) -> String {
         let levelGuidance = levelSpecificGuidance(for: level)
         let knownVocabSection = knownVocabularySection(knownVocabulary)
+        let nameSection = learnerNameSection(learnerName)
         let isFrench = Self.isFrench(interfaceLocale)
         let languageName = Self.languageName(isFrench: isFrench)
         let timeContext = timeContextGuidance(now: now, isOngoing: isOngoing)
@@ -231,6 +235,7 @@ public final class ConversationService: @unchecked Sendable {
         Your name is Sakura (さくら). You are patient, encouraging, and helpful.
 
         LEARNER LEVEL: \(level.displayName) — \(level.complexityDescription)
+        \(nameSection)
 
         \(timeContext)
 
@@ -352,6 +357,28 @@ public final class ConversationService: @unchecked Sendable {
     /// only when they fit naturally and must never force or distort the
     /// conversation to include them. Returns a trailing blank line so it slots
     /// cleanly before the RESPONSE FORMAT section.
+    /// Le prénom que l'apprenant a donné au tout premier écran de
+    /// l'onboarding — et que Sakura n'a jamais reçu (OBS2-028). L'app le
+    /// demandait, le stockait, l'affichait sur l'accueil, puis le laissait à
+    /// la porte de la seule surface conversationnelle du produit.
+    ///
+    /// Formulé comme une préférence SOUPLE, exactement comme
+    /// `knownVocabularySection` juste en dessous : une partenaire de
+    /// conversation qui place le prénom à chaque tour est plus artificielle
+    /// que celle qui ne le dit jamais. Vide quand aucun prénom n'est connu,
+    /// auquel cas le prompt est rigoureusement inchangé.
+    private func learnerNameSection(_ learnerName: String) -> String {
+        let trimmed = learnerName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return "" }
+        return """
+
+        LEARNER'S NAME: \(trimmed). Address them by name when it feels natural — greeting them, \
+        praising an effort, softening a correction. This is a SOFT preference, never a requirement: \
+        do NOT open every message with it, and do NOT work it into a sentence where it would sound \
+        forced. Never translate or alter the spelling.
+        """
+    }
+
     private func knownVocabularySection(_ knownVocabulary: [String]) -> String {
         guard !knownVocabulary.isEmpty else { return "" }
         return """
@@ -424,6 +451,7 @@ public final class ConversationService: @unchecked Sendable {
         history: [ConversationMessage],
         jlptLevel: JLPTLevel,
         knownVocabulary: [String] = [],
+        learnerName: String = "",
         interfaceLocale: Locale = .current
     ) -> AIPrompt {
         var priorTurns = history
@@ -449,6 +477,7 @@ public final class ConversationService: @unchecked Sendable {
         let systemPrompt = buildSystemPrompt(
             for: jlptLevel,
             knownVocabulary: knownVocabulary,
+            learnerName: learnerName,
             interfaceLocale: interfaceLocale,
             now: clock(),
             isOngoing: !priorTurns.isEmpty

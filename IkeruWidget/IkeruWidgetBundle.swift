@@ -68,12 +68,22 @@ struct IkeruWidgetEntry: TimelineEntry {
 struct IkeruWidgetEntryView: View {
     let entry: IkeruWidgetEntry
 
-    /// The "%lld due" / "Study time!" / "Lv. %lld" text below resolve
-    /// against Localizable.xcstrings exactly like the rest of the app, but
-    /// the IkeruWidget target currently has NO Resources build phase at all
-    /// (see CLAUDE.md and JOURNAL.md), so the catalog isn't embedded in the
-    /// extension yet and this stays English-only until that pbxproj
-    /// membership is added.
+    /// The "%lld due" / "All caught up" / "Lv. %lld" text below resolve
+    /// against Localizable.xcstrings exactly like the rest of the app.
+    ///
+    /// This comment used to say the IkeruWidget target had NO Resources
+    /// build phase, so the catalog wasn't embedded and the widget stayed
+    /// English-only. **That is no longer true** (checked 2026-08-27: the
+    /// target's Resources phase does carry Localizable.xcstrings), and the
+    /// black-box reviewer read this widget in French — which is how the
+    /// staleness surfaced. The target that still has an EMPTY Resources
+    /// phase is IkeruShare, not this one.
+    ///
+    /// The rest branch says "All caught up", not "Study time!" (OBS2-040):
+    /// the zero-due state is the one surface that should carry calm, and it
+    /// was the only part of the app visible without opening it. Telling a
+    /// learner who is up to date what you'd tell someone who never started
+    /// is the exact inversion of what this product claims to be.
     var body: some View {
         VStack {
             Image(systemName: "book.fill")
@@ -84,7 +94,7 @@ struct IkeruWidgetEntryView: View {
                 Text("\(entry.dueCount) due")
                     .font(.caption)
             } else {
-                Text("Study time!")
+                Text("All caught up")
                     .font(.caption)
             }
             Text("Lv. \(entry.level)")

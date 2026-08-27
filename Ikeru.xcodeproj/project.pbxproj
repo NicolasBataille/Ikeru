@@ -78,6 +78,7 @@
 		3B675CE8FAE03FEC9378345A /* NotoSerifJP-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = BC2F21A555C3C644D94873FF /* NotoSerifJP-Medium.ttf */; };
 		3BB64B50AF09A44225B1AB78 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = E2EB369AB07C4479E312335A /* Localizable.xcstrings */; };
 		F1459C29539AC8013D0E6140 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = E2EB369AB07C4479E312335A /* Localizable.xcstrings */; };
+		5A17E0000000000000000013 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = E2EB369AB07C4479E312335A /* Localizable.xcstrings */; };
 		3F46A142E358DF4FAF74F67B /* KanjiStudyViewStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 566DAE0C74757C138694AE80 /* KanjiStudyViewStateTests.swift */; };
 		3FF25A148A3F29A4766B9536 /* ListeningExerciseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E725C72DE5BC3FCCF6797E99 /* ListeningExerciseView.swift */; };
 		4547C70DA66DB999B294CC16 /* LaunchAnimationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35E5B9D83D4ACDC6DF4C19B3 /* LaunchAnimationView.swift */; };
@@ -1558,6 +1559,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5A17E0000000000000000013 /* Localizable.xcstrings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

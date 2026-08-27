@@ -6941,20 +6941,19 @@
         }
       }
     },
-    "RE-LEARN" : {
-      "comment" : "Summary split-cell label",
-      "extractionState" : "stale",
+    "REVIEWED" : {
+      "comment" : "Summary split-cell label: cards graded that were not newly learned. These are ordinary reviews, NOT failures — see OBS2-027.",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "RE-LEARN"
+            "value" : "REVIEWED"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "À REVOIR"
+            "value" : "RÉVISÉES"
           }
         }
       }
@@ -13677,19 +13676,19 @@
         }
       }
     },
-    "Study time!" : {
-      "comment" : "Home screen widget: shown when no reviews are due.",
+    "All caught up" : {
+      "comment" : "Home screen widget: the REST state, shown when no reviews are due. Must not exhort — see OBS2-040.",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Study time!"
+            "value" : "All caught up"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "C'est l'heure d'étudier !"
+            "value" : "Tout est à jour"
           }
         }
       }

@@ -130,7 +130,17 @@ struct TextImportCaptureView: View {
                 .font(.ikeruBodyLarge)
                 .foregroundStyle(Color.ikeruTextPrimary)
                 .scrollContentBackground(.hidden)
-                .frame(minHeight: 180)
+                // `maxHeight` autant que `minHeight` (OBS2-072). Le champ
+                // n'avait qu'un plancher : un `TextEditor` grandit avec son
+                // contenu, donc à 3 000 caractères il repoussait le bouton
+                // « Lire ce texte » loin sous le bas de l'écran. Le bouton
+                // restait atteignable au prix d'un défilement inhabituel —
+                // c'est un défaut d'agencement, pas une impasse, et le
+                // rapport a corrigé sa propre formulation sur ce point.
+                //
+                // 320 points laissent voir une dizaine de lignes ; au-delà
+                // c'est le champ qui défile, plus la page.
+                .frame(minHeight: 180, maxHeight: 320)
                 .padding(IkeruTheme.Spacing.sm)
                 .focused($isEditing)
                 .autocorrectionDisabled()
