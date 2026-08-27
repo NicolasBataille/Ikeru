@@ -65,7 +65,18 @@ struct TatamiEligibilityRow: View {
                 content(signals)
             }
         }
-        .task { await load() }
+        // `id:` et non un `.task` nu : sans clé, SwiftUI ne rejoue JAMAIS la
+        // tâche tant que la vue reste montée. Or Réglages n'est pas démonté
+        // quand on change de profil — la rangée continuait d'afficher les
+        // signaux du profil PRÉCÉDENT (OBS2-039), ce qui pouvait présenter à
+        // un profil un déverrouillage que lui n'avait pas gagné.
+        //
+        // Mesuré sur simulateur le 2026-08-27 : après bascule de profil, la
+        // liste des profils juste au-dessus se met à jour immédiatement — le
+        // corps EST réévalué — pendant que la progression Tatami restait à
+        // 0/750 alors que le profil actif en avait 514. La clé suffit donc,
+        // il n'y a rien à câbler de plus.
+        .task(id: activeProfileID()) { await load() }
     }
 
     /// The offer surface (Ready badge + Later) shows only when eligibility is
