@@ -20,6 +20,7 @@ struct TextImportFlowView: View {
 
     @Environment(\.modelContext) private var modelContext
     @Environment(\.aiRouterService) private var aiRouterService
+    @Environment(\.profileViewModel) private var profileViewModel
 
     @State private var viewModel: TextImportViewModel?
     @State private var showJournal = false
@@ -191,7 +192,8 @@ struct TextImportFlowView: View {
             conversationService: service,
             jlptLevel: .n5,
             vocabularyRepository: VocabularyRepository(modelContainer: modelContext.container),
-            contentRepository: BundledContent.makeRepository()
+            contentRepository: BundledContent.makeRepository(),
+            learnerName: profileViewModel?.displayName ?? ""
         )
         viewModel.seedTopic = ConversationTopic(
             japanese: "「\(Self.opening(from: text))」を読みました。",

@@ -262,6 +262,57 @@ struct ConversationServiceTests {
         #expect(!prompt.contains("WORDS THE LEARNER ALREADY KNOWS"))
     }
 
+    @Test("Le prénom de l'apprenant est injecté comme préférence souple (OBS2-028)")
+    func injectsLearnerName() async throws {
+        let provider = CapturingAIProvider()
+        let router = AIRouterService(
+            onDeviceProvider: provider,
+            geminiProvider: provider,
+            claudeProvider: provider,
+            localGPUProvider: provider
+        )
+        let service = ConversationService(aiRouter: router)
+
+        _ = try await service.sendMessage(
+            "こんにちは",
+            history: [],
+            jlptLevel: JLPTLevel.n5,
+            learnerName: "Hugo"
+        )
+
+        let prompt = try #require(provider.lastPrompt?.systemPrompt)
+        #expect(prompt.contains("LEARNER'S NAME: Hugo"))
+        // Même cadrage souple que pour le vocabulaire : une partenaire qui
+        // place le prénom à chaque tour est plus artificielle que celle qui
+        // ne le dit jamais.
+        #expect(prompt.contains("SOFT preference"))
+        #expect(prompt.contains("do NOT open every message with it"))
+    }
+
+    @Test("Un prénom vide ou blanc laisse le prompt rigoureusement inchangé")
+    func omitsLearnerNameWhenBlank() async throws {
+        for name in ["", "   "] {
+            let provider = CapturingAIProvider()
+            let router = AIRouterService(
+                onDeviceProvider: provider,
+                geminiProvider: provider,
+                claudeProvider: provider,
+                localGPUProvider: provider
+            )
+            let service = ConversationService(aiRouter: router)
+
+            _ = try await service.sendMessage(
+                "こんにちは",
+                history: [],
+                jlptLevel: JLPTLevel.n5,
+                learnerName: name
+            )
+
+            let prompt = try #require(provider.lastPrompt?.systemPrompt)
+            #expect(!prompt.contains("LEARNER'S NAME"), "prénom vide : aucune section (\(name.count) caractères)")
+        }
+    }
+
     // MARK: - Reading Reconciliation
 
     @Test("A wrong AI reading is corrected against the bundle reading")

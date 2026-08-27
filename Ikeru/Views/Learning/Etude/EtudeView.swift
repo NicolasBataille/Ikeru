@@ -18,6 +18,7 @@ struct ExploreView: View {
 
     @Environment(\.modelContext) private var modelContext
     @Environment(\.aiRouterService) private var aiRouterService
+    @Environment(\.profileViewModel) private var profileViewModel
 
     /// Presenting this (non-nil) drives the chat cover via `.fullScreenCover(item:)`.
     @State private var conversationViewModel: ConversationViewModel?
@@ -233,7 +234,11 @@ struct ExploreView: View {
             conversationService: service,
             jlptLevel: .n5,
             vocabularyRepository: vocabRepo,
-            contentRepository: Self.makeContentRepository()
+            contentRepository: Self.makeContentRepository(),
+            // Le prénom demandé au premier écran de l'onboarding, enfin
+            // transmis à Sakura (OBS2-028). Vide si aucun profil n'est
+            // résolu — le prompt est alors inchangé.
+            learnerName: profileViewModel?.displayName ?? ""
         )
     }
 
