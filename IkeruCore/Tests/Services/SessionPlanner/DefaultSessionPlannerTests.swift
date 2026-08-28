@@ -773,6 +773,81 @@ struct DefaultSessionPlannerDuePriorityTests {
         #expect(plan.exercises.allSatisfy(isSrsReview), "cruising sessions only ever produce .srsReview items (review wave + new-content drip): \(plan.exercises)")
     }
 
+    @Test("Des kana mûrs ne doivent plus décider pour une file de kanji jamais commencée (OBS2-023)")
+    func matureKanaDoNotSilenceAnUnstartedKanjiQueue() async {
+        // Le cas limite que le code signalait sans le traiter, et que la
+        // contre-review a mesuré de l'extérieur : l'apprenant a mûri tout son
+        // syllabaire, mais une file de kanji l'attend, jamais ouverte. Avec la
+        // règle globale, les kana — majoritaires parmi les cartes commencées —
+        // basculaient la séance en croisière, ce qui supprime le booster ET la
+        // tuile de variété : les seuls segments capables de faire apparaître
+        // les autres types d'exercices. L'apprenant se retrouvait « en
+        // croisière » sur un deck qu'il n'avait pas commencé.
+        let due = Date(timeIntervalSince1970: 1_700_000_000)
+        let future = Date(timeIntervalSince1970: 1_900_000_000)
+
+        // 25 kana réels, mûrs. `front` doit être un vrai caractère : `isKana`
+        // teste l'appartenance au catalogue des 208, pas le `CardType` — le
+        // semeur de production émet les kana en `.vocabulary`.
+        let kanaFronts = KanaGroup.allBaseCharacters.prefix(25).map(\.character)
+        let matureKana = kanaFronts.enumerated().map { index, front in
+            card(front: front, dueDate: index < 3 ? due : future, reps: 5, stability: 100)
+        }
+
+        // 25 kanji jamais commencés : un groupe significatif à `reps == 0`.
+        let unstartedKanji = (0..<25).map { index in
+            card(front: "kanji-\(index)", type: .kanji, dueDate: future, reps: 0, stability: 0)
+        }
+
+        let inputs = SessionPlannerInputs(
+            source: .homeRecommendation,
+            durationMinutes: 10,
+            profile: writingBoosterProfile(),
+            unlockedTypes: Set(ExerciseType.allCases),
+            availableCards: matureKana + unstartedKanji
+        )
+        let plan = await planner.compose(inputs: inputs)
+
+        // La croisière ne produit QUE des `.srsReview`. Voir un item d'un autre
+        // type prouve qu'on est resté en construction, donc que le booster et
+        // la variété sont revenus.
+        let hasNonReviewItem = plan.exercises.contains { !isSrsReview($0) }
+        #expect(
+            hasNonReviewItem,
+            "une file de kanji jamais commencée doit retenir la séance en construction : \(plan.exercises)"
+        )
+    }
+
+    @Test("Un groupe marginal ne retient pas indéfiniment la croisière")
+    func aTinyOffTypeQueueDoesNotBlockCruising() async {
+        // Contrepartie du test précédent : trois cartes de kanji qui traînent
+        // ne doivent PAS empêcher un apprenant réellement en croisière d'y
+        // passer. Le seuil de significativité par groupe est le même que le
+        // seuil global (`cruisingMinStartedCards`).
+        let due = Date(timeIntervalSince1970: 1_700_000_000)
+        let future = Date(timeIntervalSince1970: 1_900_000_000)
+        let dueMature = (0..<3).map { _ in card(dueDate: due, reps: 5, stability: 100) }
+        let notYetDueMature = (0..<17).map { _ in card(dueDate: future, reps: 5, stability: 100) }
+        let strayKanji = (0..<3).map { index in
+            card(front: "kanji-\(index)", type: .kanji, dueDate: future, reps: 0, stability: 0)
+        }
+
+        let inputs = SessionPlannerInputs(
+            source: .homeRecommendation,
+            durationMinutes: 10,
+            profile: writingBoosterProfile(),
+            unlockedTypes: Set(ExerciseType.allCases),
+            availableCards: dueMature + notYetDueMature + strayKanji
+        )
+        let plan = await planner.compose(inputs: inputs)
+
+        #expect(!plan.exercises.isEmpty)
+        #expect(
+            plan.exercises.allSatisfy(isSrsReview),
+            "trois kanji égarés ne doivent pas annuler la croisière : \(plan.exercises)"
+        )
+    }
+
     @Test("The same time budget fits more mature (anchored) reviews than young (learning) reviews")
     func matureCardsConsumeLessBudgetThanYoungCards() async {
         let due = Date(timeIntervalSince1970: 1_700_000_000)

@@ -387,21 +387,85 @@ public struct DefaultSessionPlanner: SessionPlanner {
     /// don't count against "mature", by design: this reads maturity of what
     /// the learner has engaged with, not the whole catalogue.
     ///
-    /// KNOWN EDGE CASE (flagged, not solved here): a learner who has
-    /// mastered every kana but is sitting on a large unseen vocabulary/kanji
-    /// queue can classify as cruising — because kana dominate their
-    /// `reps > 0` set — and lose the skill-balance booster / variety tile
-    /// that would otherwise have surfaced that queue's content types. This
-    /// mirrors the same "unseen ≠ unstarted" ambiguity `composeFoundation`'s
-    /// doc comment already calls out for the lancement/construction
-    /// boundary; revisit together if it proves to matter in practice.
+    /// ### Le cas limite que ce commentaire signalait, et qui est désormais traité
+    ///
+    /// Ce texte disait : « KNOWN EDGE CASE (flagged, not solved here): a
+    /// learner who has mastered every kana but is sitting on a large unseen
+    /// vocabulary/kanji queue can classify as cruising — because kana
+    /// dominate their `reps > 0` set — and lose the skill-balance booster /
+    /// variety tile ». C'était exact, et c'est ce que la contre-review a
+    /// mesuré de l'extérieur (OBS2-023) : les kana, majoritaires, décidaient
+    /// du régime pour tout le monde, et emportaient avec eux les seuls
+    /// segments qui font apparaître les autres types d'exercices.
+    ///
+    /// La croisière se décide maintenant **par groupe pédagogique** et non sur
+    /// l'ensemble : un seul groupe encore en construction suffit à retenir
+    /// toute la séance en construction, donc à conserver le booster et la
+    /// tuile de variété.
+    ///
+    /// Deux précautions, chacune apprise d'un défaut réel :
+    ///
+    /// - **Le regroupement n'est PAS `card.type`.** Le semeur de production
+    ///   émet TOUTES les cartes kana avec `CardType.vocabulary` — même cause
+    ///   que OBS2-034 — donc grouper sur le type remettrait kana et
+    ///   vocabulaire dans le même seau, et le défaut survivrait au correctif.
+    ///   `card.isKana` compare au catalogue des 208 caractères.
+    /// - **Un groupe marginal ne décide de rien.** Trois cartes de kanji
+    ///   traînant dans un deck ne doivent pas retenir indéfiniment un
+    ///   apprenant en construction : un groupe ne pèse qu'à partir de
+    ///   `cruisingMinStartedCards` cartes, le même seuil de significativité
+    ///   que la règle globale.
+    ///
+    /// Si aucun groupe n'atteint ce seuil (deck petit et très éparpillé), on
+    /// retombe sur la règle globale d'origine plutôt que de renvoyer un `false`
+    /// arbitraire.
+    ///
+    /// Ne considère toujours que les cartes `reps > 0` pour juger la maturité —
+    /// on lit ce que l'apprenant a engagé, pas le catalogue. Mais un groupe
+    /// entier jamais commencé est désormais un signal de CONSTRUCTION, ce qui
+    /// est précisément ce qui manquait.
     private func isCruisingStage(cards: [CardDTO]) -> Bool {
         let started = cards.filter { $0.fsrsState.reps > 0 }
         guard started.count >= Self.cruisingMinStartedCards else { return false }
-        let matureCount = started.filter {
+
+        let buckets = Dictionary(grouping: cards) { card -> CruisingBucket in
+            card.isKana ? .kana : .other(card.type)
+        }
+
+        var significantBuckets = 0
+        for (_, bucketCards) in buckets {
+            guard bucketCards.count >= Self.cruisingMinStartedCards else { continue }
+            significantBuckets += 1
+
+            let bucketStarted = bucketCards.filter { $0.fsrsState.reps > 0 }
+            // Un groupe significatif jamais (ou à peine) commencé : l'apprenant
+            // construit encore, quelle que soit la maturité des autres.
+            guard bucketStarted.count >= Self.cruisingMinStartedCards else { return false }
+
+            guard Self.isMature(bucketStarted) else { return false }
+        }
+
+        guard significantBuckets > 0 else { return Self.isMature(started) }
+        return true
+    }
+
+    /// Clé de regroupement pédagogique. `.kana` est séparé de `.other` parce
+    /// que `CardType` ne distingue pas les kana du vocabulaire — voir
+    /// `isCruisingStage`.
+    private enum CruisingBucket: Hashable {
+        case kana
+        case other(CardType)
+    }
+
+    /// Part de cartes ayant atteint `.mastered` ou `.anchored`, comparée au
+    /// seuil de croisière. Extrait pour que la règle par groupe et la règle
+    /// globale de repli ne puissent pas diverger.
+    private static func isMature(_ startedCards: [CardDTO]) -> Bool {
+        guard !startedCards.isEmpty else { return false }
+        let matureCount = startedCards.filter {
             $0.masteryLevel == .mastered || $0.masteryLevel == .anchored
         }.count
-        return Double(matureCount) / Double(started.count) >= Self.cruisingMasteryThreshold
+        return Double(matureCount) / Double(startedCards.count) >= cruisingMasteryThreshold
     }
 
     /// Foundation session: due reviews (kana already begun) interleaved with
