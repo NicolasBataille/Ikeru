@@ -182,7 +182,11 @@ public final class KanaDrillViewModel {
         isAnswered = true
         let elapsedMs = Int(now().timeIntervalSince(cardStartedAt) * 1000)
         let isCorrect = selected == correctOption
-        let grade = mapQuizResultToGrade(correct: isCorrect, responseTimeMs: elapsedMs)
+        let grade = mapQuizResultToGrade(
+            correct: isCorrect,
+            responseTimeMs: elapsedMs,
+            isFirstEncounter: card.fsrsState.reps == 0
+        )
 
         // Track which kana corresponds to the selected (potentially wrong) romaji
         // for the pedagogical "Le caractère pour {romaji} est {kana}" feedback,

@@ -1166,13 +1166,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%lld%% known"
+            "value" : "%lld%% known at import"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%lld %% connus"
+            "value" : "%lld %% connus à l'import"
           }
         }
       }

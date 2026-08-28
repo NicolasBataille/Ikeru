@@ -132,7 +132,11 @@ public final class VocabularyDrillViewModel {
         isAnswered = true
         let elapsedMs = Int(now().timeIntervalSince(entryStartedAt) * 1000)
         let isCorrect = selected == correctOption
-        let grade = mapQuizResultToGrade(correct: isCorrect, responseTimeMs: elapsedMs)
+        let grade = mapQuizResultToGrade(
+            correct: isCorrect,
+            responseTimeMs: elapsedMs,
+            isFirstEncounter: entry.fsrsState.reps == 0
+        )
 
         await vocabularyRepository.gradeEntry(
             entryId: entry.id,

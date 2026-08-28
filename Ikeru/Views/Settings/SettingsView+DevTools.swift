@@ -180,14 +180,21 @@ struct DevToolsSettingsView: View {
                     Button("Cancel", role: .cancel) {}
                     Button("Seed", role: .destructive) {
                         guard let vm = profileViewModel else { return }
-                        TestFixtures.wipeAndSeed(
+                        let summary = TestFixtures.wipeAndSeed(
                             context: modelContext,
                             profileVM: vm,
                             level: Int(devSeedLevel),
                             dueCount: Int(devSeedDue),
                             masteredCount: Int(devSeedMastered)
                         )
-                        devLastAction = "✓ Seeded: lvl \(Int(devSeedLevel)), \(Int(devSeedDue)) due, \(Int(devSeedMastered)) mastered"
+                        // Rapporte ce qui a été SEMÉ, pas ce qu'on a demandé
+                        // (OBS2-033). Le pool de contenu plafonne « dû » +
+                        // « maîtrisé » à ses 40 entrées, et le niveau RPG se
+                        // déduit de l'XP : annoncer les consignes faisait dire
+                        // « 120 mastered » à un semis qui en créait 20.
+                        devLastAction = summary.map {
+                            "✓ Semé : \($0.contentDue) dus, \($0.contentMastered) maîtrisés, niveau RPG \($0.rpgLevel)"
+                        } ?? "✗ Le semis a échoué (voir les logs)"
                     }
                 } message: {
                     Text("Deletes every card, the RPG state, and the chat log for the current profile, then replaces them with fixture data.")
@@ -196,7 +203,13 @@ struct DevToolsSettingsView: View {
 
             // Aligned columns again — same reason as the block above.
             // swiftlint:disable comma
-            devSlider(label: "Level",     value: $devSeedLevel,     range: 1...30,   step: 1)
+            // « Progression » et non « Level » (OBS2-033) : ce curseur ne règle
+            // PAS le niveau RPG, qui n'est pas réglable — il se déduit de l'XP
+            // accumulée par l'historique simulé. Ce qu'il pilote réellement,
+            // c'est `levelFraction` dans `seedKana` : la part des 92 kana de
+            // base semés comme maîtrisés. D'où un semis « lvl 15 » qui produit
+            // un niveau RPG 7 — ce n'était pas un bug, c'était l'étiquette.
+            devSlider(label: "Progression", value: $devSeedLevel,   range: 1...30,   step: 1)
             devSlider(label: "Due",       value: $devSeedDue,       range: 0...50,   step: 5)
             devSlider(label: "Mastered",  value: $devSeedMastered,  range: 0...200,  step: 10)
             // swiftlint:enable comma

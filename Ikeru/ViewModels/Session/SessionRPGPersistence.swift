@@ -259,6 +259,25 @@ final class SessionRPGPersistence {
         // session's due count / level / last-study date are final.
         await WidgetSnapshotRefresher.refresh(modelContainer: modelContainer, force: true)
 
+        // Troisième déclencheur de synchro, enfin branché — mesuré le
+        // 2026-08-27 : `CloudSyncTriggers.triggerSessionEndSync()` existait
+        // depuis le lot d'origine avec ZÉRO appelant. Son propre commentaire
+        // annonçait « wiring it later is a single added call » ; l'appel n'a
+        // jamais été ajouté, et le design en prévoyait pourtant trois.
+        //
+        // Sans lui, une séance terminée puis l'app désinstallée — ou
+        // simplement jamais ramenée au premier plan — n'était pas sauvegardée.
+        // Fenêtre étroite, mais située exactement là où l'apprenant vient de
+        // produire de la valeur.
+        //
+        // C'est bien ce point-ci et pas un autre : `finalize` est le moment où
+        // la séance devient persistée, et le rafraîchissement du widget
+        // au-dessus s'y trouve déjà pour la même raison. `triggerSessionEndSync`
+        // ne décide de rien — le consentement et le throttle restent chez
+        // `CloudSyncCoordinator.syncNow()`, qui refuse tout seul si la
+        // sauvegarde est éteinte.
+        await MainActor.run { CloudSyncTriggers.shared.triggerSessionEndSync() }
+
         return FinalizationResult(
             updatedTotalXP: updatedTotalXP,
             updatedLevel: updatedLevel,

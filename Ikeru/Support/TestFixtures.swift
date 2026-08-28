@@ -162,6 +162,11 @@ public enum TestFixtures {
     /// `CommandLine` inside) so a unit test can assert on the resulting card
     /// pool without launching the app; see `TestFixturesNothingDueTests`.
     @MainActor
+    /// Renvoie ce qui a été RÉELLEMENT semé (OBS2-033), ou `nil` si la
+    /// sauvegarde a échoué. Les curseurs sont des consignes que le pool de
+    /// contenu plafonne, et le niveau RPG n'est pas réglable — l'appelant doit
+    /// donc afficher ce retour, pas ses propres valeurs d'entrée.
+    @discardableResult
     public static func wipeAndSeed(
         context: ModelContext,
         profileVM: ProfileViewModel,
@@ -169,7 +174,7 @@ public enum TestFixtures {
         dueCount: Int,
         masteredCount: Int,
         nothingDue: Bool = false
-    ) {
+    ) -> SeedSummary? {
         let now = Date()
 
         let profile: UserProfile
@@ -181,7 +186,7 @@ public enum TestFixtures {
             context.insert(profile)
         }
 
-        populate(
+        let summary = populate(
             context: context,
             profile: profile,
             level: level,
@@ -195,13 +200,18 @@ public enum TestFixtures {
             try context.save()
         } catch {
             logger.error("wipeAndSeed save failed: \(error.localizedDescription)")
-            return
+            return nil
         }
 
         profileVM.loadProfile()
         logger.info(
-            "wipeAndSeed: level=\(level) due=\(dueCount) mastered=\(masteredCount) nothingDue=\(nothingDue)"
+            """
+            wipeAndSeed: demandé level=\(level) due=\(dueCount) mastered=\(masteredCount) \
+            nothingDue=\(nothingDue) — obtenu due=\(summary.contentDue) \
+            mastered=\(summary.contentMastered) rpgLevel=\(summary.rpgLevel)
+            """
         )
+        return summary
     }
 
     /// Deletes every UserProfile + RPGState + Card so the next launch returns
@@ -314,7 +324,7 @@ public enum TestFixtures {
         masteredCount: Int,
         nothingDue: Bool,
         now: Date
-    ) {
+    ) -> SeedSummary {
         var rng = SeededGenerator(seed: fixtureSeed(level: level, due: dueCount, mastered: masteredCount))
 
         let kanaTally = seedKana(
@@ -340,6 +350,25 @@ public enum TestFixtures {
 
         let state = seedRPGState(profile: profile, xp: totalXP, totalReviews: totalReviews)
         context.insert(state)
+
+        return SeedSummary(
+            contentDue: contentTally.seededDue,
+            contentMastered: contentTally.seededMastered,
+            rpgLevel: state.level
+        )
+    }
+
+    /// Ce que le semis a RÉELLEMENT produit, par opposition à ce qu'on lui a
+    /// demandé (OBS2-033). Les trois curseurs sont des consignes, pas des
+    /// résultats : le pool de contenu plafonne « dû » + « maîtrisé » à ses 40
+    /// entrées, et le niveau RPG n'est pas réglable du tout — il se déduit de
+    /// l'XP accumulée par l'historique simulé (`RPGConstants.levelForXP`).
+    /// Rapporter la consigne à la place du résultat, c'est ce qui faisait
+    /// annoncer « 120 mastered » à un semis qui en avait créé 20.
+    public struct SeedSummary: Sendable {
+        public let contentDue: Int
+        public let contentMastered: Int
+        public let rpgLevel: Int
     }
 
     /// Clears everything a reseed regenerates for `profile` — its cards
@@ -588,8 +617,8 @@ public enum TestFixtures {
         nothingDue: Bool,
         now: Date,
         rng: inout SeededGenerator
-    ) -> (reviewCount: Int, xp: Int) {
-        guard !contentPool.isEmpty else { return (0, 0) }
+    ) -> (reviewCount: Int, xp: Int, seededDue: Int, seededMastered: Int) {
+        guard !contentPool.isEmpty else { return (0, 0, 0, 0) }
         let cappedDue = min(max(0, due), contentPool.count)
         let cappedMastered = min(max(0, mastered), contentPool.count - cappedDue)
 
@@ -647,7 +676,7 @@ public enum TestFixtures {
             totalXP += tally.xp
         }
 
-        return (totalReviews, totalXP)
+        return (totalReviews, totalXP, cappedDue, cappedMastered)
     }
 
     // MARK: - Card + history construction

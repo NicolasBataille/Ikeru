@@ -244,7 +244,12 @@ final class DataExportManager {
     // MARK: - CSV Generation
 
     nonisolated private static func generateCardsCSV(cards: [CardDTO]) -> String {
-        var csv = "id,front,back,type,due_date,ease_factor,interval,reps,lapse_count,leech_flag\n"
+        // `ease_factor` remplacé par le véritable état FSRS (OBS2-038).
+        // `easeFactor` est un vestige SM-2 que rien n'écrit jamais : il vaut
+        // 2.5 sur toutes les cartes depuis toujours. Exporté sous l'étiquette
+        // « état d'ordonnancement courant », il donnait à qui migre vers Anki
+        // un planning faux — une constante décorative présentée comme donnée.
+        var csv = "id,front,back,type,due_date,difficulty,stability,interval,reps,lapse_count,leech_flag\n"
         let dateFormatter = ISO8601DateFormatter()
 
         for card in cards {
@@ -254,7 +259,8 @@ final class DataExportManager {
                 escapeCSV(card.back),
                 card.type.rawValue,
                 dateFormatter.string(from: card.dueDate),
-                String(format: "%.4f", card.easeFactor),
+                String(format: "%.4f", card.fsrsState.difficulty),
+                String(format: "%.4f", card.fsrsState.stability),
                 "\(card.interval)",
                 "\(card.fsrsState.reps)",
                 "\(card.lapseCount)",
@@ -339,7 +345,8 @@ final class DataExportManager {
                 "back": "The answer (reading, meaning, or translation)",
                 "type": "Card category: kanji, vocabulary, grammar, listening",
                 "dueDate": "ISO8601 date when the card is next due for review",
-                "easeFactor": "FSRS ease factor (higher = easier, typically 1.3-3.0)",
+                "difficulty": "FSRS difficulty (1-10, higher = harder for you)",
+                "stability": "FSRS stability in days — how long the memory is expected to hold",
                 "interval": "Days until next review",
                 "reps": "Number of successful reviews (0 = new card)",
                 "lapseCount": "Number of times the card was forgotten",
@@ -440,7 +447,8 @@ private struct CardExportRow: Codable, Sendable {
     let back: String
     let type: String
     let dueDate: Date
-    let easeFactor: Double
+    let difficulty: Double
+    let stability: Double
     let interval: Int
     let reps: Int
     let lapseCount: Int
@@ -452,7 +460,8 @@ private struct CardExportRow: Codable, Sendable {
         self.back = dto.back
         self.type = dto.type.rawValue
         self.dueDate = dto.dueDate
-        self.easeFactor = dto.easeFactor
+        self.difficulty = dto.fsrsState.difficulty
+        self.stability = dto.fsrsState.stability
         self.interval = dto.interval
         self.reps = dto.fsrsState.reps
         self.lapseCount = dto.lapseCount
