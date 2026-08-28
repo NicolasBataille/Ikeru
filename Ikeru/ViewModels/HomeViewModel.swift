@@ -578,29 +578,45 @@ public final class HomeViewModel {
         let durationMinutes = UserDefaults.standard.integer(forKey: "ikeru.session.defaultDurationMinutes")
         let effectiveDuration = durationMinutes > 0 ? durationMinutes : 15
 
-        // Build a minimal snapshot so the planner can size the segments. Real
-        // skill balances are fed (via `skillBalance`) so the preview's booster
-        // segment targets the same weakest skill the real session will — the
-        // hero SRS-review count is unaffected either way, but keeping the input
-        // consistent with `SessionViewModel.buildSnapshot` avoids preview drift.
-        let unlockedTypes = Set(ExerciseType.allCases)
+        // L'aperçu construit désormais le MÊME instantané que la séance réelle,
+        // et le même ensemble déverrouillé.
+        //
+        // Il fabriquait auparavant un `LearnerSnapshot` rempli de zéros
+        // (`hiraganaMastered: false`, tous les compteurs à 0) et se donnait
+        // `Set(ExerciseType.allCases)` comme ensemble déverrouillé — c'est-à-dire
+        // qu'il dimensionnait la séance sur des exercices que l'apprenant
+        // n'avait pas débloqués. Le commentaire d'origine disait vouloir
+        // « éviter la dérive de l'aperçu » ; c'est exactement ce qu'il
+        // produisait. L'accueil annonçait « ~N min » pour une séance qui n'en
+        // durerait pas autant.
+        //
+        // Trouvé le 2026-08-28 en faisant descendre `.writingPractice` au N5 :
+        // un test d'aperçu est passé de 1 à 5 minutes alors que la séance réelle
+        // n'aurait pas bougé, l'écriture n'étant pas déverrouillée pour ce
+        // profil. La cause n'était pas le nouveau seuil, c'était l'aperçu.
+        let snapshot = LearnerSnapshotBuilder.build(
+            cards: cards,
+            jlptLevel: .n5,
+            listeningAccuracyLast30: 0,
+            listeningRecallLast30Days: 0,
+            skillBalances: skillBalance.asSkillBalances,
+            hasNewContentQueued: cards.contains { $0.fsrsState.reps == 0 },
+            lastSessionAt: nil,
+            now: Date()
+        )
+        // Même union que `SessionComposer.effectiveUnlockedTypes` : l'évaluation
+        // vivante des seuils, plus les déverrouillages déjà acquis, qu'un profil
+        // conserve même si ses compteurs redescendent.
+        let acknowledged = ActiveProfileResolver
+            .fetchActiveRPGState(in: modelContainer.mainContext)?
+            .acknowledgedUnlocks ?? []
+        let unlockedTypes = DefaultExerciseUnlockService()
+            .unlockedTypes(profile: snapshot)
+            .union(acknowledged)
         let inputs = SessionPlannerInputs(
             source: .homeRecommendation,
             durationMinutes: effectiveDuration,
-            profile: LearnerSnapshot(
-                jlptLevel: .n5,
-                vocabularyMasteredFamiliarPlus: 0,
-                kanjiMasteredFamiliarPlus: 0,
-                hiraganaMastered: false,
-                katakanaMastered: false,
-                grammarPointsFamiliarPlus: 0,
-                listeningAccuracyLast30: 0,
-                listeningRecallLast30Days: 0,
-                skillBalances: skillBalance.asSkillBalances,
-                dueCardCount: cards.filter { $0.dueDate <= Date() }.count,
-                hasNewContentQueued: cards.contains(where: { $0.fsrsState.reps == 0 }),
-                lastSessionAt: nil
-            ),
+            profile: snapshot,
             unlockedTypes: unlockedTypes,
             availableCards: cards
         )
