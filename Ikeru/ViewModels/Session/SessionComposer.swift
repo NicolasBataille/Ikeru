@@ -443,16 +443,34 @@ enum NewCardPresentationScheduler {
             // AND puts two occurrences of the same card id inside the deck's
             // 3-deep peek window (duplicate matchedGeometryEffect id).
             //
-            // When the gap is not achievable, do NOT defer: drop the card
-            // from the presentation set so its single occurrence behaves
-            // exactly as it did before this feature — a normal graded review.
-            // A very short session simply does not run the presentation loop,
-            // which is preferable to running a degenerate version of it.
+            // Quand l'écart n'est pas atteignable, on renonce au TEST DIFFÉRÉ —
+            // jamais à la présentation (OBS2-001, BLOQUANT n° 1).
+            //
+            // Ce bloc retirait auparavant la carte de `presenting`, ce qui
+            // faisait retomber son unique occurrence sur « une révision notée
+            // normale ». En clair : l'apprenant était INTERROGÉ sur un
+            // caractère que personne ne lui avait montré, et sa réponse — un
+            // pur hasard — devenait sa première note FSRS.
+            //
+            // C'est mesuré : sur une première séance de 5 kana choisis et rien
+            // d'autre, les cartes de queue n'ont pas 2 occurrences après elles,
+            // donc 2 des 5 n'étaient jamais présentées. Le « 56 % de rappel »
+            // affiché en fin de séance mesurait alors de la non-présentation,
+            // pas de l'oubli.
+            //
+            // La dégradation acceptable est l'inverse : la carte est
+            // PRÉSENTÉE, et son test attendra la séance suivante. On perd une
+            // note ; on ne fabrique pas une note fausse sur un caractère
+            // jamais enseigné. Le test différé n'est pas la fonctionnalité —
+            // la rencontre l'est.
+            //
+            // Reste la contrainte qui motivait le renoncement : appender le
+            // test en fin de liste placerait deux occurrences du même id dans
+            // la fenêtre de 3 cartes du deck (`matchedGeometryEffect`
+            // dupliqué). On ne l'insère donc toujours pas — on garde
+            // simplement la présentation.
             let available = srsReviewCount(after: sourceIndex, in: working)
-            guard available >= minimumSRSGap else {
-                presenting.remove(card.id)
-                continue
-            }
+            guard available >= minimumSRSGap else { continue }
 
             let target = min(Int.random(in: offsetRange), available)
             let insertAt = insertionIndex(

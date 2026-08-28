@@ -524,16 +524,25 @@ struct NewCardPresentationTests {
         #expect(result.addedDurationSeconds == ExerciseItem.srsReview(newKana).estimatedDurationSeconds)
     }
 
-    @Test("A tail too short to give the delayed test any interference declines to defer at all")
-    func shortTailDeclinesToDefer() {
-        let newKana = kanaCard(front: "あ", romaji: "a")
+    @Test("Une queue trop courte renonce au TEST DIFFERE, jamais a la presentation (OBS2-001)")
+    func shortTailDeclinesToDeferButStillPresents() {
+        let newKana = kanaCard(front: "\u{3042}", romaji: "a")
         let due = kanjiCard(front: "\u{751F}", reps: 3)
-        // Only ONE other review follows the new card. Appending the test at the
-        // end would put it immediately after its own presentation: it would
-        // measure nothing, and both occurrences would sit inside the deck's
-        // 3-deep peek window with the same card id (duplicate
-        // matchedGeometryEffect). The scheduler declines instead — the card
-        // stays a plain graded review, exactly as before the feature existed.
+        // Une seule autre revision suit la carte neuve. Appender le test en
+        // fin de liste le placerait juste apres sa propre presentation : il ne
+        // mesurerait rien, et les deux occurrences du meme id tomberaient dans
+        // la fenetre de 3 cartes du deck (`matchedGeometryEffect` duplique).
+        // L'ordonnanceur renonce donc au test differe — ca, c'est inchange.
+        //
+        // Ce test exigeait AUSSI `cardsNeedingPresentation.isEmpty`, c'est-a-dire
+        // que la carte redevienne « une revision notee normale ». Il figeait le
+        // BLOQUANT n° 1 : l'apprenant etait interroge sur un caractere jamais
+        // montre, et sa reponse au hasard devenait sa premiere note FSRS. Sur
+        // une premiere seance — cinq kana, aucune revision de remplissage — ce
+        // cas etait systematique pour les cartes de queue.
+        //
+        // La degradation acceptable est l'inverse : on perd la note, pas la
+        // rencontre.
         let exercises: [ExerciseItem] = [.srsReview(newKana), .srsReview(due)]
 
         let result = NewCardPresentationScheduler.schedulingPresentations(
@@ -541,7 +550,12 @@ struct NewCardPresentationTests {
             offsetRange: 2...2
         )
 
-        #expect(result.cardsNeedingPresentation.isEmpty)
+        #expect(
+            result.cardsNeedingPresentation == [newKana.id],
+            "la carte doit rester PRESENTEE meme sans test differe"
+        )
+        // Rien n'est insere, et rien n'est duplique : la contrainte du deck
+        // reste respectee.
         #expect(result.exercises.count == exercises.count)
         #expect(result.addedDurationSeconds == 0)
         #expect(srsReviewPositions(of: newKana.id, in: result.exercises).count == 1)
