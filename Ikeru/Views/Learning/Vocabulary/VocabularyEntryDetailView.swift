@@ -15,7 +15,7 @@ struct VocabularyEntryDetailView: View {
     /// through the repository from here left that array stale, so the word
     /// stayed on screen until the whole tab was left and re-entered — and
     /// tapping the ghost row reopened this sheet on an id that no longer
-    /// resolved. Same shape as `AddVocabularyWordView`'s completion.
+    /// resolved. Same shape as `VocabularyWordFormView`'s completion.
     let onDelete: () -> Void
 
     @Environment(\.dismiss) private var dismiss
@@ -24,6 +24,7 @@ struct VocabularyEntryDetailView: View {
     @State private var examples: [SentenceExample] = []
     @State private var hasLoaded = false
     @State private var showDeleteConfirm = false
+    @State private var showEditSheet = false
 
     private var repo: VocabularyRepository {
         VocabularyRepository(modelContainer: modelContainer)
@@ -63,9 +64,30 @@ struct VocabularyEntryDetailView: View {
             .navigationTitle("Word Detail")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                // Corriger une entrée (OBS2-007/013). On pouvait créer un mot
+                // sans sens ni lecture, le SRS le servait ensuite, et rien ne
+                // permettait de le réparer : la seule issue était de supprimer
+                // le mot — avec tout son historique de rencontres.
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Edit") { showEditSheet = true }
+                        .foregroundStyle(Color.ikeruPrimaryAccent)
+                        .disabled(entry == nil)
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") { dismiss() }
                         .foregroundStyle(Color.ikeruPrimaryAccent)
+                }
+            }
+            .sheet(isPresented: $showEditSheet) {
+                if let entry {
+                    VocabularyWordFormView(
+                        modelContainer: modelContainer,
+                        editing: entry
+                    ) {
+                        // Recharge depuis le dépôt plutôt que de recopier les
+                        // champs saisis : c'est l'entrée persistée qui fait foi.
+                        Task { await loadData() }
+                    }
                 }
             }
             .task { await loadData() }
