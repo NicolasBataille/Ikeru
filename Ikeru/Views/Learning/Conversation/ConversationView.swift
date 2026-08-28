@@ -222,7 +222,7 @@ struct ConversationView: View {
                 // in their own language; from N4 up, short Japanese openers.
                 VStack(spacing: IkeruTheme.Spacing.sm) {
                     ForEach(starters(for: viewModel.jlptLevel, locale: locale)) { starter in
-                        suggestionButton(starter.text)
+                        suggestionButton(starter)
                     }
                 }
 
@@ -235,13 +235,23 @@ struct ConversationView: View {
 
     // MARK: - Suggestion Button
 
-    private func suggestionButton(_ text: String) -> some View {
+    /// Affiche le japonais, et sous lui sa glose quand il y en a une — c'est
+    /// le japonais qui part (OBS2-030). Un débutant peut donc envoyer une
+    /// vraie phrase japonaise sans la comprendre à l'aveugle.
+    private func suggestionButton(_ starter: ChatStarter) -> some View {
         Button {
-            Task { await viewModel.sendMessage(text) }
+            Task { await viewModel.sendMessage(starter.sent) }
         } label: {
-            Text(text)
-                .font(.ikeruBody)
-                .foregroundStyle(Color.ikeruPrimaryAccent)
+            VStack(spacing: 2) {
+                Text(starter.sent)
+                    .font(.ikeruBody)
+                    .foregroundStyle(Color.ikeruPrimaryAccent)
+                if let gloss = starter.gloss {
+                    Text(gloss)
+                        .font(.ikeruCaption)
+                        .foregroundStyle(Color.ikeruTextTertiary)
+                }
+            }
                 .frame(maxWidth: .infinity)
                 .padding(.horizontal, IkeruTheme.Spacing.md)
                 .padding(.vertical, IkeruTheme.Spacing.sm)
@@ -259,32 +269,46 @@ struct ConversationView: View {
 
     // MARK: - Starter Chips
 
-    /// A starter chip: its text is already resolved to the chosen language and
-    /// is both shown and sent verbatim (Sakura replies bilingually).
+    /// Une amorce : `sent` est ce qui part à Sakura, `gloss` ce qu'on affiche
+    /// dessous pour que l'apprenant sache ce qu'il envoie.
     private struct ChatStarter: Identifiable {
-        let text: String
-        var id: String { text }
+        let sent: String
+        let gloss: String?
+        var id: String { sent }
     }
 
-    /// Level- and language-aware conversation openers. A beginner (N5) gets
-    /// simple openers in their own language so they can start a conversation
-    /// without yet reading Japanese — Sakura answers in easy Japanese with an
-    /// inline translation, modelling the language. From N4 up, short Japanese
-    /// openers keep practice in Japanese.
+    /// Amorces de conversation, en JAPONAIS à tous les niveaux (OBS2-030).
+    ///
+    /// Au N5 elles étaient rédigées dans la langue de l'apprenant — « Bonjour !
+    /// Comment ça va ? » — sur un écran dont le champ de saisie invite à
+    /// « Écris en japonais… ». L'intention était bonne (ne pas bloquer
+    /// quelqu'un qui ne sait pas encore lire) mais elle contredisait
+    /// l'invitation, et surtout elle privait le débutant du seul moment où on
+    /// lui met une phrase japonaise correcte dans la main.
+    ///
+    /// Les puces N5 portent donc la phrase japonaise ET sa traduction : le
+    /// japonais part, la glose reste sous les yeux. On ne demande pas de
+    /// comprendre pour envoyer, on montre ce qu'on envoie. À partir du N4 la
+    /// glose disparaît — la phrase se lit toute seule.
     private func starters(for level: JLPTLevel, locale: Locale) -> [ChatStarter] {
         if level == .n5 {
             let isFrench = locale.language.languageCode?.identifier == "fr"
-            let texts = isFrench
+            let glosses = isFrench
                 ? ["Bonjour ! Comment ça va ?",
                    "J'apprends le japonais.",
                    "Apprends-moi un mot, s'il te plaît."]
                 : ["Hello! How are you?",
                    "I'm learning Japanese.",
                    "Please teach me a word."]
-            return texts.map(ChatStarter.init)
+            let japanese = [
+                "こんにちは！お元気ですか？",
+                "日本語を勉強しています。",
+                "単語を教えてください。"
+            ]
+            return zip(japanese, glosses).map { ChatStarter(sent: $0, gloss: $1) }
         }
         return ["こんにちは！", "今日は何をしましたか？", "趣味について話しましょう。"]
-            .map(ChatStarter.init)
+            .map { ChatStarter(sent: $0, gloss: nil) }
     }
 
     // MARK: - Message List
