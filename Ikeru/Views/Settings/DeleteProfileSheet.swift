@@ -36,7 +36,6 @@ struct DeleteProfileSheet: View {
         let cardCount: Int
         let level: Int
         let xp: Int
-        let lootCount: Int
         let daysActive: Int
     }
 
@@ -53,6 +52,7 @@ struct DeleteProfileSheet: View {
                     } else {
                         loadingCard
                     }
+                    whatStaysCard
                     finalWordCard
                     actionButtons
                     Spacer(minLength: IkeruTheme.Spacing.xl)
@@ -97,7 +97,13 @@ struct DeleteProfileSheet: View {
                 Text("This cannot be undone")
                     .font(.ikeruBody)
                     .foregroundStyle(Color.ikeruTextPrimary)
-                Text("All learning progress for this profile will be permanently erased.")
+                // Nomme ce qui est RÉELLEMENT effacé, au lieu de « toute la
+                // progression » (OBS2-051). La cascade est
+                // `ProfileDeletion.tombstoneGraph` : cartes, journaux de
+                // révision, état RPG, journaux d'exercice, et le profil. Le
+                // dictionnaire personnel et les textes importés n'en font pas
+                // partie — voir `whatStaysCard` juste en dessous.
+                Text("This profile's cards, review history, level and active days will be permanently erased.")
                     .font(.ikeruCaption)
                     .foregroundStyle(Color.ikeruTextSecondary)
             }
@@ -142,13 +148,6 @@ struct DeleteProfileSheet: View {
                 )
                 IkeruDivider()
                 summaryRow(
-                    icon: "bag.fill",
-                    tint: Color.ikeruSecondaryAccent,
-                    label: "Loot items",
-                    value: "\(s.lootCount)"
-                )
-                IkeruDivider()
-                summaryRow(
                     icon: "calendar",
                     tint: Color.ikeruTertiaryAccent,
                     label: "Days active",
@@ -186,15 +185,59 @@ struct DeleteProfileSheet: View {
         .padding(.vertical, IkeruTheme.Spacing.sm)
     }
 
+    /// Ce que la suppression NE touche PAS, énoncé explicitement (OBS2-051).
+    ///
+    /// `VocabularyEntry` / `VocabularyEncounter` (le dictionnaire personnel) et
+    /// `TextImport` (les textes importés) ne portent ni `profileID` ni relation
+    /// vers `UserProfile` : ce sont des magasins globaux à l'appareil, partagés
+    /// par tous les profils. La cascade ne peut donc pas les effacer — le
+    /// modèle de données n'a aucune notion d'appartenance pour eux (voir la
+    /// note dans `ProfileViewModel.deleteProfile`).
+    ///
+    /// Tant que ce choix tient, l'écran doit le DIRE. Quand P1-1 donnera un
+    /// propriétaire à ces deux modèles, ce bloc devra être retiré dans le même
+    /// commit que la migration — sinon il deviendra faux à son tour.
+    private var whatStaysCard: some View {
+        VStack(alignment: .leading, spacing: IkeruTheme.Spacing.md) {
+            IkeruSectionHeader(title: "What stays", eyebrow: "Not deleted")
+
+            Text("Your personal dictionary and the texts you imported are shared by every profile on this device, so deleting this profile does not remove them.")
+                .font(.ikeruCaption)
+                .foregroundStyle(Color.ikeruTextSecondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .tatamiRoom(.standard)
+    }
+
+    /// Vrai seulement si le profil qu'on s'apprête à supprimer est celui
+    /// actuellement utilisé. La corbeille de Réglages ouvre cette feuille pour
+    /// N'IMPORTE QUEL profil, alors que `DataExportManager` est cadré sur le
+    /// profil ACTIF de bout en bout — y compris `allCards()`, dont le nom
+    /// suggère le contraire mais qui appelle `activeProfileCards()`.
+    private var isActiveProfile: Bool {
+        ActiveProfileResolver.activeProfileID() == profile.id
+    }
+
+    /// Le conseil « exporte avant de supprimer » n'est juste que pour le profil
+    /// actif (OBS2-051). Le suivre en supprimant un AUTRE profil produit une
+    /// archive des données de quelqu'un d'autre, et ne sauvegarde rien de ce
+    /// qui va être détruit — un conseil qui échoue silencieusement est pire que
+    /// pas de conseil sur un écran irréversible.
     private var finalWordCard: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text("REMINDER")
                 .font(.ikeruMicro)
                 .ikeruTracking(.micro)
                 .foregroundStyle(Color.ikeruTextTertiary)
-            Text("Export your data before deleting if you want to keep a backup.")
-                .font(.ikeruCaption)
-                .foregroundStyle(Color.ikeruTextSecondary)
+            if isActiveProfile {
+                Text("Export your data before deleting if you want to keep a backup.")
+                    .font(.ikeruCaption)
+                    .foregroundStyle(Color.ikeruTextSecondary)
+            } else {
+                Text("Exporting only covers the profile you are currently using. To keep a backup of this one, switch to it first, then come back.")
+                    .font(.ikeruCaption)
+                    .foregroundStyle(Color.ikeruTextSecondary)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -235,7 +278,6 @@ struct DeleteProfileSheet: View {
             cardCount: cards.count,
             level: rpg?.level ?? 1,
             xp: rpg?.xp ?? 0,
-            lootCount: rpg?.lootInventory.count ?? 0,
             daysActive: days
         )
     }
