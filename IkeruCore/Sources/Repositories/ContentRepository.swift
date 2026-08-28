@@ -121,6 +121,21 @@ public final class ContentRepository: Sendable {
         await actor.kanjiByLevel(level)
     }
 
+    /// Fetch a single kanji by its character.
+    ///
+    /// Existe pour enrichir le dos d'une carte kanji (OBS2-026) : elle ne
+    /// montrait qu'UNE lecture, sans le sens ni les autres — 日 → « ひ » seul —
+    /// là où la fiche kana offre glyphe + romaji + tracé + audio. L'apprenant
+    /// mémorisait une correspondance incomplète et trompeuse.
+    ///
+    /// `kanjiByLevel` existait déjà mais oblige à charger un niveau entier pour
+    /// en filtrer un caractère.
+    /// - Parameter character: The kanji character to look up.
+    /// - Returns: The `Kanji` if the bundled content knows it, else `nil`.
+    public func kanji(for character: String) async -> Kanji? {
+        await actor.kanji(for: character)
+    }
+
     /// Fetch radicals that compose a given kanji.
     /// - Parameter character: The kanji character to look up.
     /// - Returns: Array of Radical structs that are components of the kanji.
@@ -302,6 +317,43 @@ actor ContentDatabaseActor {
     }
 
     // MARK: - Kanji Queries
+
+    /// Même projection que `kanjiByLevel`, filtrée sur un caractère. La colonne
+    /// de sens est choisie par `localizedColumn`, donc la glose suit la langue
+    /// de l'interface sans que l'appelant ait à s'en occuper.
+    func kanji(for character: String) -> Kanji? {
+        guard openIfNeeded() else { return nil }
+
+        let meanings = localizedColumn(
+            english: "meanings", french: "meanings_fr", table: "kanji", qualifier: "k."
+        )
+        let sql = """
+            SELECT k.character, k.on_readings, k.kun_readings, \(meanings),
+                   k.jlpt_level, k.stroke_count, k.stroke_order_svg
+            FROM kanji k WHERE k.character = ? LIMIT 1
+            """
+
+        var stmt: OpaquePointer?
+        guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else {
+            Logger.content.error("Failed to prepare kanji(for:) query")
+            return nil
+        }
+        defer { sqlite3_finalize(stmt) }
+        sqlite3_bind_text(stmt, 1, character, -1, SQLITE_TRANSIENT)
+
+        guard sqlite3_step(stmt) == SQLITE_ROW else { return nil }
+        let found = columnText(stmt, 0)
+        return Kanji(
+            character: found,
+            radicals: fetchRadicalCharacters(for: found),
+            onReadings: decodeJSONArray(columnText(stmt, 1)),
+            kunReadings: decodeJSONArray(columnText(stmt, 2)),
+            meanings: decodeJSONArray(columnText(stmt, 3)),
+            jlptLevel: JLPTLevel(rawValue: columnText(stmt, 4)) ?? .n5,
+            strokeCount: Int(sqlite3_column_int(stmt, 5)),
+            strokeOrderSVGRef: columnOptionalText(stmt, 6)
+        )
+    }
 
     func kanjiByLevel(_ level: JLPTLevel) -> [Kanji] {
         guard openIfNeeded() else { return [] }
