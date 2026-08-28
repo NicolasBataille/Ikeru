@@ -30,8 +30,38 @@ public enum VarietyPoolResolver {
         if level >= .n4 {
             result.insert(.sentenceConstruction)
         }
+        // `.writingPractice` descend au N5 — MÊME RAISONNEMENT que
+        // `.grammarExercise` juste au-dessus, et mêmes préalables vérifiés
+        // avant de bouger le seuil (OBS2-023) :
+        //
+        // 1. L'écran existe pour de vrai. `.writingPractice` est routé vers
+        //    `HandwritingDrillHost` dans `ExerciseTransitionContainer` — le
+        //    drill de tracé, pas un bouchon.
+        // 2. La porte est tenue ailleurs. `ExerciseUnlockService` exige les
+        //    hiragana ET les katakana maîtrisés : un débutant ne reçoit pas
+        //    d'exercice d'écriture avant de savoir lire.
+        // 3. Le contenu peut manquer proprement. `synthesise` tire une carte
+        //    kanji et renvoie `nil` s'il n'y en a pas — la séance saute la
+        //    tuile au lieu de servir du vide.
+        //
+        // À N3, dans une app qui est « N5 and no further » (README), cet
+        // exercice était du code mort : construit, testé, jamais programmé.
+        //
+        // `.readingPassage` reste au N3 DÉLIBÉRÉMENT, et c'est le point
+        // important : son écran est encore
+        // `placeholderExerciseView("Reading Passage", "Read and comprehend")`,
+        // avec un bouton « Complete » qui note `.good`. Descendre son seuil
+        // aurait livré un bouchon auto-noté dans les séances réelles — soit
+        // exactement l'erreur que le seuil du N4 évitait pour la grammaire
+        // tant que son contenu n'existait pas. Il descendra quand il aura un
+        // écran, pas avant.
+        //
+        // `.listeningUnsubtitled` reste au N3 pour une autre raison : il est
+        // de toute façon retiré par `untaughtContentTypes`, décision produit
+        // du 2026-07-19 qui n'est pas à moi de lever.
+        result.insert(.writingPractice)
         if level >= .n3 {
-            result.formUnion([.readingPassage, .writingPractice, .listeningUnsubtitled])
+            result.formUnion([.readingPassage, .listeningUnsubtitled])
         }
         if level >= .n2 {
             result.insert(.speakingPractice)
