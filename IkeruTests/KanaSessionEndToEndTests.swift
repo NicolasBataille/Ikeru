@@ -286,4 +286,66 @@ struct KanaSessionEndToEndTests {
             #expect(occurrences >= 1 && occurrences <= 3, "'\(front)' appeared \(occurrences) times — retry cap may not be enforced")
         }
     }
+
+    // MARK: - Jour un, SANS révisions de remplissage (la forme d'un vrai débutant)
+
+    /// Le BLOQUANT n° 1 de la contre-review (OBS2-001), épinglé.
+    ///
+    /// Tous les autres tests de cette fonctionnalité sèment d'abord des
+    /// révisions déjà commencées (`seedStartedFillerCards`) — précisément ce
+    /// qu'un apprenant du premier jour n'a PAS. Sans elles, les cartes de queue
+    /// n'ont pas assez d'occurrences après elles, et l'ordonnanceur renonçait
+    /// alors à la PRÉSENTATION plutôt qu'au test différé : l'apprenant était
+    /// interrogé sur un caractère que personne ne lui avait montré, et sa
+    /// réponse au hasard devenait sa première note FSRS.
+    ///
+    /// Ce test a été écrit pendant la review, où il ÉCHOUAIT (3 présentations
+    /// sur 5). Il passe depuis que le renoncement porte sur le test différé et
+    /// non sur la rencontre.
+    @Test("Jour un sans remplissage : chaque kana neuf est présenté avant d'être noté (OBS2-001)")
+    func dayOneWithoutFillersPresentsEveryNewKana() async throws {
+        let container = try makeContainer()
+        try ensureProfile(container: container)
+        let seedingRepo = CardRepository(modelContainer: container)
+
+        let seededKana = await ContentSeedService.seedBeginnerKanaIfNeeded(
+            repository: seedingRepo,
+            existingCardCount: 0
+        )
+        // Aucun `seedStartedFillerCards` ici — c'est tout l'intérêt.
+        try suppressFirstSessionBonus(container: container)
+
+        let vm = makeVM(container: container)
+        await vm.startSession()
+        #expect(vm.isActive)
+
+        var presentedIDs = Set<UUID>()
+        var gradedBeforePresentation: [String] = []
+        var iterations = 0
+
+        while !vm.isSessionComplete, iterations < 100 {
+            iterations += 1
+            guard case .srsReview(let card) = vm.currentExercise else { break }
+            if vm.isPresentingNewCard {
+                presentedIDs.insert(card.id)
+                await vm.completeNewCardPresentation()
+            } else {
+                // Une carte jamais vue qu'on note sans l'avoir présentée : le
+                // défaut exact. On l'enregistre pour que l'échec soit lisible.
+                if card.fsrsState.reps == 0, !presentedIDs.contains(card.id) {
+                    gradedBeforePresentation.append(card.front)
+                }
+                await vm.gradeAndAdvance(grade: .good)
+            }
+        }
+
+        #expect(
+            gradedBeforePresentation.isEmpty,
+            "notés sans avoir jamais été présentés : \(gradedBeforePresentation)"
+        )
+        #expect(
+            presentedIDs.count == seededKana.count,
+            "seulement \(presentedIDs.count) des \(seededKana.count) kana neufs ont reçu une présentation"
+        )
+    }
 }

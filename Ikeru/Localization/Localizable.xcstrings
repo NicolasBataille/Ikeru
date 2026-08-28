@@ -14255,6 +14255,40 @@
         }
       }
     },
+    "I've seen it" : {
+      "comment" : "Button on a new-character presentation card: advances to the next item. The card also advances on its own after a few seconds.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "I've seen it"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Je l'ai vu"
+          }
+        }
+      }
+    },
+    "Tap the character to hear it again" : {
+      "comment" : "Hint under a new-card presentation card — tapping the glyph replays the audio.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap the character to hear it again"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Touche le caractère pour réécouter"
+          }
+        }
+      }
+    },
     "MEETING A NEW CHARACTER" : {
       "extractionState" : "manual",
       "localizations" : {

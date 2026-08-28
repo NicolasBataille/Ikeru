@@ -466,6 +466,15 @@ private struct NewCardPresentationView: View {
     @State private var audioService = AudioService()
     @State private var strokeOrderViewModel = StrokeOrderViewModel()
     @AppStorage("ikeru.audio.autoplay") private var isAudioAutoplayEnabled: Bool = true
+    @Environment(\.scenePhase) private var scenePhase
+
+    /// Clé composite du minuteur : `.task(id:)` exige un seul `Equatable`, et
+    /// les deux raisons de suspendre — surcouche affichée, app inactive —
+    /// doivent toutes deux le relancer.
+    private struct PresentationTimerKey: Equatable {
+        let isPaused: Bool
+        let scenePhase: ScenePhase
+    }
 
     /// ~15-20s per the pedagogy review's "CARTE DE PRESENTATION" spec — long
     /// enough to read the glyph, hear it, and register the romaji before the
@@ -523,7 +532,22 @@ private struct NewCardPresentationView: View {
 
             Spacer()
 
-            Text("Tap to hear it again", comment: "Hint under a new-card presentation card — tapping replays the audio; the card advances on its own after a few seconds")
+            // Commande explicite (OBS2-001). La carte s'avançait UNIQUEMENT
+            // toute seule, au bout de 18 s, sans aucun bouton — « no button,
+            // no added tap » était un choix assumé, mais il laisse l'apprenant
+            // sans prise : trop lent, il perd le caractère ; trop rapide, il
+            // attend. Le minuteur reste comme filet, il n'est plus le seul
+            // moyen d'avancer.
+            Button {
+                onAcknowledged()
+            } label: {
+                Text("I've seen it", comment: "Button on a new-character presentation card: advances to the next item. The card also advances on its own after a few seconds.")
+                    .frame(maxWidth: .infinity)
+            }
+            .ikeruButtonStyle(.secondary)
+            .padding(.horizontal, IkeruTheme.Spacing.lg)
+
+            Text("Tap the character to hear it again", comment: "Hint under a new-card presentation card — tapping the glyph replays the audio")
                 .ikeruScaledFont(11, weight: .semibold, relativeTo: .caption2)
                 .tracking(2)
                 .textCase(.uppercase)
@@ -561,8 +585,19 @@ private struct NewCardPresentationView: View {
         // (timer stops dead, nothing advances under the pause overlay).
         // Resumed → a FRESH full-length sleep starts (no partial-countdown
         // bookkeeping needed for a single ungraded intro step).
-        .task(id: isPaused) {
-            guard !isPaused else { return }
+        // Clé sur `isPaused` ET sur la phase de scène (OBS2-001). La pause
+        // explicite était déjà gérée ; une interruption RÉELLE — un appel, une
+        // notification, l'app mise en arrière-plan — ne l'était pas. Le
+        // `Task.sleep` continuait de courir, et l'apprenant retrouvait la
+        // séance avec le caractère déjà passé, sans moyen d'y revenir. Une
+        // rencontre qu'on ne peut pas rejouer et qu'une interruption consomme
+        // n'est pas une rencontre.
+        //
+        // Au retour, un sommeil PLEIN redémarre : c'est délibéré. Reprendre un
+        // décompte partiel ferait disparaître la carte presque aussitôt, ce qui
+        // est exactement le défaut qu'on corrige.
+        .task(id: PresentationTimerKey(isPaused: isPaused, scenePhase: scenePhase)) {
+            guard !isPaused, scenePhase == .active else { return }
             try? await Task.sleep(for: .seconds(Self.autoAdvanceSeconds))
             guard !Task.isCancelled else { return }
             onAcknowledged()
