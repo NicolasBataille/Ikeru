@@ -498,19 +498,29 @@ struct VocabularyWordFormView: View {
     }
 
     private func save() {
-        // Même garde que `canSave`, et pas seulement `!w.isEmpty` : le bouton
-        // peut être désactivé, `save()` reste appelable depuis un autre chemin.
+        // Même garde que `canSave` : le bouton peut être désactivé, `save()`
+        // reste appelable depuis un autre chemin.
         guard missingRequirement == nil else { return }
         isSaving = true
-        let w = trimmedWord
-        let r = trimmedReading
-        let m = trimmedMeaning
+        let finalWord = trimmedWord
+        let finalReading = trimmedReading
+        let finalMeaning = trimmedMeaning
         Task {
             let repo = VocabularyRepository(modelContainer: modelContainer)
             if let editing {
-                await repo.updateEntry(id: editing.id, word: w, reading: r, meaning: m)
+                await repo.updateEntry(
+                    id: editing.id,
+                    word: finalWord,
+                    reading: finalReading,
+                    meaning: finalMeaning
+                )
             } else {
-                _ = await repo.addEntry(word: w, reading: r, meaning: m, jlptLevel: nil)
+                _ = await repo.addEntry(
+                    word: finalWord,
+                    reading: finalReading,
+                    meaning: finalMeaning,
+                    jlptLevel: nil
+                )
             }
             onSaved()
             dismiss()
