@@ -660,7 +660,10 @@ struct HomeView: View {
             if vm.kanaProgress.learningTotal > 0 {
                 Text("\u{00B7}")
                     .foregroundStyle(Color.ikeruTextTertiary)
-                Text("\(vm.kanaProgress.learningTotal)")
+                // `verbatim:` — un nombre nu ne se traduit pas, et le
+                // chercher au catalogue fabrique une clé « %lld » vide de
+                // sens.
+                Text(verbatim: "\(vm.kanaProgress.learningTotal)")
                     .ikeruScaledFont(12, design: .serif, relativeTo: .caption)
                     .monospacedDigit()
                     .foregroundStyle(Color.ikeruTextSecondary)

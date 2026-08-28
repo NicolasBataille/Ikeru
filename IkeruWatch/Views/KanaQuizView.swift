@@ -100,7 +100,8 @@ struct KanaQuizView: View {
                 .font(.system(size: 32))
                 .foregroundStyle(.green)
 
-            Text("\(viewModel.correctCount)/\(viewModel.totalQuestions)")
+            // `verbatim:` — un score « 7/10 » ne se traduit pas.
+            Text(verbatim: "\(viewModel.correctCount)/\(viewModel.totalQuestions)")
                 .font(.system(size: 20, weight: .bold))
                 .foregroundStyle(.white)
 
