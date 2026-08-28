@@ -118,6 +118,16 @@ struct TextImportJournalView: View {
             HStack(spacing: IkeruTheme.Spacing.sm) {
                 metric("TextImport.Journal.Words \(item.wordCount)")
                 if let coverage = item.coverage {
+                    // « à l'import », et pas « connus » tout court (OBS2-062).
+                    // `TextImport.coverage` est une valeur STOCKÉE au moment de
+                    // l'analyse, pas une requête : elle est structurellement
+                    // incapable de changer, quoi que l'apprenant apprenne
+                    // ensuite. Sur une fonctionnalité dont la promesse est
+                    // « apporte ton texte et apprends-le », afficher ce nombre
+                    // comme une couverture actuelle décrit une progression qui
+                    // n'aura jamais lieu. Le rendre vivant demande de
+                    // ré-analyser le texte à l'affichage — chantier séparé ;
+                    // en attendant, l'étiquette dit ce que le nombre est.
                     metric("TextImport.Journal.Coverage \(Int((coverage * 100).rounded()))")
                 }
             }
