@@ -71,13 +71,19 @@ public struct IkeruGlassSurface: View {
 
 /// Premium section header with optional eyebrow label and trailing accessory.
 public struct IkeruSectionHeader<Trailing: View>: View {
-    public let title: String
-    public let eyebrow: String?
+    /// `LocalizedStringKey`, pas `String` (OBS2-050). Avec `String`, l'init
+    /// `Text(verbatim:)` est choisi : aucune recherche dans le catalogue, et
+    /// surtout aucune EXTRACTION — ces libellés n'étaient même pas collectés,
+    /// ce qui explique qu'ils aient traversé un lint i18n vert. Les littéraux
+    /// aux sites d'appel continuent de compiler tels quels ; une variable doit
+    /// être enveloppée explicitement.
+    public let title: LocalizedStringKey
+    public let eyebrow: LocalizedStringKey?
     public let trailing: Trailing
 
     public init(
-        title: String,
-        eyebrow: String? = nil,
+        title: LocalizedStringKey,
+        eyebrow: LocalizedStringKey? = nil,
         @ViewBuilder trailing: () -> Trailing = { EmptyView() }
     ) {
         self.title = title
@@ -89,7 +95,12 @@ public struct IkeruSectionHeader<Trailing: View>: View {
         HStack(alignment: .firstTextBaseline) {
             VStack(alignment: .leading, spacing: 2) {
                 if let eyebrow {
-                    Text(eyebrow.uppercased())
+                    // `.textCase(.uppercase)` et non `.uppercased()` : une
+                    // `LocalizedStringKey` n'est pas une chaîne, et la mise en
+                    // capitales doit de toute façon se faire APRÈS la
+                    // traduction, pas sur la clé.
+                    Text(eyebrow)
+                        .textCase(.uppercase)
                         .font(.ikeruMicro)
                         .ikeruTracking(.micro)
                         .foregroundStyle(Color.ikeruTextTertiary)

@@ -11,13 +11,16 @@ import IkeruCore
 /// other apps that guard irreversible operations.
 struct HoldToConfirmButton: View {
 
-    let title: String
+    /// `LocalizedStringKey`, pas `String` (OBS2-050) : ce bouton est la
+    /// surface de CONSENTEMENT d'une action irréversible, et son texte est
+    /// interpolé (« Hold to delete Hugo »), donc la clé porte un `%@`.
+    let title: LocalizedStringKey
     let icon: String?
     let duration: TimeInterval
     let onConfirm: () -> Void
 
     init(
-        title: String,
+        title: LocalizedStringKey,
         icon: String? = nil,
         duration: TimeInterval = 1.4,
         onConfirm: @escaping () -> Void
@@ -148,7 +151,11 @@ struct HoldToConfirmButton: View {
 
     // MARK: - Dynamic label / color
 
-    private var labelText: String {
+    /// Trois libellés de plus que le titre, et le rapport ne les comptait pas :
+    /// ils s'affichent PENDANT le maintien, c'est-à-dire à l'instant précis où
+    /// l'utilisateur donne son consentement. En `String` ils étaient rendus
+    /// verbatim, donc en anglais dans une interface française.
+    private var labelText: LocalizedStringKey {
         if didComplete { return "Deleting…" }
         if isHolding {
             return progress >= 0.95 ? "Release" : "Hold to confirm"
@@ -239,7 +246,9 @@ struct HoldToConfirmButton: View {
 
         VStack(spacing: IkeruTheme.Spacing.xl) {
             HoldToConfirmButton(
-                title: "Delete Nico",
+                // Interpolé comme au vrai site d'appel : l'aperçu exerce
+                // ainsi la clé « Hold to delete %@ » et sa substitution.
+                title: "Hold to delete \("Nico")",
                 icon: "trash.fill"
             ) {
                 print("Confirmed")

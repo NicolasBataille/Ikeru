@@ -318,7 +318,7 @@ struct KanaPoolSelectorView: View {
     // MARK: Script Sections
 
     @ViewBuilder
-    private func scriptSection(_ vm: KanaPoolViewModel, script: KanaScript, title: String) -> some View {
+    private func scriptSection(_ vm: KanaPoolViewModel, script: KanaScript, title: LocalizedStringKey) -> some View {
         VStack(alignment: .leading, spacing: IkeruTheme.Spacing.md) {
             IkeruSectionHeader(title: title, eyebrow: scriptEyebrow(script))
             subSection(
@@ -339,10 +339,12 @@ struct KanaPoolSelectorView: View {
         }
     }
 
-    private func scriptEyebrow(_ script: KanaScript) -> String {
-        script == .hiragana
-            ? String(localized: "Fluid syllabary")
-            : String(localized: "Angular syllabary")
+    /// `LocalizedStringKey` depuis qu'`IkeruSectionHeader` en prend une
+    /// (OBS2-050). Renvoyer un `String(localized:)` ici puis le réenvelopper
+    /// côté composant ferait chercher la traduction FRANÇAISE comme clé — ça
+    /// « marcherait » par accident, en retombant sur le texte d'origine.
+    private func scriptEyebrow(_ script: KanaScript) -> LocalizedStringKey {
+        script == .hiragana ? "Fluid syllabary" : "Angular syllabary"
     }
 
     @ViewBuilder
