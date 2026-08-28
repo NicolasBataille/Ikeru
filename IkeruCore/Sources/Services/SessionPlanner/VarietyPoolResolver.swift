@@ -26,7 +26,23 @@ public enum VarietyPoolResolver {
         // officielle N5 (40/40, mesure le 2026-08-19). La porte reste tenue par
         // `ExerciseUnlockService`, qui exige les hiragana maitrises — un
         // debutant ne recoit donc pas de texte a trou avant de savoir lire.
-        var result: Set<ExerciseType> = [.listeningSubtitled, .fillInBlank, .grammarExercise]
+        // `.fillInBlank` A ÉTÉ RETIRÉ du pool N5 le 2026-08-28 (OBS2-023).
+        //
+        // Il y figurait, n'était PAS exclu par `untaughtContentTypes`, et sa
+        // porte de déverrouillage s'ouvre dès quelques mots de vocabulaire —
+        // il était donc réellement servi en séance d'accueil. Or son écran est
+        // encore `placeholderExerciseView("Fill in the Blank", "Complete the
+        // sentence")`, dont le bouton « Complete » appelle `onButtonGrade(.good)`.
+        //
+        // Autrement dit : l'apprenant recevait une tuile vide, tapait un
+        // bouton, et récoltait une RÉUSSITE pour un exercice qui n'existe pas.
+        // Une note imméritée n'est pas neutre — elle entre dans FSRS et
+        // allonge l'intervalle d'une carte que personne n'a révisée.
+        //
+        // C'est le miroir exact du raisonnement qui a fait descendre
+        // `.grammarExercise` au N5 : un exercice ne rejoint un pool que
+        // lorsqu'il a un écran. Celui-ci y reviendra quand il en aura un.
+        var result: Set<ExerciseType> = [.listeningSubtitled, .grammarExercise]
         if level >= .n4 {
             result.insert(.sentenceConstruction)
         }

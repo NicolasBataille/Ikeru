@@ -7,13 +7,27 @@ struct VarietyPoolResolverTests {
     /// `.grammarExercise` est au N5 depuis le 2026-08-19. Il etait au N4, ce qui
     /// le rendait inatteignable dans une app qui ne va pas au-dela du N5 — un
     /// exercice complet que personne n'aurait jamais vu.
-    @Test("N5 pool: listening + fill-in-blank + grammaire + Sakura + ecriture")
+    @Test("N5 pool: listening + grammaire + Sakura + ecriture")
     func n5() {
         let pool = VarietyPoolResolver.pool(for: .n5)
         #expect(pool == [
-            .listeningSubtitled, .fillInBlank, .grammarExercise,
+            .listeningSubtitled, .grammarExercise,
             .sakuraConversation, .writingPractice
         ])
+    }
+
+    /// `.fillInBlank` a ete RETIRE de tous les pools le 2026-08-28 : son ecran
+    /// est un bouchon dont le bouton « Complete » note `.good`. Il etait servi
+    /// en seance d'accueil, donc un apprenant reel recoltait une reussite pour
+    /// un exercice inexistant. Ce test rougit si on le remet sans ecran.
+    @Test("Le texte a trou n'est dans AUCUN pool tant qu'il n'a pas d'ecran")
+    func fillInBlankAbsentFromEveryPool() {
+        for level in JLPTLevel.allCases {
+            #expect(
+                !VarietyPoolResolver.pool(for: level).contains(.fillInBlank),
+                "fillInBlank ne doit pas etre programmable au \(level.rawValue)"
+            )
+        }
     }
 
     /// `.writingPractice` est descendu au N5 le 2026-08-28 (OBS2-023), meme
@@ -55,10 +69,13 @@ struct VarietyPoolResolverTests {
 
     @Test("Effective pool intersects with unlocked types")
     func intersects() {
+        // Le type verrouille (`.readingPassage`) est dans le pool N3 mais pas
+        // dans l'ensemble deverrouille : il doit disparaitre de l'intersection.
         let resolved = VarietyPoolResolver.effectivePool(
             for: .n3,
-            unlockedTypes: [.listeningSubtitled, .fillInBlank, .grammarExercise]
+            unlockedTypes: [.listeningSubtitled, .grammarExercise]
         )
-        #expect(resolved == [.listeningSubtitled, .fillInBlank, .grammarExercise])
+        #expect(resolved == [.listeningSubtitled, .grammarExercise])
+        #expect(VarietyPoolResolver.pool(for: .n3).contains(.readingPassage))
     }
 }
