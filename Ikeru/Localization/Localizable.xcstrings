@@ -4754,6 +4754,91 @@
         }
       }
     },
+    "Vocabulary.Validation.WordRequired" : {
+      "comment" : "Add-word sheet: the word field is empty.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enter the word you want to remember."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saisis le mot que tu veux retenir."
+          }
+        }
+      }
+    },
+    "Vocabulary.Validation.MeaningRequired" : {
+      "comment" : "Add-word sheet: the meaning is missing — without it a quiz has no correct answer to show.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add a meaning — without it, this word can't be quizzed."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajoute un sens — sans lui, ce mot ne peut pas être interrogé."
+          }
+        }
+      }
+    },
+    "Vocabulary.Validation.ReadingRequired" : {
+      "comment" : "Add-word sheet: the word contains kanji, so it needs an explicit reading.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This word contains kanji — add its reading so you can study it."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce mot contient un kanji — ajoute sa lecture pour pouvoir l'étudier."
+          }
+        }
+      }
+    },
+    "Vocabulary.Edit" : {
+      "comment" : "Title of the sheet used to correct an existing dictionary word.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit word"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Corriger le mot"
+          }
+        }
+      }
+    },
+    "Edit" : {
+      "comment" : "Toolbar button opening the word-correction sheet.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Corriger"
+          }
+        }
+      }
+    },
     "Delete Profile" : {
       "localizations" : {
         "en" : {

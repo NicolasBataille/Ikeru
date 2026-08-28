@@ -29,6 +29,26 @@ public final class VocabularyRepository: Sendable {
         )
     }
 
+    /// Corrige les trois champs saisis d'une entrée (OBS2-007/013).
+    ///
+    /// Il n'existait aucun moyen de réparer une entrée : on pouvait créer un
+    /// mot sans sens ni lecture — une carte que le SRS sert ensuite et que
+    /// personne ne peut réviser — et rien ne permettait d'y revenir. La
+    /// validation à la saisie empêche d'en créer de nouvelles ; ceci répare
+    /// celles qui existent déjà.
+    ///
+    /// Ne touche NI l'état FSRS NI l'historique de rencontres : corriger une
+    /// faute de frappe ne doit pas réinitialiser une progression.
+    @discardableResult
+    public func updateEntry(
+        id: UUID,
+        word: String,
+        reading: String,
+        meaning: String
+    ) async -> VocabularyEntryDTO? {
+        await backgroundActor.updateEntry(id: id, word: word, reading: reading, meaning: meaning)
+    }
+
     /// Fetch an entry by its ID.
     public func entry(by id: UUID) async -> VocabularyEntryDTO? {
         await backgroundActor.entry(by: id)
@@ -275,6 +295,28 @@ actor VocabularyModelActor {
     /// without this loop the encounters would stay live — visible to
     /// `SyncModelActor.pushDirtyVocabularyEncounters` and, on the pull side,
     /// re-materialising an encounter list for a word that no longer exists.
+    /// Voir la doc de la façade publique. `updatedAt` est bourré à la main :
+    /// `SyncModelActor.isDirty` compare `updatedAt` à `syncedAt`, donc une
+    /// correction qui ne le touche pas ne partirait JAMAIS au serveur — le mot
+    /// serait réparé sur cet appareil et resterait cassé sur les autres.
+    func updateEntry(
+        id: UUID,
+        word: String,
+        reading: String,
+        meaning: String
+    ) -> VocabularyEntryDTO? {
+        let predicate = #Predicate<VocabularyEntry> { $0.id == id && $0.deletedAt == nil }
+        let descriptor = FetchDescriptor(predicate: predicate)
+        guard let entry = (try? modelContext.fetch(descriptor))?.first else { return nil }
+        entry.word = word
+        entry.reading = reading
+        entry.meaning = meaning
+        entry.updatedAt = Date()
+        try? modelContext.save()
+        Logger.vocabulary.debug("Updated vocab entry: \(word)")
+        return entry.toDTO()
+    }
+
     func deleteEntry(by id: UUID) {
         let predicate = #Predicate<VocabularyEntry> { $0.id == id && $0.deletedAt == nil }
         let descriptor = FetchDescriptor(predicate: predicate)

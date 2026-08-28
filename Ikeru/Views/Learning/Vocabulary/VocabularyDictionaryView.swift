@@ -54,7 +54,7 @@ struct VocabularyDictionaryView: View {
             }
         }
         .sheet(isPresented: $showAddWord) {
-            AddVocabularyWordView(modelContainer: modelContext.container) {
+            VocabularyWordFormView(modelContainer: modelContext.container) {
                 Task { await viewModel?.loadData() }
             }
         }
@@ -370,14 +370,19 @@ struct VocabularyDictionaryView: View {
     }
 }
 
-// MARK: - AddVocabularyWordView
+// MARK: - VocabularyWordFormView
 
-/// Minimal manual word-entry sheet. Surfaces the existing
-/// `VocabularyRepository.addEntry` so a learner can build their dictionary
-/// without depending on the (AI-gated) Sakura chat.
-private struct AddVocabularyWordView: View {
+/// Saisie manuelle d'un mot — création ET correction (OBS2-007/013).
+///
+/// `editing` non nil bascule la feuille en mode correction : mêmes champs,
+/// mêmes règles de validation, `updateEntry` au lieu d'`addEntry`. Un seul
+/// formulaire pour les deux, parce que deux formulaires divergent toujours —
+/// et c'est justement l'absence de chemin de correction qui laissait vivre des
+/// entrées inétudiables.
+struct VocabularyWordFormView: View {
 
     let modelContainer: ModelContainer
+    var editing: VocabularyEntryDTO? = nil
     let onSaved: () -> Void
 
     @Environment(\.dismiss) private var dismiss
@@ -385,9 +390,43 @@ private struct AddVocabularyWordView: View {
     @State private var reading = ""
     @State private var meaning = ""
     @State private var isSaving = false
+    @State private var didPrefill = false
+
+    private var trimmedWord: String { word.trimmingCharacters(in: .whitespacesAndNewlines) }
+    private var trimmedReading: String { reading.trimmingCharacters(in: .whitespacesAndNewlines) }
+    private var trimmedMeaning: String { meaning.trimmingCharacters(in: .whitespacesAndNewlines) }
+
+    /// Vrai quand le mot contient au moins un kanji. Un mot tout en kana EST sa
+    /// propre lecture — lui réclamer une lecture séparée serait du bruit.
+    private var needsExplicitReading: Bool {
+        trimmedWord.unicodeScalars.contains { scalar in
+            (0x4E00...0x9FFF).contains(scalar.value)   // idéogrammes unifiés
+                || (0x3400...0x4DBF).contains(scalar.value)  // extension A
+        }
+    }
+
+    /// Ce qui manque encore, ou `nil` si l'entrée est étudiable (OBS2-007/013).
+    ///
+    /// Seul le MOT était requis. On pouvait donc enregistrer une entrée sans
+    /// sens et sans lecture — une carte que le SRS sert ensuite et que personne
+    /// ne peut réviser : le quiz de vocabulaire n'a aucune bonne réponse à
+    /// afficher et dégénère en deux cases dont une vide. Et rien ne permet de
+    /// la réparer après coup.
+    ///
+    /// La règle est minimale et pédagogique : il faut de quoi POSER la question
+    /// (le mot), de quoi y RÉPONDRE (le sens), et de quoi la LIRE (la lecture,
+    /// seulement si le mot porte un kanji).
+    private var missingRequirement: LocalizedStringKey? {
+        if trimmedWord.isEmpty { return "Vocabulary.Validation.WordRequired" }
+        if trimmedMeaning.isEmpty { return "Vocabulary.Validation.MeaningRequired" }
+        if needsExplicitReading, trimmedReading.isEmpty {
+            return "Vocabulary.Validation.ReadingRequired"
+        }
+        return nil
+    }
 
     private var canSave: Bool {
-        !word.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !isSaving
+        missingRequirement == nil && !isSaving
     }
 
     var body: some View {
@@ -399,12 +438,32 @@ private struct AddVocabularyWordView: View {
                         field("Vocabulary.Field.Word", jp: "\u{8A00}\u{8449}", text: $word)
                         field("Vocabulary.Field.Reading", jp: "\u{8AAD}\u{307F}", text: $reading)
                         field("Vocabulary.Field.Meaning", jp: "\u{610F}\u{5473}", text: $meaning)
+
+                        // Dire CE QUI manque, plutôt que de laisser un bouton
+                        // « Enregistrer » grisé sans explication : un contrôle
+                        // inerte et muet est une impasse.
+                        if let missingRequirement {
+                            Text(missingRequirement)
+                                .font(.ikeruCaption)
+                                .foregroundStyle(Color.ikeruTextTertiary)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
                     }
                     .padding(IkeruTheme.Spacing.lg)
                 }
             }
-            .navigationTitle("Vocabulary.Add")
+            .navigationTitle(editing == nil ? "Vocabulary.Add" : "Vocabulary.Edit")
             .navigationBarTitleDisplayMode(.inline)
+            // `.task`, pas `.onAppear` avec un garde muet : le préremplissage
+            // ne doit se faire qu'une fois, sinon une réévaluation du corps
+            // écraserait ce que l'utilisateur vient de taper.
+            .task {
+                guard !didPrefill, let editing else { return }
+                didPrefill = true
+                word = editing.word
+                reading = editing.reading
+                meaning = editing.meaning
+            }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
@@ -439,14 +498,20 @@ private struct AddVocabularyWordView: View {
     }
 
     private func save() {
-        let w = word.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !w.isEmpty else { return }
+        // Même garde que `canSave`, et pas seulement `!w.isEmpty` : le bouton
+        // peut être désactivé, `save()` reste appelable depuis un autre chemin.
+        guard missingRequirement == nil else { return }
         isSaving = true
-        let r = reading.trimmingCharacters(in: .whitespacesAndNewlines)
-        let m = meaning.trimmingCharacters(in: .whitespacesAndNewlines)
+        let w = trimmedWord
+        let r = trimmedReading
+        let m = trimmedMeaning
         Task {
-            _ = await VocabularyRepository(modelContainer: modelContainer)
-                .addEntry(word: w, reading: r, meaning: m, jlptLevel: nil)
+            let repo = VocabularyRepository(modelContainer: modelContainer)
+            if let editing {
+                await repo.updateEntry(id: editing.id, word: w, reading: r, meaning: m)
+            } else {
+                _ = await repo.addEntry(word: w, reading: r, meaning: m, jlptLevel: nil)
+            }
             onSaved()
             dismiss()
         }
