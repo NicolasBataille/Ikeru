@@ -86,6 +86,17 @@ struct KanaGroupCard: View {
                     Text(kana.character)
                         .font(.system(size: 22, weight: .regular, design: .serif))
                         .foregroundStyle(Color.ikeruTextPrimary)
+                        // Les yōon (きゃ, ピョ…) tiennent DEUX glyphes dans une
+                        // cellule large d'un cinquième de carte (OBS2-006).
+                        // Sans ces deux modificateurs, la paire passait à la
+                        // ligne et le petit ゃ se retrouvait seul sur la
+                        // seconde — ce qui se lit comme une taille pleine et
+                        // comme une orthographe fausse, alors que le glyphe est
+                        // correct. Le défaut était de mise en page, pas de
+                        // typographie : la carte d'étude, elle, a toujours
+                        // rendu ちゃ correctement.
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.55)
                     // Romaji reading, tinted by per-char mastery. The prior
                     // MasteryBadge kanji glyph (初/学/…) read as a rendering
                     // bug to the exact audience of this screen — beginners
