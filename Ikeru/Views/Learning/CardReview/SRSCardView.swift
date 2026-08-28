@@ -54,6 +54,17 @@ struct SRSCardView: View {
     @Binding var isRevealed: Bool
     let onSwipe: (SwipeDirection) -> Void
 
+    /// Détail enrichi du kanji affiché, chargé au dos de la carte (OBS2-026).
+    /// `nil` pour une carte kana, pour un kanji absent du contenu embarqué, ou
+    /// tant que la requête n'a pas répondu — le dos rend alors exactement ce
+    /// qu'il rendait avant, jamais un trou réservé.
+    @State private var kanjiDetail: Kanji?
+
+    /// Même dépôt statique que `ExerciseTransitionContainer.kanaContentRepository`
+    /// et pour la même raison : une base SQLite en lecture seule, ouverte une
+    /// fois, partagée par toutes les cartes de la séance.
+    private static let bundledContent: ContentRepository? = BundledContent.makeRepository()
+
     @State private var dragOffset: CGSize = .zero
     @State private var isDragging = false
     @State private var isFlyingOff = false
@@ -403,6 +414,70 @@ struct SRSCardView: View {
                 .multilineTextAlignment(.center)
                 .minimumScaleFactor(0.5)
                 .padding(.horizontal, IkeruTheme.Spacing.md)
+
+            // Le SENS et les AUTRES lectures (OBS2-026). Une carte kanji ne
+            // montrait que `card.back`, c'est-à-dire UNE lecture — 日 → « ひ »
+            // seul. L'apprenant mémorisait une correspondance incomplète et
+            // trompeuse, là où la carte kana lui donne glyphe + romaji + tracé
+            // + audio. Ce qu'on ajoute ne change pas ce qui est NOTÉ : la
+            // question reste la même, la réponse est simplement complète.
+            if let kanjiDetail {
+                kanjiEnrichment(kanjiDetail, answeredWith: card.back)
+            }
+        }
+        // Clé sur l'identifiant de carte : le deck réutilise cette vue d'une
+        // carte à l'autre, un `.task` nu ne se rejouerait jamais.
+        .task(id: card.id) {
+            kanjiDetail = nil
+            guard card.type == .kanji, let repo = Self.bundledContent else { return }
+            kanjiDetail = await repo.kanji(for: card.front)
+        }
+    }
+
+    /// Sens, puis lectures on'yomi et kun'yomi — en omettant celle qui vient
+    /// déjà d'être donnée comme réponse, pour ne pas la répéter à l'identique.
+    @ViewBuilder
+    private func kanjiEnrichment(_ kanji: Kanji, answeredWith answer: String) -> some View {
+        let meaning = kanji.meanings.prefix(3).joined(separator: ", ")
+        let on = kanji.onReadings.filter { $0 != answer }.prefix(3)
+        let kun = kanji.kunReadings.filter { $0 != answer }.prefix(3)
+
+        VStack(spacing: 6) {
+            if !meaning.isEmpty {
+                Text(meaning)
+                    .font(.ikeruBody)
+                    .foregroundStyle(Color.ikeruTextPrimary)
+                    .multilineTextAlignment(.center)
+                    .lineLimit(2)
+            }
+            if !on.isEmpty || !kun.isEmpty {
+                HStack(spacing: IkeruTheme.Spacing.md) {
+                    if !on.isEmpty {
+                        readingCluster(label: "\u{97F3}", readings: Array(on))
+                    }
+                    if !kun.isEmpty {
+                        readingCluster(label: "\u{8A13}", readings: Array(kun))
+                    }
+                }
+            }
+        }
+        .padding(.horizontal, IkeruTheme.Spacing.md)
+        .padding(.top, 2)
+    }
+
+    /// Un groupe de lectures, precede de son etiquette japonaise (音 / 訓) —
+    /// pas d'une glose a traduire : ces deux caracteres SONT le vocabulaire
+    /// que la carte enseigne.
+    private func readingCluster(label: String, readings: [String]) -> some View {
+        HStack(spacing: 5) {
+            Text(label)
+                .font(.system(size: 11, weight: .semibold, design: .serif))
+                .foregroundStyle(Color.ikeruTextTertiary)
+            Text(readings.joined(separator: "\u{30FB}"))
+                .font(.ikeruCaption)
+                .foregroundStyle(Color.ikeruTextSecondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
         }
     }
 
