@@ -354,6 +354,12 @@ final class WatchConnectivityManager: NSObject, ObservableObject {
             return
         }
 
+        // Cartes encore jamais notées, capturées AVANT le drain : l'exemption
+        // de première rencontre (OBS2-015) doit valoir au poignet comme sur le
+        // téléphone, sinon la même réponse donne deux notes selon l'appareil.
+        let firstEncounterIds = Set(
+            cardByFront.values.filter { $0.fsrsState.reps == 0 }.map(\.id)
+        )
         let grader = WatchQuizBatchGrader(
             inbox: inbox,
             cardIdByFront: cardByFront.mapValues(\.id),
@@ -363,7 +369,11 @@ final class WatchConnectivityManager: NSObject, ObservableObject {
                 // (`DrillUtilities.mapQuizResultToGrade`), so a wrist answer
                 // and a phone answer with the same outcome/latency get the
                 // same FSRS grade.
-                let grade = mapQuizResultToGrade(correct: event.isCorrect, responseTimeMs: event.responseTimeMs)
+                let grade = mapQuizResultToGrade(
+                    correct: event.isCorrect,
+                    responseTimeMs: event.responseTimeMs,
+                    isFirstEncounter: firstEncounterIds.contains(cardId)
+                )
                 await cardRepo.gradeCard(
                     cardId: cardId,
                     grade: grade,

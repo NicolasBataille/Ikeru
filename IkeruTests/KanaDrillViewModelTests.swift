@@ -111,6 +111,30 @@ struct KanaDrillViewModelTests {
         #expect(mapQuizResultToGrade(correct: true, responseTimeMs: 8_000) == .hard)
     }
 
+    @Test("Première rencontre : une bonne réponse lente n'est plus notée « difficile » (OBS2-015)")
+    func firstEncounterEscapesTheSpeedPenalty() {
+        // Un débutant qui découvre un mot lit la question, lit quatre
+        // propositions, se décide : il dépasse 5 s presque à tous les coups.
+        // Sa bonne réponse était notée `.hard`, ce qui raccourcit l'intervalle
+        // — l'app déduisait une fragilité qu'elle venait d'inventer.
+        #expect(
+            mapQuizResultToGrade(correct: true, responseTimeMs: 12_000, isFirstEncounter: true) == .good,
+            "une première bonne réponse ne doit pas être pénalisée par le chronomètre"
+        )
+        // Et l'exemption ne récompense pas non plus une réponse éclair : sur une
+        // carte jamais vue, il n'y a rien à rappeler, donc rien à mesurer.
+        #expect(mapQuizResultToGrade(correct: true, responseTimeMs: 800, isFirstEncounter: true) == .good)
+        // Une erreur reste une erreur, première fois comprise.
+        #expect(mapQuizResultToGrade(correct: false, responseTimeMs: 800, isFirstEncounter: true) == .again)
+    }
+
+    @Test("Aux rencontres suivantes, le chronomètre s'applique comme avant")
+    func laterEncountersKeepTheSpeedMapping() {
+        #expect(mapQuizResultToGrade(correct: true, responseTimeMs: 1_000, isFirstEncounter: false) == .easy)
+        #expect(mapQuizResultToGrade(correct: true, responseTimeMs: 3_500, isFirstEncounter: false) == .good)
+        #expect(mapQuizResultToGrade(correct: true, responseTimeMs: 8_000, isFirstEncounter: false) == .hard)
+    }
+
     @Test("submitQuizAnswer wrong maps to again and increments wrong")
     func quizWrongMapsAgain() async throws {
         let (repo, cards) = try await makeRepoAndCards(group: .hVowels)
