@@ -4652,6 +4652,108 @@
         }
       }
     },
+    "Pitch Training Done!" : {
+      "comment" : "Watch: end of the pitch-accent drill.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pitch Training Done!"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entraînement d'accent terminé !"
+          }
+        }
+      }
+    },
+    "Nothing to review here yet" : {
+      "comment" : "Watch: empty state when no chosen kana has been graded yet.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nothing to review here yet"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rien à réviser ici pour l'instant"
+          }
+        }
+      }
+    },
+    "Practice a few kana on iPhone first" : {
+      "comment" : "Watch: empty-state subtitle telling the learner where to start.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Practice a few kana on iPhone first"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pratique d'abord quelques kana sur l'iPhone"
+          }
+        }
+      }
+    },
+    "Nice work!" : {
+      "comment" : "Watch: end of the kana quiz.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nice work!"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bien joué !"
+          }
+        }
+      }
+    },
+    "Lv.%lld" : {
+      "comment" : "Watch complication, corner view: the learner's RPG level.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lv.%lld"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Niv.%lld"
+          }
+        }
+      }
+    },
+    "Lv.%lld · %lld due" : {
+      "comment" : "Watch complication, inline view: level and number of cards due.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lv.%lld · %lld due"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Niv.%lld · %lld à réviser"
+          }
+        }
+      }
+    },
     "Delete Profile" : {
       "localizations" : {
         "en" : {

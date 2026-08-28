@@ -84,7 +84,8 @@ struct HapticPitchDrillView: View {
             }
 
             // Progress
-            Text("\(viewModel.currentIndex + 1)/\(viewModel.totalWords)")
+            // `verbatim:` — « 3/10 » est une position, pas une phrase.
+            Text(verbatim: "\(viewModel.currentIndex + 1)/\(viewModel.totalWords)")
                 .font(.system(size: 11))
                 .foregroundStyle(.secondary)
         }

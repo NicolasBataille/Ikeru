@@ -88,7 +88,11 @@ struct IkeruWidgetEntryView: View {
         VStack {
             Image(systemName: "book.fill")
                 .font(.title)
-            Text("Ikeru")
+            // `verbatim:` — « Ikeru » est un nom propre. Sans ça, le
+            // linter i18n le réclame au catalogue, et une entrée dont
+            // les deux traductions sont identiques n'apprend rien à
+            // personne.
+            Text(verbatim: "Ikeru")
                 .font(.headline)
             if entry.dueCount > 0 {
                 Text("\(entry.dueCount) due")
