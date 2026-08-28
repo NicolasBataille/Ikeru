@@ -4430,6 +4430,159 @@
         }
       }
     },
+    "You will lose" : {
+      "comment" : "Delete-profile sheet: heading of the list of what deletion destroys.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You will lose"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce que tu perds"
+          }
+        }
+      }
+    },
+    "What disappears" : {
+      "comment" : "Delete-profile sheet: eyebrow above the 'You will lose' heading.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What disappears"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce qui disparaît"
+          }
+        }
+      }
+    },
+    "Learning cards" : {
+      "comment" : "Delete-profile sheet: row label, number of cards that will be erased.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Learning cards"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cartes d'apprentissage"
+          }
+        }
+      }
+    },
+    "RPG level %lld" : {
+      "comment" : "Delete-profile sheet: row label carrying the profile's RPG level.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "RPG level %lld"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Niveau RPG %lld"
+          }
+        }
+      }
+    },
+    "Days active" : {
+      "comment" : "Delete-profile sheet: row label, days since the profile was created.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Days active"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jours actifs"
+          }
+        }
+      }
+    },
+    "Hold to delete %@" : {
+      "comment" : "Hold-to-confirm button on the delete-profile sheet. %@ is the profile name.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hold to delete %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maintiens pour supprimer %@"
+          }
+        }
+      }
+    },
+    "Deleting…" : {
+      "comment" : "Hold-to-confirm button: shown once the hold completes.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deleting…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suppression…"
+          }
+        }
+      }
+    },
+    "Release" : {
+      "comment" : "Hold-to-confirm button: shown when the hold is nearly complete.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Release"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Relâche"
+          }
+        }
+      }
+    },
+    "Hold to confirm" : {
+      "comment" : "Hold-to-confirm button: shown while the button is being held.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hold to confirm"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maintiens pour confirmer"
+          }
+        }
+      }
+    },
     "Delete Profile" : {
       "localizations" : {
         "en" : {

@@ -159,7 +159,9 @@ struct DeleteProfileSheet: View {
         .tatamiRoom(.standard)
     }
 
-    private func summaryRow(icon: String, tint: Color, label: String, value: String) -> some View {
+    /// `label` en `LocalizedStringKey` (OBS2-050) ; `value` reste un `String`,
+    /// c'est un nombre formaté, pas du texte à traduire.
+    private func summaryRow(icon: String, tint: Color, label: LocalizedStringKey, value: String) -> some View {
         HStack(spacing: IkeruTheme.Spacing.md) {
             ZStack {
                 Rectangle().fill(tint.opacity(0.12))
