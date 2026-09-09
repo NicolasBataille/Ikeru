@@ -19,13 +19,24 @@ struct ExerciseUnlockServiceTests {
         }
     }
 
-    @Test("fillInBlank requires 50 vocab familiar+")
-    func fillInBlankThreshold() {
-        let below = LearnerSnapshot.empty.with(\.vocabularyMasteredFamiliarPlus, 49)
-        let at = LearnerSnapshot.empty.with(\.vocabularyMasteredFamiliarPlus, 50)
-        #expect(service.state(for: .fillInBlank, profile: below)
-            == .locked(reason: .vocabularyMastered(required: 50, current: 49)))
-        #expect(service.state(for: .fillInBlank, profile: at) == .unlocked)
+    /// Retirés le 2026-09-09 (`ExerciseType.retired`) : aucun instantané, même
+    /// saturé, ne les déverrouille, et `unlockedTypes` ne les contient jamais.
+    /// Vu ROUGE avec la branche `.retired` du service retirée.
+    @Test("Les types retirés ne se déverrouillent jamais, quel que soit le progrès")
+    func retiredTypesNeverUnlock() {
+        let saturated = LearnerSnapshot.empty
+            .with(\.hiraganaMastered, true)
+            .with(\.katakanaMastered, true)
+            .with(\.vocabularyMasteredFamiliarPlus, 1_000)
+            .with(\.kanjiMasteredFamiliarPlus, 1_000)
+            .with(\.grammarPointsFamiliarPlus, 1_000)
+        for type in ExerciseType.retired {
+            #expect(service.state(for: type, profile: saturated) == .locked(reason: .retired))
+        }
+        #expect(service.unlockedTypes(profile: saturated).isDisjoint(with: ExerciseType.retired))
+        #expect(ExerciseType.retired == [.fillInBlank, .readingPassage])
+        #expect(Set(ExerciseType.activeCases).isDisjoint(with: ExerciseType.retired))
+        #expect(ExerciseType.activeCases.count == ExerciseType.allCases.count - 2)
     }
 
     @Test("grammarExercise locks until hiragana fully mastered")
@@ -44,22 +55,6 @@ struct ExerciseUnlockServiceTests {
         #expect(service.state(for: .sentenceConstruction, profile: below)
             == .locked(reason: .grammarPointsMastered(required: 5, current: 4)))
         #expect(service.state(for: .sentenceConstruction, profile: at) == .unlocked)
-    }
-
-    @Test("readingPassage requires 100 vocab + 50 kanji (vocab check first)")
-    func readingPassageCompound() {
-        // Both unmet: lock reason names vocab (the first guard).
-        let neither = LearnerSnapshot.empty
-        #expect(service.state(for: .readingPassage, profile: neither)
-            == .locked(reason: .vocabularyMastered(required: 100, current: 0)))
-        // Vocab met, kanji short: lock reason names kanji.
-        var p = LearnerSnapshot.empty
-            .with(\.vocabularyMasteredFamiliarPlus, 100)
-            .with(\.kanjiMasteredFamiliarPlus, 49)
-        #expect(service.state(for: .readingPassage, profile: p)
-            == .locked(reason: .kanjiMastered(required: 50, current: 49)))
-        p = p.with(\.kanjiMasteredFamiliarPlus, 50)
-        #expect(service.state(for: .readingPassage, profile: p) == .unlocked)
     }
 
     @Test("writingPractice requires both kana scripts + 50 vocab (hiragana checked first)")
@@ -112,7 +107,8 @@ struct ExerciseUnlockServiceTests {
             .with(\.hiraganaMastered, true)
             .with(\.vocabularyMasteredFamiliarPlus, 50)
         let delta = service.newlyUnlocked(profile: p, previous: before)
-        #expect(delta == [.fillInBlank, .grammarExercise, .sakuraConversation])
+        // `.fillInBlank` used to be in this delta at 50 vocab; retired.
+        #expect(delta == [.grammarExercise, .sakuraConversation])
     }
 
     @Test("unlockedTypes returns the full set on a maxed profile")
@@ -126,7 +122,8 @@ struct ExerciseUnlockServiceTests {
             .with(\.grammarPointsFamiliarPlus, 100)
             .with(\.listeningAccuracyLast30, 0.95)
             .with(\.listeningRecallLast30Days, 0.95)
-        #expect(service.unlockedTypes(profile: p) == Set(ExerciseType.allCases))
+        // `activeCases`, not `allCases`: the two retired types never unlock.
+        #expect(service.unlockedTypes(profile: p) == Set(ExerciseType.activeCases))
     }
 }
 

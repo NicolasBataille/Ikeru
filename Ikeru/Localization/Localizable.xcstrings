@@ -5594,22 +5594,6 @@
         }
       }
     },
-    "Exercises Complete!" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Exercises Complete!"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Exercices terminés !"
-          }
-        }
-      }
-    },
     "Experience" : {
       "comment" : "Bilingual chrome label for the XP progress section on the Home hero",
       "localizations" : {
@@ -6501,22 +6485,6 @@
         }
       }
     },
-    "Loading passage..." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Loading passage..."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Chargement du passage…"
-          }
-        }
-      }
-    },
     "Loading profile data…" : {
       "localizations" : {
         "en" : {
@@ -7381,22 +7349,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Lecture"
-          }
-        }
-      }
-    },
-    "Reading Guide" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Guide de lecture"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Reading Guide"
           }
         }
       }

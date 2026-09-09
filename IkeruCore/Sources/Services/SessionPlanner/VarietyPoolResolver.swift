@@ -26,22 +26,12 @@ public enum VarietyPoolResolver {
         // officielle N5 (40/40, mesure le 2026-08-19). La porte reste tenue par
         // `ExerciseUnlockService`, qui exige les hiragana maitrises — un
         // debutant ne recoit donc pas de texte a trou avant de savoir lire.
-        // `.fillInBlank` A ÉTÉ RETIRÉ du pool N5 le 2026-08-28 (OBS2-023).
-        //
-        // Il y figurait, n'était PAS exclu par `untaughtContentTypes`, et sa
-        // porte de déverrouillage s'ouvre dès quelques mots de vocabulaire —
-        // il était donc réellement servi en séance d'accueil. Or son écran est
-        // encore `placeholderExerciseView("Fill in the Blank", "Complete the
-        // sentence")`, dont le bouton « Complete » appelle `onButtonGrade(.good)`.
-        //
-        // Autrement dit : l'apprenant recevait une tuile vide, tapait un
-        // bouton, et récoltait une RÉUSSITE pour un exercice qui n'existe pas.
-        // Une note imméritée n'est pas neutre — elle entre dans FSRS et
-        // allonge l'intervalle d'une carte que personne n'a révisée.
-        //
-        // C'est le miroir exact du raisonnement qui a fait descendre
-        // `.grammarExercise` au N5 : un exercice ne rejoint un pool que
-        // lorsqu'il a un écran. Celui-ci y reviendra quand il en aura un.
+        // `.fillInBlank` : retiré du pool N5 le 2026-08-28 (OBS2-023), puis du
+        // produit le 2026-09-09 — voir `ExerciseType.retired`. Il y figurait,
+        // n'était PAS exclu par `untaughtContentTypes`, et son écran était un
+        // bouchon dont le bouton « Complete » notait `.good` : une réussite
+        // imméritée qui entrait dans FSRS. Le cloze de grammaire EST un texte
+        // à trou ; il n'y avait rien d'autre à construire.
         var result: Set<ExerciseType> = [.listeningSubtitled, .grammarExercise]
         if level >= .n4 {
             result.insert(.sentenceConstruction)
@@ -63,21 +53,18 @@ public enum VarietyPoolResolver {
         // À N3, dans une app qui est « N5 and no further » (README), cet
         // exercice était du code mort : construit, testé, jamais programmé.
         //
-        // `.readingPassage` reste au N3 DÉLIBÉRÉMENT, et c'est le point
-        // important : son écran est encore
-        // `placeholderExerciseView("Reading Passage", "Read and comprehend")`,
-        // avec un bouton « Complete » qui note `.good`. Descendre son seuil
-        // aurait livré un bouchon auto-noté dans les séances réelles — soit
-        // exactement l'erreur que le seuil du N4 évitait pour la grammaire
-        // tant que son contenu n'existait pas. Il descendra quand il aura un
-        // écran, pas avant.
+        // `.readingPassage` : retiré du produit le 2026-09-09 (voir
+        // `ExerciseType.retired`). Il restait au N3 délibérément, parce que
+        // son écran était le même bouchon auto-noté — le descendre aurait
+        // livré ce bouchon en séance réelle. La lecture, c'est désormais
+        // « apporte ton propre texte », pas un passage fabriqué.
         //
         // `.listeningUnsubtitled` reste au N3 pour une autre raison : il est
         // de toute façon retiré par `untaughtContentTypes`, décision produit
         // du 2026-07-19 qui n'est pas à moi de lever.
         result.insert(.writingPractice)
         if level >= .n3 {
-            result.formUnion([.readingPassage, .listeningUnsubtitled])
+            result.insert(.listeningUnsubtitled)
         }
         if level >= .n2 {
             result.insert(.speakingPractice)

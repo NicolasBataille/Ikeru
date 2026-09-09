@@ -816,14 +816,13 @@ public struct DefaultSessionPlanner: SessionPlanner {
             return .vocabularyStudy(UUID())
         case .listeningSubtitled, .listeningUnsubtitled:
             return .listeningExercise(UUID())
-        case .fillInBlank:
-            return .fillInBlank(UUID())
+        case .fillInBlank, .readingPassage:
+            // Retired — see `ExerciseType.retired`. Nothing to synthesise.
+            return nil
         case .grammarExercise:
             return .grammarExercise(UUID())
         case .sentenceConstruction:
             return .sentenceConstruction(UUID())
-        case .readingPassage:
-            return .readingPassage(UUID())
         case .writingPractice:
             let kanjiCards = availableCards.filter { $0.type == .kanji }
             guard let card = kanjiCards.randomElement() else { return nil }
@@ -852,8 +851,10 @@ public struct DefaultSessionPlanner: SessionPlanner {
     ///       .vocabularyStudy      — VocabularyRecallView (multiple-choice recall)
     ///
     ///   STILL FILTERED (no wired view / no real content source yet):
-    ///     Tier 3 (deferred):  .fillInBlank, .readingPassage, .grammarExercise
+    ///     Tier 3 (deferred):  .grammarExercise
     ///     (listening PASSAGE comprehension also stays out — no passages table.)
+    ///   RETIRED (2026-09-09, no `ExerciseItem` case any more):
+    ///     .fillInBlank, .readingPassage — see `ExerciseType.retired`.
     ///
     /// NOTE (`.vocabularyStudy` XP-only): vocabulary has NO backing SwiftData
     /// `Card` (it lives only in the read-only content DB), so its completion is
@@ -867,7 +868,7 @@ public struct DefaultSessionPlanner: SessionPlanner {
         case .srsReview, .kanjiStudy, .writingPractice, .sentenceConstruction,
              .listeningExercise, .speakingExercise, .vocabularyStudy:
             return true
-        case .fillInBlank, .readingPassage, .grammarExercise:
+        case .grammarExercise:
             return false
         }
     }

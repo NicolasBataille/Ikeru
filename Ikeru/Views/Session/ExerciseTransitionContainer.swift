@@ -169,21 +169,11 @@ struct ExerciseTransitionContainer: View {
             // grading a card (the card-grade branch is gated on `.kanjiStudy`).
             VocabularyRecallDrillHost(vocabulary: vocabularyPool, onComplete: onExerciseComplete)
 
-        case .fillInBlank:
-            placeholderExerciseView(
-                icon: sfSymbol(for: .reading),
-                title: "Fill in the Blank",
-                detail: "Complete the sentence",
-                skill: .reading
-            )
-
-        case .readingPassage:
-            placeholderExerciseView(
-                icon: sfSymbol(for: .reading),
-                title: "Reading Passage",
-                detail: "Read and comprehend",
-                skill: .reading
-            )
+        // `.fillInBlank` and `.readingPassage` used to land here on a
+        // `placeholderExerciseView` whose « Complete » button graded `.good`
+        // (OBS2-023). Retired on 2026-09-09 — see `ExerciseType.retired` —
+        // and the placeholder went with them: an exercise joins this switch
+        // when it has a screen, never before.
         }
     }
 
@@ -264,44 +254,6 @@ struct ExerciseTransitionContainer: View {
             }
             .animation(.spring(response: 0.35, dampingFraction: 0.85), value: isRevealed)
             }
-        }
-    }
-
-    // MARK: - Placeholder Exercise View
-
-    /// Placeholder for exercise types not yet fully implemented.
-    /// Displays the skill icon, title, and a "Complete" button.
-    private func placeholderExerciseView(
-        icon: String,
-        title: String,
-        detail: String,
-        skill: SkillType
-    ) -> some View {
-        VStack(spacing: IkeruTheme.Spacing.lg) {
-            Spacer()
-
-            Image(systemName: icon)
-                .font(.system(size: 48))
-                .foregroundStyle(skillColor(for: skill))
-
-            Text(title)
-                .font(.ikeruHeading2)
-                .foregroundStyle(.white)
-
-            Text(detail)
-                .font(.ikeruBody)
-                .foregroundStyle(.ikeruTextSecondary)
-
-            Spacer()
-
-            Button("Complete") {
-                // For placeholder exercises, grade as "good"
-                onButtonGrade(.good)
-            }
-            .ikeruButtonStyle(.primary)
-            .frame(maxWidth: .infinity)
-            .padding(.horizontal, IkeruTheme.Spacing.md)
-            .padding(.bottom, IkeruTheme.Spacing.md)
         }
     }
 
@@ -917,8 +869,6 @@ extension ExerciseItem {
         case .speakingExercise(let id): "speaking-\(id)"
         case .sentenceConstruction(let id): "sentence-\(id)"
         case .vocabularyStudy(let id): "vocabulary-\(id)"
-        case .fillInBlank(let id): "fillinblank-\(id)"
-        case .readingPassage(let id): "reading-\(id)"
         }
     }
 }
