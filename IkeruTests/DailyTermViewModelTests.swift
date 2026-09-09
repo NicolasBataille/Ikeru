@@ -19,10 +19,11 @@ struct DailyTermViewModelTests {
         // schema that doesn't know those entities. Must track the app's
         // current schema version (see IkeruApp) — declaring a stale version
         // opens the container without error but traps on the first insert.
-        // V4, not V3: `IkeruSchemaV3` is now frozen (nested snapshot types,
-        // cloud-sync lot 0, 2026-08-13), so `IkeruSchemaV3.models` no longer
-        // resolves to the live top-level types this suite fetches with.
-        let schema = Schema(IkeruSchemaV4.models)
+        // V6, the live version: every earlier one nests frozen snapshot
+        // types (V3 since 2026-08-13, V4/V5 since 2026-09-09), so their
+        // `models` no longer resolve to the live top-level types this suite
+        // fetches with.
+        let schema = Schema(IkeruSchemaV6.models)
         let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
         return try ModelContainer(for: schema, configurations: [config])
     }

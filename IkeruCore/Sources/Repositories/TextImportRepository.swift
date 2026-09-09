@@ -54,12 +54,20 @@ public final class TextImportRepository: Sendable {
 @ModelActor
 actor TextImportModelActor {
 
+    /// The owner every read is scoped to and every import is stamped with
+    /// (IkeruSchemaV6, P1-1 / OBS2-022) — see `VocabularyModelActor.ownerID`
+    /// for what `nil` means.
+    private func ownerID() -> UUID? {
+        ActiveProfileLookup.resolve(in: modelContext)?.id
+    }
+
     // MARK: Create / read
 
     func create(content: String, source: ImportSource,
                 coverage: Double?, entryIDs: [UUID]) -> TextImportDTO {
         let record = TextImport(content: content, source: source,
-                                coverage: coverage, entryIDs: entryIDs)
+                                coverage: coverage, entryIDs: entryIDs,
+                                profileID: ownerID())
         modelContext.insert(record)
         try? modelContext.save()
         Logger.content.info("Imported text: \(record.entryIDs.count) words kept")
@@ -67,7 +75,8 @@ actor TextImportModelActor {
     }
 
     func all() -> [TextImportDTO] {
-        let predicate = #Predicate<TextImport> { $0.deletedAt == nil }
+        let owner = ownerID()
+        let predicate = #Predicate<TextImport> { $0.profileID == owner && $0.deletedAt == nil }
         let descriptor = FetchDescriptor(predicate: predicate,
                                          sortBy: [SortDescriptor(\.createdAt, order: .reverse)])
         return ((try? modelContext.fetch(descriptor)) ?? []).map { $0.toDTO() }
@@ -120,8 +129,9 @@ actor TextImportModelActor {
         record.deletedAt = Date()
         record.updatedAt = Date()
 
+        let owner = ownerID()
         let otherImports = ((try? modelContext.fetch(
-            FetchDescriptor<TextImport>(predicate: #Predicate { $0.deletedAt == nil })
+            FetchDescriptor<TextImport>(predicate: #Predicate { $0.profileID == owner && $0.deletedAt == nil })
         )) ?? []).filter { $0.id != id }
         let stillReferenced = Set(otherImports.flatMap(\.entryIDs))
 
@@ -172,12 +182,14 @@ actor TextImportModelActor {
     // MARK: Helpers
 
     private func live(_ id: UUID) -> TextImport? {
-        let predicate = #Predicate<TextImport> { $0.id == id && $0.deletedAt == nil }
+        let owner = ownerID()
+        let predicate = #Predicate<TextImport> { $0.id == id && $0.profileID == owner && $0.deletedAt == nil }
         return (try? modelContext.fetch(FetchDescriptor(predicate: predicate)))?.first
     }
 
     private func liveEntry(_ id: UUID) -> VocabularyEntry? {
-        let predicate = #Predicate<VocabularyEntry> { $0.id == id && $0.deletedAt == nil }
+        let owner = ownerID()
+        let predicate = #Predicate<VocabularyEntry> { $0.id == id && $0.profileID == owner && $0.deletedAt == nil }
         return (try? modelContext.fetch(FetchDescriptor(predicate: predicate)))?.first
     }
 }
