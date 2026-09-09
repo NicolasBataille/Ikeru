@@ -143,13 +143,11 @@ enum SyncPayloadBuilder {
         let createdAt: Date
     }
 
-    /// `profile_id` is always pushed `.null` for this table: unlike `Card`
-    /// / `RPGState`, the live `VocabularyEntry` model (see
-    /// `Sources/Models/Vocabulary/VocabularyEntry.swift`) carries no
-    /// `profile` relationship at all — there is nothing to read here. Adding
-    /// one is a model change outside this lot's file perimeter (and outside
-    /// the "no SwiftData schema change" rule); pushing a fabricated value
-    /// instead of `null` would be worse. Declared, not silently omitted.
+    /// `profile_id` was pushed `.null` until `IkeruSchemaV6`: the model had
+    /// no owner to read. It is now the scalar `VocabularyEntry.profileID` —
+    /// `.null` only for a row `OwnershipAdoption` has not reached yet, never
+    /// a fabricated value. The server column has existed since the baseline
+    /// migration; the intention was written there first.
     static func row(for entry: VocabularyEntry) throws -> SyncRow {
         let payload = VocabularyEntryPayload(
             word: entry.word,
@@ -166,7 +164,7 @@ enum SyncPayloadBuilder {
         )
         return [
             "id": .uuid(entry.id),
-            "profile_id": .null,
+            "profile_id": .uuidOrNull(entry.profileID),
             "payload": try SyncJSON.jsonValue(encoding: payload),
             "updated_at": .date(entry.updatedAt),
             "deleted_at": .dateOrNull(entry.deletedAt),
@@ -235,9 +233,16 @@ enum SyncPayloadBuilder {
     /// `content` is pushed **verbatim**: not trimmed, not normalised, not
     /// truncated. The text the learner left is the text that travels, or the
     /// restored card quotes a sentence that never existed.
+    ///
+    /// `profile_id` (IkeruSchemaV6, P1-1) is the one column added after the
+    /// table shipped — the trade the migration header announced. It requires
+    /// `supabase/migrations/20260909120000_text_imports_profile_id.sql` to be
+    /// applied BEFORE an app that pushes it reaches a device: PostgREST
+    /// rejects an upsert naming an unknown column, and the whole batch fails.
     static func row(for textImport: TextImport) -> SyncRow {
         [
             "id": .uuid(textImport.id),
+            "profile_id": .uuidOrNull(textImport.profileID),
             "title": .string(textImport.title),
             "content": .string(textImport.content),
             // The raw string, not `source.rawValue` through the enum: a value
