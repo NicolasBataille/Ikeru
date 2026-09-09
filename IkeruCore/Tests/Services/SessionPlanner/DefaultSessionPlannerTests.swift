@@ -214,18 +214,18 @@ struct DefaultSessionPlannerStudyTests {
 
     private let planner = DefaultSessionPlanner()
 
-    @Test("Study-custom of still-filtered (Tier-3) types yields an empty session")
+    @Test("Study-custom of non-scheduling types yields an empty session")
     func studyCustomPlaceholderOnlyIsEmpty() async {
         // study-custom synthesises only the selected typed exercises. Here they
         // resolve to non-scheduling kinds — kanaStudy synthesises nothing (kana
         // is not an SRS card, so there is no in-session unit — see
-        // kanaStudyNeverSynthesisesKanjiDrill) and grammarExercise is Tier-3
-        // (filtered) — so after the allowlist the plan is empty. (vocabularyStudy
-        // is now LIVE — see vocabularyStudySurvives — so it is excluded here.)
+        // kanaStudyNeverSynthesisesKanjiDrill) and readingPassage is RETIRED —
+        // so the plan is empty. (grammarExercise is LIVE since 2026-09-09 — see
+        // grammarClozeSurvives — so it is excluded here, like vocabularyStudy.)
         let cards = (0..<10).map { _ in fixtureDueCard() }
         let inputs = SessionPlannerInputs(
             source: .studyCustom(
-                types: [.kanaStudy, .grammarExercise],
+                types: [.kanaStudy, .readingPassage],
                 jlptLevels: [.n5]
             ),
             durationMinutes: 15,
@@ -237,19 +237,18 @@ struct DefaultSessionPlannerStudyTests {
         #expect(plan.exercises.isEmpty)
     }
 
-    @Test("Still-filtered (Tier-3) exercise types are never scheduled")
+    @Test("Types that synthesise nothing (retired, kana) are never scheduled")
     func filteredTypesNeverScheduled() async {
-        // grammarExercise → .grammarExercise (Tier-3) remains filtered;
-        // fillInBlank is RETIRED (synthesises nothing, no `ExerciseItem` case
-        // any more); kanaStudy synthesises nothing (kana is not an SRS card —
-        // see kanaStudyNeverSynthesisesKanjiDrill). Nothing survives finalize.
-        // (speakingPractice / listeningSubtitled / vocabularyStudy are now LIVE
-        // — see tier2AudioDrillsSurvive / vocabularyStudySurvives — so they are
-        // deliberately excluded here.)
+        // fillInBlank / readingPassage are RETIRED (synthesise nothing, no
+        // `ExerciseItem` case any more); kanaStudy synthesises nothing (kana
+        // is not an SRS card — see kanaStudyNeverSynthesisesKanjiDrill).
+        // Nothing survives finalize. (Every other type is LIVE — see
+        // tier2AudioDrillsSurvive / vocabularyStudySurvives /
+        // grammarClozeSurvives.)
         let cards = (0..<10).map { _ in fixtureDueCard() }
         let inputs = SessionPlannerInputs(
             source: .studyCustom(
-                types: [.kanaStudy, .grammarExercise, .fillInBlank],
+                types: [.kanaStudy, .fillInBlank, .readingPassage],
                 jlptLevels: [.n5]
             ),
             durationMinutes: 15,
@@ -258,9 +257,29 @@ struct DefaultSessionPlannerStudyTests {
             availableCards: cards
         )
         let plan = await planner.compose(inputs: inputs)
-        // Post-allowlist assertion: no NON-allowlisted (still-filtered) kind appears.
-        let filtered = plan.exercises.filter { !DefaultSessionPlanner.isLive($0) }
-        #expect(filtered.isEmpty, "still-filtered exercises should not appear: \(filtered)")
+        #expect(plan.exercises.isEmpty, "nothing here can be scheduled: \(plan.exercises)")
+    }
+
+    /// `GrammarClozeDrillHost` has been wired in the container since
+    /// 2026-08-19, yet `isLive` still said « Tier 3, deferred » — so `finalize`
+    /// dropped every grammar tile and the cloze screen was never scheduled.
+    /// Measured on 2026-09-09 while building the Compose sheet. Seen RED with
+    /// `.grammarExercise` put back in the filtered set.
+    @Test("A study session that asks for grammar gets grammar cloze tiles")
+    func grammarClozeSurvives() async {
+        let inputs = SessionPlannerInputs(
+            source: .studyCustom(types: [.grammarExercise], jlptLevels: [.n5]),
+            durationMinutes: 10,
+            profile: .empty,
+            unlockedTypes: [.grammarExercise],
+            availableCards: []
+        )
+        let plan = await planner.compose(inputs: inputs)
+        #expect(!plan.exercises.isEmpty)
+        #expect(plan.exercises.allSatisfy {
+            if case .grammarExercise = $0 { return true }
+            return false
+        })
     }
 
     @Test("Tier-2 speaking/listening survive finalize (allowlist un-filters them)")
