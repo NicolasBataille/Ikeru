@@ -361,7 +361,7 @@ struct SyncPullDivergenceTombstoneTests {
     ///
     /// Asserts on each level separately rather than on a total count, so a
     /// cascade that reaches cards but not their review logs still fails.
-    @Test("Deleting a profile tombstones its cards, their review logs, its RPG state and its outcomes")
+    @Test("Deleting a profile tombstones its cards, their review logs, its RPG state, its outcomes, its dictionary and its imports")
     func profileDeletionCascadesToTheWholeGraph() async throws {
         let container = try makeContainer()
         let context = ModelContext(container)
@@ -375,6 +375,14 @@ struct SyncPullDivergenceTombstoneTests {
         context.insert(log)
         let outcome = ExerciseOutcomeLog(skill: .listening, accuracy: 0.9, profileID: profile.id)
         context.insert(outcome)
+        // Owned since IkeruSchemaV6 (P1-1 / OBS2-051): the dictionary, its
+        // encounters, and the imported texts.
+        let entry = VocabularyEntry(word: "傘", reading: "かさ", meaning: "umbrella", profileID: profile.id)
+        context.insert(entry)
+        let encounter = VocabularyEncounter(source: .importedText, contextSnippet: "傘を持っていこう。", entry: entry)
+        context.insert(encounter)
+        let record = TextImport(content: "傘を持っていこう。", entryIDs: [entry.id], profileID: profile.id)
+        context.insert(record)
 
         // A second profile whose data must be left completely alone.
         let bystander = UserProfile(displayName: "Other")
@@ -384,6 +392,10 @@ struct SyncPullDivergenceTombstoneTests {
         context.insert(bystanderCard)
         let bystanderOutcome = ExerciseOutcomeLog(skill: .speaking, accuracy: 0.5, profileID: bystander.id)
         context.insert(bystanderOutcome)
+        let bystanderEntry = VocabularyEntry(word: "本", reading: "ほん", meaning: "book", profileID: bystander.id)
+        context.insert(bystanderEntry)
+        let bystanderImport = TextImport(content: "本を読む。", profileID: bystander.id)
+        context.insert(bystanderImport)
         try context.save()
 
         let now = Date(timeIntervalSince1970: 1_700_000_000)
@@ -395,12 +407,17 @@ struct SyncPullDivergenceTombstoneTests {
         #expect(log.deletedAt == now, "the cascade stopped at cards and never reached their review logs")
         #expect(profile.rpgState?.deletedAt == now, "the profile's RPG state was not cascade-tombstoned")
         #expect(outcome.deletedAt == now, "ExerciseOutcomeLog is scalar-scoped and was missed")
+        #expect(entry.deletedAt == now, "the profile's dictionary survived its deletion (OBS2-051)")
+        #expect(encounter.deletedAt == now, "the cascade stopped at entries and never reached their encounters")
+        #expect(record.deletedAt == now, "the profile's imported texts survived its deletion (OBS2-051)")
 
         // Nothing belonging to the other profile was touched.
         #expect(bystander.deletedAt == nil)
         #expect(bystanderCard.deletedAt == nil)
         #expect(bystanderOutcome.deletedAt == nil)
         #expect(bystander.rpgState?.deletedAt == nil)
+        #expect(bystanderEntry.deletedAt == nil)
+        #expect(bystanderImport.deletedAt == nil)
     }
 
     /// A row deleted earlier must keep its original deletion instant when a

@@ -3709,19 +3709,19 @@
         }
       }
     },
-    "This profile's cards, review history, level and active days will be permanently erased." : {
-      "comment" : "Delete-profile sheet: names exactly what the cascade erases. Must stay in step with ProfileDeletion.tombstoneGraph.",
+    "This profile's cards, review history, level, active days, personal dictionary and imported texts will be permanently erased." : {
+      "comment" : "Delete-profile sheet: names exactly what the cascade erases. Must stay in step with ProfileDeletion.tombstoneGraph (dictionary and imports since IkeruSchemaV6).",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "This profile's cards, review history, level and active days will be permanently erased."
+            "value" : "This profile's cards, review history, level, active days, personal dictionary and imported texts will be permanently erased."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Les cartes de ce profil, son historique de révisions, son niveau et ses jours actifs seront définitivement effacés."
+            "value" : "Les cartes de ce profil, son historique de révisions, son niveau, ses jours actifs, son dictionnaire personnel et ses textes importés seront définitivement effacés."
           }
         }
       }
@@ -4584,53 +4584,36 @@
         }
       }
     },
-    "What stays" : {
-      "comment" : "Delete-profile sheet: heading of the block listing what survives deletion.",
+    "Dictionary words" : {
+      "comment" : "Delete-profile sheet: summary row — number of words in the profile's personal dictionary.",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "What stays"
+            "value" : "Dictionary words"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ce qui reste"
+            "value" : "Mots du dictionnaire"
           }
         }
       }
     },
-    "Not deleted" : {
-      "comment" : "Delete-profile sheet: eyebrow above the 'What stays' heading.",
+    "Imported texts" : {
+      "comment" : "Delete-profile sheet: summary row — number of texts the profile imported.",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Not deleted"
+            "value" : "Imported texts"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Non supprimé"
-          }
-        }
-      }
-    },
-    "Your personal dictionary and the texts you imported are shared by every profile on this device, so deleting this profile does not remove them." : {
-      "comment" : "Delete-profile sheet: why the dictionary and imported texts survive. Remove when P1-1 gives them an owner.",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Your personal dictionary and the texts you imported are shared by every profile on this device, so deleting this profile does not remove them."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ton dictionnaire personnel et les textes que tu as importés sont partagés par tous les profils de cet appareil : supprimer ce profil ne les enlève pas."
+            "value" : "Textes importés"
           }
         }
       }

@@ -156,19 +156,14 @@ public final class ProfileViewModel {
 
         let wasActive = currentProfile?.id == profile.id
 
-        // NOTE (data-model gap, not fixed here — out of this task's file
-        // perimeter): `VocabularyEntry`/`VocabularyEncounter` (the "personal
-        // dictionary") carry no `profileID` and no relationship back to
-        // `UserProfile` at all — they are a single global store shared by
-        // every profile on the device. Deleting a profile therefore cannot
-        // delete "its" dictionary, because the data model has no concept of
-        // per-profile ownership for it. `DeleteProfileSheet`'s summary
-        // correctly does NOT claim to erase dictionary entries. Making the
-        // dictionary genuinely per-profile needs a schema migration
-        // (IkeruSchemaV3) — flagging for a follow-up task.
+        // The dictionary (`VocabularyEntry` + encounters) and the imported
+        // texts (`TextImport`) are owned by the profile since `IkeruSchemaV6`
+        // (P1-1 / OBS2-051) and go with it. A note stood here for three
+        // schema versions saying they could not — it was true until V6.
         //
         // The SwiftData half of the cascade — cards, their review logs, the
-        // RPG state, and the scalar-scoped ExerciseOutcomeLog rows — lives in
+        // RPG state, the scalar-scoped ExerciseOutcomeLog rows, and now the
+        // dictionary and the imports (scalar-scoped the same way) — lives in
         // `ProfileDeletion.tombstoneGraph` so it can actually be exercised by
         // a test (see that function's doc comment: this file's own test suite
         // cannot be run today). It does not save; the single `save()` below
