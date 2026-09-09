@@ -100,16 +100,28 @@ final class DataExportManager {
             )
         }
 
+        // Personal dictionary and imported texts — owned by the profile since
+        // `IkeruSchemaV6` (P1-1 / OBS2-037), so both repositories already
+        // scope to the ACTIVE PROFILE; nothing of another profile's can land
+        // here. Before V6 they were absent from the archive because they
+        // belonged to no one, and the deletion screen had to say they
+        // survived — the same gap, seen from the other side.
+        let dictionary = await VocabularyRepository(modelContainer: modelContainer).allEntries()
+        let imports = await TextImportRepository(modelContainer: modelContainer).all()
+
         // Only Sendable value types (CardDTO, ReviewLogDTO,
-        // ExerciseOutcomeLogDTO, RPGExport) cross into the detached task below
-        // — no ModelContext, ModelContainer, or @Model instance is ever
-        // captured off the main actor.
+        // ExerciseOutcomeLogDTO, RPGExport, VocabularyEntryDTO, TextImportDTO)
+        // cross into the detached task below — no ModelContext,
+        // ModelContainer, or @Model instance is ever captured off the main
+        // actor.
         let exportDir = try await Task.detached(priority: .utility) {
             try Self.writeExportFiles(
                 cards: allCards,
                 reviews: reviewLogs,
                 outcomes: exerciseOutcomes,
-                rpg: rpgExport
+                rpg: rpgExport,
+                dictionary: dictionary,
+                imports: imports
             )
         }.value
 
@@ -121,9 +133,10 @@ final class DataExportManager {
 
     /// Builds a fresh temporary directory and writes every export file into
     /// it: cards.json, cards.csv, reviews.json, confusions.json, outcomes.json,
-    /// rpg.json (if present), and context.json. Runs off the main actor — only
-    /// Sendable inputs (`CardDTO`, `ReviewLogDTO`, `ExerciseOutcomeLogDTO`,
-    /// `RPGExport`) are accepted.
+    /// rpg.json (if present), dictionary.json, imports.json, and context.json.
+    /// Runs off the main actor — only Sendable inputs (`CardDTO`,
+    /// `ReviewLogDTO`, `ExerciseOutcomeLogDTO`, `RPGExport`,
+    /// `VocabularyEntryDTO`, `TextImportDTO`) are accepted.
     ///
     /// `confusions.json` is derived, not persisted: it is aggregated from
     /// `reviews` + `cards` right here, at export time (learner-telemetry lot 1,
@@ -132,7 +145,9 @@ final class DataExportManager {
         cards: [CardDTO],
         reviews: [ReviewLogDTO],
         outcomes: [ExerciseOutcomeLogDTO],
-        rpg: RPGExport?
+        rpg: RPGExport?,
+        dictionary: [VocabularyEntryDTO],
+        imports: [TextImportDTO]
     ) throws -> URL {
         let exportDir = FileManager.default.temporaryDirectory
             .appending(path: "ikeru-export-\(Date().timeIntervalSince1970)", directoryHint: .isDirectory)
@@ -175,6 +190,13 @@ final class DataExportManager {
         if let rpg {
             try encoder.encode(rpg).write(to: exportDir.appending(path: "rpg.json"))
         }
+
+        // Personal dictionary and imported texts — always written (an empty
+        // `[]` when there is nothing), same convention as reviews/outcomes.
+        let dictionaryData = try encoder.encode(dictionary.map { DictionaryExportRow(from: $0) })
+        try dictionaryData.write(to: exportDir.appending(path: "dictionary.json"))
+        let importsData = try encoder.encode(imports.map { ImportExportRow(from: $0) })
+        try importsData.write(to: exportDir.appending(path: "imports.json"))
 
         // Context file (data model documentation)
         let contextJSON = generateContextJSON()
@@ -323,6 +345,10 @@ final class DataExportManager {
 
     // MARK: - Context JSON
 
+    // One string literal documenting the export for its consumers — its
+    // length IS the documentation. Was 103 lines before dictionary.json and
+    // imports.json joined; already over the 80-line budget then.
+    // swiftlint:disable:next function_body_length
     nonisolated private static func generateContextJSON() -> String {
         // swiftlint:disable line_length
         // The lines below are prose describing the exported schema for external
@@ -391,6 +417,36 @@ final class DataExportManager {
                 "timestamp": "ISO8601 date when the drill was completed",
                 "skill": "Skill measured: listening or speaking",
                 "accuracy": "Accuracy 0.0-1.0 (binary pass/fail for listening, banded for shadowing)"
+              }
+            },
+            "dictionary.json": {
+              "description": "The learner's personal dictionary — words they saved, with their own FSRS scheduling state (these are not SRS flashcards from cards.json; the vocabulary drill grades them separately). Scoped to the exporting profile.",
+              "fields": {
+                "id": "UUID — unique entry identifier",
+                "word": "The Japanese word as the learner saved it",
+                "reading": "Hiragana reading",
+                "meaning": "The gloss the learner saved, in the language they captured it in",
+                "jlptLevel": "Estimated JLPT level (N5…N1), null when unknown",
+                "dueDate": "ISO8601 date when the word is next due in the vocabulary drill",
+                "difficulty": "FSRS difficulty (1-10)",
+                "stability": "FSRS stability in days",
+                "interval": "Days until next review",
+                "reps": "Number of successful drill reviews (0 = never drilled)",
+                "lapseCount": "Number of times the word was forgotten",
+                "createdAt": "ISO8601 date the word entered the dictionary",
+                "encounterCount": "How many times the word was met across the app (Sakura, sessions, imported texts)"
+              }
+            },
+            "imports.json": {
+              "description": "Texts the learner brought in themselves (pasted or photographed), verbatim, with the dictionary entries each one produced. Scoped to the exporting profile.",
+              "fields": {
+                "id": "UUID — unique import identifier",
+                "title": "Short label derived from the first line",
+                "content": "The full text, exactly as the learner left it — never re-derived, never truncated",
+                "source": "How it came in: paste or photo",
+                "createdAt": "ISO8601 date of the import",
+                "coverage": "0.0-1.0 share of content words already known AT IMPORT TIME (frozen snapshot), null when nothing was measurable",
+                "entryIds": "UUIDs of the dictionary.json entries this import created, in selection order"
               }
             },
             "rpg.json": {
@@ -513,6 +569,58 @@ private struct ReviewExportRow: Codable, Sendable {
         case .good: "good"
         case .easy: "easy"
         }
+    }
+}
+
+private struct DictionaryExportRow: Codable, Sendable {
+    let id: UUID
+    let word: String
+    let reading: String
+    let meaning: String
+    let jlptLevel: String?
+    let dueDate: Date
+    let difficulty: Double
+    let stability: Double
+    let interval: Int
+    let reps: Int
+    let lapseCount: Int
+    let createdAt: Date
+    let encounterCount: Int
+
+    init(from dto: VocabularyEntryDTO) {
+        self.id = dto.id
+        self.word = dto.word
+        self.reading = dto.reading
+        self.meaning = dto.meaning
+        self.jlptLevel = dto.jlptLevel?.rawValue
+        self.dueDate = dto.dueDate
+        self.difficulty = dto.fsrsState.difficulty
+        self.stability = dto.fsrsState.stability
+        self.interval = dto.interval
+        self.reps = dto.fsrsState.reps
+        self.lapseCount = dto.lapseCount
+        self.createdAt = dto.createdAt
+        self.encounterCount = dto.encounterCount
+    }
+}
+
+private struct ImportExportRow: Codable, Sendable {
+    let id: UUID
+    let title: String
+    let content: String
+    let source: String
+    let createdAt: Date
+    let coverage: Double?
+    let entryIds: [UUID]
+
+    init(from dto: TextImportDTO) {
+        self.id = dto.id
+        self.title = dto.title
+        self.content = dto.content
+        self.source = dto.source.rawValue
+        self.createdAt = dto.createdAt
+        self.coverage = dto.coverage
+        self.entryIds = dto.entryIDs
     }
 }
 

@@ -49,6 +49,8 @@ struct DataExportManagerTests {
     private func makeContainer() throws -> ModelContainer {
         let schema = Schema([
             UserProfile.self, Card.self, ReviewLog.self, RPGState.self, ExerciseOutcomeLog.self,
+            // dictionary.json / imports.json (IkeruSchemaV6, OBS2-037).
+            VocabularyEntry.self, VocabularyEncounter.self, TextImport.self,
         ])
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         ActiveProfileResolver.setActiveProfileID(nil)
@@ -390,6 +392,78 @@ struct DataExportManagerTests {
         let flashcardRow = try #require(rows.first { $0.answeredValue == nil })
         #expect(flashcardRow.exerciseType == nil)
         #expect(flashcardRow.surface == nil)
+    }
+
+    // MARK: - dictionary.json / imports.json (OBS2-037 — owned since IkeruSchemaV6)
+
+    private struct DecodedWord: Decodable {
+        let id: UUID
+        let word: String
+        let meaning: String
+        let encounterCount: Int
+    }
+
+    private struct DecodedImport: Decodable {
+        let id: UUID
+        let content: String
+        let entryIds: [UUID]
+    }
+
+    /// The archive used to omit both, because before V6 they belonged to no
+    /// one. Seen RED with the repositories' owner predicate neutralised: the
+    /// other profile's word then leaks into the export.
+    @Test("dictionary.json and imports.json are written, scoped to the active profile, and the import cites its entry")
+    func dictionaryAndImportsScopedToActiveProfile() async throws {
+        let container = try makeContainer()
+        let context = container.mainContext
+        let profileA = UserProfile(displayName: "A")
+        let profileB = UserProfile(displayName: "B")
+        context.insert(profileA)
+        context.insert(profileB)
+        try context.save()
+
+        // Written through the real repositories, which stamp the owner.
+        ActiveProfileResolver.setActiveProfileID(profileA.id)
+        let vocab = VocabularyRepository(modelContainer: container)
+        let wordA = await vocab.addEntry(word: "傘", reading: "かさ", meaning: "parapluie", jlptLevel: .n5)
+        await vocab.logEncounter(entryId: wordA.id, source: .importedText, contextSnippet: "傘を持っていこう。")
+        let importA = await TextImportRepository(modelContainer: container)
+            .create(content: "傘を持っていこう。", source: .paste, coverage: 0.5, entryIDs: [wordA.id])
+
+        ActiveProfileResolver.setActiveProfileID(profileB.id)
+        _ = await vocab.addEntry(word: "本", reading: "ほん", meaning: "livre", jlptLevel: nil)
+        _ = await TextImportRepository(modelContainer: container)
+            .create(content: "本を読む。", source: .photo, coverage: nil, entryIDs: [])
+
+        ActiveProfileResolver.setActiveProfileID(profileA.id)
+        let dir = try await DataExportManager().buildExportDirectory(modelContainer: container)
+        defer { try? FileManager.default.removeItem(at: dir) }
+
+        let words = try decoder().decode(
+            [DecodedWord].self, from: Data(contentsOf: dir.appending(path: "dictionary.json"))
+        )
+        #expect(words.map(\.word) == ["傘"], "profile B's word leaked into profile A's archive")
+        #expect(words.first?.meaning == "parapluie")
+        #expect(words.first?.encounterCount == 1)
+
+        let imports = try decoder().decode(
+            [DecodedImport].self, from: Data(contentsOf: dir.appending(path: "imports.json"))
+        )
+        #expect(imports.map(\.id) == [importA.id], "profile B's text leaked into profile A's archive")
+        #expect(imports.first?.content == "傘を持っていこう。")
+        #expect(imports.first?.entryIds == [wordA.id])
+    }
+
+    @Test("dictionary.json and imports.json are valid empty arrays when there is nothing to export")
+    func dictionaryAndImportsEmpty() async throws {
+        let container = try makeContainer()
+        _ = try seedProfile(container)
+        let dir = try await DataExportManager().buildExportDirectory(modelContainer: container)
+        defer { try? FileManager.default.removeItem(at: dir) }
+        #expect(try decoder().decode([DecodedWord].self,
+                                     from: Data(contentsOf: dir.appending(path: "dictionary.json"))).isEmpty)
+        #expect(try decoder().decode([DecodedImport].self,
+                                     from: Data(contentsOf: dir.appending(path: "imports.json"))).isEmpty)
     }
 
     // MARK: - confusions.json (derived aggregate)
