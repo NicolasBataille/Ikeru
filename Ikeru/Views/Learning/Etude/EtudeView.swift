@@ -32,12 +32,21 @@ struct ExploreView: View {
     /// Un texte est arrivé par l'extension de partage et attend.
     @State private var hasSharedText = false
 
+    // « Composer une séance » — the opt-in door (see `ComposeSessionSheet`).
+    // The session view model is built the way `HomeView` builds its own, and
+    // the cover follows the same `isActive` contract.
+    @State private var composeViewModel: ComposeSessionViewModel?
+    @State private var sessionViewModel: SessionViewModel?
+    @State private var showCompose = false
+    @State private var showSession = false
+
     var body: some View {
         ZStack {
             IkeruScreenBackground()
             ScrollView {
                 VStack(alignment: .leading, spacing: 14) {
                     header
+                    composeRow
                     kanaRow
                     vocabularyRow
                     grammarRow
@@ -51,6 +60,24 @@ struct ExploreView: View {
         }
         .toolbar(.hidden, for: .navigationBar)
         .task { await loadProgress() }
+        .sheet(isPresented: $showCompose) {
+            if let composeViewModel {
+                ComposeSessionSheet(viewModel: composeViewModel) {
+                    await startComposedSession()
+                }
+            }
+        }
+        .fullScreenCover(isPresented: $showSession) {
+            if let svm = sessionViewModel {
+                ActiveSessionView(viewModel: svm)
+                    .onChange(of: svm.isActive) { _, isActive in
+                        if !isActive {
+                            showSession = false
+                            Task { await loadProgress() }
+                        }
+                    }
+            }
+        }
         .fullScreenCover(item: $conversationViewModel) { cvm in
             ZStack(alignment: .topLeading) {
                 // `item:` guarantees `cvm` is non-nil here (the old isPresented +
@@ -94,6 +121,20 @@ struct ExploreView: View {
     }
 
     // MARK: - Rows
+
+    /// The opt-in door. Every other row is a surface; this one is a session
+    /// the learner assembles — the counterpart of the home session, which
+    /// chooses for them.
+    private var composeRow: some View {
+        Button {
+            presentCompose()
+        } label: {
+            exploreRow(kanji: "\u{81EA}\u{7531}", title: "Compose a session",
+                       subtitle: "Choose your exercises and duration")
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("explore.composeRow")
+    }
 
     private var kanaRow: some View {
         NavigationLink {
@@ -219,6 +260,41 @@ struct ExploreView: View {
             .grammarPointsByLevel(.n5).count
         importCount = await TextImportRepository(modelContainer: container).all().count
         hasSharedText = SharedTextInbox().hasPending
+    }
+
+    // MARK: - Compose
+
+    private func presentCompose() {
+        let container = modelContext.container
+        let repo = CardRepository(modelContainer: container)
+        if sessionViewModel == nil {
+            sessionViewModel = SessionViewModel(
+                plannerService: PlannerService(cardRepository: repo),
+                cardRepository: repo,
+                modelContainer: container,
+                contentRepository: Self.makeContentRepository()
+            )
+        }
+        // Rebuilt on every open: the offer list must reflect the snapshot of
+        // NOW (a drill unlocked by the last session shows up unlocked).
+        composeViewModel = ComposeSessionViewModel(
+            cardRepository: repo,
+            modelContainer: container,
+            contentRepository: Self.makeContentRepository()
+        )
+        showCompose = true
+    }
+
+    /// `true` only if a session actually started — see
+    /// `SessionViewModel.startStudyCustomSession`. The sheet stays open
+    /// otherwise and says why.
+    private func startComposedSession() async -> Bool {
+        guard let composeViewModel, let svm = sessionViewModel else { return false }
+        let started = await composeViewModel.start(on: svm)
+        if started {
+            showSession = true
+        }
+        return started
     }
 
     // MARK: - Conversation

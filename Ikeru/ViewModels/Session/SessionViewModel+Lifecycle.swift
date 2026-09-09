@@ -143,22 +143,33 @@ extension SessionViewModel {
         return true
     }
 
-    /// Composes a custom session from the Étude → Compose sheet. Same
-    /// pipeline as `startSession()` but with `.studyCustom` as the planner
-    /// source (see `SessionComposer.composeStudyCustom`) so the planner
-    /// respects the user's chosen exercise types and JLPT levels rather than
-    /// the home recommendation skeleton. Unlike `startSession()`, never
-    /// guards on an empty queue (unchanged from the original).
+    /// Composes a custom session from the Étude → Compose sheet
+    /// (`ComposeSessionSheet`, the door that finally exists since
+    /// 2026-09-09 — it had no caller for seven weeks). Same pipeline as
+    /// `startSession()` but with `.studyCustom` as the planner source (see
+    /// `SessionComposer.composeStudyCustom`) so the planner respects the
+    /// learner's chosen exercise types.
+    ///
+    /// Returns `false` — and starts nothing — when the composition is empty
+    /// (every chosen type locked, or a card-backed drill with no card to
+    /// back it). Same honesty rule as `startSession()`: an empty session must
+    /// never open a hollow « 0 exercises » summary; the sheet says what
+    /// happened instead.
+    @discardableResult
     public func startStudyCustomSession(
         types: Set<ExerciseType>,
         levels: Set<JLPTLevel>,
         duration: Int
-    ) async {
+    ) async -> Bool {
         let composed = await sessionComposer.composeStudyCustom(
             types: types,
             levels: levels,
             duration: duration
         )
+        guard !composed.sessionExercises.isEmpty else {
+            Logger.ui.info("Study custom session composed nothing for \(types.count) types — not starting")
+            return false
+        }
 
         sessionQueue = composed.sessionQueue
         resetSessionState()
@@ -178,6 +189,7 @@ extension SessionViewModel {
         Logger.ui.info(
             "Study custom session started: \(composed.sessionExercises.count) exercises (\(composed.srsCardCount) SRS), ~\(composed.estimatedDurationMinutes)min"
         )
+        return true
     }
 
     /// Restarts the session with only the cards graded `.again` in the

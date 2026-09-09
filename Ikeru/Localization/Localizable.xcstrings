@@ -1,6 +1,414 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "Compose a session" : {
+      "comment" : "Explore row + Compose sheet title.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compose a session"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Composer une séance"
+          }
+        }
+      }
+    },
+    "Choose your exercises and duration" : {
+      "comment" : "Explore row subtitle for the Compose sheet.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose your exercises and duration"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisis tes exercices et la durée"
+          }
+        }
+      }
+    },
+    "Pick what you want to practice. The home session chooses for you; here, you choose." : {
+      "comment" : "Compose sheet intro.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pick what you want to practice. The home session chooses for you; here, you choose."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisis ce que tu veux travailler. La séance de l'accueil décide pour toi ; ici, c'est toi qui décides."
+          }
+        }
+      }
+    },
+    "Exercises" : {
+      "comment" : "Compose sheet: section header.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exercises"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exercices"
+          }
+        }
+      }
+    },
+    "Choose one or more" : {
+      "comment" : "Compose sheet: eyebrow above the exercise list.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose one or more"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un ou plusieurs"
+          }
+        }
+      }
+    },
+    "Minutes" : {
+      "comment" : "Compose sheet: eyebrow above the duration picker.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minutes"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minutes"
+          }
+        }
+      }
+    },
+    "Nothing could be composed from this selection — writing and kanji drills need kanji cards you have already started. Try another mix." : {
+      "comment" : "Compose sheet: shown when the selection composed an empty session.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nothing could be composed from this selection — writing and kanji drills need kanji cards you have already started. Try another mix."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rien à composer avec cette sélection — l'écriture et le kanji demandent des cartes kanji déjà commencées. Essaie un autre mélange."
+          }
+        }
+      }
+    },
+    "Sentence building" : {
+      "comment" : "Compose sheet: exercise title.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sentence building"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Construction de phrases"
+          }
+        }
+      }
+    },
+    "Retired" : {
+      "comment" : "Compose sheet: label for a retired exercise type (never shown; exhaustiveness).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retired"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retiré"
+          }
+        }
+      }
+    },
+    "Trace a kanji from your deck" : {
+      "comment" : "Compose sheet: exercise subtitle.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trace a kanji from your deck"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trace un kanji de ton jeu"
+          }
+        }
+      }
+    },
+    "Multiple-choice recall of N5 words" : {
+      "comment" : "Compose sheet: exercise subtitle.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Multiple-choice recall of N5 words"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retrouve le sens de mots N5 parmi plusieurs"
+          }
+        }
+      }
+    },
+    "Fill the gap in an N5 sentence pattern" : {
+      "comment" : "Compose sheet: exercise subtitle.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fill the gap in an N5 sentence pattern"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Complète le trou d'une structure N5"
+          }
+        }
+      }
+    },
+    "Put the words of a sentence in order" : {
+      "comment" : "Compose sheet: exercise subtitle.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Put the words of a sentence in order"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remets les mots d'une phrase dans l'ordre"
+          }
+        }
+      }
+    },
+    "Handwriting drill on a kanji you started" : {
+      "comment" : "Compose sheet: exercise subtitle.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Handwriting drill on a kanji you started"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tracé d'un kanji déjà commencé"
+          }
+        }
+      }
+    },
+    "Hear a word, pick its meaning" : {
+      "comment" : "Compose sheet: exercise subtitle.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hear a word, pick its meaning"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Écoute un mot, choisis son sens"
+          }
+        }
+      }
+    },
+    "Shadow a word out loud" : {
+      "comment" : "Compose sheet: exercise subtitle.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shadow a word out loud"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Répète un mot à voix haute"
+          }
+        }
+      }
+    },
+    "Unlocks at %lld familiar words — you have %lld" : {
+      "comment" : "Compose sheet: lock reason.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unlocks at %lld familiar words — you have %lld"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se débloque à %lld mots familiers — tu en as %lld"
+          }
+        }
+      }
+    },
+    "Unlocks at %lld familiar kanji — you have %lld" : {
+      "comment" : "Compose sheet: lock reason.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unlocks at %lld familiar kanji — you have %lld"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se débloque à %lld kanji familiers — tu en as %lld"
+          }
+        }
+      }
+    },
+    "Unlocks once the hiragana are familiar" : {
+      "comment" : "Compose sheet: lock reason.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unlocks once the hiragana are familiar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se débloque quand les hiragana sont familiers"
+          }
+        }
+      }
+    },
+    "Unlocks once the katakana are familiar" : {
+      "comment" : "Compose sheet: lock reason.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unlocks once the katakana are familiar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se débloque quand les katakana sont familiers"
+          }
+        }
+      }
+    },
+    "Unlocks at %lld familiar grammar points — you have %lld" : {
+      "comment" : "Compose sheet: lock reason.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unlocks at %lld familiar grammar points — you have %lld"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se débloque à %lld points de grammaire familiers — tu en as %lld"
+          }
+        }
+      }
+    },
+    "Unlocks at %@ listening accuracy" : {
+      "comment" : "Compose sheet: lock reason.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unlocks at %@ listening accuracy"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se débloque à %@ de précision en écoute"
+          }
+        }
+      }
+    },
+    "Unlocks at %@ listening recall" : {
+      "comment" : "Compose sheet: lock reason.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unlocks at %@ listening recall"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se débloque à %@ de rappel en écoute"
+          }
+        }
+      }
+    },
+    "Unlocks at JLPT %@" : {
+      "comment" : "Compose sheet: lock reason.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unlocks at JLPT %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se débloque au JLPT %@"
+          }
+        }
+      }
+    },
     "%lld words kept, each with the sentence you met it in." : {
       "localizations" : {
         "en" : {
