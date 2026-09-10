@@ -34,13 +34,13 @@ struct ProfileViewModelTests {
     /// one that dropped it. Swapping the schema form, as that note records,
     /// changed nothing — correctly, since the schema was never the variable.
     ///
-    /// V4, not V3 (2026-08-13, cloud-sync lot 0): `IkeruSchemaV3` is now
-    /// frozen (nested snapshot types) — a container opened at V3 would
-    /// bind this file's live-type fetches to the wrong entity identity.
-    /// The full V4 schema also keeps `ExerciseOutcomeLog` (scalar-scoped, no
-    /// cascade) present for the deletion-cleanup test.
+    /// V6, the live version: every earlier one nests frozen snapshot types
+    /// (V3 since 2026-08-13, V4/V5 since 2026-09-09) — a container opened at
+    /// one of them would bind this file's live-type fetches to the wrong
+    /// entity identity. The full schema also keeps `ExerciseOutcomeLog`
+    /// (scalar-scoped, no cascade) present for the deletion-cleanup test.
     private func makeContainer() throws -> ModelContainer {
-        let schema = Schema(versionedSchema: IkeruSchemaV4.self)
+        let schema = Schema(versionedSchema: IkeruSchemaV6.self)
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         return try ModelContainer(for: schema, configurations: [config])
     }

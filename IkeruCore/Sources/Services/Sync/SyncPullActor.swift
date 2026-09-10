@@ -366,10 +366,19 @@ actor SyncPullActor {
             }
         }
 
-        // Harmless final flush — every page and the replay step above
-        // already saved before its own cursor moved, so this has nothing
-        // left to do on the success path. Kept as defensive insurance, not
-        // load-bearing for the durability contract itself.
+        // Ownership adoption (IkeruSchemaV6, P1-1): rows a pre-V6 device
+        // pushed arrive with `profile_id = null` and were inserted as such
+        // above. Attribute them to this device's active profile now, in the
+        // same transaction as the pull, so no read ever sees them unowned
+        // and the next push carries the owner back up. Nothing to adopt is
+        // the normal case and costs one predicate fetch per table.
+        if let owner = ActiveProfileLookup.resolve(in: modelContext)?.id {
+            try OwnershipAdoption.adoptUnownedRows(into: owner, in: modelContext)
+        }
+
+        // Final flush — every page and the replay step above already saved
+        // before its own cursor moved; what is left here is the adoption
+        // just above, plus defensive insurance for the rest.
         try modelContext.save()
         return summary
     }

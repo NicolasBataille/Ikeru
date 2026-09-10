@@ -17,7 +17,12 @@ import SwiftData
 /// `Card`/`ReviewLog` directly instead of walking down from the profile. So
 /// the cascade has to be walked by hand, and it has to walk *exactly* the same
 /// graph the delete rules used to — plus `ExerciseOutcomeLog`, which is scoped
-/// by a scalar `profileID` and was never cascaded even before.
+/// by a scalar `profileID` and was never cascaded even before — plus, since
+/// `IkeruSchemaV6` (P1-1 / OBS2-051), the profile's dictionary
+/// (`VocabularyEntry` and their `VocabularyEncounter`s) and its imported
+/// texts (`TextImport`), both scalar-scoped the same way. Before V6 they had no
+/// owner and survived every deletion, which the deletion screen had to
+/// confess in a « What stays » card; that card is gone with this cascade.
 ///
 /// It lives in `IkeruCore` rather than inline in `ProfileViewModel` for one
 /// concrete reason: `IkeruTests/ProfileViewModelTests` cannot currently be
@@ -29,7 +34,8 @@ import SwiftData
 public enum ProfileDeletion {
 
     /// Tombstones `profile` and every row the old `.cascade` delete rules
-    /// reached, plus its `ExerciseOutcomeLog` rows.
+    /// reached, plus its `ExerciseOutcomeLog`, `VocabularyEntry` (with their
+    /// encounters) and `TextImport` rows.
     ///
     /// All rows get the **same** instant, and `SoftDeletable.tombstone(at:)`
     /// is idempotent, so a row already deleted earlier keeps its original
@@ -58,6 +64,29 @@ public enum ProfileDeletion {
         )
         for outcome in (try? context.fetch(outcomeDescriptor)) ?? [] {
             outcome.tombstone(at: now)
+        }
+
+        // The dictionary and the imported texts — scalar-scoped like the
+        // outcomes, and only owned since V6. An entry's encounters are a
+        // relationship, so they are walked, not fetched (same as the cards'
+        // review logs below); `VocabularyModelActor.deleteEntry` does the
+        // same for a single entry. An import's entries are NOT resolved
+        // through `entryIDs` here: they belong to the same profile and are
+        // already covered by the entry sweep.
+        let entryDescriptor = FetchDescriptor<VocabularyEntry>(
+            predicate: #Predicate { $0.profileID == profileID && $0.deletedAt == nil }
+        )
+        for entry in (try? context.fetch(entryDescriptor)) ?? [] {
+            entry.tombstone(at: now)
+            for encounter in entry.encounters ?? [] {
+                encounter.tombstone(at: now)
+            }
+        }
+        let importDescriptor = FetchDescriptor<TextImport>(
+            predicate: #Predicate { $0.profileID == profileID && $0.deletedAt == nil }
+        )
+        for record in (try? context.fetch(importDescriptor)) ?? [] {
+            record.tombstone(at: now)
         }
 
         // The graph the `.cascade` rules used to walk.

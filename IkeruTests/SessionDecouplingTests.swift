@@ -22,15 +22,16 @@ struct SessionDecouplingTests {
     // MARK: - Helpers
 
     private func makeContainer() throws -> ModelContainer {
-        // Full current (V4) schema so pool-drill outcomes (ExerciseOutcomeLog)
-        // can persist. Must be V4, not V3: `IkeruSchemaV3` is now frozen
-        // (nested snapshot types, cloud-sync lot 0, 2026-08-13) — a
-        // container opened with `versionedSchema: IkeruSchemaV3.self` would
-        // bind this suite's live-type fetches (via `ActiveProfileResolver` /
+        // Full current (V6) schema so pool-drill outcomes (ExerciseOutcomeLog)
+        // can persist. Must be the LIVE version: every earlier one now nests
+        // frozen snapshots (V3 froze everything on 2026-08-13; V4 and V5
+        // froze `VocabularyEntry`/`VocabularyEncounter` on 2026-09-09) — a
+        // container opened with an older `versionedSchema:` would bind this
+        // suite's live-type fetches (via `ActiveProfileResolver` /
         // `SessionViewModel`) to the WRONG entity identity and crash with
         // "Failed to cast model ... to X". See IkeruSchema.swift's
         // `IkeruSchemaV3` doc comment.
-        let schema = Schema(versionedSchema: IkeruSchemaV4.self)
+        let schema = Schema(versionedSchema: IkeruSchemaV6.self)
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         ActiveProfileResolver.setActiveProfileID(nil)
         return try ModelContainer(for: schema, configurations: [config])
@@ -612,10 +613,9 @@ struct NewCardPresentationTests {
     // MARK: - Integration (SessionViewModel)
 
     private func makeContainer() throws -> ModelContainer {
-        // V4, not V3: `IkeruSchemaV3` is now frozen (nested snapshot types,
-        // cloud-sync lot 0, 2026-08-13) — see the other `makeContainer()`
-        // above in this file for the full "Failed to cast model" story.
-        let schema = Schema(versionedSchema: IkeruSchemaV4.self)
+        // V6, the live version — see the other `makeContainer()` above in
+        // this file for the full "Failed to cast model" story.
+        let schema = Schema(versionedSchema: IkeruSchemaV6.self)
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         ActiveProfileResolver.setActiveProfileID(nil)
         return try ModelContainer(for: schema, configurations: [config])

@@ -4,9 +4,42 @@ import SwiftData
 @testable import IkeruCore
 
 private func makeTestContainer() throws -> ModelContainer {
-    let schema = Schema([TextImport.self, VocabularyEntry.self, VocabularyEncounter.self])
+    let schema = Schema([UserProfile.self, TextImport.self, VocabularyEntry.self, VocabularyEncounter.self])
     let config = ModelConfiguration(isStoredInMemoryOnly: true)
+    UserDefaults.standard.removeObject(forKey: UserProfile.activeProfileIDDefaultsKey)
     return try ModelContainer(for: schema, configurations: [config])
+}
+
+// MARK: - Un propriétaire par import (IkeruSchemaV6, P1-1 / OBS2-022)
+
+/// Vu ROUGE avec le prédicat de scoping de `all()` neutralisé.
+@Suite("Imports de texte — propriétaire", .serialized)
+struct TextImportRepositoryOwnershipTests {
+
+    @Test("Le journal de lecture d'un profil ne montre pas les textes de l'autre")
+    func journalIsScopedToTheActiveProfile() async throws {
+        let container = try makeTestContainer()
+        let context = ModelContext(container)
+        let zed = UserProfile(displayName: "Zed")
+        let neo = UserProfile(displayName: "Neo")
+        context.insert(zed)
+        context.insert(neo)
+        try context.save()
+        let repository = TextImportRepository(modelContainer: container)
+
+        UserDefaults.standard.set(zed.id.uuidString, forKey: UserProfile.activeProfileIDDefaultsKey)
+        let zedText = await repository.create(content: "傘を持っていこう。", source: .paste,
+                                              coverage: nil, entryIDs: [])
+
+        UserDefaults.standard.set(neo.id.uuidString, forKey: UserProfile.activeProfileIDDefaultsKey)
+        #expect(await repository.all().isEmpty, "Neo sees Zed's reading journal")
+        #expect(await repository.textImport(by: zedText.id) == nil)
+        // Nor can Neo delete it.
+        #expect(await repository.delete(id: zedText.id).isEmpty)
+
+        UserDefaults.standard.set(zed.id.uuidString, forKey: UserProfile.activeProfileIDDefaultsKey)
+        #expect(await repository.all().map(\.id) == [zedText.id])
+    }
 }
 
 // MARK: - Imports de texte

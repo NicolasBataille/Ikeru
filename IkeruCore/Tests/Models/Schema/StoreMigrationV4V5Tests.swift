@@ -14,10 +14,11 @@ import Foundation
 // ("Failed to cast model … to X"). Process isolation — not `.serialized`, not
 // `--no-parallel` alone — is the only reliable containment.
 //
-// V4 and V5 both name LIVE top-level types (V4 has no frozen nested snapshots),
-// so the poisoning mechanism is less likely to fire here than in the V1/V2/V3
-// suites. "Less likely" is not "cannot", and a green full run proves nothing
-// about that — see CLAUDE.md. The suite stays isolated.
+// Since 2026-09-09 (IkeruSchemaV6) V4 and V5 both nest frozen snapshots of
+// `VocabularyEntry` / `VocabularyEncounter` (and V5 of `TextImport`), so the
+// poisoning mechanism applies here exactly as in the V1/V2/V3 suites: seeding
+// uses `IkeruSchemaV4.*`, reading back uses `IkeruSchemaV5.*`, and the live
+// types are never fetched in this process.
 //
 // Suite name deliberately distinct from "StoreMigrationV2V3",
 // "StoreMigrationV3V4", "LegacyStoreMigration" and "IkeruSchema": those are the
@@ -50,11 +51,12 @@ struct StoreMigrationV4V5Tests {
 
         // 1. A genuine V4 store: `Schema(versionedSchema: IkeruSchemaV4.self)`
         //    with NO migration plan, exactly how the shipped app created its
-        //    store before V5 existed. V4 names the LIVE types, and at this
-        //    commit the live types are still V4-shaped (nothing outside
-        //    `TextImport` changed) — so seeding with the top-level types is
-        //    seeding V4, not a later shape. `IkeruSchemaTests.v4GoldenFingerprint`
-        //    is what keeps that sentence true.
+        //    store before V5 existed. `UserProfile`/`Card`/`ReviewLog`/
+        //    `RPGState`/`ExerciseOutcomeLog`/`CompanionChatMessage` are still
+        //    the live types in V4 (their shape has not moved since);
+        //    `VocabularyEntry`/`VocabularyEncounter` are V4's frozen nested
+        //    snapshots. `IkeruSchemaTests.v4GoldenFingerprint` is what keeps
+        //    that sentence true.
         do {
             let schema = Schema(versionedSchema: IkeruSchemaV4.self)
             let config = ModelConfiguration(schema: schema, url: url)
@@ -77,13 +79,13 @@ struct StoreMigrationV4V5Tests {
                                 surface: "iphone.session")
             ctx.insert(log)
 
-            let entry = VocabularyEntry(word: "傘", reading: "かさ", meaning: "parapluie",
-                                        isInDictionary: true)
+            let entry = IkeruSchemaV4.VocabularyEntry(word: "傘", reading: "かさ", meaning: "parapluie",
+                                                      isInDictionary: true)
             entry.id = entryID
             ctx.insert(entry)
-            let encounter = VocabularyEncounter(source: .sakuraChat,
-                                                contextSnippet: "傘を持っていこう。",
-                                                entry: entry)
+            let encounter = IkeruSchemaV4.VocabularyEncounter(source: .sakuraChat,
+                                                              contextSnippet: "傘を持っていこう。",
+                                                              entry: entry)
             ctx.insert(encounter)
 
             let outcome = ExerciseOutcomeLog(skill: .reading, accuracy: 0.82, profileID: profileID)
@@ -135,12 +137,12 @@ struct StoreMigrationV4V5Tests {
         #expect(logs.first?.surface == "iphone.session")
         #expect(logs.first?.card?.id == cards.first?.id)
 
-        let entries = try ctx.fetch(FetchDescriptor<VocabularyEntry>())
+        let entries = try ctx.fetch(FetchDescriptor<IkeruSchemaV5.VocabularyEntry>())
         #expect(entries.count == 1)
         #expect(entries.first?.id == entryID)
         #expect(entries.first?.meaning == "parapluie")
 
-        let encounters = try ctx.fetch(FetchDescriptor<VocabularyEncounter>())
+        let encounters = try ctx.fetch(FetchDescriptor<IkeruSchemaV5.VocabularyEncounter>())
         #expect(encounters.count == 1)
         #expect(encounters.first?.contextSnippet == "傘を持っていこう。")
         #expect(encounters.first?.entry?.id == entryID)
@@ -150,15 +152,19 @@ struct StoreMigrationV4V5Tests {
 
         // The new entity's table exists and is empty — an upgrading learner has
         // no imports yet, and asking for them must return nothing, not throw.
-        #expect(try ctx.fetch(FetchDescriptor<TextImport>()).isEmpty)
+        #expect(try ctx.fetch(FetchDescriptor<IkeruSchemaV5.TextImport>()).isEmpty)
 
         // 3. The new entity is usable in the migrated store, `[UUID]` column
         //    included. Written here, read back in step 4 from a store that was
         //    closed in between — an array property that only works while the
         //    container is warm would pass an in-memory test and lose the
         //    learner's words on the next launch.
-        let record = TextImport(content: "今日は雨が降っている。\n傘を持っていこう。",
-                                source: .photo, coverage: 0.78, entryIDs: [entryID])
+        // The frozen V5 snapshot takes the title as given (no first-line
+        // derivation — see its doc comment); the derivation itself is pinned
+        // by `TextImportRepositoryTests`.
+        let record = IkeruSchemaV5.TextImport(title: "今日は雨が降っている。",
+                                              content: "今日は雨が降っている。\n傘を持っていこう。",
+                                              source: .photo, coverage: 0.78, entryIDs: [entryID])
         let recordID = record.id
         ctx.insert(record)
         try ctx.save()
@@ -173,16 +179,16 @@ struct StoreMigrationV4V5Tests {
         )
         let ctxAgain = ModelContext(containerAgain)
         let reread = try #require(try ctxAgain.fetch(
-            FetchDescriptor<TextImport>(predicate: #Predicate { $0.id == recordID })
+            FetchDescriptor<IkeruSchemaV5.TextImport>(predicate: #Predicate { $0.id == recordID })
         ).first)
         // The learner's text, byte for byte — never re-derived, never trimmed.
         #expect(reread.content == "今日は雨が降っている。\n傘を持っていこう。")
         #expect(reread.title == "今日は雨が降っている。")
-        #expect(reread.source == .photo)
+        #expect(reread.sourceRawValue == "photo")
         #expect(reread.coverage == 0.78)
         #expect(reread.entryIDs == [entryID])
         // And the V4 rows are still there after the second open.
-        #expect(try ctxAgain.fetch(FetchDescriptor<VocabularyEntry>()).count == 1)
+        #expect(try ctxAgain.fetch(FetchDescriptor<IkeruSchemaV5.VocabularyEntry>()).count == 1)
         #expect(try ctxAgain.fetch(FetchDescriptor<UserProfile>()).count == 1)
     }
 }

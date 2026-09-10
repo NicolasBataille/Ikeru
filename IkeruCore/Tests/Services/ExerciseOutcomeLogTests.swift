@@ -38,15 +38,15 @@ struct ExerciseOutcomeAccuracyTests {
 struct ExerciseOutcomeLogAggregationTests {
 
     private func makeContainer() throws -> ModelContainer {
-        // Full current (V4) schema so the ExerciseOutcomeLog entity is
-        // present. Must be V4, not V3: `IkeruSchemaV3` is now frozen (nested
-        // snapshot types, cloud-sync lot 0, 2026-08-13) — a container opened
-        // with `versionedSchema: IkeruSchemaV3.self` would bind
+        // Full current (V6) schema so the ExerciseOutcomeLog entity is
+        // present. Must be the LIVE version: every earlier one nests frozen
+        // snapshot types (V3 since 2026-08-13, V4/V5 since 2026-09-09) — a
+        // container opened with an older `versionedSchema:` would bind
         // `CardRepository`'s live-type fetches (UserProfile/Card/
         // ReviewLog/RPGState, used throughout this suite) to the WRONG
         // entity identity and crash with "Failed to cast model ... to X".
         // See IkeruSchema.swift's `IkeruSchemaV3` doc comment.
-        let schema = Schema(versionedSchema: IkeruSchemaV4.self)
+        let schema = Schema(versionedSchema: IkeruSchemaV6.self)
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         return try ModelContainer(for: schema, configurations: [config])
     }
@@ -259,26 +259,26 @@ struct LegacyStoreMigrationTests {
             try ctx.save()
         }
 
-        // 2. Reopen with the CURRENT (V4) schema + migration plan → ALL
-        //    THREE lightweight stages run in sequence (V1→V2, V2→V3, then
-        //    V3→V4) — exactly what production does. Must target V4, not V3:
-        //    `IkeruSchemaV3` is now frozen (nested snapshot types,
-        //    cloud-sync lot 0), so a container opened with `versionedSchema:
-        //    IkeruSchemaV3.self` would bind the live-type fetches below to
-        //    the WRONG entity identity and crash with "Failed to cast model
-        //    ... to X" — the same failure class this test exists to catch,
-        //    just one version later.
-        let schemaV4 = Schema(versionedSchema: IkeruSchemaV4.self)
-        let configV4 = ModelConfiguration(schema: schemaV4, url: url)
-        let containerV4 = try ModelContainer(
-            for: schemaV4,
+        // 2. Reopen with the CURRENT (V6) schema + migration plan → ALL
+        //    FIVE lightweight stages run in sequence (V1→V2 … V5→V6) —
+        //    exactly what production does. Must target the LIVE version:
+        //    every earlier one nests frozen snapshot types (V3 since
+        //    2026-08-13, V4/V5 since 2026-09-09), so a container opened with
+        //    an older `versionedSchema:` would bind the live-type fetches
+        //    below to the WRONG entity identity and crash with "Failed to
+        //    cast model ... to X" — the same failure class this test exists
+        //    to catch, just one version later.
+        let schemaV6 = Schema(versionedSchema: IkeruSchemaV6.self)
+        let configV6 = ModelConfiguration(schema: schemaV6, url: url)
+        let containerV6 = try ModelContainer(
+            for: schemaV6,
             migrationPlan: IkeruMigrationPlan.self,
-            configurations: [configV4]
+            configurations: [configV6]
         )
-        let ctx = ModelContext(containerV4)
+        let ctx = ModelContext(containerV6)
 
-        // V1 data survived intact through ALL THREE stages — now readable
-        // through the LIVE (V4) types.
+        // V1 data survived intact through ALL FIVE stages — now readable
+        // through the LIVE (V6) types.
         let profiles = try ctx.fetch(FetchDescriptor<UserProfile>())
         #expect(profiles.count == 1)
         #expect(profiles.first?.displayName == "Migrator")

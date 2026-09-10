@@ -98,20 +98,21 @@ struct IkeruApp: App {
     let modelContainer: ModelContainer
 
     init() {
-        // Current versioned schema (IkeruSchemaV5) + migration plan so
+        // Current versioned schema (IkeruSchemaV6) + migration plan so
         // @Model changes migrate explicitly instead of relying on implicit
         // lightweight migration. The plan carries the V1→V2 stage that adds
         // ExerciseOutcomeLog, V2→V3 which adds the answer provenance fields
         // on ReviewLog, then V3→V4 which adds the cloud-sync columns
         // (updatedAt/deletedAt/syncedAt) to the 8 synchronized entities —
-        // see docs/design-specs/2026-08-10-cloud-sync-design.md §5.1. See
-        // IkeruSchema.swift in IkeruCore.
+        // see docs/design-specs/2026-08-10-cloud-sync-design.md §5.1 — then
+        // V4→V5 (`TextImport`) and V5→V6 (`profileID` on the dictionary and
+        // the imports). See IkeruSchema.swift in IkeruCore.
         //
         // This MUST name the latest version. Declaring an older one opens the
         // container without error and then traps on the first insert
         // ("Failed to cast model IkeruCore.UserProfile"), which the store
         // recovery below cannot catch — it only wraps makeModelContainer.
-        let schema = Schema(versionedSchema: IkeruSchemaV5.self)
+        let schema = Schema(versionedSchema: IkeruSchemaV6.self)
 
         do {
             modelContainer = try Self.makeModelContainer(schema: schema)
@@ -150,6 +151,15 @@ struct IkeruApp: App {
             }
             #endif
         }
+
+        // Ownership adoption (IkeruSchemaV6, P1-1): after the V5→V6 migration
+        // every dictionary entry and imported text arrives with no owner. They
+        // are attributed to the active profile HERE, synchronously, before any
+        // view can read — a `.task` on the root view races the Explore tab's
+        // own `.task`, and the learner would open an empty dictionary on the
+        // first launch after the update. Normal launches find nothing to
+        // adopt and pay one predicate fetch per table.
+        Self.adoptUnownedRows(in: modelContainer)
 
         // Initialise the AssetCache synchronously so the first body evaluation
         // already sees a non-nil environment value. AssetCache init is pure
@@ -280,6 +290,27 @@ struct IkeruApp: App {
             migrationPlan: IkeruMigrationPlan.self,
             configurations: [storeConfiguration(schema: schema)]
         )
+    }
+
+    /// See the call site in `init()`. A failure here is logged, never fatal:
+    /// the rows stay unowned and the next launch (or the next pull, which
+    /// runs the same adoption) tries again.
+    private static func adoptUnownedRows(in container: ModelContainer) {
+        MainActor.assumeIsolated {
+            let context = container.mainContext
+            guard let owner = ActiveProfileLookup.resolve(in: context)?.id else { return }
+            do {
+                let result = try OwnershipAdoption.adoptUnownedRows(into: owner, in: context)
+                if !result.isEmpty {
+                    try context.save()
+                    Logger.srs.info(
+                        "Adopted \(result.entries) dictionary entries and \(result.imports) imports into the active profile"
+                    )
+                }
+            } catch {
+                Logger.srs.error("Ownership adoption failed: \(error)")
+            }
+        }
     }
 
     // MARK: - Deep Links

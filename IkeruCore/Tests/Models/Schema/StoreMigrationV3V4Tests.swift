@@ -141,12 +141,14 @@ struct StoreMigrationV3V4Tests {
         // The relationship-pair freeze (VocabularyEntry ↔ VocabularyEncounter)
         // survives too — this is the pair the 2026-08-13 freeze-set expansion
         // exists to protect.
-        let vocabEntries = try ctx.fetch(FetchDescriptor<VocabularyEntry>())
+        // `IkeruSchemaV4.VocabularyEntry`, not the live type: V4 nests a frozen
+        // snapshot since V6 (2026-09-09), so the entity is bound to that class.
+        let vocabEntries = try ctx.fetch(FetchDescriptor<IkeruSchemaV4.VocabularyEntry>())
         #expect(vocabEntries.count == 1)
         #expect(vocabEntries.first?.word == "六つ")
         #expect(vocabEntries.first?.updatedAt == Date(timeIntervalSince1970: 0))
 
-        let vocabEncounters = try ctx.fetch(FetchDescriptor<VocabularyEncounter>())
+        let vocabEncounters = try ctx.fetch(FetchDescriptor<IkeruSchemaV4.VocabularyEncounter>())
         #expect(vocabEncounters.count == 1)
         #expect(vocabEncounters.first?.contextSnippet == "六つあります。")
         #expect(vocabEncounters.first?.entry?.id == vocabEntries.first?.id)

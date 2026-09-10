@@ -1,6 +1,6 @@
 // swiftlint:disable file_length
 // This file is an append-only history of frozen `VersionedSchema` snapshots
-// (V1 through V3) plus the live V4 and V5 schemas. Splitting it across files would
+// (V1 through V5) plus the live V6 schema. Splitting it across files would
 // break the name-shadowing trick each frozen enum relies on (nested @Model
 // types must live inside their own versioned-schema enum body — see V1's doc
 // comment) and would scatter a single coherent story about what shipped
@@ -1366,6 +1366,9 @@ public enum IkeruSchemaV4: VersionedSchema {
     public static var versionIdentifier: Schema.Version { Schema.Version(4, 0, 0) }
 
     public static var models: [any PersistentModel.Type] {
+        // Name-shadowing rule applies here exactly as in V1/V2/V3 — see their
+        // comments on `models`. `VocabularyEntry` / `VocabularyEncounter`
+        // resolve to the nested snapshots below; the rest are still live.
         [
             UserProfile.self,
             Card.self,
@@ -1379,6 +1382,114 @@ public enum IkeruSchemaV4: VersionedSchema {
             DailyTerm.self,
             ExerciseOutcomeLog.self,
         ]
+    }
+
+    // MARK: - Frozen snapshots
+    //
+    // Pinned on 2026-09-09 (IkeruSchemaV6, P1-1 / OBS2-022): the live
+    // `VocabularyEntry` gains `profileID` in V6, and V4 named it LIVE. Without
+    // these two snapshots, `IkeruSchemaV4.models` would silently start
+    // describing V6's shape — the `aa03566` failure this file opens with.
+    // This is a **pinning** operation: both classes are byte-identical in
+    // persisted shape to what shipped as V4, which `IkeruSchemaTests.
+    // v4GoldenFingerprint` proves by keeping its digest (`f012779f43f39734`)
+    // unchanged across this commit. Nested together because of the mutual
+    // `@Relationship`, exactly as V1–V3 do.
+    //
+    // ⚠️ Consequence for tests: opening a container on `IkeruSchemaV4` now
+    // binds the `VocabularyEntry` entity to THIS class for the whole process.
+    // Every suite that used to open V4 in a shared process moved to the live
+    // schema (`IkeruSchemaV6`) in the same commit; only the isolated migration
+    // suites may open V4, and they seed it with `IkeruSchemaV4.VocabularyEntry`.
+
+    /// Frozen snapshot of `VocabularyEntry` at V4 — V1's shape plus the three
+    /// cloud-sync columns. No `profileID`: that is V6.
+    @Model
+    public final class VocabularyEntry {
+
+        public var id: UUID
+        public var word: String
+        public var reading: String
+        public var meaning: String
+        public var jlptLevelRawValue: String?
+        public var fsrsState: FSRSState
+        public var easeFactor: Double
+        public var interval: Int
+        public var dueDate: Date
+        public var lapseCount: Int
+        public var isInDictionary: Bool = false
+        public var createdAt: Date
+
+        @Relationship(deleteRule: .cascade, inverse: \VocabularyEncounter.entry)
+        public var encounters: [VocabularyEncounter]?
+
+        public var updatedAt: Date = Date(timeIntervalSince1970: 0)
+        public var deletedAt: Date?
+        public var syncedAt: Date?
+
+        public init(
+            word: String,
+            reading: String,
+            meaning: String,
+            jlptLevel: JLPTLevel? = nil,
+            isInDictionary: Bool = true,
+            fsrsState: FSRSState = FSRSState(),
+            easeFactor: Double = 2.5,
+            interval: Int = 0,
+            dueDate: Date = Date(),
+            lapseCount: Int = 0,
+            createdAt: Date = Date()
+        ) {
+            self.id = UUID()
+            self.word = word
+            self.reading = reading
+            self.meaning = meaning
+            self.jlptLevelRawValue = jlptLevel?.rawValue
+            self.isInDictionary = isInDictionary
+            self.fsrsState = fsrsState
+            self.easeFactor = easeFactor
+            self.interval = interval
+            self.dueDate = dueDate
+            self.lapseCount = lapseCount
+            self.createdAt = createdAt
+            self.encounters = []
+            self.updatedAt = Date()
+            self.deletedAt = nil
+            self.syncedAt = nil
+        }
+    }
+
+    /// Frozen snapshot of `VocabularyEncounter` at V4 — V1's shape plus the
+    /// three cloud-sync columns. Unchanged in V5 and V6; frozen here only
+    /// because of the relationship pair.
+    @Model
+    public final class VocabularyEncounter {
+
+        public var id: UUID
+        public var timestamp: Date
+        public var sourceRawValue: String
+        public var contextSnippet: String
+        public var entry: VocabularyEntry?
+
+        public var updatedAt: Date = Date(timeIntervalSince1970: 0)
+        public var deletedAt: Date?
+        public var syncedAt: Date?
+
+        public init(
+            source: EncounterSource,
+            contextSnippet: String,
+            entry: VocabularyEntry,
+            timestamp: Date = Date()
+        ) {
+            self.id = UUID()
+            self.timestamp = timestamp
+            self.sourceRawValue = source.rawValue
+            self.contextSnippet = contextSnippet
+            self.entry = entry
+            self.updatedAt = Date()
+            self.deletedAt = nil
+            self.syncedAt = nil
+        }
     }
 }
 
@@ -1396,13 +1507,188 @@ public enum IkeruSchemaV4: VersionedSchema {
 /// own side instead (see its doc comment), so V4 keeps meaning exactly what it
 /// meant and this stage stays `.lightweight`.
 ///
-/// - Important: V4 is now frozen in the same sense as V1–V3 — its `models` list
-///   names live types, so **any** future change to `VocabularyEncounter`,
-///   `VocabularyEntry`, `Card`, `UserProfile` or `RPGState` must first pin a
-///   nested snapshot into V4, exactly as V1 did.
+/// - Important: V5 is frozen in the same sense as V4 — `Card`, `UserProfile`,
+///   `ReviewLog` and `RPGState` are still named LIVE here (and in V4), so
+///   **any** future change to one of them must first pin a nested snapshot
+///   into V4 AND V5, exactly as V6 did for `VocabularyEntry` and `TextImport`.
 public enum IkeruSchemaV5: VersionedSchema {
 
     public static var versionIdentifier: Schema.Version { Schema.Version(5, 0, 0) }
+
+    public static var models: [any PersistentModel.Type] {
+        // `VocabularyEntry` / `VocabularyEncounter` / `TextImport` resolve to
+        // the nested snapshots below (name shadowing, as in V1–V4).
+        [
+            UserProfile.self,
+            Card.self,
+            ReviewLog.self,
+            RPGState.self,
+            MnemonicCache.self,
+            CompanionChatMessage.self,
+            AssetManifest.self,
+            VocabularyEntry.self,
+            VocabularyEncounter.self,
+            DailyTerm.self,
+            ExerciseOutcomeLog.self,
+            TextImport.self,
+        ]
+    }
+
+    // MARK: - Frozen snapshots
+    //
+    // Pinned on 2026-09-09 with V6 (P1-1 / OBS2-022), for the reason written
+    // on V4's snapshots: V6 grows the live `VocabularyEntry` and `TextImport`,
+    // and V5 named both live. `IkeruSchemaTests.v5GoldenFingerprint` keeps its
+    // digest (`57d176f4027e3f9f`) unchanged across the pin — a changed digest
+    // would mean the snapshot was EDITED, not pinned.
+
+    /// Frozen snapshot of `VocabularyEntry` at V5 — identical to V4's.
+    @Model
+    public final class VocabularyEntry {
+
+        public var id: UUID
+        public var word: String
+        public var reading: String
+        public var meaning: String
+        public var jlptLevelRawValue: String?
+        public var fsrsState: FSRSState
+        public var easeFactor: Double
+        public var interval: Int
+        public var dueDate: Date
+        public var lapseCount: Int
+        public var isInDictionary: Bool = false
+        public var createdAt: Date
+
+        @Relationship(deleteRule: .cascade, inverse: \VocabularyEncounter.entry)
+        public var encounters: [VocabularyEncounter]?
+
+        public var updatedAt: Date = Date(timeIntervalSince1970: 0)
+        public var deletedAt: Date?
+        public var syncedAt: Date?
+
+        public init(
+            word: String,
+            reading: String,
+            meaning: String,
+            jlptLevel: JLPTLevel? = nil,
+            isInDictionary: Bool = true,
+            fsrsState: FSRSState = FSRSState(),
+            easeFactor: Double = 2.5,
+            interval: Int = 0,
+            dueDate: Date = Date(),
+            lapseCount: Int = 0,
+            createdAt: Date = Date()
+        ) {
+            self.id = UUID()
+            self.word = word
+            self.reading = reading
+            self.meaning = meaning
+            self.jlptLevelRawValue = jlptLevel?.rawValue
+            self.isInDictionary = isInDictionary
+            self.fsrsState = fsrsState
+            self.easeFactor = easeFactor
+            self.interval = interval
+            self.dueDate = dueDate
+            self.lapseCount = lapseCount
+            self.createdAt = createdAt
+            self.encounters = []
+            self.updatedAt = Date()
+            self.deletedAt = nil
+            self.syncedAt = nil
+        }
+    }
+
+    /// Frozen snapshot of `VocabularyEncounter` at V5 — identical to V4's.
+    @Model
+    public final class VocabularyEncounter {
+
+        public var id: UUID
+        public var timestamp: Date
+        public var sourceRawValue: String
+        public var contextSnippet: String
+        public var entry: VocabularyEntry?
+
+        public var updatedAt: Date = Date(timeIntervalSince1970: 0)
+        public var deletedAt: Date?
+        public var syncedAt: Date?
+
+        public init(
+            source: EncounterSource,
+            contextSnippet: String,
+            entry: VocabularyEntry,
+            timestamp: Date = Date()
+        ) {
+            self.id = UUID()
+            self.timestamp = timestamp
+            self.sourceRawValue = source.rawValue
+            self.contextSnippet = contextSnippet
+            self.entry = entry
+            self.updatedAt = Date()
+            self.deletedAt = nil
+            self.syncedAt = nil
+        }
+    }
+
+    /// Frozen snapshot of `TextImport` as it shipped in V5 — the ten columns
+    /// `IkeruSchemaTests.v5TextImportColumns` lists, and no `profileID`.
+    /// The initializer takes the title as given (no first-line derivation):
+    /// only the persisted shape is frozen, and the migration suite is its
+    /// only caller.
+    @Model
+    public final class TextImport {
+
+        public var id: UUID
+        public var title: String
+        public var content: String
+        public var sourceRawValue: String
+        public var createdAt: Date
+        public var coverage: Double?
+        public var entryIDs: [UUID]
+
+        public var updatedAt: Date = Date(timeIntervalSince1970: 0)
+        public var deletedAt: Date?
+        public var syncedAt: Date?
+
+        public init(id: UUID = UUID(), title: String, content: String,
+                    source: ImportSource = .paste, createdAt: Date = Date(),
+                    coverage: Double? = nil, entryIDs: [UUID] = []) {
+            self.id = id
+            self.title = title
+            self.content = content
+            self.sourceRawValue = source.rawValue
+            self.createdAt = createdAt
+            self.coverage = coverage
+            self.entryIDs = entryIDs
+            self.updatedAt = createdAt
+        }
+    }
+}
+
+// MARK: - Versioned Schema V6
+
+/// **V6** — gives the personal dictionary and the imported texts an owner
+/// (P1-1 / OBS2-022, 037, 051): `VocabularyEntry.profileID` and
+/// `TextImport.profileID`, both optional scalars.
+///
+/// Additive, and `.lightweight`: two new nullable columns, no entity added or
+/// removed. Existing rows migrate with `profileID == nil` — « not yet
+/// attributed » — and `OwnershipAdoption` assigns them to the active profile
+/// on the first launch after the update (and after every pull, for rows a
+/// pre-V6 device may still push with a null `profile_id`).
+///
+/// Why a scalar and not a `@Relationship` to `UserProfile`: the relationship's
+/// inverse would have grown `UserProfile`, which V4 and V5 name LIVE, and the
+/// freeze would then have had to cover the whole
+/// `UserProfile`/`Card`/`ReviewLog`/`RPGState` quartet in both versions.
+/// `ExerciseOutcomeLog` already set the precedent, and `ProfileDeletion.
+/// tombstoneGraph` already knows how to walk a scalar-scoped entity.
+///
+/// - Important: V6 is the live schema. Its `models` name live types, so the
+///   next change to ANY of them must first pin nested snapshots here (and in
+///   every earlier version that still names that type live).
+public enum IkeruSchemaV6: VersionedSchema {
+
+    public static var versionIdentifier: Schema.Version { Schema.Version(6, 0, 0) }
 
     public static var models: [any PersistentModel.Type] {
         [
@@ -1431,20 +1717,20 @@ public enum IkeruSchemaV5: VersionedSchema {
 /// `IkeruSchemaV2` is frozen at the shape that shipped before the
 /// learner-telemetry `ReviewLog` fields; `IkeruSchemaV3` is frozen at the
 /// shape that shipped before the cloud-sync columns; `IkeruSchemaV4` is frozen
-/// at the shape that shipped before `TextImport`; `IkeruSchemaV5` is the live
-/// current shape. All FOUR stages are purely additive — new defaulted/optional
-/// columns, and (for V1→V2 and V4→V5) a wholly new entity — so `.lightweight`
-/// is sufficient for each: SwiftData adds the new columns/table and leaves
-/// prior data untouched.
+/// at the shape that shipped before `TextImport`; `IkeruSchemaV5` is frozen at
+/// the shape that shipped before the dictionary and imports had an owner;
+/// `IkeruSchemaV6` is the live current shape. All FIVE stages are purely
+/// additive — new defaulted/optional columns, and (for V1→V2 and V4→V5) a
+/// wholly new entity — so `.lightweight` is sufficient for each: SwiftData
+/// adds the new columns/table and leaves prior data untouched.
 ///
-/// ⚠️ « Frozen » means something different for V4 than for V1–V3: V4's `models`
-/// still names LIVE classes, so it is frozen by *discipline and by the golden
-/// digest*, not by nested snapshots. Freezing it properly — the way V1 did —
-/// would break `KanaSessionEndToEndTests` and `SessionDecouplingTests`, which
-/// open a container on `IkeruSchemaV4` inside the shared `IkeruTests` process:
-/// nested frozen classes there would poison CoreData's entity↔class cache, the
-/// exact failure CLAUDE.md quarantines the migration suites for. Move those two
-/// suites to V5 first, or out of the shared process.
+/// ⚠️ « Frozen » is partial for V4 and V5: only `VocabularyEntry`,
+/// `VocabularyEncounter` (and `TextImport` in V5) are nested snapshots; `Card`,
+/// `UserProfile`, `ReviewLog`, `RPGState` are still named LIVE there and are
+/// frozen by *discipline and by the golden digest*. The note that used to
+/// stand here — « freezing V4 properly would break `KanaSessionEndToEndTests`
+/// and `SessionDecouplingTests` » — was acted on with V6: every shared-process
+/// suite that opened V4 now opens the live schema.
 ///
 /// When a future `@Model` change needs data transformation (renames with
 /// data preservation, split/merge fields, etc.), use `.custom(...)` instead
@@ -1453,7 +1739,7 @@ public enum IkeruMigrationPlan: SchemaMigrationPlan {
 
     public static var schemas: [any VersionedSchema.Type] {
         [IkeruSchemaV1.self, IkeruSchemaV2.self, IkeruSchemaV3.self,
-         IkeruSchemaV4.self, IkeruSchemaV5.self]
+         IkeruSchemaV4.self, IkeruSchemaV5.self, IkeruSchemaV6.self]
     }
 
     public static var stages: [MigrationStage] {
@@ -1463,6 +1749,10 @@ public enum IkeruMigrationPlan: SchemaMigrationPlan {
             .lightweight(fromVersion: IkeruSchemaV3.self, toVersion: IkeruSchemaV4.self),
             // V4 → V5 : une entité de plus (`TextImport`), rien de modifié.
             .lightweight(fromVersion: IkeruSchemaV4.self, toVersion: IkeruSchemaV5.self),
+            // V5 → V6 : deux colonnes optionnelles (`profileID`), rien d'autre.
+            // Les lignes existantes arrivent à `nil` ; `OwnershipAdoption` les
+            // rattache au profil actif au premier lancement.
+            .lightweight(fromVersion: IkeruSchemaV5.self, toVersion: IkeruSchemaV6.self),
         ]
     }
 }

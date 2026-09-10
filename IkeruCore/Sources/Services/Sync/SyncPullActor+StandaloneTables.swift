@@ -47,6 +47,11 @@ extension SyncPullActor {
                 outcomes.append(.skippedPermanent)
                 continue
             }
+            // Optional on purpose (IkeruSchemaV6): a device still on V5
+            // pushes `null`, and a null must never disqualify the row — the
+            // learner's word matters more than who it is filed under.
+            // `OwnershipAdoption` attributes it at the end of this pull.
+            let remoteOwner = SyncRowDecoding.uuid(row, "profile_id")
 
             if let existing = try fetchOne(VocabularyEntry.self, id: common.id) {
                 let winner = SyncMergeRules.resolveWinner(
@@ -64,6 +69,9 @@ extension SyncPullActor {
                     existing.dueDate = payload.dueDate
                     existing.lapseCount = payload.lapseCount
                     existing.isInDictionary = payload.isInDictionary
+                    // A remote null never erases a local owner: the remote
+                    // side simply predates V6, it has no opinion.
+                    if let remoteOwner { existing.profileID = remoteOwner }
                     existing.updatedAt = common.updatedAt
                     existing.deletedAt = common.deletedAt
                     existing.syncedAt = common.updatedAt
@@ -80,7 +88,8 @@ extension SyncPullActor {
                     interval: payload.interval,
                     dueDate: payload.dueDate,
                     lapseCount: payload.lapseCount,
-                    createdAt: payload.createdAt
+                    createdAt: payload.createdAt,
+                    profileID: remoteOwner
                 )
                 entry.id = common.id
                 entry.updatedAt = common.updatedAt
@@ -277,6 +286,8 @@ extension SyncPullActor {
                 continue
             }
             let coverage = SyncRowDecoding.number(row, "coverage")
+            // Optional for the same reason as on `vocabulary_entries` above.
+            let remoteOwner = SyncRowDecoding.uuid(row, "profile_id")
 
             if let existing = try fetchOne(TextImport.self, id: common.id) {
                 let winner = SyncMergeRules.resolveWinner(
@@ -293,6 +304,7 @@ extension SyncPullActor {
                     existing.createdAt = createdAt
                     existing.coverage = coverage
                     existing.entryIDs = entryIDs
+                    if let remoteOwner { existing.profileID = remoteOwner }
                     existing.updatedAt = common.updatedAt
                     existing.deletedAt = common.deletedAt
                     existing.syncedAt = common.updatedAt
@@ -305,7 +317,8 @@ extension SyncPullActor {
                     source: ImportSource(rawValue: sourceRawValue) ?? .paste,
                     createdAt: createdAt,
                     coverage: coverage,
-                    entryIDs: entryIDs
+                    entryIDs: entryIDs,
+                    profileID: remoteOwner
                 )
                 // Both re-asserted AFTER the initializer, which is not a
                 // pass-through: it re-derives the title from the first line

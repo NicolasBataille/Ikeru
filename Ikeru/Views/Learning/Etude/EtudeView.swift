@@ -60,6 +60,14 @@ struct ExploreView: View {
         }
         .toolbar(.hidden, for: .navigationBar)
         .task { await loadProgress() }
+        // The dictionary and the imports are per-profile since IkeruSchemaV6,
+        // and this tab stays mounted across a profile switch: without a
+        // reload, the counts below would keep showing the PREVIOUS profile's
+        // words — OBS2-022's leak, in its transient form. Same signal
+        // `HomeView` already reloads on.
+        .onReceive(NotificationCenter.default.publisher(for: .ikeruActiveProfileDidChange)) { _ in
+            Task { await loadProgress() }
+        }
         .sheet(isPresented: $showCompose) {
             if let composeViewModel {
                 ComposeSessionSheet(viewModel: composeViewModel) {
