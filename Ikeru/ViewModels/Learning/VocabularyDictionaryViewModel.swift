@@ -121,6 +121,10 @@ final class VocabularyDictionaryViewModel {
 
     private let vocabularyRepository: VocabularyRepository
 
+    /// La langue de l'interface, posée par la vue : les gloses capturées sont
+    /// résolues dedans à chaque chargement (OBS2-041).
+    var glossLocale: Locale = .current
+
     // MARK: - Init
 
     init(modelContainer: ModelContainer) {
@@ -134,7 +138,7 @@ final class VocabularyDictionaryViewModel {
     // MARK: - Actions
 
     func loadData() async {
-        entries = await vocabularyRepository.allEntries()
+        entries = await DisplayGlosses.resolve(await vocabularyRepository.allEntries(), locale: glossLocale)
         let due = await vocabularyRepository.dueEntries(before: Date())
         dueCount = due.count
         hasLoaded = true

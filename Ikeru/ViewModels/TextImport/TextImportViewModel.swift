@@ -83,7 +83,7 @@ public final class TextImportViewModel {
     /// the cloud backup, and every one of those would need to learn about a
     /// flag. « EN — » is understood everywhere, including in an export the
     /// learner opens in a text editor.
-    public static let englishLabelPrefix = "EN — "
+    public static let englishLabelPrefix = GlossResolver.englishLabelPrefix
 
     // MARK: Derived
 
@@ -108,15 +108,21 @@ public final class TextImportViewModel {
     private let dictionary: DictionaryRepository
     private let vocabulary: VocabularyRepository
     private let imports: TextImportRepository
+    /// La langue de l'interface au moment de la capture (OBS2-041) : la glose
+    /// stockée suit la langue de l'apprenant, et `GlossResolver` la re-résout
+    /// à l'affichage si la langue change ensuite.
+    private let glossLanguage: GlossLanguage
 
     public init(analyzer: JapaneseTextAnalyzer,
                 dictionary: DictionaryRepository,
                 vocabulary: VocabularyRepository,
-                imports: TextImportRepository) {
+                imports: TextImportRepository,
+                glossLanguage: GlossLanguage = .french) {
         self.analyzer = analyzer
         self.dictionary = dictionary
         self.vocabulary = vocabulary
         self.imports = imports
+        self.glossLanguage = glossLanguage
     }
 
     // MARK: Journey
@@ -233,7 +239,7 @@ public final class TextImportViewModel {
             // stocké — c'est la seule façon de la faire suivre partout
             // (dictionnaire, recto-verso, quiz, sauvegarde) sans un champ de
             // schéma, une colonne de synchro et quatre vues.
-            let gloss = entry.glossFR ?? Self.englishLabelPrefix + entry.glossEN
+            let gloss = GlossResolver.gloss(for: entry, in: glossLanguage)
                 let created = await vocabulary.addEntry(word: form, reading: entry.reading,
                                                         meaning: gloss)
                 entryID = created.id

@@ -58,6 +58,7 @@
 		A0D10F1CE0000000000B0001 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A0D10F1CE0000000000B0002 /* Assets.xcassets */; };
 		2A8442649FE4B865F041A3C3 /* FeatureTourControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E31012D5FE194F87406D24E5 /* FeatureTourControllerTests.swift */; };
 		2D7ACFA4B2B18DF787E54372 /* AppEnvironment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6955326534B6460E2F1B9C66 /* AppEnvironment.swift */; };
+		5E87D0B5628D6277A1DAFA4E /* DisplayGlosses.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70B43AD7CEB0284E4BD17459 /* DisplayGlosses.swift */; };
 		5A1C0D3E7B9F42A18C6D0E32 /* BundledContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A1C0D3E7B9F42A18C6D0E31 /* BundledContent.swift */; };
 		2D7D281D87C04B167AFE6BD2 /* VocabularyQuizView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1409278FFA9E85D0BE780A25 /* VocabularyQuizView.swift */; };
 		2E5911B53C819317FDC49F64 /* IkeruFlowLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5FD009AD0E461931F7476EE /* IkeruFlowLayout.swift */; };
@@ -419,6 +420,7 @@
 		66B13C680FC67DBFC91A70F7 /* WatchSessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchSessionManager.swift; sourceTree = "<group>"; };
 		674064B18632FB421FD3E37E /* VocabularyDrillModeSelector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VocabularyDrillModeSelector.swift; sourceTree = "<group>"; };
 		6955326534B6460E2F1B9C66 /* AppEnvironment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppEnvironment.swift; sourceTree = "<group>"; };
+		70B43AD7CEB0284E4BD17459 /* DisplayGlosses.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisplayGlosses.swift; sourceTree = "<group>"; };
 		5A1C0D3E7B9F42A18C6D0E31 /* BundledContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BundledContent.swift; sourceTree = "<group>"; };
 		6999560B934B111F55D2F3E5 /* KanaDrillSessionSummary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KanaDrillSessionSummary.swift; sourceTree = "<group>"; };
 		69C7077A729B04B8A3E50617 /* BilingualLabel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BilingualLabel.swift; sourceTree = "<group>"; };
@@ -686,6 +688,7 @@
 			isa = PBXGroup;
 			children = (
 				6955326534B6460E2F1B9C66 /* AppEnvironment.swift */,
+				70B43AD7CEB0284E4BD17459 /* DisplayGlosses.swift */,
 				5A1C0D3E7B9F42A18C6D0E31 /* BundledContent.swift */,
 				6C0690DD9A67CB231FB3B2BE /* PreWarmFactory.swift */,
 				C4E3A9795F94E20D35EBA364 /* PreWarmNotifier.swift */,
@@ -1656,6 +1659,7 @@
 				ABA74ED79DF7BC71F7543DBF /* ActiveSessionView.swift in Sources */,
 				524D3563E401A4FCE430B8DC /* LevelUpView.swift in Sources */,
 				2D7ACFA4B2B18DF787E54372 /* AppEnvironment.swift in Sources */,
+				5E87D0B5628D6277A1DAFA4E /* DisplayGlosses.swift in Sources */,
 				5A1C0D3E7B9F42A18C6D0E32 /* BundledContent.swift in Sources */,
 				318AD0DC566D55CF8F54F721 /* AttributionView.swift in Sources */,
 				80928CE01894C7B023866E4A /* ChatBubbleView.swift in Sources */,

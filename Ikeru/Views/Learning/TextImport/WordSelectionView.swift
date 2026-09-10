@@ -20,6 +20,7 @@ import IkeruCore
 /// inventer 0 % serait un reproche adressé à quelqu'un qui n'a rien fait de
 /// mal.
 struct WordSelectionView: View {
+    @Environment(\.locale) private var locale
 
     @Bindable var viewModel: TextImportViewModel
 
@@ -272,7 +273,8 @@ struct WordSelectionView: View {
                 // vide, sans badge et sans sens. Aucune ligne de la base
                 // livrée n'est dans ce cas (mesuré : 0 sur 218 498) — c'est
                 // une divergence latente qu'on ferme, pas une panne vécue.
-                if entry.glossFR?.isEmpty != false {
+                let wantsFrench = GlossLanguage(locale: locale) == .french
+                if wantsFrench, entry.glossFR?.isEmpty != false {
                     Text(verbatim: "EN")
                         .ikeruScaledFont(9, weight: .semibold, relativeTo: .caption2)
                         .foregroundStyle(Color.ikeruTextSecondary)
@@ -283,7 +285,11 @@ struct WordSelectionView: View {
                         }
                         .accessibilityLabel("TextImport.Gloss.EnglishBadge")
                 }
-                Text(verbatim: entry.glossFR.flatMap { $0.isEmpty ? nil : $0 } ?? entry.glossEN)
+                // En anglais, l'anglaise nue ; en français, la française ou
+                // l'anglaise étiquetée — la même règle qu'à la capture (OBS2-041).
+                Text(verbatim: wantsFrench
+                     ? (entry.glossFR.flatMap { $0.isEmpty ? nil : $0 } ?? entry.glossEN)
+                     : entry.glossEN)
                     .font(.ikeruCaption)
                     .foregroundStyle(Color.ikeruTextSecondary)
                     .fixedSize(horizontal: false, vertical: true)

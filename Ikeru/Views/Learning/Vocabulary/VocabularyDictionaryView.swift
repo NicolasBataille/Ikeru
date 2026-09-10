@@ -9,6 +9,7 @@ import IkeruCore
 struct VocabularyDictionaryView: View {
 
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.locale) private var locale
     @State private var viewModel: VocabularyDictionaryViewModel?
     @State private var selectedEntry: VocabularyEntryDTO?
     @State private var showAddWord = false
@@ -371,7 +372,9 @@ struct VocabularyDictionaryView: View {
 
     private func initializeViewModel() {
         guard viewModel == nil else { return }
-        viewModel = VocabularyDictionaryViewModel(modelContainer: modelContext.container)
+        let created = VocabularyDictionaryViewModel(modelContainer: modelContext.container)
+        created.glossLocale = locale
+        viewModel = created
     }
 }
 
