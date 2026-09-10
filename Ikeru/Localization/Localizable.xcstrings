@@ -13609,7 +13609,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Erreur réseau. Vérifiez votre connexion et réessayez."
+            "value" : "Erreur réseau. Vérifie ta connexion et réessaie."
           }
         }
       }
@@ -13694,7 +13694,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Votre clé IA a été refusée. Vérifiez-la dans les Réglages."
+            "value" : "Ta clé IA a été refusée. Vérifie-la dans les Réglages."
           }
         }
       }
@@ -14853,7 +14853,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Vous êtes hors ligne — Sakura reviendra une fois connecté(e)."
+            "value" : "Tu es hors ligne — Sakura reviendra une fois connecté(e)."
           }
         }
       }
@@ -15478,7 +15478,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sauvegarde votre progression sur un serveur situé en Europe — y compris les textes que vous importez vous-même. Aucun compte n'est nécessaire. Les conversations avec Sakura ne sont pas incluses. La restauration sur un nouvel appareil nécessite de vous connecter avec Apple."
+            "value" : "Sauvegarde ta progression sur un serveur situé en Europe — y compris les textes que tu importes toi-même. Aucun compte n'est nécessaire. Les conversations avec Sakura ne sont pas incluses. La restauration sur un nouvel appareil demande de te connecter avec Apple."
           }
         }
       }
@@ -15565,7 +15565,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Impossible de supprimer vos données du serveur. Rien n'a été supprimé — vérifiez votre connexion et réessayez."
+            "value" : "Impossible de supprimer tes données du serveur. Rien n'a été supprimé — vérifie ta connexion et réessaie."
           }
         }
       }
@@ -15600,7 +15600,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Supprimer votre compte et vos données ?"
+            "value" : "Supprimer ton compte et tes données ?"
           }
         }
       }
@@ -15653,7 +15653,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Connectez-vous pour retrouver votre progression sur un autre appareil."
+            "value" : "Connecte-toi pour retrouver ta progression sur un autre appareil."
           }
         }
       }
@@ -15797,7 +15797,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Votre progression reste sur cet appareil et reste aussi sur votre compte sur le serveur. La sauvegarde s'arrête, jusqu'à ce que vous vous reconnectiez et réactiviez la sauvegarde cloud."
+            "value" : "Ta progression reste sur cet appareil et reste aussi sur ton compte sur le serveur. La sauvegarde s'arrête, jusqu'à ce que tu te reconnectes et réactives la sauvegarde cloud."
           }
         }
       }
@@ -15815,7 +15815,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Vous êtes déconnecté. Votre progression est en sécurité sur cet appareil et sur votre compte. Pour reprendre la sauvegarde, reconnectez-vous puis réactivez la sauvegarde cloud."
+            "value" : "Tu es déconnecté(e). Ta progression est en sécurité sur cet appareil et sur ton compte. Pour reprendre la sauvegarde, reconnecte-toi puis réactive la sauvegarde cloud."
           }
         }
       }
@@ -15851,7 +15851,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Reconnectez-vous pour continuer la synchronisation"
+            "value" : "Reconnecte-toi pour continuer la synchronisation"
           }
         }
       }
@@ -15869,7 +15869,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Votre progression vous attend — reconnectez-vous pour la retrouver"
+            "value" : "Ta progression t'attend — reconnecte-toi pour la retrouver"
           }
         }
       }
@@ -15887,7 +15887,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Impossible de vérifier la connexion de votre compte. Rien n'a été modifié — réessayez."
+            "value" : "Impossible de vérifier la connexion de ton compte. Rien n'a été modifié — réessaie."
           }
         }
       }
@@ -15905,7 +15905,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Cet identifiant Apple est déjà lié à un autre compte. Vous êtes maintenant connecté à ce compte — l'ancienne sauvegarde de cet appareil n'est plus accessible."
+            "value" : "Cet identifiant Apple est déjà lié à un autre compte. Tu es maintenant connecté(e) à ce compte — l'ancienne sauvegarde de cet appareil n'est plus accessible."
           }
         }
       }
@@ -15923,7 +15923,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Connexion avec Apple impossible. Vérifiez votre connexion et réessayez."
+            "value" : "Connexion avec Apple impossible. Vérifie ta connexion et réessaie."
           }
         }
       }
@@ -15958,7 +15958,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Supprime définitivement votre compte et tout ce qui y est sauvegardé — profils, cartes, historique de révisions, vocabulaire, et les textes que vous avez importés. Si vous êtes connecté avec Apple, cette connexion est également supprimée. Action irréversible. Les données sur cet appareil ne sont pas concernées."
+            "value" : "Supprime définitivement ton compte et tout ce qui y est sauvegardé — profils, cartes, historique de révisions, vocabulaire, et les textes que tu as importés. Si tu es connecté(e) avec Apple, cette connexion est également supprimée. Action irréversible. Les données sur cet appareil ne sont pas concernées."
           }
         }
       }
@@ -15992,7 +15992,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Vos données ont été supprimées du serveur"
+            "value" : "Tes données ont été supprimées du serveur"
           }
         }
       }
