@@ -54,4 +54,34 @@ class IkeruUITestCase: XCTestCase {
         app.launch()
         return app
     }
+
+    /// Fait défiler l'écran vers le haut jusqu'à ce que `element` soit
+    /// entièrement AU-DESSUS de la barre d'onglets flottante, et dit si c'est
+    /// le cas à la fin.
+    ///
+    /// Pourquoi : la CI fait tourner les tests UI sur le PLUS PETIT iPhone
+    /// disponible (le sélecteur trie par nom, « iPhone SE » passe dernier —
+    /// 375 × 667 pt). Une ligne qui « existe » peut y naître sous la barre :
+    /// `tap()` vise son centre, la barre avale le tap, et rien ne s'ouvre —
+    /// sans erreur. Mesuré le 2026-09-10 sur la ligne d'import d'Étude,
+    /// devenue cinquième derrière « Composer une séance ».
+    ///
+    /// Pourquoi pas `isHittable` : mesuré le même jour, il répond VRAI pour
+    /// cette ligne dont le centre est sous la barre — l'arbre d'accessibilité
+    /// ne voit pas la barre comme un obstacle — alors que le tap réel, lui,
+    /// est avalé. Le seul verdict fiable est géométrique : le cadre de la
+    /// ligne contre celui de la barre, qui porte ses propres identifiants
+    /// (`tabBar.explore` est toujours là quand la barre l'est).
+    func scrollAboveTabBar(_ element: XCUIElement,
+                           in app: XCUIApplication,
+                           maxSwipes: Int = 4) -> Bool {
+        let tabBar = app.buttons["tabBar.explore"]
+        guard tabBar.exists else { return element.isHittable }
+        var swipes = 0
+        while element.frame.maxY > tabBar.frame.minY, swipes < maxSwipes {
+            app.swipeUp()
+            swipes += 1
+        }
+        return element.frame.maxY <= tabBar.frame.minY && element.isHittable
+    }
 }
