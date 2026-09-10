@@ -9,6 +9,7 @@ import IkeruCore
 struct VocabularyDictionaryView: View {
 
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.locale) private var locale
     @State private var viewModel: VocabularyDictionaryViewModel?
     @State private var selectedEntry: VocabularyEntryDTO?
     @State private var showAddWord = false
@@ -44,6 +45,13 @@ struct VocabularyDictionaryView: View {
             if viewModel != nil {
                 Task { await viewModel?.loadData() }
             }
+        }
+        // OBS2-041 : l'onglet garde sa pile pendant un détour par Réglages ;
+        // sans ceci, la bascule de langue laisse les gloses dans l'ancienne
+        // langue jusqu'à ce que la vue soit recréée.
+        .onChange(of: locale) { _, newLocale in
+            viewModel?.glossLocale = newLocale
+            Task { await viewModel?.loadData() }
         }
         // Per-profile since IkeruSchemaV6 — see `ExploreView` for why a
         // profile switch must reload a still-mounted list.
@@ -371,7 +379,9 @@ struct VocabularyDictionaryView: View {
 
     private func initializeViewModel() {
         guard viewModel == nil else { return }
-        viewModel = VocabularyDictionaryViewModel(modelContainer: modelContext.container)
+        let created = VocabularyDictionaryViewModel(modelContainer: modelContext.container)
+        created.glossLocale = locale
+        viewModel = created
     }
 }
 
