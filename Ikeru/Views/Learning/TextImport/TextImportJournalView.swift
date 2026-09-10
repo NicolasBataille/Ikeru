@@ -21,6 +21,8 @@ struct TextImportJournalView: View {
     let modelContainer: ModelContainer
 
     @State private var repository: TextImportRepository?
+    @State private var vocabulary: VocabularyRepository?
+    @State private var analyzer: JapaneseTextAnalyzer?
     @State private var imports: [TextImportDTO] = []
     @State private var hasLoaded = false
     @State private var pendingDeletion: TextImportDTO?
@@ -42,6 +44,8 @@ struct TextImportJournalView: View {
         .task {
             if repository == nil {
                 repository = TextImportRepository(modelContainer: modelContainer)
+                vocabulary = VocabularyRepository(modelContainer: modelContainer)
+                analyzer = BundledContent.makeDictionary().map { JapaneseTextAnalyzer(dictionary: $0) }
             }
             await load()
         }
@@ -123,16 +127,10 @@ struct TextImportJournalView: View {
             HStack(spacing: IkeruTheme.Spacing.sm) {
                 metric("TextImport.Journal.Words \(item.wordCount)")
                 if let coverage = item.coverage {
-                    // « à l'import », et pas « connus » tout court (OBS2-062).
-                    // `TextImport.coverage` est une valeur STOCKÉE au moment de
-                    // l'analyse, pas une requête : elle est structurellement
-                    // incapable de changer, quoi que l'apprenant apprenne
-                    // ensuite. Sur une fonctionnalité dont la promesse est
-                    // « apporte ton texte et apprends-le », afficher ce nombre
-                    // comme une couverture actuelle décrit une progression qui
-                    // n'aura jamais lieu. Le rendre vivant demande de
-                    // ré-analyser le texte à l'affichage — chantier séparé ;
-                    // en attendant, l'étiquette dit ce que le nombre est.
+                    // Couverture VIVANTE (OBS2-062) : `load()` ré-analyse
+                    // chaque texte avec le dictionnaire d'aujourd'hui
+                    // (`TextImportLiveCoverage`). La valeur stockée à l'import
+                    // ne bougeait jamais, quoi que l'apprenant apprenne.
                     metric("TextImport.Journal.Coverage \(Int((coverage * 100).rounded()))")
                 }
             }
@@ -221,7 +219,15 @@ struct TextImportJournalView: View {
 
     private func load() async {
         guard let repository else { return }
-        imports = await repository.all()
+        let stored = await repository.all()
+        // Ré-analyse avec le dictionnaire d'aujourd'hui (OBS2-062). Sans
+        // analyseur (bundle absent), l'instantané stocké reste affiché.
+        if let analyzer, let vocabulary {
+            let known = Set(await vocabulary.allEntries().map(\.word))
+            imports = await TextImportLiveCoverage.refresh(stored, known: known, analyze: analyzer.analyze)
+        } else {
+            imports = stored
+        }
         hasLoaded = true
     }
 
