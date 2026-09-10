@@ -223,6 +223,7 @@
 		D11E7E1000000000C003A001 /* DailyTermRevealView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D11E7E1000000000A003A001 /* DailyTermRevealView.swift */; };
 		D11E7E1000000000C004A001 /* DailyTermHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D11E7E1000000000A004A001 /* DailyTermHistoryView.swift */; };
 		D11E7E1000000000C005A001 /* DailyTermViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D11E7E1000000000A005A001 /* DailyTermViewModelTests.swift */; };
+		A1B2C3D4E5F60004 /* QuizOutcomeLineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60003 /* QuizOutcomeLineTests.swift */; };
 		A1B2C3D4E5F60002 /* VocabularyDictionaryViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60001 /* VocabularyDictionaryViewModelTests.swift */; };
 		D47F7C461CF1CFA5343E2BA8 /* MonCrest.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB4EE3B167E71594816FFDAD /* MonCrest.swift */; };
 		D620F952CB6ED990AB51DB36 /* IkeruWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD4E32975E0ECE57675459EB /* IkeruWidgetBundle.swift */; };
@@ -542,6 +543,7 @@
 		D11E7E1000000000A003A001 /* DailyTermRevealView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DailyTermRevealView.swift; path = Ikeru/Views/Home/DailyTermRevealView.swift; sourceTree = SOURCE_ROOT; };
 		D11E7E1000000000A004A001 /* DailyTermHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DailyTermHistoryView.swift; path = Ikeru/Views/Home/DailyTermHistoryView.swift; sourceTree = SOURCE_ROOT; };
 		D11E7E1000000000A005A001 /* DailyTermViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyTermViewModelTests.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60003 /* QuizOutcomeLineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuizOutcomeLineTests.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F60001 /* VocabularyDictionaryViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VocabularyDictionaryViewModelTests.swift; sourceTree = "<group>"; };
 		D2CBFF6AF9FE7C9F48E34A51 /* HoldToConfirmButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HoldToConfirmButton.swift; sourceTree = "<group>"; };
 		D5D9BA9F4FDA871221354B88 /* n5-content.sqlite */ = {isa = PBXFileReference; lastKnownFileType = file; path = "n5-content.sqlite"; sourceTree = "<group>"; };
@@ -910,6 +912,7 @@
 				769F5F51519266322B36DD05 /* AdaptiveSessionViewModelTests.swift */,
 				D73A69C4AD84199B467D6CC9 /* ConversationViewModelTests.swift */,
 				D11E7E1000000000A005A001 /* DailyTermViewModelTests.swift */,
+				A1B2C3D4E5F60003 /* QuizOutcomeLineTests.swift */,
 				A1B2C3D4E5F60001 /* VocabularyDictionaryViewModelTests.swift */,
 				2FB214E27E81F30D44CAD195 /* HandwritingViewModelTests.swift */,
 				44FF091731003AFD23A516FF /* HomeViewModelTests.swift */,
@@ -1590,6 +1593,7 @@
 				B645B881692E0AE7FE378DE4 /* AdaptiveSessionViewModelTests.swift in Sources */,
 				EBB22606F9278C7CBC1604BF /* ConversationViewModelTests.swift in Sources */,
 				D11E7E1000000000C005A001 /* DailyTermViewModelTests.swift in Sources */,
+				A1B2C3D4E5F60004 /* QuizOutcomeLineTests.swift in Sources */,
 				A1B2C3D4E5F60002 /* VocabularyDictionaryViewModelTests.swift in Sources */,
 				7C128D3DB683FE9C44385E9E /* HandwritingViewModelTests.swift in Sources */,
 				7AD47972332D13661BE1885F /* HomeViewModelTests.swift in Sources */,

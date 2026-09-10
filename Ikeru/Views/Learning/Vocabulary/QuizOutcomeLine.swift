@@ -9,6 +9,7 @@ import IkeruCore
 /// « 100 % » masquaient des « Difficile » silencieux côté SRS.
 struct QuizOutcomeLine: View {
     let outcome: QuizGradeOutcome
+    @Environment(\.locale) private var locale
 
     var body: some View {
         Text(line)
@@ -19,7 +20,7 @@ struct QuizOutcomeLine: View {
     }
 
     private var line: LocalizedStringKey {
-        let grade = Self.gradeName(outcome.grade)
+        let grade = Self.gradeName(outcome.grade, locale: locale)
         let back = outcome.nextInterval
         if outcome.grade == .again {
             return "Marked \(grade) · back in \(back)"
@@ -31,12 +32,18 @@ struct QuizOutcomeLine: View {
         return "Answered in \(seconds) s · marked \(grade) · back in \(back)"
     }
 
-    static func gradeName(_ grade: Grade) -> String {
-        switch grade {
-        case .again: String(localized: "Again")
-        case .hard: String(localized: "Hard")
-        case .good: String(localized: "Good")
-        case .easy: String(localized: "Easy")
+    /// Le nom de la note dans la langue de l'INTERFACE, pas de l'appareil.
+    /// `String(localized:)` seul lit `Bundle.main` avec la langue système et
+    /// ignore l'override `AppLocale` (le `\.locale` injecté à `MainTabView`) :
+    /// appareil en français, app forcée en anglais, la phrase disait
+    /// « Answered in 6.2 s · marked Difficile ». Voir `AppLocale.bundle(for:)`.
+    static func gradeName(_ grade: Grade, locale: Locale) -> String {
+        let bundle = AppLocale.bundle(for: locale)
+        return switch grade {
+        case .again: String(localized: "Again", bundle: bundle, locale: locale)
+        case .hard: String(localized: "Hard", bundle: bundle, locale: locale)
+        case .good: String(localized: "Good", bundle: bundle, locale: locale)
+        case .easy: String(localized: "Easy", bundle: bundle, locale: locale)
         }
     }
 }
