@@ -167,17 +167,23 @@ struct VocabularyQuizView: View {
     private var feedback: some View {
         if viewModel.isAnswered {
             let isCorrect = viewModel.selectedOption == viewModel.correctOption
-            HStack(spacing: 8) {
-                Image(systemName: isCorrect ? "checkmark.circle.fill" : "xmark.circle.fill")
-                    .foregroundStyle(isCorrect ? Color.ikeruPrimaryAccent : Color.ikeruDanger)
-                if isCorrect {
-                    Text("Correct!")
-                        .font(.ikeruCaption)
-                        .foregroundStyle(Color.ikeruTextPrimary)
-                } else {
-                    Text("The answer is: \(viewModel.correctOption)")
-                        .font(.ikeruCaption)
-                        .foregroundStyle(Color.ikeruTextSecondary)
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 8) {
+                    Image(systemName: isCorrect ? "checkmark.circle.fill" : "xmark.circle.fill")
+                        .foregroundStyle(isCorrect ? Color.ikeruPrimaryAccent : Color.ikeruDanger)
+                    if isCorrect {
+                        Text("Correct!")
+                            .font(.ikeruCaption)
+                            .foregroundStyle(Color.ikeruTextPrimary)
+                    } else {
+                        Text("The answer is: \(viewModel.correctOption)")
+                            .font(.ikeruCaption)
+                            .foregroundStyle(Color.ikeruTextSecondary)
+                    }
+                }
+                // OBS2-015 : ce que le chronomètre a noté, dit à l'apprenant.
+                if let outcome = viewModel.lastOutcome {
+                    QuizOutcomeLine(outcome: outcome)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)

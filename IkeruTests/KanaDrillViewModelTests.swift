@@ -111,6 +111,35 @@ struct KanaDrillViewModelTests {
         #expect(mapQuizResultToGrade(correct: true, responseTimeMs: 8_000) == .hard)
     }
 
+    @Test("submitQuizAnswer dit ce qu'il a noté : première rencontre, bonne réponse lente → « Bien », et l'intervalle (OBS2-015)")
+    func quizExposesTheOutcomeForAFirstEncounter() async throws {
+        let (repo, cards) = try await makeRepoAndCards(group: .hVowels)
+        let start = Date(timeIntervalSince1970: 1_800_000_000)
+        nonisolated(unsafe) var clock = start
+        let vm = KanaDrillViewModel(mode: .freePractice, queue: cards, cardRepository: repo, now: { clock })
+        #expect(vm.lastOutcome == nil, "rien à dire tant que la question n'est pas répondue")
+        vm.selectOption(vm.correctOption)
+        clock = start.addingTimeInterval(8)
+        await vm.submitQuizAnswer()
+        let outcome = try #require(vm.lastOutcome)
+        #expect(outcome.isFirstEncounter, "les cartes semées n'ont jamais été notées")
+        #expect(outcome.grade == .good, "première rencontre : le chronomètre ne s'applique pas")
+        #expect(outcome.responseTimeMs >= 8_000)
+        #expect(!outcome.nextInterval.isEmpty && outcome.nextInterval != "—", "l'intervalle réellement appliqué est annoncé")
+        vm.advance()
+        #expect(vm.lastOutcome == nil, "la ligne ne survit pas à la question suivante")
+    }
+
+    @Test("submitQuizAnswer dit ce qu'il a noté : mauvaise réponse → « Encore » (OBS2-015)")
+    func quizExposesTheOutcomeForAWrongAnswer() async throws {
+        let (repo, cards) = try await makeRepoAndCards(group: .hVowels)
+        let vm = KanaDrillViewModel(mode: .freePractice, queue: cards, cardRepository: repo)
+        let wrong = try #require(vm.quizOptions.first { $0 != vm.correctOption })
+        vm.selectOption(wrong)
+        await vm.submitQuizAnswer()
+        #expect(vm.lastOutcome?.grade == .again)
+    }
+
     @Test("Première rencontre : une bonne réponse lente n'est plus notée « difficile » (OBS2-015)")
     func firstEncounterEscapesTheSpeedPenalty() {
         // Un débutant qui découvre un mot lit la question, lit quatre

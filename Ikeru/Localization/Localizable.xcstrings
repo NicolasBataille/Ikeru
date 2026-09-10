@@ -1,6 +1,57 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "Marked %@ · back in %@" : {
+      "comment" : "OBS2-015 — la ligne de feedback du quiz qui rend visible le mapping vitesse→note.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marked %@ · back in %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noté « %1$@ » · revient dans %2$@"
+          }
+        }
+      }
+    },
+    "First time you see it · marked %@ · back in %@" : {
+      "comment" : "OBS2-015 — la ligne de feedback du quiz qui rend visible le mapping vitesse→note.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "First time you see it · marked %@ · back in %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Première fois que tu le vois · noté « %1$@ » · revient dans %2$@"
+          }
+        }
+      }
+    },
+    "Answered in %@ s · marked %@ · back in %@" : {
+      "comment" : "OBS2-015 — la ligne de feedback du quiz qui rend visible le mapping vitesse→note.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Answered in %@ s · marked %@ · back in %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Répondu en %1$@ s · noté « %2$@ » · revient dans %3$@"
+          }
+        }
+      }
+    },
     "Slow" : {
       "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
       "localizations" : {
