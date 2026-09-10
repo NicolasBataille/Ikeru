@@ -72,7 +72,7 @@ struct VocabularyDrillSummary: View {
         }
     }
 
-    private func statCell(value: String, label: String) -> some View {
+    private func statCell(value: String, label: LocalizedStringKey) -> some View {
         VStack(spacing: 4) {
             Text(value)
                 .ikeruScaledFont(18, weight: .semibold, design: .rounded, relativeTo: .title3)

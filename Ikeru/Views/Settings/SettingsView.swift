@@ -661,7 +661,7 @@ struct SettingsView: View {
                         showExportShare = true
                     } catch {
                         Logger.ui.error("Data export failed: \(error.localizedDescription)")
-                        toastManager.showError("Export failed: \(error.localizedDescription)")
+                        toastManager.showError(String(localized: "Export failed: \(error.localizedDescription)"))
                     }
                 }
             }
@@ -1210,18 +1210,18 @@ struct SettingsView: View {
             modelContainer: modelContext.container,
             assetCache: assetCache
         ) else {
-            toastManager.showError("Pre-warm unavailable: cache not ready")
+            toastManager.showError(String(localized: "Pre-warm unavailable: cache not ready"))
             return
         }
         isPreWarming = true
-        toastManager.showInfo("Pre-warming started")
+        toastManager.showInfo(String(localized: "Pre-warming started"))
         Logger.cache.info("Manual pre-warm triggered from Settings")
         Task { @MainActor in
             defer { isPreWarming = false }
             do {
                 try await service.enqueueUpcomingDueAudio(window: 86_400)
                 Logger.cache.info("Manual pre-warm done")
-                toastManager.showInfo("Pre-warm queued")
+                toastManager.showInfo(String(localized: "Pre-warm queued"))
                 if preWarmNotify {
                     await PreWarmNotifier.notifyBatchFinished()
                 }
@@ -1229,7 +1229,7 @@ struct SettingsView: View {
                 // Silently ignore cancellation.
             } catch {
                 Logger.cache.warning("Manual pre-warm failed: \(error.localizedDescription)")
-                toastManager.showError("Pre-warm failed: \(error.localizedDescription)")
+                toastManager.showError(String(localized: "Pre-warm failed: \(error.localizedDescription)"))
             }
         }
     }

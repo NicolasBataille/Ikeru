@@ -122,10 +122,10 @@ public struct IkeruSectionHeader<Trailing: View>: View {
 struct IkeruStatPill: View {
     let icon: String
     let value: String
-    let label: String?
+    let label: LocalizedStringKey?
     let tint: Color
 
-    init(icon: String, value: String, label: String? = nil, tint: Color = Color.ikeruPrimaryAccent) {
+    init(icon: String, value: String, label: LocalizedStringKey? = nil, tint: Color = Color.ikeruPrimaryAccent) {
         self.icon = icon
         self.value = value
         self.label = label

@@ -13,7 +13,7 @@ enum AppTab: Int, CaseIterable, Identifiable {
 
     var id: Int { rawValue }
 
-    var title: String {
+    var title: LocalizedStringKey {
         switch self {
         case .practice: return "Practice"
         case .explore: return "Explore"

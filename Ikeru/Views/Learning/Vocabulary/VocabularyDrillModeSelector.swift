@@ -83,8 +83,8 @@ struct VocabularyDrillModeSelector: View {
 
     @ViewBuilder
     private func modeCard(
-        title: String,
-        subtitle: String,
+        title: LocalizedStringKey,
+        subtitle: LocalizedStringKey,
         description: String,
         icon: String,
         action: @escaping () -> Void

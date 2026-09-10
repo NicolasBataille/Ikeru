@@ -18,7 +18,7 @@ struct ReadingsView: View {
 
     // MARK: - Subviews
 
-    private func readingSection(title: String, readings: [String]) -> some View {
+    private func readingSection(title: LocalizedStringKey, readings: [String]) -> some View {
         VStack(alignment: .leading, spacing: IkeruTheme.Spacing.xs) {
             Text(title)
                 .ikeruScaledFont(IkeruTheme.Typography.Size.caption, weight: .semibold, relativeTo: .caption2)
