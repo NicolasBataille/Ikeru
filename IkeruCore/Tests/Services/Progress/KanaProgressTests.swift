@@ -30,6 +30,23 @@ struct KanaProgressTests {
         #expect(KanaProgress.katakanaTotal == 46)
     }
 
+    @Test("A first session (reps < 2) counts as learning, not silence")
+    func firstSessionLeavesALearningTrace() {
+        // One "Good" tap each: reps == 1, stability well below the familiar
+        // gate — MasteryLevel.from correctly refuses .familiar (reps >= 2
+        // gate), but the learner should still see SOMETHING move.
+        let cards = [
+            fixtureCard(front: "\u{3042}", stability: 3.13, reps: 1),  // あ hiragana
+            fixtureCard(front: "\u{30A2}", stability: 3.13, reps: 1),  // ア katakana
+        ]
+        let progress = KanaProgress.from(cards: cards)
+
+        #expect(progress.total == 0, "reps < 2 must never count as mastered")
+        #expect(progress.hiraganaLearning == 1)
+        #expect(progress.katakanaLearning == 1)
+        #expect(progress.learningTotal == 2)
+    }
+
     private func fixtureCard(
         front: String,
         stability: Double,

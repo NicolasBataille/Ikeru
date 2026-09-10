@@ -4,6 +4,12 @@ import SwiftUI
 import IkeruCore
 
 // MARK: - Session Live Activity
+//
+// Text literals below ("+%lld XP", "🔥 %lld streak") resolve against
+// Localizable.xcstrings the same way the rest of the app does, but the
+// IkeruWidget target has no Resources build phase yet (see CLAUDE.md /
+// JOURNAL.md), so the catalog isn't embedded and this stays English-only
+// until that pbxproj membership is added.
 
 struct SessionLiveActivity: Widget {
     let kind = "SessionLiveActivity"
@@ -55,7 +61,7 @@ struct SessionLiveActivity: Widget {
                         }
                         .frame(height: 4)
 
-                        Text("\(context.state.completedCount)/\(context.state.totalCount)")
+                        Text(verbatim: "\(context.state.completedCount)/\(context.state.totalCount)")
                             .font(.caption2)
                             .foregroundStyle(.secondary)
                     }
@@ -79,7 +85,10 @@ struct SessionLiveActivity: Widget {
                 .foregroundStyle(.white)
             } compactTrailing: {
                 // Compact: streak count
-                Text("\(context.state.streakCount)🔥")
+                // `verbatim:` — un nombre suivi d'un emoji ne se
+                // traduit pas, et la clé « %lld🔥 » n'aurait aucun
+                // sens dans un catalogue.
+                Text(verbatim: "\(context.state.streakCount)🔥")
                     .font(.system(size: 12))
             } minimal: {
                 Image(systemName: "book.fill")
@@ -111,7 +120,7 @@ struct SessionLiveActivity: Widget {
                     .fontWeight(.semibold)
                     .foregroundStyle(.white)
 
-                Text("\(context.state.completedCount)/\(context.state.totalCount)")
+                Text(verbatim: "\(context.state.completedCount)/\(context.state.totalCount)")
                     .font(.caption)
                     .foregroundStyle(IkeruPlatformTheme.gold)
             }

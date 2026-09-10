@@ -51,6 +51,20 @@ public final class CompanionChatRepository: Sendable {
     // MARK: - Clear
 
     /// Deletes all messages for a given profile.
+    ///
+    /// A **hard** delete on purpose, unlike every other learner-data deletion
+    /// (which tombstones — see `SoftDeletable`). `CompanionChatMessage` is
+    /// neither pushed nor pulled: `SyncPayloadBuilder` builds no row for it
+    /// and `SyncModelActor` has no `pushDirtyCompanion*`, both because the
+    /// message text is free-form conversation held back for a separate opt-in
+    /// that does not exist yet. With nothing on the server there is no
+    /// resurrection vector to defend against — and a tombstone would *keep*
+    /// the text on the device the learner just asked to clear it from.
+    /// Erasing it outright is both simpler and the more private answer.
+    ///
+    /// If companion chat is ever added to the sync payload, this must become
+    /// a tombstone at the same time, or clearing history will silently
+    /// un-clear itself on the next pull.
     @MainActor
     public func clearHistory(for profileId: UUID) {
         let context = modelContainer.mainContext

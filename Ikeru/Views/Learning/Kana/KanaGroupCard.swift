@@ -28,6 +28,18 @@ struct KanaGroupCard: View {
             .animation(.spring(response: 0.3, dampingFraction: 0.85), value: isSelected)
         }
         .buttonStyle(.plain)
+        // GAP-01 two-client merge test needs to select ONE deterministic,
+        // small group (`hVowels` — 5 characters) from `IkeruUITests` without
+        // relying on localized label text — see `EtudeView.kanaRow`'s
+        // identifier, added by the same effort.
+        .accessibilityIdentifier("kanaPool.group.\(group.rawValue)")
+        // `KanaPoolViewModel.init` defaults `selectedGroups` to `[.hVowels]`
+        // (persisted thereafter, per-device) — a test can't assume this
+        // card starts UNselected, so it needs to read the current state
+        // before deciding whether to tap it. Mirrors `TatamiToggle`'s
+        // "On"/"Off" `accessibilityValue` pattern (see `SettingsPage`'s
+        // doc comment on `isCloudBackupOn`).
+        .accessibilityValue(isSelected ? "Selected" : "Not selected")
     }
 
     // MARK: Header
@@ -69,10 +81,22 @@ struct KanaGroupCard: View {
     private var characterRow: some View {
         HStack(alignment: .top, spacing: 6) {
             ForEach(group.characters) { kana in
-                VStack(spacing: 3) {
+                VStack(spacing: 2) {
+                    hiraganaBridge(for: kana)
                     Text(kana.character)
                         .font(.system(size: 22, weight: .regular, design: .serif))
                         .foregroundStyle(Color.ikeruTextPrimary)
+                        // Les yōon (きゃ, ピョ…) tiennent DEUX glyphes dans une
+                        // cellule large d'un cinquième de carte (OBS2-006).
+                        // Sans ces deux modificateurs, la paire passait à la
+                        // ligne et le petit ゃ se retrouvait seul sur la
+                        // seconde — ce qui se lit comme une taille pleine et
+                        // comme une orthographe fausse, alors que le glyphe est
+                        // correct. Le défaut était de mise en page, pas de
+                        // typographie : la carte d'étude, elle, a toujours
+                        // rendu ちゃ correctement.
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.55)
                     // Romaji reading, tinted by per-char mastery. The prior
                     // MasteryBadge kanji glyph (初/学/…) read as a rendering
                     // bug to the exact audience of this screen — beginners
@@ -91,6 +115,22 @@ struct KanaGroupCard: View {
                     Color.clear.frame(maxWidth: .infinity)
                 }
             }
+        }
+    }
+
+    /// "Même son, nouvelle forme" (chantier #24a): a katakana cell shows its
+    /// hiragana counterpart grayed out above the glyph, since the romaji is
+    /// identical on both sides (か and カ are both "ka"). Hiragana cells
+    /// reserve the same vertical space with an empty spacer so every column
+    /// in the grid lines up regardless of script.
+    @ViewBuilder
+    private func hiraganaBridge(for kana: KanaCharacter) -> some View {
+        if let counterpart = kana.hiraganaCounterpart {
+            Text(counterpart.character)
+                .font(.system(size: 12, weight: .regular, design: .serif))
+                .foregroundStyle(Color.ikeruTextTertiary.opacity(0.55))
+        } else {
+            Color.clear.frame(height: 14)
         }
     }
 
@@ -124,8 +164,8 @@ struct KanaGroupCard: View {
     }
 
     private var masteryPercentString: String {
-        guard let m = mastery else { return "—" }
-        return "\(Int(m.aggregatePercent.rounded()))%"
+        guard let mastery else { return "—" }
+        return "\(Int(mastery.aggregatePercent.rounded()))%"
     }
 
     private var nextDueString: String {

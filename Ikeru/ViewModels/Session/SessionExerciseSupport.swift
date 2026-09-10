@@ -20,6 +20,13 @@ enum SessionExerciseSupport {
         switch card.type {
         case .kanji:      return .kanjiStudy
         case .vocabulary: return .vocabularyStudy
+        // `.fillInBlank` is retired as an EXERCISE (`ExerciseType.retired`)
+        // but stays the XP/telemetry identity of a grammar-card flashcard
+        // review: `GrammarCardSeeder` still creates `.grammar` cards, their
+        // reviews have always been awarded `perGrade + 1` under this name,
+        // and `ReviewLog.exerciseType` stores that raw value. Remapping to
+        // `.grammarExercise` (`perCompletion 8`) would bend the XP curve
+        // `ExerciseXPAwardTests` pins.
         case .grammar:    return .fillInBlank
         case .listening:  return .listeningSubtitled
         }
@@ -36,8 +43,6 @@ enum SessionExerciseSupport {
         case .kanjiStudy:           return .kanjiStudy
         case .grammarExercise:      return .grammarExercise
         case .vocabularyStudy:      return .vocabularyStudy
-        case .fillInBlank:          return .fillInBlank
-        case .readingPassage:       return .readingPassage
         case .writingPractice:      return .writingPractice
         case .listeningExercise:    return .listeningSubtitled
         case .speakingExercise:     return .speakingPractice
@@ -52,8 +57,6 @@ enum SessionExerciseSupport {
         case .kanjiStudy: "Kanji"
         case .grammarExercise: "Grammar"
         case .vocabularyStudy: "Vocabulary"
-        case .fillInBlank: "Fill in Blank"
-        case .readingPassage: "Reading"
         case .writingPractice: "Writing"
         case .listeningExercise: "Listening"
         case .speakingExercise: "Speaking"

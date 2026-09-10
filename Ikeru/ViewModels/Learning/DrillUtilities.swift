@@ -31,11 +31,35 @@ func formatFSRSInterval(from start: Date, to end: Date) -> String {
 
 /// Map a quiz result (correct / response time) to an FSRS Grade using a speed bonus.
 /// - Wrong → `.again`
+/// - **Première rencontre notée, correcte → `.good`** (voir ci-dessous)
 /// - Correct under 2 s → `.easy`
 /// - Correct under 5 s → `.good`
 /// - Otherwise → `.hard`
-func mapQuizResultToGrade(correct: Bool, responseTimeMs: Int) -> Grade {
+///
+/// ### Pourquoi la première rencontre échappe au chronomètre (OBS2-015)
+///
+/// Le seuil de 5 s punit systématiquement la population que le produit vise.
+/// Un débutant qui voit un mot pour la PREMIÈRE fois lit la question, lit
+/// quatre propositions, se décide : il dépasse 5 s presque à tous les coups.
+/// Sa bonne réponse était donc notée « difficile », ce qui raccourcit
+/// l'intervalle et fait revenir la carte plus vite — l'app en déduisait une
+/// fragilité qu'elle venait d'inventer.
+///
+/// Rien à l'écran n'annonce qu'un chronomètre tourne, et l'intervalle
+/// réellement appliqué contredisait celui affiché sur la carte. À défaut de
+/// rendre le mécanisme visible — ce qui reste à faire — il ne s'applique plus
+/// au tout premier passage noté d'une carte, là où il n'a aucune chance de
+/// mesurer une vitesse de rappel : il n'y a encore rien à rappeler.
+///
+/// - Parameter isFirstEncounter: `true` quand la carte n'a jamais été notée
+///   (`fsrsState.reps == 0`). L'appelant le sait, pas cette fonction.
+func mapQuizResultToGrade(
+    correct: Bool,
+    responseTimeMs: Int,
+    isFirstEncounter: Bool = false
+) -> Grade {
     if !correct { return .again }
+    if isFirstEncounter { return .good }
     if responseTimeMs < 2_000 { return .easy }
     if responseTimeMs < 5_000 { return .good }
     return .hard

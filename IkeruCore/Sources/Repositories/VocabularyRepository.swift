@@ -29,6 +29,26 @@ public final class VocabularyRepository: Sendable {
         )
     }
 
+    /// Corrige les trois champs saisis d'une entrée (OBS2-007/013).
+    ///
+    /// Il n'existait aucun moyen de réparer une entrée : on pouvait créer un
+    /// mot sans sens ni lecture — une carte que le SRS sert ensuite et que
+    /// personne ne peut réviser — et rien ne permettait d'y revenir. La
+    /// validation à la saisie empêche d'en créer de nouvelles ; ceci répare
+    /// celles qui existent déjà.
+    ///
+    /// Ne touche NI l'état FSRS NI l'historique de rencontres : corriger une
+    /// faute de frappe ne doit pas réinitialiser une progression.
+    @discardableResult
+    public func updateEntry(
+        id: UUID,
+        word: String,
+        reading: String,
+        meaning: String
+    ) async -> VocabularyEntryDTO? {
+        await backgroundActor.updateEntry(id: id, word: word, reading: reading, meaning: meaning)
+    }
+
     /// Fetch an entry by its ID.
     public func entry(by id: UUID) async -> VocabularyEntryDTO? {
         await backgroundActor.entry(by: id)
@@ -157,34 +177,26 @@ public struct VocabularyEncounterDTO: Sendable, Identifiable {
 @ModelActor
 actor VocabularyModelActor {
 
-    // MARK: - Active Profile (desired retention)
+    // MARK: - Active Profile (owner + desired retention)
 
-    /// Reads the UserDefaults-backed active profile id. Returns nil if unset.
-    /// Mirrors `CardModelActor.activeProfileID()` so both FSRS surfaces
-    /// resolve the same profile.
-    private func activeProfileID() -> UUID? {
-        guard
-            let raw = UserDefaults.standard.string(forKey: UserProfile.activeProfileIDDefaultsKey),
-            !raw.isEmpty,
-            let id = UUID(uuidString: raw)
-        else { return nil }
-        return id
+    /// The active profile — `ActiveProfileLookup`'s rule (UserDefaults key,
+    /// else the oldest live profile), shared with `CardModelActor` so both
+    /// FSRS surfaces resolve the same profile.
+    private func fetchActiveProfile() -> UserProfile? {
+        ActiveProfileLookup.resolve(in: modelContext)
     }
 
-    private func fetchActiveProfile() -> UserProfile? {
-        if let id = activeProfileID() {
-            let predicate = #Predicate<UserProfile> { $0.id == id }
-            var descriptor = FetchDescriptor<UserProfile>(predicate: predicate)
-            descriptor.fetchLimit = 1
-            if let profile = (try? modelContext.fetch(descriptor))?.first {
-                return profile
-            }
-        }
-        var descriptor = FetchDescriptor<UserProfile>(
-            sortBy: [SortDescriptor(\.createdAt, order: .forward)]
-        )
-        descriptor.fetchLimit = 1
-        return (try? modelContext.fetch(descriptor))?.first
+    /// The owner every read is scoped to and every write is stamped with
+    /// (IkeruSchemaV6, P1-1 / OBS2-022). Before V6 the dictionary was one
+    /// store shared by every profile on the device — a new profile inherited
+    /// another's words, and the mix went to the server.
+    ///
+    /// `nil` only when the store holds no live profile at all. A predicate
+    /// on `profileID == nil` then matches unowned rows, which is the harmless
+    /// reading of « nobody to scope to » — `OwnershipAdoption` attributes
+    /// those rows the moment a profile exists.
+    private func ownerID() -> UUID? {
+        fetchActiveProfile()?.id
     }
 
     /// The active profile's desired retention, clamped to the scheduler's
@@ -205,8 +217,19 @@ actor VocabularyModelActor {
         meaning: String,
         jlptLevel: JLPTLevel?
     ) -> VocabularyEntryDTO {
-        // If a pre-tracked entry exists, promote it to dictionary
-        let predicate = #Predicate<VocabularyEntry> { $0.word == word }
+        // If a pre-tracked entry exists, promote it to dictionary.
+        //
+        // `deletedAt == nil` is load-bearing, not defensive: re-adding a word
+        // the learner previously deleted must mint a NEW entry, never revive
+        // the tombstoned one. Merge rule 4 (`SyncMergeRules.resolveWinner`)
+        // lets a tombstone win regardless of timestamp, so a revived row would
+        // be silently re-deleted by the next pull that carries the old
+        // `deleted_at` — the word would vanish again for no visible reason.
+        // See `SoftDeletable`'s "never un-tombstone" note.
+        let owner = ownerID()
+        let predicate = #Predicate<VocabularyEntry> {
+            $0.word == word && $0.profileID == owner && $0.deletedAt == nil
+        }
         let descriptor = FetchDescriptor(predicate: predicate)
         if let existing = (try? modelContext.fetch(descriptor))?.first {
             existing.isInDictionary = true
@@ -222,7 +245,8 @@ actor VocabularyModelActor {
             reading: reading,
             meaning: meaning,
             jlptLevel: jlptLevel,
-            isInDictionary: true
+            isInDictionary: true,
+            profileID: owner
         )
         modelContext.insert(entry)
         try? modelContext.save()
@@ -231,34 +255,80 @@ actor VocabularyModelActor {
     }
 
     func entry(by id: UUID) -> VocabularyEntryDTO? {
-        let predicate = #Predicate<VocabularyEntry> { $0.id == id }
+        let owner = ownerID()
+        let predicate = #Predicate<VocabularyEntry> { $0.id == id && $0.profileID == owner && $0.deletedAt == nil }
         let descriptor = FetchDescriptor(predicate: predicate)
         let results = (try? modelContext.fetch(descriptor)) ?? []
         return results.first?.toDTO()
     }
 
     func entry(byWord word: String) -> VocabularyEntryDTO? {
-        let predicate = #Predicate<VocabularyEntry> { $0.word == word }
+        let owner = ownerID()
+        let predicate = #Predicate<VocabularyEntry> {
+            $0.word == word && $0.profileID == owner && $0.deletedAt == nil
+        }
         let descriptor = FetchDescriptor(predicate: predicate)
         let results = (try? modelContext.fetch(descriptor)) ?? []
         return results.first?.toDTO()
     }
 
     func allEntries() -> [VocabularyEntryDTO] {
-        let predicate = #Predicate<VocabularyEntry> { $0.isInDictionary == true }
+        let owner = ownerID()
+        let predicate = #Predicate<VocabularyEntry> {
+            $0.isInDictionary == true && $0.profileID == owner && $0.deletedAt == nil
+        }
         let descriptor = FetchDescriptor(predicate: predicate, sortBy: [SortDescriptor(\.createdAt, order: .reverse)])
         let results = (try? modelContext.fetch(descriptor)) ?? []
         return results.map { $0.toDTO() }
     }
 
+    /// Soft-deletes an entry: stamps `deletedAt`/`updatedAt` instead of
+    /// destroying the row, so the deletion has something to push
+    /// (`deleted_at`) and survives a pull-cursor reset. A hard delete here
+    /// left the server row intact with `deleted_at = null`, and the entry
+    /// came back the next time the cursor rewound.
+    ///
+    /// Cascades to the entry's encounters by hand. The `@Relationship`'s
+    /// `.cascade` rule only fires on a real `modelContext.delete(_:)`, so
+    /// without this loop the encounters would stay live — visible to
+    /// `SyncModelActor.pushDirtyVocabularyEncounters` and, on the pull side,
+    /// re-materialising an encounter list for a word that no longer exists.
+    /// Voir la doc de la façade publique. `updatedAt` est bourré à la main :
+    /// `SyncModelActor.isDirty` compare `updatedAt` à `syncedAt`, donc une
+    /// correction qui ne le touche pas ne partirait JAMAIS au serveur — le mot
+    /// serait réparé sur cet appareil et resterait cassé sur les autres.
+    func updateEntry(
+        id: UUID,
+        word: String,
+        reading: String,
+        meaning: String
+    ) -> VocabularyEntryDTO? {
+        let owner = ownerID()
+        let predicate = #Predicate<VocabularyEntry> { $0.id == id && $0.profileID == owner && $0.deletedAt == nil }
+        let descriptor = FetchDescriptor(predicate: predicate)
+        guard let entry = (try? modelContext.fetch(descriptor))?.first else { return nil }
+        entry.word = word
+        entry.reading = reading
+        entry.meaning = meaning
+        entry.updatedAt = Date()
+        try? modelContext.save()
+        Logger.vocabulary.debug("Updated vocab entry: \(word)")
+        return entry.toDTO()
+    }
+
     func deleteEntry(by id: UUID) {
-        let predicate = #Predicate<VocabularyEntry> { $0.id == id }
+        let owner = ownerID()
+        let predicate = #Predicate<VocabularyEntry> { $0.id == id && $0.profileID == owner && $0.deletedAt == nil }
         let descriptor = FetchDescriptor(predicate: predicate)
         guard let entries = try? modelContext.fetch(descriptor),
               let entry = entries.first else { return }
-        modelContext.delete(entry)
+        let now = Date()
+        entry.tombstone(at: now)
+        for encounter in entry.encounters ?? [] {
+            encounter.tombstone(at: now)
+        }
         try? modelContext.save()
-        Logger.vocabulary.debug("Deleted vocab entry: \(entry.word)")
+        Logger.vocabulary.debug("Tombstoned vocab entry: \(entry.word)")
     }
 
     // MARK: - Encounter Logging
@@ -268,7 +338,8 @@ actor VocabularyModelActor {
         source: EncounterSource,
         contextSnippet: String
     ) {
-        let predicate = #Predicate<VocabularyEntry> { $0.id == entryId }
+        let owner = ownerID()
+        let predicate = #Predicate<VocabularyEntry> { $0.id == entryId && $0.profileID == owner && $0.deletedAt == nil }
         let descriptor = FetchDescriptor(predicate: predicate)
         guard let entries = try? modelContext.fetch(descriptor),
               let entry = entries.first else {
@@ -292,8 +363,13 @@ actor VocabularyModelActor {
         source: EncounterSource,
         contextSnippet: String
     ) {
-        // Find or create the entry
-        let predicate = #Predicate<VocabularyEntry> { $0.word == word }
+        // Find or create the entry. A tombstoned entry is NOT reused — see
+        // `addEntry`'s comment: reviving it would be undone by the next pull.
+        // Re-encountering a deleted word starts a fresh (pre-tracked) entry.
+        let owner = ownerID()
+        let predicate = #Predicate<VocabularyEntry> {
+            $0.word == word && $0.profileID == owner && $0.deletedAt == nil
+        }
         let descriptor = FetchDescriptor(predicate: predicate)
         let existing = (try? modelContext.fetch(descriptor))?.first
 
@@ -301,7 +377,8 @@ actor VocabularyModelActor {
         if let existing {
             entry = existing
         } else {
-            entry = VocabularyEntry(word: word, reading: reading, meaning: meaning, isInDictionary: false)
+            entry = VocabularyEntry(word: word, reading: reading, meaning: meaning,
+                                    isInDictionary: false, profileID: owner)
             modelContext.insert(entry)
         }
 
@@ -314,8 +391,13 @@ actor VocabularyModelActor {
         try? modelContext.save()
     }
 
+    /// Encounters for an entry. Filtered in memory as well as in the
+    /// predicate: `entry.encounters` is a SwiftData *relationship*, which no
+    /// `#Predicate` reaches — a tombstoned encounter would otherwise still
+    /// show up in the detail sheet's history list.
     func encounters(for entryId: UUID) -> [VocabularyEncounterDTO] {
-        let predicate = #Predicate<VocabularyEntry> { $0.id == entryId }
+        let owner = ownerID()
+        let predicate = #Predicate<VocabularyEntry> { $0.id == entryId && $0.profileID == owner && $0.deletedAt == nil }
         let descriptor = FetchDescriptor(predicate: predicate)
         guard let entries = try? modelContext.fetch(descriptor),
               let entry = entries.first,
@@ -323,6 +405,7 @@ actor VocabularyModelActor {
             return []
         }
         return encounters
+            .filter { $0.deletedAt == nil }
             .sorted { $0.timestamp > $1.timestamp }
             .map { $0.toDTO() }
     }
@@ -330,7 +413,10 @@ actor VocabularyModelActor {
     // MARK: - Drill Queries
 
     func dueEntries(before date: Date) -> [VocabularyEntryDTO] {
-        let predicate = #Predicate<VocabularyEntry> { $0.isInDictionary == true && $0.dueDate < date }
+        let owner = ownerID()
+        let predicate = #Predicate<VocabularyEntry> {
+            $0.isInDictionary == true && $0.dueDate < date && $0.profileID == owner && $0.deletedAt == nil
+        }
         let descriptor = FetchDescriptor(predicate: predicate)
         let results = (try? modelContext.fetch(descriptor)) ?? []
         return results.map { $0.toDTO() }
@@ -342,7 +428,8 @@ actor VocabularyModelActor {
         responseTimeMs: Int,
         now: Date
     ) {
-        let predicate = #Predicate<VocabularyEntry> { $0.id == entryId }
+        let owner = ownerID()
+        let predicate = #Predicate<VocabularyEntry> { $0.id == entryId && $0.profileID == owner && $0.deletedAt == nil }
         let descriptor = FetchDescriptor(predicate: predicate)
         guard let entries = try? modelContext.fetch(descriptor),
               let entry = entries.first else {
@@ -398,7 +485,10 @@ extension VocabularyEntry {
             lapseCount: lapseCount,
             isInDictionary: isInDictionary,
             createdAt: createdAt,
-            encounterCount: encounters?.count ?? 0
+            // Tombstoned encounters are excluded: this count is rendered in
+            // the dictionary list, and a relationship traversal sees deleted
+            // rows that no `#Predicate` filtered out.
+            encounterCount: (encounters ?? []).filter { $0.deletedAt == nil }.count
         )
     }
 }

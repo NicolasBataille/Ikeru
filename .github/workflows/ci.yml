@@ -163,16 +163,31 @@ jobs:
       - name: Select Xcode
         run: sudo xcode-select -s "$(ls -d /Applications/Xcode*.app | sort -V | tail -1)/Contents/Developer"
 
-      - name: Run IkeruCore Tests (CI-safe allowlist)
-        # We can't run the *whole* IkeruCore suite here: the macos-15 runner's
-        # Xcode ships Swift Testing library 1501, which SIGSEGVs mid-run on a
-        # legacy suite that never surfaces on newer toolchains (local Swift
-        # 6.3.3 / library 1902 runs the full suite clean, so it's unbisectable
-        # locally). `swift test --skip …` reproduces the crash; an allowlist
-        # avoids it by never *executing* the crasher. So this stays a `--filter`
-        # allowlist of suites verified to pass on CI. Newly-fixed suites are
-        # added here after CI confirms they don't reintroduce the crash.
-        # Un-filtering fully is blocked on the runner toolchain, not our tests.
+      - name: Run IkeruCore Tests (everything but the migration suites)
+        # This step used to be a `--filter` ALLOWLIST of ~50 suite names, and
+        # the comment here justified it with three claims that were all wrong.
+        # Recorded so nobody re-derives them (2026-08-15, GAP-10):
+        #
+        #   "SIGSEGVs mid-run"        -> `swift test` exited 1, never 139.
+        #   "a legacy suite"          -> LocalGPUProviderTests, written by us.
+        #   "runs clean locally"      -> it did not; 48 issues locally too.
+        #
+        # The real cause was one default argument: `LocalGPUProvider()` with no
+        # arguments defaults `bonjourDiscovery` to `NWBonjourDiscovery()`, which
+        # stands up a live `NWBrowser`. Two tests asserting hardcoded strings
+        # took the whole process down on a runner with no Bonjour. Filed as an
+        # external constraint, it became nobody's job for months.
+        #
+        # It was never unbisectable — only unbisectable LOCALLY, which is a
+        # different claim. A one-off probe job on CI named it on its first run.
+        #
+        # Cost while it stood: 587 of 1253 Core tests (47%) never executed here.
+        #
+        # Now a DENYLIST, and that inversion is the point. An allowlist fails
+        # open in the wrong direction: every newly-written suite is excluded by
+        # default, silently, until someone remembers to add its name. A denylist
+        # runs new suites automatically and forces anything excluded to be named
+        # and justified right here.
         #
         # `--no-parallel` + a SEPARATE step for LegacyStoreMigration (below):
         # opening a container with the frozen V1 shapes (IkeruSchema.swift)
@@ -185,9 +200,23 @@ jobs:
         # "IkeruSchema" token does not match it. `--no-parallel` here still
         # guards the residual concurrent-model-loading race. Test-harness-only:
         # production builds exactly one container.
+        # The three excluded suites are NOT excluded for the Bonjour reason —
+        # they are the store-migration round-trips, which must each own their
+        # process (see the next steps). They are skipped here and run there.
+        #
+        # Deliberately NOT folded back in just because a probe run happened to
+        # survive them: CLAUDE.md documents the CoreData poisoning as something
+        # a later fetch *can* hit, not *will*. One green run is evidence it did
+        # not fire, not that it cannot. Local: 1250 tests / 174 suites green.
         run: |
           cd IkeruCore
-          swift test --no-parallel --filter "JLPTReadinessFormula|JLPTBackfill|ProgressServiceJLPTRebuild|SkillXPLedger|SessionEnd|ExerciseXP|ExerciseOutcome|DailyTerm|DefaultSessionPlanner|ExerciseUnlockService|LearnerSnapshot|CardDTOJLPTLevel|BackupServiceJLPTLevel|(^|[^a])CardRepository|ProgressService|MasteryLevel|DisplayModeAdvancedThresholdMonitor|IkeruSchema|PlannerService|KanaCardRepository|ContentSeedService|ReviewForecastService|KanaProgress|VocabularyItemMapper|VocabularyRecallOptionsBuilder|MultiTurnConversation|ChatMarkerParsing|ConversationService|AIRouter|Gemini|OpenAICompatible|ClaudeProvider|AIProvider|RetryAfterParsing|ReadingValidator|ContentRepository|FSRSService|VocabularyRepository|ThemePaletteService|LeechIntervention"
+          swift test --no-parallel \
+            --skip "LegacyStoreMigration" \
+            --skip "StoreMigrationV2V3" \
+            --skip "StoreMigrationV3V4" \
+            --skip "StoreMigrationV4V5" \
+            --skip "StoreMigrationV5V6" \
+            --skip "StoreMigrationV2V6"
 
       - name: Run Legacy-Store Migration Tests (own process)
         # See the previous step's comment: this suite must never share a
@@ -197,7 +226,67 @@ jobs:
           cd IkeruCore
           swift test --no-parallel --filter "LegacyStoreMigration"
 
-      - name: Run App Tests (green subset)
+      - name: Run V2→V3 Store Migration Tests (own process)
+        # Same containment rule as the previous step, and for the same
+        # reason: opening a versioned-schema container against frozen nested
+        # types then reopening that store with live top-level types poisons
+        # SwiftData's process-global entity↔class cache, so this suite must
+        # never share a `swift test` process with any other SwiftData suite
+        # — see StoreMigrationV2V3Tests.swift's header comment. It also must
+        # not share a process with the Legacy-Store Migration step above:
+        # each store-opening migration suite gets its own process.
+        run: |
+          cd IkeruCore
+          swift test --no-parallel --filter "StoreMigrationV2V3"
+
+      - name: Run Store Migration V3→V4 Tests (isolated process)
+        # Same isolation reason as the two steps above: every store-opening
+        # migration suite gets its own `swift test` process. This one covers
+        # the sync columns (updatedAt / deletedAt / syncedAt) landing on
+        # existing rows — the migration real TestFlight devices will run.
+        run: |
+          cd IkeruCore
+          swift test --no-parallel --filter "StoreMigrationV3V4"
+
+      - name: Run Store Migration V4→V5 Tests (isolated process)
+        # Same isolation reason as the three steps above: every store-opening
+        # migration suite gets its own `swift test` process. This one covers
+        # the « apporte ton propre texte » entity (`TextImport`) landing on a
+        # store that already holds a learner's data — the migration every
+        # TestFlight device that updates will actually run. It also proves the
+        # `[UUID]` column survives a close/reopen, which an in-memory store
+        # cannot show.
+        run: |
+          cd IkeruCore
+          swift test --no-parallel --filter "StoreMigrationV4V5"
+
+      - name: Run Store Migration V5→V6 Tests (isolated process)
+        # Same isolation reason as the four steps above — and MORE necessary
+        # here, not less: V4 and V5 now nest frozen `VocabularyEntry` /
+        # `VocabularyEncounter` / `TextImport` snapshots, so this suite opens
+        # a container bound to those classes and then reopens the SAME store
+        # under the live ones. That is the exact poisoning mechanism CLAUDE.md
+        # describes. This one covers `profileID` landing as `nil` on existing
+        # dictionary and import rows, and `OwnershipAdoption` attributing
+        # them to the active profile — the migration every TestFlight device
+        # that updates will actually run.
+        run: |
+          cd IkeruCore
+          swift test --no-parallel --filter "StoreMigrationV5V6"
+
+      - name: Run Store Migration V2→V6 chain Tests (isolated process)
+        # The whole chain in ONE open, from a genuine on-disk V2 store: the
+        # 2026-08-09 TestFlight build shipped IkeruSchemaV2, so every tester
+        # who updates runs V2→V3→V4→V5→V6 at first launch without passing
+        # through any intermediate build. The five suites above prove each
+        # stage; this one proves what the learner actually lives. Same
+        # process isolation as the others (frozen V2 nested types, then the
+        # live ones, on the same store).
+        run: |
+          cd IkeruCore
+          swift test --no-parallel --filter "StoreMigrationV2V6"
+
+      - name: Run App Tests (full IkeruTests target)
         # Same — scoped to suites known to pass. KanaDrillViewModel covers
         # the recent shuffle-fix regression tests.
         #
@@ -224,24 +313,108 @@ jobs:
             exit 1
           fi
           echo "Using simulator: $DEVICE_ID"
+          # The WHOLE app test target, not an allowlist (GAP-10, 2026-08-16).
+          #
+          # This used to name 17 suites explicitly, because the target's other
+          # suites crashed the test runner. Both crashes are now fixed at the
+          # cause (a seed helper displacing a saved RPGState through the
+          # relationship's owning side; a ModelContainer dropped while its
+          # ModelContext was still in use), so the filter has nothing left to
+          # protect. Measured locally on iPhone 17 after the fixes:
+          # 372 tests, 41 suites, 0 runner restarts, ~54s.
+          #
+          # An allowlist fails OPEN, which is why this is not simply a longer
+          # list: a suite added tomorrow is silently not run, exactly as the
+          # 228 tests this list excluded were silently not run. Core made the
+          # same move to a denylist for the same reason (see CLAUDE.md). If a
+          # suite ever has to be excluded, exclude it with `-skip-testing:`
+          # and say why right here — so the exclusion is visible and every
+          # NEW suite runs by default.
+          #
+          # No `CODE_SIGNING_ALLOWED=NO`: an unsigned simulator build has no
+          # sandbox and no Keychain (`-34018`), which `KeychainAvailabilityTests`
+          # proves — and that suite is now in scope. Ad-hoc "Sign to Run
+          # Locally" signing needs no credentials, so dropping the flag costs
+          # nothing.
           xcodebuild test \
             -project Ikeru.xcodeproj \
             -scheme Ikeru \
             -destination "platform=iOS Simulator,id=$DEVICE_ID" \
             -skipPackagePluginValidation \
-            -only-testing:IkeruTests/KanaDrillViewModelTests \
-            -only-testing:IkeruTests/SessionDecouplingTests \
-            -only-testing:IkeruTests/Tier1KanjiStudyBookkeepingTests \
-            -only-testing:IkeruTests/Tier2AudioDrillCompletionTests \
-            -only-testing:IkeruTests/Tier2VocabRecallTests \
-            -only-testing:IkeruTests/DrillGradeMappingTests \
-            -only-testing:IkeruTests/DataExportManagerTests \
-            -only-testing:IkeruTests/SessionViewModelTests \
-            -only-testing:IkeruTests/SessionIntegrationTests \
-            -only-testing:IkeruTests/WidgetSnapshotStoreTests \
-            -only-testing:IkeruTests/StoreRecoveryTests \
-            -only-testing:IkeruTests/StoreRecoveryNoticeTests \
-            CODE_SIGNING_ALLOWED=NO
+            -only-testing:IkeruTests
+
+  ui-test:
+    name: UI Test (IkeruUITests)
+    runs-on: macos-15
+    needs: lint
+    # Non-blocking for now (GAP-09): this is the FIRST UI-test target this
+    # repo has ever had, run on a brand-new runner combination (XCUITest +
+    # GitHub's macos-15 image) that has had zero baking time. The app
+    # target's two SwiftData crashes, which this comment used to list as an
+    # additional risk to this job, are fixed at the cause (GAP-10,
+    # 2026-08-16) and no longer apply. Kept as its own job (not a step in
+    # `test`) so promoting it to blocking later, or removing it, is a
+    # self-contained change. `continue-on-error` so a flake here
+    # (CI-runner UI automation is known-flakier than unit tests) never reds
+    # out the required checks — promote once a week or two of green runs
+    # establishes it isn't systematically flaky on this runner image.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s "$(ls -d /Applications/Xcode*.app | sort -V | tail -1)/Contents/Developer"
+
+      - name: Run IkeruUITests
+        # Same dynamic-simulator pick as the `test` job (see its comment) —
+        # never hardcode `name=iPhone 16`, the runner's available devices
+        # bump with the macos-15 image periodically.
+        #
+        # No CODE_SIGNING_ALLOWED=NO here, unlike `device-build-check` and
+        # part of `test`: a UI test drives the real app process, which needs
+        # its sandbox and Keychain to behave like production — see
+        # CLAUDE.md's "N'utilise JAMAIS CODE_SIGNING_ALLOWED=NO pour lancer
+        # des tests" and IkeruTests/KeychainAvailabilityTests.swift, which
+        # measured exactly this failure mode. Simulator destinations don't
+        # need a real Apple Developer certificate either way — Xcode ad-hoc
+        # signs simulator builds automatically ("Sign to Run Locally"),
+        # confirmed locally: `xcodebuild build-for-testing -scheme
+        # IkeruUITests` signs with that identity with no certificate
+        # imported.
+        run: |
+          DEVICE_ID=$(xcrun simctl list devices available -j | python3 -c "
+          import json, sys
+          data = json.load(sys.stdin)
+          best = None
+          for runtime, devices in data['devices'].items():
+              if 'iOS' not in runtime: continue
+              for d in devices:
+                  if d['name'].startswith('iPhone') and d.get('isAvailable', True):
+                      key = (runtime, d['name'])
+                      if best is None or key > best[0]:
+                          best = (key, d['udid'])
+          print(best[1] if best else '', end='')
+          ")
+          if [ -z "$DEVICE_ID" ]; then
+            echo "::error::No iPhone simulator available on runner"
+            xcrun simctl list devices available
+            exit 1
+          fi
+          echo "Using simulator: $DEVICE_ID"
+          xcodebuild test \
+            -project Ikeru.xcodeproj \
+            -scheme IkeruUITests \
+            -destination "platform=iOS Simulator,id=$DEVICE_ID" \
+            -skipPackagePluginValidation \
+            -resultBundlePath TestResults/IkeruUITests.xcresult
+
+      - name: Upload UI test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: IkeruUITests-xcresult
+          path: TestResults/IkeruUITests.xcresult
+          retention-days: 14
 
   device-build-check:
     name: Device Build (no signing)

@@ -15,7 +15,7 @@ final class DataExportManager {
 
     /// Generates a complete data export as a single `.zip` archive and returns
     /// its temporary URL. The archive contains: cards.json, reviews.json,
-    /// outcomes.json, rpg.json, context.json, cards.csv.
+    /// confusions.json, outcomes.json, rpg.json, context.json, cards.csv.
     ///
     /// The intermediate export directory is zipped (so the share sheet hands the
     /// user one file, not a bare folder) and then deleted. A serialization or
@@ -80,10 +80,19 @@ final class DataExportManager {
         var rpgExport: RPGExport?
         if let profile = ActiveProfileResolver.fetchActiveProfile(in: context),
             let rpg = profile.rpgState {
+            // "Lifetime review count" (see the label in `writeContextJSON`)
+            // comes from `ReviewLog` (GAP-13), not `rpg.totalReviewsCompleted`
+            // — that field's hand-incremented writers can undercount against
+            // the real review history (the kana drill never touches it at
+            // all), so an export taken by a learner who also uses the drill
+            // would otherwise ship a number visibly smaller than the review
+            // count in reviews.json above. See `RPGState.totalReviewsCompleted`'s
+            // doc comment for the full list of writers.
+            let totalReviews = await cardRepo.activeProfileReviewCount()
             rpgExport = RPGExport(
                 xp: rpg.xp,
                 level: rpg.level,
-                totalReviewsCompleted: rpg.totalReviewsCompleted,
+                totalReviewsCompleted: totalReviews,
                 totalSessionsCompleted: rpg.totalSessionsCompleted,
                 attributes: rpg.attributes,
                 inventoryCount: rpg.lootInventory.count,
@@ -91,16 +100,28 @@ final class DataExportManager {
             )
         }
 
+        // Personal dictionary and imported texts — owned by the profile since
+        // `IkeruSchemaV6` (P1-1 / OBS2-037), so both repositories already
+        // scope to the ACTIVE PROFILE; nothing of another profile's can land
+        // here. Before V6 they were absent from the archive because they
+        // belonged to no one, and the deletion screen had to say they
+        // survived — the same gap, seen from the other side.
+        let dictionary = await VocabularyRepository(modelContainer: modelContainer).allEntries()
+        let imports = await TextImportRepository(modelContainer: modelContainer).all()
+
         // Only Sendable value types (CardDTO, ReviewLogDTO,
-        // ExerciseOutcomeLogDTO, RPGExport) cross into the detached task below
-        // — no ModelContext, ModelContainer, or @Model instance is ever
-        // captured off the main actor.
+        // ExerciseOutcomeLogDTO, RPGExport, VocabularyEntryDTO, TextImportDTO)
+        // cross into the detached task below — no ModelContext,
+        // ModelContainer, or @Model instance is ever captured off the main
+        // actor.
         let exportDir = try await Task.detached(priority: .utility) {
             try Self.writeExportFiles(
                 cards: allCards,
                 reviews: reviewLogs,
                 outcomes: exerciseOutcomes,
-                rpg: rpgExport
+                rpg: rpgExport,
+                dictionary: dictionary,
+                imports: imports
             )
         }.value
 
@@ -111,15 +132,22 @@ final class DataExportManager {
     // MARK: - Off-main writing
 
     /// Builds a fresh temporary directory and writes every export file into
-    /// it: cards.json, cards.csv, reviews.json, outcomes.json, rpg.json (if
-    /// present), and context.json. Runs off the main actor — only Sendable
-    /// inputs (`CardDTO`, `ReviewLogDTO`, `ExerciseOutcomeLogDTO`, `RPGExport`)
-    /// are accepted.
+    /// it: cards.json, cards.csv, reviews.json, confusions.json, outcomes.json,
+    /// rpg.json (if present), dictionary.json, imports.json, and context.json.
+    /// Runs off the main actor — only Sendable inputs (`CardDTO`,
+    /// `ReviewLogDTO`, `ExerciseOutcomeLogDTO`, `RPGExport`,
+    /// `VocabularyEntryDTO`, `TextImportDTO`) are accepted.
+    ///
+    /// `confusions.json` is derived, not persisted: it is aggregated from
+    /// `reviews` + `cards` right here, at export time (learner-telemetry lot 1,
+    /// see `docs/design-specs/2026-08-10-learner-telemetry-design.md` §3.1/§4).
     nonisolated private static func writeExportFiles(
         cards: [CardDTO],
         reviews: [ReviewLogDTO],
         outcomes: [ExerciseOutcomeLogDTO],
-        rpg: RPGExport?
+        rpg: RPGExport?,
+        dictionary: [VocabularyEntryDTO],
+        imports: [TextImportDTO]
     ) throws -> URL {
         let exportDir = FileManager.default.temporaryDirectory
             .appending(path: "ikeru-export-\(Date().timeIntervalSince1970)", directoryHint: .isDirectory)
@@ -147,6 +175,13 @@ final class DataExportManager {
         let reviewsData = try encoder.encode(reviews.map { ReviewExportRow(from: $0) })
         try reviewsData.write(to: exportDir.appending(path: "reviews.json"))
 
+        // Confusion pairs — DERIVED from reviews + cards, nothing new persisted.
+        // Always written (an empty `[]` when there is no confusable history yet),
+        // matching the "empty history still writes a valid file" convention used
+        // by reviews.json/outcomes.json above.
+        let confusionsData = try encoder.encode(generateConfusions(cards: cards, reviews: reviews))
+        try confusionsData.write(to: exportDir.appending(path: "confusions.json"))
+
         // Exercise outcomes (listening / shadowing, no backing Card)
         let outcomesData = try encoder.encode(outcomes.map { OutcomeExportRow(from: $0) })
         try outcomesData.write(to: exportDir.appending(path: "outcomes.json"))
@@ -155,6 +190,13 @@ final class DataExportManager {
         if let rpg {
             try encoder.encode(rpg).write(to: exportDir.appending(path: "rpg.json"))
         }
+
+        // Personal dictionary and imported texts — always written (an empty
+        // `[]` when there is nothing), same convention as reviews/outcomes.
+        let dictionaryData = try encoder.encode(dictionary.map { DictionaryExportRow(from: $0) })
+        try dictionaryData.write(to: exportDir.appending(path: "dictionary.json"))
+        let importsData = try encoder.encode(imports.map { ImportExportRow(from: $0) })
+        try importsData.write(to: exportDir.appending(path: "imports.json"))
 
         // Context file (data model documentation)
         let contextJSON = generateContextJSON()
@@ -224,7 +266,12 @@ final class DataExportManager {
     // MARK: - CSV Generation
 
     nonisolated private static func generateCardsCSV(cards: [CardDTO]) -> String {
-        var csv = "id,front,back,type,due_date,ease_factor,interval,reps,lapse_count,leech_flag\n"
+        // `ease_factor` remplacé par le véritable état FSRS (OBS2-038).
+        // `easeFactor` est un vestige SM-2 que rien n'écrit jamais : il vaut
+        // 2.5 sur toutes les cartes depuis toujours. Exporté sous l'étiquette
+        // « état d'ordonnancement courant », il donnait à qui migre vers Anki
+        // un planning faux — une constante décorative présentée comme donnée.
+        var csv = "id,front,back,type,due_date,difficulty,stability,interval,reps,lapse_count,leech_flag\n"
         let dateFormatter = ISO8601DateFormatter()
 
         for card in cards {
@@ -234,7 +281,8 @@ final class DataExportManager {
                 escapeCSV(card.back),
                 card.type.rawValue,
                 dateFormatter.string(from: card.dueDate),
-                String(format: "%.4f", card.easeFactor),
+                String(format: "%.4f", card.fsrsState.difficulty),
+                String(format: "%.4f", card.fsrsState.stability),
                 "\(card.interval)",
                 "\(card.fsrsState.reps)",
                 "\(card.lapseCount)",
@@ -243,6 +291,49 @@ final class DataExportManager {
             csv += row.joined(separator: ",") + "\n"
         }
         return csv
+    }
+
+    // MARK: - Confusion Pair Aggregation
+
+    /// Aggregates `(expected, answered)` character pairs from `reviews` into
+    /// occurrence counts. `expected` is the reviewed card's `front` (looked up
+    /// by `cardId`); `answered` is `ReviewLogDTO.answeredValue`.
+    ///
+    /// A row is included only when:
+    /// - `cardId` is non-nil (the card wasn't deleted, so `front` is
+    ///   resolvable) and matches a card in `cards`;
+    /// - `answeredValue` is non-nil (the exercise format recorded a choice —
+    ///   today, only the kana quiz does; self-graded flashcards never set it);
+    /// - `expected != answered` — a **correct** answer isn't a confusion, and
+    ///   inflating this file with matches would bury the pairs that matter.
+    ///   Per-item accuracy is already visible in `reviews.json`.
+    ///
+    /// Sorted by count descending, then `expected`/`answered` ascending, so the
+    /// output (and any test asserting on it) is deterministic regardless of
+    /// dictionary iteration order.
+    nonisolated private static func generateConfusions(
+        cards: [CardDTO],
+        reviews: [ReviewLogDTO]
+    ) -> [ConfusionExportRow] {
+        let frontByCardId = Dictionary(uniqueKeysWithValues: cards.map { ($0.id, $0.front) })
+
+        var counts: [ConfusionPairKey: Int] = [:]
+        for review in reviews {
+            guard let cardId = review.cardId,
+                let answered = review.answeredValue,
+                let expected = frontByCardId[cardId],
+                expected != answered
+            else { continue }
+            counts[ConfusionPairKey(expected: expected, answered: answered), default: 0] += 1
+        }
+
+        return counts
+            .map { ConfusionExportRow(expected: $0.key.expected, answered: $0.key.answered, count: $0.value) }
+            .sorted { lhs, rhs in
+                if lhs.count != rhs.count { return lhs.count > rhs.count }
+                if lhs.expected != rhs.expected { return lhs.expected < rhs.expected }
+                return lhs.answered < rhs.answered
+            }
     }
 
     nonisolated private static func escapeCSV(_ value: String) -> String {
@@ -254,7 +345,19 @@ final class DataExportManager {
 
     // MARK: - Context JSON
 
+    // One string literal documenting the export for its consumers — its
+    // length IS the documentation. Was 103 lines before dictionary.json and
+    // imports.json joined; already over the 80-line budget then.
+    // swiftlint:disable:next function_body_length
     nonisolated private static func generateContextJSON() -> String {
+        // swiftlint:disable line_length
+        // The lines below are prose describing the exported schema for external
+        // consumers (data scientists, other tools) — kept as single JSON string
+        // values on purpose so they stay easy to grep/diff. Wrapping mid-sentence
+        // would either break JSON validity (a raw newline inside a JSON string
+        // isn't valid without an escaped \n) or require splitting one field's
+        // meaning across several JSON keys, which is worse for a reader of the
+        // exported context.json than one long line is for a reader of this file.
         """
         {
           "export_format": "ikeru-v1",
@@ -268,7 +371,8 @@ final class DataExportManager {
                 "back": "The answer (reading, meaning, or translation)",
                 "type": "Card category: kanji, vocabulary, grammar, listening",
                 "dueDate": "ISO8601 date when the card is next due for review",
-                "easeFactor": "FSRS ease factor (higher = easier, typically 1.3-3.0)",
+                "difficulty": "FSRS difficulty (1-10, higher = harder for you)",
+                "stability": "FSRS stability in days — how long the memory is expected to hold",
                 "interval": "Days until next review",
                 "reps": "Number of successful reviews (0 = new card)",
                 "lapseCount": "Number of times the card was forgotten",
@@ -285,10 +389,26 @@ final class DataExportManager {
                 "cardId": "UUID of the reviewed card (null if the card was deleted)",
                 "cardType": "Card category at review time: kanji, vocabulary, grammar, listening",
                 "timestamp": "ISO8601 date when the review occurred",
-                "grade": "FSRS grade 1-4 (1=again, 2=hard, 3=good, 4=easy)",
+                "grade": "FSRS grade 1-4 (1=again, 2=hard, 3=good, 4=easy) — see grade_semantics below for what each value means pedagogically",
                 "gradeLabel": "Human-readable grade: again, hard, good, easy",
-                "responseTimeMs": "Time taken to answer, in milliseconds"
+                "responseTimeMs": "Time taken to answer, in milliseconds",
+                "answeredValue": "The value the learner actually chose or produced, for any exercise format that offers a choice. Null for a self-graded flashcard — there is nothing to record, the learner graded their own recall. Where present, this is what makes confusion pairs (see confusions.json) analyzable: e.g. the learner was shown シ and answered ツ. Script is NOT uniform across rows: for the kana quiz this is the kana character itself (シ), not the romaji option label, so it can be compared directly against a card's front; a few rows fall back to the raw romaji option string when the character couldn't be resolved. A consumer must not assume one script.",
+                "exerciseType": "Free-form identifier for the exercise format this grade came from. Null when not recorded. Two independent value spaces exist, distinguished by shape, not a shared enum: main-session values match ExerciseType.rawValue (e.g. kanjiStudy, vocabularyStudy, grammarStudy, listeningStudy); kana-drill values are 'kana.flashcard' or 'kana.quiz' (a surface that predates ExerciseType and grades kana cards outside the session pipeline).",
+                "surface": "Where the review was graded from: iphone.session (main SRS session), iphone.drill (kana drill flashcard/quiz), or watch. 'watch' is reserved: no Watch code path persists a ReviewLog yet, so this export will never actually contain that value today — do not read its absence as evidence the learner isn't using the Watch."
               }
+            },
+            "confusions.json": {
+              "description": "DERIVED aggregate, not a persisted table — computed from reviews.json at export time, every time. One row per distinct (expected, answered) pair with how many times it occurred in the exported window. This is the file with the highest diagnostic value: it names recurring confusions (e.g. シ/ツ, ソ/ン) instead of forcing an inference from accuracy alone.",
+              "fields": {
+                "expected": "The character/value the learner was shown (the reviewed card's front)",
+                "answered": "The character/value the learner actually chose — see reviews.json.fields.answeredValue for the script caveat",
+                "count": "Number of times this exact (expected, answered) pair occurred"
+              },
+              "exclusions": [
+                "Rows where expected == answered are NOT included — a correct answer isn't a confusion. Per-item accuracy already lives in reviews.json/cards.json.",
+                "Reviews with a null answeredValue are excluded (most flashcard/self-graded reviews today — only the kana quiz currently populates answeredValue, so confusions.json will be empty or kana-only until other formats adopt the same field).",
+                "Reviews whose card was deleted (cardId present but no longer resolvable, or cardId null) are excluded — 'expected' cannot be determined without the card."
+              ]
             },
             "outcomes.json": {
               "description": "Pool-based output drill outcomes (listening / shadowing) with no backing flashcard",
@@ -297,6 +417,36 @@ final class DataExportManager {
                 "timestamp": "ISO8601 date when the drill was completed",
                 "skill": "Skill measured: listening or speaking",
                 "accuracy": "Accuracy 0.0-1.0 (binary pass/fail for listening, banded for shadowing)"
+              }
+            },
+            "dictionary.json": {
+              "description": "The learner's personal dictionary — words they saved, with their own FSRS scheduling state (these are not SRS flashcards from cards.json; the vocabulary drill grades them separately). Scoped to the exporting profile.",
+              "fields": {
+                "id": "UUID — unique entry identifier",
+                "word": "The Japanese word as the learner saved it",
+                "reading": "Hiragana reading",
+                "meaning": "The gloss the learner saved, in the language they captured it in",
+                "jlptLevel": "Estimated JLPT level (N5…N1), null when unknown",
+                "dueDate": "ISO8601 date when the word is next due in the vocabulary drill",
+                "difficulty": "FSRS difficulty (1-10)",
+                "stability": "FSRS stability in days",
+                "interval": "Days until next review",
+                "reps": "Number of successful drill reviews (0 = never drilled)",
+                "lapseCount": "Number of times the word was forgotten",
+                "createdAt": "ISO8601 date the word entered the dictionary",
+                "encounterCount": "How many times the word was met across the app (Sakura, sessions, imported texts)"
+              }
+            },
+            "imports.json": {
+              "description": "Texts the learner brought in themselves (pasted or photographed), verbatim, with the dictionary entries each one produced. Scoped to the exporting profile.",
+              "fields": {
+                "id": "UUID — unique import identifier",
+                "title": "Short label derived from the first line",
+                "content": "The full text, exactly as the learner left it — never re-derived, never truncated",
+                "source": "How it came in: paste or photo",
+                "createdAt": "ISO8601 date of the import",
+                "coverage": "0.0-1.0 share of content words already known AT IMPORT TIME (frozen snapshot), null when nothing was measurable",
+                "entryIds": "UUIDs of the dictionary.json entries this import created, in selection order"
               }
             },
             "rpg.json": {
@@ -312,14 +462,36 @@ final class DataExportManager {
               }
             }
           },
+          "grade_semantics": {
+            "description": "What the 4 grade buttons mean, pedagogically — read this before computing any recall/retention rate from reviews.json or outcomes.json.",
+            "1": {
+              "label": "again",
+              "meaning": "The learner failed to recall. This is the ONLY grade that counts as a lapse/failure — it resets the card's FSRS interval and is what leech detection counts."
+            },
+            "2": {
+              "label": "hard",
+              "meaning": "The learner recalled correctly, but slowly or with effort. This is a SUCCESS, not a failure, in the SRS sense — 'slow but correct'. A recall/retention rate must count hard as a success alongside good and easy; counting it as a failure understates the learner's actual retention and was a bug the app itself has fixed (recall-rate calculations now treat everything except again as success)."
+            },
+            "3": {
+              "label": "good",
+              "meaning": "Recalled correctly at the expected effort — the baseline success."
+            },
+            "4": {
+              "label": "easy",
+              "meaning": "Recalled correctly with no effort — success, and schedules a longer interval than good."
+            },
+            "recall_rate_formula": "successes / total, where successes = count(grade != again) = count(grade in {hard, good, easy})"
+          },
           "usage_notes": [
             "All dates are ISO8601 format in UTC",
             "Card types: kanji, vocabulary, grammar, listening",
             "Ease factor follows FSRS algorithm conventions",
-            "Leech detection threshold: 4 lapses"
+            "Leech detection threshold: 4 lapses",
+            "See grade_semantics for what each of the 4 review grades means before computing any success/retention rate — grade 2 (hard) is a success, not a failure"
           ]
         }
         """
+        // swiftlint:enable line_length
     }
 }
 
@@ -331,7 +503,8 @@ private struct CardExportRow: Codable, Sendable {
     let back: String
     let type: String
     let dueDate: Date
-    let easeFactor: Double
+    let difficulty: Double
+    let stability: Double
     let interval: Int
     let reps: Int
     let lapseCount: Int
@@ -343,7 +516,8 @@ private struct CardExportRow: Codable, Sendable {
         self.back = dto.back
         self.type = dto.type.rawValue
         self.dueDate = dto.dueDate
-        self.easeFactor = dto.easeFactor
+        self.difficulty = dto.fsrsState.difficulty
+        self.stability = dto.fsrsState.stability
         self.interval = dto.interval
         self.reps = dto.fsrsState.reps
         self.lapseCount = dto.lapseCount
@@ -359,6 +533,17 @@ private struct ReviewExportRow: Codable, Sendable {
     let grade: Int
     let gradeLabel: String
     let responseTimeMs: Int
+    /// See `ReviewLog.answeredValue` — nil for a self-graded flashcard,
+    /// otherwise the value the learner chose/produced (script not uniform:
+    /// kana character for the kana quiz, romaji as a fallback — a consumer
+    /// must not assume one).
+    let answeredValue: String?
+    /// See `ReviewLog.exerciseType` — free-form, value space differs by
+    /// prefix (see `context.json`'s `reviews.json.fields.exerciseType`).
+    let exerciseType: String?
+    /// See `ReviewLog.surface` — `"iphone.session"`, `"iphone.drill"`, or the
+    /// reserved (not yet emitted) `"watch"`.
+    let surface: String?
 
     init(from dto: ReviewLogDTO) {
         self.id = dto.id
@@ -368,6 +553,9 @@ private struct ReviewExportRow: Codable, Sendable {
         self.grade = dto.grade.rawValue
         self.gradeLabel = Self.label(for: dto.grade)
         self.responseTimeMs = dto.responseTimeMs
+        self.answeredValue = dto.answeredValue
+        self.exerciseType = dto.exerciseType
+        self.surface = dto.surface
     }
 
     /// Explicit grade → label mapping for the exported `gradeLabel` field.
@@ -382,6 +570,74 @@ private struct ReviewExportRow: Codable, Sendable {
         case .easy: "easy"
         }
     }
+}
+
+private struct DictionaryExportRow: Codable, Sendable {
+    let id: UUID
+    let word: String
+    let reading: String
+    let meaning: String
+    let jlptLevel: String?
+    let dueDate: Date
+    let difficulty: Double
+    let stability: Double
+    let interval: Int
+    let reps: Int
+    let lapseCount: Int
+    let createdAt: Date
+    let encounterCount: Int
+
+    init(from dto: VocabularyEntryDTO) {
+        self.id = dto.id
+        self.word = dto.word
+        self.reading = dto.reading
+        self.meaning = dto.meaning
+        self.jlptLevel = dto.jlptLevel?.rawValue
+        self.dueDate = dto.dueDate
+        self.difficulty = dto.fsrsState.difficulty
+        self.stability = dto.fsrsState.stability
+        self.interval = dto.interval
+        self.reps = dto.fsrsState.reps
+        self.lapseCount = dto.lapseCount
+        self.createdAt = dto.createdAt
+        self.encounterCount = dto.encounterCount
+    }
+}
+
+private struct ImportExportRow: Codable, Sendable {
+    let id: UUID
+    let title: String
+    let content: String
+    let source: String
+    let createdAt: Date
+    let coverage: Double?
+    let entryIds: [UUID]
+
+    init(from dto: TextImportDTO) {
+        self.id = dto.id
+        self.title = dto.title
+        self.content = dto.content
+        self.source = dto.source.rawValue
+        self.createdAt = dto.createdAt
+        self.coverage = dto.coverage
+        self.entryIds = dto.entryIDs
+    }
+}
+
+/// Key for aggregating confusion pair counts in `generateConfusions`. Not
+/// exported directly — `ConfusionExportRow` is the flattened, encodable shape.
+private struct ConfusionPairKey: Hashable {
+    let expected: String
+    let answered: String
+}
+
+/// One row of `confusions.json`: an `(expected, answered)` character pair and
+/// how many times it occurred across the exported review history. Derived at
+/// export time by `generateConfusions` — nothing new persisted.
+private struct ConfusionExportRow: Codable, Sendable {
+    let expected: String
+    let answered: String
+    let count: Int
 }
 
 private struct OutcomeExportRow: Codable, Sendable {

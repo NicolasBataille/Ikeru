@@ -83,7 +83,7 @@ struct KanaQuizView: View {
                 .overlay(Rectangle().strokeBorder(TatamiTokens.goldDim.opacity(0.5), lineWidth: 1))
                 .sumiCorners(color: TatamiTokens.goldDim, size: 5, weight: 1.0)
             Spacer()
-            Text(LocalizedStringKey(viewModel.mode.displayName))
+            Text(viewModel.sessionLabel ?? LocalizedStringKey(viewModel.mode.displayName))
                 .textCase(.uppercase)
                 .font(.ikeruMicro)
                 .ikeruTracking(.micro)
@@ -96,6 +96,23 @@ struct KanaQuizView: View {
         }
         .padding(.top, IkeruTheme.Spacing.sm)
     }
+
+    // MARK: Hiragana bridge hint — deliberately NOT shown here (chantier #45g)
+    //
+    // `KanaFlashcardView` shows the "même son, nouvelle forme" hiragana
+    // bridge above a first-exposure katakana card (chantier #24a) — that's a
+    // self-graded presentation card, so revealing the hiragana counterpart
+    // only helps the learner connect the new shape to something familiar.
+    // This view, by contrast, is the 4-choice romaji recognition QUIZ: the
+    // question being asked is "what romaji does this character make?", and
+    // the hiragana counterpart's reading answers that question outright.
+    // Showing it here would both defeat the exercise (nothing left to
+    // evaluate) and poison the `answeredValue` logged for that card — a
+    // hint-assisted correct answer would be indistinguishable from a free
+    // recall in `ReviewLog.answeredValue`. So the quiz never renders the
+    // bridge, regardless of `viewModel.hiraganaBridgeCharacter` —
+    // evaluation contexts don't get the hint, only the flashcard's
+    // presentation context does.
 
     // MARK: Options
 
@@ -153,6 +170,13 @@ struct KanaQuizView: View {
         .disabled(answered)
         .scaleEffect(isSelected && !answered ? 0.97 : 1.0)
         .animation(.spring(response: 0.25, dampingFraction: 0.85), value: isSelected)
+        // Same identifier on all four options (GAP-09 UI-test harness) — a
+        // flow test only needs to tap *an* option, not the correct one
+        // (correctness is already covered by KanaDrillViewModelTests), so
+        // `buttons.matching(identifier:).firstMatch` is enough and doesn't
+        // require the option text (romaji, not localized, but still content
+        // a test shouldn't depend on).
+        .accessibilityIdentifier("kanaQuiz.optionButton")
     }
 
     // MARK: Feedback
@@ -214,6 +238,7 @@ struct KanaQuizView: View {
         .ikeruButtonStyle(.primary)
         .disabled(viewModel.selectedOption == nil)
         .opacity(viewModel.selectedOption == nil ? 0.5 : 1.0)
+        .accessibilityIdentifier("kanaQuiz.actionButton")
     }
 
     // MARK: Accuracy bar

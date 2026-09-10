@@ -11,6 +11,8 @@
 	<true/>
 	<key>UIUserInterfaceStyle</key>
 	<string>Dark</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Ikeru uses the camera to read Japanese text you photograph, so you can turn it into study cards. Photos stay on your device.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Ikeru needs microphone access for shadowing exercises where you practice speaking Japanese.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>

@@ -27,6 +27,15 @@ struct DataExportManagerTests {
         let grade: Int
         let gradeLabel: String
         let responseTimeMs: Int
+        let answeredValue: String?
+        let exerciseType: String?
+        let surface: String?
+    }
+
+    private struct DecodedConfusion: Codable {
+        let expected: String
+        let answered: String
+        let count: Int
     }
 
     private func decoder() -> JSONDecoder {
@@ -40,6 +49,8 @@ struct DataExportManagerTests {
     private func makeContainer() throws -> ModelContainer {
         let schema = Schema([
             UserProfile.self, Card.self, ReviewLog.self, RPGState.self, ExerciseOutcomeLog.self,
+            // dictionary.json / imports.json (IkeruSchemaV6, OBS2-037).
+            VocabularyEntry.self, VocabularyEncounter.self, TextImport.self,
         ])
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         ActiveProfileResolver.setActiveProfileID(nil)
@@ -177,15 +188,46 @@ struct DataExportManagerTests {
         context.insert(profileA)
         context.insert(profileB)
 
-        let rpgA = RPGState(xp: 500, level: 5, totalReviewsCompleted: 42)
-        rpgA.profile = profileA
-        profileA.rpgState = rpgA
-        context.insert(rpgA)
+        // Mutate the state each profile ALREADY owns (`UserProfile.init`
+        // mints one) rather than attaching a rival. Attaching a rival via the
+        // owning side (`rpgA.profile = profileA`) traps the whole test runner
+        // once the profile has been saved — see the GAP-10 regression test in
+        // `HomeViewModelTests` for the measurement. This suite only stayed
+        // green because it never saved between the insert and the assignment;
+        // that is ordering luck, not safety, and it also left an orphaned
+        // RPGState per profile in the store the export then had to ignore.
+        let rpgA = try #require(profileA.rpgState)
+        rpgA.xp = 500
+        rpgA.level = 5
+        rpgA.totalReviewsCompleted = 42
 
-        let rpgB = RPGState(xp: 9_000, level: 42, totalReviewsCompleted: 999)
-        rpgB.profile = profileB
-        profileB.rpgState = rpgB
-        context.insert(rpgB)
+        let rpgB = try #require(profileB.rpgState)
+        rpgB.xp = 9_000
+        rpgB.level = 42
+        rpgB.totalReviewsCompleted = 999
+
+        // `totalReviewsCompleted` in the export is GAP-13's ReviewLog-derived
+        // count (`CardRepository.activeProfileReviewCount()`), not a mirror of
+        // `RPGState.totalReviewsCompleted` — the two intentionally diverge (see
+        // that field's doc comment). So the fixture needs real `ReviewLog` rows
+        // per profile, distinct in count from each other AND from each
+        // profile's `RPGState` counter (42 / 999), so this test still fails
+        // against both the old cross-profile leak (would read A's 3 rows or
+        // A's rpgA.totalReviewsCompleted) and a regression back to reading
+        // `RPGState.totalReviewsCompleted` directly (would read 999, not 5).
+        let cardA = Card(front: "甲", back: "A", type: .kanji, dueDate: Date())
+        cardA.profile = profileA
+        context.insert(cardA)
+        for _ in 0..<3 {
+            context.insert(ReviewLog(card: cardA, grade: .good, responseTimeMs: 100))
+        }
+
+        let cardB = Card(front: "乙", back: "B", type: .kanji, dueDate: Date())
+        cardB.profile = profileB
+        context.insert(cardB)
+        for _ in 0..<5 {
+            context.insert(ReviewLog(card: cardB, grade: .good, responseTimeMs: 100))
+        }
 
         try context.save()
 
@@ -205,7 +247,7 @@ struct DataExportManagerTests {
         let decoded = try decoder().decode(DecodedRPG.self, from: Data(contentsOf: rpgURL))
         #expect(decoded.xp == 9_000)
         #expect(decoded.level == 42)
-        #expect(decoded.totalReviewsCompleted == 999)
+        #expect(decoded.totalReviewsCompleted == 5)
         #expect(decoded.xp != rpgA.xp)
         #expect(decoded.level != rpgA.level)
     }
@@ -305,6 +347,230 @@ struct DataExportManagerTests {
         )
         #expect(rows.count == 1)
         #expect(rows.first?.accuracy == 1.0)
+    }
+
+    // MARK: - Telemetry fields (learner-telemetry lot 1 export — chantier #44)
+
+    @Test("reviews.json carries answeredValue/exerciseType/surface for a quiz-style log, nil for a flashcard")
+    func reviewsJSONCarriesTelemetryFields() async throws {
+        let container = try makeContainer()
+        let profile = try seedProfile(container)
+        let context = container.mainContext
+
+        let card = Card(front: "シ", back: "shi", type: .kanji, dueDate: Date())
+        card.profile = profile
+        context.insert(card)
+
+        // Quiz-style log: the learner was shown シ and answered ツ.
+        context.insert(ReviewLog(
+            card: card, grade: .again, responseTimeMs: 800,
+            timestamp: Date(timeIntervalSince1970: 1_700_000_000),
+            answeredValue: "ツ", exerciseType: "kana.quiz", surface: "iphone.drill"
+        ))
+        // Self-graded flashcard log: nothing was chosen, so the 3 telemetry
+        // fields stay at their `nil` default.
+        context.insert(ReviewLog(
+            card: card, grade: .good, responseTimeMs: 900,
+            timestamp: Date(timeIntervalSince1970: 1_700_000_100)
+        ))
+        try context.save()
+
+        let dir = try await DataExportManager().buildExportDirectory(modelContainer: container)
+        defer { try? FileManager.default.removeItem(at: dir) }
+
+        let rows = try decoder().decode(
+            [DecodedReview].self,
+            from: Data(contentsOf: dir.appending(path: "reviews.json"))
+        )
+        #expect(rows.count == 2)
+
+        let quizRow = try #require(rows.first { $0.answeredValue != nil })
+        #expect(quizRow.answeredValue == "ツ")
+        #expect(quizRow.exerciseType == "kana.quiz")
+        #expect(quizRow.surface == "iphone.drill")
+
+        let flashcardRow = try #require(rows.first { $0.answeredValue == nil })
+        #expect(flashcardRow.exerciseType == nil)
+        #expect(flashcardRow.surface == nil)
+    }
+
+    // MARK: - dictionary.json / imports.json (OBS2-037 — owned since IkeruSchemaV6)
+
+    private struct DecodedWord: Decodable {
+        let id: UUID
+        let word: String
+        let meaning: String
+        let encounterCount: Int
+    }
+
+    private struct DecodedImport: Decodable {
+        let id: UUID
+        let content: String
+        let entryIds: [UUID]
+    }
+
+    /// The archive used to omit both, because before V6 they belonged to no
+    /// one. Seen RED with the repositories' owner predicate neutralised: the
+    /// other profile's word then leaks into the export.
+    @Test("dictionary.json and imports.json are written, scoped to the active profile, and the import cites its entry")
+    func dictionaryAndImportsScopedToActiveProfile() async throws {
+        let container = try makeContainer()
+        let context = container.mainContext
+        let profileA = UserProfile(displayName: "A")
+        let profileB = UserProfile(displayName: "B")
+        context.insert(profileA)
+        context.insert(profileB)
+        try context.save()
+
+        // Written through the real repositories, which stamp the owner.
+        ActiveProfileResolver.setActiveProfileID(profileA.id)
+        let vocab = VocabularyRepository(modelContainer: container)
+        let wordA = await vocab.addEntry(word: "傘", reading: "かさ", meaning: "parapluie", jlptLevel: .n5)
+        await vocab.logEncounter(entryId: wordA.id, source: .importedText, contextSnippet: "傘を持っていこう。")
+        let importA = await TextImportRepository(modelContainer: container)
+            .create(content: "傘を持っていこう。", source: .paste, coverage: 0.5, entryIDs: [wordA.id])
+
+        ActiveProfileResolver.setActiveProfileID(profileB.id)
+        _ = await vocab.addEntry(word: "本", reading: "ほん", meaning: "livre", jlptLevel: nil)
+        _ = await TextImportRepository(modelContainer: container)
+            .create(content: "本を読む。", source: .photo, coverage: nil, entryIDs: [])
+
+        ActiveProfileResolver.setActiveProfileID(profileA.id)
+        let dir = try await DataExportManager().buildExportDirectory(modelContainer: container)
+        defer { try? FileManager.default.removeItem(at: dir) }
+
+        let words = try decoder().decode(
+            [DecodedWord].self, from: Data(contentsOf: dir.appending(path: "dictionary.json"))
+        )
+        #expect(words.map(\.word) == ["傘"], "profile B's word leaked into profile A's archive")
+        #expect(words.first?.meaning == "parapluie")
+        #expect(words.first?.encounterCount == 1)
+
+        let imports = try decoder().decode(
+            [DecodedImport].self, from: Data(contentsOf: dir.appending(path: "imports.json"))
+        )
+        #expect(imports.map(\.id) == [importA.id], "profile B's text leaked into profile A's archive")
+        #expect(imports.first?.content == "傘を持っていこう。")
+        #expect(imports.first?.entryIds == [wordA.id])
+    }
+
+    @Test("dictionary.json and imports.json are valid empty arrays when there is nothing to export")
+    func dictionaryAndImportsEmpty() async throws {
+        let container = try makeContainer()
+        _ = try seedProfile(container)
+        let dir = try await DataExportManager().buildExportDirectory(modelContainer: container)
+        defer { try? FileManager.default.removeItem(at: dir) }
+        #expect(try decoder().decode([DecodedWord].self,
+                                     from: Data(contentsOf: dir.appending(path: "dictionary.json"))).isEmpty)
+        #expect(try decoder().decode([DecodedImport].self,
+                                     from: Data(contentsOf: dir.appending(path: "imports.json"))).isEmpty)
+    }
+
+    // MARK: - confusions.json (derived aggregate)
+
+    @Test("confusions.json aggregates repeated (expected, answered) pairs and excludes correct answers")
+    func confusionsJSONAggregatesRepeatedPairs() async throws {
+        let container = try makeContainer()
+        let profile = try seedProfile(container)
+        let context = container.mainContext
+
+        let shi = Card(front: "シ", back: "shi", type: .kanji, dueDate: Date())
+        shi.profile = profile
+        context.insert(shi)
+
+        let so = Card(front: "ソ", back: "so", type: .kanji, dueDate: Date())
+        so.profile = profile
+        context.insert(so)
+
+        // シ confused with ツ, twice — the classic shi/tsu stroke-shape pair.
+        context.insert(ReviewLog(
+            card: shi, grade: .again, responseTimeMs: 700,
+            timestamp: Date(timeIntervalSince1970: 1_700_000_000),
+            answeredValue: "ツ", exerciseType: "kana.quiz", surface: "iphone.drill"
+        ))
+        context.insert(ReviewLog(
+            card: shi, grade: .again, responseTimeMs: 750,
+            timestamp: Date(timeIntervalSince1970: 1_700_000_100),
+            answeredValue: "ツ", exerciseType: "kana.quiz", surface: "iphone.drill"
+        ))
+        // ソ confused with ン, once.
+        context.insert(ReviewLog(
+            card: so, grade: .again, responseTimeMs: 720,
+            timestamp: Date(timeIntervalSince1970: 1_700_000_200),
+            answeredValue: "ン", exerciseType: "kana.quiz", surface: "iphone.drill"
+        ))
+        // A correct answer (expected == answered) — must NOT surface as a
+        // confusion pair.
+        context.insert(ReviewLog(
+            card: shi, grade: .good, responseTimeMs: 500,
+            timestamp: Date(timeIntervalSince1970: 1_700_000_300),
+            answeredValue: "シ", exerciseType: "kana.quiz", surface: "iphone.drill"
+        ))
+        try context.save()
+
+        let dir = try await DataExportManager().buildExportDirectory(modelContainer: container)
+        defer { try? FileManager.default.removeItem(at: dir) }
+
+        let confusionsURL = dir.appending(path: "confusions.json")
+        #expect(FileManager.default.fileExists(atPath: confusionsURL.path))
+
+        let rows = try decoder().decode([DecodedConfusion].self, from: Data(contentsOf: confusionsURL))
+        #expect(rows.count == 2)
+
+        let shiTsu = try #require(rows.first { $0.expected == "シ" })
+        #expect(shiTsu.answered == "ツ")
+        #expect(shiTsu.count == 2)
+
+        let soN = try #require(rows.first { $0.expected == "ソ" })
+        #expect(soN.answered == "ン")
+        #expect(soN.count == 1)
+
+        // Sorted count-descending — the 2x pair must lead.
+        #expect(rows.first?.expected == "シ")
+    }
+
+    @Test("confusions.json is a valid empty array when there is no confusable history")
+    func confusionsJSONEmpty() async throws {
+        let container = try makeContainer()
+        _ = try seedProfile(container)
+
+        let dir = try await DataExportManager().buildExportDirectory(modelContainer: container)
+        defer { try? FileManager.default.removeItem(at: dir) }
+
+        let confusionsURL = dir.appending(path: "confusions.json")
+        #expect(FileManager.default.fileExists(atPath: confusionsURL.path))
+
+        let rows = try decoder().decode([DecodedConfusion].self, from: Data(contentsOf: confusionsURL))
+        #expect(rows.isEmpty)
+    }
+
+    // MARK: - context.json documents the new fields (self-describing package)
+
+    @Test("context.json parses as valid JSON and documents grade_semantics + the new review/confusion fields")
+    func contextJSONDocumentsTelemetryFields() async throws {
+        let container = try makeContainer()
+        _ = try seedProfile(container)
+
+        let dir = try await DataExportManager().buildExportDirectory(modelContainer: container)
+        defer { try? FileManager.default.removeItem(at: dir) }
+
+        let data = try Data(contentsOf: dir.appending(path: "context.json"))
+        let json = try #require(try JSONSerialization.jsonObject(with: data) as? [String: Any])
+
+        let gradeSemantics = try #require(json["grade_semantics"] as? [String: Any])
+        let hard = try #require(gradeSemantics["2"] as? [String: Any])
+        #expect((hard["label"] as? String) == "hard")
+
+        let files = try #require(json["files"] as? [String: Any])
+        let reviewsFields = try #require((files["reviews.json"] as? [String: Any])?["fields"] as? [String: Any])
+        #expect(reviewsFields["answeredValue"] != nil)
+        #expect(reviewsFields["exerciseType"] != nil)
+        #expect(reviewsFields["surface"] != nil)
+
+        let confusionsFields = try #require((files["confusions.json"] as? [String: Any])?["fields"] as? [String: Any])
+        #expect(confusionsFields["expected"] != nil)
+        #expect(confusionsFields["answered"] != nil)
+        #expect(confusionsFields["count"] != nil)
     }
 
     // MARK: - The shared artifact is a single zip, not a directory

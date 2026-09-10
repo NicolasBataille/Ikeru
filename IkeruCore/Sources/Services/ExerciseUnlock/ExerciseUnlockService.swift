@@ -9,16 +9,19 @@ public protocol ExerciseUnlockService: Sendable {
 /// Default implementation. Pure: no I/O, no state, fully deterministic.
 public struct DefaultExerciseUnlockService: ExerciseUnlockService {
 
-    public static let fillInBlankVocabRequired = 50
     public static let sentenceConstructionGrammarRequired = 5
-    public static let readingPassageVocabRequired = 100
-    public static let readingPassageKanjiRequired = 50
     public static let writingPracticeVocabRequired = 50
     public static let listeningUnsubtitledAccuracyRequired = 0.6
     public static let listeningUnsubtitledWindow = 30
     public static let speakingRecallRequired = 0.6
     public static let speakingRecallWindowDays = 30
-    public static let sakuraConversationMinJLPT: JLPTLevel = .n4
+    /// N5, not N4: the only shipped content is N5 (`n5-content.sqlite`), so an N4 bar was
+    /// structurally unreachable through the nominal onboarding path. The gate is also
+    /// redundant — `ConversationService.buildSystemPrompt` already constrains Sakura to the
+    /// learner's JLPT level, and a real-conditions test showed an N5 conversation with a
+    /// beginner works well. Keeping the comparison (rather than dropping the gate outright)
+    /// preserves the lock/reason machinery for when higher-level content ships.
+    public static let sakuraConversationMinJLPT: JLPTLevel = .n5
 
     public init() {}
 
@@ -27,12 +30,9 @@ public struct DefaultExerciseUnlockService: ExerciseUnlockService {
         case .kanaStudy, .kanjiStudy, .vocabularyStudy, .listeningSubtitled:
             return .unlocked
 
-        case .fillInBlank:
-            return p.vocabularyMasteredFamiliarPlus >= Self.fillInBlankVocabRequired
-                ? .unlocked
-                : .locked(reason: .vocabularyMastered(
-                    required: Self.fillInBlankVocabRequired,
-                    current: p.vocabularyMasteredFamiliarPlus))
+        case .fillInBlank, .readingPassage:
+            // Retired — see `ExerciseType.retired`. No snapshot unlocks them.
+            return .locked(reason: .retired)
 
         case .grammarExercise:
             return p.hiraganaMastered
@@ -45,19 +45,6 @@ public struct DefaultExerciseUnlockService: ExerciseUnlockService {
                 : .locked(reason: .grammarPointsMastered(
                     required: Self.sentenceConstructionGrammarRequired,
                     current: p.grammarPointsFamiliarPlus))
-
-        case .readingPassage:
-            if p.vocabularyMasteredFamiliarPlus < Self.readingPassageVocabRequired {
-                return .locked(reason: .vocabularyMastered(
-                    required: Self.readingPassageVocabRequired,
-                    current: p.vocabularyMasteredFamiliarPlus))
-            }
-            if p.kanjiMasteredFamiliarPlus < Self.readingPassageKanjiRequired {
-                return .locked(reason: .kanjiMastered(
-                    required: Self.readingPassageKanjiRequired,
-                    current: p.kanjiMasteredFamiliarPlus))
-            }
-            return .unlocked
 
         case .writingPractice:
             if !p.hiraganaMastered {

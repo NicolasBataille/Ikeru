@@ -26,6 +26,22 @@ final class WatchQuizViewModel {
         currentQuestion >= totalQuestions
     }
 
+    /// Minimum distinct kana needed to build one 4-choice question (1
+    /// target + 3 distractors) — mirrors `KanaData.generateQuizQuestion`'s
+    /// own `pool.count >= 4` guard.
+    static let minimumPoolSize = 4
+
+    /// Whether the pool computed by the most recent `startSession()` has
+    /// enough eligible kana to run a session at all. False either before
+    /// the first `startSession()` call, or when the synced eligible set
+    /// (see `WatchSessionManager.eligibleKanaCharacters`) intersected with
+    /// the quiz's hiragana catalog has fewer than `minimumPoolSize`
+    /// entries — e.g. a brand-new learner who has never synced, or one who
+    /// picked only a katakana group and has nothing gradeable in hiragana
+    /// yet. The view renders an honest "nothing to review" state instead of
+    /// silently falling back to the full hiragana syllabary.
+    private(set) var hasSufficientPool = false
+
     /// The target kana character to identify.
     private(set) var targetCharacter: String = ""
 
@@ -35,8 +51,13 @@ final class WatchQuizViewModel {
     /// The 4 answer choices.
     private(set) var choices: [KanaData.Entry] = []
 
-    /// Result of the last answer (nil if no answer yet for current question).
+    // swiftlint:disable discouraged_optional_boolean
+    /// Result of the last answer. Genuinely tri-state, not a bool in
+    /// disguise: `nil` = no answer yet for the current question, `true` /
+    /// `false` = correct / incorrect once answered (see `submitAnswer` and
+    /// the `nil`-reset in `loadNextQuestion`).
     private(set) var lastAnswerResult: Bool?
+    // swiftlint:enable discouraged_optional_boolean
 
     /// ID of the last answered choice.
     private(set) var lastAnsweredId: String?
@@ -44,19 +65,88 @@ final class WatchQuizViewModel {
     /// Results per question (true = correct).
     private(set) var questionResults: [Bool] = []
 
+    /// Per-question graded events for this nano-session — sent as a
+    /// `WatchQuizReviewBatch` on completion so every wrist answer becomes a
+    /// real `ReviewLog` on the iPhone (chantier #46), the same way the
+    /// iPhone kana quiz's `submitQuizAnswer` does via `gradeCard`.
+    private var events: [WatchQuizReviewBatch.Event] = []
+
+    /// Stable id for this nano-session, used by the iPhone side to dedupe a
+    /// replayed `transferUserInfo` delivery so it's never graded twice.
+    private var sessionId = UUID()
+
+    /// The iPhone profile that was active when this nano-session STARTED,
+    /// captured at `startSession()` rather than read at send time: the
+    /// learner can switch profiles on the phone mid-quiz, and the answers
+    /// belong to whoever was active when the questions were drawn (the pool
+    /// itself came from that profile's eligible-kana set). Sent as
+    /// `WatchQuizReviewBatch.profileId` — see that field for what the iPhone
+    /// does when it's `nil`.
+    private var sessionProfileId: UUID?
+
+    /// When the current question was shown — start of the response-time
+    /// clock for `WatchQuizReviewBatch.Event.responseTimeMs`.
+    private var questionShownAt = Date()
+
     /// Kana pool for this session.
     private var pool: [KanaData.Entry] = []
+
+    /// Remaining targets for this session, drawn without replacement so the
+    /// same kana never repeats as the answer across questions.
+    private var targetQueue: [KanaData.Entry] = []
+
+    /// The correct choice for the current question, once answered incorrectly.
+    /// Used to surface a brief "correct answer" feedback before advancing —
+    /// otherwise a wrong tap teaches nothing (see task #9).
+    var correctAnswerFeedback: (romaji: String, kana: String)? {
+        guard lastAnswerResult == false,
+              let correct = choices.first(where: { $0.id == correctId }) else { return nil }
+        return (romaji: correct.romanization, kana: correct.character)
+    }
 
     // MARK: - Session Control
 
     func startSession() {
-        pool = KanaData.hiragana
+        pool = Self.eligiblePool(from: WatchSessionManager.shared.eligibleKanaCharacters)
         currentQuestion = 0
         correctCount = 0
         questionResults = []
+        events = []
+        sessionId = UUID()
+        sessionProfileId = WatchSessionManager.shared.activeProfileId
         lastAnswerResult = nil
         lastAnsweredId = nil
+
+        hasSufficientPool = pool.count >= Self.minimumPoolSize
+        guard hasSufficientPool else {
+            // Honest empty state (chantier: never fall back to the whole
+            // hiragana syllabary) — the view checks `hasSufficientPool`
+            // before rendering the quiz content, so leaving `targetQueue`
+            // empty here is enough; `loadNextQuestion` is never called.
+            targetQueue = []
+            return
+        }
+
+        targetQueue = pool.shuffled()
         loadNextQuestion()
+    }
+
+    /// Restricts the quiz's hiragana catalog to `eligibleCharacters` — the
+    /// synced set from `WatchSessionManager.eligibleKanaCharacters`, itself
+    /// the iPhone's "chosen groups ∩ already graded (`reps > 0`)" kana (see
+    /// `WatchConnectivityManager.eligibleKanaFronts`). Hiragana-only for the
+    /// same reason `confusableGroups` below is: this quiz has no katakana
+    /// mode yet, so a katakana-only eligible set legitimately yields an
+    /// empty pool rather than silently testing katakana recognition this
+    /// quiz was never built for.
+    ///
+    /// Delegates the actual filtering to `WatchEligibleKanaPayload
+    /// .filterKanaEntries`, which is tested directly (pure, no
+    /// `WatchSessionManager`/`WCSession` involved) since this type lives
+    /// only in the watchOS-only `IkeruWatch` target and has no test target
+    /// of its own to run in.
+    static func eligiblePool(from eligibleCharacters: [String]) -> [KanaData.Entry] {
+        WatchEligibleKanaPayload.filterKanaEntries(KanaData.hiragana, toCharacters: eligibleCharacters)
     }
 
     func selectAnswer(_ choice: KanaData.Entry) {
@@ -67,6 +157,17 @@ final class WatchQuizViewModel {
         lastAnsweredId = choice.id
         questionResults.append(isCorrect)
 
+        let responseTimeMs = max(0, Int(Date().timeIntervalSince(questionShownAt) * 1_000))
+        events.append(
+            WatchQuizReviewBatch.Event(
+                targetCharacter: targetCharacter,
+                answeredCharacter: choice.character,
+                isCorrect: isCorrect,
+                responseTimeMs: responseTimeMs,
+                answeredAt: Date()
+            )
+        )
+
         if isCorrect {
             correctCount += 1
             // Success haptic played by WKInterfaceDevice
@@ -75,9 +176,12 @@ final class WatchQuizViewModel {
             WKInterfaceDevice.current().play(.failure)
         }
 
-        // Auto-advance after brief delay
+        // Auto-advance after a brief delay. Wrong answers pause longer so the
+        // correct-answer feedback (see `correctAnswerFeedback`) is readable.
+        let pauseDuration: Duration = isCorrect ? .milliseconds(600) : .milliseconds(1700)
+
         Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(600))
+            try? await Task.sleep(for: pauseDuration)
             currentQuestion += 1
             lastAnswerResult = nil
             lastAnsweredId = nil
@@ -85,13 +189,16 @@ final class WatchQuizViewModel {
                 loadNextQuestion()
             } else {
                 WKInterfaceDevice.current().play(.notification)
-                let result = WatchSessionResult(
-                    correctCount: correctCount,
-                    totalQuestions: totalQuestions,
-                    drillType: .kanaQuiz,
-                    xpEarned: correctCount * 5
+                let batch = WatchQuizReviewBatch(
+                    sessionId: sessionId,
+                    events: events,
+                    // Same rule the iPhone re-derives the credited amount
+                    // with — see `WatchQuizReviewBatch.xpEarned`, which is a
+                    // ceiling there, not the credited value.
+                    xpEarned: WatchQuizReviewBatch.xp(forCorrectAnswers: correctCount),
+                    profileId: sessionProfileId
                 )
-                WatchSessionManager.shared.sendSessionResult(result)
+                WatchSessionManager.shared.sendQuizReviewBatch(batch)
             }
         }
     }
@@ -99,9 +206,81 @@ final class WatchQuizViewModel {
     // MARK: - Private
 
     private func loadNextQuestion() {
-        guard let question = KanaData.generateQuizQuestion(from: pool) else { return }
-        targetCharacter = question.target.character
-        correctId = question.target.id
-        choices = question.choices
+        guard pool.count >= 4 else { return }
+        if targetQueue.isEmpty {
+            // Exhausted the pool without repeating within the session — reshuffle
+            // for any remaining questions (only reachable if totalQuestions ever
+            // exceeds the pool size).
+            targetQueue = pool.shuffled()
+        }
+        let target = targetQueue.removeFirst()
+        targetCharacter = target.character
+        correctId = target.id
+        choices = buildChoices(for: target)
+        questionShownAt = Date()
+    }
+
+    /// Builds the 4-choice answer set for `target`, preferring distractors that
+    /// are visually similar to it (e.g. る/ろ, き/さ) over purely random ones —
+    /// random distractors waste the questions that would otherwise drill the
+    /// pairs learners actually confuse.
+    private func buildChoices(for target: KanaData.Entry) -> [KanaData.Entry] {
+        let confusable = Self.confusableCharacters(for: target.character)
+        let remainingPool = pool.filter { $0.id != target.id }
+
+        var selected = Array(
+            remainingPool
+                .filter { confusable.contains($0.character) }
+                .shuffled()
+                .prefix(3)
+        )
+
+        if selected.count < 3 {
+            let usedIds = Set(selected.map(\.id))
+            let filler = remainingPool
+                .filter { !usedIds.contains($0.id) }
+                .shuffled()
+            selected.append(contentsOf: filler.prefix(3 - selected.count))
+        }
+
+        var choices = selected + [target]
+        choices.shuffle()
+        return choices
+    }
+
+    /// Groups of kana that are commonly confused by shape, used to bias
+    /// distractor selection toward realistic mistakes.
+    ///
+    /// Hiragana only: `startSession()` draws its pool exclusively from
+    /// `KanaData.hiragana` (see above), so a katakana-only group here would
+    /// never surface as a distractor — dead weight that looks like coverage
+    /// but isn't. The previous revision carried `["シ", "ツ"]` and `["ソ",
+    /// "ン"]` for exactly that reason; they were removed rather than left
+    /// inert. If the quiz ever gains a katakana mode, reintroduce katakana
+    /// groups alongside a katakana pool, not before.
+    private static let confusableGroups: [Set<String>] = [
+        // る/ろ/そ: all end in a similar curved hook stroke.
+        ["る", "ろ", "そ"],
+        // き/さ/ち: share the diagonal hook off the vertical stroke that
+        // trips up beginners reading small furigana.
+        ["き", "さ", "ち"],
+        ["ね", "れ", "わ"],
+        ["は", "ほ"],
+        ["あ", "お"],
+        ["ま", "も"],
+        // い/り: both are two short strokes with near-identical proportions.
+        ["い", "り"],
+        // う/つ: same single curved stroke, differing mainly in curvature.
+        ["う", "つ"],
+        // ぬ/め: identical loop-and-tail shape, differ only in the tail curl.
+        ["ぬ", "め"],
+        // す/む: both built from a loop closing back on a vertical stroke.
+        ["す", "む"],
+        // こ/に: both read as two short parallel-ish strokes at small sizes.
+        ["こ", "に"],
+    ]
+
+    private static func confusableCharacters(for character: String) -> Set<String> {
+        confusableGroups.first { $0.contains(character) }?.subtracting([character]) ?? []
     }
 }

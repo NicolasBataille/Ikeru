@@ -16,7 +16,43 @@ public final class RPGState {
     /// Current level
     public var level: Int
 
-    /// Total number of reviews completed across all sessions
+    /// Legacy, **non-authoritative** counter. Historically meant "total
+    /// number of reviews completed across all sessions", but three
+    /// independent call sites hand-increment it and can drift out of sync
+    /// with the real review history in `ReviewLog`:
+    /// - `SessionRPGPersistence.persistState` — the main SRS session's
+    ///   grading path — bumps it by 1 per card graded, with a matching
+    ///   `ReviewLog` row.
+    /// - `KanaDrillViewModel` → `CardRepository.gradeCard` (the kana drill)
+    ///   writes a `ReviewLog` row but **never touches `RPGState` at all** —
+    ///   this is the gap GAP-13 fixes: 53 shown on-device vs. 74 real
+    ///   `ReviewLog` rows for the same profile, observed 2026-08-14.
+    /// - `WatchConnectivityManager.processWatchResult` bumps it by
+    ///   `result.totalQuestions` for a `.kanaQuiz` drill result. As of
+    ///   commit f020439 the primary Watch path
+    ///   (`processWatchQuizBatch`) grades each answer through
+    ///   `CardRepository.gradeCard(surface: "watch")` first — producing a
+    ///   real `ReviewLog` — and only then calls `processWatchResult` with a
+    ///   count derived from what actually got graded, so that path is
+    ///   journal-consistent. A *direct* `WatchSessionResult` message
+    ///   (`WatchConnectivityManager.swift`'s doc comment: "a legacy
+    ///   aggregate-only … or an old Watch build") still bumps the counter
+    ///   with **no matching `ReviewLog`** — GAP-08's territory, not fixed
+    ///   here.
+    ///
+    /// **Do not read this field for anything display-facing** (the Tatami
+    /// eligibility gate, the "cumulative competence" figure, a data export's
+    /// review count, …) — use `CardRepository.activeProfileReviewCount()`
+    /// instead, which derives the true count from `ReviewLog` and cannot
+    /// diverge by construction. This field is kept only so the sync payload
+    /// / local backup snapshot shapes (`SyncPayloadBuilder`,
+    /// `BackupService.RPGSnapshot`) don't need a schema change, and because
+    /// `HomeViewModel`'s first-session-of-lifetime onboarding heuristic
+    /// (`HomeView.evaluateFirstSessionDailyTermPrompt`) still keys off its
+    /// 0 → >0 transition after a main SRS session specifically. Still
+    /// written by `SessionRPGPersistence` and `WatchConnectivityManager`;
+    /// still merged by `SyncMergeRules.mergeCounters` (`max()`, rule 3)
+    /// alongside the other monotone counters.
     public var totalReviewsCompleted: Int
 
     /// JSON-encoded RPGAttribute array. Use `attributes`/`setAttributes(_:)` accessors.
@@ -93,6 +129,29 @@ public final class RPGState {
     /// The user profile that owns this RPG state
     public var profile: UserProfile?
 
+    // MARK: - Cloud sync (schema-only, lot 0)
+    //
+    // Added by `IkeruSchemaV4` (cloud-sync lot 0, see
+    // `docs/design-specs/2026-08-10-cloud-sync-design.md` §5.1). `RPGState`
+    // holds monotone counters merged by `max()` per spec §5.3 rule 3, not
+    // LWW — but it still needs `updatedAt`/`syncedAt` to drive the push
+    // delta. Nothing reads or writes any of the three yet; that wiring is a
+    // later lot.
+
+    /// Local modification clock. Defaults to the Unix epoch at the property
+    /// level so the `.lightweight` V3→V4 migration can backfill existing
+    /// rows without a custom stage; the initializer below sets this to
+    /// `Date()` explicitly for freshly created objects.
+    public var updatedAt: Date = Date(timeIntervalSince1970: 0)
+
+    /// Tombstone. Non-nil means this row was locally deleted and awaits a
+    /// sync push of the deletion.
+    public var deletedAt: Date?
+
+    /// Timestamp of the last confirmed push to the sync server. `nil` means
+    /// never synced.
+    public var syncedAt: Date?
+
     public init(
         xp: Int = 0,
         level: Int = 1,
@@ -113,6 +172,9 @@ public final class RPGState {
         self.lastSessionDate = nil
         self.currentDailyStreak = 0
         self.longestDailyStreak = 0
+        self.updatedAt = Date()
+        self.deletedAt = nil
+        self.syncedAt = nil
     }
 
     // MARK: - Attributes Accessors

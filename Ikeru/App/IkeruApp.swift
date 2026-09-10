@@ -15,8 +15,50 @@ final class AssetCacheHolder {
     private init() {}
 }
 
-@main
+// GAP-10 (2026-08-16): `@main` moved to `IkeruMain.swift`, which picks
+// between this real app and an empty test-host `App` based on
+// `isRunningUnderXCTest` below — see that file's doc comment for why.
 struct IkeruApp: App {
+
+    // MARK: - Test-host detection
+
+    /// True when this process is the app-hosted test target's TEST HOST
+    /// (`xcodebuild test -scheme Ikeru`) rather than a real launch.
+    /// `XCTestConfigurationFilePath` is the standard, widely-used signal for
+    /// this (set by the XCTest launcher regardless of whether the actual
+    /// tests are written with XCTest or Swift Testing — Swift Testing is
+    /// hosted through the same XCTest bridge under `xcodebuild test`).
+    ///
+    /// Why this exists (GAP-10, 2026-08-16): `IkeruTests` builds and tears
+    /// down its OWN in-memory `ModelContainer` per test, but `xcodebuild
+    /// test` still launches this REAL `App` as the test host, so its full
+    /// SwiftUI scene — including the `.task { }` below — genuinely mounts
+    /// and runs unless gated.
+    ///
+    /// CORRECTION (2026-08-16, same day): an earlier version of this comment
+    /// claimed this gate FIXED the `SwiftData/BackingData.swift:940: Fatal
+    /// error: Never access a full future backing data` crash by removing
+    /// `IkeruApp`'s own second `ModelContainer` from the process. That claim
+    /// was measured and falsified, not just doubted: `@main` was moved to
+    /// `IkeruMain.swift`, which swaps in an empty `TestHostApp` (no
+    /// `ModelContainer`, no `.task`, no `IkeruApp` instance at all) whenever
+    /// `isRunningUnderXCTest` is true. `HomeViewModelTests
+    /// .loadDataLoadsRPGState()`, run alone, still crashed with the
+    /// IDENTICAL fatal error afterwards — proof this app's own container was
+    /// never the (or at least not the only) cause. The real mechanism is
+    /// still not identified; see GAP-10's final report for the measured
+    /// evidence (two distinct crash signatures, `ModelContainer(` reachable
+    /// only from this file per a repo-wide grep, contradicting evidence
+    /// against a background-actor/mainContext race).
+    ///
+    /// This gate is kept anyway as ordinary test hygiene — the app-hosted
+    /// test target should not run this app's real startup side effects
+    /// (background task registration, launch animation, profile
+    /// initialization) as an accidental by-product of hosting tests — not as
+    /// a fix for the SwiftData crash.
+    static var isRunningUnderXCTest: Bool {
+        ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
+    }
 
     // MARK: - Pre-warm constants
 
@@ -37,6 +79,12 @@ struct IkeruApp: App {
     @State private var toastManager = ToastManager()
     @State private var profileViewModel: ProfileViewModel?
     @State private var showOnboarding = false
+    /// Set by `NameEntryView` right before it dismisses itself on the
+    /// "I already have an account" restore path — read (and reset) by the
+    /// `onChange(of: showOnboarding)` below so a RETURNING learner does not
+    /// get the brand-new-user feature tour, which that handler otherwise
+    /// fires unconditionally on every onboarding dismissal.
+    @State private var onboardingFinishedViaRestore = false
     @State private var hasCheckedProfile = false
     @State private var hasFinishedLaunch: Bool = IkeruApp.hasPlayedLaunchAnimation
     /// Set by `LaunchAnimationView.onReadyForContent` so the real UI is built
@@ -50,11 +98,21 @@ struct IkeruApp: App {
     let modelContainer: ModelContainer
 
     init() {
-        // Current versioned schema (IkeruSchemaV2) + migration plan so
+        // Current versioned schema (IkeruSchemaV6) + migration plan so
         // @Model changes migrate explicitly instead of relying on implicit
         // lightweight migration. The plan carries the V1→V2 stage that adds
-        // ExerciseOutcomeLog. See IkeruSchema.swift in IkeruCore.
-        let schema = Schema(versionedSchema: IkeruSchemaV2.self)
+        // ExerciseOutcomeLog, V2→V3 which adds the answer provenance fields
+        // on ReviewLog, then V3→V4 which adds the cloud-sync columns
+        // (updatedAt/deletedAt/syncedAt) to the 8 synchronized entities —
+        // see docs/design-specs/2026-08-10-cloud-sync-design.md §5.1 — then
+        // V4→V5 (`TextImport`) and V5→V6 (`profileID` on the dictionary and
+        // the imports). See IkeruSchema.swift in IkeruCore.
+        //
+        // This MUST name the latest version. Declaring an older one opens the
+        // container without error and then traps on the first insert
+        // ("Failed to cast model IkeruCore.UserProfile"), which the store
+        // recovery below cannot catch — it only wraps makeModelContainer.
+        let schema = Schema(versionedSchema: IkeruSchemaV6.self)
 
         do {
             modelContainer = try Self.makeModelContainer(schema: schema)
@@ -93,6 +151,15 @@ struct IkeruApp: App {
             }
             #endif
         }
+
+        // Ownership adoption (IkeruSchemaV6, P1-1): after the V5→V6 migration
+        // every dictionary entry and imported text arrives with no owner. They
+        // are attributed to the active profile HERE, synchronously, before any
+        // view can read — a `.task` on the root view races the Explore tab's
+        // own `.task`, and the learner would open an empty dictionary on the
+        // first launch after the update. Normal launches find nothing to
+        // adopt and pay one predicate fetch per table.
+        Self.adoptUnownedRows(in: modelContainer)
 
         // Initialise the AssetCache synchronously so the first body evaluation
         // already sees a non-nil environment value. AssetCache init is pure
@@ -149,12 +216,22 @@ struct IkeruApp: App {
             .environment(\.assetCache, assetCache)
             .toastOverlay()
             .task {
+                    // GAP-10: skip the app's own startup machinery when this
+                    // process is IkeruTests' test host, not a real launch —
+                    // see `isRunningUnderXCTest`'s doc comment.
+                    guard !Self.isRunningUnderXCTest else { return }
                     initializeProfileViewModel()
                     NotificationManager.shared.registerAsDelegate()
                     WatchConnectivityManager.shared.activate(modelContainer: modelContainer)
                     await scheduleNotificationsFromSettings()
                     schedulePreWarmTask()
                     await WidgetSnapshotRefresher.refresh(modelContainer: modelContainer)
+                    // Cloud-sync push triggers (design spec §5.2): starts the
+                    // network-regain monitor now, and readies the coordinator
+                    // for the foreground trigger wired below in
+                    // onChange(of: scenePhase). syncNow() itself no-ops
+                    // without consent, so this is safe to start unconditionally.
+                    CloudSyncTriggers.shared.start(modelContainer: modelContainer)
                     if StoreRecoveryNotice.isPending() {
                         showStoreRecoveryNotice = true
                     }
@@ -183,6 +260,9 @@ struct IkeruApp: App {
                 Task { @MainActor in
                     await WidgetSnapshotRefresher.refresh(modelContainer: modelContainer)
                 }
+                // Cloud-sync foreground trigger (design spec §5.2). Detached
+                // internally — never awaited here, never delays this UI path.
+                CloudSyncTriggers.shared.triggerForegroundSync()
             }
         }
     }
@@ -212,6 +292,27 @@ struct IkeruApp: App {
         )
     }
 
+    /// See the call site in `init()`. A failure here is logged, never fatal:
+    /// the rows stay unowned and the next launch (or the next pull, which
+    /// runs the same adoption) tries again.
+    private static func adoptUnownedRows(in container: ModelContainer) {
+        MainActor.assumeIsolated {
+            let context = container.mainContext
+            guard let owner = ActiveProfileLookup.resolve(in: context)?.id else { return }
+            do {
+                let result = try OwnershipAdoption.adoptUnownedRows(into: owner, in: context)
+                if !result.isEmpty {
+                    try context.save()
+                    Logger.srs.info(
+                        "Adopted \(result.entries) dictionary entries and \(result.imports) imports into the active profile"
+                    )
+                }
+            } catch {
+                Logger.srs.error("Ownership adoption failed: \(error)")
+            }
+        }
+    }
+
     // MARK: - Deep Links
 
     /// Handles `ikeru://…` URLs — currently only the home-screen widget's
@@ -235,7 +336,7 @@ struct IkeruApp: App {
         if hasCheckedProfile {
             MainTabView(isNewUserOnboarding: showOnboarding)
                 .fullScreenCover(isPresented: $showOnboarding) {
-                    NameEntryView()
+                    NameEntryView(finishedViaRestore: $onboardingFinishedViaRestore)
                         .environment(\.profileViewModel, profileViewModel)
                         .onDisappear {
                             // Reload profile after onboarding dismisses
@@ -243,9 +344,27 @@ struct IkeruApp: App {
                         }
                 }
                 .onChange(of: showOnboarding) { wasShowing, isShowing in
-                    // Sign-up onboarding just finished — kick off the in-app
-                    // feature tour for this brand-new profile.
-                    if wasShowing && !isShowing {
+                    guard wasShowing && !isShowing else { return }
+                    if onboardingFinishedViaRestore {
+                        // Restored an existing profile. This handler only
+                        // stops itself from ALSO posting `.requestFeatureTour`
+                        // — it does NOT, by itself, stop the tour from
+                        // running: `MainTabView.onAppear` calls its own
+                        // `tourController.startIfNeeded(profileID:)`
+                        // independently of this flag, and would still fire
+                        // for a returning learner if that `onAppear` re-runs
+                        // on this cover's dismissal. What actually prevents
+                        // that is `NameEntryView.performRestoreSync()`
+                        // explicitly calling
+                        // `FeatureTourController.markSeen(profileID:)`
+                        // before setting this flag — `startIfNeeded` then
+                        // finds `hasSeenTour` already true and no-ops on its
+                        // own. Consume the flag here regardless, purely to
+                        // avoid the redundant `.requestFeatureTour` post.
+                        onboardingFinishedViaRestore = false
+                    } else {
+                        // Sign-up onboarding just finished — kick off the
+                        // in-app feature tour for this brand-new profile.
                         NotificationCenter.default.post(name: .requestFeatureTour, object: nil)
                     }
                 }
@@ -265,8 +384,24 @@ struct IkeruApp: App {
         let viewModel = ProfileViewModel(modelContext: modelContainer.mainContext)
         profileViewModel = viewModel
 
+        #if IKERU_DEV_TOOLS
+        // Dev helper: launch with -wipeData to reset to a clean slate BEFORE
+        // -skipOnboarding / -mockProfile run below. Without this, a second UI
+        // test launch on the same simulator sees `hasProfile == true` from the
+        // previous run and both of those flags silently no-op (`seedIfRequested`
+        // and this file's own `-skipOnboarding` guard both check `hasProfile`
+        // first) — the exact "seed doesn't re-run on the 2nd launch" trap named
+        // in the GAP-09 UI-test-harness brief. Runs in its own IKERU_DEV_TOOLS
+        // block (stripped before App Store submit, see CLAUDE.md) since
+        // `TestFixtures.wipeAll` lives behind the same flag.
+        if AppEnvironment.hasFlag("wipeData") {
+            Logger.ui.info("wipeData flag set — clearing all persisted state before seeding")
+            TestFixtures.wipeAll(context: modelContainer.mainContext, profileVM: viewModel)
+        }
+        #endif
+
         // Dev helper: launch with -skipOnboarding to auto-create a default profile
-        if !viewModel.hasProfile && CommandLine.arguments.contains("-skipOnboarding") {
+        if !viewModel.hasProfile && AppEnvironment.hasFlag("skipOnboarding") {
             Logger.ui.info("Skip onboarding flag set — creating default profile")
             viewModel.createProfile(name: "Nico")
             viewModel.loadProfile()
@@ -278,6 +413,61 @@ struct IkeruApp: App {
         // (so QA can launch a seed via the Outils dev menu) and is stripped before
         // App Store submit — see CLAUDE.md "Removing IKERU_DEV_TOOLS".
         TestFixtures.seedIfRequested(context: modelContainer.mainContext, profileVM: viewModel)
+        #endif
+
+        // Dev helper: launch with -skipTour to land on a profile that has already
+        // "seen" the feature tour.
+        //
+        // Without this, `-skipOnboarding` and `-startTab=` do not compose, which
+        // is not obvious and cost a UI test its diagnosis: creating a profile
+        // starts the tour, and the tour drives navigation itself
+        // (`MainTabView.syncTabToTourStep()`), overwriting whatever tab
+        // `-startTab=` selected. The test asked for Settings and was quietly
+        // taken to the tour's own step instead.
+        //
+        // Reuses `markSeen` rather than adding a second notion of "seen": it is
+        // the same static writer the restore path uses, on the same UserDefaults
+        // key `hasSeenTour(profileID:)` reads. A test that suppressed the tour
+        // some other way would be testing a code path no learner ever takes.
+        if let profileID = viewModel.currentProfile?.id,
+           AppEnvironment.hasFlag("skipTour") {
+            Logger.ui.info("Skip tour flag set — marking the feature tour as seen")
+            FeatureTourController.markSeen(profileID: profileID)
+        }
+
+        // Dev helper: launch with -skipHints to land on a profile that has
+        // already dismissed every in-context coach-mark (swipe tutorial,
+        // caught-up explainer, kana drill modes, first-session daily term).
+        //
+        // Distinct from `-skipTour` above, which owns the *tab tour* and its
+        // own controller. These are the lighter overlays that fire the first
+        // time a learner reaches a surface — and they are opaque scrims: the
+        // swipe tutorial covers the session card and its grade buttons
+        // entirely (measured 2026-08-16, see `OnboardingFlags.markAllSeen`).
+        // Any UI test that isn't about the coach-mark itself needs both flags.
+        if let profileID = viewModel.currentProfile?.id,
+           AppEnvironment.hasFlag("skipHints") {
+            Logger.ui.info("Skip hints flag set — marking every coach-mark as seen")
+            OnboardingFlags.markAllSeen(profileID: profileID)
+        }
+
+        #if IKERU_DEV_TOOLS
+        // GAP-01 two-client merge test only: launch with -switchToOldestProfile
+        // to make the OTHER client's pulled-down profile (always the older
+        // one by `createdAt` in this test's phase ordering — see
+        // `LaunchArguments.switchToOldestProfile` in IkeruUITests) the
+        // active one on THIS device. `viewModel.allProfiles` is already
+        // sorted by `createdAt` ascending (`ProfileViewModel.loadProfile()`),
+        // so `.first` is exactly that profile. Without this, every card/
+        // review-log query stays scoped to this device's OWN throwaway
+        // profile forever — a pull never changes which profile is active.
+        // No-op when only one profile exists locally (nothing to switch to).
+        if AppEnvironment.hasFlag("switchToOldestProfile"),
+           let oldest = viewModel.allProfiles.first,
+           oldest.id != viewModel.currentProfile?.id {
+            Logger.ui.info("switchToOldestProfile flag set — switching active profile to \(oldest.id)")
+            viewModel.switchProfile(to: oldest)
+        }
         #endif
 
         if viewModel.hasProfile {
@@ -305,7 +495,12 @@ struct IkeruApp: App {
             let context = modelContainer.mainContext
             guard let state = ActiveProfileResolver.fetchActiveRPGState(in: context),
                   state.acknowledgedUnlocks.isEmpty else { return }
-            let fetchedCards: [Card] = (try? context.fetch(FetchDescriptor<Card>())) ?? []
+            // Tombstoned cards excluded: a deleted card must not push a
+            // threshold over the line and silently pre-acknowledge an unlock
+            // the learner would then never see fire.
+            let fetchedCards: [Card] = (try? context.fetch(
+                FetchDescriptor<Card>(predicate: #Predicate { $0.deletedAt == nil })
+            )) ?? []
             let cards: [CardDTO] = fetchedCards.map { card in
                 CardDTO(
                     id: card.id,
@@ -357,7 +552,12 @@ struct IkeruApp: App {
             guard let state = ActiveProfileResolver.fetchActiveRPGState(in: context),
                   state.jlptBackfillVersion == 0 else { return }
 
-            let fetchedCards: [Card] = (try? context.fetch(FetchDescriptor<Card>())) ?? []
+            // Tombstoned cards excluded: no point tagging a JLPT level onto a
+            // card the learner deleted, and the readiness score this feeds
+            // must not count it.
+            let fetchedCards: [Card] = (try? context.fetch(
+                FetchDescriptor<Card>(predicate: #Predicate { $0.deletedAt == nil })
+            )) ?? []
             let dtos: [CardDTO] = fetchedCards.map { card in
                 CardDTO(
                     id: card.id,
@@ -409,7 +609,8 @@ struct IkeruApp: App {
     @MainActor
     private func scheduleNotificationsFromSettings() async {
         let context = modelContainer.mainContext
-        let descriptor = FetchDescriptor<UserProfile>()
+        // A tombstoned profile must not keep scheduling reminders.
+        let descriptor = FetchDescriptor<UserProfile>(predicate: #Predicate { $0.deletedAt == nil })
         guard let profile = try? context.fetch(descriptor).first else { return }
 
         let settings = profile.settings

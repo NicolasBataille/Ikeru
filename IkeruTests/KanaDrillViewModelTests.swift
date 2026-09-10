@@ -111,6 +111,30 @@ struct KanaDrillViewModelTests {
         #expect(mapQuizResultToGrade(correct: true, responseTimeMs: 8_000) == .hard)
     }
 
+    @Test("Première rencontre : une bonne réponse lente n'est plus notée « difficile » (OBS2-015)")
+    func firstEncounterEscapesTheSpeedPenalty() {
+        // Un débutant qui découvre un mot lit la question, lit quatre
+        // propositions, se décide : il dépasse 5 s presque à tous les coups.
+        // Sa bonne réponse était notée `.hard`, ce qui raccourcit l'intervalle
+        // — l'app déduisait une fragilité qu'elle venait d'inventer.
+        #expect(
+            mapQuizResultToGrade(correct: true, responseTimeMs: 12_000, isFirstEncounter: true) == .good,
+            "une première bonne réponse ne doit pas être pénalisée par le chronomètre"
+        )
+        // Et l'exemption ne récompense pas non plus une réponse éclair : sur une
+        // carte jamais vue, il n'y a rien à rappeler, donc rien à mesurer.
+        #expect(mapQuizResultToGrade(correct: true, responseTimeMs: 800, isFirstEncounter: true) == .good)
+        // Une erreur reste une erreur, première fois comprise.
+        #expect(mapQuizResultToGrade(correct: false, responseTimeMs: 800, isFirstEncounter: true) == .again)
+    }
+
+    @Test("Aux rencontres suivantes, le chronomètre s'applique comme avant")
+    func laterEncountersKeepTheSpeedMapping() {
+        #expect(mapQuizResultToGrade(correct: true, responseTimeMs: 1_000, isFirstEncounter: false) == .easy)
+        #expect(mapQuizResultToGrade(correct: true, responseTimeMs: 3_500, isFirstEncounter: false) == .good)
+        #expect(mapQuizResultToGrade(correct: true, responseTimeMs: 8_000, isFirstEncounter: false) == .hard)
+    }
+
     @Test("submitQuizAnswer wrong maps to again and increments wrong")
     func quizWrongMapsAgain() async throws {
         let (repo, cards) = try await makeRepoAndCards(group: .hVowels)
@@ -123,6 +147,64 @@ struct KanaDrillViewModelTests {
         #expect(vm.wrongCount == 1)
         #expect(vm.correctCount == 0)
         #expect(vm.selectedOptionCharacter != nil)
+    }
+
+    // MARK: - ReviewLog provenance (learner-telemetry lot 1)
+    //
+    // Full call path: KanaDrillViewModel → CardRepository.gradeCard →
+    // CardModelActor → ReviewLog(answeredValue:exerciseType:surface:) →
+    // read back via CardRepository.reviewLogs(for:). This is the only
+    // CI-executed proof that the plumbing actually reaches the persisted row
+    // (not just that a wider signature exists and nothing calls it).
+
+    @Test("submitQuizAnswer persists the confused character as answeredValue, with kana.quiz provenance")
+    func quizAnswerPersistsProvenance() async throws {
+        let (repo, cards) = try await makeRepoAndCards(group: .hVowels)
+        let vm = KanaDrillViewModel(mode: .freePractice, queue: cards, cardRepository: repo)
+        let cardID = try #require(vm.currentCard?.id)
+        let wrongOption = try #require(vm.quizOptions.first { $0 != vm.correctOption })
+        vm.selectOption(wrongOption)
+        await vm.submitQuizAnswer()
+
+        let logs = await repo.reviewLogs(for: cardID)
+        #expect(logs.count == 1)
+        let log = try #require(logs.first)
+        // The persisted value is the resolved kana character (what makes a
+        // confusion pair analyzable), not the raw romaji option label.
+        #expect(log.answeredValue == vm.selectedOptionCharacter)
+        #expect(log.answeredValue != nil)
+        #expect(log.exerciseType == "kana.quiz")
+        #expect(log.surface == "iphone.drill")
+    }
+
+    @Test("submitQuizAnswer on a CORRECT pick also persists answeredValue (not misses-only)")
+    func quizCorrectAnswerPersistsProvenance() async throws {
+        let (repo, cards) = try await makeRepoAndCards(group: .hVowels)
+        let vm = KanaDrillViewModel(mode: .freePractice, queue: cards, cardRepository: repo)
+        let cardID = try #require(vm.currentCard?.id)
+        vm.selectOption(vm.correctOption)
+        await vm.submitQuizAnswer()
+
+        let logs = await repo.reviewLogs(for: cardID)
+        let log = try #require(logs.first)
+        #expect(log.answeredValue != nil)
+        #expect(log.exerciseType == "kana.quiz")
+    }
+
+    @Test("Flashcard grade() leaves answeredValue nil (self-graded) but stamps kana.flashcard provenance")
+    func flashcardGradePersistsProvenance() async throws {
+        let (repo, cards) = try await makeRepoAndCards(group: .hVowels)
+        let vm = KanaDrillViewModel(mode: .freePractice, queue: cards, cardRepository: repo)
+        let cardID = try #require(vm.currentCard?.id)
+        vm.reveal()
+        await vm.grade(.good)
+
+        let logs = await repo.reviewLogs(for: cardID)
+        #expect(logs.count == 1)
+        let log = try #require(logs.first)
+        #expect(log.answeredValue == nil)
+        #expect(log.exerciseType == "kana.flashcard")
+        #expect(log.surface == "iphone.drill")
     }
 
     // MARK: - Distractors

@@ -2,10 +2,30 @@
 """
 Generate SQLite content bundles for the Ikeru Japanese learning app.
 
-Data Sources (all public domain / CC-licensed factual data):
+Data Sources:
+- Kanji readings and meanings: DERIVED FROM KANJIDIC (EDRDG, CC BY-SA 4.0).
+  This header used to say "original compositions", and that was false. Measured
+  2026-08-15: all 63 dotted kun readings below are byte-identical to KANJIDIC's
+  okurigana convention, and the on-readings reproduce its ordering in 89 of 90
+  kanji. The entries here are a hand-trimmed SUBSET of KANJIDIC (its affix-
+  marked forms such as `ひと-` were dropped), which is a curation of KANJIDIC,
+  not an independent authoring of it. Credited in AttributionView. CC BY-SA is
+  share-alike — do not restore the "original compositions" wording.
+- Radical decompositions: Ikeru's own, NOT RADKFILE. Same measurement: only 36
+  of 90 match RADKFILE, with systematic divergence (八/九 here vs RADKFILE's
+  ハ-shaped radicals). Do not credit RADKFILE without re-running that diff.
 - JLPT N5 kanji list (factual list, not copyrightable)
-- CJK radical data (Unicode standard, public)
-- Common vocabulary and example sentences (original compositions)
+- Vocabulary: the English glosses are Ikeru's own, all 693 of them. The WORDS
+  come from two lists — Ikeru's original hand-picked 205, and 488 more selected
+  from the Tanos JLPT N5 list (Jonathan Waller, CC BY, credited in
+  AttributionView). Only the word and its reading were taken from Tanos; its
+  English gloss column was deliberately not imported, because the site states
+  no provenance for it. See scripts/tanos/build-vocab-list.py. The per-row
+  marker is `vocabulary.list_source`, so the claim above is checkable by query
+  rather than by trust. Entries live in scripts/content/vocabulary.json.
+- The 96 original example sentences (original compositions). A further 317
+  sentences come from Tatoeba and are applied separately by
+  scripts/apply-tatoeba-sentences.py — they are not generated here.
 
 Usage:
     python3 scripts/generate_content_bundles.py
@@ -17,7 +37,11 @@ import argparse
 import json
 import os
 import sqlite3
+from pathlib import Path
 from typing import NamedTuple
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+VOCABULARY_JSON = REPO_ROOT / "scripts" / "content" / "vocabulary.json"
 
 
 # ---------------------------------------------------------------------------
@@ -45,6 +69,7 @@ class VocabEntry(NamedTuple):
     meaning: str
     kanji_character: str | None
     jlpt_level: str
+    list_source: str
 
 
 class SentenceEntry(NamedTuple):
@@ -79,6 +104,11 @@ CREATE TABLE IF NOT EXISTS radicals (
     meaning TEXT,
     stroke_count INTEGER
 );
+CREATE TABLE IF NOT EXISTS kana (
+    character TEXT PRIMARY KEY,
+    stroke_count INTEGER,
+    stroke_order_svg TEXT
+);
 CREATE TABLE IF NOT EXISTS kanji_radical_edges (
     radical_character TEXT,
     kanji_character TEXT,
@@ -90,7 +120,14 @@ CREATE TABLE IF NOT EXISTS vocabulary (
     reading TEXT,
     meaning TEXT,
     kanji_character TEXT,
-    jlpt_level TEXT
+    jlpt_level TEXT,
+    -- Which list the word was selected FROM — not who wrote the gloss.
+    -- Every `meaning` in this table is Ikeru's own text; `list_source` says
+    -- whether the word itself was on Ikeru's original hand-picked list
+    -- ('ikeru') or came from the Tanos JLPT N5 list ('tanos', CC BY, credited
+    -- in AttributionView). Without this column the attribution is a claim in
+    -- a README that nothing can check; with it, one query answers it.
+    list_source TEXT
 );
 CREATE TABLE IF NOT EXISTS sentences (
     id INTEGER PRIMARY KEY,
@@ -293,6 +330,12 @@ def n5_kanji() -> list[KanjiEntry]:
         KanjiEntry("間", ["門", "日"], ["カン", "ケン"], ["あいだ", "ま"], ["interval", "between"], 12),
         KanjiEntry("分", ["八", "刀"], ["ブン", "フン"], ["わ.かる", "わ.ける"], ["minute", "part", "understand"], 4),
         KanjiEntry("半", ["丨", "二", "十"], ["ハン"], ["なか.ば"], ["half"], 5),
+        # 午 : le SEUL kanji de la liste Tanos N5 qui manquait, mesure le
+        # 2026-08-19 en diffant les 90 enseignes contre les 79 de
+        # KanjiList.N5.doc. Lectures et sens repris de cette liste, elle-meme
+        # KANJIDIC-derivee comme le reste de ce fichier. Porte 午前 / 午後,
+        # deja tous deux dans le vocabulaire.
+        KanjiEntry("\u5348", ["\u30ce", "\u5341"], ["\u30b4"], ["\u3046\u307e"], ["noon", "sign of the horse"], 4),
         KanjiEntry("毎", ["母", "ノ"], ["マイ"], ["ごと"], ["every"], 6),
         KanjiEntry("今", ["人", "一"], ["コン", "キン"], ["いま"], ["now"], 4),
         KanjiEntry("何", ["人", "口", "一"], ["カ"], ["なに", "なん"], ["what"], 7),
@@ -312,247 +355,54 @@ def n5_kanji() -> list[KanjiEntry]:
 
 
 # ---------------------------------------------------------------------------
-# N5 Vocabulary (~200 words)
+# N5 Vocabulary
 # ---------------------------------------------------------------------------
 
 def n5_vocabulary() -> list[VocabEntry]:
-    return [
-        # Numbers / Counters
-        VocabEntry("一つ", "ひとつ", "one (thing)", "一", "n5"),
-        VocabEntry("二つ", "ふたつ", "two (things)", "二", "n5"),
-        VocabEntry("三つ", "みっつ", "three (things)", "三", "n5"),
-        VocabEntry("四つ", "よっつ", "four (things)", "四", "n5"),
-        VocabEntry("五つ", "いつつ", "five (things)", "五", "n5"),
-        VocabEntry("六つ", "むっつ", "six (things)", "六", "n5"),
-        VocabEntry("七つ", "ななつ", "seven (things)", "七", "n5"),
-        VocabEntry("八つ", "やっつ", "eight (things)", "八", "n5"),
-        VocabEntry("九つ", "ここのつ", "nine (things)", "九", "n5"),
-        VocabEntry("十", "じゅう", "ten", "十", "n5"),
-        VocabEntry("百", "ひゃく", "hundred", "百", "n5"),
-        VocabEntry("千", "せん", "thousand", "千", "n5"),
-        VocabEntry("万", "まん", "ten thousand", "万", "n5"),
-        VocabEntry("円", "えん", "yen; circle", "円", "n5"),
+    """Load the N5 vocabulary from ``scripts/content/vocabulary.json``.
 
-        # Days of the week
-        VocabEntry("月曜日", "げつようび", "Monday", "月", "n5"),
-        VocabEntry("火曜日", "かようび", "Tuesday", "火", "n5"),
-        VocabEntry("水曜日", "すいようび", "Wednesday", "水", "n5"),
-        VocabEntry("木曜日", "もくようび", "Thursday", "木", "n5"),
-        VocabEntry("金曜日", "きんようび", "Friday", "金", "n5"),
-        VocabEntry("土曜日", "どようび", "Saturday", "土", "n5"),
-        VocabEntry("日曜日", "にちようび", "Sunday", "日", "n5"),
+    The entries used to be ~200 literals in this file. They moved out when the
+    list grew to 693 words: a data set that large is data, not code, and it is
+    edited by people (and reviewed in diffs) far more often than this
+    generator is.
 
-        # Time words
-        VocabEntry("今日", "きょう", "today", "今", "n5"),
-        VocabEntry("明日", "あした", "tomorrow", "日", "n5"),
-        VocabEntry("昨日", "きのう", "yesterday", "日", "n5"),
-        VocabEntry("今", "いま", "now", "今", "n5"),
-        VocabEntry("朝", "あさ", "morning", None, "n5"),
-        VocabEntry("昼", "ひる", "noon; daytime", None, "n5"),
-        VocabEntry("夜", "よる", "night; evening", None, "n5"),
-        VocabEntry("毎日", "まいにち", "every day", "毎", "n5"),
-        VocabEntry("毎朝", "まいあさ", "every morning", "毎", "n5"),
-        VocabEntry("毎週", "まいしゅう", "every week", "毎", "n5"),
-        VocabEntry("毎月", "まいつき", "every month", "毎", "n5"),
-        VocabEntry("毎年", "まいとし", "every year", "毎", "n5"),
-        VocabEntry("今年", "ことし", "this year", "年", "n5"),
-        VocabEntry("去年", "きょねん", "last year", "年", "n5"),
-        VocabEntry("来年", "らいねん", "next year", "来", "n5"),
-        VocabEntry("今月", "こんげつ", "this month", "月", "n5"),
-        VocabEntry("先月", "せんげつ", "last month", "先", "n5"),
-        VocabEntry("来月", "らいげつ", "next month", "来", "n5"),
-        VocabEntry("今週", "こんしゅう", "this week", "今", "n5"),
-        VocabEntry("先週", "せんしゅう", "last week", "先", "n5"),
-        VocabEntry("来週", "らいしゅう", "next week", "来", "n5"),
-        VocabEntry("時間", "じかん", "time; hour", "時", "n5"),
-        VocabEntry("半", "はん", "half", "半", "n5"),
-        VocabEntry("分", "ふん", "minute", "分", "n5"),
-        VocabEntry("午前", "ごぜん", "A.M.; morning", "前", "n5"),
-        VocabEntry("午後", "ごご", "P.M.; afternoon", "後", "n5"),
+    Provenance, per row, in ``list_source``:
 
-        # Nature
-        VocabEntry("山", "やま", "mountain", "山", "n5"),
-        VocabEntry("川", "かわ", "river", "川", "n5"),
-        VocabEntry("天気", "てんき", "weather", "天", "n5"),
-        VocabEntry("雨", "あめ", "rain", "雨", "n5"),
-        VocabEntry("花", "はな", "flower", "花", "n5"),
-        VocabEntry("空", "そら", "sky", "空", "n5"),
-        VocabEntry("水", "みず", "water", "水", "n5"),
-        VocabEntry("木", "き", "tree", "木", "n5"),
-        VocabEntry("花見", "はなみ", "cherry blossom viewing", "花", "n5"),
+    - ``ikeru`` — the original hand-picked list this file used to carry.
+    - ``tanos`` — words selected from Jonathan Waller's JLPT N5 list
+      (CC BY, credited in ``AttributionView``). Only the **word and its
+      reading** came from there; see ``scripts/tanos/build-vocab-list.py``
+      for why the English glosses deliberately did not.
 
-        # People
-        VocabEntry("人", "ひと", "person", "人", "n5"),
-        VocabEntry("日本人", "にほんじん", "Japanese person", "人", "n5"),
-        VocabEntry("男の子", "おとこのこ", "boy", "男", "n5"),
-        VocabEntry("女の子", "おんなのこ", "girl", "女", "n5"),
-        VocabEntry("男の人", "おとこのひと", "man", "男", "n5"),
-        VocabEntry("女の人", "おんなのひと", "woman", "女", "n5"),
-        VocabEntry("子供", "こども", "child; children", "子", "n5"),
-        VocabEntry("友達", "ともだち", "friend", "友", "n5"),
-        VocabEntry("お父さん", "おとうさん", "father (polite)", "父", "n5"),
-        VocabEntry("お母さん", "おかあさん", "mother (polite)", "母", "n5"),
-        VocabEntry("父", "ちち", "father (plain)", "父", "n5"),
-        VocabEntry("母", "はは", "mother (plain)", "母", "n5"),
-        VocabEntry("兄", "あに", "older brother (plain)", None, "n5"),
-        VocabEntry("姉", "あね", "older sister (plain)", None, "n5"),
-        VocabEntry("弟", "おとうと", "younger brother", None, "n5"),
-        VocabEntry("妹", "いもうと", "younger sister", None, "n5"),
-        VocabEntry("家族", "かぞく", "family", None, "n5"),
+    Every ``meaning`` in the file is Ikeru's own English, exactly as before.
+    """
+    path = VOCABULARY_JSON
+    with open(path, encoding="utf-8") as handle:
+        payload = json.load(handle)
 
-        # School
-        VocabEntry("学生", "がくせい", "student", "学", "n5"),
-        VocabEntry("大学", "だいがく", "university", "大", "n5"),
-        VocabEntry("大学生", "だいがくせい", "university student", "学", "n5"),
-        VocabEntry("学校", "がっこう", "school", "学", "n5"),
-        VocabEntry("先生", "せんせい", "teacher", "先", "n5"),
-        VocabEntry("本", "ほん", "book", "本", "n5"),
-        VocabEntry("日本語", "にほんご", "Japanese language", "語", "n5"),
-        VocabEntry("英語", "えいご", "English language", "語", "n5"),
-        VocabEntry("勉強", "べんきょう", "study", None, "n5"),
-
-        # Food / Drink
-        VocabEntry("食べる", "たべる", "to eat", "食", "n5"),
-        VocabEntry("飲む", "のむ", "to drink", "飲", "n5"),
-        VocabEntry("食べ物", "たべもの", "food", "食", "n5"),
-        VocabEntry("飲み物", "のみもの", "drink; beverage", "飲", "n5"),
-        VocabEntry("お茶", "おちゃ", "tea", None, "n5"),
-        VocabEntry("ご飯", "ごはん", "rice; meal", None, "n5"),
-        VocabEntry("パン", "ぱん", "bread", None, "n5"),
-        VocabEntry("肉", "にく", "meat", None, "n5"),
-        VocabEntry("魚", "さかな", "fish", None, "n5"),
-        VocabEntry("野菜", "やさい", "vegetables", None, "n5"),
-        VocabEntry("果物", "くだもの", "fruit", None, "n5"),
-        VocabEntry("卵", "たまご", "egg", None, "n5"),
-        VocabEntry("朝ご飯", "あさごはん", "breakfast", None, "n5"),
-        VocabEntry("昼ご飯", "ひるごはん", "lunch", None, "n5"),
-        VocabEntry("晩ご飯", "ばんごはん", "dinner", None, "n5"),
-
-        # Actions
-        VocabEntry("見る", "みる", "to see; to look", "見", "n5"),
-        VocabEntry("聞く", "きく", "to hear; to ask; to listen", "聞", "n5"),
-        VocabEntry("読む", "よむ", "to read", "読", "n5"),
-        VocabEntry("書く", "かく", "to write", "書", "n5"),
-        VocabEntry("話す", "はなす", "to speak; to talk", "話", "n5"),
-        VocabEntry("行く", "いく", "to go", "行", "n5"),
-        VocabEntry("来る", "くる", "to come", "来", "n5"),
-        VocabEntry("出る", "でる", "to go out; to exit", "出", "n5"),
-        VocabEntry("入る", "はいる", "to enter", "入", "n5"),
-        VocabEntry("買う", "かう", "to buy", "買", "n5"),
-        VocabEntry("休む", "やすむ", "to rest; to take a day off", "休", "n5"),
-        VocabEntry("立つ", "たつ", "to stand", "立", "n5"),
-        VocabEntry("分かる", "わかる", "to understand", "分", "n5"),
-        VocabEntry("出かける", "でかける", "to go out", "出", "n5"),
-        VocabEntry("歩く", "あるく", "to walk", None, "n5"),
-        VocabEntry("走る", "はしる", "to run", None, "n5"),
-        VocabEntry("泳ぐ", "およぐ", "to swim", None, "n5"),
-        VocabEntry("作る", "つくる", "to make; to create", None, "n5"),
-        VocabEntry("使う", "つかう", "to use", None, "n5"),
-        VocabEntry("待つ", "まつ", "to wait", None, "n5"),
-        VocabEntry("持つ", "もつ", "to hold; to have", None, "n5"),
-        VocabEntry("住む", "すむ", "to live; to reside", None, "n5"),
-        VocabEntry("知る", "しる", "to know", None, "n5"),
-        VocabEntry("思う", "おもう", "to think", None, "n5"),
-        VocabEntry("言う", "いう", "to say", None, "n5"),
-        VocabEntry("会う", "あう", "to meet", None, "n5"),
-        VocabEntry("帰る", "かえる", "to return home", None, "n5"),
-        VocabEntry("教える", "おしえる", "to teach; to tell", None, "n5"),
-        VocabEntry("開ける", "あける", "to open", None, "n5"),
-        VocabEntry("閉める", "しめる", "to close", None, "n5"),
-        VocabEntry("始まる", "はじまる", "to begin (intransitive)", None, "n5"),
-        VocabEntry("終わる", "おわる", "to end; to finish", None, "n5"),
-
-        # Adjectives
-        VocabEntry("大きい", "おおきい", "big; large", "大", "n5"),
-        VocabEntry("小さい", "ちいさい", "small; little", "小", "n5"),
-        VocabEntry("高い", "たかい", "high; tall; expensive", "高", "n5"),
-        VocabEntry("安い", "やすい", "cheap; inexpensive", "安", "n5"),
-        VocabEntry("新しい", "あたらしい", "new", "新", "n5"),
-        VocabEntry("古い", "ふるい", "old (things)", "古", "n5"),
-        VocabEntry("長い", "ながい", "long", "長", "n5"),
-        VocabEntry("白い", "しろい", "white", "白", "n5"),
-        VocabEntry("多い", "おおい", "many; much", "多", "n5"),
-        VocabEntry("少ない", "すくない", "few; little", "少", "n5"),
-        VocabEntry("いい", "いい", "good", None, "n5"),
-        VocabEntry("悪い", "わるい", "bad", None, "n5"),
-        VocabEntry("暑い", "あつい", "hot (weather)", None, "n5"),
-        VocabEntry("寒い", "さむい", "cold (weather)", None, "n5"),
-        VocabEntry("暖かい", "あたたかい", "warm", None, "n5"),
-        VocabEntry("涼しい", "すずしい", "cool; refreshing", None, "n5"),
-        VocabEntry("早い", "はやい", "early; fast", None, "n5"),
-        VocabEntry("遅い", "おそい", "slow; late", None, "n5"),
-        VocabEntry("近い", "ちかい", "near; close", None, "n5"),
-        VocabEntry("遠い", "とおい", "far; distant", None, "n5"),
-        VocabEntry("広い", "ひろい", "wide; spacious", None, "n5"),
-        VocabEntry("狭い", "せまい", "narrow; cramped", None, "n5"),
-        VocabEntry("重い", "おもい", "heavy", None, "n5"),
-        VocabEntry("軽い", "かるい", "light (weight)", None, "n5"),
-        VocabEntry("明るい", "あかるい", "bright", None, "n5"),
-        VocabEntry("暗い", "くらい", "dark", None, "n5"),
-        VocabEntry("難しい", "むずかしい", "difficult", None, "n5"),
-        VocabEntry("易しい", "やさしい", "easy", None, "n5"),
-        VocabEntry("面白い", "おもしろい", "interesting; funny", None, "n5"),
-        VocabEntry("楽しい", "たのしい", "fun; enjoyable", None, "n5"),
-        VocabEntry("忙しい", "いそがしい", "busy", None, "n5"),
-        VocabEntry("元気", "げんき", "healthy; energetic", None, "n5"),
-        VocabEntry("静か", "しずか", "quiet", None, "n5"),
-        VocabEntry("有名", "ゆうめい", "famous", "名", "n5"),
-        VocabEntry("大切", "たいせつ", "important; precious", "大", "n5"),
-        VocabEntry("便利", "べんり", "convenient", None, "n5"),
-
-        # Places
-        VocabEntry("国", "くに", "country", "国", "n5"),
-        VocabEntry("日本", "にほん", "Japan", "日", "n5"),
-        VocabEntry("外国", "がいこく", "foreign country", "外", "n5"),
-        VocabEntry("家", "いえ", "house; home", None, "n5"),
-        VocabEntry("部屋", "へや", "room", None, "n5"),
-        VocabEntry("会社", "かいしゃ", "company", None, "n5"),
-        VocabEntry("病院", "びょういん", "hospital", None, "n5"),
-        VocabEntry("駅", "えき", "train station", None, "n5"),
-        VocabEntry("店", "みせ", "shop; store", None, "n5"),
-        VocabEntry("銀行", "ぎんこう", "bank", "金", "n5"),
-
-        # Directions / Positions
-        VocabEntry("上", "うえ", "above; on top", "上", "n5"),
-        VocabEntry("下", "した", "below; under", "下", "n5"),
-        VocabEntry("中", "なか", "inside; middle", "中", "n5"),
-        VocabEntry("右", "みぎ", "right", "右", "n5"),
-        VocabEntry("左", "ひだり", "left", "左", "n5"),
-        VocabEntry("前", "まえ", "front; before", "前", "n5"),
-        VocabEntry("後ろ", "うしろ", "behind; back", "後", "n5"),
-        VocabEntry("北", "きた", "north", "北", "n5"),
-        VocabEntry("南", "みなみ", "south", "南", "n5"),
-        VocabEntry("東", "ひがし", "east", "東", "n5"),
-        VocabEntry("西", "にし", "west", "西", "n5"),
-        VocabEntry("外", "そと", "outside", "外", "n5"),
-
-        # Transport
-        VocabEntry("電車", "でんしゃ", "train", "電", "n5"),
-        VocabEntry("車", "くるま", "car", "車", "n5"),
-        VocabEntry("自転車", "じてんしゃ", "bicycle", "車", "n5"),
-
-        # Misc nouns
-        VocabEntry("名前", "なまえ", "name", "名", "n5"),
-        VocabEntry("お金", "おかね", "money", "金", "n5"),
-        VocabEntry("電話", "でんわ", "telephone", "電", "n5"),
-        VocabEntry("写真", "しゃしん", "photograph", None, "n5"),
-        VocabEntry("映画", "えいが", "movie", None, "n5"),
-        VocabEntry("音楽", "おんがく", "music", None, "n5"),
-        VocabEntry("手紙", "てがみ", "letter", "手", "n5"),
-        VocabEntry("新聞", "しんぶん", "newspaper", "新", "n5"),
-        VocabEntry("何", "なに", "what", "何", "n5"),
-        VocabEntry("今年", "ことし", "this year", "年", "n5"),
-
-        # Existence / State
-        VocabEntry("ある", "ある", "to exist (inanimate)", None, "n5"),
-        VocabEntry("いる", "いる", "to exist (animate)", None, "n5"),
-
-        # Common expressions
-        VocabEntry("お願いします", "おねがいします", "please (request)", None, "n5"),
-        VocabEntry("すみません", "すみません", "excuse me; sorry", None, "n5"),
-        VocabEntry("ありがとう", "ありがとう", "thank you", None, "n5"),
-        VocabEntry("大丈夫", "だいじょうぶ", "all right; OK", "大", "n5"),
-    ]
+    entries: list[VocabEntry] = []
+    seen: set[str] = set()
+    for row in payload["words"]:
+        word = row["word"]
+        if word in seen:
+            # The shipped bundle carried 今年 twice (ids 34 and 200) until
+            # 2026-08-16 — 206 rows for 205 words. Failing loudly here is what
+            # would have caught it.
+            raise ValueError(f"{path}: {word!r} appears twice")
+        seen.add(word)
+        if not row.get("meaning"):
+            raise ValueError(f"{path}: {word!r} has no English gloss")
+        entries.append(
+            VocabEntry(
+                word,
+                row["reading"],
+                row["meaning"],
+                row.get("kanji_character"),
+                row["jlpt_level"],
+                row["list_source"],
+            )
+        )
+    return entries
 
 
 # ---------------------------------------------------------------------------
@@ -874,6 +724,133 @@ def n5_grammar() -> list[GrammarEntry]:
                      ["日本語は難しいですが、楽しいです。 — Japanese is difficult, but fun.",
                       "高いけど、買います。 — It's expensive, but I'll buy it.",
                       "行きたいですが、時間がありません。 — I want to go, but I don't have time."]),
+
+        # --- Ajoutes le 2026-08-19 : les 20 schemas de phrase qui manquaient.
+        # Mesure contre GrammarList.N5.doc (Tanos, CC BY) : la liste officielle
+        # compte 40 points, l'app en avait 31 — mais presque tous des
+        # PARTICULES. Ce qui manquait etait l'autre moitie du N5 : les schemas
+        # avec lesquels on PARLE (てください, たり…たり, ほうがいい, まえに…).
+        # Le chiffre « ~80 » qui circulait dans TODO.md etait faux du double.
+        GrammarEntry("n5", "へ (Direction)",
+                     "Marks the direction of movement. Interchangeable with に for destinations — へ stresses the heading, に the arrival point. Written へ but pronounced 'e'.",
+                     ["学校へ行きます。 — I go to school.",
+                      "日本へ来ました。 — I came to Japan.",
+                      "どこへ行きますか。 — Where are you going?"]),
+
+        GrammarEntry("n5", "や (Non-exhaustive list)",
+                     "Lists a few examples and implies there are more — 'things like A and B'. と lists everything; や leaves the list open.",
+                     ["本やノートを買いました。 — I bought books, notebooks and so on.",
+                      "犬や魚が好きです。 — I like dogs, fish and the like.",
+                      "パンや水があります。 — There is bread, water and so on."]),
+
+        GrammarEntry("n5", "あります / います (Existence)",
+                     "States that something exists or is somewhere. あります for inanimate things, います for people and animals.",
+                     ["上に本があります。 — There is a book on top.",
+                      "部屋に人がいます。 — There is someone in the room.",
+                      "お金がありません。 — I have no money."]),
+
+        GrammarEntry("n5", "ませんか (Invitation)",
+                     "A polite invitation — 'won't you ~?'. Softer than ましょう because it leaves the other person room to decline.",
+                     ["一緒に行きませんか。 — Won't you come with me?",
+                      "お茶を飲みませんか。 — Would you like some tea?",
+                      "映画を見ませんか。 — Shall we see a film?"]),
+
+        GrammarEntry("n5", "ましょうか (Shall I? / Shall we?)",
+                     "Offers to do something for someone, or proposes a joint action as a question. ましょう decides; ましょうか asks.",
+                     ["持ちましょうか。 — Shall I carry it?",
+                      "窓を開けましょうか。 — Shall I open the window?",
+                      "何を食べましょうか。 — What shall we eat?"]),
+
+        GrammarEntry("n5", "てください (Request)",
+                     "Asks someone to do something politely. Attach ください to the て-form.",
+                     ["待ってください。 — Please wait.",
+                      "名前を書いてください。 — Please write your name.",
+                      "もう一度言ってください。 — Please say it once more."]),
+
+        GrammarEntry("n5", "ないでください (Negative request)",
+                     "Asks someone NOT to do something. Attach でください to the ない-form.",
+                     ["ここに入らないでください。 — Please do not come in here.",
+                      "写真を撮らないでください。 — Please do not take photographs.",
+                      "忘れないでください。 — Please do not forget."]),
+
+        GrammarEntry("n5", "に行く (Going to do something)",
+                     "Verb stem + に + a motion verb states the PURPOSE of going — 'go in order to ~'.",
+                     ["映画を見に行きます。 — I'm going to see a film.",
+                      "友達に会いに行きました。 — I went to meet a friend.",
+                      "パンを買いに行きます。 — I'm going out to buy bread."]),
+
+        GrammarEntry("n5", "のが好き / 上手 / 下手 (Liking and skill)",
+                     "の turns a verb into a noun, so it can be liked or done well. Dictionary form + のが + 好き / 上手 / 下手.",
+                     ["本を読むのが好きです。 — I like reading.",
+                      "歌を歌うのが上手です。 — She is good at singing.",
+                      "話すのが下手です。 — I am bad at speaking."]),
+
+        GrammarEntry("n5", "まだ〜ていません (Not yet)",
+                     "Says an action has not happened YET, and is still expected. Contrast with ませんでした, which simply did not happen.",
+                     ["まだ食べていません。 — I haven't eaten yet.",
+                      "手紙をまだ書いていません。 — I haven't written the letter yet.",
+                      "まだ来ていません。 — He hasn't come yet."]),
+
+        GrammarEntry("n5", "〜のほうが〜より (Comparison)",
+                     "Compares two things — 'A is more ~ than B'. The thing that wins takes のほうが, the other より.",
+                     ["電車のほうがバスより速いです。 — The train is faster than the bus.",
+                      "犬のほうが猫より好きです。 — I like dogs more than cats.",
+                      "今日のほうが昨日より暑いです。 — Today is hotter than yesterday."]),
+
+        GrammarEntry("n5", "〜の中で〜がいちばん (Superlative)",
+                     "Picks out the most ~ within a group — 'of all A, B is the most ~'.",
+                     ["日本の中で東京がいちばん大きいです。 — Of all Japan, Tokyo is the biggest.",
+                      "果物の中でりんごがいちばん好きです。 — Of all fruit I like apples best.",
+                      "一年の中で八月がいちばん暑いです。 — August is the hottest month of the year."]),
+
+        GrammarEntry("n5", "くなる / になる (Becoming)",
+                     "States a change of state. い-adjectives drop い and take く; な-adjectives and nouns take に.",
+                     ["寒くなりました。 — It has turned cold.",
+                      "元気になりました。 — I got better.",
+                      "先生になりたいです。 — I want to become a teacher."]),
+
+        GrammarEntry("n5", "〜たり〜たりする (Representative actions)",
+                     "Lists a few representative actions out of several, without claiming to be exhaustive. Past plain form + り, ending in する.",
+                     ["本を読んだり音楽を聞いたりします。 — I read, listen to music and so on.",
+                      "食べたり飲んだりしました。 — We ate and drank and so on.",
+                      "泳いだり走ったりします。 — I swim, run and the like."]),
+
+        GrammarEntry("n5", "んです (Explanatory)",
+                     "Gives or asks for an explanation, or softens a statement. Plain form + んです.",
+                     ["日本語を勉強しているんです。 — The thing is, I'm studying Japanese.",
+                      "どうして休んだんですか。 — Why was it that you took the day off?",
+                      "少し高いんです。 — It's a bit expensive, you see."]),
+
+        GrammarEntry("n5", "ほうがいい (Advice)",
+                     "Recommends a course of action — 'you had better ~'. Past plain form + ほうがいい.",
+                     ["早く寝たほうがいいですよ。 — You had better go to bed early.",
+                      "休んだほうがいいです。 — You should rest.",
+                      "先生に聞いたほうがいいです。 — You had better ask the teacher."]),
+
+        GrammarEntry("n5", "ので (Reason, soft)",
+                     "Gives a reason. Softer and more objective than から, which is why it suits polite requests and excuses.",
+                     ["雨が降っているので、行きません。 — Since it is raining, I won't go.",
+                      "寒いので、窓を閉めてください。 — As it's cold, please close the window.",
+                      "時間がないので、また今度。 — I'm out of time, so another time."]),
+
+        GrammarEntry("n5", "でしょう (Probably / right?)",
+                     "Expresses probability. Said with rising intonation it seeks the listener's agreement instead.",
+                     ["明日は雨でしょう。 — It will probably rain tomorrow.",
+                      "彼は来ないでしょう。 — He probably won't come.",
+                      "きれいでしょう。 — It's pretty, isn't it?"]),
+
+        GrammarEntry("n5", "まえに (Before doing)",
+                     "States what comes BEFORE something else. Dictionary form + 前に for verbs, noun + の前に for nouns.",
+                     ["寝る前に本を読みます。 — I read before going to bed.",
+                      "ご飯の前に手を洗います。 — I wash my hands before the meal.",
+                      "出かける前に電話します。 — I'll call before going out."]),
+
+        GrammarEntry("n5", "てから (After doing)",
+                     "States a sequence — 'after doing A, then B'. て-form + から. Unlike あとで, it stresses that A must come first.",
+                     ["ご飯を食べてから出かけます。 — I'll go out after eating.",
+                      "手を洗ってから食べてください。 — Please eat after washing your hands.",
+                      "学校が終わってから遊びます。 — I'll play after school finishes."]),
+
     ]
 
 
@@ -939,8 +916,8 @@ def create_database(db_path: str, level: str) -> dict[str, int]:
     vocab_list = get_vocab()
     for i, v in enumerate(vocab_list, 1):
         cur.execute(
-            "INSERT OR IGNORE INTO vocabulary VALUES (?, ?, ?, ?, ?, ?)",
-            (i, v.word, v.reading, v.meaning, v.kanji_character, v.jlpt_level),
+            "INSERT OR IGNORE INTO vocabulary VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (i, v.word, v.reading, v.meaning, v.kanji_character, v.jlpt_level, v.list_source),
         )
     counts["vocabulary"] = len(vocab_list)
 

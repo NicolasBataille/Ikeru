@@ -23,15 +23,49 @@ struct IkeruSchemaTests {
         #expect(IkeruSchemaV2.versionIdentifier == Schema.Version(2, 0, 0))
     }
 
+    @Test("V3 has the same model COUNT as V2 (ReviewLog gains columns, not a new entity)")
+    func v3ModelCount() {
+        #expect(IkeruSchemaV3.models.count == IkeruSchemaV2.models.count)
+        #expect(IkeruSchemaV3.versionIdentifier == Schema.Version(3, 0, 0))
+    }
+
+    @Test("V4 has the same model COUNT as V3 (8 entities gain sync columns, not new entities)")
+    func v4ModelCount() {
+        #expect(IkeruSchemaV4.models.count == IkeruSchemaV3.models.count)
+        #expect(IkeruSchemaV4.versionIdentifier == Schema.Version(4, 0, 0))
+    }
+
+    @Test("V5 adds exactly one entity to V4 (TextImport), and touches nothing else")
+    func v5ModelCount() {
+        #expect(IkeruSchemaV5.models.count == IkeruSchemaV4.models.count + 1)
+        #expect(IkeruSchemaV5.versionIdentifier == Schema.Version(5, 0, 0))
+        // Le point qui compte : V5 est purement ADDITIVE. Toute entité de V4
+        // doit se retrouver telle quelle dans V5 — c'est ce qui autorise une
+        // étape `.lightweight` et ce qui garde intact le sens de V4.
+        let v4Names = Set(IkeruSchemaV4.models.map { String(describing: $0) })
+        let v5Names = Set(IkeruSchemaV5.models.map { String(describing: $0) })
+        #expect(v4Names.isSubset(of: v5Names))
+        #expect(v5Names.subtracting(v4Names) == ["TextImport"])
+    }
+
+    @Test("V6 has the same model COUNT as V5 (two entities gain profileID, no new entity)")
+    func v6ModelCount() {
+        #expect(IkeruSchemaV6.models.count == IkeruSchemaV5.models.count)
+        #expect(IkeruSchemaV6.versionIdentifier == Schema.Version(6, 0, 0))
+        let v5Names = Set(IkeruSchemaV5.models.map { String(describing: $0) })
+        let v6Names = Set(IkeruSchemaV6.models.map { String(describing: $0) })
+        #expect(v5Names == v6Names)
+    }
+
     @Test("Migration plan is well-formed: stages == schemas - 1")
     func planWellFormed() {
-        #expect(IkeruMigrationPlan.schemas.count == 2)
+        #expect(IkeruMigrationPlan.schemas.count == 6)
         #expect(IkeruMigrationPlan.stages.count == IkeruMigrationPlan.schemas.count - 1)
     }
 
-    @Test("A container opens with the current (V2) versioned schema + migration plan")
+    @Test("A container opens with the current (V6) versioned schema + migration plan")
     func containerOpensWithPlan() throws {
-        let schema = Schema(versionedSchema: IkeruSchemaV2.self)
+        let schema = Schema(versionedSchema: IkeruSchemaV6.self)
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         let container = try ModelContainer(
             for: schema,
@@ -39,9 +73,23 @@ struct IkeruSchemaTests {
             configurations: [config]
         )
         // Every declared model resolves to exactly one schema entity — a guard
-        // against a model being dropped from (or duplicated in) V2.
-        #expect(container.schema.entities.count == IkeruSchemaV2.models.count)
+        // against a model being dropped from (or duplicated in) V6.
+        #expect(container.schema.entities.count == IkeruSchemaV6.models.count)
     }
+
+    // Deliberately NOT adding a "container opens with frozen V2 (or V3)
+    // alone" test here: unlike `Schema(versionedSchema:)` construction (safe
+    // — the golden fingerprint tests below already do this for V2/V3),
+    // actually *opening a ModelContainer* against a frozen version's nested
+    // types poisons SwiftData's process-global entity↔class cache for the
+    // rest of THIS suite's process (same containment rule as
+    // `StoreMigrationV2V3Tests` / `StoreMigrationV3V4Tests` — see their
+    // header comments). This file runs `--no-parallel` alongside
+    // CardRepositoryTests, KanaCardRepositoryTests, ProgressServiceTests,
+    // etc., all of which fetch live types — planting that container-open
+    // here would make their green status order-dependent. `v2GoldenFingerprint`
+    // / `v3GoldenFingerprint` below and the isolated-process migration
+    // suites already cover what this would have proven.
 
     // MARK: - Golden fingerprints (mechanical guard against silent drift)
 
@@ -72,11 +120,62 @@ struct IkeruSchemaTests {
     /// fails loudly. On failure: if the change was intentional, cut a new
     /// VersionedSchema + migration stage and update the golden hash here;
     /// never edit a frozen schema in place.
-    private static func typedFingerprint(of schema: Schema) -> String {
-        let lines = schema.entities
-            .flatMap { entity in entity.properties.map { "\(entity.name)|\(String(describing: $0))" } }
+    /// One property, rendered from its **documented** API surface.
+    ///
+    /// ⚠️ Never `String(describing:)` a `Schema.Property`. That was the first
+    /// version, and it made the digest **machine-dependent**: SwiftData's own
+    /// description format is an implementation detail that differs between OS
+    /// versions, so the same code produced `93c7f1726ba34d2a` on macOS 26 and
+    /// `16a69598f17ed293` on the CI's macOS 15. A golden digest that fails
+    /// depending on where it runs is worse than no digest at all — it teaches
+    /// people to update the constant until the light goes green, which is
+    /// exactly the reflex that lets a real schema drift through.
+    ///
+    /// Everything named here is public, stable API **and declared by us**, and
+    /// covers what the digest exists to catch: a property retyped, made
+    /// optional, made unique, made transient, or given a default it did not
+    /// have.
+    ///
+    /// `isTransformable` is deliberately absent even though it is public: it is
+    /// *inferred* by SwiftData from the type rather than declared here, and
+    /// that inference is itself version-dependent. Anything the framework
+    /// decides for us belongs to the implementation, exactly like the
+    /// description did.
+    private static func canonical(_ property: any SchemaProperty) -> String {
+        if let attribute = property as? Schema.Attribute {
+            return [
+                "attr", attribute.name,
+                "type=\(attribute.valueType)",
+                "optional=\(attribute.isOptional)",
+                "unique=\(attribute.isUnique)",
+                "transient=\(attribute.isTransient)",
+                "hasDefault=\(attribute.defaultValue != nil)",
+            ].joined(separator: "|")
+        }
+        if let relationship = property as? Schema.Relationship {
+            return [
+                "rel", relationship.name,
+                "optional=\(relationship.isOptional)",
+                "toMany=\(relationship.isToOneRelationship == false)",
+                "delete=\(relationship.deleteRule)",
+            ].joined(separator: "|")
+        }
+        return "other|\(property.name)"
+    }
+
+    /// The canonical lines of a schema, sorted — what the digest hashes.
+    ///
+    /// Exposed so a failure can print the lines instead of two opaque numbers.
+    /// A golden-digest failure without them tells you « something changed » and
+    /// leaves you to bisect; with them it names the property.
+    static func canonicalLines(of schema: Schema) -> [String] {
+        schema.entities
+            .flatMap { entity in entity.properties.map { "\(entity.name)|\(Self.canonical($0))" } }
             .sorted()
-            .joined(separator: "\n")
+    }
+
+    private static func typedFingerprint(of schema: Schema) -> String {
+        let lines = Self.canonicalLines(of: schema).joined(separator: "\n")
         // Deterministic FNV-1a (Swift's Hasher is seeded per-process).
         var hash: UInt64 = 0xcbf29ce484222325
         for byte in lines.utf8 {
@@ -198,7 +297,9 @@ struct IkeruSchemaTests {
         #expect(Self.fingerprint(of: schema) == Self.v1GoldenFingerprintList)
         // Typed digest: also catches retyping/re-optionalizing an EXISTING
         // property, which the name list above cannot see.
-        #expect(Self.typedFingerprint(of: schema) == "3d20f3ad6b03e99b")
+        #expect(Self.typedFingerprint(of: schema) == "ad7225455af258b1",
+                Comment(rawValue: Self.canonicalLines(of: schema)
+                    .joined(separator: "\n")))
     }
 
     @Test("V2 golden fingerprint — V1 plus RPGState.activeDaysCount plus ExerciseOutcomeLog")
@@ -216,6 +317,143 @@ struct IkeruSchemaTests {
         golden.sort()
         #expect(Self.fingerprint(of: schema) == golden)
         // Typed digest — see v1GoldenFingerprint for what this adds.
-        #expect(Self.typedFingerprint(of: schema) == "eb462d92926249b7")
+        #expect(Self.typedFingerprint(of: schema) == "9d6d71ca8acc0b2d",
+                Comment(rawValue: Self.canonicalLines(of: schema)
+                    .joined(separator: "\n")))
+    }
+
+    @Test("V3 golden fingerprint — V2 plus ReviewLog.answeredValue/exerciseType/surface")
+    func v3GoldenFingerprint() {
+        let schema = Schema(versionedSchema: IkeruSchemaV3.self)
+        var golden = Self.v1GoldenFingerprintList
+        golden.append("RPGState.activeDaysCount")
+        golden.append(contentsOf: [
+            "ExerciseOutcomeLog.accuracy",
+            "ExerciseOutcomeLog.id",
+            "ExerciseOutcomeLog.profileID",
+            "ExerciseOutcomeLog.skillRawValue",
+            "ExerciseOutcomeLog.timestamp",
+        ])
+        golden.append(contentsOf: [
+            "ReviewLog.answeredValue",
+            "ReviewLog.exerciseType",
+            "ReviewLog.surface",
+        ])
+        golden.sort()
+        #expect(Self.fingerprint(of: schema) == golden)
+        // Typed digest — see v1GoldenFingerprint for what this adds. Produced
+        // by running this suite (`swift test --no-parallel --filter
+        // "IkeruSchema"`) and reading the printed value; not hand-computed.
+        #expect(Self.typedFingerprint(of: schema) == "0d655ecc868bfcf4",
+                Comment(rawValue: Self.canonicalLines(of: schema)
+                    .joined(separator: "\n")))
+    }
+
+    /// The 24 `updatedAt`/`deletedAt`/`syncedAt` columns cloud-sync lot 0
+    /// (`docs/design-specs/2026-08-10-cloud-sync-design.md` §5.1) adds — one
+    /// triple per synchronized entity (spec §3): `UserProfile`, `Card`,
+    /// `ReviewLog`, `RPGState`, `VocabularyEntry`, `VocabularyEncounter`,
+    /// `ExerciseOutcomeLog`, `CompanionChatMessage`. `MnemonicCache`,
+    /// `AssetManifest`, `DailyTerm` are explicitly not synchronized and gain
+    /// nothing.
+    private static let v4SyncColumns = [
+        "UserProfile.updatedAt", "UserProfile.deletedAt", "UserProfile.syncedAt",
+        "Card.updatedAt", "Card.deletedAt", "Card.syncedAt",
+        "ReviewLog.updatedAt", "ReviewLog.deletedAt", "ReviewLog.syncedAt",
+        "RPGState.updatedAt", "RPGState.deletedAt", "RPGState.syncedAt",
+        "VocabularyEntry.updatedAt", "VocabularyEntry.deletedAt", "VocabularyEntry.syncedAt",
+        "VocabularyEncounter.updatedAt", "VocabularyEncounter.deletedAt", "VocabularyEncounter.syncedAt",
+        "ExerciseOutcomeLog.updatedAt", "ExerciseOutcomeLog.deletedAt", "ExerciseOutcomeLog.syncedAt",
+        "CompanionChatMessage.updatedAt", "CompanionChatMessage.deletedAt", "CompanionChatMessage.syncedAt",
+    ]
+
+    @Test("V4 golden fingerprint — V3 plus updatedAt/deletedAt/syncedAt on the 8 synchronized entities")
+    func v4GoldenFingerprint() {
+        let schema = Schema(versionedSchema: IkeruSchemaV4.self)
+        var golden = Self.v1GoldenFingerprintList
+        golden.append("RPGState.activeDaysCount")
+        golden.append(contentsOf: [
+            "ExerciseOutcomeLog.accuracy",
+            "ExerciseOutcomeLog.id",
+            "ExerciseOutcomeLog.profileID",
+            "ExerciseOutcomeLog.skillRawValue",
+            "ExerciseOutcomeLog.timestamp",
+        ])
+        golden.append(contentsOf: [
+            "ReviewLog.answeredValue",
+            "ReviewLog.exerciseType",
+            "ReviewLog.surface",
+        ])
+        golden.append(contentsOf: Self.v4SyncColumns)
+        golden.sort()
+        #expect(Self.fingerprint(of: schema) == golden)
+        // Typed digest — minted 2026-08-19 by running this suite, as the note
+        // that stood here asked. It was missing until V5 shipped, which meant
+        // V4 (whose `models` are LIVE types) had NO guard against a property
+        // being *retyped* or *re-optionalized*: the name list above cannot see
+        // that, and V4 is the version every store on a real device is coming
+        // from. See v1GoldenFingerprint for the failure mode.
+        #expect(Self.typedFingerprint(of: schema) == "f012779f43f39734",
+                Comment(rawValue: Self.canonicalLines(of: schema)
+                    .joined(separator: "\n")))
+    }
+
+    /// The 10 columns `TextImport` brings — and nothing else. V5 is purely
+    /// additive by construction (see `IkeruSchemaV5`'s doc comment); this list
+    /// is what makes "by construction" mechanically checkable.
+    private static let v5TextImportColumns = [
+        "TextImport.content",
+        "TextImport.coverage",
+        "TextImport.createdAt",
+        "TextImport.deletedAt",
+        "TextImport.entryIDs",
+        "TextImport.id",
+        "TextImport.sourceRawValue",
+        "TextImport.syncedAt",
+        "TextImport.title",
+        "TextImport.updatedAt",
+    ]
+
+    /// The gap this closes: `v5ModelCount` only compares *entity name sets*, so
+    /// it would stay green if a V4 entity silently gained, lost or retyped a
+    /// property — which is exactly the `aa03566` failure, since V4 and V5 both
+    /// name LIVE types. Both fingerprints below are needed: the name list
+    /// catches added/removed/renamed properties, the typed digest catches
+    /// retyping and re-optionalizing.
+    @Test("V5 golden fingerprint — V4 untouched, plus exactly TextImport's 10 columns")
+    func v5GoldenFingerprint() {
+        let v4 = Self.fingerprint(of: Schema(versionedSchema: IkeruSchemaV4.self))
+        let v5 = Self.fingerprint(of: Schema(versionedSchema: IkeruSchemaV5.self))
+        // Not one property of V4 moved: additive means additive.
+        #expect(v5.filter { !$0.hasPrefix("TextImport.") } == v4)
+        #expect(v5.filter { $0.hasPrefix("TextImport.") } == Self.v5TextImportColumns)
+        #expect((v4 + Self.v5TextImportColumns).sorted() == v5)
+        // Typed digest — minted 2026-08-19 by running this suite. It did NOT
+        // change on 2026-09-09 when V5 got its nested snapshots for V6: that
+        // is the proof the freeze was a pin, not an edit.
+        #expect(Self.typedFingerprint(of: Schema(versionedSchema: IkeruSchemaV5.self))
+                == "57d176f4027e3f9f")
+    }
+
+    /// The two columns V6 brings (P1-1 / OBS2-022) — and nothing else.
+    private static let v6OwnerColumns = [
+        "TextImport.profileID",
+        "VocabularyEntry.profileID",
+    ]
+
+    /// V4 and V5 name `Card`/`UserProfile`/`ReviewLog`/`RPGState` LIVE, and V6
+    /// names everything live — so this is where a stray property on any of
+    /// them would show up first. Both fingerprints for the same reason as V5.
+    @Test("V6 golden fingerprint — V5 untouched, plus exactly profileID on VocabularyEntry and TextImport")
+    func v6GoldenFingerprint() {
+        let v5 = Self.fingerprint(of: Schema(versionedSchema: IkeruSchemaV5.self))
+        let v6 = Self.fingerprint(of: Schema(versionedSchema: IkeruSchemaV6.self))
+        #expect(v6.filter { !$0.hasSuffix(".profileID") || $0.hasPrefix("ExerciseOutcomeLog.") } == v5)
+        #expect((v5 + Self.v6OwnerColumns).sorted() == v6)
+        // Typed digest — minted 2026-09-09 by running this suite.
+        #expect(Self.typedFingerprint(of: Schema(versionedSchema: IkeruSchemaV6.self))
+                == "40d6385891834f93",
+                Comment(rawValue: Self.canonicalLines(of: Schema(versionedSchema: IkeruSchemaV6.self))
+                    .joined(separator: "\n")))
     }
 }

@@ -11,7 +11,9 @@ struct KanaQuizView: View {
 
     var body: some View {
         ZStack {
-            if viewModel.isComplete {
+            if !viewModel.hasSufficientPool {
+                emptyStateView
+            } else if viewModel.isComplete {
                 completionView
             } else {
                 quizContent
@@ -20,6 +22,31 @@ struct KanaQuizView: View {
         .onAppear {
             viewModel.startSession()
         }
+    }
+
+    // MARK: - Empty State
+
+    /// Shown when the synced eligible-kana set (chosen groups ∩ already
+    /// graded at least once) has too few characters to run a session —
+    /// never falls back to the full hiragana syllabary. See
+    /// `WatchQuizViewModel.hasSufficientPool`.
+    private var emptyStateView: some View {
+        VStack(spacing: 8) {
+            Image(systemName: "character.book.closed")
+                .font(.system(size: 28))
+                .foregroundStyle(.secondary)
+
+            Text("Nothing to review here yet")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(.white)
+                .multilineTextAlignment(.center)
+
+            Text("Practice a few kana on iPhone first")
+                .font(.system(size: 11))
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+        }
+        .padding(.horizontal, 8)
     }
 
     // MARK: - Quiz Content
@@ -48,6 +75,10 @@ struct KanaQuizView: View {
                 }
             }
 
+            // Correct-answer feedback (shown briefly after a wrong tap, before
+            // advancing — a wrong answer without this teaches nothing).
+            feedbackLine
+
             // Progress dots
             HStack(spacing: 3) {
                 ForEach(0..<viewModel.totalQuestions, id: \.self) { index in
@@ -69,7 +100,8 @@ struct KanaQuizView: View {
                 .font(.system(size: 32))
                 .foregroundStyle(.green)
 
-            Text("\(viewModel.correctCount)/\(viewModel.totalQuestions)")
+            // `verbatim:` — un score « 7/10 » ne se traduit pas.
+            Text(verbatim: "\(viewModel.correctCount)/\(viewModel.totalQuestions)")
                 .font(.system(size: 20, weight: .bold))
                 .foregroundStyle(.white)
 
@@ -82,6 +114,21 @@ struct KanaQuizView: View {
             }
             .buttonStyle(.bordered)
             .tint(IkeruPlatformTheme.gold)
+        }
+    }
+
+    // MARK: - Feedback
+
+    @ViewBuilder
+    private var feedbackLine: some View {
+        if let feedback = viewModel.correctAnswerFeedback {
+            Text("The character for \(feedback.romaji) is \(feedback.kana)")
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(.green)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+        } else {
+            Color.clear.frame(height: 12)
         }
     }
 

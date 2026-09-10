@@ -7,15 +7,31 @@ struct LocalGPUProviderTests {
 
     // MARK: - Provider Properties
 
+    // These two assert constants, and used to do it through the PARAMETERLESS
+    // initialiser — whose default argument is `NWBonjourDiscovery()`, which
+    // builds a live `NWBrowser` for `_ikeruai._tcp` and cancels it in `deinit`.
+    // That is real network machinery, stood up on a CI runner that has no
+    // Bonjour, to read back a hardcoded string.
+    //
+    // It took the whole test process down. `LocalGPUProviderTests` is the
+    // suite the CI allowlist existed to avoid (GAP-10): the probe job caught
+    // the run dying at "Provider name is LocalGPU", the first test to call the
+    // bare initialiser. Cost of that one default argument: 587 of 1253 Core
+    // tests never ran on CI, because the allowlist written around this crash
+    // also excluded every unrelated suite, and every new one by default.
+    //
+    // Every other test in this file already injects a mock. These two now do
+    // too — no behaviour is lost, since neither reads discovery at all.
+
     @Test("Provider name is LocalGPU")
     func providerName() {
-        let provider = LocalGPUProvider()
+        let provider = LocalGPUProvider(bonjourDiscovery: MockBonjourDiscovery(endpoint: nil))
         #expect(provider.name == "LocalGPU")
     }
 
     @Test("Provider tier is localGPU")
     func providerTier() {
-        let provider = LocalGPUProvider()
+        let provider = LocalGPUProvider(bonjourDiscovery: MockBonjourDiscovery(endpoint: nil))
         #expect(provider.tier == .localGPU)
     }
 

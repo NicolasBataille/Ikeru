@@ -135,7 +135,7 @@ struct HomeView: View {
             // Also covers opening the app already caught-up (the state can be
             // reached without a session ending this launch).
             evaluateCaughtUpExplainer()
-            if CommandLine.arguments.contains("-autoStartSession") {
+            if AppEnvironment.hasFlag("autoStartSession") {
                 startSession()
             }
         }
@@ -223,7 +223,7 @@ struct HomeView: View {
                 topBar(vm)
                 proverbHero(vm)
                 dailyTermSection
-                sessionBreakdown(vm)
+                competencyBookSection(vm)
                 nextStepSection(vm)
             }
             .padding(.horizontal, IkeruTheme.Spacing.lg)
@@ -236,22 +236,111 @@ struct HomeView: View {
 
     // MARK: - Quiet state (when no cards due)
 
-    private var quietState: some View {
-        HStack(spacing: 10) {
-            Image(systemName: "checkmark.seal")
-                .font(.system(size: 14, weight: .medium))
-                .foregroundStyle(Color.ikeruSuccess)
-            Text("All caught up — enjoy the calm")
-                .font(.ikeruCaption)
-                .foregroundStyle(Color.ikeruTextTertiary)
+    /// What a learner sees when nothing is due.
+    ///
+    /// Until 2026-08-16 this was a dead end: a "All caught up — enjoy the
+    /// calm" badge, no CTA, and every other way into a session silently did
+    /// nothing. The owner's decision was that the app must never leave the
+    /// learner in front of emptiness, but that the filling must be **explicit
+    /// and presented** — a session that fills itself without saying so stays
+    /// the defect.
+    ///
+    /// So the badge keeps its place (finishing your reviews IS worth
+    /// acknowledging) and two offers appear under it. Each is shown only when
+    /// its pool can actually produce a session, so no button is ever inert.
+    /// When neither can, the badge stands alone exactly as before — that is
+    /// the one case where "caught up" is genuinely a full stop.
+    private func quietState(_ vm: HomeViewModel) -> some View {
+        VStack(alignment: .leading, spacing: IkeruTheme.Spacing.sm) {
+            HStack(spacing: 10) {
+                Image(systemName: "checkmark.seal")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(Color.ikeruSuccess)
+                Text("All caught up — enjoy the calm")
+                    .font(.ikeruCaption)
+                    .foregroundStyle(Color.ikeruTextTertiary)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+            .background {
+                Rectangle().fill(.ultraThinMaterial)
+                    .overlay(Rectangle().strokeBorder(TatamiTokens.goldDim.opacity(0.5), lineWidth: 0.6))
+            }
+            .sumiCorners(color: TatamiTokens.goldDim, size: 5, weight: 0.9)
+
+            if !vm.caughtUpOffers.isEmpty {
+                Text("Want to keep going? Nothing is due, so this is extra.")
+                    .font(.ikeruCaption)
+                    .foregroundStyle(Color.ikeruTextTertiary)
+                    .padding(.top, 2)
+
+                if vm.caughtUpOffers.contains(.deepen) {
+                    caughtUpOfferButton(
+                        offer: .deepen,
+                        symbol: "arrow.down.heart",
+                        title: "Go deeper",
+                        subtitle: "Practise what you already know, weakest first"
+                    )
+                }
+                if vm.caughtUpOffers.contains(.discover) {
+                    caughtUpOfferButton(
+                        offer: .discover,
+                        symbol: "sparkles",
+                        title: "Discover something new",
+                        subtitle: "Meet content you haven't seen yet"
+                    )
+                }
+            }
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
-        .background {
-            Rectangle().fill(.ultraThinMaterial)
-                .overlay(Rectangle().strokeBorder(TatamiTokens.goldDim.opacity(0.5), lineWidth: 0.6))
+        // `.contain`, and load-bearing: an identifier on a bare VStack is not
+        // exposed as an element at all, so `otherElements["home.caughtUpProposal"]`
+        // never resolved and the UI test died on its first assertion while the
+        // proposal was plainly on screen (measured 2026-08-16, screenshot in
+        // the PR). `.contain` publishes the container while leaving the two
+        // offer buttons individually addressable — `.combine` would have
+        // merged them into one element and broken the taps.
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("home.caughtUpProposal")
+    }
+
+    /// One caught-up offer. Both offers share this so they read as a pair of
+    /// equals — neither is the "real" button with the other as a consolation.
+    private func caughtUpOfferButton(
+        offer: SessionPlannerInputs.CaughtUpOffer,
+        symbol: String,
+        title: LocalizedStringKey,
+        subtitle: LocalizedStringKey
+    ) -> some View {
+        Button {
+            startCaughtUpSession(offer)
+        } label: {
+            HStack(spacing: 10) {
+                Image(systemName: symbol)
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundStyle(Color.ikeruPrimaryAccent)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(title)
+                        .font(.ikeruBody)
+                        .foregroundStyle(.white)
+                    Text(subtitle)
+                        .font(.ikeruCaption)
+                        .foregroundStyle(Color.ikeruTextTertiary)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(Color.ikeruTextTertiary)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
+            .background {
+                Rectangle().fill(.ultraThinMaterial)
+                    .overlay(Rectangle().strokeBorder(TatamiTokens.goldDim.opacity(0.5), lineWidth: 0.6))
+            }
+            .sumiCorners(color: TatamiTokens.goldDim, size: 5, weight: 0.9)
         }
-        .sumiCorners(color: TatamiTokens.goldDim, size: 5, weight: 0.9)
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("home.caughtUp.\(offer.rawValue)")
     }
 
     // MARK: - Choose-your-kana CTA (soft study-set gate)
@@ -335,10 +424,10 @@ struct HomeView: View {
 
     /// Returns "四月二十九日 · 火" (Japanese serif kanji date).
     private func serifJapaneseDate() -> String {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "ja_JP")
-        f.dateFormat = "M月d日 · E"
-        return f.string(from: Date())
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "ja_JP")
+        formatter.dateFormat = "M月d日 · E"
+        return formatter.string(from: Date())
     }
 
     // MARK: - Daily Term
@@ -444,7 +533,7 @@ struct HomeView: View {
                 // practice, so the session always matches what they chose.
                 chooseKanaCTA
             } else if vm.todayKind == .empty {
-                quietState
+                quietState(vm)
             } else {
                 // Hero CTA — speaks the shared .primary ink-block language
                 // (owner feedback: every gold action should look like ONE
@@ -467,10 +556,14 @@ struct HomeView: View {
                 }
                 .ikeruButtonStyle(.primary)
                 .tourAnchor(.sessionCTA)
+                .accessibilityIdentifier("home.beginPracticeButton")
             }
 
             // Beginner's compass — kana mastery, always visible (the honest
-            // progress number that replaces XP/streak chrome).
+            // progress number that replaces XP/streak chrome). Identifier is
+            // on the count `Text` leaf inside, not this call site — see
+            // `kanaProgressLine`'s body.
+            sessionShapeLine(vm)
             kanaProgressLine(vm)
         }
         .tatamiRoom(.glass, padding: 20)
@@ -487,6 +580,62 @@ struct HomeView: View {
     }
 
     /// "かな X/92 learned" — the calm progress signal for beginners.
+    ///
+    /// Also carries the "in progress" count (`learningTotal`) whenever it's
+    /// nonzero. Without it, a beginner's first-ever session ends with this
+    /// line stuck at "0/92" — mathematically correct (mastery requires
+    /// `reps >= 2`, see `MasteryLevel`) but silent, exactly the "anti-burnout
+    /// without a mirror" gap the 2026-08-10 review names. The in-progress
+    /// count is the trace that makes session one visible.
+    /// La forme de la prochaine seance, en une ligne discrete sous le CTA.
+    ///
+    /// Remplace la bande « NOUVEAUX / RÉVISION / APPROX. » qui occupait une
+    /// carte entiere entre l'accueil et le terme du jour. Signale sur device le
+    /// 2026-08-19 : trois chiffres, trois icones et un cadre pour dire ce que
+    /// le gros chiffre juste au-dessus dit deja en partie — l'ecran se lisait
+    /// charge. Ici l'information reste, dans le meme registre typographique que
+    /// la ligne kana, et sans son propre cadre.
+    ///
+    /// La duree n'est PAS reprise : « ~1 min » sur une seance d'une carte
+    /// n'apprend rien, et c'est la valeur la moins actionnable des trois.
+    @ViewBuilder
+    private func sessionShapeLine(_ vm: HomeViewModel) -> some View {
+        if vm.sessionPreviewCardCount > 0 {
+            HStack(spacing: 8) {
+                if vm.sessionPreviewNewCount > 0 {
+                    Text(verbatim: "\(vm.sessionPreviewNewCount)")
+                        .ikeruScaledFont(12, design: .serif, relativeTo: .caption)
+                        .monospacedDigit()
+                        .foregroundStyle(Color.ikeruTextSecondary)
+                    Text("New")
+                        .ikeruScaledFont(10, relativeTo: .caption2)
+                        .textCase(.uppercase)
+                        .tracking(1.0)
+                        .foregroundStyle(Color.ikeruTextTertiary)
+                }
+                if vm.sessionPreviewNewCount > 0 && vm.sessionPreviewReviewCount > 0 {
+                    Text("\u{00B7}")
+                        .foregroundStyle(Color.ikeruTextTertiary)
+                }
+                if vm.sessionPreviewReviewCount > 0 {
+                    Text(verbatim: "\(vm.sessionPreviewReviewCount)")
+                        .ikeruScaledFont(12, design: .serif, relativeTo: .caption)
+                        .monospacedDigit()
+                        .foregroundStyle(Color.ikeruTextSecondary)
+                    Text("Review")
+                        .ikeruScaledFont(10, relativeTo: .caption2)
+                        .textCase(.uppercase)
+                        .tracking(1.0)
+                        .foregroundStyle(Color.ikeruTextTertiary)
+                }
+                Spacer()
+            }
+            .padding(.top, 2)
+            .accessibilityElement(children: .combine)
+            .accessibilityIdentifier("home.sessionShape")
+        }
+    }
+
     private func kanaProgressLine(_ vm: HomeViewModel) -> some View {
         HStack(spacing: 8) {
             Text("\u{304B}\u{306A}") // かな
@@ -496,11 +645,34 @@ struct HomeView: View {
                 .ikeruScaledFont(12, design: .serif, relativeTo: .caption)
                 .monospacedDigit()
                 .foregroundStyle(Color.ikeruTextSecondary)
+                // Applied to this leaf `Text`, not the parent `HStack`: a
+                // SwiftUI container isn't itself an accessibility element
+                // unless explicitly combined (`.accessibilityElement(children:
+                // .combine)`), so an identifier on the HStack would not be
+                // queryable from XCUITest — see `IkeruUITests/Pages/HomePage.swift`.
+                .accessibilityIdentifier("home.kanaProgressCount")
             Text("Home.KanaLearned")
                 .ikeruScaledFont(10, relativeTo: .caption2)
                 .textCase(.uppercase)
                 .tracking(1.0)
                 .foregroundStyle(Color.ikeruTextTertiary)
+
+            if vm.kanaProgress.learningTotal > 0 {
+                Text("\u{00B7}")
+                    .foregroundStyle(Color.ikeruTextTertiary)
+                // `verbatim:` — un nombre nu ne se traduit pas, et le
+                // chercher au catalogue fabrique une clé « %lld » vide de
+                // sens.
+                Text(verbatim: "\(vm.kanaProgress.learningTotal)")
+                    .ikeruScaledFont(12, design: .serif, relativeTo: .caption)
+                    .monospacedDigit()
+                    .foregroundStyle(Color.ikeruTextSecondary)
+                Text("Home.KanaInProgress")
+                    .ikeruScaledFont(10, relativeTo: .caption2)
+                    .textCase(.uppercase)
+                    .tracking(1.0)
+                    .foregroundStyle(Color.ikeruTextTertiary)
+            }
             Spacer()
         }
         .padding(.top, 2)
@@ -575,19 +747,38 @@ struct HomeView: View {
         .padding(.horizontal, 10)
     }
 
+    // MARK: - Competency booklet (the "miroir" — see CompetencyBookCard)
+    //
+    // Only renders once there is something to mirror (at least one card or
+    // dictionary entry has been touched) — an untouched profile still gets
+    // the choose-your-kana gate or the hero CTA, never an empty booklet.
+
+    @ViewBuilder
+    private func competencyBookSection(_ vm: HomeViewModel) -> some View {
+        if vm.masteryBook.totalCount > 0 {
+            CompetencyBookCard(
+                masteryBook: vm.masteryBook,
+                weeklyDelta: vm.masteryBookWeeklyDelta
+            )
+        }
+    }
+
     // MARK: - Next-step suggestion (calm progression nudge)
     //
     // One gentle "do this next" card derived from the learner's progress (the
     // first unmet rung of the ladder). Shown only once the learner has started
-    // (not while the choose-your-kana gate is up) and hidden when fully caught
-    // up. Kana rungs are tappable (open the chooser to add the next groups);
-    // later rungs are calm, informational — never dead taps.
+    // (not while the choose-your-kana gate is up). The ladder's terminal rung
+    // is `.converseWithSakura` — once a learner clears every earlier rung the
+    // card keeps recommending Sakura rather than disappearing, since
+    // `NextStepRecommender` has no "already caught up" state to fall back to
+    // (see its doc comment: there is no "has conversed with Sakura" signal to
+    // retire the rung with). Kana rungs are tappable (open the chooser to add
+    // the next groups); later rungs are calm, informational — never dead taps.
 
     @ViewBuilder
     private func nextStepSection(_ vm: HomeViewModel) -> some View {
         if !vm.needsStudySetChoice,
-           let step = vm.nextStep,
-           step.stage != .allCaughtUp {
+           let step = vm.nextStep {
             if isKanaStage(step.stage) {
                 Button { showStudySetChooser = true } label: { nextStepCard(step) }
                     .buttonStyle(.plain)
@@ -639,7 +830,6 @@ struct HomeView: View {
         case .studyGrammar:       return "Home.NextStep.Grammar.Title"
         case .readingListening:   return "Home.NextStep.Reading.Title"
         case .converseWithSakura: return "Home.NextStep.Sakura.Title"
-        case .allCaughtUp:        return "Home.NextStep.CaughtUp.Title"
         }
     }
 
@@ -652,7 +842,6 @@ struct HomeView: View {
         case .studyGrammar:       return "Home.NextStep.Grammar.Body"
         case .readingListening:   return "Home.NextStep.Reading.Body"
         case .converseWithSakura: return "Home.NextStep.Sakura.Body"
-        case .allCaughtUp:        return "Home.NextStep.CaughtUp.Body"
         }
     }
 
@@ -684,11 +873,7 @@ struct HomeView: View {
     /// returns nil so the session still starts; the audio drills just get an
     /// empty vocabulary pool rather than crashing.
     private static func makeContentRepository() -> ContentRepository? {
-        guard let url = Bundle.main.url(forResource: "n5-content", withExtension: "sqlite") else {
-            Logger.ui.error("n5-content.sqlite not found in bundle — audio drills will have no content")
-            return nil
-        }
-        return ContentRepository(bundleURL: url)
+        BundledContent.makeRepository()
     }
 
     private func startSession() {
@@ -701,6 +886,33 @@ struct HomeView: View {
             // an empty plan must never show a hollow "0 cards / 0% recall" summary.
             let started = await svm.startSession()
             showSession = started
+            if !started {
+                // Nothing composable. Rather than the old silent no-op, land
+                // the learner on the proposal: refreshing recomputes
+                // `todayKind` and `caughtUpOffers`, so Home swaps the CTA for
+                // the approfondir/découvrir pair on the next frame.
+                Logger.ui.info("startSession produced nothing — falling back to the caught-up proposal")
+                await viewModel?.loadData()
+            }
+        }
+    }
+
+    /// Starts one of the two caught-up offers.
+    ///
+    /// Mirrors `startSession()`'s honesty rule: only present the session if
+    /// one actually started. The pool can empty between the proposal being
+    /// rendered and the tap (another device syncing a review, say), and in
+    /// that case the right answer is to refresh the proposal, not to open a
+    /// hollow session.
+    private func startCaughtUpSession(_ offer: SessionPlannerInputs.CaughtUpOffer) {
+        guard let svm = sessionViewModel else { return }
+        reviewsBeforeSession = viewModel?.totalReviewsCompleted ?? 0
+        Task {
+            let started = await svm.startCaughtUpSession(offer: offer)
+            showSession = started
+            if !started {
+                await viewModel?.loadData()
+            }
         }
     }
 
@@ -727,7 +939,16 @@ struct HomeView: View {
               vm.todayKind == .empty,
               !vm.restDayActive,
               !vm.needsStudySetChoice,
-              vm.totalReviewsCompleted > 0,
+              // A THRESHOLD ("has this learner ever reviewed anything"), so it
+              // reads the `ReviewLog`-derived count, not `RPGState`. GAP-13's
+              // residual: on the RPG counter this was wrong for exactly the
+              // learner this explainer exists for — kana-drill-only work
+              // journals ReviewLog rows without ever touching RPGState, so
+              // they stayed at 0 forever and never saw it.
+              // `evaluateFirstSessionDailyTermPrompt` below deliberately does
+              // NOT switch: it keys on a 0 → >0 TRANSITION, where the derived
+              // count would already be >0 and the prompt would never fire.
+              vm.derivedReviewCount > 0,
               !showFirstSessionDailyTermPrompt,   // never stack on the daily-term alert
               let profileID = ActiveProfileResolver.activeProfileID(),
               !OnboardingFlags.hasSeenCaughtUpExplainer(profileID: profileID)

@@ -111,6 +111,56 @@ struct DisplayModePreferenceRepositoryTests {
         #expect(bag.values == [.beginner, .tatami])
     }
 
+    @Test("A brand-new profile starts .beginner even while the active profile is .tatami")
+    func newProfileStartsBeginnerWhileActiveProfileIsTatami() {
+        // Regression test for task #15: a fresh profile must never inherit
+        // whatever mode was showing for the profile that was active a
+        // moment ago. The repository itself resolves per-active-profile-id
+        // on every call (no cross-profile caching at this layer) — this
+        // test pins that contract down explicitly, using the exact
+        // "existing profile is Tatami, new profile appears" scenario from
+        // the review, rather than relying on the more generic
+        // `profileScoping` test above to imply it.
+        final class Holder: @unchecked Sendable {
+            var id: UUID
+            init(_ id: UUID) { self.id = id }
+        }
+
+        let defaults = makeDefaults()
+        let existingProfile = UUID()
+        let newProfile = UUID()
+        let holder = Holder(existingProfile)
+
+        let repo = UserDefaultsDisplayModePreferenceRepository(
+            defaults: defaults,
+            activeProfileID: { holder.id },
+            // Existing profile predates the beginner-first migration —
+            // lazily resolves to .tatami on first read.
+            profileCreatedAt: { id in
+                id == existingProfile
+                    ? DisplayModeReleaseDate.value.addingTimeInterval(-86_400)
+                    : Date()
+            }
+        )
+
+        // The existing, currently-active profile is (or becomes) Tatami.
+        #expect(repo.current() == .tatami)
+        repo.set(.tatami)
+        #expect(repo.current() == .tatami)
+
+        // A new profile is created and becomes active — simulates
+        // ProfileViewModel.createProfile + ActiveProfileResolver switching
+        // the active id, without any explicit `set()` for the new profile.
+        holder.id = newProfile
+        #expect(repo.current() == .beginner)
+
+        // Switching back confirms the existing profile's explicit choice
+        // survived untouched — the new profile's default resolution must
+        // not have clobbered it.
+        holder.id = existingProfile
+        #expect(repo.current() == .tatami)
+    }
+
     @Test("Missing profile resolution falls back to .beginner without writing")
     func missingProfile() {
         let defaults = makeDefaults()

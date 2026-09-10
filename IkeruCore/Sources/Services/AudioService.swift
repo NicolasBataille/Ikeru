@@ -95,6 +95,27 @@ public final class AudioService {
         observeInterruptions()
     }
 
+    deinit {
+        // L'observateur d'interruption etait enregistre dans `init` et JAMAIS
+        // retire : il n'y avait aucun `deinit`. Chaque `AudioService` laissait
+        // donc derriere lui une inscription vivante dans le NotificationCenter,
+        // et l'app en cree beaucoup — six sites d'instanciation, dont
+        // `ListenButton` qui en pose un par phrase d'exemple, sur `@State`,
+        // donc recree a chaque recomposition.
+        //
+        // `interruptionObserver` est deja `nonisolated(unsafe)`, ce qui rend ce
+        // retrait possible depuis un `deinit` non isole alors que la classe est
+        // `@MainActor`.
+        //
+        // ⚠️ Trouve en enquetant sur [GAP-19] (corruption de tas vue UNE fois
+        // dans `stop()`), mais **rien ne prouve que ce soit la cause** : le
+        // crash n'a jamais rejoue, y compris sous les tests de rotation ajoutes
+        // avec ce correctif. C'est une fuite reelle corrigee pour elle-meme.
+        if let interruptionObserver {
+            NotificationCenter.default.removeObserver(interruptionObserver)
+        }
+    }
+
     // MARK: - Audio Session
 
     /// Configures AVAudioSession for a learning app with spoken audio.

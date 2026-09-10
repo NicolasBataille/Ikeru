@@ -63,6 +63,20 @@ final class SessionRPGPersistence {
     }
 
     /// Persists current RPG state to SwiftData.
+    ///
+    /// The `totalReviewsCompleted += 1` below is deliberately left as-is
+    /// (GAP-13, 2026-08) even though this field is no longer the
+    /// authoritative lifetime review count anywhere in the UI — see
+    /// `RPGState.totalReviewsCompleted`'s doc comment for the full list of
+    /// writers (this one, plus two in `WatchConnectivityManager`). Every
+    /// display of a lifetime review count now derives from `ReviewLog` via
+    /// `CardRepository.activeProfileReviewCount()`. This increment survives
+    /// only because `HomeViewModel.totalReviewsCompleted` still keys its
+    /// first-session-ever onboarding heuristic off this field's 0 → >0
+    /// transition — an approximation, not an exact one even before this fix
+    /// (a Watch result can also move it), but still the least-bad signal
+    /// available without reintroducing the Tatami-gate divergence this fix
+    /// removes.
     func persistState(xp: Int, level: Int) async {
         await withRPGState { state in
             state.xp = xp
@@ -244,6 +258,25 @@ final class SessionRPGPersistence {
         // Refresh the home-screen widgets' data channel now that this
         // session's due count / level / last-study date are final.
         await WidgetSnapshotRefresher.refresh(modelContainer: modelContainer, force: true)
+
+        // Troisième déclencheur de synchro, enfin branché — mesuré le
+        // 2026-08-27 : `CloudSyncTriggers.triggerSessionEndSync()` existait
+        // depuis le lot d'origine avec ZÉRO appelant. Son propre commentaire
+        // annonçait « wiring it later is a single added call » ; l'appel n'a
+        // jamais été ajouté, et le design en prévoyait pourtant trois.
+        //
+        // Sans lui, une séance terminée puis l'app désinstallée — ou
+        // simplement jamais ramenée au premier plan — n'était pas sauvegardée.
+        // Fenêtre étroite, mais située exactement là où l'apprenant vient de
+        // produire de la valeur.
+        //
+        // C'est bien ce point-ci et pas un autre : `finalize` est le moment où
+        // la séance devient persistée, et le rafraîchissement du widget
+        // au-dessus s'y trouve déjà pour la même raison. `triggerSessionEndSync`
+        // ne décide de rien — le consentement et le throttle restent chez
+        // `CloudSyncCoordinator.syncNow()`, qui refuse tout seul si la
+        // sauvegarde est éteinte.
+        await MainActor.run { CloudSyncTriggers.shared.triggerSessionEndSync() }
 
         return FinalizationResult(
             updatedTotalXP: updatedTotalXP,

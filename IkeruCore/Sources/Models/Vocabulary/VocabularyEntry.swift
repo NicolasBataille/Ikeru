@@ -57,6 +57,51 @@ public final class VocabularyEntry {
     @Relationship(deleteRule: .cascade, inverse: \VocabularyEncounter.entry)
     public var encounters: [VocabularyEncounter]?
 
+    // MARK: - Owner (IkeruSchemaV6, P1-1 / OBS2-022)
+    //
+    // Until V6 the dictionary was a store GLOBAL to the device: no `profileID`,
+    // no relationship to `UserProfile`. Three symptoms followed from that one
+    // gap — a new profile inherited another's words (and the mix was pushed to
+    // the server), the export could not scope what belonged to no one, and the
+    // deletion screen could not erase what it could not attribute.
+    //
+    // A scalar, not a `@Relationship`, for the same reason `ExerciseOutcomeLog`
+    // uses one: growing `UserProfile` (frozen live in V4/V5) would have meant
+    // freezing the whole Card/ReviewLog/RPGState quartet again, and a scalar
+    // migrates `.lightweight` as `nil`. `nil` means « not yet attributed » — a
+    // row that predates V6, or one pulled from a device that still runs V5 —
+    // and `OwnershipAdoption` assigns those to the active profile.
+
+    /// The owning profile's `UserProfile.id`. See the note above for why it
+    /// is a scalar and what `nil` means.
+    public var profileID: UUID?
+
+    // MARK: - Cloud sync (schema-only, lot 0)
+    //
+    // Added by `IkeruSchemaV4` (cloud-sync lot 0, see
+    // `docs/design-specs/2026-08-10-cloud-sync-design.md` §5.1).
+    // `deletedAt` IS written in production: `VocabularyModelActor.deleteEntry`
+    // tombstones the entry (and cascades to its `encounters`) instead of
+    // hard-deleting it — see `SoftDeletable`, including why a re-added word
+    // gets a NEW entry rather than reviving this one. `syncedAt` is written
+    // by `SyncModelActor`. `updatedAt` is bumped by the tombstone but still
+    // not by ordinary field mutations — the staleness gap declared in
+    // `SyncModelActor` is unchanged.
+
+    /// Local modification clock. Defaults to the Unix epoch at the property
+    /// level so the `.lightweight` V3→V4 migration can backfill existing
+    /// rows without a custom stage; the initializer below sets this to
+    /// `Date()` explicitly for freshly created objects.
+    public var updatedAt: Date = Date(timeIntervalSince1970: 0)
+
+    /// Tombstone. Non-nil means this row was locally deleted and awaits a
+    /// sync push of the deletion.
+    public var deletedAt: Date?
+
+    /// Timestamp of the last confirmed push to the sync server. `nil` means
+    /// never synced.
+    public var syncedAt: Date?
+
     public init(
         word: String,
         reading: String,
@@ -68,9 +113,11 @@ public final class VocabularyEntry {
         interval: Int = 0,
         dueDate: Date = Date(),
         lapseCount: Int = 0,
-        createdAt: Date = Date()
+        createdAt: Date = Date(),
+        profileID: UUID? = nil
     ) {
         self.id = UUID()
+        self.profileID = profileID
         self.word = word
         self.reading = reading
         self.meaning = meaning
@@ -83,5 +130,8 @@ public final class VocabularyEntry {
         self.lapseCount = lapseCount
         self.createdAt = createdAt
         self.encounters = []
+        self.updatedAt = Date()
+        self.deletedAt = nil
+        self.syncedAt = nil
     }
 }

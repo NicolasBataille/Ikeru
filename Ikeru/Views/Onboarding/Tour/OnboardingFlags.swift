@@ -57,13 +57,44 @@ enum OnboardingFlags {
         UserDefaults.standard.set(true, forKey: key(kanaDrillModesExplainer, profileID))
     }
 
+    /// Every per-profile coach-mark flag. Keep in sync when adding one — both
+    /// `clearAll` and `markAllSeen` iterate it.
+    private static let allFlags = [
+        swipeTutorial,
+        firstSessionDailyTermPrompt,
+        caughtUpExplainer,
+        kanaDrillModesExplainer,
+    ]
+
     /// Removes every per-profile flag for a deleted profile so its UserDefaults
     /// entries don't accumulate forever (mirrors the ExerciseOutcomeLog cleanup
-    /// in `ProfileViewModel.deleteProfile`). Keep in sync with the flag list
-    /// above.
+    /// in `ProfileViewModel.deleteProfile`).
     static func clearAll(profileID: UUID) {
-        for name in [swipeTutorial, firstSessionDailyTermPrompt, caughtUpExplainer, kanaDrillModesExplainer] {
+        for name in allFlags {
             UserDefaults.standard.removeObject(forKey: key(name, profileID))
+        }
+    }
+
+    /// Marks every coach-mark as already seen — the exact inverse of
+    /// `clearAll`, and the only writer a UI test needs.
+    ///
+    /// Why this exists: these coach-marks are *overlays*. The swipe tutorial
+    /// (`ActiveSessionView.maybeShowSwipeTutorial`) covers the whole card and
+    /// its grade buttons behind a "Got it" scrim the moment a session shows
+    /// its first card, and Sakura's caught-up explainer does the same on Home.
+    /// A test that isn't about the coach-mark itself can neither see nor tap
+    /// what it came for, and the failure reads as a missing element rather
+    /// than as a hijacked screen — measured 2026-08-16, it is one of the two
+    /// reasons `SessionAnswerFlowUITests` could never pass.
+    ///
+    /// Deliberately reuses the same `mark…Seen` keys real dismissal writes,
+    /// so a suppressed test still exercises the production code path. Kept
+    /// separate from `-skipTour` (which owns the *tab tour*, a different
+    /// controller) so a future test that wants to assert on a coach-mark can
+    /// simply not pass this flag.
+    static func markAllSeen(profileID: UUID) {
+        for name in allFlags {
+            UserDefaults.standard.set(true, forKey: key(name, profileID))
         }
     }
 }

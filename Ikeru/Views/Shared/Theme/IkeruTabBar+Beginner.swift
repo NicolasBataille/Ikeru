@@ -12,7 +12,11 @@ struct BeginnerTabCell: View {
 
     var body: some View {
         Button(action: onTap) {
-            VStack(spacing: 4) {
+            // spacing 2, and a 3pt rail well: an SF Symbol at size 22 renders
+            // a glyph box closer to 26pt tall, so the icon already brings its
+            // own breathing room. See `IkeruTabBar`'s padding comment for the
+            // 83pt budget these numbers add up to.
+            VStack(spacing: 2) {
                 Image(systemName: symbolName)
                     .font(.system(size: 22, weight: .regular))
                     .foregroundStyle(
@@ -24,7 +28,7 @@ struct BeginnerTabCell: View {
                         isActive ? Color.ikeruPrimaryAccent : TatamiTokens.paperGhost
                     )
                 ZStack {
-                    Color.clear.frame(height: 5)
+                    Color.clear.frame(height: 3)
                     if isActive {
                         KintsugiTabRail()
                             .matchedGeometryEffect(id: "tab-rail", in: railNamespace)
@@ -35,6 +39,9 @@ struct BeginnerTabCell: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        // GAP-01 two-client merge test — see `TatamiTabCell`'s matching
+        // identifier, same effort.
+        .accessibilityIdentifier("tabBar.\(String(describing: tab))")
     }
 
     private var symbolName: String {

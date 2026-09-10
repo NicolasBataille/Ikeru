@@ -78,9 +78,13 @@ struct StrokeOrderIntegrationTests {
         // The accuracy service compares against stroke 1's target,
         // so tracing stroke 2's path should score poorly
         #expect(viewModel.strokeResults.count == 1)
-        // Vertical stroke traced when horizontal expected should be incorrect
+        // Vertical stroke traced when horizontal expected should be incorrect.
+        // Measured against 十's first stroke: mean distance 0.213 — inside the
+        // 0.30 tolerance, which is why this assertion used to accept
+        // `.approximatelyCorrect` and could not fail. The endpoint gap is
+        // 0.429 and the peak distance 0.429, so the shape terms reject it.
         let result = viewModel.strokeResults[0]
-        #expect(result == .incorrect || result == .approximatelyCorrect)
+        #expect(result == .incorrect)
     }
 
     // MARK: - Accuracy Scoring
@@ -121,6 +125,15 @@ struct StrokeOrderIntegrationTests {
         ]
         viewModel.recordStroke(points: scribble)
 
+        // Was a `withKnownIssue` (GAP-10, surfaced 2026-08-16): a four-point
+        // zigzag crossing the canvas diagonally in both directions used to
+        // grade `.approximatelyCorrect`, because its mean distance is 0.299 —
+        // a hair under the 0.30 bar — and mean distance was the only thing
+        // `StrokeAccuracyService` measured. Fixed by adding shape terms rather
+        // than by lowering the bar: measured here, the scribble's length ratio
+        // is 4.55 and its endpoint gap 0.289, both far outside tolerance.
+        // Wrapper removed in the same commit as the fix, since Swift Testing
+        // fails a `withKnownIssue` block that stops recording an issue.
         #expect(viewModel.strokeResults[0] == .incorrect)
     }
 

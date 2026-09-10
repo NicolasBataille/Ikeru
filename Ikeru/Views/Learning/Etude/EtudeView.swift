@@ -18,6 +18,7 @@ struct ExploreView: View {
 
     @Environment(\.modelContext) private var modelContext
     @Environment(\.aiRouterService) private var aiRouterService
+    @Environment(\.profileViewModel) private var profileViewModel
 
     /// Presenting this (non-nil) drives the chat cover via `.fullScreenCover(item:)`.
     @State private var conversationViewModel: ConversationViewModel?
@@ -26,6 +27,24 @@ struct ExploreView: View {
     // kana is learned, and how many words you've collected. Nil until loaded.
     @State private var kanaProgress: KanaProgress?
     @State private var vocabSavedCount: Int?
+    @State private var grammarCount: Int?
+    @State private var importCount: Int?
+    /// Un texte est arrivé par l'extension de partage et attend.
+    @State private var hasSharedText = false
+
+    // « Composer une séance » — the opt-in door (see `ComposeSessionSheet`).
+    // The session view model is built the way `HomeView` builds its own, and
+    // the cover follows the same `isActive` contract.
+    @State private var composeViewModel: ComposeSessionViewModel?
+    @State private var sessionViewModel: SessionViewModel?
+    /// The session cover, presented with `item:` — see `composedSession`'s
+    /// `.fullScreenCover` below for why `isPresented:` + `if let` is not an
+    /// option here (measured: an empty black cover).
+    @State private var composedSession: ComposedSessionPresentation?
+    /// Set by `startComposedSession` when a session actually started; the
+    /// cover is presented from the sheet's `onDismiss`, never while the
+    /// sheet is still up — two modals at once, SwiftUI shows neither.
+    @State private var sessionPendingAfterCompose = false
 
     var body: some View {
         ZStack {
@@ -33,8 +52,11 @@ struct ExploreView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 14) {
                     header
+                    composeRow
                     kanaRow
                     vocabularyRow
+                    grammarRow
+                    textImportRow
                     sakuraRow
                 }
                 .padding(.horizontal, 22)
@@ -44,6 +66,41 @@ struct ExploreView: View {
         }
         .toolbar(.hidden, for: .navigationBar)
         .task { await loadProgress() }
+        // The dictionary and the imports are per-profile since IkeruSchemaV6,
+        // and this tab stays mounted across a profile switch: without a
+        // reload, the counts below would keep showing the PREVIOUS profile's
+        // words — OBS2-022's leak, in its transient form. Same signal
+        // `HomeView` already reloads on.
+        .onReceive(NotificationCenter.default.publisher(for: .ikeruActiveProfileDidChange)) { _ in
+            Task { await loadProgress() }
+        }
+        // `item:`, not `isPresented:` + `if let` — that pair raced and
+        // presented an EMPTY sheet (measured on simulator 2026-09-10, the same
+        // trap the conversation cover below had already hit). Assigning the
+        // view model IS the presentation, so the content is never handed nil.
+        .sheet(item: $composeViewModel, onDismiss: {
+            if sessionPendingAfterCompose, let svm = sessionViewModel {
+                sessionPendingAfterCompose = false
+                composedSession = ComposedSessionPresentation(viewModel: svm)
+            }
+        }) { cvm in
+            ComposeSessionSheet(viewModel: cvm) {
+                await startComposedSession()
+            }
+        }
+        // `item:` here too. `isPresented:` + `if let svm = sessionViewModel`
+        // presented an EMPTY black cover on simulator (2026-09-10) even
+        // though the session had started (its Live Activity was up) — the
+        // content closure saw nil. Same trap, same cure as the sheet above.
+        .fullScreenCover(item: $composedSession) { presentation in
+            ActiveSessionView(viewModel: presentation.viewModel)
+                .onChange(of: presentation.viewModel.isActive) { _, isActive in
+                    if !isActive {
+                        composedSession = nil
+                        Task { await loadProgress() }
+                    }
+                }
+        }
         .fullScreenCover(item: $conversationViewModel) { cvm in
             ZStack(alignment: .topLeading) {
                 // `item:` guarantees `cvm` is non-nil here (the old isPresented +
@@ -88,6 +145,20 @@ struct ExploreView: View {
 
     // MARK: - Rows
 
+    /// The opt-in door. Every other row is a surface; this one is a session
+    /// the learner assembles — the counterpart of the home session, which
+    /// chooses for them.
+    private var composeRow: some View {
+        Button {
+            presentCompose()
+        } label: {
+            exploreRow(kanji: "\u{81EA}\u{7531}", title: "Compose a session",
+                       subtitle: "Choose your exercises and duration")
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("explore.composeRow")
+    }
+
     private var kanaRow: some View {
         NavigationLink {
             KanaPoolSelectorView()
@@ -97,6 +168,12 @@ struct ExploreView: View {
                        stat: kanaProgress.map { "\($0.total)/\(KanaProgress.grandTotal)" })
         }
         .buttonStyle(.plain)
+        // GAP-01 two-client merge test: the only reachable path from Explore
+        // into `KanaPoolSelectorView`, where a specific kana group can be
+        // selected and drilled deterministically (see `KanaGroupCard`'s and
+        // `KanaPoolSelectorView.drillButton`'s identifiers, added for the
+        // same effort).
+        .accessibilityIdentifier("explore.kanaRow")
     }
 
     private var vocabularyRow: some View {
@@ -108,6 +185,41 @@ struct ExploreView: View {
                        stat: vocabSavedCount.flatMap { $0 > 0 ? "\($0)" : nil })
         }
         .buttonStyle(.plain)
+    }
+
+    /// Grammaire — la surface qui manquait. Les 51 points existaient dans le
+    /// bundle sans qu'aucune vue ne les affiche (verifie 2026-08-19).
+    private var grammarRow: some View {
+        NavigationLink {
+            GrammarListView()
+        } label: {
+            exploreRow(kanji: "\u{6587}\u{6CD5}", title: "Grammar",
+                       subtitle: "Sentence patterns",
+                       stat: grammarCount.flatMap { $0 > 0 ? "\($0)" : nil })
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("explore.grammarRow")
+    }
+
+    /// « Apporte ton propre texte » — la porte par laquelle le japonais
+    /// rencontré dehors entre dans l'app. Placée juste avant Sakura : les deux
+    /// lignes du bas sont celles où l'apprenant amène quelque chose à lui,
+    /// plutôt que de consommer du contenu curaté.
+    private var textImportRow: some View {
+        NavigationLink {
+            TextImportFlowView()
+        } label: {
+            // Le sous-titre change quand un texte partagé attend : c'est la
+            // seule trace visible du partage, puisqu'une extension ne peut pas
+            // ouvrir l'app elle-même (voir `SharedTextInbox`).
+            exploreRow(kanji: "\u{8AAD}\u{89E3}", title: "Your own text",
+                       subtitle: hasSharedText
+                           ? "A shared text is waiting"
+                           : "Paste or photograph Japanese",
+                       stat: importCount.flatMap { $0 > 0 ? "\($0)" : nil })
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("explore.textImportRow")
     }
 
     private var sakuraRow: some View {
@@ -165,6 +277,48 @@ struct ExploreView: View {
         let vocab = await VocabularyRepository(modelContainer: container).allEntries()
         kanaProgress = KanaProgress.from(cards: cards)
         vocabSavedCount = vocab.count
+        // Compte lu depuis le bundle, pas code en dur : si le contenu s'enrichit
+        // la ligne suit, et s'il manque la ligne s'affiche sans chiffre.
+        grammarCount = await Self.makeContentRepository()?
+            .grammarPointsByLevel(.n5).count
+        importCount = await TextImportRepository(modelContainer: container).all().count
+        hasSharedText = SharedTextInbox().hasPending
+    }
+
+    // MARK: - Compose
+
+    private func presentCompose() {
+        let container = modelContext.container
+        let repo = CardRepository(modelContainer: container)
+        if sessionViewModel == nil {
+            sessionViewModel = SessionViewModel(
+                plannerService: PlannerService(cardRepository: repo),
+                cardRepository: repo,
+                modelContainer: container,
+                contentRepository: Self.makeContentRepository()
+            )
+        }
+        // Rebuilt on every open: the offer list must reflect the snapshot of
+        // NOW (a drill unlocked by the last session shows up unlocked).
+        composeViewModel = ComposeSessionViewModel(
+            cardRepository: repo,
+            modelContainer: container,
+            contentRepository: Self.makeContentRepository()
+        )
+    }
+
+    /// `true` only if a session actually started — see
+    /// `SessionViewModel.startStudyCustomSession`. The sheet stays open
+    /// otherwise and says why.
+    private func startComposedSession() async -> Bool {
+        guard let composeViewModel, let svm = sessionViewModel else { return false }
+        let started = await composeViewModel.start(on: svm)
+        if started {
+            // The sheet dismisses itself on `true`; the cover follows from
+            // its `onDismiss` (see the `.sheet` above).
+            sessionPendingAfterCompose = true
+        }
+        return started
     }
 
     // MARK: - Conversation
@@ -180,7 +334,11 @@ struct ExploreView: View {
             conversationService: service,
             jlptLevel: .n5,
             vocabularyRepository: vocabRepo,
-            contentRepository: Self.makeContentRepository()
+            contentRepository: Self.makeContentRepository(),
+            // Le prénom demandé au premier écran de l'onboarding, enfin
+            // transmis à Sakura (OBS2-028). Vide si aucun profil n'est
+            // résolu — le prompt est alors inchangé.
+            learnerName: profileViewModel?.displayName ?? ""
         )
     }
 
@@ -189,10 +347,14 @@ struct ExploreView: View {
     /// against curated readings (remediation 6.7). Fail-safe: a missing
     /// resource logs and returns nil, and reading-validation simply no-ops.
     private static func makeContentRepository() -> ContentRepository? {
-        guard let url = Bundle.main.url(forResource: "n5-content", withExtension: "sqlite") else {
-            Logger.ui.error("n5-content.sqlite not found in bundle — Sakura reading validation disabled")
-            return nil
-        }
-        return ContentRepository(bundleURL: url)
+        BundledContent.makeRepository()
     }
+}
+
+/// Identity for the composed-session cover. The `SessionViewModel` is
+/// long-lived (rebuilt only on the first open), so the identity belongs to
+/// the presentation, not to the model.
+private struct ComposedSessionPresentation: Identifiable {
+    let id = UUID()
+    let viewModel: SessionViewModel
 }

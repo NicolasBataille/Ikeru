@@ -501,4 +501,56 @@ struct FSRSServiceTests {
         let elapsed = ContinuousClock.now - start
         #expect(elapsed < .seconds(1))
     }
+
+    // MARK: - Early Reviews (reviewing before the due date)
+
+    /// Probe written 2026-08-16 before designing the "approfondir" branch of
+    /// the empty-session proposal (task #60): if a learner with nothing due
+    /// practises a card that is started but not yet due, does grading it
+    /// corrupt the schedule?
+    ///
+    /// It does not, and the reason is structural rather than lucky:
+    /// `scheduleReviewCard` derives `elapsedDays` from `lastReview`, never
+    /// from `dueDate`. An early review therefore has HIGH retrievability, and
+    /// FSRS-5's stability-after-success term is inversely related to it — so
+    /// reviewing early legitimately earns a smaller stability gain than
+    /// waiting. That is correct spaced-repetition behaviour, not a bug to
+    /// route around.
+    ///
+    /// This test exists so a future refactor that starts measuring elapsed
+    /// time from the due date (an easy and plausible mistake) fails here
+    /// instead of silently inflating everyone's intervals.
+    @Test("Reviewing early earns less stability than reviewing on time")
+    func earlyReviewEarnsLessStability() {
+        let start = Date(timeIntervalSince1970: 1_700_000_000)
+        let learned = FSRSService.schedule(state: FSRSState(), grade: .good, now: start)
+
+        let onTime = FSRSService.schedule(
+            state: learned, grade: .good, now: start.addingTimeInterval(10 * 86400)
+        )
+        let early = FSRSService.schedule(
+            state: learned, grade: .good, now: start.addingTimeInterval(2 * 86400)
+        )
+
+        #expect(early.stability < onTime.stability)
+        #expect(early.stability > learned.stability, "an early success must still be progress")
+        #expect(early.reps == onTime.reps)
+        #expect(early.lapses == 0)
+    }
+
+    /// The same probe at the other extreme: grading a card the very same day
+    /// it was learned takes the short-term branch (`sameDayThresholdDays`),
+    /// which must not be mistaken for a lapse or produce a degenerate state.
+    @Test("Same-day re-grade stays a valid state")
+    func sameDayRegradeStaysValid() {
+        let start = Date(timeIntervalSince1970: 1_700_000_000)
+        let learned = FSRSService.schedule(state: FSRSState(), grade: .good, now: start)
+        let sameDay = FSRSService.schedule(
+            state: learned, grade: .good, now: start.addingTimeInterval(3600)
+        )
+
+        #expect(sameDay.stability > 0)
+        #expect(sameDay.lapses == 0)
+        #expect(sameDay.reps == learned.reps + 1)
+    }
 }

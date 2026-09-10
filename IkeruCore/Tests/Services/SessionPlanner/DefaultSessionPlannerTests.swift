@@ -105,8 +105,6 @@ struct DefaultSessionPlannerHomeTests {
         case .kanjiStudy: "kanjiStudy"
         case .grammarExercise: "grammarExercise"
         case .vocabularyStudy: "vocabularyStudy"
-        case .fillInBlank: "fillInBlank"
-        case .readingPassage: "readingPassage"
         case .writingPractice: "writingPractice"
         case .listeningExercise: "listeningExercise"
         case .speakingExercise: "speakingExercise"
@@ -216,18 +214,18 @@ struct DefaultSessionPlannerStudyTests {
 
     private let planner = DefaultSessionPlanner()
 
-    @Test("Study-custom of still-filtered (Tier-3) types yields an empty session")
+    @Test("Study-custom of non-scheduling types yields an empty session")
     func studyCustomPlaceholderOnlyIsEmpty() async {
         // study-custom synthesises only the selected typed exercises. Here they
         // resolve to non-scheduling kinds — kanaStudy synthesises nothing (kana
         // is not an SRS card, so there is no in-session unit — see
-        // kanaStudyNeverSynthesisesKanjiDrill) and grammarExercise is Tier-3
-        // (filtered) — so after the allowlist the plan is empty. (vocabularyStudy
-        // is now LIVE — see vocabularyStudySurvives — so it is excluded here.)
+        // kanaStudyNeverSynthesisesKanjiDrill) and readingPassage is RETIRED —
+        // so the plan is empty. (grammarExercise is LIVE since 2026-09-09 — see
+        // grammarClozeSurvives — so it is excluded here, like vocabularyStudy.)
         let cards = (0..<10).map { _ in fixtureDueCard() }
         let inputs = SessionPlannerInputs(
             source: .studyCustom(
-                types: [.kanaStudy, .grammarExercise],
+                types: [.kanaStudy, .readingPassage],
                 jlptLevels: [.n5]
             ),
             durationMinutes: 15,
@@ -239,19 +237,18 @@ struct DefaultSessionPlannerStudyTests {
         #expect(plan.exercises.isEmpty)
     }
 
-    @Test("Still-filtered (Tier-3) exercise types are never scheduled")
+    @Test("Types that synthesise nothing (retired, kana) are never scheduled")
     func filteredTypesNeverScheduled() async {
-        // grammarExercise → .grammarExercise (Tier-3) and fillInBlank →
-        // .fillInBlank (Tier-3) remain filtered; kanaStudy synthesises nothing
-        // (kana is not an SRS card — see kanaStudyNeverSynthesisesKanjiDrill).
-        // Nothing survives finalize.
-        // (speakingPractice / listeningSubtitled / vocabularyStudy are now LIVE
-        // — see tier2AudioDrillsSurvive / vocabularyStudySurvives — so they are
-        // deliberately excluded here.)
+        // fillInBlank / readingPassage are RETIRED (synthesise nothing, no
+        // `ExerciseItem` case any more); kanaStudy synthesises nothing (kana
+        // is not an SRS card — see kanaStudyNeverSynthesisesKanjiDrill).
+        // Nothing survives finalize. (Every other type is LIVE — see
+        // tier2AudioDrillsSurvive / vocabularyStudySurvives /
+        // grammarClozeSurvives.)
         let cards = (0..<10).map { _ in fixtureDueCard() }
         let inputs = SessionPlannerInputs(
             source: .studyCustom(
-                types: [.kanaStudy, .grammarExercise, .fillInBlank],
+                types: [.kanaStudy, .fillInBlank, .readingPassage],
                 jlptLevels: [.n5]
             ),
             durationMinutes: 15,
@@ -260,9 +257,29 @@ struct DefaultSessionPlannerStudyTests {
             availableCards: cards
         )
         let plan = await planner.compose(inputs: inputs)
-        // Post-allowlist assertion: no NON-allowlisted (still-filtered) kind appears.
-        let filtered = plan.exercises.filter { !DefaultSessionPlanner.isLive($0) }
-        #expect(filtered.isEmpty, "still-filtered exercises should not appear: \(filtered)")
+        #expect(plan.exercises.isEmpty, "nothing here can be scheduled: \(plan.exercises)")
+    }
+
+    /// `GrammarClozeDrillHost` has been wired in the container since
+    /// 2026-08-19, yet `isLive` still said « Tier 3, deferred » — so `finalize`
+    /// dropped every grammar tile and the cloze screen was never scheduled.
+    /// Measured on 2026-09-09 while building the Compose sheet. Seen RED with
+    /// `.grammarExercise` put back in the filtered set.
+    @Test("A study session that asks for grammar gets grammar cloze tiles")
+    func grammarClozeSurvives() async {
+        let inputs = SessionPlannerInputs(
+            source: .studyCustom(types: [.grammarExercise], jlptLevels: [.n5]),
+            durationMinutes: 10,
+            profile: .empty,
+            unlockedTypes: [.grammarExercise],
+            availableCards: []
+        )
+        let plan = await planner.compose(inputs: inputs)
+        #expect(!plan.exercises.isEmpty)
+        #expect(plan.exercises.allSatisfy {
+            if case .grammarExercise = $0 { return true }
+            return false
+        })
     }
 
     @Test("Tier-2 speaking/listening survive finalize (allowlist un-filters them)")
@@ -597,5 +614,288 @@ struct DefaultSessionPlannerFoundationTests {
             lapseCount: 0,
             leechFlag: false
         )
+    }
+}
+
+// MARK: - Due-priority + stage profiles (P2 chantier #19/#20, 2026-08-13)
+
+@Suite("DefaultSessionPlanner — Due-priority + stage profiles")
+struct DefaultSessionPlannerDuePriorityTests {
+
+    private let planner = DefaultSessionPlanner()
+
+    /// Card with configurable maturity (`reps`/`stability`/`lapses`), unlike
+    /// the simpler fixtures in the sibling suites — needed here to steer
+    /// `MasteryLevel.from(fsrsState:)` and exercise the duration/backlog
+    /// logic directly. `stability: 100, reps: 5, lapses: 0` lands on
+    /// `.anchored`; `stability: 5, reps: 1` lands on `.learning` (same as
+    /// the other suites' plain fixtures).
+    private func card(
+        front: String = "x",
+        type: CardType = .vocabulary,
+        dueDate: Date = Date(timeIntervalSince1970: 1_700_000_000),
+        reps: Int = 1,
+        stability: Double = 5,
+        lapses: Int = 0
+    ) -> CardDTO {
+        CardDTO(
+            id: UUID(),
+            front: front,
+            back: "y",
+            type: type,
+            fsrsState: FSRSState(
+                difficulty: 5,
+                stability: stability,
+                reps: reps,
+                lapses: lapses,
+                lastReview: nil
+            ),
+            easeFactor: 2.5,
+            interval: 1,
+            dueDate: dueDate,
+            lapseCount: 0,
+            leechFlag: false
+        )
+    }
+
+    /// Same profile shape as the sibling suite's `writingBoosterProfile` —
+    /// forces `.writing` as the lowest-balance skill so a `construction`
+    /// session's booster targets a *live* type (`.writingPractice`), given
+    /// kanji cards in the pool and an N3 `jlptLevel` (unlocks
+    /// `.writingPractice` in `VarietyPoolResolver`).
+    private func writingBoosterProfile(jlptLevel: JLPTLevel = .n3) -> LearnerSnapshot {
+        LearnerSnapshot(
+            jlptLevel: jlptLevel,
+            vocabularyMasteredFamiliarPlus: 0,
+            kanjiMasteredFamiliarPlus: 0,
+            hiraganaMastered: false,
+            katakanaMastered: false,
+            grammarPointsFamiliarPlus: 0,
+            listeningAccuracyLast30: 0,
+            listeningRecallLast30Days: 0,
+            skillBalances: [.reading: 1.0, .listening: 1.0, .speaking: 1.0, .writing: 0.0],
+            dueCardCount: 0,
+            hasNewContentQueued: false,
+            lastSessionAt: nil
+        )
+    }
+
+    private func isSrsReview(_ item: ExerciseItem) -> Bool {
+        if case .srsReview = item { return true }
+        return false
+    }
+
+    @Test("A backlog bigger than the budget consumes the ENTIRE budget in reviews — nothing left for booster/variety/new")
+    func backlogBiggerThanBudgetConsumesEntireBudget() async {
+        let due = Date(timeIntervalSince1970: 1_700_000_000)
+        // reps: 1, stability: 5 → `.learning` → unmodulated 15s/review.
+        let cards = (0..<60).map { _ in card(dueDate: due) }
+        let inputs = SessionPlannerInputs(
+            source: .homeRecommendation,
+            durationMinutes: 5, // 300s
+            profile: .empty,
+            unlockedTypes: Set(ExerciseType.allCases),
+            availableCards: cards
+        )
+        let plan = await planner.compose(inputs: inputs)
+
+        // 300s / 15s per review = exactly 20 reviews, consuming the WHOLE
+        // budget — none left over for booster/variety/new, and the 40
+        // still-due cards that didn't fit are simply not this session's
+        // problem to solve (they stay due for the next session).
+        #expect(plan.exercises.count == 20, "expected the full 300s budget spent on review: \(plan.exercises.count) items")
+        #expect(plan.exercises.allSatisfy(isSrsReview), "a backlog-dominated session must be honestly all-review: \(plan.exercises)")
+    }
+
+    @Test("Once dues are scheduled, the 30/20/10 quotas apply to what's LEFT, not to the nominal fraction of the total")
+    func quotasApplyToRemainderNotTotal() async {
+        let due = Date(timeIntervalSince1970: 1_700_000_000)
+        // 30 due cards (all `.learning`, 15s each) = 450s of review.
+        let dueCards = (0..<22).map { _ in card(dueDate: due) }
+            + (0..<8).map { _ in card(type: .kanji, dueDate: due) }
+        let inputs = SessionPlannerInputs(
+            source: .homeRecommendation,
+            durationMinutes: 10, // 600s
+            profile: writingBoosterProfile(),
+            unlockedTypes: Set(ExerciseType.allCases),
+            availableCards: dueCards
+        )
+        let plan = await planner.compose(inputs: inputs)
+
+        let reviewCount = plan.exercises.filter(isSrsReview).count
+        #expect(reviewCount == 30, "all 30 due cards should fit in the 600s budget (450s spent): got \(reviewCount)")
+
+        let writingPracticeCount = plan.exercises.filter {
+            if case .writingPractice = $0 { return true }
+            return false
+        }.count
+        // Remainder after review = 600 - 450 = 150s. One writingPractice
+        // (90s) fits; a second would need 180s more (270s total), which
+        // does not fit in 150s. If the booster quota were still computed
+        // against the nominal 30% of the FULL 600s budget (180s) instead of
+        // the 150s actually left over, TWO would fit instead of one — that
+        // is exactly the bug this test pins.
+        #expect(writingPracticeCount == 1, "booster should be capped by the 150s remainder (1 item), not the nominal 180s (2 items): got \(writingPracticeCount)")
+    }
+
+    @Test("Below the cruising mastery threshold, the session stays in 'construction' and still schedules the skill-balance booster")
+    func belowMasteryThresholdStaysInConstruction() async {
+        // 10 anchored (mature) + 10 still-learning = 50% mature — under the
+        // 60% cruising threshold (`cruisingMasteryThreshold`) despite having
+        // enough started cards (`cruisingMinStartedCards`) to qualify by count.
+        let future = Date(timeIntervalSince1970: 1_900_000_000)
+        let mature = (0..<10).map { _ in card(dueDate: future, reps: 5, stability: 100) }
+        let young = (0..<10).map { _ in card(dueDate: future, reps: 1, stability: 5) }
+        let kanjiCards = (0..<5).map { _ in card(type: .kanji, dueDate: future, reps: 3, stability: 5) }
+        let inputs = SessionPlannerInputs(
+            source: .homeRecommendation,
+            durationMinutes: 10,
+            profile: writingBoosterProfile(),
+            unlockedTypes: Set(ExerciseType.allCases),
+            availableCards: mature + young + kanjiCards
+        )
+        let plan = await planner.compose(inputs: inputs)
+
+        let hasWritingPractice = plan.exercises.contains {
+            if case .writingPractice = $0 { return true }
+            return false
+        }
+        #expect(hasWritingPractice, "expected the construction profile's skill-balance booster to fire below the cruising threshold: \(plan.exercises)")
+    }
+
+    @Test("Once most of the started deck is FSRS-mature, the session switches to 'croisière': reviews + a small new-content drip only, no booster/variety even with budget and candidates to spare")
+    func aboveMasteryThresholdSwitchesToCruising() async {
+        // 20 anchored started cards (100% mature, well past the 60%
+        // threshold, and meeting `cruisingMinStartedCards`): 3 due now (a
+        // small review cost) + 17 due later (ample leftover budget).
+        let due = Date(timeIntervalSince1970: 1_700_000_000)
+        let future = Date(timeIntervalSince1970: 1_900_000_000)
+        let dueMature = (0..<3).map { _ in card(dueDate: due, reps: 5, stability: 100) }
+        let notYetDueMature = (0..<17).map { _ in card(dueDate: future, reps: 5, stability: 100) }
+        // Same kanji-card + skewed-skill-balance setup as
+        // `belowMasteryThresholdStaysInConstruction` — if this session went
+        // through `composeConstruction` instead, these would let a
+        // `.writingPractice` item through.
+        let kanjiCards = (0..<5).map { _ in card(type: .kanji, dueDate: future, reps: 3, stability: 5) }
+        let inputs = SessionPlannerInputs(
+            source: .homeRecommendation,
+            durationMinutes: 10,
+            profile: writingBoosterProfile(),
+            unlockedTypes: Set(ExerciseType.allCases),
+            availableCards: dueMature + notYetDueMature + kanjiCards
+        )
+        let plan = await planner.compose(inputs: inputs)
+
+        #expect(!plan.exercises.isEmpty)
+        #expect(plan.exercises.allSatisfy(isSrsReview), "cruising sessions only ever produce .srsReview items (review wave + new-content drip): \(plan.exercises)")
+    }
+
+    @Test("Des kana mûrs ne doivent plus décider pour une file de kanji jamais commencée (OBS2-023)")
+    func matureKanaDoNotSilenceAnUnstartedKanjiQueue() async {
+        // Le cas limite que le code signalait sans le traiter, et que la
+        // contre-review a mesuré de l'extérieur : l'apprenant a mûri tout son
+        // syllabaire, mais une file de kanji l'attend, jamais ouverte. Avec la
+        // règle globale, les kana — majoritaires parmi les cartes commencées —
+        // basculaient la séance en croisière, ce qui supprime le booster ET la
+        // tuile de variété : les seuls segments capables de faire apparaître
+        // les autres types d'exercices. L'apprenant se retrouvait « en
+        // croisière » sur un deck qu'il n'avait pas commencé.
+        let due = Date(timeIntervalSince1970: 1_700_000_000)
+        let future = Date(timeIntervalSince1970: 1_900_000_000)
+
+        // 25 kana réels, mûrs. `front` doit être un vrai caractère : `isKana`
+        // teste l'appartenance au catalogue des 208, pas le `CardType` — le
+        // semeur de production émet les kana en `.vocabulary`.
+        let kanaFronts = KanaGroup.allBaseCharacters.prefix(25).map(\.character)
+        let matureKana = kanaFronts.enumerated().map { index, front in
+            card(front: front, dueDate: index < 3 ? due : future, reps: 5, stability: 100)
+        }
+
+        // 25 kanji jamais commencés : un groupe significatif à `reps == 0`.
+        let unstartedKanji = (0..<25).map { index in
+            card(front: "kanji-\(index)", type: .kanji, dueDate: future, reps: 0, stability: 0)
+        }
+
+        let inputs = SessionPlannerInputs(
+            source: .homeRecommendation,
+            durationMinutes: 10,
+            profile: writingBoosterProfile(),
+            unlockedTypes: Set(ExerciseType.allCases),
+            availableCards: matureKana + unstartedKanji
+        )
+        let plan = await planner.compose(inputs: inputs)
+
+        // La croisière ne produit QUE des `.srsReview`. Voir un item d'un autre
+        // type prouve qu'on est resté en construction, donc que le booster et
+        // la variété sont revenus.
+        let hasNonReviewItem = plan.exercises.contains { !isSrsReview($0) }
+        #expect(
+            hasNonReviewItem,
+            "une file de kanji jamais commencée doit retenir la séance en construction : \(plan.exercises)"
+        )
+    }
+
+    @Test("Un groupe marginal ne retient pas indéfiniment la croisière")
+    func aTinyOffTypeQueueDoesNotBlockCruising() async {
+        // Contrepartie du test précédent : trois cartes de kanji qui traînent
+        // ne doivent PAS empêcher un apprenant réellement en croisière d'y
+        // passer. Le seuil de significativité par groupe est le même que le
+        // seuil global (`cruisingMinStartedCards`).
+        let due = Date(timeIntervalSince1970: 1_700_000_000)
+        let future = Date(timeIntervalSince1970: 1_900_000_000)
+        let dueMature = (0..<3).map { _ in card(dueDate: due, reps: 5, stability: 100) }
+        let notYetDueMature = (0..<17).map { _ in card(dueDate: future, reps: 5, stability: 100) }
+        let strayKanji = (0..<3).map { index in
+            card(front: "kanji-\(index)", type: .kanji, dueDate: future, reps: 0, stability: 0)
+        }
+
+        let inputs = SessionPlannerInputs(
+            source: .homeRecommendation,
+            durationMinutes: 10,
+            profile: writingBoosterProfile(),
+            unlockedTypes: Set(ExerciseType.allCases),
+            availableCards: dueMature + notYetDueMature + strayKanji
+        )
+        let plan = await planner.compose(inputs: inputs)
+
+        #expect(!plan.exercises.isEmpty)
+        #expect(
+            plan.exercises.allSatisfy(isSrsReview),
+            "trois kanji égarés ne doivent pas annuler la croisière : \(plan.exercises)"
+        )
+    }
+
+    @Test("The same time budget fits more mature (anchored) reviews than young (learning) reviews")
+    func matureCardsConsumeLessBudgetThanYoungCards() async {
+        let due = Date(timeIntervalSince1970: 1_700_000_000)
+        let youngCards = (0..<20).map { _ in card(dueDate: due, reps: 1, stability: 5) }
+        let matureCards = (0..<20).map { _ in card(dueDate: due, reps: 5, stability: 100) }
+
+        let youngInputs = SessionPlannerInputs(
+            source: .homeRecommendation,
+            durationMinutes: 2, // 120s
+            profile: .empty,
+            unlockedTypes: Set(ExerciseType.allCases),
+            availableCards: youngCards
+        )
+        let matureInputs = SessionPlannerInputs(
+            source: .homeRecommendation,
+            durationMinutes: 2,
+            profile: .empty,
+            unlockedTypes: Set(ExerciseType.allCases),
+            availableCards: matureCards
+        )
+
+        let youngPlan = await planner.compose(inputs: youngInputs)
+        let maturePlan = await planner.compose(inputs: matureInputs)
+
+        let youngCount = youngPlan.exercises.filter(isSrsReview).count
+        let matureCount = maturePlan.exercises.filter(isSrsReview).count
+
+        // 120s / 15s (young, unmodulated baseline) = 8 reviews.
+        // 120s / 6s (anchored, 0.4× multiplier, rounded) = 20 reviews.
+        #expect(youngCount == 8, "expected 8 young reviews to fill 120s at 15s/card: got \(youngCount)")
+        #expect(matureCount == 20, "expected all 20 mature reviews to fit 120s at 6s/card: got \(matureCount)")
+        #expect(matureCount > youngCount, "a mature-heavy backlog should fit more reviews in the same budget: young=\(youngCount) mature=\(matureCount)")
     }
 }

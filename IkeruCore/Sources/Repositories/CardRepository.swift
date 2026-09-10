@@ -199,11 +199,24 @@ public final class CardRepository: Sendable {
     /// This is an atomic operation — the card state and review log are persisted together.
     /// If the save fails, the failure is logged at `.error` and published on
     /// `saveErrorMonitor` so the UI can warn that the grade did not persist.
+    /// - Parameters:
+    ///   - answeredValue: The value the learner actually chose/produced, for
+    ///     choice-format exercises (e.g. the kana character corresponding to
+    ///     a wrong quiz pick, for confusion-pair analysis). `nil` for a
+    ///     self-graded flashcard — there is nothing to record.
+    ///   - exerciseType: Free-form identifier for the exercise format this
+    ///     grade came from (e.g. an `ExerciseType.rawValue`, or
+    ///     "kana.flashcard" / "kana.quiz"). See `ReviewLog.exerciseType`.
+    ///   - surface: Where the review was graded from — `"iphone.session"`,
+    ///     `"iphone.drill"`, or `"watch"`. See `ReviewLog.surface`.
     public func gradeCard(
         cardId: UUID,
         grade: Grade,
         responseTimeMs: Int,
-        now: Date = Date()
+        now: Date = Date(),
+        answeredValue: String? = nil,
+        exerciseType: String? = nil,
+        surface: String? = nil
     ) async {
         do {
             try await backgroundActor.gradeCard(
@@ -211,7 +224,10 @@ public final class CardRepository: Sendable {
                 grade: grade,
                 responseTimeMs: responseTimeMs,
                 now: now,
-                leechThreshold: Self.leechThreshold
+                leechThreshold: Self.leechThreshold,
+                answeredValue: answeredValue,
+                exerciseType: exerciseType,
+                surface: surface
             )
         } catch {
             await reportSaveFailure(operation: "gradeCard", error: error)
@@ -233,6 +249,38 @@ public final class CardRepository: Sendable {
     /// profile's history never leaks another's. Mirrors `allCards()` scoping.
     public func activeProfileReviewLogs() async -> [ReviewLogDTO] {
         await backgroundActor.activeProfileReviewLogs()
+    }
+
+    /// **Authoritative lifetime review count** for the active profile —
+    /// the number of `ReviewLog` rows attached (via `Card.reviewLogs`) to
+    /// the active profile's cards, excluding soft-deleted rows
+    /// (`deletedAt != nil`).
+    ///
+    /// This is the fix for GAP-13 (2026-08): `RPGState.totalReviewsCompleted`
+    /// used to be maintained as a second, hand-incremented counter with
+    /// several independent writers (see that field's doc comment for the
+    /// full list) that don't all agree with `ReviewLog` — most visibly, the
+    /// kana drill's `KanaDrillViewModel.gradeCard` calls journal to
+    /// `ReviewLog` but never touch `RPGState` at all, undercounting the
+    /// figure the Tatami-mode gate and the "cumulative competence" display
+    /// read. Every review, on every surface, always writes a `ReviewLog` in
+    /// the same `CardRepository.gradeCard` transaction — so counting those
+    /// rows directly removes the divergence instead of adding yet another
+    /// hand-incremented site that would just as surely disagree with the
+    /// others eventually. `RPGState.totalReviewsCompleted` itself is no
+    /// longer authoritative for anything display-facing; see its doc
+    /// comment.
+    ///
+    /// Deliberately a plain read (no caching): it walks the same
+    /// already-faulted `activeProfileCards()` object graph
+    /// `activeProfileReviewLogs()` does (used today on every data-export
+    /// tap), and is called from bounded, low-frequency UI reads (Home
+    /// appearing, the Tatami-eligibility settings row) — not a hot loop. A
+    /// cached counter was considered and rejected: it would reintroduce
+    /// exactly the invalidation surface this fix removes (who bumps the
+    /// cache, and when does it get out of sync with `ReviewLog`?).
+    public func activeProfileReviewCount() async -> Int {
+        await backgroundActor.activeProfileReviewCount()
     }
 
     /// Exercise outcomes (listening / shadowing) scoped to the **active
@@ -342,6 +390,34 @@ public struct ReviewLogDTO: Sendable, Identifiable {
     public let timestamp: Date
     public let grade: Grade
     public let responseTimeMs: Int
+    /// See `ReviewLog.answeredValue`.
+    public let answeredValue: String?
+    /// See `ReviewLog.exerciseType`.
+    public let exerciseType: String?
+    /// See `ReviewLog.surface`.
+    public let surface: String?
+
+    public init(
+        id: UUID,
+        cardId: UUID?,
+        cardType: CardType?,
+        timestamp: Date,
+        grade: Grade,
+        responseTimeMs: Int,
+        answeredValue: String? = nil,
+        exerciseType: String? = nil,
+        surface: String? = nil
+    ) {
+        self.id = id
+        self.cardId = cardId
+        self.cardType = cardType
+        self.timestamp = timestamp
+        self.grade = grade
+        self.responseTimeMs = responseTimeMs
+        self.answeredValue = answeredValue
+        self.exerciseType = exerciseType
+        self.surface = surface
+    }
 }
 
 /// Lightweight, Sendable snapshot of an `ExerciseOutcomeLog` for cross-actor
@@ -362,38 +438,24 @@ actor CardModelActor {
 
     // MARK: - Active Profile Scoping
 
-    /// Reads the UserDefaults-backed active profile id. Returns nil if unset.
-    private func activeProfileID() -> UUID? {
-        guard
-            let raw = UserDefaults.standard.string(forKey: UserProfile.activeProfileIDDefaultsKey),
-            !raw.isEmpty,
-            let id = UUID(uuidString: raw)
-        else { return nil }
-        return id
-    }
-
-    /// Fetches the currently-active UserProfile, or the oldest as a fallback.
+    /// Fetches the currently-active UserProfile, or the oldest live one as a
+    /// fallback — `ActiveProfileLookup`'s rule, shared with
+    /// `VocabularyModelActor` and `OwnershipAdoption`.
     private func fetchActiveProfile() -> UserProfile? {
-        if let id = activeProfileID() {
-            let predicate = #Predicate<UserProfile> { $0.id == id }
-            var descriptor = FetchDescriptor<UserProfile>(predicate: predicate)
-            descriptor.fetchLimit = 1
-            if let profile = (try? modelContext.fetch(descriptor))?.first {
-                return profile
-            }
-        }
-        var descriptor = FetchDescriptor<UserProfile>(
-            sortBy: [SortDescriptor(\.createdAt, order: .forward)]
-        )
-        descriptor.fetchLimit = 1
-        return (try? modelContext.fetch(descriptor))?.first
+        ActiveProfileLookup.resolve(in: modelContext)
     }
 
     /// Returns cards belonging to the active profile (including legacy
     /// orphans with `profile == nil`, once migrated). See `attachOrphanCards`.
+    ///
+    /// Tombstoned cards are filtered in memory: `profile.cards` is a
+    /// SwiftData relationship, so no `#Predicate` applies to it. This one
+    /// traversal feeds `allCards()`, `activeProfileReviewLogs()` and the data
+    /// export, so missing it would leak deleted cards into three surfaces at
+    /// once.
     private func activeProfileCards() -> [Card] {
         guard let profile = fetchActiveProfile() else { return [] }
-        return profile.cards ?? []
+        return (profile.cards ?? []).filter { $0.deletedAt == nil }
     }
 
     /// The active profile's `desiredRetention`, clamped to
@@ -442,7 +504,7 @@ actor CardModelActor {
     }
 
     func card(by id: UUID) -> CardDTO? {
-        let predicate = #Predicate<Card> { $0.id == id }
+        let predicate = #Predicate<Card> { $0.id == id && $0.deletedAt == nil }
         let descriptor = FetchDescriptor(predicate: predicate)
         let results = (try? modelContext.fetch(descriptor)) ?? []
         return results.first?.toDTO()
@@ -457,7 +519,10 @@ actor CardModelActor {
     /// Safe to call on every launch — no-op once all cards have a profile.
     func attachOrphanCards() throws {
         guard let fallback = fetchActiveProfile() else { return }
-        let predicate = #Predicate<Card> { $0.profile == nil }
+        // Tombstoned orphans stay orphans: re-attaching a deleted card to a
+        // profile would put it back in `activeProfileCards()`'s reach the
+        // moment anything stopped filtering.
+        let predicate = #Predicate<Card> { $0.profile == nil && $0.deletedAt == nil }
         let descriptor = FetchDescriptor(predicate: predicate)
         guard let orphans = try? modelContext.fetch(descriptor), !orphans.isEmpty else { return }
         for card in orphans { card.profile = fallback }
@@ -465,20 +530,36 @@ actor CardModelActor {
         Logger.srs.info("Attached \(orphans.count) orphan cards to profile: \(fallback.displayName)")
     }
 
+    /// Soft-deletes a card: stamps `deletedAt`/`updatedAt` instead of
+    /// destroying the row, so the deletion is something the push can carry
+    /// (`deleted_at`) and a later pull can never undo. A hard delete left the
+    /// server row alive with `deleted_at = null`; any pull-cursor rewind
+    /// re-inserted the card.
+    ///
+    /// Cascades to the card's review logs by hand — the `@Relationship`'s
+    /// `.cascade` rule only fires on a real `modelContext.delete(_:)`. Two
+    /// reasons this matters: `allReviewLogs(from:to:)` fetches `ReviewLog`
+    /// directly (no card traversal to filter on), so orphaned logs would keep
+    /// feeding statistics for a card the learner deleted; and a live log left
+    /// on the server is exactly the material merge rule 2 replays from.
     func deleteCard(by id: UUID) throws {
-        let predicate = #Predicate<Card> { $0.id == id }
+        let predicate = #Predicate<Card> { $0.id == id && $0.deletedAt == nil }
         let descriptor = FetchDescriptor(predicate: predicate)
         guard let cards = try? modelContext.fetch(descriptor),
               let card = cards.first else {
             return
         }
-        modelContext.delete(card)
+        let now = Date()
+        card.tombstone(at: now)
+        for log in card.reviewLogs ?? [] {
+            log.tombstone(at: now)
+        }
         try modelContext.save()
-        Logger.srs.debug("Deleted card: \(card.front)")
+        Logger.srs.debug("Tombstoned card: \(card.front)")
     }
 
     func setJLPTLevel(_ level: JLPTLevel?, for cardId: UUID) throws {
-        let predicate = #Predicate<Card> { $0.id == cardId }
+        let predicate = #Predicate<Card> { $0.id == cardId && $0.deletedAt == nil }
         let descriptor = FetchDescriptor(predicate: predicate)
         guard let cards = try? modelContext.fetch(descriptor),
               let card = cards.first else {
@@ -499,7 +580,7 @@ actor CardModelActor {
     func dueCards(before date: Date) -> [CardDTO] {
         guard let profileID = fetchActiveProfile()?.id else { return [] }
         let predicate = #Predicate<Card> {
-            $0.profile?.id == profileID && $0.dueDate < date
+            $0.profile?.id == profileID && $0.dueDate < date && $0.deletedAt == nil
         }
         let descriptor = FetchDescriptor(predicate: predicate)
         let results = (try? modelContext.fetch(descriptor)) ?? []
@@ -512,7 +593,7 @@ actor CardModelActor {
     func dueCardsSortedByDueDate(before date: Date) -> [CardDTO] {
         guard let profileID = fetchActiveProfile()?.id else { return [] }
         let predicate = #Predicate<Card> {
-            $0.profile?.id == profileID && $0.dueDate < date
+            $0.profile?.id == profileID && $0.dueDate < date && $0.deletedAt == nil
         }
         let descriptor = FetchDescriptor<Card>(
             predicate: predicate,
@@ -528,7 +609,7 @@ actor CardModelActor {
     func leechCards() -> [CardDTO] {
         guard let profileID = fetchActiveProfile()?.id else { return [] }
         let predicate = #Predicate<Card> {
-            $0.profile?.id == profileID && $0.leechFlag
+            $0.profile?.id == profileID && $0.leechFlag && $0.deletedAt == nil
         }
         let descriptor = FetchDescriptor(predicate: predicate)
         let results = (try? modelContext.fetch(descriptor)) ?? []
@@ -542,7 +623,7 @@ actor CardModelActor {
         guard let profileID = fetchActiveProfile()?.id else { return [] }
         let raw = type.rawValue
         let predicate = #Predicate<Card> {
-            $0.profile?.id == profileID && $0.typeRawValue == raw
+            $0.profile?.id == profileID && $0.typeRawValue == raw && $0.deletedAt == nil
         }
         let descriptor = FetchDescriptor(predicate: predicate)
         let results = (try? modelContext.fetch(descriptor)) ?? []
@@ -554,9 +635,12 @@ actor CardModelActor {
         grade: Grade,
         responseTimeMs: Int,
         now: Date,
-        leechThreshold: Int
+        leechThreshold: Int,
+        answeredValue: String? = nil,
+        exerciseType: String? = nil,
+        surface: String? = nil
     ) throws {
-        let predicate = #Predicate<Card> { $0.id == cardId }
+        let predicate = #Predicate<Card> { $0.id == cardId && $0.deletedAt == nil }
         let descriptor = FetchDescriptor(predicate: predicate)
         guard let cards = try? modelContext.fetch(descriptor),
               let card = cards.first else {
@@ -591,7 +675,15 @@ actor CardModelActor {
         }
 
         // Create review log in the same transaction
-        let log = ReviewLog(card: card, grade: grade, responseTimeMs: responseTimeMs, timestamp: now)
+        let log = ReviewLog(
+            card: card,
+            grade: grade,
+            responseTimeMs: responseTimeMs,
+            timestamp: now,
+            answeredValue: answeredValue,
+            exerciseType: exerciseType,
+            surface: surface
+        )
         modelContext.insert(log)
 
         // Save atomically — both card update and review log persist together.
@@ -605,19 +697,20 @@ actor CardModelActor {
 
     func reviewLogs(for cardId: UUID) -> [ReviewLogDTO] {
         // Fetch via the card's relationship for reliability
-        let predicate = #Predicate<Card> { $0.id == cardId }
+        let predicate = #Predicate<Card> { $0.id == cardId && $0.deletedAt == nil }
         let descriptor = FetchDescriptor(predicate: predicate)
         guard let cards = try? modelContext.fetch(descriptor),
               let card = cards.first,
               let logs = card.reviewLogs else {
             return []
         }
-        return logs.map { $0.toDTO() }
+        // Relationship traversal — filtered in memory, no predicate applies.
+        return logs.filter { $0.deletedAt == nil }.map { $0.toDTO() }
     }
 
     func allReviewLogs(from startDate: Date, to endDate: Date) -> [ReviewLogDTO] {
         let predicate = #Predicate<ReviewLog> {
-            $0.timestamp >= startDate && $0.timestamp <= endDate
+            $0.timestamp >= startDate && $0.timestamp <= endDate && $0.deletedAt == nil
         }
         let descriptor = FetchDescriptor(predicate: predicate)
         let results = (try? modelContext.fetch(descriptor)) ?? []
@@ -629,11 +722,35 @@ actor CardModelActor {
     /// rather than fetching every log in the store — so no other profile's
     /// history is reachable. Orphan logs whose card was deleted are omitted
     /// (they can't be attributed to a profile, so they never leak into exports).
+    /// Broken into statements rather than one chain on purpose: adding the
+    /// `deletedAt` filter to the fluent `flatMap → sorted → map` pushed the
+    /// expression past the type-checker's budget ("unable to type-check this
+    /// expression in reasonable time"). Same behaviour, annotated steps.
     func activeProfileReviewLogs() -> [ReviewLogDTO] {
-        activeProfileCards()
-            .flatMap { $0.reviewLogs ?? [] }
-            .sorted { $0.timestamp < $1.timestamp }
-            .map { $0.toDTO() }
+        let logs: [ReviewLog] = activeProfileCards().flatMap { $0.reviewLogs ?? [] }
+        // Relationship traversal — tombstoned logs are invisible to any
+        // `#Predicate`, so they are dropped here.
+        let live: [ReviewLog] = logs.filter { $0.deletedAt == nil }
+        let ordered: [ReviewLog] = live.sorted { $0.timestamp < $1.timestamp }
+        return ordered.map { $0.toDTO() }
+    }
+
+    /// Counts `ReviewLog` rows for the active profile's cards, excluding
+    /// soft-deleted rows. See `CardRepository.activeProfileReviewCount()`
+    /// for why this exists and why it isn't cached. Traverses the same
+    /// `activeProfileCards()` object graph as `activeProfileReviewLogs()`
+    /// above rather than a `#Predicate`-based `fetchCount` on `ReviewLog`
+    /// directly: scoping by profile needs a two-hop relationship
+    /// (`ReviewLog.card?.profile?.id`), and SwiftData's predicate macro does
+    /// not reliably support chaining an optional relationship through
+    /// another optional relationship — the single-hop predicates elsewhere
+    /// in this file (`$0.profile?.id == profileID` on `Card`) are as deep as
+    /// this codebase risks going.
+    func activeProfileReviewCount() -> Int {
+        activeProfileCards().reduce(0) { total, card in
+            let liveLogs = (card.reviewLogs ?? []).lazy.filter { $0.deletedAt == nil }.count
+            return total + liveLogs
+        }
     }
 
     /// Exercise outcomes (listening / shadowing) for the active profile only,
@@ -644,7 +761,7 @@ actor CardModelActor {
     func activeProfileExerciseOutcomes() -> [ExerciseOutcomeLogDTO] {
         guard let profileID = fetchActiveProfile()?.id else { return [] }
         let descriptor = FetchDescriptor<ExerciseOutcomeLog>(
-            predicate: #Predicate { $0.profileID == profileID },
+            predicate: #Predicate { $0.profileID == profileID && $0.deletedAt == nil },
             sortBy: [SortDescriptor(\.timestamp, order: .forward)]
         )
         let logs = (try? modelContext.fetch(descriptor)) ?? []
@@ -680,7 +797,9 @@ actor CardModelActor {
         guard let profileID = fetchActiveProfile()?.id else { return 0 }
         let raw = skill.rawValue
         var descriptor = FetchDescriptor<ExerciseOutcomeLog>(
-            predicate: #Predicate { $0.profileID == profileID && $0.skillRawValue == raw },
+            predicate: #Predicate {
+                $0.profileID == profileID && $0.skillRawValue == raw && $0.deletedAt == nil
+            },
             sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
         )
         descriptor.fetchLimit = limit
@@ -698,6 +817,7 @@ actor CardModelActor {
         let descriptor = FetchDescriptor<ExerciseOutcomeLog>(
             predicate: #Predicate {
                 $0.profileID == profileID && $0.skillRawValue == raw && $0.timestamp >= cutoff
+                    && $0.deletedAt == nil
             }
         )
         let logs = (try? modelContext.fetch(descriptor)) ?? []
@@ -738,7 +858,10 @@ extension ReviewLog {
             cardType: card?.type,
             timestamp: timestamp,
             grade: grade,
-            responseTimeMs: responseTimeMs
+            responseTimeMs: responseTimeMs,
+            answeredValue: answeredValue,
+            exerciseType: exerciseType,
+            surface: surface
         )
     }
 }

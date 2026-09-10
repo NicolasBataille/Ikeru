@@ -42,6 +42,29 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_CATALOGUE = REPO_ROOT / "Ikeru" / "Localization" / "Localizable.xcstrings"
 DEFAULT_ROOT = REPO_ROOT / "Ikeru"
+# Le linter ne regardait QUE la cible app. Les cibles embarquees rendent
+# pourtant du texte a l'utilisateur, et leurs chaines n'etaient donc jamais
+# verifiees — c'est ainsi que les libelles de la Watch ont pu ne jamais entrer
+# au catalogue (OBS2-047). IkeruShare avait meme une phase Resources vide, donc
+# ses chaines francaises existaient sans jamais atteindre le binaire (OBS2-061).
+DEFAULT_ROOTS = [
+    REPO_ROOT / "Ikeru",
+    REPO_ROOT / "IkeruWatch",
+    REPO_ROOT / "IkeruWidget",
+    REPO_ROOT / "IkeruShare",
+]
+
+# Noms de parametres qui portent, par convention, du texte destine a l'ecran.
+# Volontairement etroit : `icon:` est un symbole SF, `value:` un nombre
+# formate, ni l'un ni l'autre ne se traduit.
+LABEL_PARAM_NAMES = (
+    "title", "label", "eyebrow", "subtitle", "caption", "heading",
+    "hint", "kicker", "placeholder", "prompt", "message",
+)
+
+LABEL_TYPED_STRING_RE = re.compile(
+    r"\b(" + "|".join(LABEL_PARAM_NAMES) + r")\s*:\s*String\b(?!\s*\.)"
+)
 DEFAULT_BASELINE = REPO_ROOT / "scripts" / "i18n-lint-baseline.json"
 
 # ---------------------------------------------------------------------------
@@ -166,6 +189,17 @@ _INT_LIKE_SUFFIXES = (
     "remaining",
     "seconds",
     "minutes",
+    # Ajoutes le 2026-08-28 : l'heuristique classait `entry.dueCards` en `%@`,
+    # donc reclamait au catalogue une cle « %@ cards ready » qui n'existe pas —
+    # et surtout, en la lisant de bonne foi, on ajoute une cle MORTE. Un
+    # avertissement faux coute plus cher qu'un avertissement absent : il fait
+    # ecrire du code faux pour le faire taire.
+    "cards",
+    "days",
+    "streak",
+    "total",
+    "reviews",
+    "items",
 )
 
 # Suffixes / substrings that strongly indicate a String-typed expression.
@@ -366,14 +400,52 @@ def has_english_words(key: str) -> bool:
     return any(w.lower() not in {"lld", "xp"} for w in words) if words else False
 
 
-def lint_repo(root: Path, catalogue_path: Path) -> list[dict]:
+def find_label_typed_strings(text: str) -> list[tuple[int, str]]:
+    """Parametres de libelle types `String` plutot que `LocalizedStringKey`.
+
+    C'est la cause racine du BLOQUANT n° 4 (OBS2-050), et elle est invisible
+    pour le reste de ce linter : un `String` selectionne l'init
+    `Text(verbatim:)`, donc SwiftUI ne cherche RIEN dans le catalogue — et
+    surtout `genstrings`/Xcode n'EXTRAIT rien non plus. La chaine n'est donc
+    meme pas collectee, ce qui explique qu'un ecran a moitie anglais ait pu
+    traverser un lint vert.
+
+    Heuristique syntaxique, pas un verificateur de types : elle signale, elle
+    ne prouve pas. D'ou la baseline.
+    """
+    hits: list[tuple[int, str]] = []
+    for line_no, line in enumerate(text.split("\n"), start=1):
+        code = line.split("//", 1)[0]
+        if not code.strip():
+            continue
+        for m in LABEL_TYPED_STRING_RE.finditer(code):
+            hits.append((line_no, m.group(1)))
+    return hits
+
+
+def lint_repo(roots, catalogue_path: Path) -> list[dict]:
     keys, keys_with_fr, skeleton_to_keys = load_catalogue(catalogue_path)
     violations: list[dict] = []
 
-    for path in iter_swift_files(root):
+    if isinstance(roots, Path):
+        roots = [roots]
+    paths = [p for root in roots if root.exists() for p in iter_swift_files(root)]
+
+    for path in paths:
         text = path.read_text(encoding="utf-8", errors="replace")
         stripped = strip_preview_blocks(text)
         rel = str(path.relative_to(REPO_ROOT)) if REPO_ROOT in path.parents else str(path)
+
+        for line_no, param in find_label_typed_strings(stripped):
+            violations.append(
+                {
+                    "file": rel,
+                    "line": line_no,
+                    "key": f"{param}: String",
+                    "kind": "label-typed-String",
+                    "interpolated": False,
+                }
+            )
 
         for str_start, parts in find_text_call_sites(stripped):
             key, is_interpolated = generated_key_for(parts)
@@ -495,8 +567,9 @@ def main() -> int:
     parser.add_argument(
         "--root",
         type=Path,
-        default=DEFAULT_ROOT,
-        help="App-target source root to scan for *.swift files",
+        nargs="+",
+        default=DEFAULT_ROOTS,
+        help="Source roots to scan for *.swift files (app + embedded targets)",
     )
     parser.add_argument(
         "--baseline",
@@ -514,11 +587,13 @@ def main() -> int:
     if not args.catalogue.exists():
         print(f"error: catalogue not found: {args.catalogue}", file=sys.stderr)
         return 2
-    if not args.root.exists():
-        print(f"error: source root not found: {args.root}", file=sys.stderr)
+    roots = args.root if isinstance(args.root, list) else [args.root]
+    existing = [r for r in roots if r.exists()]
+    if not existing:
+        print(f"error: no source root found among: {roots}", file=sys.stderr)
         return 2
 
-    violations = lint_repo(args.root, args.catalogue)
+    violations = lint_repo(existing, args.catalogue)
 
     if args.update_baseline:
         save_baseline(args.baseline, violations)

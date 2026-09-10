@@ -28,6 +28,16 @@ import SQLite3
 ///     stroke_count INTEGER
 /// );
 ///
+/// CREATE TABLE kana (
+///     character TEXT PRIMARY KEY,
+///     stroke_count INTEGER,       -- derived from the stored SVG's path count
+///     stroke_order_svg TEXT       -- KanjiVG SVG path data
+/// );                              -- covers the 92 base + 50 dakuten kana only;
+///                                 -- yōon digraphs (きゃ, etc.) have no row —
+///                                 -- KanjiVG has no file for a two-codepoint
+///                                 -- combination. See KanaGroup.swift for the
+///                                 -- full 208-character list (romaji, section).
+///
 /// CREATE TABLE kanji_radical_edges (
 ///     radical_character TEXT,
 ///     kanji_character TEXT,
@@ -39,6 +49,7 @@ import SQLite3
 ///     word TEXT,
 ///     reading TEXT,
 ///     meaning TEXT,
+///     meaning_fr TEXT,        -- French gloss (see below)
 ///     kanji_character TEXT,   -- nullable FK
 ///     jlpt_level TEXT
 /// );
@@ -47,6 +58,8 @@ import SQLite3
 ///     id INTEGER PRIMARY KEY,
 ///     japanese TEXT,
 ///     english TEXT,
+///     french TEXT,            -- French translation
+///     furigana TEXT,          -- 水(みず)を… — written by scripts/furigana/
 ///     vocabulary_word TEXT    -- FK for lookup
 /// );
 ///
@@ -54,19 +67,49 @@ import SQLite3
 ///     id INTEGER PRIMARY KEY,
 ///     jlpt_level TEXT,
 ///     title TEXT,
+///     title_fr TEXT,
 ///     explanation TEXT,
-///     examples TEXT           -- JSON array
+///     explanation_fr TEXT,
+///     examples TEXT,          -- JSON array
+///     examples_fr TEXT        -- JSON array
 /// );
 /// ```
+///
+/// ## Language
+///
+/// Learner-facing glosses exist in English (authoritative, every row) and
+/// French (`_fr` columns, written by `scripts/apply-content-fr.py`). The
+/// language is fixed at construction — Core never reads `Locale.current`, the
+/// app target resolves it from `AppLocale` and passes it in.
+///
+/// Two safeguards, both handled here so no caller has to think about them:
+///
+/// - **Per-row fallback**: a French column that is NULL, blank, or an empty
+///   JSON array (`[]`) serves the English value instead. A field of English
+///   text beats a blank field on screen.
+/// - **Older bundles**: a bundle predating the French columns is detected via
+///   `PRAGMA table_info` and queried in English, rather than failing to
+///   prepare and returning nothing.
+///
+/// `sentences.french` and `sentences.furigana` are served by
+/// `exampleSentences(for:limit:)`. `sentences.english` still has no reader —
+/// and note the corpus is lopsided: the Tatoeba half (536 of 632 rows) carries
+/// French and NO English, because it was selected from Tatoeba's jpn↔fra links.
+/// That is why `exampleSentences` drops untranslated rows instead of falling
+/// back across languages the way the vocabulary glosses do.
 public final class ContentRepository: Sendable {
 
     /// The background actor performing thread-safe SQLite operations.
     private let actor: ContentDatabaseActor
 
     /// Creates a ContentRepository with the given SQLite bundle URL.
-    /// - Parameter bundleURL: Path to the .sqlite file. Must be accessible for reading.
-    public init(bundleURL: URL) {
-        self.actor = ContentDatabaseActor(bundleURL: bundleURL)
+    /// - Parameters:
+    ///   - bundleURL: Path to the .sqlite file. Must be accessible for reading.
+    ///   - language: Language for learner-facing glosses. Defaults to
+    ///     `.english`, the bundle's authoritative language — an unwired
+    ///     caller gets complete content, never a silent locale guess.
+    public init(bundleURL: URL, language: ContentLanguage = .english) {
+        self.actor = ContentDatabaseActor(bundleURL: bundleURL, language: language)
     }
 
     // MARK: - Kanji Queries
@@ -78,11 +121,40 @@ public final class ContentRepository: Sendable {
         await actor.kanjiByLevel(level)
     }
 
+    /// Fetch a single kanji by its character.
+    ///
+    /// Existe pour enrichir le dos d'une carte kanji (OBS2-026) : elle ne
+    /// montrait qu'UNE lecture, sans le sens ni les autres — 日 → « ひ » seul —
+    /// là où la fiche kana offre glyphe + romaji + tracé + audio. L'apprenant
+    /// mémorisait une correspondance incomplète et trompeuse.
+    ///
+    /// `kanjiByLevel` existait déjà mais oblige à charger un niveau entier pour
+    /// en filtrer un caractère.
+    /// - Parameter character: The kanji character to look up.
+    /// - Returns: The `Kanji` if the bundled content knows it, else `nil`.
+    public func kanji(for character: String) async -> Kanji? {
+        await actor.kanji(for: character)
+    }
+
     /// Fetch radicals that compose a given kanji.
     /// - Parameter character: The kanji character to look up.
     /// - Returns: Array of Radical structs that are components of the kanji.
     public func radicalsForKanji(_ character: String) async -> [Radical] {
         await actor.radicalsForKanji(character)
+    }
+
+    // MARK: - Kana Queries
+
+    /// Fetch stroke-order trace data for a single kana character.
+    ///
+    /// Covers the 92 base + 50 dakuten kana only (single Unicode codepoint
+    /// each). Yōon digraphs (きゃ, しゅ, ...) return `nil` — KanjiVG, the
+    /// upstream data source, has no file for a two-codepoint combination.
+    /// See `KanaGroup.swift` for the full 208-character kana list.
+    /// - Parameter character: The kana character to look up (e.g. "か").
+    /// - Returns: `(strokeCount, svg)` if trace data exists, else `nil`.
+    public func kanaStrokeData(for character: String) async -> (strokeCount: Int, svg: String)? {
+        await actor.kanaStrokeData(for: character)
     }
 
     // MARK: - Vocabulary Queries
@@ -97,8 +169,31 @@ public final class ContentRepository: Sendable {
     /// Fetch example sentences for a vocabulary word.
     /// - Parameter word: The vocabulary word to look up.
     /// - Returns: Array of Japanese sentence strings.
+    ///
+    /// Japanese only, and unread by any caller as of 2026-08-16. Prefer
+    /// `exampleSentences(for:limit:)`, which pairs each sentence with its
+    /// translation — a bare Japanese sentence is not an example a beginner
+    /// can use.
     public func sentencesForVocabulary(_ word: String) async -> [String] {
         await actor.sentencesForVocabulary(word)
+    }
+
+    /// Example sentences for `word`, each with a translation in the learner's
+    /// language, capped at `limit`.
+    ///
+    /// Returns an empty array when the word has no bundled examples — which is
+    /// the common case for a dictionary entry the learner met in conversation
+    /// rather than in the bundle, since the lookup is keyed on
+    /// `sentences.vocabulary_word`. Callers should render nothing, not an
+    /// empty section.
+    ///
+    /// - Parameters:
+    ///   - word: The bundle's canonical form. Verified 2026-08-16: every
+    ///     `sentences.vocabulary_word` matches a `vocabulary.word` exactly
+    ///     (zero orphans), so no stemming is needed on this join.
+    ///   - limit: Maximum examples to return.
+    public func exampleSentences(for word: String, limit: Int) async -> [SentenceExample] {
+        await actor.exampleSentences(for: word, limit: limit)
     }
 
     /// Fetch vocabulary items for a given JLPT level.
@@ -144,6 +239,12 @@ public final class ContentRepository: Sendable {
         await actor.grammarPointsByLevel(level)
     }
 
+    /// Les exercices a trou pour ce niveau, un par point qui en porte un.
+    /// Vide sur un bundle anterieur au generateur — l'exercice se saute alors.
+    public func grammarClozes(for level: JLPTLevel) async -> [GrammarCloze] {
+        await actor.grammarClozes(for: level)
+    }
+
     // MARK: - Edge Queries
 
     /// Fetch all kanji-radical edges for a given JLPT level.
@@ -176,11 +277,17 @@ private let SQLITE_TRANSIENT = unsafeBitCast(-1, to: sqlite3_destructor_type.sel
 actor ContentDatabaseActor {
 
     private let bundleURL: URL
+    private let language: ContentLanguage
     private nonisolated(unsafe) var db: OpaquePointer?
     private let decoder = JSONDecoder()
 
-    init(bundleURL: URL) {
+    /// Column names per table, read once via `PRAGMA table_info` and cached —
+    /// used to tell a French-capable bundle from an older English-only one.
+    private var columnCache: [String: Set<String>] = [:]
+
+    init(bundleURL: URL, language: ContentLanguage = .english) {
         self.bundleURL = bundleURL
+        self.language = language
     }
 
     // MARK: - Database Lifecycle
@@ -211,11 +318,51 @@ actor ContentDatabaseActor {
 
     // MARK: - Kanji Queries
 
+    /// Même projection que `kanjiByLevel`, filtrée sur un caractère. La colonne
+    /// de sens est choisie par `localizedColumn`, donc la glose suit la langue
+    /// de l'interface sans que l'appelant ait à s'en occuper.
+    func kanji(for character: String) -> Kanji? {
+        guard openIfNeeded() else { return nil }
+
+        let meanings = localizedColumn(
+            english: "meanings", french: "meanings_fr", table: "kanji", qualifier: "k."
+        )
+        let sql = """
+            SELECT k.character, k.on_readings, k.kun_readings, \(meanings),
+                   k.jlpt_level, k.stroke_count, k.stroke_order_svg
+            FROM kanji k WHERE k.character = ? LIMIT 1
+            """
+
+        var stmt: OpaquePointer?
+        guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else {
+            Logger.content.error("Failed to prepare kanji(for:) query")
+            return nil
+        }
+        defer { sqlite3_finalize(stmt) }
+        sqlite3_bind_text(stmt, 1, character, -1, SQLITE_TRANSIENT)
+
+        guard sqlite3_step(stmt) == SQLITE_ROW else { return nil }
+        let found = columnText(stmt, 0)
+        return Kanji(
+            character: found,
+            radicals: fetchRadicalCharacters(for: found),
+            onReadings: decodeJSONArray(columnText(stmt, 1)),
+            kunReadings: decodeJSONArray(columnText(stmt, 2)),
+            meanings: decodeJSONArray(columnText(stmt, 3)),
+            jlptLevel: JLPTLevel(rawValue: columnText(stmt, 4)) ?? .n5,
+            strokeCount: Int(sqlite3_column_int(stmt, 5)),
+            strokeOrderSVGRef: columnOptionalText(stmt, 6)
+        )
+    }
+
     func kanjiByLevel(_ level: JLPTLevel) -> [Kanji] {
         guard openIfNeeded() else { return [] }
 
+        let meanings = localizedColumn(
+            english: "meanings", french: "meanings_fr", table: "kanji", qualifier: "k."
+        )
         let sql = """
-            SELECT k.character, k.on_readings, k.kun_readings, k.meanings,
+            SELECT k.character, k.on_readings, k.kun_readings, \(meanings),
                    k.jlpt_level, k.stroke_count, k.stroke_order_svg
             FROM kanji k WHERE k.jlpt_level = ?
             """
@@ -290,13 +437,41 @@ actor ContentDatabaseActor {
         return results
     }
 
+    // MARK: - Kana Queries
+
+    /// Returns `nil` both when the character has no trace data (e.g. a yōon
+    /// digraph) and when the bundle predates the `kana` table entirely —
+    /// `sqlite3_prepare_v2` fails gracefully on a missing table, it is
+    /// logged, not a crash.
+    func kanaStrokeData(for character: String) -> (strokeCount: Int, svg: String)? {
+        guard openIfNeeded() else { return nil }
+
+        let sql = "SELECT stroke_count, stroke_order_svg FROM kana WHERE character = ?"
+        var stmt: OpaquePointer?
+        guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else {
+            Logger.content.error("Failed to prepare kanaStrokeData query")
+            return nil
+        }
+        defer { sqlite3_finalize(stmt) }
+
+        sqlite3_bind_text(stmt, 1, character, -1, SQLITE_TRANSIENT)
+
+        guard sqlite3_step(stmt) == SQLITE_ROW,
+              let svg = columnOptionalText(stmt, 1) else {
+            return nil
+        }
+        let strokeCount = Int(sqlite3_column_int(stmt, 0))
+        return (strokeCount, svg)
+    }
+
     // MARK: - Vocabulary Queries
 
     func vocabularyForKanji(_ character: String) -> [Vocabulary] {
         guard openIfNeeded() else { return [] }
 
         let sql = """
-            SELECT v.id, v.word, v.reading, v.meaning, v.kanji_character, v.jlpt_level
+            SELECT v.id, v.word, v.reading, \(vocabularyMeaningColumn),
+                   v.kanji_character, v.jlpt_level
             FROM vocabulary v WHERE v.kanji_character = ?
             """
 
@@ -339,7 +514,8 @@ actor ContentDatabaseActor {
         guard openIfNeeded() else { return [] }
 
         let sql = """
-            SELECT v.id, v.word, v.reading, v.meaning, v.kanji_character, v.jlpt_level
+            SELECT v.id, v.word, v.reading, \(vocabularyMeaningColumn),
+                   v.kanji_character, v.jlpt_level
             FROM vocabulary v WHERE v.jlpt_level = ?
             """
 
@@ -376,11 +552,100 @@ actor ContentDatabaseActor {
 
     // MARK: - Grammar Queries
 
+    /// Les exercices a trou, un par point de grammaire qui en porte un.
+    ///
+    /// La colonne est **sondee**, pas supposee : un bundle anterieur au
+    /// generateur rend une liste vide et l'exercice se saute, plutot que
+    /// d'echouer a preparer la requete.
+    ///
+    /// La phrase reste dans la langue de l'apprenant pour la traduction, mais
+    /// le japonais et la reponse ne sont pas localises — ce sont les memes dans
+    /// les deux langues.
+    /// La traduction du premier exemple d'un tableau JSON « japonais — traduction ».
+    /// Vide si le tableau est illisible ou si l'entree n'a pas de tiret cadratin :
+    /// la vue omet alors la ligne plutot que d'afficher du japonais en double.
+    /// Un tableau JSON de chaines, ou vide s'il est illisible — l'exercice
+    /// tombe alors sur zero distracteur et la vue se degrade, plutot que de
+    /// planter sur du contenu inattendu.
+    static func decodeStrings(_ json: String) -> [String] {
+        guard let data = json.data(using: .utf8),
+              let values = try? JSONDecoder().decode([String].self, from: data)
+        else { return [] }
+        return values
+    }
+
+    static func firstExampleTranslation(from json: String) -> String {
+        guard let data = json.data(using: .utf8),
+              let entries = try? JSONDecoder().decode([String].self, from: data),
+              let first = entries.first else { return "" }
+        let parts = first.components(separatedBy: " — ")
+        guard parts.count > 1 else { return "" }
+        return parts.dropFirst().joined(separator: " — ")
+    }
+
+    func grammarClozes(for level: JLPTLevel) -> [GrammarCloze] {
+        guard openIfNeeded() else { return [] }
+        let columns = columnNames(of: "grammar_points")
+        guard columns.contains("cloze_sentence"), columns.contains("cloze_answer") else {
+            return []
+        }
+
+        let title = localizedColumn(english: "title", french: "title_fr", table: "grammar_points")
+        // La traduction vient de la colonne LOCALISEE, pas d'une copie figee :
+        // `cloze_sentence` ne porte que le japonais. Geler la traduction a la
+        // generation avait mis une glose anglaise sous une UI francaise.
+        let examples = localizedColumn(
+            english: "examples", french: "examples_fr", table: "grammar_points"
+        )
+        let sql = """
+            SELECT id, \(title), cloze_sentence, cloze_answer, \(examples),
+                   COALESCE(cloze_distractors, '[]')
+            FROM grammar_points
+            WHERE jlpt_level = ?
+              AND TRIM(COALESCE(cloze_sentence, '')) != ''
+              AND TRIM(COALESCE(cloze_answer, '')) != ''
+            ORDER BY id
+            """
+
+        var stmt: OpaquePointer?
+        guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else {
+            Logger.content.error("Failed to prepare grammarClozes query")
+            return []
+        }
+        defer { sqlite3_finalize(stmt) }
+        sqlite3_bind_text(stmt, 1, level.rawValue, -1, SQLITE_TRANSIENT)
+
+        var results: [GrammarCloze] = []
+        while sqlite3_step(stmt) == SQLITE_ROW {
+            // `examples` est un tableau JSON « japonais — traduction » ; on ne
+            // garde que la traduction du PREMIER, celui dont vient le trou.
+            let translation = Self.firstExampleTranslation(from: columnText(stmt, 4))
+            let cloze = GrammarCloze(
+                pointID: Int(sqlite3_column_int(stmt, 0)),
+                title: columnText(stmt, 1),
+                sentence: columnText(stmt, 2),
+                answer: columnText(stmt, 3),
+                translation: translation,
+                distractors: Self.decodeStrings(columnText(stmt, 5))
+            )
+            guard !cloze.sentence.isEmpty, !cloze.answer.isEmpty else { continue }
+            results.append(cloze)
+        }
+        return results
+    }
+
     func grammarPointsByLevel(_ level: JLPTLevel) -> [GrammarPoint] {
         guard openIfNeeded() else { return [] }
 
+        let title = localizedColumn(english: "title", french: "title_fr", table: "grammar_points")
+        let explanation = localizedColumn(
+            english: "explanation", french: "explanation_fr", table: "grammar_points"
+        )
+        let examples = localizedColumn(
+            english: "examples", french: "examples_fr", table: "grammar_points"
+        )
         let sql = """
-            SELECT id, jlpt_level, title, explanation, examples
+            SELECT id, jlpt_level, \(title), \(explanation), \(examples)
             FROM grammar_points WHERE jlpt_level = ?
             """
 
@@ -486,6 +751,66 @@ actor ContentDatabaseActor {
         return results
     }
 
+    // MARK: - Language Helpers
+
+    /// Column names of `table`, cached after the first `PRAGMA table_info`.
+    /// An unknown or missing table yields an empty set, which makes
+    /// `localizedColumn` degrade to the English column.
+    private func columnNames(of table: String) -> Set<String> {
+        if let cached = columnCache[table] { return cached }
+
+        var names: Set<String> = []
+        var stmt: OpaquePointer?
+        if sqlite3_prepare_v2(db, "PRAGMA table_info(\(table))", -1, &stmt, nil) == SQLITE_OK {
+            while sqlite3_step(stmt) == SQLITE_ROW {
+                names.insert(columnText(stmt, 1))
+            }
+        } else {
+            Logger.content.error("Failed to read schema of table \(table)")
+        }
+        sqlite3_finalize(stmt)
+
+        columnCache[table] = names
+        return names
+    }
+
+    /// The localized `vocabulary.meaning` expression, shared by the two
+    /// vocabulary queries so they can never drift apart on language.
+    private var vocabularyMeaningColumn: String {
+        localizedColumn(
+            english: "meaning", french: "meaning_fr", table: "vocabulary", qualifier: "v."
+        )
+    }
+
+    /// SQL expression serving the localized value of a column, with an
+    /// explicit per-row fallback to English.
+    ///
+    /// In English, or against a bundle whose French column doesn't exist, this
+    /// is just the English column. In French it becomes a `CASE` that treats
+    /// NULL, blank and `'[]'` (an empty JSON array — how a missing
+    /// `meanings_fr` / `examples_fr` would show up) as "not translated" and
+    /// serves the English value for that row.
+    /// - Parameters:
+    ///   - english: The authoritative column name.
+    ///   - french: The `_fr` column name.
+    ///   - table: Table the columns belong to, for the schema probe.
+    ///   - qualifier: Table alias prefix used in the query (e.g. `"v."`).
+    /// - Returns: An expression to splice into a SELECT list.
+    private func localizedColumn(
+        english: String,
+        french: String,
+        table: String,
+        qualifier: String = ""
+    ) -> String {
+        let englishColumn = qualifier + english
+        guard language == .french, columnNames(of: table).contains(french) else {
+            return englishColumn
+        }
+        let frenchColumn = qualifier + french
+        return "CASE WHEN TRIM(COALESCE(\(frenchColumn), '')) IN ('', '[]') "
+            + "THEN \(englishColumn) ELSE \(frenchColumn) END"
+    }
+
     // MARK: - Private Helpers
 
     private func fetchRadicalCharacters(for kanjiCharacter: String) -> [String] {
@@ -503,6 +828,64 @@ actor ContentDatabaseActor {
             radicals.append(columnText(stmt, 0))
         }
         return radicals
+    }
+
+    /// Example sentences for `word`, each paired with a translation in the
+    /// learner's language, capped at `limit`.
+    ///
+    /// Rows whose translation is missing are filtered **in SQL**, so `limit`
+    /// counts usable examples rather than candidate rows — a word with six
+    /// rows of which two are translated still yields two, not zero.
+    ///
+    /// No cross-language fallback, unlike `localizedColumn`. See
+    /// `SentenceExample`'s doc for the measurement: the Tatoeba half of the
+    /// corpus carries French and no English, so "French missing → serve
+    /// English" would be backwards here and would render French text under an
+    /// English UI.
+    ///
+    /// Ordered by `id` so a word's examples are stable across launches — the
+    /// view shows only the first few, and a set that reshuffled every time
+    /// would read as a bug.
+    func exampleSentences(for word: String, limit: Int) -> [SentenceExample] {
+        guard openIfNeeded() else { return [] }
+        guard limit > 0 else { return [] }
+
+        let translationColumn = language == .french ? "french" : "english"
+        guard columnNames(of: "sentences").contains(translationColumn) else { return [] }
+
+        // `furigana` sondee, pas supposee : un bundle anterieur a la colonne
+        // doit servir les phrases sans annotation plutot que d'echouer a
+        // preparer la requete et de ne rien rendre du tout.
+        let hasFurigana = columnNames(of: "sentences").contains("furigana")
+        let furiganaColumn = hasFurigana ? "COALESCE(furigana, '')" : "''"
+        let sql = """
+            SELECT japanese, \(translationColumn), \(furiganaColumn) FROM sentences
+            WHERE vocabulary_word = ?
+              AND TRIM(COALESCE(\(translationColumn), '')) NOT IN ('', '[]')
+            ORDER BY id
+            LIMIT ?
+            """
+        var stmt: OpaquePointer?
+        guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else {
+            Logger.content.error("Failed to prepare exampleSentences query")
+            return []
+        }
+        defer { sqlite3_finalize(stmt) }
+
+        sqlite3_bind_text(stmt, 1, word, -1, SQLITE_TRANSIENT)
+        sqlite3_bind_int(stmt, 2, Int32(limit))
+
+        var examples: [SentenceExample] = []
+        while sqlite3_step(stmt) == SQLITE_ROW {
+            let japanese = columnText(stmt, 0)
+            let translation = columnText(stmt, 1)
+            let furigana = columnText(stmt, 2)
+            guard !japanese.isEmpty, !translation.isEmpty else { continue }
+            examples.append(SentenceExample(japanese: japanese,
+                                            translation: translation,
+                                            furigana: furigana))
+        }
+        return examples
     }
 
     private func fetchSentences(for word: String) -> [String] {

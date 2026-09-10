@@ -23,10 +23,33 @@ final class WatchSessionManager: NSObject, ObservableObject {
     @Published private(set) var syncedLevel: Int = 1
     @Published private(set) var syncedDueCards: Int = 0
 
+    /// Kana characters the Watch quiz is allowed to draw from: the
+    /// learner's chosen groups intersected with kana already graded at
+    /// least once, synced from the iPhone — see `WatchEligibleKanaPayload`.
+    /// Starts empty (not "everything"), matching the honest-empty-state
+    /// requirement: a Watch that hasn't yet received applicationContext at
+    /// all (brand-new pairing, or launched before the iPhone ever synced)
+    /// must show "nothing to review" rather than quiz on unchosen/unseen
+    /// kana.
+    @Published private(set) var eligibleKanaCharacters: [String] = []
+
+    /// The learner profile active on the iPhone as of the last received
+    /// applicationContext — stamped onto every outgoing
+    /// `WatchQuizReviewBatch` so the iPhone can tell which profile answered
+    /// (see `WatchQuizReviewBatch.profileId`). `nil` until the first context
+    /// arrives, or when the paired iPhone runs a build that predates the
+    /// stamp; a batch sent with `nil` is graded by the iPhone only when
+    /// mis-attribution is impossible there (a single profile on the device).
+    @Published private(set) var activeProfileId: UUID?
+
     /// Pending session results to send when connectivity is restored.
     private var pendingResults: [WatchSessionResult] = []
 
-    private override init() {
+    /// Pending kana-quiz review batches to send when connectivity is
+    /// restored — same queued-while-offline treatment as `pendingResults`.
+    private var pendingReviewBatches: [WatchQuizReviewBatch] = []
+
+    override private init() {
         super.init()
     }
 
@@ -55,23 +78,49 @@ final class WatchSessionManager: NSObject, ObservableObject {
         Logger.sync.info("Sent session result: \(result.drillType.rawValue), +\(result.xpEarned) XP")
     }
 
+    /// Sends a batch of individually-graded kana quiz answers to the iPhone,
+    /// so each answer is graded through `CardRepository.gradeCard` there —
+    /// see `WatchQuizReviewBatch`. Uses `transferUserInfo` for the same
+    /// guaranteed-delivery-while-offline reason as `sendSessionResult`.
+    func sendQuizReviewBatch(_ batch: WatchQuizReviewBatch) {
+        guard WCSession.default.activationState == .activated else {
+            pendingReviewBatches.append(batch)
+            Logger.sync.info("Queued quiz review batch (offline): \(batch.events.count) answers")
+            return
+        }
+
+        WCSession.default.transferUserInfo(batch.toDictionary())
+        Logger.sync.info("Sent quiz review batch: \(batch.events.count) answers, +\(batch.xpEarned) XP")
+    }
+
     /// Flushes any pending results when connectivity is restored.
     private func flushPendingResults() {
-        guard !pendingResults.isEmpty else { return }
-        Logger.sync.info("Flushing \(self.pendingResults.count) pending results")
-        for result in pendingResults {
-            WCSession.default.transferUserInfo(result.toDictionary())
+        if !pendingResults.isEmpty {
+            Logger.sync.info("Flushing \(self.pendingResults.count) pending results")
+            for result in pendingResults {
+                WCSession.default.transferUserInfo(result.toDictionary())
+            }
+            pendingResults.removeAll()
         }
-        pendingResults.removeAll()
+
+        if !pendingReviewBatches.isEmpty {
+            Logger.sync.info("Flushing \(self.pendingReviewBatches.count) pending review batches")
+            for batch in pendingReviewBatches {
+                WCSession.default.transferUserInfo(batch.toDictionary())
+            }
+            pendingReviewBatches.removeAll()
+        }
     }
 
     /// Apply state synced from the iPhone. Called only on the main actor —
     /// the delegate callback hops here via `Task { @MainActor }`.
     @MainActor
-    func applySyncedState(xp: Int, level: Int, due: Int) {
+    func applySyncedState(xp: Int, level: Int, due: Int, eligibleKana: [String], activeProfileId: UUID?) {
         self.syncedXP = xp
         self.syncedLevel = level
         self.syncedDueCards = due
+        self.eligibleKanaCharacters = eligibleKana
+        self.activeProfileId = activeProfileId
     }
 }
 
@@ -109,10 +158,27 @@ extension WatchSessionManager: WCSessionDelegate {
         let xp = payload.xp
         let level = payload.level
         let due = payload.dueCardCount
+        // Merged into the SAME dictionary as `WatchSyncPayload` on the
+        // sending side — see `WatchEligibleKanaPayload`'s doc. Missing key
+        // (older iPhone build, or context genuinely never included it) is
+        // treated as "nothing eligible", never as "everything eligible".
+        let eligibleKana = WatchEligibleKanaPayload.fromContext(applicationContext)?.characters ?? []
+        // Same merged dictionary again — the iPhone's active profile id, so
+        // the batches this Watch sends back carry the provenance the iPhone
+        // needs to avoid grading them onto another profile's cards (GAP-17).
+        let profileId = WatchQuizReviewBatch.activeProfileId(fromContext: applicationContext)
         Task { @MainActor in
-            WatchSessionManager.shared.applySyncedState(xp: xp, level: level, due: due)
+            WatchSessionManager.shared.applySyncedState(
+                xp: xp,
+                level: level,
+                due: due,
+                eligibleKana: eligibleKana,
+                activeProfileId: profileId
+            )
         }
 
-        Logger.sync.info("Watch received state: level=\(payload.level), xp=\(payload.xp)")
+        Logger.sync.info(
+            "Watch received state: level=\(payload.level), xp=\(payload.xp), eligibleKana=\(eligibleKana.count)"
+        )
     }
 }

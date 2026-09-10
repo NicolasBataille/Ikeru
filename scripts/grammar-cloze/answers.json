@@ -1,0 +1,30 @@
+{
+  "_comment": [
+    "Reponse attendue d'un exercice a trou, pour les points ou elle ne peut pas",
+    "etre derivee automatiquement du titre. Revue a la main le 2026-08-19.",
+    "",
+    "Pourquoi 14 sur 51 : le titre porte la forme du DICTIONNAIRE (ている,",
+    "てはいけない, すぎる) alors que l'exemple est en forme POLIE (ています,",
+    "てはいけません, すぎました) ; ou le titre contient un joker (〜のほうが〜より) ;",
+    "ou le kana du titre s'ecrit en kanji dans l'exemple (まえに -> 前に).",
+    "",
+    "La reponse est la sous-chaine EXACTE a masquer dans le premier exemple.",
+    "Le generateur verifie qu'elle s'y trouve, et refuse d'ecrire sinon."
+  ],
+  "answers": {
+    "16": "てください",
+    "17": "ています",
+    "20": "てはいけません",
+    "21": "なければなりません",
+    "23": "たことがあります",
+    "25": "あげました",
+    "27": "すぎました",
+    "39": "に行きます",
+    "41": "ていません",
+    "42": "のほうが",
+    "43": "がいちばん",
+    "44": "くなりました",
+    "45": "たり",
+    "50": "前に"
+  }
+}

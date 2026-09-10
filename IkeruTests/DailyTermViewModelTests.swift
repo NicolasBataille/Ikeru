@@ -11,11 +11,19 @@ struct DailyTermViewModelTests {
     // MARK: - Helpers
 
     private func makeContainer() throws -> ModelContainer {
-        let schema = Schema([
-            DailyTerm.self,
-            VocabularyEntry.self,
-            VocabularyEncounter.self
-        ])
+        // Full app schema (not just the daily-term models): `load()` now
+        // also resolves the learner's JLPT level via `ProgressService` /
+        // `CardRepository`, which fetch `Card`, `ReviewLog`, `UserProfile`
+        // and `ExerciseOutcomeLog`. A container scoped to only the
+        // daily-term models crashes the moment that fetch runs against a
+        // schema that doesn't know those entities. Must track the app's
+        // current schema version (see IkeruApp) — declaring a stale version
+        // opens the container without error but traps on the first insert.
+        // V6, the live version: every earlier one nests frozen snapshot
+        // types (V3 since 2026-08-13, V4/V5 since 2026-09-09), so their
+        // `models` no longer resolve to the live top-level types this suite
+        // fetches with.
+        let schema = Schema(IkeruSchemaV6.models)
         let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
         return try ModelContainer(for: schema, configurations: [config])
     }

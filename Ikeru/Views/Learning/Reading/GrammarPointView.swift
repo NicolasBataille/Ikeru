@@ -29,17 +29,10 @@ struct GrammarPointView: View {
 
     private var headerSection: some View {
         VStack(spacing: IkeruTheme.Spacing.sm) {
-            Text(grammarPoint.jlptLevel.displayName)
-                .font(.ikeruCaption)
-                .fontWeight(.semibold)
-                .tracking(1.2)
-                .foregroundStyle(Color.ikeruPrimaryAccent)
-                .padding(.horizontal, IkeruTheme.Spacing.sm)
-                .padding(.vertical, IkeruTheme.Spacing.xs)
-                .overlay(
-                    Rectangle()
-                        .strokeBorder(TatamiTokens.goldDim, lineWidth: 1)
-                )
+            // Pas de badge JLPT : les 51 points du bundle sont N5, sans
+            // exception, donc il etait constant et ne distinguait rien — meme
+            // mesure et meme decision que sur `VocabularyEntryDetailView`.
+            // A remettre le jour d'un bundle N4+.
 
             Text(grammarPoint.title)
                 .font(.kanjiMedium)

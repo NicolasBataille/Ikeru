@@ -43,8 +43,27 @@ struct IkeruTabBar: View {
             }
         }
         .padding(.horizontal, 22)
+        // MEASURED on an iPhone 14 Pro, not estimated. Instrumenting the bar
+        // with a GeometryReader and reading it off the device gave
+        // `height=76.33 safeBottom=34.0`, which settled two things at once:
+        //
+        //  1. The bar DOES own the bottom safe area (`MainTabView` hands it
+        //     over) — `safeBottom=34` is its overlap into the home-indicator
+        //     region, not a second inset stacked underneath. At 76pt it was
+        //     already SHORTER than a standard iOS tab bar (~83pt).
+        //  2. So height was never the complaint. The content was ASYMMETRIC —
+        //     8pt of air above the icons against 22 + 3 below — and that
+        //     lopsidedness is what reads as "space under the icons". Three
+        //     earlier rounds shortened the bar; none touched the real problem.
+        //
+        // 12/14 balances it while keeping the labels clear of the home
+        // indicator, which draws ~8pt from the bottom edge.
+        //
+        // Rebalance from a fresh measurement if this changes. Those two numbers
+        // cost one instrumented build and were worth more than three rounds of
+        // adjusting by eye.
         .padding(.top, 12)
-        .padding(.bottom, 26)
+        .padding(.bottom, 14)
         .background(.ultraThinMaterial)
         .overlay(alignment: .top) {
             FusumaRail(opacity: 0.7)
@@ -76,7 +95,7 @@ private struct TatamiTabCell: View {
 
     var body: some View {
         Button(action: onTap) {
-            VStack(spacing: 4) {
+            VStack(spacing: 2) {
                 if isActive {
                     MonCrest(kind: monKind, size: 10, color: .ikeruPrimaryAccent)
                 } else {
@@ -88,7 +107,7 @@ private struct TatamiTabCell: View {
                         isActive ? Color.ikeruPrimaryAccent : TatamiTokens.paperGhost
                     )
                 ZStack {
-                    Color.clear.frame(height: 5)
+                    Color.clear.frame(height: 3)
                     if isActive {
                         KintsugiTabRail()
                             .matchedGeometryEffect(id: "tab-rail", in: railNamespace)
@@ -100,6 +119,10 @@ private struct TatamiTabCell: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel(accessibilityLabel)
+        // GAP-01 two-client merge test: tapping between tabs mid-scenario
+        // (Explore → Settings) needs a stable, non-localized target — see
+        // `EtudeView.kanaRow`'s identifier, added by the same effort.
+        .accessibilityIdentifier("tabBar.\(String(describing: tab))")
     }
 
     private var japaneseLabel: String {
@@ -140,4 +163,27 @@ private struct TatamiTabCell: View {
         }
     }
     return Wrapper().preferredColorScheme(.dark)
+}
+
+// MARK: - Tab-bar clearance
+
+extension View {
+
+    /// Lifts a bottom-pinned control clear of the floating tab bar.
+    ///
+    /// `MainTabView` overlays `IkeruTabBar` on top of every tab's content, so a
+    /// control pinned to the bottom of the screen is **drawn underneath it** and
+    /// becomes untappable. That is not a cosmetic issue: measured on the
+    /// simulator 2026-08-19, the « Choose words to learn » footer of the reading
+    /// stage sat entirely behind the bar, and the import journey had no way
+    /// forward at all.
+    ///
+    /// The number comes from the bar's own measurement — 76.33pt on an iPhone
+    /// 14 Pro (see the comment above) — rounded up to 88 for margin, which is
+    /// the value the kana drill screens already use. It lives here, beside the
+    /// bar it clears, so a future change to the bar's height has one obvious
+    /// place to update instead of eight hardcoded paddings across the app.
+    func ikeruTabBarClearance() -> some View {
+        padding(.bottom, 88)
+    }
 }

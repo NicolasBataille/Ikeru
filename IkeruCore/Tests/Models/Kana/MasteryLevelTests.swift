@@ -67,20 +67,77 @@ struct MasteryLevelTests {
         #expect(MasteryLevel.from(fsrsState: s) == .anchored)
     }
 
-    @Test("Recent lapse within 2 days demotes to .learning even with high stability")
-    func recentLapseDemotes() {
+    // MARK: - Retrait de la règle « rechute récente » (OBS2-024 / 077 / 081)
+    //
+    // Ces trois tests remplacent `recentLapseDemotes` / `oldLapseDoesNotDemote`,
+    // qui épinglaient le comportement retiré. Voir la note de conception sur
+    // `MasteryLevel.from(fsrsState:now:)` pour le raisonnement complet.
+
+    @Test("Une rechute ancienne au compteur ne rétrograde plus une carte stable")
+    func lifetimeLapseNoLongerDemotesAStableCard() {
+        // Le cas exact que le reviewer a mesuré en boîte noire : carte ratée une
+        // fois dans sa vie, révisée avec SUCCÈS à l'instant. Elle affichait
+        // « en apprentissage » alors que sa stabilité disait « maîtrisé ».
         let now = Date()
-        let recent = now.addingTimeInterval(-86_400) // 1 day ago
-        let s = FSRSState(difficulty: 5, stability: 30.0, reps: 5, lapses: 1, lastReview: recent)
-        #expect(MasteryLevel.from(fsrsState: s, now: now) == .learning)
+        let justReviewed = FSRSState(
+            difficulty: 5, stability: 30.0, reps: 5, lapses: 1, lastReview: now
+        )
+        #expect(MasteryLevel.from(fsrsState: justReviewed, now: now) == .mastered)
+
+        // Et le palier ne dépend plus du tout de l'horloge : même état, trois
+        // dates. C'est ce qui rendait la rétrogradation permanente pour les
+        // cartes à intervalle court, chaque révision réarmant la fenêtre.
+        for offset in [0.0, 47 * 3600.0, 49 * 3600.0, 7 * 86_400.0] {
+            #expect(
+                MasteryLevel.from(fsrsState: justReviewed, now: now.addingTimeInterval(offset)) == .mastered,
+                "le palier ne doit plus varier avec le temps écoulé (offset \(offset)s)"
+            )
+        }
     }
 
-    @Test("Lapse older than 2 days does NOT demote")
-    func oldLapseDoesNotDemote() {
-        let now = Date()
-        let old = now.addingTimeInterval(-3 * 86_400) // 3 days ago
-        let s = FSRSState(difficulty: 5, stability: 30.0, reps: 5, lapses: 1, lastReview: old)
-        #expect(MasteryLevel.from(fsrsState: s, now: now) == .mastered)
+    @Test("Un vrai échec rétrograde toujours — par l'effondrement de stabilité")
+    func aFreshFailureStillDemotesViaStability() {
+        // C'est la mesure sur laquelle repose tout le retrait : si FSRS ne
+        // faisait PAS redescendre le palier de lui-même, supprimer la règle
+        // laisserait une carte fraîchement ratée affichée « maîtrisé ». Ce test
+        // échoue si cette hypothèse cesse d'être vraie — par exemple si les
+        // poids FSRS changent.
+        let t0 = Date()
+        for stability in [10.0, 20.0, 50.0] {
+            let mastered = FSRSState(
+                difficulty: 5, stability: stability, reps: 4, lapses: 0, lastReview: t0
+            )
+            #expect(MasteryLevel.from(fsrsState: mastered, now: t0) == .mastered)
+
+            let afterFailure = FSRSService.schedule(
+                state: mastered, grade: .again, now: t0.addingTimeInterval(86_400)
+            )
+            #expect(
+                afterFailure.stability < mastered.stability,
+                "un échec doit effondrer la stabilité (départ \(stability))"
+            )
+            #expect(
+                MasteryLevel.from(fsrsState: afterFailure, now: t0.addingTimeInterval(86_400)) != .mastered,
+                "après un échec, la carte ne doit plus être affichée « maîtrisé » (départ \(stability))"
+            )
+        }
+    }
+
+    @Test("Limite assumée : au-delà de ~100 de stabilité, un échec ne change pas le palier")
+    func veryStableCardKeepsItsTierAfterOneFailure() {
+        // Ce test ne décrit pas un défaut mais la contrepartie MESURÉE du
+        // retrait, consignée pour qu'elle ne soit pas redécouverte comme une
+        // régression. Ces cartes reviennent tous les plusieurs mois : la
+        // fenêtre de 48 h y était un clignotement que personne ne voyait.
+        let t0 = Date()
+        let anchored = FSRSState(difficulty: 5, stability: 200.0, reps: 12, lapses: 0, lastReview: t0)
+        #expect(MasteryLevel.from(fsrsState: anchored, now: t0) == .anchored)
+
+        let afterFailure = FSRSService.schedule(
+            state: anchored, grade: .again, now: t0.addingTimeInterval(86_400)
+        )
+        #expect(afterFailure.stability < anchored.stability, "la stabilité chute quand même")
+        #expect(afterFailure.lapses == anchored.lapses + 1, "l'échec est bien compté")
     }
 
     @Test("emoji is non-empty for every case", arguments: MasteryLevel.allCases)

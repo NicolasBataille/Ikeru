@@ -34,10 +34,17 @@ struct HomeViewModelTests {
         return profile
     }
 
-    /// Seeds an RPGState attached to the active profile (creating one if
-    /// the test forgot to seed a profile first). The resolver's
-    /// `fetchActiveRPGState` requires a profile→state attachment, so a
-    /// standalone insert is invisible to the view model.
+    /// Seeds the active profile's RPG state (creating the profile if the test
+    /// forgot to). The resolver's `fetchActiveRPGState` requires a
+    /// profile→state attachment, so a standalone insert is invisible to the
+    /// view model.
+    ///
+    /// Mutates the state the profile ALREADY owns rather than minting a rival
+    /// one. `UserProfile.init` always creates its own `RPGState` (see that
+    /// initializer), so "seed an RPG state" never means "attach a new one" —
+    /// it means "set the values on the one that is already there". Doing it
+    /// the other way round is what crashed the whole test runner for months;
+    /// `seedingMutatesTheProfilesOwnRPGState()` below holds the measurement.
     private func seedRPGState(container: ModelContainer, xp: Int, level: Int) throws {
         let context = container.mainContext
         let profile: UserProfile = try {
@@ -46,10 +53,20 @@ struct HomeViewModelTests {
             }
             return try seedProfile(container: container, name: "Test")
         }()
-        let state = RPGState(xp: xp, level: level, totalReviewsCompleted: 10)
-        state.profile = profile
-        profile.rpgState = state
-        context.insert(state)
+        let state: RPGState = try {
+            if let existing = profile.rpgState { return existing }
+            // Only reachable for a profile built without `UserProfile.init`
+            // (none today). Assigning the INVERSE side is safe here precisely
+            // because there is nothing to displace.
+            let fresh = RPGState()
+            profile.rpgState = fresh
+            context.insert(fresh)
+            try context.save()
+            return fresh
+        }()
+        state.xp = xp
+        state.level = level
+        state.totalReviewsCompleted = 10
         try context.save()
     }
 
@@ -73,6 +90,16 @@ struct HomeViewModelTests {
                 front: "Card \(i)",
                 back: "Back \(i)",
                 type: .kanji,
+                // `reps: 1` is what makes these REVIEWS. The planner's
+                // `pickReviews` filters on `dueDate <= now && reps > 0`; a
+                // never-reviewed card is NEW content, which is deliberately
+                // dripped roughly one per session. Seeded with the default
+                // `reps == 0`, this helper produced new cards while its name
+                // and every assertion said "due reviews", so a 3-card seed
+                // composed a 1-item session. The product was right; the
+                // fixture was lying.
+                fsrsState: FSRSState(difficulty: 5.0, stability: 5.0, reps: 1, lapses: 0,
+                                     lastReview: Date().addingTimeInterval(-86_400)),
                 dueDate: Date().addingTimeInterval(-3600) // Due 1 hour ago
             )
             card.profile = profile
@@ -147,7 +174,12 @@ struct HomeViewModelTests {
         await vm.loadData()
 
         #expect(vm.xp == 250)
-        #expect(vm.level == 3)
+        // Level is DERIVED from XP, never read from the stored field —
+        // `loadRPGState` even repairs a stale `RPGState.level` in place. This
+        // used to assert the seeded `level: 3`, which 250 XP has never
+        // produced (`levelForXP(250) == 2`); the assertion was simply wrong
+        // and only survived because the suite crashed before reaching it.
+        #expect(vm.level == RPGConstants.levelForXP(250))
         #expect(vm.xpForNextLevel > 0)
     }
 
@@ -183,7 +215,10 @@ struct HomeViewModelTests {
         await vm.loadData()
 
         #expect(vm.sessionPreviewCardCount == 3)
-        #expect(vm.sessionPreviewMinutes == 3)
+        // ~15 s per review card (`DefaultSessionPlanner.reviewDurationSeconds`),
+        // so three of them round to one minute, not three. The old `== 3`
+        // assumed a minute per card and had never been executed.
+        #expect(vm.sessionPreviewMinutes == 1)
     }
 
     // MARK: - Computed Property Tests
@@ -227,7 +262,11 @@ struct HomeViewModelTests {
         await vm.loadData()
 
         #expect(vm.learningSummaryText.contains("5 cards ready"))
-        #expect(vm.learningSummaryText.contains("12 kanji learned"))
+        // 17, not 12: `kanjiLearnedCount` counts every kanji card with
+        // `reps > 0`, and the 5 "due" cards are now genuine reviews (see
+        // `seedDueCards`) rather than never-seen cards, so they count as
+        // learned too — which is what "learned" has always meant here.
+        #expect(vm.learningSummaryText.contains("17 kanji learned"))
     }
 
     @Test("sessionPreviewText shows card count and time")
@@ -287,10 +326,12 @@ struct HomeViewModelTests {
         await vm.loadData()
 
         #expect(vm.displayName == "Nico")
-        #expect(vm.level == 2)
+        // Derived, not stored — see `loadDataLoadsRPGState`.
+        #expect(vm.level == RPGConstants.levelForXP(100))
         #expect(vm.xp == 100)
         #expect(vm.dueCardCount == 3)
-        #expect(vm.kanjiLearnedCount == 8)
+        // 11 = 8 reviewed + the 3 due reviews; see `learningSummaryText`'s note.
+        #expect(vm.kanjiLearnedCount == 11)
         #expect(vm.sessionPreviewCardCount > 0)
         #expect(vm.hasLoaded == true)
     }
@@ -312,5 +353,58 @@ struct HomeViewModelTests {
         // Reload
         await vm.loadData()
         #expect(vm.dueCardCount == 2)
+    }
+
+    // MARK: - GAP-10 regression
+
+    /// Pins the rule that cost this repo its whole app-target test suite.
+    ///
+    /// **Measured, 2026-08-16** (bisected statement by statement inside a
+    /// single `-only-testing:` run, so nothing else was in the process):
+    /// assigning the **owning side** of a to-one SwiftData relationship —
+    /// `newState.profile = profile` — when `profile` already owns a *saved*
+    /// `RPGState` traps the process:
+    ///
+    ///   SwiftData/BackingData.swift:940: Fatal error: Never access a full
+    ///   future backing data - PersistentIdentifier(... /RPGState/p1 ...)
+    ///
+    /// Assigning the **inverse side** on the same data — `profile.rpgState =
+    /// newState` — does not trap. Neither `context.insert(newState)` before
+    /// the assignment nor reading `profile.rpgState` first (to materialize
+    /// the object being displaced) avoids it; both were tried and both still
+    /// crashed. The trigger is the displacement itself, through the owning
+    /// side, of a child that has already been saved. When the profile was
+    /// never saved, the displaced child holds a temporary identifier and
+    /// nothing traps — which is the only reason `DataExportManagerTests`
+    /// stayed green in CI while carrying the same shape.
+    ///
+    /// Two consequences the codebase depends on:
+    /// 1. `UserProfile.init` mints its own `RPGState`, so a profile ALWAYS
+    ///    owns one. "Seeding" an RPG state therefore means mutating that
+    ///    one, never attaching a second.
+    /// 2. Production is safe by construction, not by luck:
+    ///    `ActiveProfileResolver.fetchActiveRPGState` returns early when
+    ///    `profile.rpgState` is non-nil, and `SyncPullActor`'s RPG upsert
+    ///    routes the "profile already has a state" case through its
+    ///    orphan-adoption branch. Both reach `state.profile = …` only when
+    ///    there is nothing to displace. Keep it that way.
+    ///
+    /// This test asserts the SAFE path stays safe. It deliberately does not
+    /// assert the crash — that would take the runner down with it.
+    @Test("GAP-10: seeding RPG state mutates the profile's own, never a rival")
+    func seedingMutatesTheProfilesOwnRPGState() async throws {
+        let container = try makeContainer()
+        let profile = try seedProfile(container: container, name: "Test")
+        let originalStateID = profile.rpgState?.persistentModelID
+        #expect(originalStateID != nil, "UserProfile.init must still mint an RPGState")
+
+        try seedRPGState(container: container, xp: 250, level: 3)
+
+        // Same object, new values — no second RPGState was ever created.
+        #expect(profile.rpgState?.persistentModelID == originalStateID)
+        #expect(profile.rpgState?.xp == 250)
+
+        let all = try container.mainContext.fetch(FetchDescriptor<RPGState>())
+        #expect(all.count == 1, "a rival RPGState would orphan the profile's own")
     }
 }

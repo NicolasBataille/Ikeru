@@ -41,7 +41,11 @@ public final class ProfileViewModel {
     /// Fetches all profiles and selects the active one from persisted id.
     /// Falls back to the oldest profile on cold launch and persists that choice.
     public func loadProfile() {
+        // Tombstoned profiles are excluded everywhere: they must not appear in
+        // the switcher, must not be re-selectable, and must not count towards
+        // `deleteProfile`'s "never delete the last profile" guard.
         let descriptor = FetchDescriptor<UserProfile>(
+            predicate: #Predicate { $0.deletedAt == nil },
             sortBy: [SortDescriptor(\.createdAt, order: .forward)]
         )
         let profiles = (try? modelContext.fetch(descriptor)) ?? []
@@ -79,6 +83,12 @@ public final class ProfileViewModel {
             currentProfile = profile
             allProfiles.append(profile)
             ActiveProfileResolver.setActiveProfileID(profile.id)
+            // New active profile: the cached display mode in MainTabView
+            // must be re-read from the (now-different) active profile's
+            // key, or the brand-new profile inherits whatever mode the
+            // previously-active profile was showing. See the matching
+            // comment in `switchProfile`.
+            NotificationCenter.default.post(name: .displayModeDidChange, object: nil)
             Logger.ui.info("Created user profile: \(trimmedName)")
         } catch {
             Logger.ui.error("Failed to save user profile: \(error)")
@@ -93,11 +103,50 @@ public final class ProfileViewModel {
         currentProfile = profile
         ActiveProfileResolver.setActiveProfileID(profile.id)
         NotificationCenter.default.post(name: .ikeruActiveProfileDidChange, object: profile.id)
+        // The display mode (Tatami/Beginner) is stored per-profile
+        // (UserDefaultsDisplayModePreferenceRepository keys on the active
+        // profile id), but MainTabView caches the resolved mode in a
+        // `@State` fed by the repository's CurrentValueSubject — that
+        // subject only re-emits on an explicit `repo.set(...)`, never on a
+        // profile switch. Without this notification the newly-active
+        // profile's mode never gets re-read, and the UI keeps showing
+        // whichever mode the *previous* profile was in (the Tatami-leak
+        // bug). `.displayModeDidChange` already exists for exactly this
+        // "mode changed out from under the cached value" case (onboarding's
+        // placement step posts it too) — MainTabView already listens.
+        NotificationCenter.default.post(name: .displayModeDidChange, object: nil)
         Logger.ui.info("Switched to profile: \(profile.displayName)")
     }
 
-    /// Deletes a profile (only if it's not the last remaining one).
-    /// Cascades to RPGState + cards via the SwiftData relationship rule.
+    /// Soft-deletes a profile: stamps `deletedAt`/`updatedAt` on the profile
+    /// and, **by hand**, on everything the old hard delete used to cascade to.
+    ///
+    /// The cascade is manual now and that is the whole subtlety of this
+    /// method. `UserProfile` declares `@Relationship(deleteRule: .cascade)`
+    /// for `cards` and `rpgState`, and `Card` declares one for `reviewLogs` —
+    /// but SwiftData only runs a delete rule on a real
+    /// `modelContext.delete(_:)`. Stamping `deletedAt` on the profile alone
+    /// would leave its cards, review logs and RPG state fully live: still
+    /// pushed by `SyncModelActor`, still counted by anything that fetches
+    /// `Card`/`ReviewLog` directly rather than through the profile. So this
+    /// walks the same graph the delete rule used to walk, plus
+    /// `ExerciseOutcomeLog` (scoped by a scalar `profileID`, never cascaded
+    /// even before).
+    ///
+    /// Visible behaviour is unchanged: the profile disappears from the
+    /// switcher, its data stops counting, and now it also stays gone after a
+    /// pull-cursor reset instead of being re-inserted from the server.
+    ///
+    /// Deleting the *last* remaining profile is refused: this app has no
+    /// signed-out state, and driving the user back to onboarding after a
+    /// same-screen delete would require `IkeruApp`'s root `showOnboarding`
+    /// flag to re-open — state this view model has no reach into. The UI
+    /// (`SettingsView`) never offers a delete affordance while only one
+    /// profile exists, so this guard should never actually fire from a
+    /// live tap; it exists as a safety net if that invariant is ever
+    /// violated. See CLAUDE.md-adjacent task notes for the follow-up needed
+    /// to support "delete your only profile → back to onboarding".
+    ///
     /// - Parameter profile: The profile to delete.
     public func deleteProfile(_ profile: UserProfile) {
         guard allProfiles.count > 1 else {
@@ -107,24 +156,32 @@ public final class ProfileViewModel {
 
         let wasActive = currentProfile?.id == profile.id
 
-        // ExerciseOutcomeLog is scoped by a scalar `profileID` (not a
-        // relationship), so it does NOT cascade with the profile the way Card /
-        // ReviewLog / RPGState do — delete its rows explicitly so no orphaned
-        // outcome history lingers after the profile is gone.
+        // The dictionary (`VocabularyEntry` + encounters) and the imported
+        // texts (`TextImport`) are owned by the profile since `IkeruSchemaV6`
+        // (P1-1 / OBS2-051) and go with it. A note stood here for three
+        // schema versions saying they could not — it was true until V6.
+        //
+        // The SwiftData half of the cascade — cards, their review logs, the
+        // RPG state, the scalar-scoped ExerciseOutcomeLog rows, and now the
+        // dictionary and the imports (scalar-scoped the same way) — lives in
+        // `ProfileDeletion.tombstoneGraph` so it can actually be exercised by
+        // a test (see that function's doc comment: this file's own test suite
+        // cannot be run today). It does not save; the single `save()` below
+        // commits the whole cascade atomically.
         let deletedID = profile.id
-        let outcomeDescriptor = FetchDescriptor<ExerciseOutcomeLog>(
-            predicate: #Predicate { $0.profileID == deletedID }
-        )
-        if let outcomes = try? modelContext.fetch(outcomeDescriptor) {
-            for outcome in outcomes { modelContext.delete(outcome) }
-        }
+        ProfileDeletion.tombstoneGraph(of: profile, in: modelContext)
 
         // Same reasoning for the per-profile UserDefaults onboarding flags
         // (swipe tutorial, first-session daily-term prompt) — they're keyed by
         // profile id and would otherwise linger forever.
         OnboardingFlags.clearAll(profileID: deletedID)
 
-        modelContext.delete(profile)
+        // Same reasoning again for the competency-booklet weekly-delta
+        // baseline (chantier #45h): also UserDefaults-backed and keyed by
+        // profile id (see `MasteryBookSnapshotStore`), so it doesn't cascade
+        // with the SwiftData delete below and would otherwise linger forever.
+        MasteryBookSnapshotStore.clear(profileID: deletedID)
+
         do {
             try modelContext.save()
             allProfiles.removeAll { $0.id == profile.id }
@@ -132,6 +189,9 @@ public final class ProfileViewModel {
                 currentProfile = next
                 ActiveProfileResolver.setActiveProfileID(next.id)
                 NotificationCenter.default.post(name: .ikeruActiveProfileDidChange, object: next.id)
+                // Active profile changed as a side effect of the delete —
+                // same cached-display-mode staleness as `switchProfile`.
+                NotificationCenter.default.post(name: .displayModeDidChange, object: nil)
             }
             Logger.ui.info("Deleted profile: \(profile.displayName)")
         } catch {

@@ -1,0 +1,63 @@
+name: Supabase Keep-Alive
+
+# Supabase pauses a free-tier project after ~7 days with no requests. For an
+# app used irregularly — which is exactly Ikeru's usage pattern — that means
+# opening the app after a holiday and finding cloud backup broken.
+#
+# The app is local-first, so a paused project is never data loss: the learner
+# keeps working offline and the backup catches up later. This job exists so
+# the pause does not happen in the first place.
+#
+# Daily rather than every 6 days: a single missed run (GitHub delays or drops
+# scheduled jobs under load — the schedule is best-effort, not a guarantee)
+# must not be enough to reach the pause threshold. Daily leaves ~6 missed
+# runs of margin.
+#
+# ⚠️ GitHub disables scheduled workflows on repositories with no activity for
+# 60 days. If Ikeru goes quiet for two months, this job stops and the project
+# pauses shortly after. That is acceptable — an abandoned repo needing a
+# manual re-enable is not a failure worth engineering around — but it is worth
+# knowing rather than discovering.
+
+on:
+  schedule:
+    # 06:17 UTC — deliberately off the hour. Cron jobs scheduled at :00 pile
+    # up across all of GitHub and are the ones most likely to be delayed.
+    - cron: '17 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ping:
+    name: Ping the project
+    runs-on: ubuntu-latest
+    steps:
+      - name: Query PostgREST
+        # No secret needed. The publishable key is public by design — it is
+        # already committed in SyncJSON.swift and shipped inside the app
+        # binary. It grants nothing on its own: every table has RLS, and this
+        # unauthenticated request resolves `auth.uid()` to NULL, so the
+        # response is an empty array. That is fine — the point is to touch
+        # Postgres, not to read anything.
+        run: |
+          set -euo pipefail
+          URL="https://aiayzlarixlogcoyswna.supabase.co/rest/v1/profiles?select=id&limit=1"
+          KEY="sb_publishable_THLdQoO5IdEZcCovxEQFAg_I14rjqU8"
+
+          CODE=$(curl -sS -o /tmp/body.txt -w '%{http_code}' --max-time 30 \
+            "$URL" -H "apikey: $KEY")
+
+          echo "HTTP $CODE"
+          cat /tmp/body.txt
+          echo
+
+          # Fail loudly on anything other than 200. A paused project answers
+          # with a gateway error, so a red run here is the signal that the
+          # keep-alive already failed and the project needs a manual restore
+          # from the dashboard. Silently passing would defeat the purpose.
+          if [ "$CODE" != "200" ]; then
+            echo "::error::Supabase did not answer 200 — the project may be paused or unreachable."
+            exit 1
+          fi

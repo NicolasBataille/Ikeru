@@ -15,9 +15,32 @@ public final class HomeViewModel {
     public private(set) var displayName: String = ""
 
     /// Current RPG level.
+    ///
+    /// Deliberately NOT surfaced anywhere in `HomeView`, including the new
+    /// competency-booklet mirror (`masteryBook`) — decision taken in the
+    /// 2026-08-10 review's "RPG orphelin" item (#25). Still computed because
+    /// the widget target reads `RPGState` independently (App Group, outside
+    /// this work item's file perimeter) and because retiring the underlying
+    /// XP/loot pipeline is a bigger call than one review pass. Reasons kept
+    /// out of the UI:
+    /// 1. The XP economy still pays hidden streak bonuses
+    ///    (`RPGConstants.fiveDayStreakBonus`, `.thirtyDayStreakBonus`,
+    ///    `.firstSessionOfDayBonus`) — exactly the pressure the product
+    ///    deliberately removed ("zero streak, zero ligue"). Showing "Lv. 4"
+    ///    would re-import that pressure wearing a different label, and an
+    ///    "effort" framing doesn't fix that the effort curve is secretly
+    ///    streak-shaped.
+    /// 2. It's redundant with what the booklet already shows: `masteryBook`
+    ///    tells the learner exactly what became familiar/mastered, which is
+    ///    legible and auditable. A level number the learner can't decompose
+    ///    ("why am I level 4 and not 5?") adds opacity, not signal.
+    /// 3. It wouldn't actually fix the orphan problem — the widget already
+    ///    shows "Lv. N" with zero context; duplicating that number on Home
+    ///    just adds a second unexplained instance of the same defect.
     public private(set) var level: Int = 1
 
-    /// Current total XP.
+    /// Current total XP. See `level`'s doc comment for why this stays out of
+    /// the new competency-booklet UI.
     public private(set) var xp: Int = 0
 
     /// XP required to reach the next level.
@@ -29,16 +52,62 @@ public final class HomeViewModel {
     /// Number of kanji cards the user has learned (reviewed at least once).
     public private(set) var kanjiLearnedCount: Int = 0
 
-    /// Lifetime review count for the active profile's `RPGState`. Home reads
-    /// this (before vs. after a session) to detect the learner's first-ever
-    /// completed session, which drives the one-time daily-term prompt.
+    /// **Not** the lifetime review count shown anywhere to the learner —
+    /// despite the name, this mirrors `RPGState.totalReviewsCompleted`
+    /// verbatim (see that field's doc comment for why it's non-authoritative
+    /// as of GAP-13, and for the full list of what writes it), kept exactly
+    /// as-is on purpose: Home only reads it (before vs. after a session) to
+    /// detect a "has this profile's session/Watch counter moved past 0" 0 →
+    /// >0 transition, which drives the one-time daily-term prompt. This is
+    /// an approximation, not a precise "first session" signal even today —
+    /// e.g. a Watch quiz result can also move it — but re-deriving it from
+    /// `ReviewLog` (like `advancedThresholdSignals()` now does for the
+    /// Tatami gate) would make it strictly worse for the common case: any
+    /// learner who did a kana drill before their first session (a very
+    /// likely order) would walk into that first session with the derived
+    /// count already >0, so the prompt would never fire for them at all.
+    /// Any DISPLAY of a lifetime review count must go through
+    /// `CardRepository.activeProfileReviewCount()`.
     public private(set) var totalReviewsCompleted: Int = 0
+
+    /// The lifetime review count derived from `ReviewLog` — the honest one.
+    ///
+    /// Exists alongside `totalReviewsCompleted` above because the two answer
+    /// genuinely different questions, and collapsing them would break one of
+    /// the two callers:
+    ///
+    /// - a **transition** (`0` → `>0` across one session) wants the RPG
+    ///   counter, for the reason spelled out above: a learner who drilled
+    ///   kana before their first session would already be `>0` here, so the
+    ///   one-time prompt keyed on it would never fire for them;
+    /// - a **threshold** (`> 0`, "has this learner ever reviewed anything")
+    ///   wants this one. On the RPG counter the answer is wrong for exactly
+    ///   the learner GAP-13 was about — kana-drill-only work journals
+    ///   `ReviewLog` rows without ever touching `RPGState`, so they sit at
+    ///   `0` forever.
+    ///
+    /// Concretely, the bug this closes: someone working only through
+    /// Explore → Kana finishes their whole set, nothing is due, and the
+    /// "all caught up" explainer written precisely for them never appears.
+    public private(set) var derivedReviewCount: Int = 0
 
     /// Estimated card count for the next session preview.
     public private(set) var sessionPreviewCardCount: Int = 0
 
     /// Estimated time in minutes for the next session.
     public private(set) var sessionPreviewMinutes: Int = 0
+
+    /// Which caught-up offers can actually produce a session right now.
+    ///
+    /// Drives the proposal shown when `todayKind == .empty`. Empty set means
+    /// there is genuinely nothing left — every card mastered and no new
+    /// content — which is the only case where "all caught up" should stay a
+    /// full stop rather than an invitation.
+    ///
+    /// This is computed rather than assumed so the UI never renders a button
+    /// that does nothing on tap. A silently inert control is the exact defect
+    /// this proposal exists to remove.
+    public private(set) var caughtUpOffers: Set<SessionPlannerInputs.CaughtUpOffer> = []
 
     /// Recent achievement text (e.g., "Unlocked Listening!").
     public private(set) var recentAchievement: String?
@@ -55,6 +124,22 @@ public final class HomeViewModel {
     /// Kana mastery (familiar+), for the calm "X/92" progress line on Home.
     public private(set) var kanaProgress: KanaProgress =
         KanaProgress(hiraganaMastered: 0, katakanaMastered: 0)
+
+    /// Aggregate mastery-level counts across kana cards + the personal
+    /// vocabulary dictionary — the "livret de compétence" (competency
+    /// booklet) mirror. See `MasteryBookCounts`'s doc comment and the
+    /// 2026-08-10 review (erreur de conception #4 — "tu as enlevé le fouet
+    /// sans installer le miroir").
+    public private(set) var masteryBook: MasteryBookCounts = MasteryBookCounts()
+
+    /// Net change in `masteryBook.knownCount` (familiar-or-better) since the
+    /// current weekly baseline, or nil when no baseline exists yet at all
+    /// (this profile's first-ever Home load). The baseline itself rolls
+    /// forward only once a full week has passed — see
+    /// `MasteryBookSnapshotStore`'s doc comment — so this delta stays
+    /// visible for the whole week, not just a single load. Persisted in
+    /// UserDefaults, no SwiftData schema involved.
+    public private(set) var masteryBookWeeklyDelta: Int?
 
     /// Whether Home should invite the learner to choose a kana study set before
     /// practising (the soft "choose your kana" gate). True only for a fresh
@@ -157,6 +242,10 @@ public final class HomeViewModel {
     private let cardRepository: CardRepository
     private let plannerService: PlannerService
     private let progressService: ProgressService
+    /// Feeds the vocabulary half of `masteryBook` — the personal dictionary
+    /// is a separate SwiftData model from `Card`, so it needs its own
+    /// repository (mirrors how `VocabularyDictionaryViewModel` reads it).
+    private let vocabularyRepository: VocabularyRepository
     /// Canonical planner — same instance type as `SessionViewModel` uses,
     /// so the preview counts always match what `startSession()` will serve.
     private let sessionPlanner: DefaultSessionPlanner
@@ -169,6 +258,7 @@ public final class HomeViewModel {
         self.cardRepository = repo
         self.plannerService = PlannerService(cardRepository: repo)
         self.progressService = ProgressService(cardRepository: repo)
+        self.vocabularyRepository = VocabularyRepository(modelContainer: modelContainer)
         self.sessionPlanner = DefaultSessionPlanner()
     }
 
@@ -182,6 +272,7 @@ public final class HomeViewModel {
         self.cardRepository = cardRepository
         self.plannerService = plannerService
         self.progressService = ProgressService(cardRepository: cardRepository)
+        self.vocabularyRepository = VocabularyRepository(modelContainer: modelContainer)
         self.sessionPlanner = DefaultSessionPlanner()
     }
 
@@ -242,12 +333,27 @@ public final class HomeViewModel {
     }
 
     /// Returns the current threshold signals for the active profile.
-    /// Reads `RPGState` for total reviews / active days and the card
-    /// repository for the mastered-card count. Safe to call on the main actor.
+    /// Reviews come from `CardRepository.activeProfileReviewCount()` — the
+    /// `ReviewLog`-derived, cross-surface count (GAP-13) — not from
+    /// `RPGState.totalReviewsCompleted`, which only ever credited the main
+    /// SRS session and undercounted kana-drill reviews. Active days still
+    /// reads `RPGState` (that counter has no equivalent divergence — see its
+    /// own doc comment). Safe to call on the main actor.
+    ///
+    /// **No production call site as of GAP-13 (2026-08).** This method is
+    /// NOT the live Tatami-mode eligibility gate — `TatamiEligibilityRow`
+    /// computes its own `reviews`/`mastery`/`activeDays` independently
+    /// (see that file) rather than calling this one. It is kept (and its
+    /// review source fixed alongside the rest of GAP-13) because it is
+    /// public API on `HomeViewModel` and `IkeruCore/Tests` exercises the
+    /// `DisplayModeAdvancedThresholdMonitor` logic it wraps directly — but
+    /// wiring it into Home, or deleting it in favor of always going through
+    /// `TatamiEligibilityRow`, is unresolved follow-up, not something this
+    /// fix should be read as having shipped.
     public func advancedThresholdSignals() async -> AdvancedThresholdSignals {
         let context = modelContainer.mainContext
         let rpg = ActiveProfileResolver.fetchActiveRPGState(in: context)
-        let reviews = rpg?.totalReviewsCompleted ?? 0
+        let reviews = await cardRepository.activeProfileReviewCount()
         let activeDays = rpg?.activeDaysCount ?? 0
         let allCards = await cardRepository.allCards()
         let masteryCount = allCards.filter { card in
@@ -291,9 +397,11 @@ public final class HomeViewModel {
         // chooser instead of silently receiving cards.
         await refreshStudySetGate()
         await loadRPGState()
+        await loadDerivedReviewCount()
         await loadDueCardCount()
         await loadKanjiLearnedCount()
         await loadKanaProgress()
+        await loadMasteryBook()
         // Skill balance must load BEFORE the snapshot consumers below
         // (`loadNextStep` / `composeSessionPreview` feed `skillBalance` into the
         // planner), otherwise they read the previous cycle's stale value.
@@ -383,6 +491,13 @@ public final class HomeViewModel {
         dueCardCount = dueCards.count
     }
 
+    /// Refreshes `derivedReviewCount` from `ReviewLog`. A pure read, no
+    /// cache — the same source `TatamiEligibilityRow` uses, so the two can
+    /// never drift apart the way the hand-incremented counter did.
+    private func loadDerivedReviewCount() async {
+        derivedReviewCount = await cardRepository.activeProfileReviewCount()
+    }
+
     private func loadKanjiLearnedCount() async {
         let allCards = await cardRepository.allCards()
         kanjiLearnedCount = allCards.filter { $0.fsrsState.reps > 0 }.count
@@ -391,6 +506,41 @@ public final class HomeViewModel {
     private func loadKanaProgress() async {
         let allCards = await cardRepository.allCards()
         kanaProgress = KanaProgress.from(cards: allCards)
+    }
+
+    /// Loads the competency-booklet mirror: combines SRS card mastery (kana
+    /// today) with the personal vocabulary dictionary, then diffs against a
+    /// week-old UserDefaults baseline (`MasteryBookSnapshotStore`) for the
+    /// weekly delta. No SwiftData schema involved — see the store's doc
+    /// comment for why a schema-backed history table isn't used here.
+    private func loadMasteryBook() async {
+        let cards = await cardRepository.allCards()
+        // Guard the vocabulary fetch on the container actually carrying the
+        // `VocabularyEntry` entity. Production's schema always does
+        // (`IkeruSchema`), but a caller can construct `HomeViewModel` with a
+        // narrower `ModelContainer` (e.g. a test schema listing only
+        // `UserProfile`/`Card`/`ReviewLog`/`RPGState`) — fetching an entity
+        // absent from the container's schema is a programmer-error case
+        // SwiftData is not guaranteed to fail gracefully on, so this is
+        // checked ahead of the fetch rather than merely wrapped in `try?`.
+        let vocabModelIsRegistered = modelContainer.schema.entities.contains { $0.name == "VocabularyEntry" }
+        let vocabEntries: [VocabularyEntryDTO]
+        if vocabModelIsRegistered {
+            vocabEntries = await vocabularyRepository.allEntries()
+        } else {
+            vocabEntries = []
+        }
+        let counts = MasteryBookCounts.from(cards: cards) + MasteryBookCounts.from(vocabularyEntries: vocabEntries)
+        masteryBook = counts
+
+        guard let profileID = ActiveProfileResolver.activeProfileID() else {
+            masteryBookWeeklyDelta = nil
+            return
+        }
+        masteryBookWeeklyDelta = MasteryBookSnapshotStore
+            .priorSnapshot(profileID: profileID)
+            .map { counts.delta(from: $0) }
+        MasteryBookSnapshotStore.recordIfStale(profileID: profileID, counts: counts)
     }
 
     /// Computes the single "do this next" suggestion from a real snapshot of the
@@ -428,29 +578,45 @@ public final class HomeViewModel {
         let durationMinutes = UserDefaults.standard.integer(forKey: "ikeru.session.defaultDurationMinutes")
         let effectiveDuration = durationMinutes > 0 ? durationMinutes : 15
 
-        // Build a minimal snapshot so the planner can size the segments. Real
-        // skill balances are fed (via `skillBalance`) so the preview's booster
-        // segment targets the same weakest skill the real session will — the
-        // hero SRS-review count is unaffected either way, but keeping the input
-        // consistent with `SessionViewModel.buildSnapshot` avoids preview drift.
-        let unlockedTypes = Set(ExerciseType.allCases)
+        // L'aperçu construit désormais le MÊME instantané que la séance réelle,
+        // et le même ensemble déverrouillé.
+        //
+        // Il fabriquait auparavant un `LearnerSnapshot` rempli de zéros
+        // (`hiraganaMastered: false`, tous les compteurs à 0) et se donnait
+        // `Set(ExerciseType.allCases)` comme ensemble déverrouillé — c'est-à-dire
+        // qu'il dimensionnait la séance sur des exercices que l'apprenant
+        // n'avait pas débloqués. Le commentaire d'origine disait vouloir
+        // « éviter la dérive de l'aperçu » ; c'est exactement ce qu'il
+        // produisait. L'accueil annonçait « ~N min » pour une séance qui n'en
+        // durerait pas autant.
+        //
+        // Trouvé le 2026-08-28 en faisant descendre `.writingPractice` au N5 :
+        // un test d'aperçu est passé de 1 à 5 minutes alors que la séance réelle
+        // n'aurait pas bougé, l'écriture n'étant pas déverrouillée pour ce
+        // profil. La cause n'était pas le nouveau seuil, c'était l'aperçu.
+        let snapshot = LearnerSnapshotBuilder.build(
+            cards: cards,
+            jlptLevel: .n5,
+            listeningAccuracyLast30: 0,
+            listeningRecallLast30Days: 0,
+            skillBalances: skillBalance.asSkillBalances,
+            hasNewContentQueued: cards.contains { $0.fsrsState.reps == 0 },
+            lastSessionAt: nil,
+            now: Date()
+        )
+        // Même union que `SessionComposer.effectiveUnlockedTypes` : l'évaluation
+        // vivante des seuils, plus les déverrouillages déjà acquis, qu'un profil
+        // conserve même si ses compteurs redescendent.
+        let acknowledged = ActiveProfileResolver
+            .fetchActiveRPGState(in: modelContainer.mainContext)?
+            .acknowledgedUnlocks ?? []
+        let unlockedTypes = DefaultExerciseUnlockService()
+            .unlockedTypes(profile: snapshot)
+            .union(acknowledged)
         let inputs = SessionPlannerInputs(
             source: .homeRecommendation,
             durationMinutes: effectiveDuration,
-            profile: LearnerSnapshot(
-                jlptLevel: .n5,
-                vocabularyMasteredFamiliarPlus: 0,
-                kanjiMasteredFamiliarPlus: 0,
-                hiraganaMastered: false,
-                katakanaMastered: false,
-                grammarPointsFamiliarPlus: 0,
-                listeningAccuracyLast30: 0,
-                listeningRecallLast30Days: 0,
-                skillBalances: skillBalance.asSkillBalances,
-                dueCardCount: cards.filter { $0.dueDate <= Date() }.count,
-                hasNewContentQueued: cards.contains(where: { $0.fsrsState.reps == 0 }),
-                lastSessionAt: nil
-            ),
+            profile: snapshot,
             unlockedTypes: unlockedTypes,
             availableCards: cards
         )
@@ -483,6 +649,11 @@ public final class HomeViewModel {
         }
         sessionPreviewNewCount = newCount
         sessionPreviewReviewCount = reviewCount
+
+        // What can still be offered once there is nothing due. Computed from
+        // the same `cards` snapshot the preview used, so the proposal and the
+        // count it replaces can never disagree.
+        caughtUpOffers = DefaultSessionPlanner.caughtUpAvailability(cards: cards)
         Logger.ui.debug(
             "Session preview (planner): \(srsItems.count) SRS (\(newCount) new / \(reviewCount) review), ~\(self.sessionPreviewMinutes) min"
         )

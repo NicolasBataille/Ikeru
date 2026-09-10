@@ -8,6 +8,14 @@ public enum EncounterSource: String, Sendable, Codable, CaseIterable, Identifiab
     case kanaDrill
     case kanjiStudy
 
+    /// Met in a text the learner brought in themselves.
+    ///
+    /// ⚠️ A client that predates this case reads an unknown raw value and falls
+    /// back to `.sakuraChat` — it will not crash, but it will **misfile** the
+    /// encounter. Known and accepted: the alternative was a migration on a
+    /// frozen entity, for a label.
+    case importedText
+
     public var id: String { rawValue }
 
     public var label: String {
@@ -17,6 +25,7 @@ public enum EncounterSource: String, Sendable, Codable, CaseIterable, Identifiab
         case .readingPassage: "Reading"
         case .kanaDrill: "Kana Drill"
         case .kanjiStudy: "Kanji Study"
+        case .importedText: "Imported Text"
         }
     }
 
@@ -27,6 +36,7 @@ public enum EncounterSource: String, Sendable, Codable, CaseIterable, Identifiab
         case .readingPassage: "book"
         case .kanaDrill: "character.hiragana"
         case .kanjiStudy: "character.ja"
+        case .importedText: "doc.text"
         }
     }
 }

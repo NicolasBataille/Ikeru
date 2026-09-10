@@ -12,14 +12,28 @@ import os
 /// 2. Drop anything already used on a previous day (`usedWords`).
 /// 3. Drop anything the user has already added to their personal dictionary
 ///    (`existingDictionaryWords`).
-/// 4. Score the remaining candidates against the day's tags
-///    (season, weekday, time of year). Higher score = better match.
-/// 5. Tiebreak with a deterministic hash seeded by the date so the same
+/// 4. When a learner level is supplied, drop candidates whose JLPT level is
+///    clearly above the learner's reach (more than one step harder — see
+///    `isWithinReach`). Candidates outside the JLPT scale (`jlptLevel ==
+///    nil`, e.g. business/industrial loanwords) are never dropped by this
+///    step — the catalog leans heavily on them and excluding them would
+///    starve the pool — but they are scored below any in-reach levelled
+///    word (see step 5) so a beginner isn't handed jargon over a word
+///    that's actually suited to them, on days when one is available.
+/// 5. Score the remaining candidates. When a learner level is known, level
+///    fit is the primary axis (matched-or-below > one-step "stretch" >
+///    off-scale, with off-scale nudged back up once the learner is past
+///    N4) and the day's tags (season, weekday, time of year) only break
+///    ties within the same level tier. Without a learner level, tags alone
+///    decide, as before.
+/// 6. Tiebreak with a deterministic hash seeded by the date so the same
 ///    day always produces the same word for the same user.
 ///
 /// If nothing survives the filters (very unlikely with the built-in catalog
 /// of ~50 entries), fall back to the seasonal pool, then to the full
-/// catalog. This guarantees a term every day.
+/// catalog. This guarantees a term every day — the level filter in step 4
+/// degrades the same way: if it would leave nothing to pick from, it's
+/// skipped rather than block selection.
 public struct DailyTermService: Sendable {
 
     private let repository: DailyTermRepository
@@ -70,10 +84,16 @@ public struct DailyTermService: Sendable {
     /// Returns the term for the given day, generating and persisting it
     /// on first call. Repeats are avoided across past days and against
     /// the supplied dictionary words.
+    ///
+    /// - Parameter learnerLevel: the learner's current JLPT level, if
+    ///   known. Only consulted the first time a day's term is generated —
+    ///   once persisted, a day's term never changes, even if the caller
+    ///   passes a different level on a later call for the same day.
     @discardableResult
     public func termForDay(
         _ day: Date = Date(),
-        existingDictionaryWords: Set<String> = []
+        existingDictionaryWords: Set<String> = [],
+        learnerLevel: JLPTLevel? = nil
     ) async -> DailyTermDTO {
         let normalised = calendar.startOfDay(for: day)
 
@@ -84,7 +104,7 @@ public struct DailyTermService: Sendable {
         let usedWords = await repository.usedWords()
             .union(existingDictionaryWords)
 
-        let candidate = pickCandidate(for: normalised, excluding: usedWords)
+        let candidate = pickCandidate(for: normalised, excluding: usedWords, learnerLevel: learnerLevel)
         // Persist the English text as a safety net (back-compat with rows
         // that may be read by a future build without locale awareness).
         // Reads always re-derive via `localized(_:)` so the persisted
@@ -137,29 +157,45 @@ public struct DailyTermService: Sendable {
     /// Pure selection function — exposed for tests.
     ///
     /// Algorithm:
-    /// 1. Drop catalog entries already present in `usedWords`.
-    /// 2. If the working pool is empty (every catalog word has been used),
-    ///    fall back to the full catalog and use the date seed both for
-    ///    scoring and as the modulo index, so consecutive days continue
-    ///    to vary instead of locking on a single word.
-    /// 3. Score each candidate by the number of overlapping tags with the
-    ///    day's tags (season/weekday/month). Pick from the top-scoring
-    ///    bucket, tiebroken by `dateSeed`.
+    /// 1. Drop catalog entries already present in `usedWords`. If that
+    ///    empties the pool, fall back to the full catalog (existing
+    ///    exhaustion behaviour, unchanged).
+    /// 2. When `learnerLevel` is supplied, drop candidates clearly above
+    ///    the learner's reach (`isWithinReach`). If that would empty the
+    ///    pool, skip the filter rather than fail to produce a term.
+    /// 3. Score each remaining candidate. With no `learnerLevel`, the
+    ///    score is the tag-overlap count, exactly as before. With a
+    ///    `learnerLevel`, level fit (`levelFitBonus`) is weighted so far
+    ///    above tag overlap that it always decides first — tags only
+    ///    break ties between candidates at the same level tier.
+    /// 4. Pick from the top-scoring bucket, tiebroken by `dateSeed`.
     public func pickCandidate(
         for day: Date,
-        excluding usedWords: Set<String>
+        excluding usedWords: Set<String>,
+        learnerLevel: JLPTLevel? = nil
     ) -> DailyTermCandidate {
         let dayTags = Self.tags(for: day, calendar: calendar)
         let seed = Self.dateSeed(for: day, calendar: calendar)
 
-        let pool = catalog.filter { !usedWords.contains($0.word) }
-        let workingPool = pool.isEmpty ? catalog : pool
+        let unusedPool = catalog.filter { !usedWords.contains($0.word) }
+        let basePool = unusedPool.isEmpty ? catalog : unusedPool
+
+        let inReach = basePool.filter { Self.isWithinReach($0, of: learnerLevel) }
+        let workingPool = inReach.isEmpty ? basePool : inReach
 
         let scored: [(candidate: DailyTermCandidate, score: Int)] = workingPool.map { candidate in
-            let overlap = candidate.tags.reduce(0) { acc, tag in
+            let tagOverlap = candidate.tags.reduce(0) { acc, tag in
                 acc + (dayTags.contains(tag) ? 1 : 0)
             }
-            return (candidate, overlap)
+            guard let learnerLevel else {
+                // No level known — legacy behaviour, tags alone decide.
+                return (candidate, tagOverlap)
+            }
+            let levelFit = Self.levelFitBonus(candidate.jlptLevel, learnerLevel: learnerLevel)
+            // Level fit is weighted well above the maximum possible tag
+            // overlap so it always wins the comparison first; tags only
+            // break ties among candidates in the same level tier.
+            return (candidate, levelFit * 100 + tagOverlap)
         }
 
         let bestScore = scored.map(\.score).max() ?? 0
@@ -175,6 +211,34 @@ public struct DailyTermService: Sendable {
         let ordered = topCandidates.sorted { $0.word < $1.word }
         let index = Int(seed % UInt64(max(ordered.count, 1)))
         return ordered[index]
+    }
+
+    /// Whether a candidate is appropriate for the learner's level: at or
+    /// below it, or at most one JLPT step harder (a deliberate "stretch"
+    /// word). Candidates outside the JLPT scale (`jlptLevel == nil`) are
+    /// always considered within reach — the catalog leans heavily on
+    /// non-JLPT cultural/industrial vocabulary, and hard-excluding it would
+    /// starve the pool; see `levelFitBonus` for how it's still deprioritised
+    /// for early learners. No `learnerLevel` also always returns true
+    /// (level-blind selection, the pre-existing behaviour).
+    static func isWithinReach(_ candidate: DailyTermCandidate, of learnerLevel: JLPTLevel?) -> Bool {
+        guard let learnerLevel, let candidateLevel = candidate.jlptLevel else { return true }
+        let stepsHarder = learnerLevel.number - candidateLevel.number
+        return stepsHarder <= 1
+    }
+
+    /// Scoring bonus used to rank candidates that already passed
+    /// `isWithinReach`: a matched-or-easier level scores highest, the
+    /// one-step-harder "stretch" level scores lowest, and off-scale
+    /// (`nil`) content sits in between for learners past their first two
+    /// levels but is nudged to the bottom — alongside the stretch level —
+    /// for N5/N4 learners, so a beginner is offered an actual levelled
+    /// word over a curiosity whenever one is available that day.
+    static func levelFitBonus(_ candidateLevel: JLPTLevel?, learnerLevel: JLPTLevel) -> Int {
+        guard let candidateLevel else {
+            return learnerLevel <= .n4 ? 0 : 2
+        }
+        return candidateLevel <= learnerLevel ? 3 : 1
     }
 
     /// Composes a date-aware caption for the term. Rotates among a few

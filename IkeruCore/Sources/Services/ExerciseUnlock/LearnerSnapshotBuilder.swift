@@ -42,6 +42,24 @@ public enum LearnerSnapshotBuilder {
         "\u{30EF}", "\u{30F2}", "\u{30F3}",                          // ワヲン
     ]
 
+    /// Les ~116 kana qui ne sont PAS parmi les 92 de base : dakuten,
+    /// handakuten et yōon.
+    ///
+    /// Séparé des deux ensembles de base parce que ces caractères doivent
+    /// répondre différemment à deux questions distinctes (OBS2-034) :
+    /// « est-ce une carte de vocabulaire ? » → **non**, ce sont des kana ;
+    /// « comptent-ils dans le seuil de maîtrise des 46 caractères ? » →
+    /// **non plus**, ce seuil porte sur le syllabaire de base.
+    ///
+    /// Avant ce correctif, seuls les 92 de base étaient reconnus : un
+    /// apprenant qui maîtrisait ぎゃ, ピョ ou づ voyait ces cartes comptées
+    /// comme du **vocabulaire** et pouvait franchir deux portes d'exercice
+    /// réservées au vocabulaire avec zéro mot appris. La garde existait, elle
+    /// s'arrêtait à mi-chemin.
+    static let extendedKana: Set<String> = Set(
+        KanaGroup.allExtendedCharacters.map(\.character)
+    )
+
     public static func build(
         cards: [CardDTO],
         jlptLevel: JLPTLevel,
@@ -83,13 +101,21 @@ public enum LearnerSnapshotBuilder {
             // kana cards as `CardType.vocabulary`, not `.kanji`. Match
             // explicitly against the 46 base hiragana / katakana sets so
             // dakuten and small/extended kana don't falsely satisfy the
-            // 46-character mastery threshold.
+            // 46-character mastery threshold — then against `extendedKana`
+            // just below, so they aren't miscounted as vocabulary either.
             if baseHiragana.contains(card.front) {
                 if familiarPlus { hiraganaFamiliarFronts.insert(card.front) }
                 continue
             }
             if baseKatakana.contains(card.front) {
                 if familiarPlus { katakanaFamiliarFronts.insert(card.front) }
+                continue
+            }
+            // Dakuten / handakuten / yōon : des kana, donc jamais du
+            // vocabulaire — mais volontairement SANS insertion dans les
+            // ensembles ci-dessus, le seuil des 46 portant sur le syllabaire
+            // de base seul (OBS2-034).
+            if extendedKana.contains(card.front) {
                 continue
             }
 

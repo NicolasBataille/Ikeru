@@ -3,11 +3,23 @@ import Observation
 import os
 
 /// Composes study sessions by selecting and ordering cards.
-/// Supports both basic (Story 1.5) and adaptive (Story 5.1) composition.
 ///
-/// Basic `composeSession()` is preserved as a backward-compatible fallback.
-/// Adaptive `composeAdaptiveSession(config:)` uses skill balancing, time adaptation,
-/// silent mode, and pedagogical sequencing.
+/// Only `composeSession()` remains: due cards plus at most
+/// `maxNewCardsPerSession` new ones, no skill balancing. Session composition
+/// proper lives in `DefaultSessionPlanner`.
+///
+/// `composeAdaptiveSession(config:)` was deleted on 2026-08-16 along with its
+/// two callers. It was deprecated, and — measured, not assumed — no view, no
+/// shortcut and no Watch target reached it: `loadSessionPreview` and
+/// `startAdaptiveSession` were called by tests alone. It is worth recording
+/// what it did, because two `withKnownIssue` assertions described its output
+/// as a product defect: given an EMPTY card store it composed a ~25-item
+/// session, ~22 of them reading drills, because its supplementary filler
+/// spent the whole time budget re-picking the single highest-deficit skill
+/// and fabricated `.grammarExercise` placeholders with no backing card. That
+/// was real, and it was also unreachable — the live path
+/// (`DefaultSessionPlanner`) returns an empty plan and the app shows the
+/// caught-up proposal instead.
 ///
 /// All composition logic is pure — no side effects, no database writes.
 @Observable
@@ -56,63 +68,6 @@ public final class PlannerService: @unchecked Sendable {
 
     // MARK: - Adaptive Composition (Story 5.1)
 
-    /// Composes an adaptive session plan considering skill balance, time, and context.
-    ///
-    /// This is a pure function — takes inputs, returns a SessionPlan, no side effects.
-    /// - Parameter config: Session configuration including time, mode, and balance data.
-    /// - Returns: A SessionPlan with ordered exercises, timing estimates, and skill breakdown.
-    @available(*, deprecated, message: "Use DefaultSessionPlanner.compose(inputs:) instead.")
-    public func composeAdaptiveSession(config: SessionConfig) async -> SessionPlan {
-        let startTime = CFAbsoluteTimeGetCurrent()
-
-        let now = Date()
-        // Most-overdue-first: `selectSRSCards` below prefix-truncates to
-        // `duration.maxSRSCards`, so an unsorted feed would silently drop
-        // whichever due cards happened to sort last in storage rather than
-        // the least urgent ones.
-        let dueCards = await cardRepository.dueCardsSortedByDueDate(before: now)
-        let allCards = await cardRepository.allCards()
-
-        let duration = SessionDuration.from(minutes: config.availableTimeMinutes)
-        let timeBudgetSeconds = config.availableTimeMinutes * 60
-
-        // Step 1: Select SRS review cards (always take priority)
-        let srsCards = selectSRSCards(dueCards: dueCards, allCards: allCards, duration: duration)
-
-        // Step 2: Build SRS exercises
-        var exercises: [ExerciseItem] = srsCards.map { .srsReview($0) }
-        var usedTimeSeconds = exercises.reduce(0) { $0 + $1.estimatedDurationSeconds }
-
-        // Step 3: Add supplementary exercises if time allows and tier supports it
-        if duration.includesSupplementary && usedTimeSeconds < timeBudgetSeconds {
-            let remainingSeconds = timeBudgetSeconds - usedTimeSeconds
-            let supplementary = composeSupplementaryExercises(
-                config: config,
-                duration: duration,
-                remainingSeconds: remainingSeconds,
-                allCards: allCards
-            )
-            exercises.append(contentsOf: supplementary)
-            usedTimeSeconds = exercises.reduce(0) { $0 + $1.estimatedDurationSeconds }
-        }
-
-        // Step 4: Build the plan
-        let estimatedMinutes = max(0, usedTimeSeconds / 60)
-        let breakdown = computeBreakdown(exercises: exercises)
-
-        let plan = SessionPlan(
-            exercises: exercises,
-            estimatedDurationMinutes: estimatedMinutes,
-            exerciseBreakdown: breakdown
-        )
-
-        let elapsed = (CFAbsoluteTimeGetCurrent() - startTime) * 1000
-        Logger.planner.info(
-            "Adaptive session composed: \(exercises.count) exercises, ~\(estimatedMinutes)min (\(elapsed, format: .fixed(precision: 1))ms)"
-        )
-
-        return plan
-    }
 
     // MARK: - Skill Balance Computation
 

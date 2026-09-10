@@ -35,7 +35,29 @@ struct AttributionView: View {
                 .font(.ikeruBody)
                 .foregroundStyle(.ikeruTextSecondary)
 
-            Text("Vocabulary, kanji readings, grammar notes, and example sentences are original content written for Ikeru.")
+            // "kanji readings" was in this sentence until 2026-08-15, and it
+            // was false — they are KANJIDIC-derived (see the note on
+            // `Attribution.all`). This is the line a learner actually READS;
+            // fixing only the source comment would have left the claim on
+            // screen and the correction where nobody looks.
+            // Same trap sprung again on 2026-08-19: "Meanings … are written
+            // for Ikeru" was true until `jmdict.sqlite` shipped. Every
+            // definition a learner reads while importing their own text is
+            // JMdict's, so the claim is scoped to the lessons instead of
+            // being left standing one release too long. Split in two rather
+            // than stretched: one sentence longer and the line breaks the
+            // strict lint on changed lines, and shortening it meant dropping
+            // the "most" in front of "example sentences" — which would trade
+            // one overclaim for another.
+            // "Vocabulary", not just "meanings": the 693 vocabulary glosses
+            // are hand-authored, but the kanji meanings in the lessons are
+            // KANJIDIC-derived — the card below says so. Unqualified, this
+            // sentence contradicted a credit printed on the same screen.
+            Text("The vocabulary meanings and grammar notes in Ikeru's lessons are written for Ikeru. The definitions shown for the texts you import come from JMdict.")
+                .font(.ikeruCaption)
+                .foregroundStyle(.ikeruTextSecondary)
+
+            Text("Kanji readings come from KANJIDIC, the N5 word list from Tanos, most example sentences from Tatoeba — all credited below.")
                 .font(.ikeruCaption)
                 .foregroundStyle(.ikeruTextSecondary)
         }
@@ -69,6 +91,26 @@ struct AttributionView: View {
             Text(item.description)
                 .font(.ikeruCaption)
                 .foregroundStyle(.ikeruTextSecondary)
+
+            // The EDRDG licence does not merely permit a link, it asks for one:
+            // "provide copies of the documentation and licence files … Where the
+            // application packaging does not provide for the inclusion of such
+            // files (e.g. with iPhone applications), it is sufficient to provide
+            // links". We are exactly that case, so this row is a compliance
+            // requirement for KANJIDIC, not decoration. It is offered for the
+            // other sources too — the same courtesy costs nothing.
+            if let licenceURL = item.licenceURL {
+                Link(destination: licenceURL) {
+                    HStack(spacing: 4) {
+                        Text("Read the licence")
+                        Image(systemName: "arrow.up.right")
+                            .font(.system(size: 10, weight: .semibold))
+                    }
+                    .font(.ikeruCaption)
+                    .foregroundStyle(Color.ikeruPrimaryAccent)
+                }
+                .padding(.top, 2)
+            }
         }
         .tatamiRoom(.standard)
     }
@@ -81,6 +123,11 @@ struct Attribution: Identifiable {
     let name: String
     let author: String
     let license: String
+    /// Where the licence text itself can be read. Optional so a source without
+    /// a canonical online licence page does not have to invent one — but the
+    /// EDRDG licence explicitly asks for this link on apps that cannot bundle
+    /// the documentation files, which is every iOS app.
+    let licenceURL: URL?
     /// Typed as `LocalizedStringKey` (not `String`) so the literals below
     /// resolve against the string catalog when rendered via `Text(_:)`
     /// instead of falling into the verbatim initializer — see CLAUDE.md.
@@ -88,18 +135,88 @@ struct Attribution: Identifiable {
 
     /// Resources actually used by the shipped content bundle and app.
     ///
-    /// Kept intentionally short: kanji readings/meanings/radicals,
-    /// vocabulary, and example sentences are hand-authored for Ikeru
-    /// (see `scripts/generate-content-bundle.swift`) rather than imported
-    /// from JMdict, KANJIDIC/RADKFILE, or the Tatoeba corpus, so those are
-    /// not credited here.
+    /// The bundle is built by `scripts/generate_content_bundles.py`. Two other
+    /// generators in `scripts/` are dead demo stubs; the headers claiming they
+    /// import KANJIDIC/RADKFILE describe neither the shipped data nor a live
+    /// pipeline, and this comment used to cite one of them as its authority.
+    ///
+    /// Kanji readings and meanings ARE derived from KANJIDIC, and are credited
+    /// below. That was measured, not assumed, on 2026-08-15: all 63 dotted kun
+    /// readings in the bundle are byte-identical to KANJIDIC's okurigana
+    /// convention (`み.つ`, `みっ.つ`), and the on-readings reproduce its own
+    /// ordering in 89 of 90 kanji. The bundle trims KANJIDIC's affix-marked
+    /// entries (`ひと-`, `うわ-`) and keeps a subset — a curation of KANJIDIC
+    /// is still derived from it. CC BY-SA 4.0 is share-alike; whether that
+    /// reaches the app binary is an open question filed against the App Store
+    /// task, and crediting the source is right either way.
+    ///
+    /// Radicals are NOT credited to RADKFILE, on the same evidence: only 36 of
+    /// 90 decompositions match it, and the misses are systematic (the bundle
+    /// writes 八 and 九 where RADKFILE writes its own ハ-shaped radicals).
+    /// Vocabulary *glosses* remain hand-authored — all 693 of them, English and
+    /// French. What is no longer Ikeru's own is the **selection**: 488 of the
+    /// 693 words were picked from the Tanos JLPT N5 list (CC BY, credited
+    /// below), whose site asks for a link. Only the word and its reading came
+    /// from there; the deck's own English gloss column was deliberately not
+    /// imported, because tanos.co.uk states no provenance for it and it is
+    /// plausibly EDICT-derived — see `scripts/tanos/build-vocab-list.py`. The
+    /// split is recorded per row in `vocabulary.list_source`, so "we wrote the
+    /// meanings, they had the list" is a query, not a promise.
+    ///
+    /// Do not add a RADKFILE entry without re-running that diff — crediting a
+    /// source you did not use is its own kind of false claim.
+    ///
+    /// Example sentences are no longer all Ikeru's: 239 of the 335 come from
+    /// Tatoeba under CC BY 2.0 FR (`scripts/tatoeba/`), which requires
+    /// attribution — hence the entry below. Provenance is recorded per row in
+    /// the content bundle (`sentences.source`), so the two sets stay
+    /// distinguishable. Tatoeba *audio* is licensed separately, per
+    /// contributor, and none of it is bundled.
+    ///
+    /// The imported-text feature reads none of that bundle. It reads
+    /// `Ikeru/Resources/ContentBundles/jmdict.sqlite`, built by
+    /// `scripts/jmdict/build-dictionary.py` from JMdict (EDRDG, Monash
+    /// University — https://www.edrdg.org/jmdict/j_jmdict.html). What a
+    /// learner sees when tapping a word of their own text is derived from it,
+    /// end to end: the 218 498 entries themselves, their readings, their
+    /// parts of speech, and both the French and the English glosses. What is
+    /// Ikeru's is the shaping, not the lexicography — which columns are kept,
+    /// the cap at 3 senses of 3 glosses each (`MAX_SENSES`), the decision to
+    /// index the rare and search-only spellings (`rK`/`sK`/`rk`/`sk`) without
+    /// ever displaying them, the `curated` flag that marks a form as already
+    /// on the app's N5 syllabus, and the rule that a French gloss is shown
+    /// when JMdict has one — 7 % of entries, but 43 % of the priority-marked
+    /// ones — and an English gloss otherwise, always labelled as English.
+    ///
+    /// CC BY-SA 4.0 is share-alike, so the derived `jmdict.sqlite` stays under
+    /// that licence. That is the same situation as KANJIDIC above, with the
+    /// same open question about how far share-alike reaches into the app
+    /// binary, filed against the App Store task — and crediting the source is
+    /// right either way.
     @MainActor
     static let all: [Attribution] = [
+        Attribution(
+            id: "kanjidic",
+            name: "KANJIDIC",
+            author: "Electronic Dictionary Research and Development Group",
+            license: "CC BY-SA 4.0",
+            licenceURL: URL(string: "https://www.edrdg.org/edrdg/licence.html"),
+            description: "Kanji readings and meanings in the content bundle are derived from the KANJIDIC database, maintained by the EDRDG at Monash University."
+        ),
+        Attribution(
+            id: "jmdict",
+            name: "JMdict",
+            author: "Electronic Dictionary Research and Development Group",
+            license: "CC BY-SA 4.0",
+            licenceURL: URL(string: "https://www.edrdg.org/edrdg/licence.html"),
+            description: "Entries, readings, parts of speech and definitions for the texts you import are derived from the JMdict dictionary, maintained by the EDRDG at Monash University."
+        ),
         Attribution(
             id: "kanjivg",
             name: "KanjiVG",
             author: "Ulrich Apel",
             license: "CC BY-SA 3.0",
+            licenceURL: URL(string: "https://creativecommons.org/licenses/by-sa/3.0/"),
             description: "Stroke order data for kanji characters. Provides the vector paths used in stroke order animations and tracing exercises."
         ),
         Attribution(
@@ -107,13 +224,31 @@ struct Attribution: Identifiable {
             name: "Noto Serif JP",
             author: "Google Fonts",
             license: "SIL OFL 1.1",
+            licenceURL: URL(string: "https://openfontlicense.org"),
             description: "Japanese serif typeface bundled with the app, used to render kanji and Japanese text on every device."
+        ),
+        Attribution(
+            id: "tatoeba",
+            name: "Tatoeba",
+            author: "Tatoeba contributors — tatoeba.org",
+            license: "CC BY 2.0 FR",
+            licenceURL: URL(string: "https://creativecommons.org/licenses/by/2.0/fr/"),
+            description: "Japanese example sentences reproduced unchanged from Tatoeba; French lightly normalized (spacing, apostrophes). Its audio is licensed separately, per contributor, unused."
+        ),
+        Attribution(
+            id: "tanos",
+            name: "Tanos JLPT lists",
+            author: "Jonathan Waller — tanos.co.uk",
+            license: "CC BY",
+            licenceURL: URL(string: "http://www.tanos.co.uk/jlpt/sharing/"),
+            description: "The JLPT N5 word list and its readings come from Jonathan Waller's JLPT resources. The meanings shown in Ikeru are written for Ikeru, not taken from there."
         ),
         Attribution(
             id: "voicevox",
             name: "VOICEVOX：四国めたん",
             author: "VOICEVOX / Hiroshiba",
             license: "VOICEVOX Terms (credit required)",
+            licenceURL: URL(string: "https://voicevox.hiroshiba.jp/term/"),
             description: "Pronunciation audio for kana, vocabulary, and example sentences is pre-generated with the free VOICEVOX speech engine (voice: 四国めたん) and bundled for offline playback — no setup required."
         ),
     ]

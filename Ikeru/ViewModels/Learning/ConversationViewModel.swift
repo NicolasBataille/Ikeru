@@ -72,6 +72,14 @@ public final class ConversationViewModel: Identifiable {
     /// ConversationView; consumed (and cleared) on first appear.
     public var seedTopic: ConversationTopic?
 
+    /// The learner's app interface language (FR/EN), read from the `\.locale`
+    /// environment by `ConversationView` and mirrored here so it can be
+    /// forwarded to `ConversationService.sendMessage` — Sakura writes
+    /// translations/corrections in this language instead of guessing from
+    /// what the learner types. Defaults to `.current` so a view model built
+    /// without the wiring (tests, previews) still behaves reasonably.
+    public var interfaceLocale: Locale = .current
+
     // MARK: - Computed
 
     /// Whether the send button should be enabled.
@@ -108,14 +116,22 @@ public final class ConversationViewModel: Identifiable {
 
     // MARK: - Init
 
+    /// Le prénom donné à l'onboarding, transmis à Sakura comme préférence
+    /// souple (OBS2-028). Vide par défaut : les `#Preview` et les tests
+    /// construisent le modèle sans profil, et le prompt reste alors
+    /// rigoureusement inchangé.
+    private let learnerName: String
+
     public init(
         conversationService: ConversationService,
         jlptLevel: JLPTLevel = .n5,
         speechDelegate: SpeechRecognitionDelegate? = nil,
         vocabularyRepository: VocabularyRepository? = nil,
         contentRepository: ContentRepository? = nil,
+        learnerName: String = "",
         networkChecker: any NetworkChecker = NWPathNetworkChecker()
     ) {
+        self.learnerName = learnerName
         self.conversationService = conversationService
         self.jlptLevel = jlptLevel
         self.speechDelegate = speechDelegate
@@ -224,7 +240,9 @@ public final class ConversationViewModel: Identifiable {
                 history: messages,
                 jlptLevel: jlptLevel,
                 knownVocabulary: knownVocabulary,
-                bundleReadings: bundleReadings
+                learnerName: learnerName,
+                bundleReadings: bundleReadings,
+                interfaceLocale: interfaceLocale
             )
             messages.append(response)
             await logVocabularyEncounters(response)

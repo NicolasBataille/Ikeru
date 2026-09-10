@@ -170,7 +170,7 @@ public final class StrokeOrderViewModel {
             let overall = accuracyService.evaluateOverall(strokeResults: strokeResults)
             overallResult = overall
             Logger.ui.info(
-                "Character '\(self.character)' tracing complete: passed=\(overall.passed), avgScore=\(overall.averageScore)"
+                "Character '\(self.character)' tracing complete: passed=\(overall.passed), avgSeverity=\(overall.averageSeverity)"
             )
         }
     }

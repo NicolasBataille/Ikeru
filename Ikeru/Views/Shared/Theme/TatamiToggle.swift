@@ -9,6 +9,11 @@ struct TatamiToggle: View {
 
     @Binding var isOn: Bool
     let onChange: (Bool) -> Void
+    /// Optional UI-test hook. `nil` (the default) at every existing call site —
+    /// only rows that a UI test needs to find (e.g. the cloud-backup toggle,
+    /// GAP-09) pass one. An empty-string identifier on the rest is harmless:
+    /// nothing queries by it.
+    var accessibilityID: String?
 
     private let trackWidth: CGFloat = 36
     private let trackHeight: CGFloat = 16
@@ -51,6 +56,7 @@ struct TatamiToggle: View {
         }
         .buttonStyle(.plain)
         .accessibilityValue(isOn ? Text("On") : Text("Off"))
+        .accessibilityIdentifier(accessibilityID ?? "")
     }
 }
 

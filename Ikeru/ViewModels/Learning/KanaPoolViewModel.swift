@@ -2,6 +2,62 @@ import Foundation
 import IkeruCore
 import os
 
+// MARK: - Hiragana ↔ Katakana bridging (chantier #24a)
+//
+// "Même son, nouvelle forme": when a katakana is first introduced, show its
+// hiragana counterpart alongside it. The romaji is identical on both sides
+// by construction — か and カ are both "ka" in `KanaGroup`'s character table
+// — and groups are named symmetrically (`hK`/`kK`, `hSH`/`kSH`, ...), so the
+// mapping below is a lookup against data that already exists; nothing new is
+// authored here.
+
+extension KanaGroup {
+    /// The hiragana group with the same row (e.g. `kK` → `hK`), or `nil` if
+    /// this is already a hiragana group. Relies on the enum's script-prefix +
+    /// shared-row-suffix naming convention holding for every case.
+    var mirroredHiraganaGroup: KanaGroup? {
+        guard script == .katakana else { return nil }
+        let hiraganaRawValue = "h" + rawValue.dropFirst()
+        return KanaGroup(rawValue: hiraganaRawValue)
+    }
+}
+
+extension KanaCharacter {
+    /// The hiragana character with the same reading, if this is katakana.
+    /// `nil` for hiragana characters (no bridge needed) or the unexpected
+    /// case where no mirrored group/reading is found — fails safe rather
+    /// than guessing.
+    var hiraganaCounterpart: KanaCharacter? {
+        guard let hiraganaGroup = group.mirroredHiraganaGroup else { return nil }
+        return hiraganaGroup.characters.first(where: { $0.romaji == romaji })
+    }
+}
+
+// MARK: - KanaConfusionCluster (chantier #24b)
+
+/// A small cluster of katakana that beginners routinely mix up by shape —
+/// distinguished by stroke angle/direction, not by sound. Six canonical
+/// clusters; every character is checked against `KanaGroup`'s character
+/// table below (reviewed pairs, not generated to fill a quota).
+public struct KanaConfusionCluster: Identifiable, Sendable, Equatable {
+    public let id: String
+    /// The confusable characters, 2 or 3 per cluster.
+    public let characters: [String]
+
+    public var displayLabel: String { characters.joined(separator: " / ") }
+}
+
+public enum KanaConfusionClusters {
+    public static let all: [KanaConfusionCluster] = [
+        KanaConfusionCluster(id: "shi-tsu", characters: ["シ", "ツ"]),
+        KanaConfusionCluster(id: "so-n", characters: ["ソ", "ン"]),
+        KanaConfusionCluster(id: "ku-wa-ke", characters: ["ク", "ワ", "ケ"]),
+        KanaConfusionCluster(id: "ko-yu", characters: ["コ", "ユ"]),
+        KanaConfusionCluster(id: "su-nu", characters: ["ス", "ヌ"]),
+        KanaConfusionCluster(id: "chi-te", characters: ["チ", "テ"]),
+    ]
+}
+
 // MARK: - KanaPreset
 
 /// Predefined selections for quick pool configuration.
@@ -81,11 +137,13 @@ public final class KanaPoolViewModel {
     // MARK: Persistence
 
     private static let storageKey = "ikeru.kana.selectedGroups"
+    private static let legacyExtendedGroupsMigratedKey = "ikeru.kana.migratedLegacyExtendedGroupsV1"
 
     // MARK: Init
 
     public init(repository: KanaCardRepository) {
         self.repository = repository
+        Self.migrateLegacyExtendedSelectionIfNeeded()
         self.selectedGroups = Self.loadPersistedSelection() ?? [.hVowels]
     }
 
@@ -98,6 +156,17 @@ public final class KanaPoolViewModel {
         // (which later trap `mastery(for:)`'s unique-keyed Dictionary).
         if case .loading = loadingState { return }
         loadingState = .loading
+        // Purge kana cards that were already created for a group no longer in
+        // the current selection but never studied (reps == 0). Most
+        // concretely: a build predating `migrateLegacyExtendedSelectionIfNeeded()`
+        // may have let the learner select (and therefore seed) a dakuten/yōon
+        // group; that migration strips such groups from the persisted
+        // selection, but on its own leaves their cards behind as an invisible,
+        // non-deselectable pile — still counted due, still blocking the
+        // foundation session mode. Safe to run on every load: it never
+        // touches a card with reps > 0, and is a no-op once the store is
+        // clean (see `KanaCardRepository.purgeUnstartedCards`).
+        await repository.purgeUnstartedCards(notIn: selectedGroups)
         // Seed ONLY the currently-selected groups, not all 92 kana. Opening the
         // grid no longer materialises the entire katakana set as immediately-due
         // cards — that was the source of katakana leaking into Home Practice.
@@ -169,6 +238,46 @@ public final class KanaPoolViewModel {
         selectedGroups.reduce(0) { $0 + $1.characters.count }
     }
 
+    // MARK: Sequencing guard (chantier #24c)
+    //
+    // A beginner on day 0 could tap "All" in the preset bar and instantly
+    // select all 92 kana — no staging, no "finish hiragana first". This is
+    // an advisory-only guard: the view interposes a confirmation before
+    // honouring a preset flagged here, but `applyPreset` itself still does
+    // exactly what it's told either way.
+
+    /// Below this average hiragana-base mastery (0...1), jumping straight to
+    /// a katakana preset gets a confirmation instead of silently seeding
+    /// dozens of new cards.
+    private static let hiraganaReadinessThreshold: Double = 0.5
+
+    /// Average aggregate mastery (0...1) across the 10 hiragana base groups —
+    /// a rough "has this learner gotten anywhere with hiragana yet" signal.
+    /// 0 before `loadMasteries()` has ever completed, same as a fresh install.
+    public var hiraganaBaseProgress: Double {
+        let baseGroups = KanaGroup.allCases.filter { $0.script == .hiragana && $0.section == .base }
+        guard !baseGroups.isEmpty else { return 0 }
+        let percentages = baseGroups.map { masteries[$0]?.aggregatePercent ?? 0 }
+        return (percentages.reduce(0, +) / Double(baseGroups.count)) / 100.0
+    }
+
+    /// Whether applying `preset` should be interposed with a "finish
+    /// hiragana first?" confirmation: it introduces katakana, hiragana-base
+    /// mastery is still low, and the learner isn't already mid-way through
+    /// katakana (a returning learner with any katakana group selected is
+    /// never nagged again).
+    public func presetNeedsSequencingConfirmation(_ preset: KanaPreset) -> Bool {
+        switch preset {
+        case .katakanaBase, .katakanaAll, .all:
+            break
+        case .hiraganaBase, .hiraganaAll:
+            return false
+        }
+        let alreadyStudyingKatakana = selectedGroups.contains { $0.script == .katakana }
+        guard !alreadyStudyingKatakana else { return false }
+        return hiraganaBaseProgress < Self.hiraganaReadinessThreshold
+    }
+
     // MARK: Fetching cards for drill modes
 
     public func cards(for mode: KanaDrillMode) async -> [CardDTO] {
@@ -184,6 +293,30 @@ public final class KanaPoolViewModel {
         case .weakReinforcement:
             return await repository.weakCardsForGroups(selectedGroups)
         }
+    }
+
+    // MARK: Confusion clusters (chantier #24b)
+
+    /// The `KanaGroup`s backing a cluster's characters. Repository queries are
+    /// group-scoped (there's no per-character fetch), so a cluster's cards are
+    /// always reached by seeding/fetching its owning groups and then filtering
+    /// down — see `cards(forConfusionCluster:)`.
+    public func groups(forConfusionCluster cluster: KanaConfusionCluster) -> Set<KanaGroup> {
+        Set(cluster.characters.compactMap { character in
+            KanaGroup.allCases.first { $0.characters.contains { $0.character == character } }
+        })
+    }
+
+    /// Cards for exactly this cluster's characters — fetched via the owning
+    /// groups (seeding them first, in case none were selected yet) and
+    /// filtered down to just the cluster's characters, so a triple like
+    /// ク/ワ/ケ never pulls in the rest of the K or W/N row.
+    public func cards(forConfusionCluster cluster: KanaConfusionCluster) async -> [CardDTO] {
+        let clusterGroups = groups(forConfusionCluster: cluster)
+        await repository.seed(groups: clusterGroups)
+        let all = await repository.cardsForGroups(clusterGroups)
+        let charSet = Set(cluster.characters)
+        return all.filter { charSet.contains($0.front) }
     }
 
     /// Confirm the current selection as the learner's study set: persist it
@@ -210,6 +343,41 @@ public final class KanaPoolViewModel {
         guard let data = UserDefaults.standard.data(forKey: storageKey) else { return nil }
         return try? JSONDecoder().decode(Set<KanaGroup>.self, from: data)
     }
+
+    /// One-time migration for testers who checked a dakuten/yōon group back
+    /// when those groups were scaffolded with an empty character table: the
+    /// selection persisted, but it cost nothing and displayed nothing. Now
+    /// that the table is populated (see `KanaGroup`), leaving a stale
+    /// selection in place would silently seed up to 116 kana cards — all due
+    /// at once — the next time `loadMasteries()` runs. Strip any non-`.base`
+    /// group from a selection that predates this migration so existing
+    /// installs don't wake up to an avalanche they never knowingly chose.
+    /// Runs once (gated by `legacyExtendedGroupsMigratedKey`): a group picked
+    /// AFTER this migration is a deliberate choice and is left alone.
+    private static func migrateLegacyExtendedSelectionIfNeeded() {
+        let defaults = UserDefaults.standard
+        guard !defaults.bool(forKey: legacyExtendedGroupsMigratedKey) else { return }
+        defer { defaults.set(true, forKey: legacyExtendedGroupsMigratedKey) }
+
+        guard let persisted = loadPersistedSelection() else { return }
+        let baseOnly = persisted.filter { $0.section == .base }
+        guard baseOnly != persisted else { return }
+        // A selection that was entirely non-base groups is not a real study
+        // set (nothing would have rendered pre-fix either) — fall back to the
+        // same default a fresh install gets, rather than persisting an empty
+        // selection that would silently leave the learner with zero cards.
+        let migrated = baseOnly.isEmpty ? [.hVowels] : baseOnly
+
+        do {
+            let data = try JSONEncoder().encode(migrated)
+            defaults.set(data, forKey: storageKey)
+            Logger.content.info(
+                "KanaPool: migrated legacy selection, dropped \(persisted.count - baseOnly.count) non-base group(s)"
+            )
+        } catch {
+            Logger.content.error("KanaPool: failed to persist migrated selection: \(error.localizedDescription)")
+        }
+    }
 }
 
 // MARK: - StudySetStore
@@ -233,9 +401,23 @@ enum StudySetStore {
     }
 
     /// The chosen kana groups (decoded from the shared selection key).
+    ///
+    /// Falls back to the same `[.hVowels]` default `KanaPoolViewModel.init`
+    /// uses, and for a reason that bit us: the view model assigns that default
+    /// inside `init`, where a `didSet` does not fire, so a learner who accepts
+    /// the default set and confirms never writes the key at all. Returning an
+    /// empty set here made every downstream consumer read "this learner chose
+    /// nothing" — which left the Watch showing "nothing to review yet" for
+    /// good and the phone silently refusing every answer it sent back.
+    ///
+    /// Same story for learners grandfathered in by `refreshStudySetGate`, who
+    /// never see the chooser at all.
     static var chosenGroups: Set<KanaGroup> {
-        guard let data = UserDefaults.standard.data(forKey: groupsKey) else { return [] }
-        return (try? JSONDecoder().decode(Set<KanaGroup>.self, from: data)) ?? []
+        guard let data = UserDefaults.standard.data(forKey: groupsKey),
+              let decoded = try? JSONDecoder().decode(Set<KanaGroup>.self, from: data),
+              !decoded.isEmpty
+        else { return [.hVowels] }
+        return decoded
     }
 
     /// Mark that the learner has made an explicit study-set choice.

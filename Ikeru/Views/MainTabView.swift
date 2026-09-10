@@ -40,14 +40,13 @@ struct MainTabView: View {
 
     @Environment(\.modelContext) private var modelContext
     @State private var selectedTab: AppTab = {
-        if let arg = CommandLine.arguments.first(where: { $0.hasPrefix("-startTab=") }),
-           let raw = Int(arg.dropFirst("-startTab=".count)),
+        if let raw = AppEnvironment.intArg("startTab"),
            let tab = AppTab(rawValue: raw) {
             return tab
         }
         return .practice
     }()
-    @State private var presentAISettings = CommandLine.arguments.contains("-presentAISettings")
+    @State private var presentAISettings = AppEnvironment.hasFlag("presentAISettings")
     @State private var appLocale = AppLocale()
     @State private var displayMode: DisplayMode = .beginner
     @State private var displayModeRepo: (any DisplayModePreferenceRepository)?
@@ -64,8 +63,18 @@ struct MainTabView: View {
             tabContent
                 .ignoresSafeArea(.keyboard)
 
+            // The bar OWNS the bottom safe area rather than sitting on top of
+            // it. Respecting it (the default) pins the content above the home
+            // indicator while the material still tints that ~34pt strip, so
+            // the labels float with a band of dead space underneath that no
+            // amount of padding elsewhere can reclaim — trimming above the
+            // icons only moved them further from it.
+            //
+            // Owning it lets the content sit lower, and the bar manages its
+            // own bottom clearance instead (see `IkeruTabBar`'s padding).
             IkeruTabBar(selection: $selectedTab, tabs: AppTab.allCases)
                 .ignoresSafeArea(.keyboard)
+                .ignoresSafeArea(.container, edges: .bottom)
         }
         .overlayPreferenceValue(TourAnchorKey.self) { anchors in
             GeometryReader { proxy in
@@ -159,7 +168,7 @@ struct MainTabView: View {
             profileCreatedAt: { id in
                 let context = container.mainContext
                 let descriptor = FetchDescriptor<UserProfile>(
-                    predicate: #Predicate { $0.id == id }
+                    predicate: #Predicate { $0.id == id && $0.deletedAt == nil }
                 )
                 return (try? context.fetch(descriptor))?.first?.createdAt
             }

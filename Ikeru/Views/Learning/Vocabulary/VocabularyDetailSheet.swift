@@ -14,6 +14,7 @@ struct VocabularyDetailSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var existingEntry: VocabularyEntryDTO?
     @State private var encounters: [VocabularyEncounterDTO] = []
+    @State private var examples: [SentenceExample] = []
     @State private var hasLoaded = false
     @State private var contextExpanded = false
 
@@ -32,6 +33,7 @@ struct VocabularyDetailSheet: View {
                         wordHeader
                         meaningSection
                         contextSection
+                        ExampleSentencesSection(examples: examples)
                         if let entry = existingEntry, entry.isInDictionary {
                             masterySection(entry)
                         }
@@ -86,9 +88,14 @@ struct VocabularyDetailSheet: View {
                 .font(.system(size: 64, weight: .regular, design: .serif))
                 .foregroundStyle(Color.ikeruTextPrimary)
 
-            Text(hint.reading)
-                .ikeruScaledFont(24, weight: .medium, design: .rounded, relativeTo: .title2)
-                .foregroundStyle(Color.ikeruPrimaryAccent)
+            HStack(spacing: IkeruTheme.Spacing.sm) {
+                Text(hint.reading)
+                    .ikeruScaledFont(24, weight: .medium, design: .rounded, relativeTo: .title2)
+                    .foregroundStyle(Color.ikeruPrimaryAccent)
+
+                // La LECTURE, pas le mot — voir `ListenButton`.
+                ListenButton(text: hint.reading.isEmpty ? hint.word : hint.reading)
+            }
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, IkeruTheme.Spacing.lg)
@@ -144,7 +151,7 @@ struct VocabularyDetailSheet: View {
             HStack(spacing: IkeruTheme.Spacing.lg) {
                 statTile(
                     value: entry.mastery.emoji,
-                    label: entry.mastery.label
+                    labelKey: LocalizedStringKey(entry.mastery.label)
                 )
                 statTile(
                     value: "\(entry.encounterCount)",
@@ -166,6 +173,24 @@ struct VocabularyDetailSheet: View {
                 .font(.ikeruStatsLarge)
                 .foregroundStyle(Color.ikeruPrimaryAccent)
             Text(label.uppercased())
+                .font(.ikeruMicro)
+                .ikeruTracking(.micro)
+                .foregroundStyle(Color.ikeruTextTertiary)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    /// Variant for values whose label is a localization-catalog **key**
+    /// (e.g. `MasteryLevel.label`) rather than plain text — `.uppercased()`
+    /// can't run on a `LocalizedStringKey`, so `.textCase(.uppercase)` gets
+    /// the same visual effect after the catalog lookup resolves it.
+    private func statTile(value: String, labelKey: LocalizedStringKey) -> some View {
+        VStack(spacing: 4) {
+            Text(value)
+                .font(.ikeruStatsLarge)
+                .foregroundStyle(Color.ikeruPrimaryAccent)
+            Text(labelKey)
+                .textCase(.uppercase)
                 .font(.ikeruMicro)
                 .ikeruTracking(.micro)
                 .foregroundStyle(Color.ikeruTextTertiary)
@@ -251,6 +276,8 @@ struct VocabularyDetailSheet: View {
             existingEntry = entry
             encounters = await repo.encounters(for: entry.id)
         }
+        // Loaded here, not inside the section — see `ExampleSentencesSection`.
+        examples = await ExampleSentencesSection.load(word: hint.word)
         hasLoaded = true
     }
 

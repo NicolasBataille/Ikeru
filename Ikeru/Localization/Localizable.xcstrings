@@ -1,6 +1,526 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "Compose a session" : {
+      "comment" : "Explore row + Compose sheet title.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compose a session"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Composer une séance"
+          }
+        }
+      }
+    },
+    "Choose your exercises and duration" : {
+      "comment" : "Explore row subtitle for the Compose sheet.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose your exercises and duration"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisis tes exercices et la durée"
+          }
+        }
+      }
+    },
+    "Pick what you want to practice. The home session chooses for you; here, you choose." : {
+      "comment" : "Compose sheet intro.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pick what you want to practice. The home session chooses for you; here, you choose."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisis ce que tu veux travailler. La séance de l'accueil décide pour toi ; ici, c'est toi qui décides."
+          }
+        }
+      }
+    },
+    "Exercises" : {
+      "comment" : "Compose sheet: section header.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exercises"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exercices"
+          }
+        }
+      }
+    },
+    "Choose one or more" : {
+      "comment" : "Compose sheet: eyebrow above the exercise list.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose one or more"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un ou plusieurs"
+          }
+        }
+      }
+    },
+    "Minutes" : {
+      "comment" : "Compose sheet: eyebrow above the duration picker.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minutes"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minutes"
+          }
+        }
+      }
+    },
+    "Nothing could be composed from this selection — writing and kanji drills need kanji cards you have already started. Try another mix." : {
+      "comment" : "Compose sheet: shown when the selection composed an empty session.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nothing could be composed from this selection — writing and kanji drills need kanji cards you have already started. Try another mix."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rien à composer avec cette sélection — l'écriture et le kanji demandent des cartes kanji déjà commencées. Essaie un autre mélange."
+          }
+        }
+      }
+    },
+    "Sentence building" : {
+      "comment" : "Compose sheet: exercise title.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sentence building"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Construction de phrases"
+          }
+        }
+      }
+    },
+    "Retired" : {
+      "comment" : "Compose sheet: label for a retired exercise type (never shown; exhaustiveness).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retired"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retiré"
+          }
+        }
+      }
+    },
+    "Trace a kanji from your deck" : {
+      "comment" : "Compose sheet: exercise subtitle.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trace a kanji from your deck"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trace un kanji de ton jeu"
+          }
+        }
+      }
+    },
+    "Multiple-choice recall of N5 words" : {
+      "comment" : "Compose sheet: exercise subtitle.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Multiple-choice recall of N5 words"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retrouve le sens de mots N5 parmi plusieurs"
+          }
+        }
+      }
+    },
+    "Fill the gap in an N5 sentence pattern" : {
+      "comment" : "Compose sheet: exercise subtitle.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fill the gap in an N5 sentence pattern"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Complète le trou d'une structure N5"
+          }
+        }
+      }
+    },
+    "Put the words of a sentence in order" : {
+      "comment" : "Compose sheet: exercise subtitle.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Put the words of a sentence in order"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remets les mots d'une phrase dans l'ordre"
+          }
+        }
+      }
+    },
+    "Handwriting drill on a kanji you started" : {
+      "comment" : "Compose sheet: exercise subtitle.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Handwriting drill on a kanji you started"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tracé d'un kanji déjà commencé"
+          }
+        }
+      }
+    },
+    "Hear a word, pick its meaning" : {
+      "comment" : "Compose sheet: exercise subtitle.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hear a word, pick its meaning"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Écoute un mot, choisis son sens"
+          }
+        }
+      }
+    },
+    "Shadow a word out loud" : {
+      "comment" : "Compose sheet: exercise subtitle.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shadow a word out loud"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Répète un mot à voix haute"
+          }
+        }
+      }
+    },
+    "Unlocks at %lld familiar words — you have %lld" : {
+      "comment" : "Compose sheet: lock reason.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unlocks at %lld familiar words — you have %lld"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se débloque à %lld mots familiers — tu en as %lld"
+          }
+        }
+      }
+    },
+    "Unlocks at %lld familiar kanji — you have %lld" : {
+      "comment" : "Compose sheet: lock reason.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unlocks at %lld familiar kanji — you have %lld"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se débloque à %lld kanji familiers — tu en as %lld"
+          }
+        }
+      }
+    },
+    "Unlocks once the hiragana are familiar" : {
+      "comment" : "Compose sheet: lock reason.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unlocks once the hiragana are familiar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se débloque quand les hiragana sont familiers"
+          }
+        }
+      }
+    },
+    "Unlocks once the katakana are familiar" : {
+      "comment" : "Compose sheet: lock reason.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unlocks once the katakana are familiar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se débloque quand les katakana sont familiers"
+          }
+        }
+      }
+    },
+    "Unlocks at %lld familiar grammar points — you have %lld" : {
+      "comment" : "Compose sheet: lock reason.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unlocks at %lld familiar grammar points — you have %lld"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se débloque à %lld points de grammaire familiers — tu en as %lld"
+          }
+        }
+      }
+    },
+    "Unlocks at %@ listening accuracy" : {
+      "comment" : "Compose sheet: lock reason.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unlocks at %@ listening accuracy"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se débloque à %@ de précision en écoute"
+          }
+        }
+      }
+    },
+    "Unlocks at %@ listening recall" : {
+      "comment" : "Compose sheet: lock reason.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unlocks at %@ listening recall"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se débloque à %@ de rappel en écoute"
+          }
+        }
+      }
+    },
+    "Unlocks at JLPT %@" : {
+      "comment" : "Compose sheet: lock reason.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unlocks at JLPT %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se débloque au JLPT %@"
+          }
+        }
+      }
+    },
+    "%lld words kept, each with the sentence you met it in." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld words kept, each with the sentence you met it in."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld mots retenus, chacun avec la phrase où tu l'as rencontré."
+          }
+        }
+      }
+    },
+    "A shared text is waiting" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A shared text is waiting"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un texte partagé t'attend"
+          }
+        }
+      }
+    },
+    "Already in your dictionary" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Already in your dictionary"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Déjà dans ton dictionnaire"
+          }
+        }
+      }
+    },
+    "Already used Ikeru before?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Already used Ikeru before?"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu as déjà utilisé Ikeru ?"
+          }
+        }
+      }
+    },
+    "Back to the text" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Back to the text"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Revenir au texte"
+          }
+        }
+      }
+    },
+    "Choose words to learn" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose words to learn"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisir les mots à apprendre"
+          }
+        }
+      }
+    },
+    "Couldn't reach the server. Check your connection and try again." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't reach the server. Check your connection and try again."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de joindre le serveur. Vérifie ta connexion et réessaie."
+          }
+        }
+      }
+    },
     "Couldn't save your review — it may not count." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -14,6 +534,1750 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Impossible d'enregistrer ta révision — elle pourrait ne pas compter."
+          }
+        }
+      }
+    },
+    "Definition in English" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Definition in English"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Définition en anglais"
+          }
+        }
+      }
+    },
+    "Kept for this import" : {
+      "comment" : "WordDetailSheet — la fiche ouverte au tap d'un mot pendant la lecture assistee. Ces quatre cles etaient utilisees comme LocalizedStringKey sans jamais entrer dans le catalogue, donc la fiche s'affichait a moitie en anglais en francais. i18n-lint ne les voyait pas : il ne regarde ni .navigationTitle(...) ni les helpers maison (sectionLabel) ni LocalizedStringKey(...) explicite.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kept for this import"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gardé pour cet import"
+          }
+        }
+      }
+    },
+    "Learn this word" : {
+      "comment" : "WordDetailSheet — la fiche ouverte au tap d'un mot pendant la lecture assistee. Ces quatre cles etaient utilisees comme LocalizedStringKey sans jamais entrer dans le catalogue, donc la fiche s'affichait a moitie en anglais en francais. i18n-lint ne les voyait pas : il ne regarde ni .navigationTitle(...) ni les helpers maison (sectionLabel) ni LocalizedStringKey(...) explicite.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Learn this word"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apprendre ce mot"
+          }
+        }
+      }
+    },
+    "Meaning" : {
+      "comment" : "WordDetailSheet — la fiche ouverte au tap d'un mot pendant la lecture assistee. Ces quatre cles etaient utilisees comme LocalizedStringKey sans jamais entrer dans le catalogue, donc la fiche s'affichait a moitie en anglais en francais. i18n-lint ne les voyait pas : il ne regarde ni .navigationTitle(...) ni les helpers maison (sectionLabel) ni LocalizedStringKey(...) explicite.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meaning"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sens"
+          }
+        }
+      }
+    },
+    "Nothing to read in what was shared." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nothing to read in what was shared."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rien à lire dans ce qui a été partagé."
+          }
+        }
+      }
+    },
+    "Saved. Open Ikeru and the text will be waiting." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saved. Open Ikeru and the text will be waiting."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enregistré. Ouvre Ikeru et le texte t'y attendra."
+          }
+        }
+      }
+    },
+    "Talk about this text with Sakura" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Talk about this text with Sakura"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parler de ce texte avec Sakura"
+          }
+        }
+      }
+    },
+    "TextImport.Journal.Summary %lld %lld %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%#@texts@, %#@words@, %3$lld%% average coverage"
+          },
+          "substitutions" : {
+            "texts" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg text read"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg texts read"
+                    }
+                  }
+                }
+              }
+            },
+            "words" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg word kept"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg words kept"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%#@texts@, %#@words@, %3$lld %% de couverture moyenne"
+          },
+          "substitutions" : {
+            "texts" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg texte lu"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg textes lus"
+                    }
+                  }
+                }
+              }
+            },
+            "words" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg mot retenu"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg mots retenus"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "TextImport.Journal.SummaryNoCoverage %lld %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%#@texts@, %#@words@"
+          },
+          "substitutions" : {
+            "texts" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg text read"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg texts read"
+                    }
+                  }
+                }
+              }
+            },
+            "words" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg word kept"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg words kept"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%#@texts@, %#@words@"
+          },
+          "substitutions" : {
+            "texts" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg texte lu"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg textes lus"
+                    }
+                  }
+                }
+              }
+            },
+            "words" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg mot retenu"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg mots retenus"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "TextImport.Journal.ThisMonth" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "THIS MONTH"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CE MOIS-CI"
+          }
+        }
+      }
+    },
+    "Word" : {
+      "comment" : "WordDetailSheet — la fiche ouverte au tap d'un mot pendant la lecture assistee. Ces quatre cles etaient utilisees comme LocalizedStringKey sans jamais entrer dans le catalogue, donc la fiche s'affichait a moitie en anglais en francais. i18n-lint ne les voyait pas : il ne regarde ni .navigationTitle(...) ni les helpers maison (sectionLabel) ni LocalizedStringKey(...) explicite.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Word"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mot"
+          }
+        }
+      }
+    },
+    "Definition unavailable offline" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Definition unavailable offline"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Définition non disponible hors ligne"
+          }
+        }
+      }
+    },
+    "Dictionary form" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dictionary form"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Forme du dictionnaire"
+          }
+        }
+      }
+    },
+    "Discover something new" : {
+      "comment" : "HomeView — caught-up offer, title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Discover something new"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Découvrir du nouveau"
+          }
+        }
+      }
+    },
+    "Entries, readings, parts of speech and definitions for the texts you import are derived from the JMdict dictionary, maintained by the EDRDG at Monash University." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entries, readings, parts of speech and definitions for the texts you import are derived from the JMdict dictionary, maintained by the EDRDG at Monash University."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les entrées, lectures, natures grammaticales et définitions des textes que tu importes sont dérivées du dictionnaire JMdict, maintenu par l'EDRDG à l'université Monash."
+          }
+        }
+      }
+    },
+    "Go deeper" : {
+      "comment" : "HomeView — caught-up offer, title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Go deeper"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Approfondir"
+          }
+        }
+      }
+    },
+    "Grammar word — nothing to add to your dictionary here." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grammar word — nothing to add to your dictionary here."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mot grammatical — rien à ajouter à ton dictionnaire ici."
+          }
+        }
+      }
+    },
+    "I already have an account" : {
+      "extractionState" : "manual",
+      "comment" : "Accessibility label for the Sign in with Apple button at the foot of onboarding's name-entry screen",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "I already have an account"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "J'ai déjà un compte"
+          }
+        }
+      }
+    },
+    "Import another text" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Import another text"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importer un autre texte"
+          }
+        }
+      }
+    },
+    "Kanji readings come from KANJIDIC, the N5 word list from Tanos, most example sentences from Tatoeba — all credited below." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kanji readings come from KANJIDIC, the N5 word list from Tanos, most example sentences from Tatoeba — all credited below."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les lectures des kanji viennent de KANJIDIC, la liste de mots N5 de Tanos, la plupart des phrases d'exemple de Tatoeba — tout est crédité ci-dessous."
+          }
+        }
+      }
+    },
+    "Let's get\nstarted" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Let's get\nstarted"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prêt(e) à\ncommencer ?"
+          }
+        }
+      }
+    },
+    "Meet content you haven't seen yet" : {
+      "comment" : "HomeView — caught-up offer 'discover', subtitle",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meet content you haven't seen yet"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rencontrer du contenu que tu n'as pas encore vu"
+          }
+        }
+      }
+    },
+    "No backup was found for that Apple account — let's set up your profile." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No backup was found for that Apple account — let's set up your profile."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune sauvegarde trouvée pour ce compte Apple — configurons ton profil."
+          }
+        }
+      }
+    },
+    "One spelling is often several words" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "One spelling is often several words"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une même graphie est souvent plusieurs mots"
+          }
+        }
+      }
+    },
+    "Open the word details" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open the word details"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir la fiche du mot"
+          }
+        }
+      }
+    },
+    "Other readings and meanings" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Other readings and meanings"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autres lectures et sens"
+          }
+        }
+      }
+    },
+    "Paste or photograph Japanese" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paste or photograph Japanese"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Colle ou photographie du japonais"
+          }
+        }
+      }
+    },
+    "Practise what you already know, weakest first" : {
+      "comment" : "HomeView — caught-up offer 'deepen', subtitle",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Practise what you already know, weakest first"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Travailler ce que tu connais déjà, du plus fragile au plus solide"
+          }
+        }
+      }
+    },
+    "Practise what you just read" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Practise what you just read"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pratiquer ce que tu viens de lire"
+          }
+        }
+      }
+    },
+    "Reading journal" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reading journal"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Journal de lecture"
+          }
+        }
+      }
+    },
+    "Restoring your progress…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restoring your progress…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restauration de ta progression…"
+          }
+        }
+      }
+    },
+    "Show or hide the readings above the kanji" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show or hide the readings above the kanji"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher ou masquer les lectures au-dessus des kanji"
+          }
+        }
+      }
+    },
+    "Signing in turns on backup, so we can restore your progress if you saved it before." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Signing in turns on backup, so we can restore your progress if you saved it before."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se connecter active la sauvegarde, pour qu'on puisse restaurer ta progression si tu l'avais enregistrée."
+          }
+        }
+      }
+    },
+    "Start" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Commencer"
+          }
+        }
+      }
+    },
+    "Still finishing up — please wait a moment and try again." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Still finishing up — please wait a moment and try again."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Encore en cours — patiente un instant puis réessaie."
+          }
+        }
+      }
+    },
+    "Text saved. You kept no word this time — that's a fine way to read." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Text saved. You kept no word this time — that's a fine way to read."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Texte enregistré. Tu n'as gardé aucun mot cette fois — c'est une façon parfaitement valable de lire."
+          }
+        }
+      }
+    },
+    "TextImport.Capture.Analyze" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Read this text"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lire ce texte"
+          }
+        }
+      }
+    },
+    "TextImport.Capture.Analyzing" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Analysing…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Analyse en cours…"
+          }
+        }
+      }
+    },
+    "TextImport.Capture.Camera" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Camera"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appareil photo"
+          }
+        }
+      }
+    },
+    "TextImport.Capture.CameraDenied" : {
+      "comment" : "Shown under the capture buttons when camera permission is denied (TextImportCaptureView.cameraAccessDenied). The key was referenced by the view without ever being added here, so the learner read the raw identifier « TextImport.Capture.CameraDenied » above an « Ouvrir les réglages » button.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Camera access is off, so the preview stays black. Turn it on in Settings — or paste the text instead."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L'accès à l'appareil photo est refusé, l'aperçu reste noir. Autorise-le dans les réglages — ou colle le texte à la place."
+          }
+        }
+      }
+    },
+    "TextImport.Capture.ClipboardEmpty" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nothing to paste — your clipboard is empty."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rien à coller — ton presse-papiers est vide."
+          }
+        }
+      }
+    },
+    "TextImport.Capture.DictionaryUnavailable" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The dictionary is unavailable, so this text cannot be looked up."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le dictionnaire est indisponible : ce texte ne peut pas être analysé."
+          }
+        }
+      }
+    },
+    "TextImport.Capture.Field" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Japanese text to import"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Texte japonais à importer"
+          }
+        }
+      }
+    },
+    "TextImport.Capture.Kicker" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BRING YOUR OWN TEXT"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "APPORTE TON TEXTE"
+          }
+        }
+      }
+    },
+    "TextImport.Capture.Library" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Photos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Photos"
+          }
+        }
+      }
+    },
+    "TextImport.Capture.Paste" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paste"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coller"
+          }
+        }
+      }
+    },
+    "TextImport.Capture.Placeholder" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paste or type Japanese here…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Colle ou tape du japonais ici…"
+          }
+        }
+      }
+    },
+    "TextImport.Capture.Recognizing" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reading the photo…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lecture de la photo…"
+          }
+        }
+      }
+    },
+    "TextImport.Capture.Subtitle" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paste or photograph Japanese you met anywhere. Ikeru reads it with you and you choose what to keep."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Colle ou photographie du japonais croisé n'importe où. Ikeru le lit avec toi et tu choisis ce que tu gardes."
+          }
+        }
+      }
+    },
+    "TextImport.Capture.Title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your own text"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ton propre texte"
+          }
+        }
+      }
+    },
+    "TextImport.Flow.DictionaryUnavailable" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The dictionary is unavailable, so text cannot be looked up right now."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le dictionnaire est indisponible : impossible d'analyser un texte pour le moment."
+          }
+        }
+      }
+    },
+    "TextImport.Gloss.EnglishBadge" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Definition in English"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Définition en anglais"
+          }
+        }
+      }
+    },
+    "TextImport.Gloss.Unavailable" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Definition unavailable offline"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Définition non disponible hors ligne"
+          }
+        }
+      }
+    },
+    "TextImport.Journal.Coverage %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld%% known at import"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld %% connus à l'import"
+          }
+        }
+      }
+    },
+    "TextImport.Journal.DeleteExplanation" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Only the words this text alone brought in are removed. Words you also met elsewhere stay in your dictionary."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seuls les mots que ce texte a été le seul à apporter sont retirés. Ceux que tu as rencontrés ailleurs restent dans ton dictionnaire."
+          }
+        }
+      }
+    },
+    "TextImport.Journal.DeleteTitle" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete this text?"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer ce texte ?"
+          }
+        }
+      }
+    },
+    "TextImport.Journal.Empty" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nothing imported yet. Paste or photograph Japanese you meet, and its words come here with the sentence you found them in."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rien d'importé pour l'instant. Colle ou photographie du japonais que tu croises : ses mots arrivent ici avec la phrase où tu les as trouvés."
+          }
+        }
+      }
+    },
+    "TextImport.Journal.Title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reading journal"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Journal de lecture"
+          }
+        }
+      }
+    },
+    "TextImport.Journal.Words %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%#@words@"
+          },
+          "substitutions" : {
+            "words" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg word"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg words"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%#@words@"
+          },
+          "substitutions" : {
+            "words" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg mot"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg mots"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "TextImport.Saved.NoWord" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Text saved. You kept no word this time — that's a fine way to read."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Texte enregistré. Tu n'as gardé aucun mot cette fois — c'est une façon parfaitement valable de lire."
+          }
+        }
+      }
+    },
+    "TextImport.Saved.WordsKept %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%#@words@, each with the sentence you met it in."
+          },
+          "substitutions" : {
+            "words" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg word kept"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg words kept"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%#@words@, chacun avec la phrase où tu l'as rencontré."
+          },
+          "substitutions" : {
+            "words" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg mot retenu"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg mots retenus"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "TextImport.Selection.BeyondCap" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "if you want more"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "si tu en veux plus"
+          }
+        }
+      }
+    },
+    "TextImport.Selection.Coverage %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You already know %lld%% of this text"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu connais déjà %lld %% de ce texte"
+          }
+        }
+      }
+    },
+    "TextImport.Selection.CoverageKicker" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "YOUR COVERAGE"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TA COUVERTURE"
+          }
+        }
+      }
+    },
+    "TextImport.Selection.Intro" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pick what you want to keep. The first few are already ticked; everything below is there if you want it."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisis ce que tu veux garder. Les premiers sont déjà cochés ; tout le reste est là si tu en veux."
+          }
+        }
+      }
+    },
+    "TextImport.Selection.Kept %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%#@words@"
+          },
+          "substitutions" : {
+            "words" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg word kept"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg words kept"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%#@words@"
+          },
+          "substitutions" : {
+            "words" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg mot retenu"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg mots retenus"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "TextImport.Selection.NothingRecognized" : {
+      "comment" : "Shown instead of the word list when the analyser recognised no content word at all (coverage == nil) — garbled OCR, slang, proper nouns. Distinct from NothingUnknown, which congratulates: saying « you already know everything here » about a text nothing could read would be an invented compliment. The key was referenced by WordSelectionView without ever being added here, so the learner read the raw identifier instead of the explanation.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No words could be read here. That happens with slang, proper nouns, or a photo the recognition struggled with. Go back and correct the text, then try again."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun mot n'a pu être lu ici. Ça arrive avec de l'argot, des noms propres, ou une photo que la reconnaissance a mal déchiffrée. Reviens en arrière pour corriger le texte, puis relance."
+          }
+        }
+      }
+    },
+    "TextImport.Selection.NothingUnknown" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You already know every word here. Nothing to add — that's a good read."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu connais déjà tous les mots d'ici. Rien à ajouter — c'est une belle lecture."
+          }
+        }
+      }
+    },
+    "TextImport.Selection.Save" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keep these words"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Garder ces mots"
+          }
+        }
+      }
+    },
+    "TextImport.Selection.Title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Words to learn"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mots à apprendre"
+          }
+        }
+      }
+    },
+    "The dictionary is unavailable, so text cannot be looked up right now." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The dictionary is unavailable, so text cannot be looked up right now."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le dictionnaire est indisponible : impossible d'analyser un texte pour le moment."
+          }
+        }
+      }
+    },
+    "The vocabulary meanings and grammar notes in Ikeru's lessons are written for Ikeru. The definitions shown for the texts you import come from JMdict." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The vocabulary meanings and grammar notes in Ikeru's lessons are written for Ikeru. The definitions shown for the texts you import come from JMdict."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les sens du vocabulaire et les notes de grammaire des leçons d'Ikeru sont écrits pour Ikeru. Les définitions affichées pour les textes que tu importes viennent de JMdict."
+          }
+        }
+      }
+    },
+    "This can take a moment depending on your connection." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This can take a moment depending on your connection."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cela peut prendre un moment selon ta connexion."
+          }
+        }
+      }
+    },
+    "This only takes a moment." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This only takes a moment."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cela ne prend qu'un instant."
+          }
+        }
+      }
+    },
+    "Underlined: a word you have not learned yet" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Underlined: a word you have not learned yet"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Souligné : un mot que tu n'as pas encore appris"
+          }
+        }
+      }
+    },
+    "Want to keep going? Nothing is due, so this is extra." : {
+      "comment" : "HomeView — caught-up proposal, intro line",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Want to keep going? Nothing is due, so this is extra."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Envie de continuer ? Rien n'est dû, donc c'est du bonus."
+          }
+        }
+      }
+    },
+    "We couldn't reach the server to check for a backup. Starting fresh from here will create a new, separate profile — check your connection and try restoring again first." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "We couldn't reach the server to check for a backup. Starting fresh from here will create a new, separate profile — check your connection and try restoring again first."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de joindre le serveur pour vérifier une sauvegarde. Repartir de zéro ici créera un second profil séparé — vérifie ta connexion et réessaie d'abord de restaurer."
+          }
+        }
+      }
+    },
+    "WELCOME" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "WELCOME"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BIENVENUE"
+          }
+        }
+      }
+    },
+    "The JLPT N5 word list and its readings come from Jonathan Waller's JLPT resources. The meanings shown in Ikeru are written for Ikeru, not taken from there." : {
+      "comment" : "AttributionView — Tanos JLPT lists credit",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The JLPT N5 word list and its readings come from Jonathan Waller's JLPT resources. The meanings shown in Ikeru are written for Ikeru, not taken from there."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La liste de mots JLPT N5 et ses lectures viennent des ressources JLPT de Jonathan Waller. Les définitions affichées dans Ikeru sont écrites pour Ikeru, elles n'en sont pas tirées."
+          }
+        }
+      }
+    },
+    "You already know %lld%% of this text" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You already know %lld%% of this text"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu connais déjà %lld %% de ce texte"
+          }
+        }
+      }
+    },
+    "Your Apple sign-in couldn't be verified. Please try again." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your Apple sign-in couldn't be verified. Please try again."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ta connexion Apple n'a pas pu être vérifiée. Réessaie."
+          }
+        }
+      }
+    },
+    "Your own text" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your own text"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ton propre texte"
+          }
+        }
+      }
+    },
+    "import.photo.error.imageUnreadable" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "That image could not be opened."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette image n'a pas pu être ouverte."
+          }
+        }
+      }
+    },
+    "import.photo.error.recognitionFailed" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The photo could not be read."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La photo n'a pas pu être lue."
+          }
+        }
+      }
+    },
+    "import.photo.error.verticalNotSupported" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No horizontal text found. Vertical Japanese — manga bubbles, some signs — is not supported yet; you can type it in instead."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun texte horizontal trouvé. Le japonais vertical — bulles de manga, certains panneaux — n'est pas encore pris en charge ; tu peux le taper à la main."
+          }
+        }
+      }
+    },
+    "import.source.paste" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pasted"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Collé"
+          }
+        }
+      }
+    },
+    "import.source.photo" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Photo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Photo"
+          }
+        }
+      }
+    },
+    "始める" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "始める"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "始める"
+          }
+        }
+      }
+    },
+    "門" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "門"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "門"
           }
         }
       }
@@ -1463,23 +3727,6 @@
         }
       }
     },
-    "A path from curious to fluent" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "A path from curious to fluent"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Un chemin de curieux à courant"
-          }
-        }
-      }
-    },
     "About" : {
       "comment" : "Settings section header",
       "extractionState" : "stale",
@@ -1870,18 +4117,19 @@
         }
       }
     },
-    "All learning progress for this profile will be permanently erased." : {
+    "This profile's cards, review history, level, active days, personal dictionary and imported texts will be permanently erased." : {
+      "comment" : "Delete-profile sheet: names exactly what the cascade erases. Must stay in step with ProfileDeletion.tombstoneGraph (dictionary and imports since IkeruSchemaV6).",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "All learning progress for this profile will be permanently erased."
+            "value" : "This profile's cards, review history, level, active days, personal dictionary and imported texts will be permanently erased."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Toute la progression de ce profil sera effacée définitivement."
+            "value" : "Les cartes de ce profil, son historique de révisions, son niveau, ses jours actifs, son dictionnaire personnel et ses textes importés seront définitivement effacés."
           }
         }
       }
@@ -2591,12 +4839,419 @@
         }
       }
     },
+    "You will lose" : {
+      "comment" : "Delete-profile sheet: heading of the list of what deletion destroys.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You will lose"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce que tu perds"
+          }
+        }
+      }
+    },
+    "What disappears" : {
+      "comment" : "Delete-profile sheet: eyebrow above the 'You will lose' heading.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What disappears"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce qui disparaît"
+          }
+        }
+      }
+    },
+    "Learning cards" : {
+      "comment" : "Delete-profile sheet: row label, number of cards that will be erased.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Learning cards"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cartes d'apprentissage"
+          }
+        }
+      }
+    },
+    "RPG level %lld" : {
+      "comment" : "Delete-profile sheet: row label carrying the profile's RPG level.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "RPG level %lld"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Niveau RPG %lld"
+          }
+        }
+      }
+    },
+    "Days active" : {
+      "comment" : "Delete-profile sheet: row label, days since the profile was created.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Days active"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jours actifs"
+          }
+        }
+      }
+    },
+    "Hold to delete %@" : {
+      "comment" : "Hold-to-confirm button on the delete-profile sheet. %@ is the profile name.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hold to delete %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maintiens pour supprimer %@"
+          }
+        }
+      }
+    },
+    "Deleting…" : {
+      "comment" : "Hold-to-confirm button: shown once the hold completes.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deleting…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suppression…"
+          }
+        }
+      }
+    },
+    "Release" : {
+      "comment" : "Hold-to-confirm button: shown when the hold is nearly complete.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Release"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Relâche"
+          }
+        }
+      }
+    },
+    "Hold to confirm" : {
+      "comment" : "Hold-to-confirm button: shown while the button is being held.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hold to confirm"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maintiens pour confirmer"
+          }
+        }
+      }
+    },
+    "Dictionary words" : {
+      "comment" : "Delete-profile sheet: summary row — number of words in the profile's personal dictionary.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dictionary words"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mots du dictionnaire"
+          }
+        }
+      }
+    },
+    "Imported texts" : {
+      "comment" : "Delete-profile sheet: summary row — number of texts the profile imported.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Imported texts"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Textes importés"
+          }
+        }
+      }
+    },
+    "Exporting only covers the profile you are currently using. To keep a backup of this one, switch to it first, then come back." : {
+      "comment" : "Delete-profile sheet: shown instead of the export advice when deleting a NON-active profile.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exporting only covers the profile you are currently using. To keep a backup of this one, switch to it first, then come back."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L'export ne couvre que le profil que tu utilises actuellement. Pour garder une sauvegarde de celui-ci, bascule dessus d'abord, puis reviens."
+          }
+        }
+      }
+    },
+    "Pitch Training Done!" : {
+      "comment" : "Watch: end of the pitch-accent drill.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pitch Training Done!"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entraînement d'accent terminé !"
+          }
+        }
+      }
+    },
+    "Nothing to review here yet" : {
+      "comment" : "Watch: empty state when no chosen kana has been graded yet.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nothing to review here yet"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rien à réviser ici pour l'instant"
+          }
+        }
+      }
+    },
+    "Practice a few kana on iPhone first" : {
+      "comment" : "Watch: empty-state subtitle telling the learner where to start.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Practice a few kana on iPhone first"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pratique d'abord quelques kana sur l'iPhone"
+          }
+        }
+      }
+    },
+    "Nice work!" : {
+      "comment" : "Watch: end of the kana quiz.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nice work!"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bien joué !"
+          }
+        }
+      }
+    },
+    "Lv.%lld" : {
+      "comment" : "Watch complication, corner view: the learner's RPG level.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lv.%lld"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Niv.%lld"
+          }
+        }
+      }
+    },
+    "Lv.%lld · %lld due" : {
+      "comment" : "Watch complication, inline view: level and number of cards due.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lv.%lld · %lld due"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Niv.%lld · %lld à réviser"
+          }
+        }
+      }
+    },
+    "Vocabulary.Validation.WordRequired" : {
+      "comment" : "Add-word sheet: the word field is empty.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enter the word you want to remember."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saisis le mot que tu veux retenir."
+          }
+        }
+      }
+    },
+    "Vocabulary.Validation.MeaningRequired" : {
+      "comment" : "Add-word sheet: the meaning is missing — without it a quiz has no correct answer to show.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add a meaning — without it, this word can't be quizzed."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajoute un sens — sans lui, ce mot ne peut pas être interrogé."
+          }
+        }
+      }
+    },
+    "Vocabulary.Validation.ReadingRequired" : {
+      "comment" : "Add-word sheet: the word contains kanji, so it needs an explicit reading.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This word contains kanji — add its reading so you can study it."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce mot contient un kanji — ajoute sa lecture pour pouvoir l'étudier."
+          }
+        }
+      }
+    },
+    "Vocabulary.Edit" : {
+      "comment" : "Title of the sheet used to correct an existing dictionary word.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit word"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Corriger le mot"
+          }
+        }
+      }
+    },
+    "Edit" : {
+      "comment" : "Toolbar button opening the word-correction sheet.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Corriger"
+          }
+        }
+      }
+    },
     "Delete Profile" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Delete Profile"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer le profil"
+          }
+        }
+      }
+    },
+    "Delete profile" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete profile"
           }
         },
         "fr" : {
@@ -3326,22 +5981,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Example Sentences"
-          }
-        }
-      }
-    },
-    "Exercises Complete!" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Exercises Complete!"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Exercices terminés !"
           }
         }
       }
@@ -4237,22 +6876,6 @@
         }
       }
     },
-    "Loading passage..." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Loading passage..."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Chargement du passage…"
-          }
-        }
-      }
-    },
     "Loading profile data…" : {
       "localizations" : {
         "en" : {
@@ -4298,23 +6921,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Marquer"
-          }
-        }
-      }
-    },
-    "Master kana, kanji, grammar, and conversation — one step at a time, at your own pace." : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Master kana, kanji, grammar, and conversation — one step at a time, at your own pace."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Maîtrise les kana, kanji, la grammaire et la conversation — un pas à la fois, à ton rythme."
           }
         }
       }
@@ -5103,20 +7709,19 @@
         }
       }
     },
-    "RE-LEARN" : {
-      "comment" : "Summary split-cell label",
-      "extractionState" : "stale",
+    "REVIEWED" : {
+      "comment" : "Summary split-cell label: cards graded that were not newly learned. These are ordinary reviews, NOT failures — see OBS2-027.",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "RE-LEARN"
+            "value" : "REVIEWED"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "À REVOIR"
+            "value" : "RÉVISÉES"
           }
         }
       }
@@ -5135,22 +7740,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Lecture"
-          }
-        }
-      }
-    },
-    "Reading Guide" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Guide de lecture"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Reading Guide"
           }
         }
       }
@@ -9482,6 +12071,222 @@
         }
       }
     },
+    "Anchored" : {
+      "comment" : "Vocabulary mastery filter chip",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anchored"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ancré"
+          }
+        }
+      }
+    },
+    "Encounters" : {
+      "comment" : "Vocabulary sort order",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Encounters"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rencontres"
+          }
+        }
+      }
+    },
+    "Familiar" : {
+      "comment" : "Vocabulary mastery filter chip",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Familiar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Familier"
+          }
+        }
+      }
+    },
+    "Learning" : {
+      "comment" : "Vocabulary mastery filter chip",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Learning"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En apprentissage"
+          }
+        }
+      }
+    },
+    "Mastered" : {
+      "comment" : "Vocabulary mastery filter chip",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mastered"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maîtrisé"
+          }
+        }
+      }
+    },
+    "Recent" : {
+      "comment" : "Vocabulary sort order",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recent"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Récents"
+          }
+        }
+      }
+    },
+    "Search words..." : {
+      "comment" : "Dictionary search field placeholder",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Search words..."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rechercher un mot…"
+          }
+        }
+      }
+    },
+    "Grammar.Count %lld" : {
+      "comment" : "Count of grammar points in the list header",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld points"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld points"
+          }
+        }
+      }
+    },
+    "Grammar.Empty" : {
+      "comment" : "Shown when the bundled grammar content is unavailable",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grammar content could not be loaded."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le contenu de grammaire n'a pas pu être chargé."
+          }
+        }
+      }
+    },
+    "Grammar.Title" : {
+      "comment" : "Header above the grammar list",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sentence patterns"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schémas de phrase"
+          }
+        }
+      }
+    },
+    "Sentence patterns" : {
+      "comment" : "Etude row subtitle for grammar",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sentence patterns"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schémas de phrase"
+          }
+        }
+      }
+    },
+    "Grammar.Validate" : {
+      "comment" : "Button that submits the selected cloze answer",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Validate"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valider"
+          }
+        }
+      }
+    },
     "Vocabulary.Add" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -9495,6 +12300,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ajouter un mot"
+          }
+        }
+      }
+    },
+    "Vocabulary.Examples.Title" : {
+      "comment" : "Section header above a word's bundled example sentences",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Examples"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exemples"
           }
         }
       }
@@ -10723,40 +13546,6 @@
         }
       }
     },
-    "Home.NextStep.CaughtUp.Title" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "All caught up"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tout est à jour"
-          }
-        }
-      }
-    },
-    "Home.NextStep.CaughtUp.Body" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lovely work. Keep your reviews warm."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Beau travail. Entretiens tes révisions."
-          }
-        }
-      }
-    },
     "Play Again" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -11267,24 +14056,6 @@
         }
       }
     },
-    "Vocabulary, kanji readings, grammar notes, and example sentences are original content written for Ikeru." : {
-      "comment" : "AttributionView header note clarifying content provenance",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Vocabulary, kanji readings, grammar notes, and example sentences are original content written for Ikeru."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Le vocabulaire, les lectures de kanji, les notes de grammaire et les phrases d'exemple sont un contenu original rédigé pour Ikeru."
-          }
-        }
-      }
-    },
     "Stroke order data for kanji characters. Provides the vector paths used in stroke order animations and tracing exercises." : {
       "comment" : "AttributionView — KanjiVG entry description",
       "extractionState" : "manual",
@@ -11471,6 +14242,1286 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vous êtes hors ligne — Sakura reviendra une fois connecté(e)."
+          }
+        }
+      }
+    },
+    "Follows display mode" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Follows display mode"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suit le mode d'affichage"
+          }
+        }
+      }
+    },
+    "Audio autoplay" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Audio autoplay"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lecture automatique"
+          }
+        }
+      }
+    },
+    "Settings.TatamiEligibility.PathCompetence" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cumulative competence"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compétence cumulée"
+          }
+        }
+      }
+    },
+    "Settings.TatamiEligibility.PathActiveDays" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Time practiced"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ancienneté"
+          }
+        }
+      }
+    },
+    "Settings.TatamiEligibility.Or" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "or"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ou"
+          }
+        }
+      }
+    },
+    "Settings.TatamiEligibility.PathMet" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Path met"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voie atteinte"
+          }
+        }
+      }
+    },
+    "Explore" : {
+      "comment" : "Explore tab header chrome label (BilingualLabel chrome text) — also matched by the tatami tab bar's VoiceOver accessibility label, which passes the same literal.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Explore"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Explorer"
+          }
+        }
+      }
+    },
+    "Japanese Flashcard" : {
+      "comment" : "StandBy flashcard widget configuration display name (widget gallery).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Japanese Flashcard"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flashcard japonaise"
+          }
+        }
+      }
+    },
+    "Learn kanji in StandBy mode." : {
+      "comment" : "StandBy flashcard widget configuration description (widget gallery).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Learn kanji in StandBy mode."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apprends des kanji en mode StandBy."
+          }
+        }
+      }
+    },
+    "Track your Japanese learning progress." : {
+      "comment" : "Home screen widget configuration description (widget gallery).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Track your Japanese learning progress."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suis ta progression en japonais."
+          }
+        }
+      }
+    },
+    "%lld due" : {
+      "comment" : "Home screen widget: due review count line.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld due"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld à réviser"
+          }
+        }
+      }
+    },
+    "All caught up" : {
+      "comment" : "Home screen widget: the REST state, shown when no reviews are due. Must not exhort — see OBS2-040.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All caught up"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tout est à jour"
+          }
+        }
+      }
+    },
+    "Lv. %lld" : {
+      "comment" : "Home screen widget: level line.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lv. %lld"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Niv. %lld"
+          }
+        }
+      }
+    },
+    "+%lld XP" : {
+      "comment" : "Session Live Activity (Dynamic Island expanded, trailing region): XP earned this session.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "+%lld XP"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "+%lld XP"
+          }
+        }
+      }
+    },
+    "🔥 %lld streak" : {
+      "comment" : "Session Live Activity (Dynamic Island expanded, bottom region): current correctness streak.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🔥 %lld streak"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🔥 %lld d'affilée"
+          }
+        }
+      }
+    },
+    "Mastery.New" : {
+      "comment" : "MasteryLevel.label — catalog KEY (not display text). IkeruCore can't resolve the app's locale-overridden bundle, so the view layer renders this via Text(LocalizedStringKey(...)); see CLAUDE.md Localisation section.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nouveau"
+          }
+        }
+      }
+    },
+    "Mastery.Learning" : {
+      "comment" : "MasteryLevel.label — catalog KEY (not display text). IkeruCore can't resolve the app's locale-overridden bundle, so the view layer renders this via Text(LocalizedStringKey(...)); see CLAUDE.md Localisation section.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Learning"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En apprentissage"
+          }
+        }
+      }
+    },
+    "Mastery.Familiar" : {
+      "comment" : "MasteryLevel.label — catalog KEY (not display text). IkeruCore can't resolve the app's locale-overridden bundle, so the view layer renders this via Text(LocalizedStringKey(...)); see CLAUDE.md Localisation section.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Familiar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Familier"
+          }
+        }
+      }
+    },
+    "Mastery.Mastered" : {
+      "comment" : "MasteryLevel.label — catalog KEY (not display text). IkeruCore can't resolve the app's locale-overridden bundle, so the view layer renders this via Text(LocalizedStringKey(...)); see CLAUDE.md Localisation section.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mastered"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maîtrisé"
+          }
+        }
+      }
+    },
+    "Mastery.Anchored" : {
+      "comment" : "MasteryLevel.label — catalog KEY (not display text). IkeruCore can't resolve the app's locale-overridden bundle, so the view layer renders this via Text(LocalizedStringKey(...)); see CLAUDE.md Localisation section.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anchored"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ancré"
+          }
+        }
+      }
+    },
+    "Kana.HiraganaBridge.Caption" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Same sound, new shape"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Même son, nouvelle forme"
+          }
+        }
+      }
+    },
+    "Kana.ConfusionPairs.Title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Easily Confused"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Souvent confondus"
+          }
+        }
+      }
+    },
+    "Kana.ConfusionPairs.Description" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "These katakana look alike. Drill them together until the difference is automatic."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ces katakana se ressemblent. Entraîne-toi dessus jusqu'à ce que la différence devienne automatique."
+          }
+        }
+      }
+    },
+    "Kana.ConfusionPairs.PracticeLabel" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Practice"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entraînement"
+          }
+        }
+      }
+    },
+    "Kana.Sequencing.Title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Finish hiragana first?"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terminer les hiragana d'abord ?"
+          }
+        }
+      }
+    },
+    "Kana.Sequencing.Message" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Katakana is much easier once hiragana feels automatic. You can always come back to it later."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les katakana sont bien plus faciles à apprendre une fois que les hiragana sont automatiques. Tu pourras toujours y revenir plus tard."
+          }
+        }
+      }
+    },
+    "Kana.Sequencing.SwitchToHiragana" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start with Hiragana Basics"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Commencer par les hiragana de base"
+          }
+        }
+      }
+    },
+    "Kana.Sequencing.ContinueAnyway" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continue Anyway"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continuer quand même"
+          }
+        }
+      }
+    },
+    "Home.CompetencyBook.Eyebrow" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "COMPETENCY BOOK"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LIVRET DE COMPÉTENCE"
+          }
+        }
+      }
+    },
+    "Home.CompetencyBook.Subtitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What you know, right now"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce que tu sais, maintenant"
+          }
+        }
+      }
+    },
+    "Home.CompetencyBook.WeeklyDelta" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "familiar or better this week"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "en familier ou mieux cette semaine"
+          }
+        }
+      }
+    },
+    "Home.KanaInProgress" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "in progress"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "en cours"
+          }
+        }
+      }
+    },
+    "I've seen it" : {
+      "comment" : "Button on a new-character presentation card: advances to the next item. The card also advances on its own after a few seconds.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "I've seen it"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Je l'ai vu"
+          }
+        }
+      }
+    },
+    "Tap the character to hear it again" : {
+      "comment" : "Hint under a new-card presentation card — tapping the glyph replays the audio.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap the character to hear it again"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Touche le caractère pour réécouter"
+          }
+        }
+      }
+    },
+    "MEETING A NEW CHARACTER" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MEETING A NEW CHARACTER"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "NOUVEAU CARACTÈRE"
+          }
+        }
+      }
+    },
+    "Tap to hear it again" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap to hear it again"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Touchez pour réécouter"
+          }
+        }
+      }
+    },
+    "Backs up your progress to a server in Europe. No account is needed. Conversations with Sakura are not included. Restoring on a new device is not available yet." : {
+      "extractionState" : "manual",
+      "comment" : "Value reworded for lot 3 (Sign in with Apple), then again on 2026-08-19 for « Apporte ton propre texte » — key text kept stable to avoid a re-key. The imported-texts clause is not decoration: this explainer sits directly under the toggle and is the consent surface the learner actually reads, while text_imports pushes their own pasted or photographed prose. Naming only what is EXCLUDED (Sakura) while the widest new inclusion went unnamed was the gap.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Backs up your progress to a server in Europe — including the texts you import yourself. No account is needed. Conversations with Sakura are not included. Restoring on a new device requires signing in with Apple."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sauvegarde votre progression sur un serveur situé en Europe — y compris les textes que vous importez vous-même. Aucun compte n'est nécessaire. Les conversations avec Sakura ne sont pas incluses. La restauration sur un nouvel appareil nécessite de vous connecter avec Apple."
+          }
+        }
+      }
+    },
+    "Backed up, restore incomplete" : {
+      "extractionState" : "manual",
+      "comment" : "Cloud backup status row in Settings: shown when the last push succeeded and the pull itself succeeded, but some rows were left stuck or were permanently abandoned after repeated failures (a poison row) — the backup itself is fine, only the restore side is limping",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Backed up, restore incomplete"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sauvegardé, restauration incomplète"
+          }
+        }
+      }
+    },
+    "Backed up, will retry" : {
+      "extractionState" : "manual",
+      "comment" : "Cloud backup status row in Settings: shown when the last push succeeded but the pull/merge half of that sync cycle failed — the backup itself is fine, a retry (foreground or network-regain trigger) will pick the pull back up",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Backed up, will retry"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sauvegardé, nouvel essai prévu"
+          }
+        }
+      }
+    },
+    "Backup pending" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Backup pending"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sauvegarde en attente"
+          }
+        }
+      }
+    },
+    "Cloud backup (beta)" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cloud backup (beta)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sauvegarde cloud (bêta)"
+          }
+        }
+      }
+    },
+    "Couldn't delete your data from the server. Nothing was deleted — check your connection and try again." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't delete your data from the server. Nothing was deleted — check your connection and try again."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de supprimer vos données du serveur. Rien n'a été supprimé — vérifiez votre connexion et réessayez."
+          }
+        }
+      }
+    },
+    "Delete" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer"
+          }
+        }
+      }
+    },
+    "Delete data from server?" : {
+      "extractionState" : "manual",
+      "comment" : "Value reworded for lot 3 (Sign in with Apple) — key text kept stable to avoid a re-key. Deletion now also erases the account itself (Apple identity included), not just the backed-up rows.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete your account and data?"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer votre compte et vos données ?"
+          }
+        }
+      }
+    },
+    "Delete my data from the server" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete my data from the server"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer mes données du serveur"
+          }
+        }
+      }
+    },
+    "Sign in with Apple" : {
+      "extractionState" : "manual",
+      "comment" : "Accessibility label for the Sign in with Apple row in Settings — the visible button is Apple's own native chrome, hit-tested via a wrapping plain Button (lot 3)",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sign in with Apple"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se connecter avec Apple"
+          }
+        }
+      }
+    },
+    "Sign in to pick up your progress on another device." : {
+      "extractionState" : "manual",
+      "comment" : "One-line explainer shown under the Sign in with Apple row in Settings (lot 3)",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sign in to pick up your progress on another device."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connectez-vous pour retrouver votre progression sur un autre appareil."
+          }
+        }
+      }
+    },
+    "Connected with Apple" : {
+      "extractionState" : "manual",
+      "comment" : "Settings row state once the learner has signed in / linked with Apple (lot 3) — replaces the sign-in button",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connected with Apple"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connecté avec Apple"
+          }
+        }
+      }
+    },
+    "Apple ID" : {
+      "extractionState" : "manual",
+      "comment" : "Settings row label for the Apple sign-in state once connected (visual-coherence pass) — paired with a \"Connected\" value, same label+value shape as the Profile row above it; not tappable",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple ID"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Identifiant Apple"
+          }
+        }
+      }
+    },
+    "Connected" : {
+      "extractionState" : "manual",
+      "comment" : "Value shown next to \"Apple ID\" once the learner is signed in (visual-coherence pass) — a state, not a tappable row",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connected"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connecté"
+          }
+        }
+      }
+    },
+    "Signing in…" : {
+      "extractionState" : "manual",
+      "comment" : "Loading label shown next to the spinner while the Sign in with Apple network call is in flight (lot 3)",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Signing in…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connexion…"
+          }
+        }
+      }
+    },
+    "Sign out" : {
+      "extractionState" : "manual",
+      "comment" : "Settings row label AND the confirmation dialog's action button — sign out of Apple, non-destructive (the account and local progress both survive)",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sign out"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se déconnecter"
+          }
+        }
+      }
+    },
+    "Sign out of Apple?" : {
+      "extractionState" : "manual",
+      "comment" : "Confirmation dialog title before signing out — not phrased as destructive, because it is not",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sign out of Apple?"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se déconnecter d'Apple ?"
+          }
+        }
+      }
+    },
+    "Signing out…" : {
+      "extractionState" : "manual",
+      "comment" : "Loading label shown next to the spinner while CloudSyncCoordinator.signOut() is in flight",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Signing out…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Déconnexion…"
+          }
+        }
+      }
+    },
+    "Your progress stays on this device, and stays on your account on the server. Backup stops until you sign in again and turn Cloud backup back on." : {
+      "extractionState" : "manual",
+      "comment" : "Explains that signing out is not destructive (local progress and the server account both survive) and that resuming backup takes two explicit steps: signing in again, then turning Cloud backup back on",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your progress stays on this device, and stays on your account on the server. Backup stops until you sign in again and turn Cloud backup back on."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre progression reste sur cet appareil et reste aussi sur votre compte sur le serveur. La sauvegarde s'arrête, jusqu'à ce que vous vous reconnectiez et réactiviez la sauvegarde cloud."
+          }
+        }
+      }
+    },
+    "You're signed out. Your progress is safe on this device and on your account. To back up again, sign in and turn Cloud backup back on." : {
+      "extractionState" : "manual",
+      "comment" : "Toast shown after a successful sign-out — states plainly that nothing was lost, and that resuming backup takes two explicit steps rather than promising it resumes automatically",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You're signed out. Your progress is safe on this device and on your account. To back up again, sign in and turn Cloud backup back on."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous êtes déconnecté. Votre progression est en sécurité sur cet appareil et sur votre compte. Pour reprendre la sauvegarde, reconnectez-vous puis réactivez la sauvegarde cloud."
+          }
+        }
+      }
+    },
+    "Couldn't sign out on this device. Try again." : {
+      "extractionState" : "manual",
+      "comment" : "Toast shown when CloudSyncCoordinator.signOut() throws (a local Keychain failure — this call makes no network request)",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't sign out on this device. Try again."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de se déconnecter sur cet appareil. Réessayez."
+          }
+        }
+      }
+    },
+    "Sign in again to keep syncing" : {
+      "extractionState" : "manual",
+      "comment" : "Shown instead of the normal Connected-with-Apple state when the linked session's refresh token was rejected server-side (SyncAuthError.reauthenticationRequired) — tapping re-runs the same sign-in flow, which reconnects the same account (lot 3)",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sign in again to keep syncing"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reconnectez-vous pour continuer la synchronisation"
+          }
+        }
+      }
+    },
+    "Your progress is waiting — sign in to reconnect" : {
+      "extractionState" : "manual",
+      "comment" : "Shown instead of the normal not-yet-linked sign-in row when this device restored from an iCloud backup taken after Sign in with Apple was linked elsewhere — the Keychain session is empty, but the wasLinked marker (UserDefaults, survives the restore) says this device once held a linked account. Tapping runs the same sign-in flow, which reconnects to that same account (lot 3, round-2 remediation)",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your progress is waiting — sign in to reconnect"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre progression vous attend — reconnectez-vous pour la retrouver"
+          }
+        }
+      }
+    },
+    "We couldn't verify your account connection. Nothing was changed — please try again." : {
+      "extractionState" : "manual",
+      "comment" : "Sign in with Apple error — AppleLinkError.linkIdentityGuardTripped: the server returned a different account than expected, so nothing was adopted (lot 3). Distinct from the generic network-failure message and from a silent cancellation.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "We couldn't verify your account connection. Nothing was changed — please try again."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de vérifier la connexion de votre compte. Rien n'a été modifié — réessayez."
+          }
+        }
+      }
+    },
+    "This Apple ID is already linked to another account. You're now signed in as that account — this device's earlier backup is no longer reachable." : {
+      "extractionState" : "manual",
+      "comment" : "Sign in with Apple notice — AppleLinkOutcome.switchedIdentity where the linked Apple ID genuinely belongs to a DIFFERENT, pre-existing account (not the ordinary reconnect-after-restore case, which is filtered out by comparing user IDs before this shows). Tells the learner their device just switched accounts and the old anonymous backup is now unreachable from the app (lot 3, Important #4 remediation).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This Apple ID is already linked to another account. You're now signed in as that account — this device's earlier backup is no longer reachable."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cet identifiant Apple est déjà lié à un autre compte. Vous êtes maintenant connecté à ce compte — l'ancienne sauvegarde de cet appareil n'est plus accessible."
+          }
+        }
+      }
+    },
+    "Couldn't sign in with Apple. Check your connection and try again." : {
+      "extractionState" : "manual",
+      "comment" : "Sign in with Apple error — generic/network failure (AppleSignInFlow.SignInError.missingIdentityToken/.underlying, or any other propagated error), distinct from the guard-tripped and cancellation cases (lot 3)",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't sign in with Apple. Check your connection and try again."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connexion avec Apple impossible. Vérifiez votre connexion et réessayez."
+          }
+        }
+      }
+    },
+    "Never backed up" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Never backed up"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune sauvegarde"
+          }
+        }
+      }
+    },
+    "Permanently deletes your backed-up progress — profiles, cards, review history, and vocabulary — from the server. This cannot be undone. Data on this device stays untouched." : {
+      "extractionState" : "manual",
+      "comment" : "Value reworded for lot 3 (Sign in with Apple), then again on 2026-08-19 for « Apporte ton propre texte » — key text kept stable to avoid a re-key. Deletion now also erases the account itself; wording covers both anonymous-only and Apple-linked learners since most are the former. The imported texts are listed explicitly: this alert is the enumeration a learner reads before an irreversible erasure, and text_imports shipped into the backup without being named in it.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permanently deletes your account and everything backed up to it — profiles, cards, review history, vocabulary, and the texts you imported. If you're signed in with Apple, that connection is removed too. This cannot be undone. Data on this device stays untouched."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprime définitivement votre compte et tout ce qui y est sauvegardé — profils, cartes, historique de révisions, vocabulaire, et les textes que vous avez importés. Si vous êtes connecté avec Apple, cette connexion est également supprimée. Action irréversible. Les données sur cet appareil ne sont pas concernées."
+          }
+        }
+      }
+    },
+    "Up to date" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Up to date"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "À jour"
+          }
+        }
+      }
+    },
+    "Your data has been deleted from the server" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your data has been deleted from the server"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vos données ont été supprimées du serveur"
+          }
+        }
+      }
+    },
+    "削除" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "削除"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "削除"
+          }
+        }
+      }
+    },
+    "This word is no longer in your dictionary." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This word is no longer in your dictionary."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce mot n'est plus dans ton dictionnaire."
+          }
+        }
+      }
+    },
+    "From your first kana to JLPT N5" : {
+      "comment" : "OnboardingTourView — page 1 subtitle",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "From your first kana to JLPT N5"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "De tes premiers kana au JLPT N5"
+          }
+        }
+      }
+    },
+    "Kana, kanji, grammar, and conversation — a complete beginner's foundation, one step at a time, at your own pace." : {
+      "comment" : "OnboardingTourView — page 1 description",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kana, kanji, grammar, and conversation — a complete beginner's foundation, one step at a time, at your own pace."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kana, kanji, grammaire et conversation — des bases de débutant complètes, un pas à la fois, à ton rythme."
+          }
+        }
+      }
+    },
+    "Japanese example sentences reproduced unchanged from Tatoeba; French lightly normalized (spacing, apostrophes). Its audio is licensed separately, per contributor, unused." : {
+      "comment" : "AttributionView — Tatoeba entry description",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Japanese example sentences reproduced unchanged from Tatoeba; French lightly normalized (spacing, apostrophes). Its audio is licensed separately, per contributor, unused."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les phrases d'exemple japonaises sont reproduites telles quelles depuis Tatoeba ; le français est légèrement normalisé (espaces, apostrophes). Son audio est sous licence distincte, par contributeur, non utilisé."
+          }
+        }
+      }
+    },
+    "Kanji readings and meanings in the content bundle are derived from the KANJIDIC database, maintained by the EDRDG at Monash University." : {
+      "comment" : "AttributionView — KANJIDIC entry description",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kanji readings and meanings in the content bundle are derived from the KANJIDIC database, maintained by the EDRDG at Monash University."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les lectures et les sens des kanji du contenu embarqué sont dérivés de la base KANJIDIC, maintenue par l'EDRDG à l'université Monash."
+          }
+        }
+      }
+    },
+    "Meanings and grammar notes are written for Ikeru. Kanji readings come from KANJIDIC, the N5 word list from Tanos, most example sentences from Tatoeba — all credited below." : {
+      "comment" : "AttributionView — header, provenance summary",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meanings and grammar notes are written for Ikeru. Kanji readings come from KANJIDIC, the N5 word list from Tanos, most example sentences from Tatoeba — all credited below."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les définitions et les notes de grammaire sont écrites pour Ikeru. Les lectures des kanji viennent de KANJIDIC, la liste de mots N5 de Tanos, la plupart des phrases d'exemple de Tatoeba — tous sont crédités ci-dessous."
+          }
+        }
+      }
+    },
+    "Read the licence" : {
+      "comment" : "AttributionView — link to each source's licence text",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Read the licence"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lire la licence"
           }
         }
       }

@@ -1,3 +1,12 @@
+// swiftlint:disable file_length
+// This file is an append-only history of frozen `VersionedSchema` snapshots
+// (V1 through V5) plus the live V6 schema. Splitting it across files would
+// break the name-shadowing trick each frozen enum relies on (nested @Model
+// types must live inside their own versioned-schema enum body — see V1's doc
+// comment) and would scatter a single coherent story about what shipped
+// when. Growth here is expected and intentional every time a new schema
+// version is cut; see IkeruSchemaTests.swift's golden-fingerprint tests for
+// the actual safety net.
 import Foundation
 import SwiftData
 
@@ -43,12 +52,26 @@ import SwiftData
 /// again: editing `RPGState.swift` no longer touches `IkeruSchemaV1.RPGState`
 /// at all.
 ///
-/// Models that cannot reach `RPGState` through any relationship
-/// (`MnemonicCache`, `CompanionChatMessage`, `AssetManifest`,
-/// `VocabularyEntry`, `VocabularyEncounter`, `DailyTerm`) stay live
-/// references: freezing them buys no additional safety (they can't drift via
-/// this relationship graph) while multiplying the maintenance burden every
-/// future versioned schema would carry forward.
+/// ### 2026-08-13 update — the freeze set grew to 7
+///
+/// Cloud-sync lot 0 (`docs/design-specs/2026-08-10-cloud-sync-design.md`
+/// §5.1) adds `updatedAt` / `deletedAt` / `syncedAt` to the *live*
+/// `VocabularyEntry`, `VocabularyEncounter`, and `CompanionChatMessage`
+/// classes as part of `IkeruSchemaV4`. Before that change those three were
+/// safe to leave live in V1/V2 — nobody had touched their shape since
+/// `a7371a3`. The moment their live shape changes, the same `aa03566`
+/// failure mode applies to them too: `IkeruSchemaV1.models` would silently
+/// start describing V4's shape. They join the freeze set here, unchanged in
+/// content from what shipped at `a7371a3` — this is a **pinning** operation
+/// (adding a nested snapshot that matches the current live shape exactly),
+/// not an edit to what V1 means. `VocabularyEntry` and `VocabularyEncounter`
+/// are frozen together (same enum, mutual `@Relationship`) for the same
+/// reason the Card/ReviewLog/UserProfile/RPGState quartet is.
+///
+/// Models that still cannot reach any Lot-0-touched entity through any
+/// relationship (`MnemonicCache`, `AssetManifest`, `DailyTerm`) stay live
+/// references: freezing them buys no additional safety while multiplying the
+/// maintenance burden every future versioned schema would carry forward.
 ///
 /// - Important: `IkeruSchemaV1.models` — and every nested frozen type below —
 ///   must stay byte-identical to the shape already on TestFlight users'
@@ -69,8 +92,10 @@ public enum IkeruSchemaV1: VersionedSchema {
         // runtime ("Failed to cast model IkeruCore.UserProfile … to UserProfile"
         // in the migration tests) — bisected 2026-07-15. The golden fingerprint
         // tests in IkeruSchemaTests pin that these resolve to the frozen
-        // 19-property shapes; if this list is ever moved out of the enum body,
-        // those tests fail before anything ships.
+        // 19-property shapes; if this list is ever moved out of the enum
+        // body, those tests fail before anything ships. Same rule applies to
+        // `VocabularyEntry` / `VocabularyEncounter` / `CompanionChatMessage`,
+        // frozen here since 2026-08-13 (cloud-sync lot 0).
         [
             UserProfile.self,
             Card.self,
@@ -344,39 +369,235 @@ public enum IkeruSchemaV1: VersionedSchema {
             self.responseTimeMs = responseTimeMs
         }
     }
+
+    /// Frozen snapshot of `VocabularyEntry`, unchanged since `a7371a3`.
+    /// Frozen here since 2026-08-13 (cloud-sync lot 0) — the live class
+    /// gains `updatedAt`/`deletedAt`/`syncedAt` in `IkeruSchemaV4`. Nested
+    /// together with `VocabularyEncounter` below because the two hold a
+    /// mutual `@Relationship`.
+    @Model
+    public final class VocabularyEntry {
+
+        /// Unique identifier for the entry.
+        public var id: UUID
+
+        /// The Japanese word (e.g. 勉強).
+        public var word: String
+
+        /// Hiragana reading (e.g. べんきょう).
+        public var reading: String
+
+        /// Translation in the user's language.
+        public var meaning: String
+
+        /// Raw value storage for JLPTLevel (used in SwiftData predicates).
+        public var jlptLevelRawValue: String?
+
+        /// Estimated JLPT level for this word.
+        public var jlptLevel: JLPTLevel? {
+            get {
+                guard let raw = jlptLevelRawValue else { return nil }
+                return JLPTLevel(rawValue: raw)
+            }
+            set { jlptLevelRawValue = newValue?.rawValue }
+        }
+
+        /// FSRS scheduling state.
+        public var fsrsState: FSRSState
+
+        /// Ease factor for scheduling (default 2.5).
+        public var easeFactor: Double
+
+        /// Current review interval in days.
+        public var interval: Int
+
+        /// Date when the entry is next due for review.
+        public var dueDate: Date
+
+        /// Number of times the entry has lapsed (been forgotten).
+        public var lapseCount: Int
+
+        /// Whether the user explicitly added this word to their dictionary.
+        public var isInDictionary: Bool = false
+
+        /// Date when the entry was first added to the dictionary.
+        public var createdAt: Date
+
+        /// All encounter logs for this entry.
+        @Relationship(deleteRule: .cascade, inverse: \VocabularyEncounter.entry)
+        public var encounters: [VocabularyEncounter]?
+
+        public init(
+            word: String,
+            reading: String,
+            meaning: String,
+            jlptLevel: JLPTLevel? = nil,
+            isInDictionary: Bool = true,
+            fsrsState: FSRSState = FSRSState(),
+            easeFactor: Double = 2.5,
+            interval: Int = 0,
+            dueDate: Date = Date(),
+            lapseCount: Int = 0,
+            createdAt: Date = Date()
+        ) {
+            self.id = UUID()
+            self.word = word
+            self.reading = reading
+            self.meaning = meaning
+            self.jlptLevelRawValue = jlptLevel?.rawValue
+            self.isInDictionary = isInDictionary
+            self.fsrsState = fsrsState
+            self.easeFactor = easeFactor
+            self.interval = interval
+            self.dueDate = dueDate
+            self.lapseCount = lapseCount
+            self.createdAt = createdAt
+            self.encounters = []
+        }
+    }
+
+    /// Frozen snapshot of `VocabularyEncounter`, unchanged since `a7371a3`.
+    /// Frozen here since 2026-08-13 (cloud-sync lot 0) — see
+    /// `VocabularyEntry` above for why the pair is nested together.
+    @Model
+    public final class VocabularyEncounter {
+
+        /// Unique identifier for this encounter.
+        public var id: UUID
+
+        /// Timestamp of the encounter.
+        public var timestamp: Date
+
+        /// Raw value storage for EncounterSource (used in SwiftData predicates).
+        public var sourceRawValue: String
+
+        /// Where in the app the word was encountered.
+        public var source: EncounterSource {
+            get { EncounterSource(rawValue: sourceRawValue) ?? .sakuraChat }
+            set { sourceRawValue = newValue.rawValue }
+        }
+
+        /// The sentence or context where the word appeared.
+        public var contextSnippet: String
+
+        /// The vocabulary entry this encounter belongs to.
+        public var entry: VocabularyEntry?
+
+        public init(
+            source: EncounterSource,
+            contextSnippet: String,
+            entry: VocabularyEntry,
+            timestamp: Date = Date()
+        ) {
+            self.id = UUID()
+            self.timestamp = timestamp
+            self.sourceRawValue = source.rawValue
+            self.contextSnippet = contextSnippet
+            self.entry = entry
+        }
+    }
+
+    /// Frozen snapshot of `CompanionChatMessage`, unchanged since `a7371a3`.
+    /// Frozen here since 2026-08-13 (cloud-sync lot 0) — the live class
+    /// gains `updatedAt`/`deletedAt`/`syncedAt` in `IkeruSchemaV4`.
+    @Model
+    public final class CompanionChatMessage {
+
+        /// Unique identifier for the message.
+        public var id: UUID
+
+        /// Who sent the message.
+        public var roleRawValue: String
+
+        /// The raw content of the message (may contain inline tags).
+        public var content: String
+
+        /// When the message was created.
+        public var createdAt: Date
+
+        /// The profile this message belongs to.
+        public var profileId: UUID
+
+        /// Typed role accessor.
+        @Transient
+        public var role: CompanionMessageRole {
+            CompanionMessageRole(rawValue: roleRawValue) ?? .system
+        }
+
+        public init(
+            role: CompanionMessageRole,
+            content: String,
+            profileId: UUID
+        ) {
+            self.id = UUID()
+            self.roleRawValue = role.rawValue
+            self.content = content
+            self.createdAt = Date()
+            self.profileId = profileId
+        }
+    }
 }
 
 // MARK: - Versioned Schema V2
 
-/// **V2** — the fully live current shape. Two additive changes on top of V1:
+/// **V2** — frozen now that `IkeruSchemaV3` exists (learner-telemetry lot 1,
+/// remediation item #17). Two additive changes on top of V1:
 ///
 /// 1. `RPGState.activeDaysCount` (commit `aa03566`) — a new stored `Int`
 ///    property, defaulting to `0`. This is the property whose addition to
 ///    the *live* `RPGState` class silently mutated `IkeruSchemaV1`'s meaning
 ///    before V1 was frozen (see the post-mortem in `IkeruSchemaV1`'s doc
-///    comment); it is only ever meant to exist from V2 onward.
+///    comment); it only ever existed from V2 onward.
 /// 2. `ExerciseOutcomeLog` (remediation 4.4) — a brand-new entity whose only
 ///    cross-entity reference is a scalar `profileID: UUID` (not a SwiftData
 ///    relationship), so it doesn't change any existing entity's shape.
 ///
-/// Both changes are lightweight-safe: an added scalar property with a
-/// default, and a wholly new entity. Unlike V1, V2 uses *live* references
-/// throughout — it doesn't need to be frozen because there is currently no
-/// V3. The day a `V3` is created, V2 must be frozen the same way V1 was.
+/// Both changes were lightweight-safe: an added scalar property with a
+/// default, and a wholly new entity.
+///
+/// ### 2026-08-13 update — the freeze set grew to 8
+///
+/// Same reasoning as `IkeruSchemaV1`'s 2026-08-13 update: cloud-sync lot 0
+/// touches the live `VocabularyEntry`, `VocabularyEncounter`,
+/// `CompanionChatMessage`, **and** `ExerciseOutcomeLog` (all four gain
+/// `updatedAt`/`deletedAt`/`syncedAt` in `IkeruSchemaV4`), so all four join
+/// the freeze set here too — unchanged in content from what V2 actually
+/// shipped, this is a pinning operation, not an edit.
+///
+/// - Important: `IkeruSchemaV2.models` — and every nested frozen type below —
+///   must stay byte-identical to what shipped as "V2" (the shape released to
+///   TestFlight before `ReviewLog` gained `answeredValue`/`exerciseType`/
+///   `surface`). **Never edit anything in this enum** to reflect a new model
+///   change; that goes in `IkeruSchemaV3` (or later) plus a `MigrationStage`.
+///   See the golden-fingerprint tests in `IkeruSchemaTests.swift`.
+///
+/// ⚠️ Freezing V2 means every OTHER call site that opens a container with
+/// `Schema(versionedSchema: IkeruSchemaV2.self)` (or `Schema(IkeruSchemaV2.models)`)
+/// and then fetches/inserts using the *live* top-level types (`UserProfile`,
+/// `Card`, `ReviewLog`, `RPGState`) will now hit the same
+/// "Failed to cast model … to X" mismatch V1's post-mortem describes, because
+/// those live types now describe V3's shape, not V2's. As of this change the
+/// only call sites still opening V2 directly are OUTSIDE this remediation
+/// item's file perimeter (production bootstrap + several test files) — see
+/// the handoff notes for the exact list. They must be repointed at
+/// `IkeruSchemaV3` before V2's freeze is safe to ship.
 public enum IkeruSchemaV2: VersionedSchema {
 
     public static var versionIdentifier: Schema.Version { Schema.Version(2, 0, 0) }
 
     public static var models: [any PersistentModel.Type] {
         // The first four bind to the frozen nested snapshots below via name
-        // shadowing. ⚠️ Do NOT "clarify" them to `IkeruSchemaV1.UserProfile.self`
+        // shadowing. ⚠️ Do NOT "clarify" them to `IkeruSchemaV2.UserProfile.self`
         // etc.: self-qualifying the nested @Model types from inside this enum's
         // own body empirically breaks SwiftData's class↔entity resolution at
         // runtime ("Failed to cast model IkeruCore.UserProfile … to UserProfile"
-        // in the migration tests) — bisected 2026-07-15. The golden fingerprint
-        // tests in IkeruSchemaTests pin that these resolve to the frozen
-        // 19-property shapes; if this list is ever moved out of the enum body,
-        // those tests fail before anything ships.
+        // in the migration tests) — bisected 2026-07-15 (same pitfall as V1).
+        // The golden fingerprint tests in IkeruSchemaTests pin that these
+        // resolve to the frozen 20-property (RPGState) / 5-property
+        // (ReviewLog) shapes; if this list is ever moved out of the enum
+        // body, those tests fail before anything ships. Same rule applies to
+        // `VocabularyEntry` / `VocabularyEncounter` / `CompanionChatMessage` /
+        // `ExerciseOutcomeLog`, frozen here since 2026-08-13 (cloud-sync lot 0).
         [
             UserProfile.self,
             Card.self,
@@ -391,6 +612,1100 @@ public enum IkeruSchemaV2: VersionedSchema {
             ExerciseOutcomeLog.self,
         ]
     }
+
+    // MARK: - Frozen snapshots
+
+    /// Frozen snapshot of `RPGState` as it stood for V2 — the 20-stored-
+    /// property shape (V1's 19 plus `activeDaysCount`). **Never add, remove,
+    /// retype, or rename a stored property here.**
+    @Model
+    public final class RPGState {
+
+        public var id: UUID
+        public var xp: Int
+        public var level: Int
+        public var totalReviewsCompleted: Int
+        public var attributesData: Data?
+        public var lootInventoryData: Data?
+        public var lootBoxesData: Data?
+        public var totalSessionsCompleted: Int
+        public var equippedTitleID: UUID?
+        public var equippedThemeID: UUID?
+        public var equippedBadgeIDsData: Data?
+        public var acknowledgedUnlocksData: Data?
+        public var sessionsSinceLastDrop: Int = 0
+        public var lastSessionDate: Date?
+        public var currentDailyStreak: Int = 0
+        public var longestDailyStreak: Int = 0
+
+        /// Added in V2 (commit `aa03566`) — see this enum's doc comment.
+        public var activeDaysCount: Int = 0
+
+        public var jlptBackfillVersion: Int = 0
+        public var lastReadinessBestFit: String?
+        public var profile: UserProfile?
+
+        public init(
+            xp: Int = 0,
+            level: Int = 1,
+            totalReviewsCompleted: Int = 0
+        ) {
+            self.id = UUID()
+            self.xp = xp
+            self.level = level
+            self.totalReviewsCompleted = totalReviewsCompleted
+            self.attributesData = nil
+            self.lootInventoryData = nil
+            self.lootBoxesData = nil
+            self.totalSessionsCompleted = 0
+            self.equippedTitleID = nil
+            self.equippedThemeID = nil
+            self.equippedBadgeIDsData = nil
+            self.sessionsSinceLastDrop = 0
+            self.lastSessionDate = nil
+            self.currentDailyStreak = 0
+            self.longestDailyStreak = 0
+        }
+    }
+
+    /// Frozen snapshot of `UserProfile` for V2 — unchanged from V1.
+    @Model
+    public final class UserProfile: Identifiable {
+
+        public var id: UUID
+        public var displayName: String
+        public var createdAt: Date
+        public var settings: ProfileSettings
+
+        @Relationship(deleteRule: .cascade, inverse: \Card.profile)
+        public var cards: [Card]?
+
+        @Relationship(deleteRule: .cascade, inverse: \RPGState.profile)
+        public var rpgState: RPGState?
+
+        public init(
+            displayName: String,
+            settings: ProfileSettings = ProfileSettings()
+        ) {
+            self.id = UUID()
+            self.displayName = displayName
+            self.createdAt = Date()
+            self.settings = settings
+            self.cards = []
+            self.rpgState = RPGState()
+        }
+    }
+
+    /// Frozen snapshot of `Card` for V2 — unchanged from V1.
+    @Model
+    public final class Card {
+
+        public var id: UUID
+        public var front: String
+        public var back: String
+        public var typeRawValue: String
+
+        public var type: CardType {
+            get { CardType(rawValue: typeRawValue) ?? .kanji }
+            set { typeRawValue = newValue.rawValue }
+        }
+
+        public var fsrsState: FSRSState
+        public var easeFactor: Double
+        public var interval: Int
+        public var dueDate: Date
+        public var lapseCount: Int
+        public var leechFlag: Bool
+        public var jlptLevelRawValue: String?
+
+        public var jlptLevel: JLPTLevel? {
+            get {
+                guard let raw = jlptLevelRawValue else { return nil }
+                return JLPTLevel(rawValue: raw)
+            }
+            set { jlptLevelRawValue = newValue?.rawValue }
+        }
+
+        public var profile: UserProfile?
+
+        @Relationship(deleteRule: .cascade, inverse: \ReviewLog.card)
+        public var reviewLogs: [ReviewLog]?
+
+        public init(
+            front: String,
+            back: String,
+            type: CardType,
+            fsrsState: FSRSState = FSRSState(),
+            easeFactor: Double = 2.5,
+            interval: Int = 0,
+            dueDate: Date = Date(),
+            lapseCount: Int = 0,
+            leechFlag: Bool = false,
+            jlptLevel: JLPTLevel? = nil
+        ) {
+            self.id = UUID()
+            self.front = front
+            self.back = back
+            self.typeRawValue = type.rawValue
+            self.fsrsState = fsrsState
+            self.easeFactor = easeFactor
+            self.interval = interval
+            self.dueDate = dueDate
+            self.lapseCount = lapseCount
+            self.leechFlag = leechFlag
+            self.jlptLevelRawValue = jlptLevel?.rawValue
+            self.reviewLogs = []
+        }
+    }
+
+    /// Frozen snapshot of `ReviewLog` for V2 — the 5-stored-property shape
+    /// **without** `answeredValue`/`exerciseType`/`surface`. Those are
+    /// V3-only; see `IkeruSchemaV3`.
+    @Model
+    public final class ReviewLog {
+
+        public var id: UUID
+        public var timestamp: Date
+        public var card: Card?
+        public var gradeRawValue: Int
+
+        public var grade: Grade {
+            get { Grade(rawValue: gradeRawValue) ?? .good }
+            set { gradeRawValue = newValue.rawValue }
+        }
+
+        public var responseTimeMs: Int
+
+        public init(
+            card: Card,
+            grade: Grade,
+            responseTimeMs: Int,
+            timestamp: Date = Date()
+        ) {
+            self.id = UUID()
+            self.timestamp = timestamp
+            self.card = card
+            self.gradeRawValue = grade.rawValue
+            self.responseTimeMs = responseTimeMs
+        }
+    }
+
+    /// Frozen snapshot of `VocabularyEntry` for V2 — unchanged from V1.
+    /// Frozen here since 2026-08-13 (cloud-sync lot 0) — see
+    /// `IkeruSchemaV1.VocabularyEntry`'s doc comment.
+    @Model
+    public final class VocabularyEntry {
+
+        public var id: UUID
+        public var word: String
+        public var reading: String
+        public var meaning: String
+        public var jlptLevelRawValue: String?
+
+        public var jlptLevel: JLPTLevel? {
+            get {
+                guard let raw = jlptLevelRawValue else { return nil }
+                return JLPTLevel(rawValue: raw)
+            }
+            set { jlptLevelRawValue = newValue?.rawValue }
+        }
+
+        public var fsrsState: FSRSState
+        public var easeFactor: Double
+        public var interval: Int
+        public var dueDate: Date
+        public var lapseCount: Int
+        public var isInDictionary: Bool = false
+        public var createdAt: Date
+
+        @Relationship(deleteRule: .cascade, inverse: \VocabularyEncounter.entry)
+        public var encounters: [VocabularyEncounter]?
+
+        public init(
+            word: String,
+            reading: String,
+            meaning: String,
+            jlptLevel: JLPTLevel? = nil,
+            isInDictionary: Bool = true,
+            fsrsState: FSRSState = FSRSState(),
+            easeFactor: Double = 2.5,
+            interval: Int = 0,
+            dueDate: Date = Date(),
+            lapseCount: Int = 0,
+            createdAt: Date = Date()
+        ) {
+            self.id = UUID()
+            self.word = word
+            self.reading = reading
+            self.meaning = meaning
+            self.jlptLevelRawValue = jlptLevel?.rawValue
+            self.isInDictionary = isInDictionary
+            self.fsrsState = fsrsState
+            self.easeFactor = easeFactor
+            self.interval = interval
+            self.dueDate = dueDate
+            self.lapseCount = lapseCount
+            self.createdAt = createdAt
+            self.encounters = []
+        }
+    }
+
+    /// Frozen snapshot of `VocabularyEncounter` for V2 — unchanged from V1.
+    @Model
+    public final class VocabularyEncounter {
+
+        public var id: UUID
+        public var timestamp: Date
+        public var sourceRawValue: String
+
+        public var source: EncounterSource {
+            get { EncounterSource(rawValue: sourceRawValue) ?? .sakuraChat }
+            set { sourceRawValue = newValue.rawValue }
+        }
+
+        public var contextSnippet: String
+        public var entry: VocabularyEntry?
+
+        public init(
+            source: EncounterSource,
+            contextSnippet: String,
+            entry: VocabularyEntry,
+            timestamp: Date = Date()
+        ) {
+            self.id = UUID()
+            self.timestamp = timestamp
+            self.sourceRawValue = source.rawValue
+            self.contextSnippet = contextSnippet
+            self.entry = entry
+        }
+    }
+
+    /// Frozen snapshot of `CompanionChatMessage` for V2 — unchanged from V1.
+    @Model
+    public final class CompanionChatMessage {
+
+        public var id: UUID
+        public var roleRawValue: String
+        public var content: String
+        public var createdAt: Date
+        public var profileId: UUID
+
+        @Transient
+        public var role: CompanionMessageRole {
+            CompanionMessageRole(rawValue: roleRawValue) ?? .system
+        }
+
+        public init(
+            role: CompanionMessageRole,
+            content: String,
+            profileId: UUID
+        ) {
+            self.id = UUID()
+            self.roleRawValue = role.rawValue
+            self.content = content
+            self.createdAt = Date()
+            self.profileId = profileId
+        }
+    }
+
+    /// Frozen snapshot of `ExerciseOutcomeLog` for V2 — the shape it had at
+    /// introduction. Frozen here since 2026-08-13 (cloud-sync lot 0) — the
+    /// live class gains `updatedAt`/`deletedAt`/`syncedAt` in `IkeruSchemaV4`.
+    @Model
+    public final class ExerciseOutcomeLog {
+
+        public var id: UUID
+        public var timestamp: Date
+        public var skillRawValue: String
+        public var accuracy: Double
+        public var profileID: UUID
+
+        public var skill: SkillType {
+            get { SkillType(rawValue: skillRawValue) ?? .listening }
+            set { skillRawValue = newValue.rawValue }
+        }
+
+        public init(
+            skill: SkillType,
+            accuracy: Double,
+            profileID: UUID,
+            timestamp: Date = Date()
+        ) {
+            self.id = UUID()
+            self.timestamp = timestamp
+            self.skillRawValue = skill.rawValue
+            self.accuracy = accuracy
+            self.profileID = profileID
+        }
+    }
+}
+
+// MARK: - Versioned Schema V3
+
+/// **V3** — frozen now that `IkeruSchemaV4` exists (cloud-sync lot 0,
+/// `docs/design-specs/2026-08-10-cloud-sync-design.md` §5.1). One additive
+/// change on top of V2:
+///
+/// `ReviewLog` gains three optional stored properties —  `answeredValue`,
+/// `exerciseType`, `surface` — so a review log entry can carry which value
+/// the learner actually chose (for confusion-pair analysis) and where the
+/// grade came from. All three default to `nil`, so this is lightweight-safe:
+/// existing V2 rows backfill as `nil` with no data transformation needed.
+///
+/// ### 2026-08-13 update — V3 is now frozen, with a full 8-entity freeze set
+///
+/// V3 used to describe itself as "the fully live current shape" because
+/// there was no V4 yet. `IkeruSchemaV4` now exists: it adds `updatedAt` /
+/// `deletedAt` / `syncedAt` to the 8 synchronized entities per the cloud-sync
+/// design (`UserProfile`, `Card`, `ReviewLog`, `RPGState`, `VocabularyEntry`,
+/// `VocabularyEncounter`, `ExerciseOutcomeLog`, `CompanionChatMessage`). All
+/// 8 are therefore frozen here, nested exactly as they stood before that
+/// addition — this is what makes V3→V4 a legitimate `.lightweight` stage
+/// instead of silently mutating what "V3" already meant.
+///
+/// `MnemonicCache`, `AssetManifest`, `DailyTerm` are unaffected by lot 0 (not
+/// synchronized entities — see spec §3) and stay live references.
+///
+/// - Important: `IkeruSchemaV3.models` — and every nested frozen type below —
+///   must stay byte-identical to what shipped as "V3". **Never edit anything
+///   in this enum** to reflect a new model change; that goes in
+///   `IkeruSchemaV4` (or later) plus a `MigrationStage`. See the
+///   golden-fingerprint tests in `IkeruSchemaTests.swift`.
+public enum IkeruSchemaV3: VersionedSchema {
+
+    public static var versionIdentifier: Schema.Version { Schema.Version(3, 0, 0) }
+
+    public static var models: [any PersistentModel.Type] {
+        // Name-shadowing rule applies here exactly as in V1/V2 — see their
+        // comments on `models`. Do NOT self-qualify these to
+        // `IkeruSchemaV3.UserProfile.self` etc.
+        [
+            UserProfile.self,
+            Card.self,
+            ReviewLog.self,
+            RPGState.self,
+            MnemonicCache.self,
+            CompanionChatMessage.self,
+            AssetManifest.self,
+            VocabularyEntry.self,
+            VocabularyEncounter.self,
+            DailyTerm.self,
+            ExerciseOutcomeLog.self,
+        ]
+    }
+
+    // MARK: - Frozen snapshots
+
+    /// Frozen snapshot of `RPGState` for V3 — identical to V2's (RPGState
+    /// gained nothing between V2 and V3).
+    @Model
+    public final class RPGState {
+
+        public var id: UUID
+        public var xp: Int
+        public var level: Int
+        public var totalReviewsCompleted: Int
+        public var attributesData: Data?
+        public var lootInventoryData: Data?
+        public var lootBoxesData: Data?
+        public var totalSessionsCompleted: Int
+        public var equippedTitleID: UUID?
+        public var equippedThemeID: UUID?
+        public var equippedBadgeIDsData: Data?
+        public var acknowledgedUnlocksData: Data?
+        public var sessionsSinceLastDrop: Int = 0
+        public var lastSessionDate: Date?
+        public var currentDailyStreak: Int = 0
+        public var longestDailyStreak: Int = 0
+        public var activeDaysCount: Int = 0
+        public var jlptBackfillVersion: Int = 0
+        public var lastReadinessBestFit: String?
+        public var profile: UserProfile?
+
+        public init(
+            xp: Int = 0,
+            level: Int = 1,
+            totalReviewsCompleted: Int = 0
+        ) {
+            self.id = UUID()
+            self.xp = xp
+            self.level = level
+            self.totalReviewsCompleted = totalReviewsCompleted
+            self.attributesData = nil
+            self.lootInventoryData = nil
+            self.lootBoxesData = nil
+            self.totalSessionsCompleted = 0
+            self.equippedTitleID = nil
+            self.equippedThemeID = nil
+            self.equippedBadgeIDsData = nil
+            self.sessionsSinceLastDrop = 0
+            self.lastSessionDate = nil
+            self.currentDailyStreak = 0
+            self.longestDailyStreak = 0
+        }
+    }
+
+    /// Frozen snapshot of `UserProfile` for V3 — unchanged from V1/V2.
+    @Model
+    public final class UserProfile: Identifiable {
+
+        public var id: UUID
+        public var displayName: String
+        public var createdAt: Date
+        public var settings: ProfileSettings
+
+        @Relationship(deleteRule: .cascade, inverse: \Card.profile)
+        public var cards: [Card]?
+
+        @Relationship(deleteRule: .cascade, inverse: \RPGState.profile)
+        public var rpgState: RPGState?
+
+        public init(
+            displayName: String,
+            settings: ProfileSettings = ProfileSettings()
+        ) {
+            self.id = UUID()
+            self.displayName = displayName
+            self.createdAt = Date()
+            self.settings = settings
+            self.cards = []
+            self.rpgState = RPGState()
+        }
+    }
+
+    /// Frozen snapshot of `Card` for V3 — unchanged from V1/V2.
+    @Model
+    public final class Card {
+
+        public var id: UUID
+        public var front: String
+        public var back: String
+        public var typeRawValue: String
+
+        public var type: CardType {
+            get { CardType(rawValue: typeRawValue) ?? .kanji }
+            set { typeRawValue = newValue.rawValue }
+        }
+
+        public var fsrsState: FSRSState
+        public var easeFactor: Double
+        public var interval: Int
+        public var dueDate: Date
+        public var lapseCount: Int
+        public var leechFlag: Bool
+        public var jlptLevelRawValue: String?
+
+        public var jlptLevel: JLPTLevel? {
+            get {
+                guard let raw = jlptLevelRawValue else { return nil }
+                return JLPTLevel(rawValue: raw)
+            }
+            set { jlptLevelRawValue = newValue?.rawValue }
+        }
+
+        public var profile: UserProfile?
+
+        @Relationship(deleteRule: .cascade, inverse: \ReviewLog.card)
+        public var reviewLogs: [ReviewLog]?
+
+        public init(
+            front: String,
+            back: String,
+            type: CardType,
+            fsrsState: FSRSState = FSRSState(),
+            easeFactor: Double = 2.5,
+            interval: Int = 0,
+            dueDate: Date = Date(),
+            lapseCount: Int = 0,
+            leechFlag: Bool = false,
+            jlptLevel: JLPTLevel? = nil
+        ) {
+            self.id = UUID()
+            self.front = front
+            self.back = back
+            self.typeRawValue = type.rawValue
+            self.fsrsState = fsrsState
+            self.easeFactor = easeFactor
+            self.interval = interval
+            self.dueDate = dueDate
+            self.lapseCount = lapseCount
+            self.leechFlag = leechFlag
+            self.jlptLevelRawValue = jlptLevel?.rawValue
+            self.reviewLogs = []
+        }
+    }
+
+    /// Frozen snapshot of `ReviewLog` for V3 — the 8-stored-property shape
+    /// **with** `answeredValue`/`exerciseType`/`surface`, but without the
+    /// cloud-sync columns (V4-only).
+    @Model
+    public final class ReviewLog {
+
+        public var id: UUID
+        public var timestamp: Date
+        public var card: Card?
+        public var gradeRawValue: Int
+
+        public var grade: Grade {
+            get { Grade(rawValue: gradeRawValue) ?? .good }
+            set { gradeRawValue = newValue.rawValue }
+        }
+
+        public var responseTimeMs: Int
+        public var answeredValue: String?
+        public var exerciseType: String?
+        public var surface: String?
+
+        public init(
+            card: Card,
+            grade: Grade,
+            responseTimeMs: Int,
+            timestamp: Date = Date(),
+            answeredValue: String? = nil,
+            exerciseType: String? = nil,
+            surface: String? = nil
+        ) {
+            self.id = UUID()
+            self.timestamp = timestamp
+            self.card = card
+            self.gradeRawValue = grade.rawValue
+            self.responseTimeMs = responseTimeMs
+            self.answeredValue = answeredValue
+            self.exerciseType = exerciseType
+            self.surface = surface
+        }
+    }
+
+    /// Frozen snapshot of `VocabularyEntry` for V3 — unchanged from V1/V2.
+    @Model
+    public final class VocabularyEntry {
+
+        public var id: UUID
+        public var word: String
+        public var reading: String
+        public var meaning: String
+        public var jlptLevelRawValue: String?
+
+        public var jlptLevel: JLPTLevel? {
+            get {
+                guard let raw = jlptLevelRawValue else { return nil }
+                return JLPTLevel(rawValue: raw)
+            }
+            set { jlptLevelRawValue = newValue?.rawValue }
+        }
+
+        public var fsrsState: FSRSState
+        public var easeFactor: Double
+        public var interval: Int
+        public var dueDate: Date
+        public var lapseCount: Int
+        public var isInDictionary: Bool = false
+        public var createdAt: Date
+
+        @Relationship(deleteRule: .cascade, inverse: \VocabularyEncounter.entry)
+        public var encounters: [VocabularyEncounter]?
+
+        public init(
+            word: String,
+            reading: String,
+            meaning: String,
+            jlptLevel: JLPTLevel? = nil,
+            isInDictionary: Bool = true,
+            fsrsState: FSRSState = FSRSState(),
+            easeFactor: Double = 2.5,
+            interval: Int = 0,
+            dueDate: Date = Date(),
+            lapseCount: Int = 0,
+            createdAt: Date = Date()
+        ) {
+            self.id = UUID()
+            self.word = word
+            self.reading = reading
+            self.meaning = meaning
+            self.jlptLevelRawValue = jlptLevel?.rawValue
+            self.isInDictionary = isInDictionary
+            self.fsrsState = fsrsState
+            self.easeFactor = easeFactor
+            self.interval = interval
+            self.dueDate = dueDate
+            self.lapseCount = lapseCount
+            self.createdAt = createdAt
+            self.encounters = []
+        }
+    }
+
+    /// Frozen snapshot of `VocabularyEncounter` for V3 — unchanged from V1/V2.
+    @Model
+    public final class VocabularyEncounter {
+
+        public var id: UUID
+        public var timestamp: Date
+        public var sourceRawValue: String
+
+        public var source: EncounterSource {
+            get { EncounterSource(rawValue: sourceRawValue) ?? .sakuraChat }
+            set { sourceRawValue = newValue.rawValue }
+        }
+
+        public var contextSnippet: String
+        public var entry: VocabularyEntry?
+
+        public init(
+            source: EncounterSource,
+            contextSnippet: String,
+            entry: VocabularyEntry,
+            timestamp: Date = Date()
+        ) {
+            self.id = UUID()
+            self.timestamp = timestamp
+            self.sourceRawValue = source.rawValue
+            self.contextSnippet = contextSnippet
+            self.entry = entry
+        }
+    }
+
+    /// Frozen snapshot of `CompanionChatMessage` for V3 — unchanged from V1/V2.
+    @Model
+    public final class CompanionChatMessage {
+
+        public var id: UUID
+        public var roleRawValue: String
+        public var content: String
+        public var createdAt: Date
+        public var profileId: UUID
+
+        @Transient
+        public var role: CompanionMessageRole {
+            CompanionMessageRole(rawValue: roleRawValue) ?? .system
+        }
+
+        public init(
+            role: CompanionMessageRole,
+            content: String,
+            profileId: UUID
+        ) {
+            self.id = UUID()
+            self.roleRawValue = role.rawValue
+            self.content = content
+            self.createdAt = Date()
+            self.profileId = profileId
+        }
+    }
+
+    /// Frozen snapshot of `ExerciseOutcomeLog` for V3 — unchanged from V2.
+    @Model
+    public final class ExerciseOutcomeLog {
+
+        public var id: UUID
+        public var timestamp: Date
+        public var skillRawValue: String
+        public var accuracy: Double
+        public var profileID: UUID
+
+        public var skill: SkillType {
+            get { SkillType(rawValue: skillRawValue) ?? .listening }
+            set { skillRawValue = newValue.rawValue }
+        }
+
+        public init(
+            skill: SkillType,
+            accuracy: Double,
+            profileID: UUID,
+            timestamp: Date = Date()
+        ) {
+            self.id = UUID()
+            self.timestamp = timestamp
+            self.skillRawValue = skill.rawValue
+            self.accuracy = accuracy
+            self.profileID = profileID
+        }
+    }
+}
+
+// MARK: - Versioned Schema V4
+
+/// **V4** — the fully live current shape (cloud-sync lot 0,
+/// `docs/design-specs/2026-08-10-cloud-sync-design.md` §5.1). Adds three
+/// stored properties — `updatedAt: Date`, `deletedAt: Date?`,
+/// `syncedAt: Date?` — to each of the 8 **synchronized** entities per the
+/// spec's §3 classification:
+///
+/// `UserProfile`, `Card`, `ReviewLog`, `RPGState`, `VocabularyEntry`,
+/// `VocabularyEncounter`, `ExerciseOutcomeLog`, `CompanionChatMessage`.
+///
+/// `MnemonicCache` (regenerable cache), `AssetManifest` (device-local cache),
+/// and `DailyTerm` (deterministic per day) are explicitly **not**
+/// synchronized per spec §3 and gain no columns here.
+///
+/// This is schema-only: no repository writes `updatedAt` on mutation yet,
+/// nothing reads `deletedAt`/`syncedAt` yet, and no network dependency is
+/// introduced. See each model's doc comment for the "not wired yet" note.
+///
+/// `updatedAt` is non-optional with a property-level default of the Unix
+/// epoch (`Date(timeIntervalSince1970: 0)`) so the `.lightweight` V3→V4
+/// migration can backfill existing rows without a custom migration stage —
+/// mirroring the `activeDaysCount: Int = 0` precedent from V1→V2, just for a
+/// `Date`. Every model's initializer explicitly sets `updatedAt = Date()`
+/// for freshly created objects, so only pre-existing (migrated) rows ever
+/// see the epoch sentinel.
+///
+/// V4 uses *live* references throughout. **That is now a standing hazard, not
+/// a neutral fact**: `IkeruSchemaV5` exists (2026-08-19) and V4 was NOT frozen
+/// when it was cut, so V4 and V5 both describe whatever the live classes say
+/// today. Adding, removing or retyping a stored property on any of these
+/// classes silently rewrites what V4 means — the `aa03566` failure this file
+/// opens with — and every real store stops hash-matching.
+///
+/// What holds the line until someone does the freeze: `IkeruSchemaTests`'
+/// `v4GoldenFingerprint` (name list **and** typed digest) and
+/// `v5GoldenFingerprint`. They fail loudly on any such edit. Do not "fix" them
+/// by updating the golden values: freeze V4's touched entities into nested
+/// snapshots the way V1 did, then cut V6.
+public enum IkeruSchemaV4: VersionedSchema {
+
+    public static var versionIdentifier: Schema.Version { Schema.Version(4, 0, 0) }
+
+    public static var models: [any PersistentModel.Type] {
+        // Name-shadowing rule applies here exactly as in V1/V2/V3 — see their
+        // comments on `models`. `VocabularyEntry` / `VocabularyEncounter`
+        // resolve to the nested snapshots below; the rest are still live.
+        [
+            UserProfile.self,
+            Card.self,
+            ReviewLog.self,
+            RPGState.self,
+            MnemonicCache.self,
+            CompanionChatMessage.self,
+            AssetManifest.self,
+            VocabularyEntry.self,
+            VocabularyEncounter.self,
+            DailyTerm.self,
+            ExerciseOutcomeLog.self,
+        ]
+    }
+
+    // MARK: - Frozen snapshots
+    //
+    // Pinned on 2026-09-09 (IkeruSchemaV6, P1-1 / OBS2-022): the live
+    // `VocabularyEntry` gains `profileID` in V6, and V4 named it LIVE. Without
+    // these two snapshots, `IkeruSchemaV4.models` would silently start
+    // describing V6's shape — the `aa03566` failure this file opens with.
+    // This is a **pinning** operation: both classes are byte-identical in
+    // persisted shape to what shipped as V4, which `IkeruSchemaTests.
+    // v4GoldenFingerprint` proves by keeping its digest (`f012779f43f39734`)
+    // unchanged across this commit. Nested together because of the mutual
+    // `@Relationship`, exactly as V1–V3 do.
+    //
+    // ⚠️ Consequence for tests: opening a container on `IkeruSchemaV4` now
+    // binds the `VocabularyEntry` entity to THIS class for the whole process.
+    // Every suite that used to open V4 in a shared process moved to the live
+    // schema (`IkeruSchemaV6`) in the same commit; only the isolated migration
+    // suites may open V4, and they seed it with `IkeruSchemaV4.VocabularyEntry`.
+
+    /// Frozen snapshot of `VocabularyEntry` at V4 — V1's shape plus the three
+    /// cloud-sync columns. No `profileID`: that is V6.
+    @Model
+    public final class VocabularyEntry {
+
+        public var id: UUID
+        public var word: String
+        public var reading: String
+        public var meaning: String
+        public var jlptLevelRawValue: String?
+        public var fsrsState: FSRSState
+        public var easeFactor: Double
+        public var interval: Int
+        public var dueDate: Date
+        public var lapseCount: Int
+        public var isInDictionary: Bool = false
+        public var createdAt: Date
+
+        @Relationship(deleteRule: .cascade, inverse: \VocabularyEncounter.entry)
+        public var encounters: [VocabularyEncounter]?
+
+        public var updatedAt: Date = Date(timeIntervalSince1970: 0)
+        public var deletedAt: Date?
+        public var syncedAt: Date?
+
+        public init(
+            word: String,
+            reading: String,
+            meaning: String,
+            jlptLevel: JLPTLevel? = nil,
+            isInDictionary: Bool = true,
+            fsrsState: FSRSState = FSRSState(),
+            easeFactor: Double = 2.5,
+            interval: Int = 0,
+            dueDate: Date = Date(),
+            lapseCount: Int = 0,
+            createdAt: Date = Date()
+        ) {
+            self.id = UUID()
+            self.word = word
+            self.reading = reading
+            self.meaning = meaning
+            self.jlptLevelRawValue = jlptLevel?.rawValue
+            self.isInDictionary = isInDictionary
+            self.fsrsState = fsrsState
+            self.easeFactor = easeFactor
+            self.interval = interval
+            self.dueDate = dueDate
+            self.lapseCount = lapseCount
+            self.createdAt = createdAt
+            self.encounters = []
+            self.updatedAt = Date()
+            self.deletedAt = nil
+            self.syncedAt = nil
+        }
+    }
+
+    /// Frozen snapshot of `VocabularyEncounter` at V4 — V1's shape plus the
+    /// three cloud-sync columns. Unchanged in V5 and V6; frozen here only
+    /// because of the relationship pair.
+    @Model
+    public final class VocabularyEncounter {
+
+        public var id: UUID
+        public var timestamp: Date
+        public var sourceRawValue: String
+        public var contextSnippet: String
+        public var entry: VocabularyEntry?
+
+        public var updatedAt: Date = Date(timeIntervalSince1970: 0)
+        public var deletedAt: Date?
+        public var syncedAt: Date?
+
+        public init(
+            source: EncounterSource,
+            contextSnippet: String,
+            entry: VocabularyEntry,
+            timestamp: Date = Date()
+        ) {
+            self.id = UUID()
+            self.timestamp = timestamp
+            self.sourceRawValue = source.rawValue
+            self.contextSnippet = contextSnippet
+            self.entry = entry
+            self.updatedAt = Date()
+            self.deletedAt = nil
+            self.syncedAt = nil
+        }
+    }
+}
+
+// MARK: - Versioned Schema V5
+
+/// **V5** — adds `TextImport`, the « apporte ton propre texte » entity.
+///
+/// Purely additive: one new entity, and **not a single existing model was
+/// touched**. That was a design constraint, not luck. The natural modelling
+/// hangs a relationship off `VocabularyEncounter` back to its import — and
+/// `VocabularyEncounter` is referenced *live* by `IkeruSchemaV4`, so growing it
+/// would have silently redefined what V4 means and reproduced the `aa03566`
+/// failure this file opens with: every real store stops hash-matching and the
+/// container refuses to open. `TextImport` carries the entry identifiers on its
+/// own side instead (see its doc comment), so V4 keeps meaning exactly what it
+/// meant and this stage stays `.lightweight`.
+///
+/// - Important: V5 is frozen in the same sense as V4 — `Card`, `UserProfile`,
+///   `ReviewLog` and `RPGState` are still named LIVE here (and in V4), so
+///   **any** future change to one of them must first pin a nested snapshot
+///   into V4 AND V5, exactly as V6 did for `VocabularyEntry` and `TextImport`.
+public enum IkeruSchemaV5: VersionedSchema {
+
+    public static var versionIdentifier: Schema.Version { Schema.Version(5, 0, 0) }
+
+    public static var models: [any PersistentModel.Type] {
+        // `VocabularyEntry` / `VocabularyEncounter` / `TextImport` resolve to
+        // the nested snapshots below (name shadowing, as in V1–V4).
+        [
+            UserProfile.self,
+            Card.self,
+            ReviewLog.self,
+            RPGState.self,
+            MnemonicCache.self,
+            CompanionChatMessage.self,
+            AssetManifest.self,
+            VocabularyEntry.self,
+            VocabularyEncounter.self,
+            DailyTerm.self,
+            ExerciseOutcomeLog.self,
+            TextImport.self,
+        ]
+    }
+
+    // MARK: - Frozen snapshots
+    //
+    // Pinned on 2026-09-09 with V6 (P1-1 / OBS2-022), for the reason written
+    // on V4's snapshots: V6 grows the live `VocabularyEntry` and `TextImport`,
+    // and V5 named both live. `IkeruSchemaTests.v5GoldenFingerprint` keeps its
+    // digest (`57d176f4027e3f9f`) unchanged across the pin — a changed digest
+    // would mean the snapshot was EDITED, not pinned.
+
+    /// Frozen snapshot of `VocabularyEntry` at V5 — identical to V4's.
+    @Model
+    public final class VocabularyEntry {
+
+        public var id: UUID
+        public var word: String
+        public var reading: String
+        public var meaning: String
+        public var jlptLevelRawValue: String?
+        public var fsrsState: FSRSState
+        public var easeFactor: Double
+        public var interval: Int
+        public var dueDate: Date
+        public var lapseCount: Int
+        public var isInDictionary: Bool = false
+        public var createdAt: Date
+
+        @Relationship(deleteRule: .cascade, inverse: \VocabularyEncounter.entry)
+        public var encounters: [VocabularyEncounter]?
+
+        public var updatedAt: Date = Date(timeIntervalSince1970: 0)
+        public var deletedAt: Date?
+        public var syncedAt: Date?
+
+        public init(
+            word: String,
+            reading: String,
+            meaning: String,
+            jlptLevel: JLPTLevel? = nil,
+            isInDictionary: Bool = true,
+            fsrsState: FSRSState = FSRSState(),
+            easeFactor: Double = 2.5,
+            interval: Int = 0,
+            dueDate: Date = Date(),
+            lapseCount: Int = 0,
+            createdAt: Date = Date()
+        ) {
+            self.id = UUID()
+            self.word = word
+            self.reading = reading
+            self.meaning = meaning
+            self.jlptLevelRawValue = jlptLevel?.rawValue
+            self.isInDictionary = isInDictionary
+            self.fsrsState = fsrsState
+            self.easeFactor = easeFactor
+            self.interval = interval
+            self.dueDate = dueDate
+            self.lapseCount = lapseCount
+            self.createdAt = createdAt
+            self.encounters = []
+            self.updatedAt = Date()
+            self.deletedAt = nil
+            self.syncedAt = nil
+        }
+    }
+
+    /// Frozen snapshot of `VocabularyEncounter` at V5 — identical to V4's.
+    @Model
+    public final class VocabularyEncounter {
+
+        public var id: UUID
+        public var timestamp: Date
+        public var sourceRawValue: String
+        public var contextSnippet: String
+        public var entry: VocabularyEntry?
+
+        public var updatedAt: Date = Date(timeIntervalSince1970: 0)
+        public var deletedAt: Date?
+        public var syncedAt: Date?
+
+        public init(
+            source: EncounterSource,
+            contextSnippet: String,
+            entry: VocabularyEntry,
+            timestamp: Date = Date()
+        ) {
+            self.id = UUID()
+            self.timestamp = timestamp
+            self.sourceRawValue = source.rawValue
+            self.contextSnippet = contextSnippet
+            self.entry = entry
+            self.updatedAt = Date()
+            self.deletedAt = nil
+            self.syncedAt = nil
+        }
+    }
+
+    /// Frozen snapshot of `TextImport` as it shipped in V5 — the ten columns
+    /// `IkeruSchemaTests.v5TextImportColumns` lists, and no `profileID`.
+    /// The initializer takes the title as given (no first-line derivation):
+    /// only the persisted shape is frozen, and the migration suite is its
+    /// only caller.
+    @Model
+    public final class TextImport {
+
+        public var id: UUID
+        public var title: String
+        public var content: String
+        public var sourceRawValue: String
+        public var createdAt: Date
+        public var coverage: Double?
+        public var entryIDs: [UUID]
+
+        public var updatedAt: Date = Date(timeIntervalSince1970: 0)
+        public var deletedAt: Date?
+        public var syncedAt: Date?
+
+        public init(id: UUID = UUID(), title: String, content: String,
+                    source: ImportSource = .paste, createdAt: Date = Date(),
+                    coverage: Double? = nil, entryIDs: [UUID] = []) {
+            self.id = id
+            self.title = title
+            self.content = content
+            self.sourceRawValue = source.rawValue
+            self.createdAt = createdAt
+            self.coverage = coverage
+            self.entryIDs = entryIDs
+            self.updatedAt = createdAt
+        }
+    }
+}
+
+// MARK: - Versioned Schema V6
+
+/// **V6** — gives the personal dictionary and the imported texts an owner
+/// (P1-1 / OBS2-022, 037, 051): `VocabularyEntry.profileID` and
+/// `TextImport.profileID`, both optional scalars.
+///
+/// Additive, and `.lightweight`: two new nullable columns, no entity added or
+/// removed. Existing rows migrate with `profileID == nil` — « not yet
+/// attributed » — and `OwnershipAdoption` assigns them to the active profile
+/// on the first launch after the update (and after every pull, for rows a
+/// pre-V6 device may still push with a null `profile_id`).
+///
+/// Why a scalar and not a `@Relationship` to `UserProfile`: the relationship's
+/// inverse would have grown `UserProfile`, which V4 and V5 name LIVE, and the
+/// freeze would then have had to cover the whole
+/// `UserProfile`/`Card`/`ReviewLog`/`RPGState` quartet in both versions.
+/// `ExerciseOutcomeLog` already set the precedent, and `ProfileDeletion.
+/// tombstoneGraph` already knows how to walk a scalar-scoped entity.
+///
+/// - Important: V6 is the live schema. Its `models` name live types, so the
+///   next change to ANY of them must first pin nested snapshots here (and in
+///   every earlier version that still names that type live).
+public enum IkeruSchemaV6: VersionedSchema {
+
+    public static var versionIdentifier: Schema.Version { Schema.Version(6, 0, 0) }
+
+    public static var models: [any PersistentModel.Type] {
+        [
+            UserProfile.self,
+            Card.self,
+            ReviewLog.self,
+            RPGState.self,
+            MnemonicCache.self,
+            CompanionChatMessage.self,
+            AssetManifest.self,
+            VocabularyEntry.self,
+            VocabularyEncounter.self,
+            DailyTerm.self,
+            ExerciseOutcomeLog.self,
+            TextImport.self,
+        ]
+    }
 }
 
 // MARK: - Migration Plan
@@ -399,11 +1714,23 @@ public enum IkeruSchemaV2: VersionedSchema {
 ///
 /// `IkeruSchemaV1` is the frozen shape released to TestFlight before
 /// versioned schemas existed (see its doc comment for the full story);
-/// `IkeruSchemaV2` is the live current shape. The V1 → V2 delta —
-/// `RPGState.activeDaysCount` (additive, defaulted) plus the wholly new
-/// `ExerciseOutcomeLog` entity — touches no existing entity's identity or
-/// required data, so a `.lightweight` stage is sufficient: SwiftData adds the
-/// new column and the new table and leaves all V1 data untouched.
+/// `IkeruSchemaV2` is frozen at the shape that shipped before the
+/// learner-telemetry `ReviewLog` fields; `IkeruSchemaV3` is frozen at the
+/// shape that shipped before the cloud-sync columns; `IkeruSchemaV4` is frozen
+/// at the shape that shipped before `TextImport`; `IkeruSchemaV5` is frozen at
+/// the shape that shipped before the dictionary and imports had an owner;
+/// `IkeruSchemaV6` is the live current shape. All FIVE stages are purely
+/// additive — new defaulted/optional columns, and (for V1→V2 and V4→V5) a
+/// wholly new entity — so `.lightweight` is sufficient for each: SwiftData
+/// adds the new columns/table and leaves prior data untouched.
+///
+/// ⚠️ « Frozen » is partial for V4 and V5: only `VocabularyEntry`,
+/// `VocabularyEncounter` (and `TextImport` in V5) are nested snapshots; `Card`,
+/// `UserProfile`, `ReviewLog`, `RPGState` are still named LIVE there and are
+/// frozen by *discipline and by the golden digest*. The note that used to
+/// stand here — « freezing V4 properly would break `KanaSessionEndToEndTests`
+/// and `SessionDecouplingTests` » — was acted on with V6: every shared-process
+/// suite that opened V4 now opens the live schema.
 ///
 /// When a future `@Model` change needs data transformation (renames with
 /// data preservation, split/merge fields, etc.), use `.custom(...)` instead
@@ -411,10 +1738,21 @@ public enum IkeruSchemaV2: VersionedSchema {
 public enum IkeruMigrationPlan: SchemaMigrationPlan {
 
     public static var schemas: [any VersionedSchema.Type] {
-        [IkeruSchemaV1.self, IkeruSchemaV2.self]
+        [IkeruSchemaV1.self, IkeruSchemaV2.self, IkeruSchemaV3.self,
+         IkeruSchemaV4.self, IkeruSchemaV5.self, IkeruSchemaV6.self]
     }
 
     public static var stages: [MigrationStage] {
-        [.lightweight(fromVersion: IkeruSchemaV1.self, toVersion: IkeruSchemaV2.self)]
+        [
+            .lightweight(fromVersion: IkeruSchemaV1.self, toVersion: IkeruSchemaV2.self),
+            .lightweight(fromVersion: IkeruSchemaV2.self, toVersion: IkeruSchemaV3.self),
+            .lightweight(fromVersion: IkeruSchemaV3.self, toVersion: IkeruSchemaV4.self),
+            // V4 → V5 : une entité de plus (`TextImport`), rien de modifié.
+            .lightweight(fromVersion: IkeruSchemaV4.self, toVersion: IkeruSchemaV5.self),
+            // V5 → V6 : deux colonnes optionnelles (`profileID`), rien d'autre.
+            // Les lignes existantes arrivent à `nil` ; `OwnershipAdoption` les
+            // rattache au profil actif au premier lancement.
+            .lightweight(fromVersion: IkeruSchemaV5.self, toVersion: IkeruSchemaV6.self),
+        ]
     }
 }
