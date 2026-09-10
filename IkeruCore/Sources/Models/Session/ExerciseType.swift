@@ -38,6 +38,27 @@ public enum ExerciseType: String, Codable, CaseIterable, Sendable, Hashable {
     /// Every type a learner can still be offered.
     public static var activeCases: [ExerciseType] { allCases.filter { !$0.isRetired } }
 
+    /// What the Compose sheet (Étude → « Composer une séance ») offers, in
+    /// display order — the explicit opt-in door `untaughtContentTypes`'
+    /// justification always named and that never existed until 2026-09-09.
+    ///
+    /// Only types `DefaultSessionPlanner.synthesise` turns into a LIVE drill
+    /// that is what its name says. Deliberately absent:
+    /// - `.kanaStudy` — kana is not an SRS card; the planner synthesises
+    ///   nothing for it (the kana drill has its own door in Explore).
+    /// - `.sakuraConversation` — the planner maps it to the shadowing drill,
+    ///   which is not a conversation; Sakura has her own row in Explore.
+    /// - `.listeningUnsubtitled` — today it yields the very same
+    ///   `.listeningExercise` as `.listeningSubtitled`; offering both would
+    ///   promise a difference the drill does not make.
+    /// - the retired types.
+    /// Locked types ARE listed (the sheet shows them disabled with the reason):
+    /// an opt-in door that hides what is locked teaches nothing.
+    public static let composableInStudySession: [ExerciseType] = [
+        .kanjiStudy, .vocabularyStudy, .grammarExercise, .sentenceConstruction,
+        .writingPractice, .listeningSubtitled, .speakingPractice,
+    ]
+
     /// The primary skill this exercise type targets.
     public var skill: SkillType {
         switch self {

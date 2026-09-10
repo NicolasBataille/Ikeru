@@ -22,7 +22,9 @@ final class SessionComposer {
     private let plannerService: PlannerService
     private let sessionPlanner: any SessionPlanner
     private let unlockService: any ExerciseUnlockService
-    private let cardRepository: CardRepository
+    /// Read by `ComposeSessionViewModel` to build the same snapshot the
+    /// session start will build.
+    let cardRepository: CardRepository
     private let contentRepository: ContentRepository?
     private let modelContainer: ModelContainer
 
@@ -186,8 +188,9 @@ final class SessionComposer {
     /// Composes a custom session from the Étude → Compose sheet. Same
     /// pipeline as `composeHomeRecommendation` but with `.studyCustom` as the
     /// planner source so the planner respects the user's chosen exercise
-    /// types and JLPT levels. Unlike the home-recommendation path, this never
-    /// returns nil — `startStudyCustomSession()` has no empty-queue guard.
+    /// types. Never returns nil: an empty `sessionExercises` is a legitimate
+    /// answer (« nothing composable from that selection ») that
+    /// `startStudyCustomSession()` turns into `false` rather than a session.
     func composeStudyCustom(
         types: Set<ExerciseType>,
         levels: Set<JLPTLevel>,

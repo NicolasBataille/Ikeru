@@ -205,6 +205,9 @@
 		C91AAFCB6B347DD7E48BEC5F /* GrammarPointView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BFAD9F3F0796D53A41F3F2A /* GrammarPointView.swift */; };
 		8C1C0D3E7B9F42A18C6D0E72 /* GrammarListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C1C0D3E7B9F42A18C6D0E71 /* GrammarListView.swift */; };
 		AB1C0D3E7B9F42A18C6D0E92 /* GrammarClozeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB1C0D3E7B9F42A18C6D0E91 /* GrammarClozeView.swift */; };
+		3769BA985183486DBE78C11E /* ComposeSessionViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEF56C16CBB7ECA8BAD615AE /* ComposeSessionViewModelTests.swift */; };
+		D4F3C4101771271E97D9116A /* ComposeSessionViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F6C2D2935E7A29E1341FE17 /* ComposeSessionViewModel.swift */; };
+		7302481A6AF060B80E4BB357 /* ComposeSessionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4512E9C50D76C3818F52F0BC /* ComposeSessionSheet.swift */; };
 		C98990815A7397FAEECC5E9F /* MasteryBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 432F33D5FCBBD072BE009810 /* MasteryBadge.swift */; };
 		C9C552606F14AE938AB0A1C3 /* StrokeTracingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69FD1BC54CDC2C981E6F4402 /* StrokeTracingView.swift */; };
 		CA1E4BC77111ADC4E439BCB7 /* KanaDrillSessionSummary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6999560B934B111F55D2F3E5 /* KanaDrillSessionSummary.swift */; };
@@ -354,6 +357,9 @@
 		1BFAD9F3F0796D53A41F3F2A /* GrammarPointView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GrammarPointView.swift; sourceTree = "<group>"; };
 		8C1C0D3E7B9F42A18C6D0E71 /* GrammarListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GrammarListView.swift; sourceTree = "<group>"; };
 		AB1C0D3E7B9F42A18C6D0E91 /* GrammarClozeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GrammarClozeView.swift; sourceTree = "<group>"; };
+		BEF56C16CBB7ECA8BAD615AE /* ComposeSessionViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComposeSessionViewModelTests.swift; sourceTree = "<group>"; };
+		9F6C2D2935E7A29E1341FE17 /* ComposeSessionViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComposeSessionViewModel.swift; sourceTree = "<group>"; };
+		4512E9C50D76C3818F52F0BC /* ComposeSessionSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComposeSessionSheet.swift; sourceTree = "<group>"; };
 		AAKC0000000000000000001 /* KeychainAvailabilityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainAvailabilityTests.swift; sourceTree = "<group>"; };
 		AACB0000000000000000001 /* ContentBundleVocabularyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentBundleVocabularyTests.swift; sourceTree = "<group>"; };
 		1D97512A99D55C0A04CB5169 /* KanaDrillViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KanaDrillViewModelTests.swift; sourceTree = "<group>"; };
@@ -899,6 +905,7 @@
 				D11E7E1000000000A005A001 /* DailyTermViewModelTests.swift */,
 				2FB214E27E81F30D44CAD195 /* HandwritingViewModelTests.swift */,
 				44FF091731003AFD23A516FF /* HomeViewModelTests.swift */,
+				BEF56C16CBB7ECA8BAD615AE /* ComposeSessionViewModelTests.swift */,
 				5A1C0D3E7B9F42A18C6D0E21 /* TestFixturesNothingDueTests.swift */,
 				E415FB60B6790A37E7C422E7 /* ImmersiveSessionViewTests.swift */,
 				AAKC0000000000000000001 /* KeychainAvailabilityTests.swift */,
@@ -980,6 +987,7 @@
 			isa = PBXGroup;
 			children = (
 				641C149490C9056EFCD19CBC /* EtudeView.swift */,
+				4512E9C50D76C3818F52F0BC /* ComposeSessionSheet.swift */,
 			);
 			path = Etude;
 			sourceTree = "<group>";
@@ -999,6 +1007,7 @@
 				A71BF12D4449340885A08FCA /* ShadowingViewModel.swift */,
 				605EB123E5636067D0104242 /* StrokeOrderViewModel.swift */,
 				5628B43A53BA4F60FC2FAA4E /* VocabularyDictionaryViewModel.swift */,
+				9F6C2D2935E7A29E1341FE17 /* ComposeSessionViewModel.swift */,
 				9834BE2E79BA875F8F6A58DA /* VocabularyDrillViewModel.swift */,
 			);
 			path = Learning;
@@ -1574,6 +1583,7 @@
 				D11E7E1000000000C005A001 /* DailyTermViewModelTests.swift in Sources */,
 				7C128D3DB683FE9C44385E9E /* HandwritingViewModelTests.swift in Sources */,
 				7AD47972332D13661BE1885F /* HomeViewModelTests.swift in Sources */,
+				3769BA985183486DBE78C11E /* ComposeSessionViewModelTests.swift in Sources */,
 				5A1C0D3E7B9F42A18C6D0E22 /* TestFixturesNothingDueTests.swift in Sources */,
 				588F16A9AD56FA5DE5DDB103 /* ImmersiveSessionViewTests.swift in Sources */,
 				AAKC0000000000000000002 /* KeychainAvailabilityTests.swift in Sources */,
@@ -1674,6 +1684,8 @@
 				C91AAFCB6B347DD7E48BEC5F /* GrammarPointView.swift in Sources */,
 				8C1C0D3E7B9F42A18C6D0E72 /* GrammarListView.swift in Sources */,
 				AB1C0D3E7B9F42A18C6D0E92 /* GrammarClozeView.swift in Sources */,
+				D4F3C4101771271E97D9116A /* ComposeSessionViewModel.swift in Sources */,
+				7302481A6AF060B80E4BB357 /* ComposeSessionSheet.swift in Sources */,
 				9BC4183DC3C8A7EC9B37686D /* HandwritingCanvasView.swift in Sources */,
 				FF89BFE59885EB3742A25989 /* HandwritingExerciseView.swift in Sources */,
 				2F6B8C98160163965120553D /* HandwritingViewModel.swift in Sources */,

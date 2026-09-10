@@ -22,6 +22,11 @@ final class TextImportUITests: IkeruUITestCase {
         let row = app.buttons["explore.textImportRow"]
         XCTAssertTrue(row.waitForExistence(timeout: 20),
                       "ligne d'import absente.\n\(app.debugDescription)")
+        // Sur iPhone SE (le simulateur de la CI), la ligne naît sous la barre
+        // d'onglets — voir `scrollAboveTabBar`. Exister ne suffit pas, et
+        // `isHittable` ment ici.
+        XCTAssertTrue(scrollAboveTabBar(row, in: app),
+                      "ligne d'import toujours sous la barre après défilement.\n\(app.debugDescription)")
         row.tap()
 
         // Saisie directe : le presse-papiers du simulateur demande une

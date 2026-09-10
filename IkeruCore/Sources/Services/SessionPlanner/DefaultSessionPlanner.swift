@@ -86,10 +86,18 @@ public struct DefaultSessionPlanner: SessionPlanner {
     /// Exercise types whose content the app never TEACHES anywhere yet: they
     /// quiz raw N5 content-DB entries (words, sentences) with no connection to
     /// what the learner has actually met — guessing, not learning. Excluded
-    /// from the HOME booster/variety pools until the vocab-dictionary feature
-    /// provides a real "already encountered" source (owner decision,
-    /// 2026-07-19 device pass). Étude custom sessions keep every type — there
-    /// the learner opts in explicitly.
+    /// from the HOME booster/variety pools until the listening/speaking
+    /// generators draw from `VocabularyEncounter` (owner decision, 2026-07-19
+    /// device pass; the dictionary shipped since, but the generators still
+    /// read the raw content DB). `composeStudy` keeps every type — there the
+    /// learner opts in explicitly, through the Compose sheet (Étude →
+    /// « Composer une séance »).
+    ///
+    /// ⚠️ That last sentence was FALSE from 2026-07-19 to 2026-09-09: the
+    /// Compose sheet did not exist, `startStudyCustomSession` had no caller,
+    /// and this exclusion justified itself by a door nobody could open.
+    /// Nico's ruling (2026-09-09): build the door, keep the exclusion.
+    /// `ExerciseType.composableInStudySession` is what the door offers.
     public static let untaughtContentTypes: Set<ExerciseType> = [
         .listeningSubtitled, .listeningUnsubtitled,
         .speakingPractice, .sakuraConversation,
@@ -849,10 +857,19 @@ public struct DefaultSessionPlanner: SessionPlanner {
     ///       .listeningExercise    — ListeningExerciseView (word/meaning subtypes)
     ///       .speakingExercise     — ShadowingExerciseView
     ///       .vocabularyStudy      — VocabularyRecallView (multiple-choice recall)
+    ///       .grammarExercise      — GrammarClozeDrillHost (51 N5 clozes from the
+    ///                               bundle; `DrillUnavailableView` when the pool
+    ///                               cannot yield two options). Listed as
+    ///                               « Tier 3, deferred » until 2026-09-09 — which
+    ///                               meant `finalize` dropped every grammar tile the
+    ///                               2026-08-19 pool change had made eligible. The
+    ///                               screen was live for three weeks and never
+    ///                               scheduled once; measured while building the
+    ///                               Compose sheet, which must not offer a type that
+    ///                               yields nothing.
     ///
-    ///   STILL FILTERED (no wired view / no real content source yet):
-    ///     Tier 3 (deferred):  .grammarExercise
-    ///     (listening PASSAGE comprehension also stays out — no passages table.)
+    ///   STILL FILTERED: nothing today.
+    ///     (listening PASSAGE comprehension stays out — no passages table.)
     ///   RETIRED (2026-09-09, no `ExerciseItem` case any more):
     ///     .fillInBlank, .readingPassage — see `ExerciseType.retired`.
     ///
@@ -866,10 +883,8 @@ public struct DefaultSessionPlanner: SessionPlanner {
     static func isLive(_ item: ExerciseItem) -> Bool {
         switch item {
         case .srsReview, .kanjiStudy, .writingPractice, .sentenceConstruction,
-             .listeningExercise, .speakingExercise, .vocabularyStudy:
+             .listeningExercise, .speakingExercise, .vocabularyStudy, .grammarExercise:
             return true
-        case .grammarExercise:
-            return false
         }
     }
 

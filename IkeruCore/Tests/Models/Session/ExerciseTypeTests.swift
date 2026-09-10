@@ -15,6 +15,7 @@ struct ExerciseTypeTests {
         #expect(ExerciseType.kanjiStudy.skill == .reading)
         #expect(ExerciseType.vocabularyStudy.skill == .reading)
         #expect(ExerciseType.fillInBlank.skill == .reading)
+        // Retired, still typed — see `retired`.
         #expect(ExerciseType.grammarExercise.skill == .reading)
         #expect(ExerciseType.readingPassage.skill == .reading)
         #expect(ExerciseType.writingPractice.skill == .writing)
@@ -31,5 +32,19 @@ struct ExerciseTypeTests {
             #expect(type.estimatedDurationSeconds > 0)
             #expect(type.estimatedDurationSeconds <= 240)
         }
+    }
+
+    /// The Compose sheet offers exactly these, in this order, and nothing the
+    /// planner cannot turn into a live drill of that name.
+    @Test("composableInStudySession lists live, honest, non-retired types only")
+    func composableInStudySession() {
+        let offered = ExerciseType.composableInStudySession
+        #expect(offered == [.kanjiStudy, .vocabularyStudy, .grammarExercise, .sentenceConstruction,
+                            .writingPractice, .listeningSubtitled, .speakingPractice])
+        #expect(Set(offered).isDisjoint(with: ExerciseType.retired))
+        #expect(!offered.contains(.kanaStudy), "kana is not an SRS card — the planner synthesises nothing")
+        #expect(!offered.contains(.sakuraConversation), "would deliver shadowing under Sakura's name")
+        #expect(!offered.contains(.listeningUnsubtitled), "same drill as subtitled today")
+        #expect(Set(offered).isSubset(of: Set(ExerciseType.activeCases)))
     }
 }
