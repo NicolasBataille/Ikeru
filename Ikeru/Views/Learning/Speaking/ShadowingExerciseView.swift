@@ -88,7 +88,7 @@ struct ShadowingExerciseView: View {
         }
     }
 
-    private func phaseStep(label: String, phase: ExercisePhase) -> some View {
+    private func phaseStep(label: LocalizedStringKey, phase: ExercisePhase) -> some View {
         let isActive = viewModel.exercisePhase == phase
         let isPast = phaseOrder(viewModel.exercisePhase) > phaseOrder(phase)
 

@@ -18,7 +18,7 @@ enum SwipeDirection: Sendable, Equatable {
         }
     }
 
-    var label: String {
+    var label: LocalizedStringKey {
         switch self {
         case .left: "Again"
         case .right: "Good"
@@ -468,7 +468,7 @@ struct SRSCardView: View {
     /// Un groupe de lectures, precede de son etiquette japonaise (音 / 訓) —
     /// pas d'une glose a traduire : ces deux caracteres SONT le vocabulaire
     /// que la carte enseigne.
-    private func readingCluster(label: String, readings: [String]) -> some View {
+    private func readingCluster(label: LocalizedStringKey, readings: [String]) -> some View {
         HStack(spacing: 5) {
             Text(label)
                 .font(.system(size: 11, weight: .semibold, design: .serif))
@@ -810,7 +810,7 @@ extension SwipeDirection {
                     upcomingCards: upcoming,
                     isRevealed: $revealed
                 ) { direction in
-                    print("Swiped: \(direction.label)")
+                    print("Swiped: \(direction)")
                 }
                 .padding(IkeruTheme.Spacing.lg)
             }

@@ -182,7 +182,7 @@ struct AISettingsView: View {
                     Text(entry.title)
                         .font(.ikeruHeading3)
                         .foregroundStyle(.ikeruTextSecondary)
-                    Text(entry.subtitle)
+                    Text(LocalizedStringKey(entry.subtitle))
                         .font(.ikeruCaption)
                         .foregroundStyle(.ikeruTextSecondary.opacity(0.7))
                 }
@@ -293,9 +293,9 @@ struct AISettingsView: View {
                     Button {
                         do {
                             try vm.save()
-                            showSaveConfirmation("Rig settings saved")
+                            showSaveConfirmation(String(localized: "Rig settings saved"))
                         } catch {
-                            showSaveConfirmation("Save failed — check URL and token")
+                            showSaveConfirmation(String(localized: "Save failed — check URL and token"))
                         }
                     } label: {
                         Text("Save")
@@ -431,11 +431,11 @@ struct AISettingsView: View {
             try keychainStore.save(key: entry.keychainKey, value: trimmed)
             configured.insert(entry.id)
             inputs[entry.id] = ""
-            showSaveConfirmation("\(entry.title) key saved")
+            showSaveConfirmation(String(localized: "\(entry.title) key saved"))
             Logger.ai.info("\(entry.title) API key saved to Keychain")
         } catch {
             Logger.ai.error("Failed to save \(entry.title) API key: \(error.localizedDescription)")
-            showSaveConfirmation("Failed to save \(entry.title) key")
+            showSaveConfirmation(String(localized: "Failed to save \(entry.title) key"))
         }
     }
 
@@ -443,7 +443,7 @@ struct AISettingsView: View {
         do {
             try keychainStore.delete(key: entry.keychainKey)
             configured.remove(entry.id)
-            showSaveConfirmation("\(entry.title) key removed")
+            showSaveConfirmation(String(localized: "\(entry.title) key removed"))
             Logger.ai.info("\(entry.title) API key removed from Keychain")
         } catch {
             Logger.ai.error("Failed to delete \(entry.title) API key: \(error.localizedDescription)")
@@ -465,6 +465,8 @@ struct AISettingsView: View {
 private struct CloudProviderEntry: Identifiable, Sendable {
     let id: String
     let title: String
+    /// Catalogue KEY, rendered through `Text(LocalizedStringKey(_:))`: the
+    /// struct is `Sendable`, `LocalizedStringKey` is not.
     let subtitle: String
     let keychainKey: String
     let signupURL: URL

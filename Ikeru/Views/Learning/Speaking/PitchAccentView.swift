@@ -101,7 +101,7 @@ struct PitchAccentView: View {
         )
     }
 
-    private func legendItem(color: Color, label: String, isDashed: Bool) -> some View {
+    private func legendItem(color: Color, label: LocalizedStringKey, isDashed: Bool) -> some View {
         HStack(spacing: IkeruTheme.Spacing.xs) {
             if isDashed {
                 // Dashed line representation
@@ -245,7 +245,7 @@ struct PitchAccentView: View {
         }
     }
 
-    private func statBadge(label: String, value: String) -> some View {
+    private func statBadge(label: LocalizedStringKey, value: String) -> some View {
         VStack(spacing: 2) {
             Text(value)
                 .font(.ikeruBody)

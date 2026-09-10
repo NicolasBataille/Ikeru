@@ -191,14 +191,15 @@ struct VocabularyEntryDetailView: View {
         .tatamiRoom(.standard)
     }
 
-    private func statTile(value: String, label: String) -> some View {
+    private func statTile(value: String, label: LocalizedStringKey) -> some View {
         VStack(spacing: 4) {
             Text(value)
                 .font(.ikeruStatsLarge)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
                 .foregroundStyle(Color.ikeruPrimaryAccent)
-            Text(label.uppercased())
+            Text(label)
+                .textCase(.uppercase)
                 .ikeruScaledFont(10, relativeTo: .caption2)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)

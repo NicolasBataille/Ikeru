@@ -59,9 +59,9 @@ struct DailyTermRevealHostView: View {
             defer { addInFlight = false }
             if let updated = await viewModel.addToDictionary(term) {
                 term = updated
-                toastManager.showInfo("Added to your dictionary")
+                toastManager.showInfo(String(localized: "Added to your dictionary"))
             } else if !term.addedToDictionary {
-                toastManager.showError("Couldn't add to dictionary")
+                toastManager.showError(String(localized: "Couldn't add to dictionary"))
             }
         }
     }

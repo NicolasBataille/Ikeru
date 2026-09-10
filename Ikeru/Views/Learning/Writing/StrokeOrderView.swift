@@ -18,7 +18,7 @@ public enum StrokeAnimationSpeed: String, CaseIterable, Sendable {
         }
     }
 
-    var label: String {
+    var label: LocalizedStringKey {
         switch self {
         case .slow: "Slow"
         case .normal: "Normal"

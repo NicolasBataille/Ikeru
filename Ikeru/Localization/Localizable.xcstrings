@@ -1,6 +1,567 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "Slow" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Slow"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lent"
+          }
+        }
+      }
+    },
+    "Normal" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Normal"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Normal"
+          }
+        }
+      }
+    },
+    "Fast" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fast"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rapide"
+          }
+        }
+      }
+    },
+    "On'yomi" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "On'yomi"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "On'yomi"
+          }
+        }
+      }
+    },
+    "Kun'yomi" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kun'yomi"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kun'yomi"
+          }
+        }
+      }
+    },
+    "Target" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Target"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cible"
+          }
+        }
+      }
+    },
+    "Yours" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yours"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toi"
+          }
+        }
+      }
+    },
+    "Confidence" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Confidence"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Confiance"
+          }
+        }
+      }
+    },
+    "Analysis" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Analysis"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Analyse"
+          }
+        }
+      }
+    },
+    "Speak" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Speak"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parle"
+          }
+        }
+      }
+    },
+    "Interval" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Interval"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Intervalle"
+          }
+        }
+      }
+    },
+    "Lapses" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lapses"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oublis"
+          }
+        }
+      }
+    },
+    "音" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "音"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "音"
+          }
+        }
+      }
+    },
+    "訓" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "訓"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "訓"
+          }
+        }
+      }
+    },
+    "Rig settings saved" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rig settings saved"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réglages du rig enregistrés"
+          }
+        }
+      }
+    },
+    "Save failed — check URL and token" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save failed — check URL and token"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Échec de l'enregistrement : vérifie l'URL et le jeton"
+          }
+        }
+      }
+    },
+    "%@ key saved" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ key saved"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clé %@ enregistrée"
+          }
+        }
+      }
+    },
+    "Failed to save %@ key" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Failed to save %@ key"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible d'enregistrer la clé %@"
+          }
+        }
+      }
+    },
+    "%@ key removed" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ key removed"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clé %@ supprimée"
+          }
+        }
+      }
+    },
+    "Added to your dictionary" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Added to your dictionary"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouté à ton dictionnaire"
+          }
+        }
+      }
+    },
+    "Couldn't add to dictionary" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't add to dictionary"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible d'ajouter au dictionnaire"
+          }
+        }
+      }
+    },
+    "Export failed: %@" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Export failed: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Échec de l'export : %@"
+          }
+        }
+      }
+    },
+    "Pre-warm unavailable: cache not ready" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pre-warm unavailable: cache not ready"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Préchauffage indisponible : le cache n'est pas prêt"
+          }
+        }
+      }
+    },
+    "Pre-warming started" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pre-warming started"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Préchauffage lancé"
+          }
+        }
+      }
+    },
+    "Pre-warm queued" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pre-warm queued"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Préchauffage mis en file d'attente"
+          }
+        }
+      }
+    },
+    "Pre-warm failed: %@" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pre-warm failed: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Échec du préchauffage : %@"
+          }
+        }
+      }
+    },
+    "%@ added to dictionary" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ added to dictionary"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ ajouté au dictionnaire"
+          }
+        }
+      }
+    },
+    "Google AI Studio · Free tier" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Google AI Studio · Free tier"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Google AI Studio · palier gratuit"
+          }
+        }
+      }
+    },
+    "Multi-model gateway · Free Llama/DeepSeek/Qwen" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Multi-model gateway · Free Llama/DeepSeek/Qwen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passerelle multi-modèles · Llama/DeepSeek/Qwen gratuits"
+          }
+        }
+      }
+    },
+    "Llama 3.3 70B · Sub-second latency · Free tier" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Llama 3.3 70B · Sub-second latency · Free tier"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Llama 3.3 70B · latence sous la seconde · palier gratuit"
+          }
+        }
+      }
+    },
+    "Llama 3.3 70B · Wafer-scale silicon · Free tier" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Llama 3.3 70B · Wafer-scale silicon · Free tier"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Llama 3.3 70B · puce wafer-scale · palier gratuit"
+          }
+        }
+      }
+    },
+    "Llama / Phi / Mistral via your GitHub PAT" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Llama / Phi / Mistral via your GitHub PAT"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Llama / Phi / Mistral via ton PAT GitHub"
+          }
+        }
+      }
+    },
+    "Anthropic API key — billed pay-as-you-go, NOT covered by your Pro/Max sub" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anthropic API key — billed pay-as-you-go, NOT covered by your Pro/Max sub"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clé API Anthropic : facturée à l'usage, PAS couverte par ton abonnement Pro/Max"
+          }
+        }
+      }
+    },
     "Compose a session" : {
       "comment" : "Explore row + Compose sheet title.",
       "localizations" : {
