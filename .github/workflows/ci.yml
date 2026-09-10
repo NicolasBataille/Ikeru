@@ -214,7 +214,8 @@ jobs:
             --skip "LegacyStoreMigration" \
             --skip "StoreMigrationV2V3" \
             --skip "StoreMigrationV3V4" \
-            --skip "StoreMigrationV4V5"
+            --skip "StoreMigrationV4V5" \
+            --skip "StoreMigrationV5V6"
 
       - name: Run Legacy-Store Migration Tests (own process)
         # See the previous step's comment: this suite must never share a
@@ -257,6 +258,20 @@ jobs:
         run: |
           cd IkeruCore
           swift test --no-parallel --filter "StoreMigrationV4V5"
+
+      - name: Run Store Migration V5→V6 Tests (isolated process)
+        # Same isolation reason as the four steps above — and MORE necessary
+        # here, not less: V4 and V5 now nest frozen `VocabularyEntry` /
+        # `VocabularyEncounter` / `TextImport` snapshots, so this suite opens
+        # a container bound to those classes and then reopens the SAME store
+        # under the live ones. That is the exact poisoning mechanism CLAUDE.md
+        # describes. This one covers `profileID` landing as `nil` on existing
+        # dictionary and import rows, and `OwnershipAdoption` attributing
+        # them to the active profile — the migration every TestFlight device
+        # that updates will actually run.
+        run: |
+          cd IkeruCore
+          swift test --no-parallel --filter "StoreMigrationV5V6"
 
       - name: Run App Tests (full IkeruTests target)
         # Same — scoped to suites known to pass. KanaDrillViewModel covers

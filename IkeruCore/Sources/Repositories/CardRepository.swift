@@ -438,34 +438,11 @@ actor CardModelActor {
 
     // MARK: - Active Profile Scoping
 
-    /// Reads the UserDefaults-backed active profile id. Returns nil if unset.
-    private func activeProfileID() -> UUID? {
-        guard
-            let raw = UserDefaults.standard.string(forKey: UserProfile.activeProfileIDDefaultsKey),
-            !raw.isEmpty,
-            let id = UUID(uuidString: raw)
-        else { return nil }
-        return id
-    }
-
-    /// Fetches the currently-active UserProfile, or the oldest as a fallback.
-    /// Both lookups exclude tombstoned profiles — see the identical helper in
-    /// `VocabularyModelActor` for why the fallback in particular must filter.
+    /// Fetches the currently-active UserProfile, or the oldest live one as a
+    /// fallback — `ActiveProfileLookup`'s rule, shared with
+    /// `VocabularyModelActor` and `OwnershipAdoption`.
     private func fetchActiveProfile() -> UserProfile? {
-        if let id = activeProfileID() {
-            let predicate = #Predicate<UserProfile> { $0.id == id && $0.deletedAt == nil }
-            var descriptor = FetchDescriptor<UserProfile>(predicate: predicate)
-            descriptor.fetchLimit = 1
-            if let profile = (try? modelContext.fetch(descriptor))?.first {
-                return profile
-            }
-        }
-        var descriptor = FetchDescriptor<UserProfile>(
-            predicate: #Predicate { $0.deletedAt == nil },
-            sortBy: [SortDescriptor(\.createdAt, order: .forward)]
-        )
-        descriptor.fetchLimit = 1
-        return (try? modelContext.fetch(descriptor))?.first
+        ActiveProfileLookup.resolve(in: modelContext)
     }
 
     /// Returns cards belonging to the active profile (including legacy

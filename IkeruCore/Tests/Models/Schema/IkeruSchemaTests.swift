@@ -48,15 +48,24 @@ struct IkeruSchemaTests {
         #expect(v5Names.subtracting(v4Names) == ["TextImport"])
     }
 
+    @Test("V6 has the same model COUNT as V5 (two entities gain profileID, no new entity)")
+    func v6ModelCount() {
+        #expect(IkeruSchemaV6.models.count == IkeruSchemaV5.models.count)
+        #expect(IkeruSchemaV6.versionIdentifier == Schema.Version(6, 0, 0))
+        let v5Names = Set(IkeruSchemaV5.models.map { String(describing: $0) })
+        let v6Names = Set(IkeruSchemaV6.models.map { String(describing: $0) })
+        #expect(v5Names == v6Names)
+    }
+
     @Test("Migration plan is well-formed: stages == schemas - 1")
     func planWellFormed() {
-        #expect(IkeruMigrationPlan.schemas.count == 5)
+        #expect(IkeruMigrationPlan.schemas.count == 6)
         #expect(IkeruMigrationPlan.stages.count == IkeruMigrationPlan.schemas.count - 1)
     }
 
-    @Test("A container opens with the current (V5) versioned schema + migration plan")
+    @Test("A container opens with the current (V6) versioned schema + migration plan")
     func containerOpensWithPlan() throws {
-        let schema = Schema(versionedSchema: IkeruSchemaV5.self)
+        let schema = Schema(versionedSchema: IkeruSchemaV6.self)
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         let container = try ModelContainer(
             for: schema,
@@ -64,8 +73,8 @@ struct IkeruSchemaTests {
             configurations: [config]
         )
         // Every declared model resolves to exactly one schema entity — a guard
-        // against a model being dropped from (or duplicated in) V5.
-        #expect(container.schema.entities.count == IkeruSchemaV5.models.count)
+        // against a model being dropped from (or duplicated in) V6.
+        #expect(container.schema.entities.count == IkeruSchemaV6.models.count)
     }
 
     // Deliberately NOT adding a "container opens with frozen V2 (or V3)
@@ -419,8 +428,32 @@ struct IkeruSchemaTests {
         #expect(v5.filter { !$0.hasPrefix("TextImport.") } == v4)
         #expect(v5.filter { $0.hasPrefix("TextImport.") } == Self.v5TextImportColumns)
         #expect((v4 + Self.v5TextImportColumns).sorted() == v5)
-        // Typed digest — minted 2026-08-19 by running this suite.
+        // Typed digest — minted 2026-08-19 by running this suite. It did NOT
+        // change on 2026-09-09 when V5 got its nested snapshots for V6: that
+        // is the proof the freeze was a pin, not an edit.
         #expect(Self.typedFingerprint(of: Schema(versionedSchema: IkeruSchemaV5.self))
                 == "57d176f4027e3f9f")
+    }
+
+    /// The two columns V6 brings (P1-1 / OBS2-022) — and nothing else.
+    private static let v6OwnerColumns = [
+        "TextImport.profileID",
+        "VocabularyEntry.profileID",
+    ]
+
+    /// V4 and V5 name `Card`/`UserProfile`/`ReviewLog`/`RPGState` LIVE, and V6
+    /// names everything live — so this is where a stray property on any of
+    /// them would show up first. Both fingerprints for the same reason as V5.
+    @Test("V6 golden fingerprint — V5 untouched, plus exactly profileID on VocabularyEntry and TextImport")
+    func v6GoldenFingerprint() {
+        let v5 = Self.fingerprint(of: Schema(versionedSchema: IkeruSchemaV5.self))
+        let v6 = Self.fingerprint(of: Schema(versionedSchema: IkeruSchemaV6.self))
+        #expect(v6.filter { !$0.hasSuffix(".profileID") || $0.hasPrefix("ExerciseOutcomeLog.") } == v5)
+        #expect((v5 + Self.v6OwnerColumns).sorted() == v6)
+        // Typed digest — minted 2026-09-09 by running this suite.
+        #expect(Self.typedFingerprint(of: Schema(versionedSchema: IkeruSchemaV6.self))
+                == "40d6385891834f93",
+                Comment(rawValue: Self.canonicalLines(of: Schema(versionedSchema: IkeruSchemaV6.self))
+                    .joined(separator: "\n")))
     }
 }

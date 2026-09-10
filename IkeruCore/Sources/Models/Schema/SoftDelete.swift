@@ -65,7 +65,10 @@ extension SoftDeletable {
 
 // MARK: - Conformances
 //
-// 7 of the 8 synced entities. `CompanionChatMessage` is deliberately absent:
+// 8 of the 9 synced entities (`TextImport` joined on 2026-09-09, when
+// `ProfileDeletion.tombstoneGraph` started cascading to it; its repository
+// had been stamping `deletedAt`/`updatedAt` by hand). `CompanionChatMessage`
+// is deliberately absent:
 // it is neither pushed nor pulled (see `SyncPayloadBuilder`'s trailing
 // comment and the absence of any `pushDirtyCompanion*` in `SyncModelActor`),
 // so it has no resurrection vector — and tombstoning it would *retain* the
@@ -80,3 +83,4 @@ extension ReviewLog: SoftDeletable {}
 extension VocabularyEntry: SoftDeletable {}
 extension VocabularyEncounter: SoftDeletable {}
 extension ExerciseOutcomeLog: SoftDeletable {}
+extension TextImport: SoftDeletable {}

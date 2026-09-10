@@ -179,6 +179,43 @@ struct SyncTextImportTests {
         #expect(restored.deletedAt == nil)
     }
 
+    @Test("The owner travels with the import, and a null owner from an older device is adopted on pull")
+    func ownerRoundTripsAndNullIsAdopted() async throws {
+        let server = FakeSyncServer()
+        let deviceA = try makeContainer()
+        let deviceB = try makeContainer()
+
+        // Device A has a profile and imports under it.
+        let contextA = ModelContext(deviceA)
+        let profileA = UserProfile(displayName: "A")
+        contextA.insert(profileA)
+        try contextA.save()
+        UserDefaults.standard.set(profileA.id.uuidString, forKey: UserProfile.activeProfileIDDefaultsKey)
+        let owned = await TextImportRepository(modelContainer: deviceA)
+            .create(content: "雨", source: .paste, coverage: nil, entryIDs: [])
+        // …plus one row shaped like a pre-V6 device's push: no owner at all.
+        let legacy = TextImport(content: "雪")
+        legacy.updatedAt = Date()
+        contextA.insert(legacy)
+        try contextA.save()
+        _ = try await pushImports(container: deviceA, server: server)
+
+        // Device B restores with its own active profile.
+        let contextB = ModelContext(deviceB)
+        let profileB = UserProfile(displayName: "B")
+        contextB.insert(profileB)
+        try contextB.save()
+        UserDefaults.standard.set(profileB.id.uuidString, forKey: UserProfile.activeProfileIDDefaultsKey)
+        _ = try await pullEverything(container: deviceB, server: server)
+
+        let restoredOwned = try #require(try fetchImport(id: owned.id, in: deviceB))
+        #expect(restoredOwned.profileID == profileA.id, "the pushed owner must be applied as-is")
+        let restoredLegacy = try #require(try fetchImport(id: legacy.id, in: deviceB))
+        #expect(restoredLegacy.profileID == profileB.id,
+                "a null owner must be adopted by the pulling device's active profile, in the same pull")
+        #expect(restoredLegacy.updatedAt > legacy.updatedAt, "adoption must mark the row dirty so the owner goes back up")
+    }
+
     @Test("Pulling the same import twice changes nothing")
     func pullIsIdempotent() async throws {
         let server = FakeSyncServer()

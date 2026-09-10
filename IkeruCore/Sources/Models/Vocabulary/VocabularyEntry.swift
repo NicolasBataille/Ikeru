@@ -57,6 +57,25 @@ public final class VocabularyEntry {
     @Relationship(deleteRule: .cascade, inverse: \VocabularyEncounter.entry)
     public var encounters: [VocabularyEncounter]?
 
+    // MARK: - Owner (IkeruSchemaV6, P1-1 / OBS2-022)
+    //
+    // Until V6 the dictionary was a store GLOBAL to the device: no `profileID`,
+    // no relationship to `UserProfile`. Three symptoms followed from that one
+    // gap — a new profile inherited another's words (and the mix was pushed to
+    // the server), the export could not scope what belonged to no one, and the
+    // deletion screen could not erase what it could not attribute.
+    //
+    // A scalar, not a `@Relationship`, for the same reason `ExerciseOutcomeLog`
+    // uses one: growing `UserProfile` (frozen live in V4/V5) would have meant
+    // freezing the whole Card/ReviewLog/RPGState quartet again, and a scalar
+    // migrates `.lightweight` as `nil`. `nil` means « not yet attributed » — a
+    // row that predates V6, or one pulled from a device that still runs V5 —
+    // and `OwnershipAdoption` assigns those to the active profile.
+
+    /// The owning profile's `UserProfile.id`. See the note above for why it
+    /// is a scalar and what `nil` means.
+    public var profileID: UUID?
+
     // MARK: - Cloud sync (schema-only, lot 0)
     //
     // Added by `IkeruSchemaV4` (cloud-sync lot 0, see
@@ -94,9 +113,11 @@ public final class VocabularyEntry {
         interval: Int = 0,
         dueDate: Date = Date(),
         lapseCount: Int = 0,
-        createdAt: Date = Date()
+        createdAt: Date = Date(),
+        profileID: UUID? = nil
     ) {
         self.id = UUID()
+        self.profileID = profileID
         self.word = word
         self.reading = reading
         self.meaning = meaning

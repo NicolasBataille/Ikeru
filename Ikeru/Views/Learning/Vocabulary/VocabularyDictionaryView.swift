@@ -45,6 +45,11 @@ struct VocabularyDictionaryView: View {
                 Task { await viewModel?.loadData() }
             }
         }
+        // Per-profile since IkeruSchemaV6 — see `ExploreView` for why a
+        // profile switch must reload a still-mounted list.
+        .onReceive(NotificationCenter.default.publisher(for: .ikeruActiveProfileDidChange)) { _ in
+            Task { await viewModel?.loadData() }
+        }
         .sheet(item: $selectedEntry) { entry in
             VocabularyEntryDetailView(
                 entryId: entry.id,

@@ -40,11 +40,21 @@ struct SyncPayloadBuilderTests {
         #expect(row["profile_id"] == .null)
     }
 
-    @Test("VocabularyEntry row always pushes profile_id as null — no profile relationship exists on the model")
-    func vocabularyEntryRowProfileIDIsAlwaysNull() throws {
-        let entry = VocabularyEntry(word: "犬", reading: "いぬ", meaning: "dog")
-        let row = try SyncPayloadBuilder.row(for: entry)
-        #expect(row["profile_id"] == .null)
+    @Test("VocabularyEntry row pushes its scalar profileID as profile_id, and null only while unowned")
+    func vocabularyEntryRowCarriesOwner() throws {
+        let owner = UUID()
+        let owned = VocabularyEntry(word: "犬", reading: "いぬ", meaning: "dog", profileID: owner)
+        #expect(try SyncPayloadBuilder.row(for: owned)["profile_id"] == .uuid(owner))
+        // Unowned (pre-adoption) is declared as null, never fabricated.
+        let unowned = VocabularyEntry(word: "猫", reading: "ねこ", meaning: "cat")
+        #expect(try SyncPayloadBuilder.row(for: unowned)["profile_id"] == .null)
+    }
+
+    @Test("TextImport row pushes profile_id — the one column added after the table shipped")
+    func textImportRowCarriesOwner() {
+        let owner = UUID()
+        let record = TextImport(content: "雨", profileID: owner)
+        #expect(SyncPayloadBuilder.row(for: record)["profile_id"] == .uuid(owner))
     }
 
     @Test("ReviewLog row flattens card_id/grade/answered_value/exercise_type/surface as columns, not just payload")

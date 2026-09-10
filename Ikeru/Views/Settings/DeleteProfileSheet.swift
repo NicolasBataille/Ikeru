@@ -5,7 +5,7 @@ import IkeruCore
 /// Styled confirmation sheet for deleting a profile. Replaces the generic
 /// system confirmationDialog with something that matches Ikeru's wabi-sabi
 /// glass aesthetic and — critically — shows the learner exactly what they
-/// are about to lose (cards, level, items, days active).
+/// are about to lose (cards, level, days active, words, imported texts).
 struct DeleteProfileSheet: View {
 
     let profile: UserProfile
@@ -37,6 +37,10 @@ struct DeleteProfileSheet: View {
         let level: Int
         let xp: Int
         let daysActive: Int
+        /// Dictionary words and imported texts — owned by the profile since
+        /// `IkeruSchemaV6`, and erased with it (OBS2-051).
+        let wordCount: Int
+        let importCount: Int
     }
 
     var body: some View {
@@ -52,7 +56,6 @@ struct DeleteProfileSheet: View {
                     } else {
                         loadingCard
                     }
-                    whatStaysCard
                     finalWordCard
                     actionButtons
                     Spacer(minLength: IkeruTheme.Spacing.xl)
@@ -100,10 +103,12 @@ struct DeleteProfileSheet: View {
                 // Nomme ce qui est RÉELLEMENT effacé, au lieu de « toute la
                 // progression » (OBS2-051). La cascade est
                 // `ProfileDeletion.tombstoneGraph` : cartes, journaux de
-                // révision, état RPG, journaux d'exercice, et le profil. Le
-                // dictionnaire personnel et les textes importés n'en font pas
-                // partie — voir `whatStaysCard` juste en dessous.
-                Text("This profile's cards, review history, level and active days will be permanently erased.")
+                // révision, état RPG, journaux d'exercice, dictionnaire
+                // personnel, textes importés, et le profil. Les deux derniers
+                // en font partie depuis `IkeruSchemaV6` (P1-1) — la carte
+                // « Ce qui reste » qui les excusait est partie avec la
+                // migration, dans le même commit.
+                Text("This profile's cards, review history, level, active days, personal dictionary and imported texts will be permanently erased.")
                     .font(.ikeruCaption)
                     .foregroundStyle(Color.ikeruTextSecondary)
             }
@@ -153,6 +158,20 @@ struct DeleteProfileSheet: View {
                     label: "Days active",
                     value: "\(s.daysActive)"
                 )
+                IkeruDivider()
+                summaryRow(
+                    icon: "character.book.closed",
+                    tint: Color.ikeruSecondaryAccent,
+                    label: "Dictionary words",
+                    value: "\(s.wordCount)"
+                )
+                IkeruDivider()
+                summaryRow(
+                    icon: "doc.text",
+                    tint: Color.ikeruSecondaryAccent,
+                    label: "Imported texts",
+                    value: "\(s.importCount)"
+                )
             }
         }
         .tatamiRoom(.standard)
@@ -183,30 +202,6 @@ struct DeleteProfileSheet: View {
                 .foregroundStyle(Color.ikeruTextSecondary)
         }
         .padding(.vertical, IkeruTheme.Spacing.sm)
-    }
-
-    /// Ce que la suppression NE touche PAS, énoncé explicitement (OBS2-051).
-    ///
-    /// `VocabularyEntry` / `VocabularyEncounter` (le dictionnaire personnel) et
-    /// `TextImport` (les textes importés) ne portent ni `profileID` ni relation
-    /// vers `UserProfile` : ce sont des magasins globaux à l'appareil, partagés
-    /// par tous les profils. La cascade ne peut donc pas les effacer — le
-    /// modèle de données n'a aucune notion d'appartenance pour eux (voir la
-    /// note dans `ProfileViewModel.deleteProfile`).
-    ///
-    /// Tant que ce choix tient, l'écran doit le DIRE. Quand P1-1 donnera un
-    /// propriétaire à ces deux modèles, ce bloc devra être retiré dans le même
-    /// commit que la migration — sinon il deviendra faux à son tour.
-    private var whatStaysCard: some View {
-        VStack(alignment: .leading, spacing: IkeruTheme.Spacing.md) {
-            IkeruSectionHeader(title: "What stays", eyebrow: "Not deleted")
-
-            Text("Your personal dictionary and the texts you imported are shared by every profile on this device, so deleting this profile does not remove them.")
-                .font(.ikeruCaption)
-                .foregroundStyle(Color.ikeruTextSecondary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-        }
-        .tatamiRoom(.standard)
     }
 
     /// Vrai seulement si le profil qu'on s'apprête à supprimer est celui
@@ -274,11 +269,24 @@ struct DeleteProfileSheet: View {
         let rpg = profile.rpgState
         let created = profile.createdAt
         let days = max(0, Calendar.current.dateComponents([.day], from: created, to: Date()).day ?? 0)
+        // Scalar-scoped (no relationship to walk), so fetched — same as
+        // `ProfileDeletion.tombstoneGraph` does. Counting only dictionary
+        // words: pre-tracked (encounter-only) entries are not something the
+        // learner ever saw as theirs.
+        let profileID = profile.id
+        let wordCount = (try? modelContext.fetchCount(FetchDescriptor<VocabularyEntry>(
+            predicate: #Predicate { $0.profileID == profileID && $0.isInDictionary == true && $0.deletedAt == nil }
+        ))) ?? 0
+        let importCount = (try? modelContext.fetchCount(FetchDescriptor<TextImport>(
+            predicate: #Predicate { $0.profileID == profileID && $0.deletedAt == nil }
+        ))) ?? 0
         summary = Summary(
             cardCount: cards.count,
             level: rpg?.level ?? 1,
             xp: rpg?.xp ?? 0,
-            daysActive: days
+            daysActive: days,
+            wordCount: wordCount,
+            importCount: importCount
         )
     }
 }

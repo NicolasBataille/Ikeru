@@ -91,6 +91,11 @@ struct TextImportJournalView: View {
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
         .refreshable { await load() }
+        // Per-profile since IkeruSchemaV6 — see `ExploreView` for why a
+        // profile switch must reload a still-mounted list.
+        .onReceive(NotificationCenter.default.publisher(for: .ikeruActiveProfileDidChange)) { _ in
+            Task { await load() }
+        }
     }
 
     private func row(_ item: TextImportDTO) -> some View {

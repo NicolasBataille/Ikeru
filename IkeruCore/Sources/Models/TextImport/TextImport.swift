@@ -65,6 +65,12 @@ public final class TextImport {
     /// `preexistingDictionaryWordsAreNotClaimed` in `TextImportViewModelTests`.
     public var entryIDs: [UUID]
 
+    /// The owning profile's `UserProfile.id` (IkeruSchemaV6, P1-1 / OBS2-022).
+    /// Scalar and optional for the reasons `VocabularyEntry.profileID`
+    /// documents; `nil` is « not yet attributed » and is resolved by
+    /// `OwnershipAdoption`.
+    public var profileID: UUID?
+
     public var source: ImportSource {
         get { ImportSource(rawValue: sourceRawValue) ?? .paste }
         set { sourceRawValue = newValue.rawValue }
@@ -83,8 +89,10 @@ public final class TextImport {
 
     public init(id: UUID = UUID(), title: String = "", content: String,
                 source: ImportSource = .paste, createdAt: Date = Date(),
-                coverage: Double? = nil, entryIDs: [UUID] = []) {
+                coverage: Double? = nil, entryIDs: [UUID] = [],
+                profileID: UUID? = nil) {
         self.id = id
+        self.profileID = profileID
         self.content = content
         self.title = title.isEmpty ? Self.derivedTitle(from: content) : title
         self.sourceRawValue = source.rawValue
