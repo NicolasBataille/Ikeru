@@ -48,6 +48,10 @@ public final class KanaDrillViewModel {
 
     public private(set) var predictedIntervals: [Grade: String] = [:]
 
+    /// Ce que le dernier `submitQuizAnswer` a noté et pourquoi (OBS2-015) ;
+    /// `nil` tant que la question courante n'est pas répondue.
+    public private(set) var lastOutcome: QuizGradeOutcome?
+
     // MARK: Dependencies
 
     private let cardRepository: CardRepository
@@ -182,10 +186,27 @@ public final class KanaDrillViewModel {
         isAnswered = true
         let elapsedMs = Int(now().timeIntervalSince(cardStartedAt) * 1000)
         let isCorrect = selected == correctOption
+        let isFirstEncounter = card.fsrsState.reps == 0
         let grade = mapQuizResultToGrade(
             correct: isCorrect,
             responseTimeMs: elapsedMs,
-            isFirstEncounter: card.fsrsState.reps == 0
+            isFirstEncounter: isFirstEncounter
+        )
+        // La rétention du profil AVANT la prédiction : avec le défaut 0.9,
+        // l'intervalle annoncé contredirait celui que `gradeCard` applique.
+        if cachedDesiredRetention == nil {
+            cachedDesiredRetention = await cardRepository.activeDesiredRetention()
+        }
+        let intervals = computePredictedIntervals(
+            fsrsState: card.fsrsState,
+            now: now(),
+            desiredRetention: cachedDesiredRetention ?? 0.9
+        )
+        lastOutcome = QuizGradeOutcome(
+            grade: grade,
+            responseTimeMs: max(0, elapsedMs),
+            isFirstEncounter: isFirstEncounter,
+            nextInterval: intervals[grade] ?? "—"
         )
 
         // Track which kana corresponds to the selected (potentially wrong) romaji
@@ -235,6 +256,7 @@ public final class KanaDrillViewModel {
         selectedOption = nil
         selectedOptionCharacter = nil
         predictedIntervals = [:]
+        lastOutcome = nil
         cardStartedAt = now()
         buildQuiz(for: card)
     }
@@ -249,6 +271,7 @@ public final class KanaDrillViewModel {
         selectedOption = nil
         selectedOptionCharacter = nil
         predictedIntervals = [:]
+        lastOutcome = nil
         sessionEnded = false
         let nowValue = now()
         startedAt = nowValue

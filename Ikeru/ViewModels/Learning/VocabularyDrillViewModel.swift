@@ -39,6 +39,10 @@ public final class VocabularyDrillViewModel {
 
     public private(set) var predictedIntervals: [Grade: String] = [:]
 
+    /// Ce que le dernier `submitQuizAnswer` a noté et pourquoi (OBS2-015) ;
+    /// `nil` tant que la question courante n'est pas répondue.
+    public private(set) var lastOutcome: QuizGradeOutcome?
+
     // MARK: - Dependencies
 
     private let vocabularyRepository: VocabularyRepository
@@ -132,10 +136,27 @@ public final class VocabularyDrillViewModel {
         isAnswered = true
         let elapsedMs = Int(now().timeIntervalSince(entryStartedAt) * 1000)
         let isCorrect = selected == correctOption
+        let isFirstEncounter = entry.fsrsState.reps == 0
         let grade = mapQuizResultToGrade(
             correct: isCorrect,
             responseTimeMs: elapsedMs,
-            isFirstEncounter: entry.fsrsState.reps == 0
+            isFirstEncounter: isFirstEncounter
+        )
+        // La rétention du profil AVANT la prédiction : avec le défaut 0.9,
+        // l'intervalle annoncé contredirait celui que `gradeEntry` applique.
+        if cachedDesiredRetention == nil {
+            cachedDesiredRetention = await vocabularyRepository.activeDesiredRetention()
+        }
+        let intervals = computePredictedIntervals(
+            fsrsState: entry.fsrsState,
+            now: now(),
+            desiredRetention: cachedDesiredRetention ?? 0.9
+        )
+        lastOutcome = QuizGradeOutcome(
+            grade: grade,
+            responseTimeMs: max(0, elapsedMs),
+            isFirstEncounter: isFirstEncounter,
+            nextInterval: intervals[grade] ?? "—"
         )
 
         await vocabularyRepository.gradeEntry(
@@ -171,6 +192,7 @@ public final class VocabularyDrillViewModel {
         isAnswered = false
         selectedOption = nil
         predictedIntervals = [:]
+        lastOutcome = nil
         entryStartedAt = now()
         buildQuiz(for: entry)
     }
@@ -184,6 +206,7 @@ public final class VocabularyDrillViewModel {
         isAnswered = false
         selectedOption = nil
         predictedIntervals = [:]
+        lastOutcome = nil
         sessionEnded = false
         let nowValue = now()
         startedAt = nowValue

@@ -185,22 +185,28 @@ struct KanaQuizView: View {
     private var feedback: some View {
         if viewModel.isAnswered {
             let isCorrect = viewModel.selectedOption == viewModel.correctOption
-            HStack(spacing: 8) {
-                Image(systemName: isCorrect ? "checkmark.circle.fill" : "xmark.circle.fill")
-                    .foregroundStyle(isCorrect ? Color.ikeruPrimaryAccent : Color.ikeruError)
-                if isCorrect {
-                    Text("Correct!")
-                        .font(.ikeruCaption)
-                        .foregroundStyle(Color.ikeruTextPrimary)
-                } else if let wrongRomaji = viewModel.selectedOption,
-                          let kana = viewModel.selectedOptionCharacter {
-                    Text("The character for \(wrongRomaji) is \(kana)")
-                        .font(.ikeruCaption)
-                        .foregroundStyle(Color.ikeruTextSecondary)
-                } else {
-                    Text("Try again")
-                        .font(.ikeruCaption)
-                        .foregroundStyle(Color.ikeruTextSecondary)
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 8) {
+                    Image(systemName: isCorrect ? "checkmark.circle.fill" : "xmark.circle.fill")
+                        .foregroundStyle(isCorrect ? Color.ikeruPrimaryAccent : Color.ikeruError)
+                    if isCorrect {
+                        Text("Correct!")
+                            .font(.ikeruCaption)
+                            .foregroundStyle(Color.ikeruTextPrimary)
+                    } else if let wrongRomaji = viewModel.selectedOption,
+                              let kana = viewModel.selectedOptionCharacter {
+                        Text("The character for \(wrongRomaji) is \(kana)")
+                            .font(.ikeruCaption)
+                            .foregroundStyle(Color.ikeruTextSecondary)
+                    } else {
+                        Text("Try again")
+                            .font(.ikeruCaption)
+                            .foregroundStyle(Color.ikeruTextSecondary)
+                    }
+                }
+                // OBS2-015 : ce que le chronomètre a noté, dit à l'apprenant.
+                if let outcome = viewModel.lastOutcome {
+                    QuizOutcomeLine(outcome: outcome)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
