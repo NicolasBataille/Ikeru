@@ -215,7 +215,8 @@ jobs:
             --skip "StoreMigrationV2V3" \
             --skip "StoreMigrationV3V4" \
             --skip "StoreMigrationV4V5" \
-            --skip "StoreMigrationV5V6"
+            --skip "StoreMigrationV5V6" \
+            --skip "StoreMigrationV2V6"
 
       - name: Run Legacy-Store Migration Tests (own process)
         # See the previous step's comment: this suite must never share a
@@ -272,6 +273,18 @@ jobs:
         run: |
           cd IkeruCore
           swift test --no-parallel --filter "StoreMigrationV5V6"
+
+      - name: Run Store Migration V2→V6 chain Tests (isolated process)
+        # The whole chain in ONE open, from a genuine on-disk V2 store: the
+        # 2026-08-09 TestFlight build shipped IkeruSchemaV2, so every tester
+        # who updates runs V2→V3→V4→V5→V6 at first launch without passing
+        # through any intermediate build. The five suites above prove each
+        # stage; this one proves what the learner actually lives. Same
+        # process isolation as the others (frozen V2 nested types, then the
+        # live ones, on the same store).
+        run: |
+          cd IkeruCore
+          swift test --no-parallel --filter "StoreMigrationV2V6"
 
       - name: Run App Tests (full IkeruTests target)
         # Same — scoped to suites known to pass. KanaDrillViewModel covers
