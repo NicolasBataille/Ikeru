@@ -46,6 +46,13 @@ struct VocabularyDictionaryView: View {
                 Task { await viewModel?.loadData() }
             }
         }
+        // OBS2-041 : l'onglet garde sa pile pendant un détour par Réglages ;
+        // sans ceci, la bascule de langue laisse les gloses dans l'ancienne
+        // langue jusqu'à ce que la vue soit recréée.
+        .onChange(of: locale) { _, newLocale in
+            viewModel?.glossLocale = newLocale
+            Task { await viewModel?.loadData() }
+        }
         // Per-profile since IkeruSchemaV6 — see `ExploreView` for why a
         // profile switch must reload a still-mounted list.
         .onReceive(NotificationCenter.default.publisher(for: .ikeruActiveProfileDidChange)) { _ in
