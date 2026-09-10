@@ -19,6 +19,7 @@ struct VocabularyEntryDetailView: View {
     let onDelete: () -> Void
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.locale) private var locale
     @State private var entry: VocabularyEntryDTO?
     @State private var encounters: [VocabularyEncounterDTO] = []
     @State private var examples: [SentenceExample] = []
@@ -326,7 +327,12 @@ struct VocabularyEntryDetailView: View {
 
     private func loadData() async {
         let loaded = await repo.entry(by: entryId)
-        entry = loaded
+        // Glose résolue dans la langue de l'interface (OBS2-041).
+        if let loaded {
+            entry = await DisplayGlosses.resolve(loaded, locale: locale)
+        } else {
+            entry = nil
+        }
         encounters = await repo.encounters(for: entryId)
         // Loaded here, not inside the section: a view that renders nothing
         // while its list is empty has no lifecycle to load from. See
