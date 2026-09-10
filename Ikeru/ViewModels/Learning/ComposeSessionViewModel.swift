@@ -17,7 +17,10 @@ import os
 
 @MainActor
 @Observable
-final class ComposeSessionViewModel {
+final class ComposeSessionViewModel: Identifiable {
+    /// `.sheet(item:)` needs an identity — one per open, since the view
+    /// model is rebuilt on every open (see `ExploreView.presentCompose`).
+    let id = UUID()
 
     /// One line of the sheet: a type, and whether the learner may pick it.
     struct Offer: Identifiable, Equatable {

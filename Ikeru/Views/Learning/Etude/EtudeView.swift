@@ -37,8 +37,14 @@ struct ExploreView: View {
     // the cover follows the same `isActive` contract.
     @State private var composeViewModel: ComposeSessionViewModel?
     @State private var sessionViewModel: SessionViewModel?
-    @State private var showCompose = false
-    @State private var showSession = false
+    /// The session cover, presented with `item:` — see `composedSession`'s
+    /// `.fullScreenCover` below for why `isPresented:` + `if let` is not an
+    /// option here (measured: an empty black cover).
+    @State private var composedSession: ComposedSessionPresentation?
+    /// Set by `startComposedSession` when a session actually started; the
+    /// cover is presented from the sheet's `onDismiss`, never while the
+    /// sheet is still up — two modals at once, SwiftUI shows neither.
+    @State private var sessionPendingAfterCompose = false
 
     var body: some View {
         ZStack {
@@ -68,23 +74,32 @@ struct ExploreView: View {
         .onReceive(NotificationCenter.default.publisher(for: .ikeruActiveProfileDidChange)) { _ in
             Task { await loadProgress() }
         }
-        .sheet(isPresented: $showCompose) {
-            if let composeViewModel {
-                ComposeSessionSheet(viewModel: composeViewModel) {
-                    await startComposedSession()
-                }
+        // `item:`, not `isPresented:` + `if let` — that pair raced and
+        // presented an EMPTY sheet (measured on simulator 2026-09-10, the same
+        // trap the conversation cover below had already hit). Assigning the
+        // view model IS the presentation, so the content is never handed nil.
+        .sheet(item: $composeViewModel, onDismiss: {
+            if sessionPendingAfterCompose, let svm = sessionViewModel {
+                sessionPendingAfterCompose = false
+                composedSession = ComposedSessionPresentation(viewModel: svm)
+            }
+        }) { cvm in
+            ComposeSessionSheet(viewModel: cvm) {
+                await startComposedSession()
             }
         }
-        .fullScreenCover(isPresented: $showSession) {
-            if let svm = sessionViewModel {
-                ActiveSessionView(viewModel: svm)
-                    .onChange(of: svm.isActive) { _, isActive in
-                        if !isActive {
-                            showSession = false
-                            Task { await loadProgress() }
-                        }
+        // `item:` here too. `isPresented:` + `if let svm = sessionViewModel`
+        // presented an EMPTY black cover on simulator (2026-09-10) even
+        // though the session had started (its Live Activity was up) — the
+        // content closure saw nil. Same trap, same cure as the sheet above.
+        .fullScreenCover(item: $composedSession) { presentation in
+            ActiveSessionView(viewModel: presentation.viewModel)
+                .onChange(of: presentation.viewModel.isActive) { _, isActive in
+                    if !isActive {
+                        composedSession = nil
+                        Task { await loadProgress() }
                     }
-            }
+                }
         }
         .fullScreenCover(item: $conversationViewModel) { cvm in
             ZStack(alignment: .topLeading) {
@@ -290,7 +305,6 @@ struct ExploreView: View {
             modelContainer: container,
             contentRepository: Self.makeContentRepository()
         )
-        showCompose = true
     }
 
     /// `true` only if a session actually started — see
@@ -300,7 +314,9 @@ struct ExploreView: View {
         guard let composeViewModel, let svm = sessionViewModel else { return false }
         let started = await composeViewModel.start(on: svm)
         if started {
-            showSession = true
+            // The sheet dismisses itself on `true`; the cover follows from
+            // its `onDismiss` (see the `.sheet` above).
+            sessionPendingAfterCompose = true
         }
         return started
     }
@@ -333,4 +349,12 @@ struct ExploreView: View {
     private static func makeContentRepository() -> ContentRepository? {
         BundledContent.makeRepository()
     }
+}
+
+/// Identity for the composed-session cover. The `SessionViewModel` is
+/// long-lived (rebuilt only on the first open), so the identity belongs to
+/// the presentation, not to the model.
+private struct ComposedSessionPresentation: Identifiable {
+    let id = UUID()
+    let viewModel: SessionViewModel
 }
