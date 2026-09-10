@@ -16,40 +16,22 @@ struct VarietyPoolResolverTests {
         ])
     }
 
-    /// `.fillInBlank` a ete RETIRE de tous les pools le 2026-08-28 : son ecran
-    /// est un bouchon dont le bouton « Complete » note `.good`. Il etait servi
-    /// en seance d'accueil, donc un apprenant reel recoltait une reussite pour
-    /// un exercice inexistant. Ce test rougit si on le remet sans ecran.
-    @Test("Le texte a trou n'est dans AUCUN pool tant qu'il n'a pas d'ecran")
-    func fillInBlankAbsentFromEveryPool() {
+    /// `.fillInBlank` et `.readingPassage` sont RETIRÉS du produit depuis le
+    /// 2026-09-09 (`ExerciseType.retired`) — retirés des pools dès le
+    /// 2026-08-28, quand leur écran était encore un bouchon dont le bouton
+    /// « Complete » notait `.good`. Ce test rougit si l'un des deux revient
+    /// dans un pool, à n'importe quel niveau. Vu ROUGE en remettant
+    /// `.readingPassage` dans l'union N3.
+    @Test("Un type retiré n'est dans AUCUN pool, à AUCUN niveau")
+    func retiredTypesAbsentFromEveryPool() {
         for level in JLPTLevel.allCases {
             #expect(
-                !VarietyPoolResolver.pool(for: level).contains(.fillInBlank),
-                "fillInBlank ne doit pas etre programmable au \(level.rawValue)"
+                VarietyPoolResolver.pool(for: level).isDisjoint(with: ExerciseType.retired),
+                "un type retiré est programmable au \(level.rawValue)"
             )
         }
     }
 
-    /// `.writingPractice` est descendu au N5 le 2026-08-28 (OBS2-023), meme
-    /// raisonnement que la grammaire : a N3, dans une app « N5 and no
-    /// further », l'exercice de trace etait du code mort — un ecran reel
-    /// (`HandwritingDrillHost`) que le planificateur ne pouvait jamais
-    /// programmer.
-    @Test("L'ecriture est atteignable des le N5")
-    func writingReachableAtN5() {
-        #expect(VarietyPoolResolver.pool(for: .n5).contains(.writingPractice))
-    }
-
-    /// Contrepartie du test precedent, et c'est LUI qui compte : la lecture
-    /// NE DOIT PAS descendre tant que `.readingPassage` est rendu par
-    /// `placeholderExerciseView` — un bouchon dont le bouton « Complete »
-    /// note `.good`. Ce test rougit si quelqu'un applique le precedent de la
-    /// grammaire sans verifier que l'ecran existe.
-    @Test("La lecture NE descend PAS au N5 : son ecran est encore un bouchon")
-    func readingStaysGatedUntilItHasAScreen() {
-        #expect(!VarietyPoolResolver.pool(for: .n5).contains(.readingPassage))
-        #expect(VarietyPoolResolver.pool(for: .n3).contains(.readingPassage))
-    }
 
     @Test("N4 ajoute la construction de phrase, la grammaire etant deja la")
     func n4() {
@@ -64,18 +46,18 @@ struct VarietyPoolResolverTests {
         let pool = VarietyPoolResolver.pool(for: .n1)
         #expect(pool.contains(.speakingPractice))
         #expect(pool.contains(.sakuraConversation))
-        #expect(pool.contains(.readingPassage))
+        #expect(pool.contains(.listeningUnsubtitled))
     }
 
     @Test("Effective pool intersects with unlocked types")
     func intersects() {
-        // Le type verrouille (`.readingPassage`) est dans le pool N3 mais pas
-        // dans l'ensemble deverrouille : il doit disparaitre de l'intersection.
+        // Le type verrouille (`.listeningUnsubtitled`) est dans le pool N3 mais
+        // pas dans l'ensemble deverrouille : il doit disparaitre de l'intersection.
         let resolved = VarietyPoolResolver.effectivePool(
             for: .n3,
             unlockedTypes: [.listeningSubtitled, .grammarExercise]
         )
         #expect(resolved == [.listeningSubtitled, .grammarExercise])
-        #expect(VarietyPoolResolver.pool(for: .n3).contains(.readingPassage))
+        #expect(VarietyPoolResolver.pool(for: .n3).contains(.listeningUnsubtitled))
     }
 }

@@ -64,19 +64,21 @@ public struct NextStep: Equatable, Sendable {
 /// to unit-test.
 public enum NextStepRecommender {
 
-    /// Vocabulary familiar+ needed before suggesting kanji. Reuses the
-    /// fill-in-the-blank unlock threshold so the suggestion and the actual
-    /// exercise unlock agree.
-    public static let vocabularyMilestone = DefaultExerciseUnlockService.fillInBlankVocabRequired
-    /// Kanji familiar+ needed before suggesting grammar (matches the
-    /// reading-passage kanji gate).
-    public static let kanjiMilestone = DefaultExerciseUnlockService.readingPassageKanjiRequired
+    /// Vocabulary familiar+ needed before suggesting kanji. Used to alias the
+    /// fill-in-the-blank unlock threshold (50); that exercise was retired on
+    /// 2026-09-09 and the ladder keeps the same rung — this is the
+    /// recommender's own figure now, not a borrowed gate.
+    public static let vocabularyMilestone = 50
+    /// Kanji familiar+ needed before suggesting grammar. Same story: aliased
+    /// the reading-passage kanji gate (50) until that exercise was retired.
+    public static let kanjiMilestone = 50
     /// Grammar points familiar+ needed before suggesting reading/listening
     /// (matches the sentence-construction gate).
     public static let grammarMilestone = DefaultExerciseUnlockService.sentenceConstructionGrammarRequired
-    /// Vocabulary familiar+ that marks "ready for richer reading/listening"
-    /// (matches the reading-passage vocab gate).
-    public static let readingVocabularyMilestone = DefaultExerciseUnlockService.readingPassageVocabRequired
+    /// Vocabulary familiar+ that marks "ready for richer reading/listening".
+    /// Aliased the reading-passage vocab gate (100) until that exercise was
+    /// retired; the rung itself is unchanged.
+    public static let readingVocabularyMilestone = 100
 
     /// Returns the first unmet rung of the ladder, falling through to the
     /// terminal `.converseWithSakura` once every earlier rung — including the

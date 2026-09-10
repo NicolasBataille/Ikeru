@@ -21,4 +21,8 @@ public enum ExerciseLockReason: Sendable, Equatable {
     case listeningAccuracyOver(required: Double, current: Double, window: Int)
     case listeningRecallOver(required: Double, current: Double, days: Int)
     case jlptLevelReached(required: JLPTLevel, current: JLPTLevel)
+    /// The type was withdrawn from the product (`ExerciseType.retired`): no
+    /// progress unlocks it. Distinct from every other reason on purpose — a
+    /// UI that surfaces `current` / `required` has nothing to show here.
+    case retired
 }

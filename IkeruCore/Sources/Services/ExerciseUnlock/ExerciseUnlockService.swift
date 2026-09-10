@@ -9,10 +9,7 @@ public protocol ExerciseUnlockService: Sendable {
 /// Default implementation. Pure: no I/O, no state, fully deterministic.
 public struct DefaultExerciseUnlockService: ExerciseUnlockService {
 
-    public static let fillInBlankVocabRequired = 50
     public static let sentenceConstructionGrammarRequired = 5
-    public static let readingPassageVocabRequired = 100
-    public static let readingPassageKanjiRequired = 50
     public static let writingPracticeVocabRequired = 50
     public static let listeningUnsubtitledAccuracyRequired = 0.6
     public static let listeningUnsubtitledWindow = 30
@@ -33,12 +30,9 @@ public struct DefaultExerciseUnlockService: ExerciseUnlockService {
         case .kanaStudy, .kanjiStudy, .vocabularyStudy, .listeningSubtitled:
             return .unlocked
 
-        case .fillInBlank:
-            return p.vocabularyMasteredFamiliarPlus >= Self.fillInBlankVocabRequired
-                ? .unlocked
-                : .locked(reason: .vocabularyMastered(
-                    required: Self.fillInBlankVocabRequired,
-                    current: p.vocabularyMasteredFamiliarPlus))
+        case .fillInBlank, .readingPassage:
+            // Retired — see `ExerciseType.retired`. No snapshot unlocks them.
+            return .locked(reason: .retired)
 
         case .grammarExercise:
             return p.hiraganaMastered
@@ -51,19 +45,6 @@ public struct DefaultExerciseUnlockService: ExerciseUnlockService {
                 : .locked(reason: .grammarPointsMastered(
                     required: Self.sentenceConstructionGrammarRequired,
                     current: p.grammarPointsFamiliarPlus))
-
-        case .readingPassage:
-            if p.vocabularyMasteredFamiliarPlus < Self.readingPassageVocabRequired {
-                return .locked(reason: .vocabularyMastered(
-                    required: Self.readingPassageVocabRequired,
-                    current: p.vocabularyMasteredFamiliarPlus))
-            }
-            if p.kanjiMasteredFamiliarPlus < Self.readingPassageKanjiRequired {
-                return .locked(reason: .kanjiMastered(
-                    required: Self.readingPassageKanjiRequired,
-                    current: p.kanjiMasteredFamiliarPlus))
-            }
-            return .unlocked
 
         case .writingPractice:
             if !p.hiraganaMastered {

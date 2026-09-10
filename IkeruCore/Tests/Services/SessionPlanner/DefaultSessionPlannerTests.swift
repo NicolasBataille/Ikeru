@@ -105,8 +105,6 @@ struct DefaultSessionPlannerHomeTests {
         case .kanjiStudy: "kanjiStudy"
         case .grammarExercise: "grammarExercise"
         case .vocabularyStudy: "vocabularyStudy"
-        case .fillInBlank: "fillInBlank"
-        case .readingPassage: "readingPassage"
         case .writingPractice: "writingPractice"
         case .listeningExercise: "listeningExercise"
         case .speakingExercise: "speakingExercise"
@@ -241,10 +239,10 @@ struct DefaultSessionPlannerStudyTests {
 
     @Test("Still-filtered (Tier-3) exercise types are never scheduled")
     func filteredTypesNeverScheduled() async {
-        // grammarExercise → .grammarExercise (Tier-3) and fillInBlank →
-        // .fillInBlank (Tier-3) remain filtered; kanaStudy synthesises nothing
-        // (kana is not an SRS card — see kanaStudyNeverSynthesisesKanjiDrill).
-        // Nothing survives finalize.
+        // grammarExercise → .grammarExercise (Tier-3) remains filtered;
+        // fillInBlank is RETIRED (synthesises nothing, no `ExerciseItem` case
+        // any more); kanaStudy synthesises nothing (kana is not an SRS card —
+        // see kanaStudyNeverSynthesisesKanjiDrill). Nothing survives finalize.
         // (speakingPractice / listeningSubtitled / vocabularyStudy are now LIVE
         // — see tier2AudioDrillsSurvive / vocabularyStudySurvives — so they are
         // deliberately excluded here.)

@@ -11,10 +11,12 @@ public enum ExerciseXP {
         case .kanaStudy:           return .perGrade(grade: grade ?? .good, bonus: 0)
         case .kanjiStudy:          return .perGrade(grade: grade ?? .good, bonus: 2)
         case .vocabularyStudy:     return .perGrade(grade: grade ?? .good, bonus: 0)
+        // Retired as an exercise (`ExerciseType.retired`); still the XP identity
+        // of grammar-card flashcard reviews — see `SessionExerciseSupport`.
         case .fillInBlank:         return .perGrade(grade: grade ?? .good, bonus: 1)
         case .grammarExercise:     return .perCompletion(base: 8)
         case .sentenceConstruction:return .perCompletion(base: 12)
-        case .readingPassage:      return .perCompletion(base: 25)
+        case .readingPassage:      return .perCompletion(base: 25) // retired, never awarded
         case .writingPractice:     return .perCompletion(base: 18)
         case .listeningSubtitled:  return .perCompletion(base: 10)
         case .listeningUnsubtitled:return .perCompletion(base: 14)

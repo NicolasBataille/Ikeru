@@ -6,8 +6,6 @@ public typealias ListeningExerciseID = UUID
 public typealias SpeakingExerciseID = UUID
 public typealias SentenceExerciseID = UUID
 public typealias VocabularyExerciseID = UUID
-public typealias FillInBlankExerciseID = UUID
-public typealias ReadingPassageID = UUID
 
 /// A single exercise in an adaptive session plan.
 /// Each item maps to a skill and has an estimated duration.
@@ -21,10 +19,6 @@ public enum ExerciseItem: Sendable, Equatable {
     case grammarExercise(GrammarPointID)
     /// A vocabulary study exercise.
     case vocabularyStudy(VocabularyExerciseID)
-    /// A fill-in-the-blank exercise (particles, conjugation, vocabulary).
-    case fillInBlank(FillInBlankExerciseID)
-    /// A comprehensible input reading passage.
-    case readingPassage(ReadingPassageID)
     /// A writing practice exercise, backed by the kanji card being practiced.
     case writingPractice(CardDTO)
     /// A listening comprehension exercise.
@@ -41,8 +35,6 @@ public enum ExerciseItem: Sendable, Equatable {
         case .kanjiStudy: .reading
         case .grammarExercise: .reading
         case .vocabularyStudy: .reading
-        case .fillInBlank: .reading
-        case .readingPassage: .reading
         case .writingPractice: .writing
         case .listeningExercise: .listening
         case .speakingExercise: .speaking
@@ -57,8 +49,6 @@ public enum ExerciseItem: Sendable, Equatable {
         case .kanjiStudy: 60
         case .grammarExercise: 45
         case .vocabularyStudy: 30
-        case .fillInBlank: 20
-        case .readingPassage: 120
         case .writingPractice: 90
         case .listeningExercise: 60
         case .speakingExercise: 90
@@ -71,7 +61,7 @@ public enum ExerciseItem: Sendable, Equatable {
         switch self {
         case .listeningExercise, .speakingExercise: true
         case .srsReview, .kanjiStudy, .grammarExercise, .vocabularyStudy,
-             .fillInBlank, .readingPassage, .writingPractice, .sentenceConstruction: false
+             .writingPractice, .sentenceConstruction: false
         }
     }
 }
