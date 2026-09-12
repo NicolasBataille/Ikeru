@@ -67,6 +67,33 @@ private final class CapturingAIProvider: AIProvider, @unchecked Sendable {
 @MainActor
 struct ConversationServiceTests {
 
+    @Test("Le prompt demande les balises MNEMONIC et QUIZ que l'analyseur sait lire (P1-4)")
+    func promptAsksForTheTagsTheParserReads() {
+        // Trois composants de Sakura (kanji, mnémonique, quiz en ligne) étaient
+        // câblés derrière un analyseur qui reconnaît leurs balises, mais le
+        // prompt système ne demandait jamais deux d'entre elles : elles ne
+        // pouvaient apparaître que si le modèle inventait la syntaxe.
+        let provider = MockConversationAIProvider(responseContent: "はい")
+        let router = AIRouterService(
+            onDeviceProvider: provider,
+            geminiProvider: provider,
+            claudeProvider: provider,
+            localGPUProvider: provider
+        )
+        let service = ConversationService(aiRouter: router)
+        let prompt = service.buildPrompt(userMessage: "こんにちは", history: [], jlptLevel: .n5,
+                                         interfaceLocale: Locale(identifier: "fr"))
+        #expect(prompt.systemPrompt.contains("[MNEMONIC:"))
+        #expect(prompt.systemPrompt.contains("[QUIZ:"))
+        #expect(prompt.systemPrompt.contains("in French"), "les balises sont demandées dans la langue de l'interface")
+
+        // Et la forme demandée est bien celle que l'analyseur accepte.
+        let mnemonic = ChatContentParser.parse("[MNEMONIC: 食 | une personne mange sous un toit]")
+        #expect(mnemonic.contains { if case .mnemonic = $0 { true } else { false } })
+        let quiz = ChatContentParser.parse("[QUIZ: 食 | manger | boire | dormir]")
+        #expect(quiz.contains { if case .quiz = $0 { true } else { false } })
+    }
+
     @Test("Sends message and receives response")
     func sendMessage() async throws {
         let provider = MockConversationAIProvider(responseContent: "はい、いい天気ですね！")
