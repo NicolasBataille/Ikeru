@@ -288,6 +288,17 @@ struct SettingsView: View {
                 .padding(.horizontal, 22)
                 .padding(.top, 14)
                 .padding(.bottom, 140) // clear of the floating tab bar
+                // Pin the content to the width the scroll view proposes. A
+                // wrapped French `Text` can report a third of a point more
+                // than proposed (measured 2026-09-12: the cloud-backup
+                // explainer, 269.67 for 269.33), and without this that
+                // fraction climbs to the scroll view, whose content ends up
+                // wider than the window — which is all UIScrollView needs to
+                // let the page rubber-band sideways. A `frame(maxWidth:)`
+                // does not help: it adopts an overflowing child's width.
+                // `containerRelativeFrame` reports exactly the scroll view's
+                // width and lets the extra third of a point overflow unseen.
+                .containerRelativeFrame(.horizontal, alignment: .leading)
             }
         }
         .toolbar(.hidden, for: .navigationBar)
@@ -1327,12 +1338,16 @@ extension SettingsView {
                 .foregroundStyle(TatamiTokens.paperGhost)
                 .lineLimit(1)
                 .fixedSize(horizontal: true, vertical: false)
+            // Truncates rather than pushes: the pickers and the toggle are
+            // fixed-width, so this label is the one thing that can give.
+            // With `fixedSize` here too, "Weekly check-in" plus both pickers
+            // measured 377 for 346 available (iPhone 17e, English) and the
+            // whole row spilled past the screen edge.
             Text(label)
                 .ikeruScaledFont(13, relativeTo: .caption)
                 .foregroundStyle(Color.ikeruTextPrimary)
                 .lineLimit(1)
-                .layoutPriority(1)
-                .fixedSize(horizontal: true, vertical: false)
+                .minimumScaleFactor(0.85)
             Spacer(minLength: 4)
             if isOn.wrappedValue {
                 trailing()
