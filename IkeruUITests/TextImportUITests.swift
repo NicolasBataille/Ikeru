@@ -50,15 +50,19 @@ final class TextImportUITests: IkeruUITestCase {
         let toSelection = app.buttons["textImport.toSelection"]
         XCTAssertTrue(toSelection.waitForExistence(timeout: 20),
                       "l'étape de lecture n'offre pas de suite.\n\(app.debugDescription)")
-        XCTAssertTrue(toSelection.isHittable,
-                      "le bouton existe mais rien ne peut le toucher — dessiné sous la barre ?")
+        // Pas `isHittable` seul : il répond vrai pour un bouton dont le centre
+        // est sur la barre d'onglets (mesuré le 2026-09-10) — précisément la
+        // panne du 08-19 que cette garde doit attraper. Le cadre tranche.
+        XCTAssertTrue(isClearOfTabBar(toSelection, in: app),
+                      "le bouton existe mais est dessiné sous la barre d'onglets, ou intappable.\n\(app.debugDescription)")
         toSelection.tap()
 
         // Et la sélection doit à son tour offrir sa sortie.
         let save = app.buttons["textImport.save"]
         XCTAssertTrue(save.waitForExistence(timeout: 15),
                       "l'écran de sélection n'offre pas d'enregistrement.\n\(app.debugDescription)")
-        XCTAssertTrue(save.isHittable, "bouton d'enregistrement intappable")
+        XCTAssertTrue(isClearOfTabBar(save, in: app),
+                      "bouton d'enregistrement sous la barre d'onglets, ou intappable.\n\(app.debugDescription)")
     }
 
     func testExploreOffersTheTextImportRow() {

@@ -2186,13 +2186,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%lld%% known at import"
+            "value" : "%lld%% known today"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%lld %% connus à l'import"
+            "value" : "%lld %% connus aujourd'hui"
           }
         }
       }
