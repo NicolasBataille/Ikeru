@@ -1347,6 +1347,7 @@ extension SettingsView {
                 .ikeruScaledFont(13, relativeTo: .caption)
                 .foregroundStyle(Color.ikeruTextPrimary)
                 .lineLimit(1)
+                .minimumScaleFactor(0.85)
             Spacer(minLength: 4)
             if isOn.wrappedValue {
                 trailing()
