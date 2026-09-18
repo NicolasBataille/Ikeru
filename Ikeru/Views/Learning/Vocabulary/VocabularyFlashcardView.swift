@@ -162,7 +162,7 @@ struct VocabularyFlashcardView: View {
     }
 
     @ViewBuilder
-    private func gradeButton(_ grade: Grade, label: String, tint: Color) -> some View {
+    private func gradeButton(_ grade: Grade, label: LocalizedStringKey, tint: Color) -> some View {
         Button {
             Task {
                 if grade == .again {

@@ -19,6 +19,7 @@ import IkeruCore
 struct TextImportFlowView: View {
 
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.locale) private var locale
     @Environment(\.aiRouterService) private var aiRouterService
     @Environment(\.profileViewModel) private var profileViewModel
 
@@ -143,7 +144,7 @@ struct TextImportFlowView: View {
     @ViewBuilder
     private func practiceSession(_ viewModel: TextImportViewModel) -> some View {
         let repository = VocabularyRepository(modelContainer: modelContext.container)
-        AsyncEntriesView(repository: repository, ids: viewModel.savedEntryIDs) { queue, all in
+        AsyncEntriesView(repository: repository, ids: viewModel.savedEntryIDs, locale: locale) { queue, all in
             VocabularyQuizView(viewModel: VocabularyDrillViewModel(
                 queue: queue, allEntries: all, vocabularyRepository: repository))
         }
@@ -219,7 +220,8 @@ struct TextImportFlowView: View {
             analyzer: JapaneseTextAnalyzer(dictionary: dictionary),
             dictionary: dictionary,
             vocabulary: VocabularyRepository(modelContainer: modelContext.container),
-            imports: TextImportRepository(modelContainer: modelContext.container)
+            imports: TextImportRepository(modelContainer: modelContext.container),
+            glossLanguage: GlossLanguage(locale: locale)
         )
     }
 }
@@ -293,6 +295,7 @@ private struct AsyncEntriesView<Content: View>: View {
 
     let repository: VocabularyRepository
     let ids: [UUID]
+    let locale: Locale
     @ViewBuilder let content: ([VocabularyEntryDTO], [VocabularyEntryDTO]) -> Content
 
     @State private var loaded: ([VocabularyEntryDTO], [VocabularyEntryDTO])?
@@ -306,7 +309,7 @@ private struct AsyncEntriesView<Content: View>: View {
             }
         }
         .task {
-            let all = await repository.allEntries()
+            let all = await DisplayGlosses.resolve(await repository.allEntries(), locale: locale)
             let wanted = Set(ids)
             loaded = (all.filter { wanted.contains($0.id) }, all)
         }

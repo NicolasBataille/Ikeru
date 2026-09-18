@@ -9,6 +9,7 @@ struct VocabularyDrillModeSelector: View {
 
     let modelContainer: ModelContainer
 
+    @Environment(\.locale) private var locale
     @State private var dueEntries: [VocabularyEntryDTO] = []
     @State private var allEntries: [VocabularyEntryDTO] = []
     @State private var hasLoaded = false
@@ -83,8 +84,8 @@ struct VocabularyDrillModeSelector: View {
 
     @ViewBuilder
     private func modeCard(
-        title: String,
-        subtitle: String,
+        title: LocalizedStringKey,
+        subtitle: LocalizedStringKey,
         description: String,
         icon: String,
         action: @escaping () -> Void
@@ -119,8 +120,10 @@ struct VocabularyDrillModeSelector: View {
     }
 
     private func loadEntries() async {
-        allEntries = await repo.allEntries()
-        dueEntries = await repo.dueEntries(before: Date())
+        // Gloses résolues dans la langue de l'interface (OBS2-041) : les
+        // options du quiz comme le recto-verso lisent `meaning`.
+        allEntries = await DisplayGlosses.resolve(await repo.allEntries(), locale: locale)
+        dueEntries = await DisplayGlosses.resolve(await repo.dueEntries(before: Date()), locale: locale)
         // If no due entries, offer all entries for free practice
         if dueEntries.isEmpty {
             dueEntries = allEntries

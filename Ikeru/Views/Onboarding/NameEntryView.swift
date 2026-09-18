@@ -433,6 +433,13 @@ private struct NameEntryStep: View {
         ZStack {
             IkeruScreenBackground()
 
+            // Scrollable, and the keyboard goes away on a tap anywhere
+            // outside the field. Measured on a fresh install (iPhone 14 Pro,
+            // 2026-09-18): the field takes focus on its own, the keyboard
+            // covered the Sign in with Apple button at the foot, and nothing
+            // dismissed it — a returning learner could not restore at all.
+            GeometryReader { proxy in
+            ScrollView(showsIndicators: false) {
             VStack(spacing: 0) {
                 Spacer()
 
@@ -473,6 +480,13 @@ private struct NameEntryStep: View {
                 Spacer()
             }
             .padding(.horizontal, IkeruTheme.Spacing.xl)
+            .frame(minHeight: proxy.size.height)
+            .contentShape(Rectangle())
+            .onTapGesture { isNameFieldFocused = false }
+            }
+            .scrollDismissesKeyboard(.interactively)
+            .scrollBounceBehavior(.basedOnSize)
+            }
         }
         .onAppear {
             withAnimation(.spring(response: 0.6, dampingFraction: 0.86).delay(0.1)) {
@@ -653,7 +667,9 @@ private struct NameEntryStep: View {
     // MARK: - Actions
 
     private func submit() {
-        guard isNameValid else { return }
+        // The keyboard's own Continue key must at least put the keyboard
+        // away when there is nothing to submit.
+        guard isNameValid else { isNameFieldFocused = false; return }
         Logger.ui.info("Name submitted for profile creation")
         isNameFieldFocused = false
         onContinue(name)

@@ -29,6 +29,28 @@ func formatFSRSInterval(from start: Date, to end: Date) -> String {
     return "\(months) mois"
 }
 
+/// Ce que le chronomètre a décidé, pour le montrer à l'apprenant (OBS2-015).
+///
+/// Le mapping vitesse→note n'était affiché nulle part : « Correct ! » à
+/// l'écran, `.hard` dans le SRS, et un intervalle appliqué qui contredisait
+/// celui aperçu sur la carte. Chaque quiz expose désormais ce qu'il a noté,
+/// en combien de temps, et quand la carte revient — voir `QuizOutcomeLine`.
+public struct QuizGradeOutcome: Equatable, Sendable {
+    public let grade: Grade
+    public let responseTimeMs: Int
+    public let isFirstEncounter: Bool
+    /// Intervalle formaté (`formatFSRSInterval`) que la note appliquée produit
+    /// VRAIMENT, avec la rétention du profil — jamais le défaut 0.9.
+    public let nextInterval: String
+
+    public init(grade: Grade, responseTimeMs: Int, isFirstEncounter: Bool, nextInterval: String) {
+        self.grade = grade
+        self.responseTimeMs = responseTimeMs
+        self.isFirstEncounter = isFirstEncounter
+        self.nextInterval = nextInterval
+    }
+}
+
 /// Map a quiz result (correct / response time) to an FSRS Grade using a speed bonus.
 /// - Wrong → `.again`
 /// - **Première rencontre notée, correcte → `.good`** (voir ci-dessous)

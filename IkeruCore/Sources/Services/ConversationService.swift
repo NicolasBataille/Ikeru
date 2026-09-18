@@ -259,6 +259,12 @@ public final class ConversationService: @unchecked Sendable {
         10. Encourage the learner to try responding in Japanese, even partially.
         11. Follow the CURRENT CONTEXT above for greetings — only open with a time-appropriate \
         one on the first message of a conversation, never again once it's already underway.
+        12. When one kanji in your reply deserves a memory hook, add ONE line after your response: \
+        [MNEMONIC: 漢字 | a one-sentence visual hook in \(languageName)]. At most one per reply, \
+        only for a kanji you actually used, never for kana.
+        13. Every few exchanges, check recall of a kanji you already used with ONE line: \
+        [QUIZ: 漢字 | its correct meaning | a wrong meaning | another wrong meaning] — all in \
+        \(languageName), the correct meaning FIRST. Never in your first reply, at most one per reply.
         \(registerNote)
 
         \(knownVocabSection)RESPONSE FORMAT:

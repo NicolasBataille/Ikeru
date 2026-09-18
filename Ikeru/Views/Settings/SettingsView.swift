@@ -288,6 +288,17 @@ struct SettingsView: View {
                 .padding(.horizontal, 22)
                 .padding(.top, 14)
                 .padding(.bottom, 140) // clear of the floating tab bar
+                // Pin the content to the width the scroll view proposes. A
+                // wrapped French `Text` can report a third of a point more
+                // than proposed (measured 2026-09-12: the cloud-backup
+                // explainer, 269.67 for 269.33), and without this that
+                // fraction climbs to the scroll view, whose content ends up
+                // wider than the window — which is all UIScrollView needs to
+                // let the page rubber-band sideways. A `frame(maxWidth:)`
+                // does not help: it adopts an overflowing child's width.
+                // `containerRelativeFrame` reports exactly the scroll view's
+                // width and lets the extra third of a point overflow unseen.
+                .containerRelativeFrame(.horizontal, alignment: .leading)
             }
         }
         .toolbar(.hidden, for: .navigationBar)
@@ -661,7 +672,7 @@ struct SettingsView: View {
                         showExportShare = true
                     } catch {
                         Logger.ui.error("Data export failed: \(error.localizedDescription)")
-                        toastManager.showError("Export failed: \(error.localizedDescription)")
+                        toastManager.showError(String(localized: "Export failed: \(error.localizedDescription)"))
                     }
                 }
             }
@@ -1210,18 +1221,18 @@ struct SettingsView: View {
             modelContainer: modelContext.container,
             assetCache: assetCache
         ) else {
-            toastManager.showError("Pre-warm unavailable: cache not ready")
+            toastManager.showError(String(localized: "Pre-warm unavailable: cache not ready"))
             return
         }
         isPreWarming = true
-        toastManager.showInfo("Pre-warming started")
+        toastManager.showInfo(String(localized: "Pre-warming started"))
         Logger.cache.info("Manual pre-warm triggered from Settings")
         Task { @MainActor in
             defer { isPreWarming = false }
             do {
                 try await service.enqueueUpcomingDueAudio(window: 86_400)
                 Logger.cache.info("Manual pre-warm done")
-                toastManager.showInfo("Pre-warm queued")
+                toastManager.showInfo(String(localized: "Pre-warm queued"))
                 if preWarmNotify {
                     await PreWarmNotifier.notifyBatchFinished()
                 }
@@ -1229,7 +1240,7 @@ struct SettingsView: View {
                 // Silently ignore cancellation.
             } catch {
                 Logger.cache.warning("Manual pre-warm failed: \(error.localizedDescription)")
-                toastManager.showError("Pre-warm failed: \(error.localizedDescription)")
+                toastManager.showError(String(localized: "Pre-warm failed: \(error.localizedDescription)"))
             }
         }
     }
@@ -1327,12 +1338,16 @@ extension SettingsView {
                 .foregroundStyle(TatamiTokens.paperGhost)
                 .lineLimit(1)
                 .fixedSize(horizontal: true, vertical: false)
+            // Truncates rather than pushes: the pickers and the toggle are
+            // fixed-width, so this label is the one thing that can give.
+            // With `fixedSize` here too, "Weekly check-in" plus both pickers
+            // measured 377 for 346 available (iPhone 17e, English) and the
+            // whole row spilled past the screen edge.
             Text(label)
                 .ikeruScaledFont(13, relativeTo: .caption)
                 .foregroundStyle(Color.ikeruTextPrimary)
                 .lineLimit(1)
-                .layoutPriority(1)
-                .fixedSize(horizontal: true, vertical: false)
+                .minimumScaleFactor(0.85)
             Spacer(minLength: 4)
             if isOn.wrappedValue {
                 trailing()

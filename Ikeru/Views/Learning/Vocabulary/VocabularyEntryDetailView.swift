@@ -19,6 +19,7 @@ struct VocabularyEntryDetailView: View {
     let onDelete: () -> Void
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.locale) private var locale
     @State private var entry: VocabularyEntryDTO?
     @State private var encounters: [VocabularyEncounterDTO] = []
     @State private var examples: [SentenceExample] = []
@@ -191,14 +192,15 @@ struct VocabularyEntryDetailView: View {
         .tatamiRoom(.standard)
     }
 
-    private func statTile(value: String, label: String) -> some View {
+    private func statTile(value: String, label: LocalizedStringKey) -> some View {
         VStack(spacing: 4) {
             Text(value)
                 .font(.ikeruStatsLarge)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
                 .foregroundStyle(Color.ikeruPrimaryAccent)
-            Text(label.uppercased())
+            Text(label)
+                .textCase(.uppercase)
                 .ikeruScaledFont(10, relativeTo: .caption2)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
@@ -325,7 +327,12 @@ struct VocabularyEntryDetailView: View {
 
     private func loadData() async {
         let loaded = await repo.entry(by: entryId)
-        entry = loaded
+        // Glose résolue dans la langue de l'interface (OBS2-041).
+        if let loaded {
+            entry = await DisplayGlosses.resolve(loaded, locale: locale)
+        } else {
+            entry = nil
+        }
         encounters = await repo.encounters(for: entryId)
         // Loaded here, not inside the section: a view that renders nothing
         // while its list is empty has no lifecycle to load from. See

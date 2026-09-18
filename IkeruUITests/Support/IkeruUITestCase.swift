@@ -82,6 +82,19 @@ class IkeruUITestCase: XCTestCase {
             app.swipeUp()
             swipes += 1
         }
+        return isClearOfTabBar(element, in: app)
+    }
+
+    /// Vrai si `element` est dessiné entièrement AU-DESSUS de la barre
+    /// d'onglets flottante (ou si la barre n'est pas là), ET atteignable.
+    ///
+    /// C'est le verdict qu'il faut pour « ce bouton est-il sous la barre ? »,
+    /// la panne du 2026-08-19 : `isHittable` seul répond VRAI pour un élément
+    /// dont le centre est sur la barre (mesuré le 2026-09-10), donc une garde
+    /// `isHittable` sur un pied de page ne mord pas contre cette régression.
+    func isClearOfTabBar(_ element: XCUIElement, in app: XCUIApplication) -> Bool {
+        let tabBar = app.buttons["tabBar.explore"]
+        guard tabBar.exists else { return element.isHittable }
         return element.frame.maxY <= tabBar.frame.minY && element.isHittable
     }
 }

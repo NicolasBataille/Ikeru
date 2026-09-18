@@ -1,6 +1,618 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "Marked %@ · back in %@" : {
+      "comment" : "OBS2-015 — la ligne de feedback du quiz qui rend visible le mapping vitesse→note.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marked %@ · back in %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noté « %1$@ » · revient dans %2$@"
+          }
+        }
+      }
+    },
+    "First time you see it · marked %@ · back in %@" : {
+      "comment" : "OBS2-015 — la ligne de feedback du quiz qui rend visible le mapping vitesse→note.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "First time you see it · marked %@ · back in %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Première fois que tu le vois · noté « %1$@ » · revient dans %2$@"
+          }
+        }
+      }
+    },
+    "Answered in %@ s · marked %@ · back in %@" : {
+      "comment" : "OBS2-015 — la ligne de feedback du quiz qui rend visible le mapping vitesse→note.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Answered in %@ s · marked %@ · back in %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Répondu en %1$@ s · noté « %2$@ » · revient dans %3$@"
+          }
+        }
+      }
+    },
+    "Slow" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Slow"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lent"
+          }
+        }
+      }
+    },
+    "Normal" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Normal"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Normal"
+          }
+        }
+      }
+    },
+    "Fast" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fast"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rapide"
+          }
+        }
+      }
+    },
+    "On'yomi" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "On'yomi"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "On'yomi"
+          }
+        }
+      }
+    },
+    "Kun'yomi" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kun'yomi"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kun'yomi"
+          }
+        }
+      }
+    },
+    "Target" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Target"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cible"
+          }
+        }
+      }
+    },
+    "Yours" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yours"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toi"
+          }
+        }
+      }
+    },
+    "Confidence" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Confidence"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Confiance"
+          }
+        }
+      }
+    },
+    "Analysis" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Analysis"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Analyse"
+          }
+        }
+      }
+    },
+    "Speak" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Speak"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parle"
+          }
+        }
+      }
+    },
+    "Interval" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Interval"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Intervalle"
+          }
+        }
+      }
+    },
+    "Lapses" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lapses"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oublis"
+          }
+        }
+      }
+    },
+    "音" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "音"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "音"
+          }
+        }
+      }
+    },
+    "訓" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "訓"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "訓"
+          }
+        }
+      }
+    },
+    "Rig settings saved" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rig settings saved"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réglages du rig enregistrés"
+          }
+        }
+      }
+    },
+    "Save failed — check URL and token" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save failed — check URL and token"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Échec de l'enregistrement : vérifie l'URL et le jeton"
+          }
+        }
+      }
+    },
+    "%@ key saved" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ key saved"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clé %@ enregistrée"
+          }
+        }
+      }
+    },
+    "Failed to save %@ key" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Failed to save %@ key"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible d'enregistrer la clé %@"
+          }
+        }
+      }
+    },
+    "%@ key removed" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ key removed"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clé %@ supprimée"
+          }
+        }
+      }
+    },
+    "Added to your dictionary" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Added to your dictionary"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouté à ton dictionnaire"
+          }
+        }
+      }
+    },
+    "Couldn't add to dictionary" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't add to dictionary"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible d'ajouter au dictionnaire"
+          }
+        }
+      }
+    },
+    "Export failed: %@" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Export failed: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Échec de l'export : %@"
+          }
+        }
+      }
+    },
+    "Pre-warm unavailable: cache not ready" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pre-warm unavailable: cache not ready"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Préchauffage indisponible : le cache n'est pas prêt"
+          }
+        }
+      }
+    },
+    "Pre-warming started" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pre-warming started"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Préchauffage lancé"
+          }
+        }
+      }
+    },
+    "Pre-warm queued" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pre-warm queued"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Préchauffage mis en file d'attente"
+          }
+        }
+      }
+    },
+    "Pre-warm failed: %@" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pre-warm failed: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Échec du préchauffage : %@"
+          }
+        }
+      }
+    },
+    "%@ added to dictionary" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ added to dictionary"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ ajouté au dictionnaire"
+          }
+        }
+      }
+    },
+    "Google AI Studio · Free tier" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Google AI Studio · Free tier"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Google AI Studio · palier gratuit"
+          }
+        }
+      }
+    },
+    "Multi-model gateway · Free Llama/DeepSeek/Qwen" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Multi-model gateway · Free Llama/DeepSeek/Qwen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passerelle multi-modèles · Llama/DeepSeek/Qwen gratuits"
+          }
+        }
+      }
+    },
+    "Llama 3.3 70B · Sub-second latency · Free tier" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Llama 3.3 70B · Sub-second latency · Free tier"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Llama 3.3 70B · latence sous la seconde · palier gratuit"
+          }
+        }
+      }
+    },
+    "Llama 3.3 70B · Wafer-scale silicon · Free tier" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Llama 3.3 70B · Wafer-scale silicon · Free tier"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Llama 3.3 70B · puce wafer-scale · palier gratuit"
+          }
+        }
+      }
+    },
+    "Llama / Phi / Mistral via your GitHub PAT" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Llama / Phi / Mistral via your GitHub PAT"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Llama / Phi / Mistral via ton PAT GitHub"
+          }
+        }
+      }
+    },
+    "Anthropic API key — billed pay-as-you-go, NOT covered by your Pro/Max sub" : {
+      "comment" : "Arriéré label: String (2026-09-10) — champ retypé en LocalizedStringKey ou String(localized:).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anthropic API key — billed pay-as-you-go, NOT covered by your Pro/Max sub"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clé API Anthropic : facturée à l'usage, PAS couverte par ton abonnement Pro/Max"
+          }
+        }
+      }
+    },
     "Compose a session" : {
       "comment" : "Explore row + Compose sheet title.",
       "localizations" : {
@@ -1574,13 +2186,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%lld%% known at import"
+            "value" : "%lld%% known today"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%lld %% connus à l'import"
+            "value" : "%lld %% connus aujourd'hui"
           }
         }
       }
@@ -12997,7 +13609,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Erreur réseau. Vérifiez votre connexion et réessayez."
+            "value" : "Erreur réseau. Vérifie ta connexion et réessaie."
           }
         }
       }
@@ -13082,7 +13694,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Votre clé IA a été refusée. Vérifiez-la dans les Réglages."
+            "value" : "Ta clé IA a été refusée. Vérifie-la dans les Réglages."
           }
         }
       }
@@ -14241,7 +14853,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Vous êtes hors ligne — Sakura reviendra une fois connecté(e)."
+            "value" : "Tu es hors ligne — Sakura reviendra une fois connecté(e)."
           }
         }
       }
@@ -14866,7 +15478,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sauvegarde votre progression sur un serveur situé en Europe — y compris les textes que vous importez vous-même. Aucun compte n'est nécessaire. Les conversations avec Sakura ne sont pas incluses. La restauration sur un nouvel appareil nécessite de vous connecter avec Apple."
+            "value" : "Sauvegarde ta progression sur un serveur situé en Europe — y compris les textes que tu importes toi-même. Aucun compte n'est nécessaire. Les conversations avec Sakura ne sont pas incluses. La restauration sur un nouvel appareil demande de te connecter avec Apple."
           }
         }
       }
@@ -14953,7 +15565,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Impossible de supprimer vos données du serveur. Rien n'a été supprimé — vérifiez votre connexion et réessayez."
+            "value" : "Impossible de supprimer tes données du serveur. Rien n'a été supprimé — vérifie ta connexion et réessaie."
           }
         }
       }
@@ -14988,7 +15600,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Supprimer votre compte et vos données ?"
+            "value" : "Supprimer ton compte et tes données ?"
           }
         }
       }
@@ -15041,7 +15653,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Connectez-vous pour retrouver votre progression sur un autre appareil."
+            "value" : "Connecte-toi pour retrouver ta progression sur un autre appareil."
           }
         }
       }
@@ -15185,7 +15797,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Votre progression reste sur cet appareil et reste aussi sur votre compte sur le serveur. La sauvegarde s'arrête, jusqu'à ce que vous vous reconnectiez et réactiviez la sauvegarde cloud."
+            "value" : "Ta progression reste sur cet appareil et reste aussi sur ton compte sur le serveur. La sauvegarde s'arrête, jusqu'à ce que tu te reconnectes et réactives la sauvegarde cloud."
           }
         }
       }
@@ -15203,7 +15815,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Vous êtes déconnecté. Votre progression est en sécurité sur cet appareil et sur votre compte. Pour reprendre la sauvegarde, reconnectez-vous puis réactivez la sauvegarde cloud."
+            "value" : "Tu es déconnecté(e). Ta progression est en sécurité sur cet appareil et sur ton compte. Pour reprendre la sauvegarde, reconnecte-toi puis réactive la sauvegarde cloud."
           }
         }
       }
@@ -15239,7 +15851,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Reconnectez-vous pour continuer la synchronisation"
+            "value" : "Reconnecte-toi pour continuer la synchronisation"
           }
         }
       }
@@ -15257,7 +15869,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Votre progression vous attend — reconnectez-vous pour la retrouver"
+            "value" : "Ta progression t'attend — reconnecte-toi pour la retrouver"
           }
         }
       }
@@ -15275,7 +15887,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Impossible de vérifier la connexion de votre compte. Rien n'a été modifié — réessayez."
+            "value" : "Impossible de vérifier la connexion de ton compte. Rien n'a été modifié — réessaie."
           }
         }
       }
@@ -15293,7 +15905,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Cet identifiant Apple est déjà lié à un autre compte. Vous êtes maintenant connecté à ce compte — l'ancienne sauvegarde de cet appareil n'est plus accessible."
+            "value" : "Cet identifiant Apple est déjà lié à un autre compte. Tu es maintenant connecté(e) à ce compte — l'ancienne sauvegarde de cet appareil n'est plus accessible."
           }
         }
       }
@@ -15311,7 +15923,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Connexion avec Apple impossible. Vérifiez votre connexion et réessayez."
+            "value" : "Connexion avec Apple impossible. Vérifie ta connexion et réessaie."
           }
         }
       }
@@ -15346,7 +15958,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Supprime définitivement votre compte et tout ce qui y est sauvegardé — profils, cartes, historique de révisions, vocabulaire, et les textes que vous avez importés. Si vous êtes connecté avec Apple, cette connexion est également supprimée. Action irréversible. Les données sur cet appareil ne sont pas concernées."
+            "value" : "Supprime définitivement ton compte et tout ce qui y est sauvegardé — profils, cartes, historique de révisions, vocabulaire, et les textes que tu as importés. Si tu es connecté(e) avec Apple, cette connexion est également supprimée. Action irréversible. Les données sur cet appareil ne sont pas concernées."
           }
         }
       }
@@ -15380,7 +15992,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Vos données ont été supprimées du serveur"
+            "value" : "Tes données ont été supprimées du serveur"
           }
         }
       }

@@ -167,12 +167,13 @@ struct VocabularyDetailSheet: View {
         .tatamiRoom(.standard)
     }
 
-    private func statTile(value: String, label: String) -> some View {
+    private func statTile(value: String, label: LocalizedStringKey) -> some View {
         VStack(spacing: 4) {
             Text(value)
                 .font(.ikeruStatsLarge)
                 .foregroundStyle(Color.ikeruPrimaryAccent)
-            Text(label.uppercased())
+            Text(label)
+                .textCase(.uppercase)
                 .font(.ikeruMicro)
                 .ikeruTracking(.micro)
                 .foregroundStyle(Color.ikeruTextTertiary)
@@ -292,7 +293,7 @@ struct VocabularyDetailSheet: View {
         if let id = existingEntry?.id {
             encounters = await repo.encounters(for: id)
         }
-        toastManager.showInfo("\(hint.word) added to dictionary")
+        toastManager.showInfo(String(localized: "\(hint.word) added to dictionary"))
         dismiss()
     }
 }

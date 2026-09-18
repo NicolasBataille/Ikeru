@@ -45,6 +45,24 @@ final class AppLocale {
         Self.resolve(preference: preference, preferredLanguages: Locale.preferredLanguages)
     }
 
+    /// Le bundle de strings de CETTE langue, pour le texte runtime (`String`)
+    /// qui doit suivre l'interface et non l'appareil.
+    ///
+    /// `String(localized:)` seul lit `Bundle.main` dans la langue système, et
+    /// son paramètre `locale:` ne choisit PAS le `.lproj` (mesuré le
+    /// 2026-09-10 : `String(localized: "Again", locale: en)` rendait « Encore »
+    /// sur un simulateur en français). Il faut ouvrir le `.lproj` de la langue
+    /// et le passer en `bundle:`. Repli sur `Bundle.main` si la langue n'a
+    /// pas de dossier.
+    static func bundle(for locale: Locale) -> Bundle {
+        guard
+            let code = locale.language.languageCode?.identifier,
+            let url = Bundle.main.url(forResource: code, withExtension: "lproj"),
+            let bundle = Bundle(url: url)
+        else { return .main }
+        return bundle
+    }
+
     // MARK: - Pure helpers (testable)
 
     /// Resolve a locale given a preference and the device's preferred-language list.

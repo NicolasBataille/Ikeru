@@ -31,6 +31,7 @@ struct WordDetailSheet: View {
     let onLearn: (() -> Void)?
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.locale) private var locale
     @State private var alternativesExpanded = false
 
     var body: some View {
@@ -158,7 +159,7 @@ struct WordDetailSheet: View {
     /// prix de l'honnêteté du lookup.
     @ViewBuilder
     private func glossRow(_ entry: DictionaryEntry, font: Font, color: Color) -> some View {
-        let gloss = Self.gloss(entry)
+        let gloss = Self.gloss(entry, language: GlossLanguage(locale: locale))
         VStack(alignment: .leading, spacing: IkeruTheme.Spacing.xs) {
             if gloss.isEnglish { englishBadge }
             Text(verbatim: gloss.text)
@@ -311,7 +312,10 @@ struct WordDetailSheet: View {
 
     /// La gloss à montrer, et si c'est de l'anglais. Une chaîne française vide
     /// compte comme absente : elle n'apprendrait rien et masquerait l'anglais.
-    private static func gloss(_ entry: DictionaryEntry) -> (text: String, isEnglish: Bool) {
+    private static func gloss(_ entry: DictionaryEntry, language: GlossLanguage) -> (text: String, isEnglish: Bool) {
+        // Même règle qu'à la capture (`GlossResolver.gloss`) : en anglais,
+        // l'anglaise nue n'est pas un repli, donc pas de badge (OBS2-041).
+        if language == .english { return (entry.glossEN, false) }
         if let french = entry.glossFR, !french.isEmpty { return (french, false) }
         return (entry.glossEN, true)
     }
